@@ -57,7 +57,7 @@ import com.tc.objectserver.api.ManagementKeyCallback;
 
 public class EntityManagerImpl implements EntityManager {
   private static final TCLogger LOGGER = TCLogging.getLogger(EntityManagerImpl.class);
-  private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
+  private final ConcurrentMap<EntityID, FetchID> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<FetchID, ManagedEntity> entityIndex = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
@@ -99,7 +99,8 @@ public class EntityManagerImpl implements EntityManager {
     this.creationLoader = Thread.currentThread().getContextClassLoader();
     this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
-    entities.put(platform.getID(), platform);
+    entities.put(platform.getID(), new FetchID(0L));
+    entityIndex.put(new FetchID(0L), platform);
   }
 
   private ManagedEntity createPlatformEntity() {
@@ -125,7 +126,7 @@ public class EntityManagerImpl implements EntityManager {
     //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
     try {
       // issue-439: We need to sort these entities, ascending by consumerID.
-      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
       Collections.sort(sortingList, this.consumerIdSorter);
       for (ManagedEntity entity : sortingList) {
         entity.promoteEntity();
@@ -142,17 +143,17 @@ public class EntityManagerImpl implements EntityManager {
   public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
+    EntityServerService service = getVersionCheckedService(id, version);
     snapshotLock.acquireUninterruptibly();
     try {
-      ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
-      ManagedEntity exists = entities.putIfAbsent(id, temp);
-      if (exists == null) {
-        LOGGER.debug("created " + id);
-  // using consumerid to seed fetchid
-        entityIndex.put(new FetchID(consumerID), temp);
-      }
-      return exists != null ? exists : temp;
+    //  if active, reuse the managed entity if it is mapped to an id.  if passive, MUST map the id to the index of the managed entity
+      FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
+      
+      ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
+        new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
+          clientEntityStateManager, eventCollector, processorPipeline, service, shouldCreateActiveEntities, canDelete));
+
+      return temp;
     } finally {
       snapshotLock.release();
     }
@@ -162,13 +163,16 @@ public class EntityManagerImpl implements EntityManager {
   public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
-    if (entities.putIfAbsent(entityID, temp) != null) {
-      throw new IllegalStateException("Double create for entity " + entityID);
-    } else {
-// using consumerid to seed fetchid
-      entityIndex.put(new FetchID(consumerID), temp);
-    }
+    EntityServerService service = getVersionCheckedService(entityID, recordedVersion);
+    FetchID set = new FetchID(consumerID);
+    Object checkNull = entities.put(entityID, set);
+    Assert.assertNull(checkNull); //  must be null, nothing should be competing
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, 
+          serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, 
+          processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
+    
+    checkNull = entityIndex.put(set, temp);
+    Assert.assertNull(checkNull); //  must be null, nothing should be competing
     try {
       temp.loadEntity(configuration);
     } catch (ConfigurationException ce) {
@@ -178,21 +182,24 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public boolean removeDestroyed(EntityID id) {
-    boolean removed = false;
+  public boolean removeDestroyed(FetchID id) {
     snapshotLock.acquireUninterruptibly();
     try {
-      ManagedEntity e = entities.get(id);
-      if (e != null && e.isDestroyed()) {
-        if (entities.remove(id) != null) {
-          entityIndex.remove(e.getConsumerID());
-          removed = true;
+      ManagedEntity e = entityIndex.computeIfPresent(id,(fetch,entity)->{
+        if (entity.isRemoveable()) {
+          entities.remove(entity.getID(), fetch);
+          return null;
+        } else {
+          return entity;
         }
-      }
-      if (removed) {
+      });
+      
+      if (e == null) {
         LOGGER.debug("removed " + id);
+        return true;
+      } else {
+        return false;
       }
-      return removed;
     } finally {
       snapshotLock.release();
     }
@@ -219,8 +226,10 @@ public class EntityManagerImpl implements EntityManager {
 //  short circuit for null entity, it's never here
       return Optional.empty();
     }
-    ManagedEntity entity = entities.get(id);
-    if (entity != null) {
+    FetchID fetch = entities.get(id);
+    ManagedEntity entity = null;
+    if (fetch != null) {
+      entity = entityIndex.get(fetch);
       //  if the version in the descriptor is not valid, don't check 
       //  check the provided version against the version of the entity
       if (version > 0 && entity.getVersion() != version) {
@@ -232,14 +241,14 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public Collection<ManagedEntity> getAll() {
-    return new ArrayList<>(entities.values());
+    return new ArrayList<>(entityIndex.values());
   }
   
   @Override
   public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst) {
     snapshotLock.acquireUninterruptibly();
     try {
-      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entities.values());
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
       Collections.sort(sortingList, this.consumerIdSorter);
       if (runFirst != null) {
         runFirst.accept(sortingList);
@@ -279,7 +288,7 @@ public class EntityManagerImpl implements EntityManager {
   
   @Override
   public void resetReferences() {
-    for (ManagedEntity me : entities.values()) {
+    for (ManagedEntity me : entityIndex.values()) {
       me.resetReferences(0);
     }
   }
@@ -300,9 +309,9 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
-    for (Map.Entry<EntityID, ManagedEntity> entry : entities.entrySet()) {
+    for (Map.Entry<EntityID, FetchID> entry : entities.entrySet()) {
       EntityID entityID = entry.getKey();
-      entry.getValue().dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
+      entityIndex.get(entry.getValue()).dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
     }
   }
 

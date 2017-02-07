@@ -243,6 +243,14 @@ public class EntityPersistor {
     return consumerID;
   }
 
+  public void setNextConsumerID(long consumerID) {
+    long checkID = this.counters.get(COUNTERS_CONSUMER_ID);
+    if (consumerID >= checkID) {
+      this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
+      storeToDisk(COUNTERS_FILE_NAME, this.counters);
+    }
+  }
+  
   public synchronized void removeTrackingForClient(ClientID sourceNodeID) {
     this.entityLifeJournal.remove(sourceNodeID);
   }

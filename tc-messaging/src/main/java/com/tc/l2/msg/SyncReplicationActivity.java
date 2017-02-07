@@ -330,8 +330,10 @@ public class SyncReplicationActivity implements OrderedEventContext {
         this.entitiesForSyncStart[i].serializeTo(out);
       }
     } else {
-      this.entityID.serializeTo(out);
-      out.writeLong(version);
+      if (this.action == ActivityType.CREATE_ENTITY) {
+        this.entityID.serializeTo(out);
+        out.writeLong(version);
+      }
       out.writeLong(fetchID.toLong());
       int sourceNodeType = this.src.getNodeType();
       Assert.assertTrue(NodeID.CLIENT_NODE_TYPE == sourceNodeType);
@@ -385,8 +387,10 @@ public class SyncReplicationActivity implements OrderedEventContext {
         entitiesForSyncStart[i] = EntityCreationTuple.deserializeFrom(in);
       }
     } else {
-      entityID = EntityID.readFrom(in);
-      version = in.readLong();
+      if (action == ActivityType.CREATE_ENTITY) {
+        entityID = EntityID.readFrom(in);
+        version = in.readLong();
+      }
       fetchID = new FetchID(in.readLong());
       int sourceNodeType = in.read();
       Assert.assertTrue(NodeID.CLIENT_NODE_TYPE == sourceNodeType);

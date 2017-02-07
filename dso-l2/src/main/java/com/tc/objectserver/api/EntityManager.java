@@ -22,6 +22,7 @@ package com.tc.objectserver.api;
 import com.tc.entity.MessageCodecSupplier;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.text.PrettyPrintable;
 import java.util.Collection;
 import java.util.List;
@@ -51,10 +52,10 @@ public interface EntityManager extends StateDumpable, MessageCodecSupplier, Pret
  
   /**
    * Once a ManagedEntity is destroyed it must be removed from the EntityManager manually. 
-   * @param id - EntityID
+   * @param id the fetchid of the destroyed entity
    * @return true if the entity is removed
    */
-  boolean removeDestroyed(EntityID id);
+  boolean removeDestroyed(FetchID id);
 
   /**
    * Get the stub for the specified entity

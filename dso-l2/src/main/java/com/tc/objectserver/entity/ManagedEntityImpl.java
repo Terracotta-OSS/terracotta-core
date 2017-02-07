@@ -119,7 +119,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  it presently holds the config we used when we first created passiveServerEntity (if it isn't null).  It is used
   //  when we promote to an active.
   private byte[] constructorInfo;
-
+    
   ManagedEntityImpl(EntityID id, long version, long consumerID, ManagementKeyCallback flushLocalPipeline, InternalServiceRegistry registry, ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector,
                     RequestProcessor process, EntityServerService<EntityMessage, EntityResponse> factory,
                     boolean isInActiveState, boolean canDelete) {
@@ -649,7 +649,17 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
   
+  void setCreateParent(ManagedEntity create) {
+    this.createParent = create;
+  }
+  
+  private ManagedEntity createParent;
+  
   private void createEntity(ResultCapture response, byte[] constructorInfo) throws ConfigurationException {
+    if (createParent != null && !createParent.isDestroyed()) {
+      response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
+      return;
+    }
     if (!this.isDestroyed && (this.activeServerEntity != null || this.passiveServerEntity != null)) {
       response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
 //  failed to create, destroyed
@@ -993,7 +1003,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final Runnable original;
     private final int concurrency;
     private ActivePassiveAckWaiter  waitFor;
-    private boolean waitForReplication = false;
 
     public SchedulingRunnable(ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
       this.request = request;
@@ -1027,7 +1036,6 @@ public class ManagedEntityImpl implements ManagedEntity {
           replicate = loc.runOnPassive();
         }
       } 
-      waitForReplication = replicate;
       waitFor = executor.scheduleRequest(id, version, fetchID, request, payload, this, replicate, concurrency);
       this.notifyAll();
     }
@@ -1045,7 +1053,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         runnables.clear(); 
   //  there may be no more incoming messages on this entity to clear the 
   //  queue so if it is not empty, push a noop.  
-        flushLocalPipeline.completed(id, fetchID, request.getAction());
+        ServerEntityAction action = request.getAction();
+        if (request.getAction() == ServerEntityAction.CREATE_ENTITY && isDestroyed()) {
+        //  must be a failed create, mimic destroy
+          action = ServerEntityAction.DESTROY_ENTITY;
+        }
+        flushLocalPipeline.completed(id, fetchID, action);
       }
     }
     

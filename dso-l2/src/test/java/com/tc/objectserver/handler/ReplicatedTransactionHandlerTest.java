@@ -37,7 +37,6 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -66,6 +65,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
@@ -110,7 +110,7 @@ public class ReplicatedTransactionHandlerTest {
     Mockito.doAnswer((Answer<SimpleCompletion>) (InvocationOnMock invocation) -> {
       ((Consumer<byte[]>)invocation.getArguments()[3]).accept(null);
       return null;
-    }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(Runnable.class), any(Consumer.class), any(Consumer.class));
     when(entityManager.getEntity(Matchers.eq(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, 1L)))).thenReturn(Optional.of(platform));
     this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
     this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
@@ -244,6 +244,7 @@ public class ReplicatedTransactionHandlerTest {
       return null;
     }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     when(entity.getID()).thenReturn(entityID);
+    when(entity.getConsumerID()).thenReturn(1L);
     when(this.entityManager.getEntity(Matchers.any())).then(invoke->{
       EntityDescriptor desp = (EntityDescriptor)invoke.getArguments()[0];
       if (desp.isIndexed() && desp.getFetchID().equals(fetchID)) {
@@ -272,7 +273,7 @@ public class ReplicatedTransactionHandlerTest {
     ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, new byte[0]));
     when(entity.isRemoveable()).thenReturn(Boolean.TRUE);
     this.rth.getEventHandler().handleEvent(destroy);
-    verify(entityManager).removeDestroyed(eq(entityID));
+    verify(entityManager).removeDestroyed(eq(fetchID));
   }
   
   @Test
@@ -365,7 +366,7 @@ public class ReplicatedTransactionHandlerTest {
   private void mockPassiveSync(ReplicatedTransactionHandler rth) throws EventHandlerException {
 //  start passive sync
     EntityID eid = new EntityID("foo", "bar");
-    FetchID fetch = new FetchID(1L);
+    FetchID fetch = new FetchID(10L);
     long VERSION = 1;
     byte[] config = new byte[0];
     boolean canDelete = true;

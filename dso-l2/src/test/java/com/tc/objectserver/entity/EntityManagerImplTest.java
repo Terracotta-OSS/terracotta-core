@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
@@ -42,20 +43,19 @@ import java.util.Optional;
 
 import static java.util.Optional.empty;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ClientDescriptor;
 import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class EntityManagerImplTest {
   private EntityManager entityManager;
   private EntityID id;
+  private FetchID fetch;
   private long version;
   private long consumerID;
 
@@ -66,17 +66,19 @@ public class EntityManagerImplTest {
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
     when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
-        ((Runnable)invoke.getArguments()[3]).run();
+        ((Runnable)invoke.getArguments()[5]).run();
         return null;
       });
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
-        mock(RequestProcessor.class),
+        processor,
         mock(ManagementKeyCallback.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");
+    consumerID = 1L;
+    fetch = new FetchID(consumerID);
     version = 1;
   }
 
@@ -158,7 +160,7 @@ public class EntityManagerImplTest {
     //  set the destroyed flag in the entity
     entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null, null);
     //  remove it from the manager
-    entityManager.removeDestroyed(id);
+    entityManager.removeDestroyed(fetch);
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 

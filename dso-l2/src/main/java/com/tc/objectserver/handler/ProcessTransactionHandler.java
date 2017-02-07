@@ -362,7 +362,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         } else {
           if (ServerEntityAction.MANAGED_ENTITY_GC == action && entity.isRemoveable()) {
               LOGGER.debug("removing " + entity.getID());
-              entityManager.removeDestroyed(entity.getID());
+              entityManager.removeDestroyed(descriptor.getFetchID());
             // no scheduling needed
           } else {
             // if this is the MANAGED_ENTTIY_GC and not removable then still need to flush
