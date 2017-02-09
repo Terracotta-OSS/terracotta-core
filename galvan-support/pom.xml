@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.2-SNAPSHOT</version>
+    <version>5.2.0-pre14</version>
     <relativePath>../build-parent</relativePath>
   </parent>
 
