@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
@@ -234,7 +235,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     if (!ClientID.NULL_ID.equals(sourceNodeID)) {
       if (null != oldestTransactionOnClient) {
         // This client still needs transaction order persistence.
-        this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+        Future<Void> transactionOrderPersistenceFuture = this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+        serverEntityRequest.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
       } else {
         // This is probably a disconnect: we can discard transaction order persistence for this client.
         this.transactionOrderPersistor.removeTrackingForClient(sourceNodeID);

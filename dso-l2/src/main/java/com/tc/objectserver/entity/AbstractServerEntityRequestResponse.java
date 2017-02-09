@@ -34,6 +34,8 @@ import com.tc.util.Assert;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.terracotta.exception.EntityException;
 
@@ -47,6 +49,8 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   private boolean isComplete = false;
   private boolean isRetired = false;
   private boolean alsoRetire = false;
+
+  private Future<Void> transactionOrderPersistenceFuture;
 
   public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src) {
     this.action = action;
@@ -108,6 +112,13 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public synchronized void received() {
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityReceivedResponse message = (VoltronEntityReceivedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE);
+      if(transactionOrderPersistenceFuture != null) {
+        try {
+          transactionOrderPersistenceFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException("Caught exception while persisting transaction order", e);
+        }
+      }
       message.setTransactionID(transaction);
       message.send();
     });
@@ -153,6 +164,10 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
     });
     this.isComplete = true;
     this.notifyAll();
+  }
+
+  public void setTransactionOrderPersistenceFuture(Future<Void> transactionOrderPersistenceFuture) {
+    this.transactionOrderPersistenceFuture = transactionOrderPersistenceFuture;
   }
   
   @Override

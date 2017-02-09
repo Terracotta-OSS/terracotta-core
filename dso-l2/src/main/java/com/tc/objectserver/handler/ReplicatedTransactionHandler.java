@@ -65,6 +65,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.exception.EntityException;
 
@@ -250,7 +252,7 @@ public class ReplicatedTransactionHandler {
   }
 
   private void syncBeginEntityListReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
-    ackReceived(activeSender, activity);
+    ackReceived(activeSender, activity, null);
     beforeSyncAction(activity);
     
     // In this case, we want to create all the provided entities.
@@ -282,17 +284,22 @@ public class ReplicatedTransactionHandler {
     TransactionID transactionID = activity.getTransactionID();
     TransactionID oldestTransactionOnClient = activity.getOldestTransactionOnClient();
 
+    Future<Void> tmpFuture = null;
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
     if (!ClientInstanceID.NULL_ID.equals(sourceNodeID)) {
       if (!oldestTransactionOnClient.isNull()) {
-        this.orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+        tmpFuture = this.orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID,
+          oldestTransactionOnClient);
+
       } else {
         // This corresponds to a disconnect.
         this.orderedTransactions.removeTrackingForClient(sourceNodeID);
         this.entityPersistor.removeTrackingForClient(sourceNodeID);
       }
     }
+
+    final Future<Void> transactionOrderPersistenceFuture = tmpFuture;
 
     byte[] extendedData = activity.getExtendedData();
 
@@ -307,7 +314,7 @@ public class ReplicatedTransactionHandler {
         boolean canDelete = !sourceNodeID.isNull();
         ManagedEntity temp = entityManager.createEntity(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete);
         Assert.assertTrue(temp.getConsumerID() + " == " + activity.getFetchID().toLong(), temp.getConsumerID() == activity.getFetchID().toLong());
-        temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), ()->ackReceived(activeSender, activity), 
+        temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
           (result) -> {
             if (!sourceNodeID.isNull()) {
               entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), true /*from client checked*/, extendedData);
@@ -336,7 +343,7 @@ public class ReplicatedTransactionHandler {
         MessagePayload payload = MessagePayload.syncPayloadNormal(extendedData, activity.getConcurrency());
         if (null != request.getAction()) switch (request.getAction()) {
           case RECONFIGURE_ENTITY:  
-            entity.get().addRequestMessage(request, payload, ()->ackReceived(activeSender, activity), 
+            entity.get().addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
               (result)->{
                 entityPersistor.entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID(), entityInstance.getVersion(), result);
                 acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
@@ -346,7 +353,7 @@ public class ReplicatedTransactionHandler {
               });
             break;
           case DESTROY_ENTITY:
-            entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity), 
+            entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
               (result)-> {
                 entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID());
                 acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
@@ -357,7 +364,7 @@ public class ReplicatedTransactionHandler {
             break;
           case FETCH_ENTITY:
           case RELEASE_ENTITY:
-            entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity), 
+            entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
               (result)-> {
                 acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
               }, (exception) -> {
@@ -377,7 +384,7 @@ public class ReplicatedTransactionHandler {
             acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             break;
           default:
-            entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity),(result)-> acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
+            entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),(result)-> acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS), (exception) -> acknowledge(activeSender, activity, ReplicationResultCode.FAIL));
             break;
         }
       } else {
@@ -556,8 +563,15 @@ public class ReplicatedTransactionHandler {
     }
   }
 
-  private void ackReceived(ServerID activeSender, SyncReplicationActivity activity) {
+  private void ackReceived(ServerID activeSender, SyncReplicationActivity activity, Future<Void> future) {
     if (!activeSender.equals(ServerID.NULL_ID)) {
+      if(future != null) {
+        try {
+          future.get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException("Caught exception while persisting transaction order", e);
+        }
+      }
       prepareAckForSend(activeSender, activity.getActivityID(), ReplicationResultCode.RECEIVED);
     }
   }
