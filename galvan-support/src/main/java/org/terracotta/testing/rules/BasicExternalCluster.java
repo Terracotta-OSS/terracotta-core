@@ -108,7 +108,19 @@ public class BasicExternalCluster extends Cluster {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    this.displayName = description.getDisplayName();
+    String methodName = description.getMethodName();
+    Class testClass = description.getTestClass();
+    if (methodName == null) {
+      if (testClass == null) {
+        this.displayName = description.getDisplayName();
+      } else {
+        this.displayName = testClass.getSimpleName();
+      }
+    } else if (testClass == null) {
+      this.displayName = description.getDisplayName();
+    } else {
+      this.displayName = methodName + "(" + testClass.getSimpleName() + ")";
+    }
     return super.apply(base, description);
   }
 
