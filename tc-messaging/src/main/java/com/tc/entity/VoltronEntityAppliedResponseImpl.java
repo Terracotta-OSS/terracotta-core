@@ -49,7 +49,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   
   @Override
   public VoltronEntityMessage.Acks getAckType() {
-    return VoltronEntityMessage.Acks.APPLIED;
+    return VoltronEntityMessage.Acks.COMPLETED;
   }
   
   @Override

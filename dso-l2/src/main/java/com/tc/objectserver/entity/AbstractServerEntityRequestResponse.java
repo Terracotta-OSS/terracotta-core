@@ -100,7 +100,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public synchronized void failure(EntityException e) {
     if (isComplete()) throw new AssertionError("Error after successful complete");
     getReturnChannel().ifPresent(channel -> {
-      VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
+      VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
       message.setFailure(transaction, e, alsoRetire);
       message.send();
     });
@@ -127,7 +127,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   @Override
   public synchronized void complete() {
     getReturnChannel().ifPresent(channel -> {
-      VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
+      VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
       switch (action) {
         case CREATE_ENTITY:
         case DESTROY_ENTITY:
@@ -154,7 +154,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
         case INVOKE_ACTION:
         case FETCH_ENTITY:
         case RECONFIGURE_ENTITY:
-          VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
+          VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
           actionResponse.setSuccess(transaction, value, alsoRetire);
           actionResponse.send();
           break;
