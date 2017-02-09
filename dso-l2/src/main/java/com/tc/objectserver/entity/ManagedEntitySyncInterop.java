@@ -19,13 +19,13 @@
 package com.tc.objectserver.entity;
 
 import com.tc.util.Assert;
-import java.io.Serializable;
+
 
 /**
  * Special control structure to make sure sync and lifecycle operations
  * are properly controlled through the sync process
  */
-public final class ManagedEntitySyncInterop implements Serializable {
+public final class ManagedEntitySyncInterop {
 //  single threaded lifecycle
   private int lifecycleOccuring;
 //  multiple sync threads possible

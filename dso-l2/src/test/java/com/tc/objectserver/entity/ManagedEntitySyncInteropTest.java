@@ -63,8 +63,8 @@ public class ManagedEntitySyncInteropTest {
   public void testMultipleAccessToSync() throws Exception {
     ManagedEntitySyncInterop instance = new ManagedEntitySyncInterop();
 // start two syncs
-    Future f1 = run(()->{instance.startSync();return null;});
-    Future f2 = run(()->{instance.startSync();return null;});
+    Future<Void> f1 = run(()->{instance.startSync();return null;});
+    Future<Void> f2 = run(()->{instance.startSync();return null;});
     try {
       f1.get(5, TimeUnit.SECONDS);
       f2.get(5, TimeUnit.SECONDS);
@@ -81,10 +81,10 @@ public class ManagedEntitySyncInteropTest {
     // lifecycle will block and this test is expecting the blocking in the opposite order so it will hang.
     
     // Start the lifecycle operation
-    Future f1 = run(()->{instance.startLifecycle();return null;});
+    Future<Void> f1 = run(()->{instance.startLifecycle();return null;});
     f1.get();
     // Now, start the sync (it should block).
-    Future f2 = run(()->{instance.startSync();return null;});
+    Future<Void> f2 = run(()->{instance.startSync();return null;});
     try {
       f2.get(1, TimeUnit.SECONDS);
       Assert.fail();
@@ -107,10 +107,10 @@ public class ManagedEntitySyncInteropTest {
     // sync will block and this test is expecting the blocking in the opposite order so it will hang.
     
     // Start the sync
-    Future f1 = run(()->{instance.startSync();return null;});
+    Future<Void> f1 = run(()->{instance.startSync();return null;});
     // Wait for the sync to start BEFORE we attempt the reference so we know it will block (and not the sync).
     f1.get();
-    Future f2 = run(()->{instance.startReference();return null;});
+    Future<Void> f2 = run(()->{instance.startReference();return null;});
     f1.get();
     try {
       f2.get(1, TimeUnit.SECONDS);
@@ -140,10 +140,10 @@ public class ManagedEntitySyncInteropTest {
     // sync will block and this test is expecting the blocking in the opposite order so it will hang.
     
     // Start the sync
-    Future f1 = run(()->{instance.startSync();return null;});
+    Future<Void> f1 = run(()->{instance.startSync();return null;});
     // Wait for the sync to start BEFORE we attempt the lifecycle start so we know it will block (and not the sync).
     f1.get();
-    Future f2 = run(()->{instance.startLifecycle();return null;});
+    Future<Void> f2 = run(()->{instance.startLifecycle();return null;});
     // We expect the lifecycle operation to be blocked since the sync is in-progress.
     try {
       f2.get(1, TimeUnit.SECONDS);
