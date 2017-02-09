@@ -61,6 +61,11 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
   }
   
   @Override
+  public boolean doesRequestReceived() {
+    return true;
+  }
+
+  @Override
   public Type getVoltronType() {
     return Type.LOCAL_PIPELINE_FLUSH;
   }

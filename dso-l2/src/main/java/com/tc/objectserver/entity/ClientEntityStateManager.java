@@ -37,7 +37,7 @@ public interface ClientEntityStateManager {
    * @param clientID The client.
    * @param entityDescriptor The entity.
    */
-  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  public boolean addReference(ClientDescriptorImpl clientID, EntityID entityDescriptor);
 
   /**
    * Removes a reference from clientID to the entity described by entityDescriptor.
@@ -46,7 +46,7 @@ public interface ClientEntityStateManager {
    * @param clientID The client.
    * @param entityDescriptor The entity.
    */
-  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  public boolean removeReference(ClientDescriptorImpl clientID);
 
   /**
    * Verifies that no clients have a reference to the entity described by entityDescriptor.

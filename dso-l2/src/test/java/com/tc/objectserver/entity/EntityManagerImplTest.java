@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
@@ -42,20 +43,19 @@ import java.util.Optional;
 
 import static java.util.Optional.empty;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ClientDescriptor;
 import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class EntityManagerImplTest {
   private EntityManager entityManager;
   private EntityID id;
+  private FetchID fetch;
   private long version;
   private long consumerID;
 
@@ -65,30 +65,32 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
-        ((Runnable)invoke.getArguments()[3]).run();
+    when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
+        ((Runnable)invoke.getArguments()[5]).run();
         return null;
       });
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
         mock(ITopologyEventCollector.class),
-        mock(RequestProcessor.class),
+        processor,
         mock(ManagementKeyCallback.class)
     );
     id = new EntityID(TestEntity.class.getName(), "foo");
+    consumerID = 1L;
+    fetch = new FetchID(consumerID);
     version = 1;
   }
 
   @Test
   public void testGetNonExistent() throws Exception {
-    assertThat(entityManager.getEntity(id, version), is(empty()));
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 
   @Test
   public void testCreateEntity() throws Exception {
     entityManager.createEntity(id, version, consumerID, true);
-    assertThat(entityManager.getEntity(id, version).get().getID(), is(id));
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)).get().getID(), is(id));
   }
 
   @Test
@@ -100,17 +102,17 @@ public class EntityManagerImplTest {
   
   @Test
   public void testNullEntityChecks() throws Exception {
-    Optional<ManagedEntity> check = entityManager.getEntity(EntityID.NULL_ID, 0);
+    Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));
     Assert.assertFalse(check.isPresent());
     ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
     Assert.assertNotNull(entity);
-    check = entityManager.getEntity(id, version);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version));
     Assert.assertTrue(check.isPresent());
-    check = entityManager.getEntity(id, 0);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, 0));
     //  make sure zero versions go to empty
-    Assert.assertFalse(check.isPresent());
+    Assert.assertTrue(check.isPresent());
     //  make sure null goes to empty
-    check = entityManager.getEntity(EntityID.NULL_ID, 1);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, 1));
     Assert.assertFalse(check.isPresent());
   }
 
@@ -141,8 +143,13 @@ public class EntityManagerImplTest {
       }
 
       @Override
-      public ClientDescriptor getSourceDescriptor() {
-        return new ClientDescriptorImpl(ClientID.NULL_ID, new EntityDescriptor(id, ClientInstanceID.NULL_ID, version));
+      public ClientInstanceID getClientInstance() {
+        return ClientInstanceID.NULL_ID;
+      }
+
+      @Override
+      public boolean requiresReceived() {
+        return false;
       }
 
       @Override
@@ -151,10 +158,10 @@ public class EntityManagerImplTest {
       }
     };
     //  set the destroyed flag in the entity
-    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null);
+    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null, null);
     //  remove it from the manager
-    entityManager.removeDestroyed(id);
-    assertThat(entityManager.getEntity(id, version), is(empty()));
+    entityManager.removeDestroyed(fetch);
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 
 }

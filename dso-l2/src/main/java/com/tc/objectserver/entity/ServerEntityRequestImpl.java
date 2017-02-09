@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -27,7 +28,6 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 
 import java.util.Set;
-import org.terracotta.entity.ClientDescriptor;
 
 
 public class ServerEntityRequestImpl implements ServerEntityRequest {
@@ -36,15 +36,17 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   private final ClientID node;
   private final TransactionID transaction;
   private final TransactionID oldest;
+  private final boolean requiresReceived;
   private final Set<NodeID> replicates;
-  private final EntityDescriptor eid;
+  private final ClientInstanceID cid;
 
-  public ServerEntityRequestImpl(EntityDescriptor descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, Set<NodeID> replicates) {
-    this.eid = descriptor;
+  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived, Set<NodeID> replicates) {
+    this.cid = descriptor;
     this.action = action;
     this.node = node;
     this.transaction = transaction;
     this.oldest = oldest;
+    this.requiresReceived = requiresReceived;
     this.replicates = replicates;
   }
 
@@ -69,10 +71,15 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   }
 
   @Override
-  public ClientDescriptor getSourceDescriptor() {
-    return new ClientDescriptorImpl(node, eid);
+  public ClientInstanceID getClientInstance() {
+    return  cid;
   }
 
+  @Override
+  public boolean requiresReceived() {
+    return requiresReceived;
+  }
+ 
   @Override
   public Set<NodeID> replicateTo(Set<NodeID> passives) {
     // Note that we should be avoiding the decision to replicate messages at a higher-level so filter out any local-only

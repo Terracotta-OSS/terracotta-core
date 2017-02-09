@@ -31,6 +31,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
 import com.tc.properties.TCPropertiesImpl;
@@ -216,12 +217,12 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   
   private static class SyncState {
     // liveSet is the total set of entities which we believe have finished syncing and fully exist on the passive.
-    private final Set<EntityID> liveSet = new HashSet<>();
+    private final Set<FetchID> liveFetch = new HashSet<>();
     // syncdID is the set of concurrency keys, of the entity syncingID, which we believe have finished syncing and fully
     //  exist on the passive.
     private final Set<Integer> syncdID = new HashSet<>();
     // syncingID is the entity currently being synced to this passive.
-    private EntityID syncingID = EntityID.NULL_ID;
+    private FetchID syncingFetch = FetchID.NULL_ID;
     // syncingConcurrency is the concurrency key we are currently syncing to syncingID, 0 if none is in progress.
     private int syncingConcurrency = -1;
     // begun is true when we decide to start syncing to this passive node (triggered by SYNC_BEGIN).
@@ -244,66 +245,63 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     }
     
     public boolean shouldMessageBeReplicated(SyncReplicationActivity activity) {
-      final EntityID eid = activity.getEntityID();
-        
         switch (validateInput(activity)) {
           case SYNC_BEGIN:
             begun = true;
             return true;
           case SYNC_ENTITY_BEGIN:
-            syncingID = eid;
-            syncdID.clear();
-            syncdID.add(ConcurrencyStrategy.MANAGEMENT_KEY);
-            syncdID.add(ConcurrencyStrategy.UNIVERSAL_KEY);
-            syncingConcurrency = 0;
-//  if the entity is created through the create message replication, the entity should not be sync'd
-//  set syncid to null so all messages until end get filtered out.  this should not be alot, it just got created
-            if (liveSet.contains(syncingID)) {
-              syncingID = EntityID.NULL_ID;
-              if (debugLogging) {
-                logger.debug("Drop: entity " + syncingID + " was created no sync required");
-              }
+            if (liveFetch.contains(activity.getFetchID())) {
               return false;
+            } else {
+              syncingFetch = activity.getFetchID();
+              syncdID.clear();
+              syncdID.add(ConcurrencyStrategy.MANAGEMENT_KEY);
+              syncdID.add(ConcurrencyStrategy.UNIVERSAL_KEY);
+              syncingConcurrency = 0;
+              return true;
             }
-            return true;
           case SYNC_ENTITY_CONCURRENCY_BEGIN:
-            if (syncingID == EntityID.NULL_ID) {
+            if (syncingFetch.equals(activity.getFetchID())) {
+              Assert.assertEquals(syncingConcurrency, 0);
+              syncingConcurrency = activity.getConcurrency();
+              return true;
+            } else {
               return false;
             }
-            Assert.assertEquals(syncingID, eid);
-            Assert.assertEquals(syncingConcurrency, 0);
-            syncingConcurrency = activity.getConcurrency();
-            return true;
           case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-            return (syncingID != EntityID.NULL_ID);
+            if (syncingFetch.equals(activity.getFetchID())) {
+              return true;
+            } else {
+              return false;
+            }
           case SYNC_ENTITY_CONCURRENCY_END:
-            if (syncingID == EntityID.NULL_ID) {
+            if (syncingFetch.equals(activity.getFetchID())) {
+              syncdID.add(syncingConcurrency);
+              syncingConcurrency = 0;
+              return true;
+            } else {
               return false;
             }
-            Assert.assertEquals(syncingConcurrency, activity.getConcurrency());
-            syncdID.add(syncingConcurrency);
-            syncingConcurrency = 0;
-            return true;
           case SYNC_ENTITY_END:
-            if (syncingID == EntityID.NULL_ID) {
+            if (syncingFetch.equals(activity.getFetchID())) {
+              liveFetch.add(syncingFetch);
+              syncingFetch = FetchID.NULL_ID;
+              return true;
+            } else {
               return false;
             }
-            Assert.assertEquals(syncingID, eid);
-            liveSet.add(syncingID);
-            syncingID = EntityID.NULL_ID;
-            return true;
           case SYNC_END:
  //  sync is complete, clear all collections and let everything pass
             complete = true;
-            liveSet.clear();
+            liveFetch.clear();
             syncdID.clear();
-            syncingID = EntityID.NULL_ID;
+            syncingFetch = FetchID.NULL_ID;
             return true;
           case CREATE_ENTITY:
 // if this create came through, it is not part of the snapshot set so everything
 // applies
             if (begun) {
-              liveSet.add(eid);
+              liveFetch.add(activity.getFetchID());
             }
 //  fall-through
           case RECONFIGURE_ENTITY:
@@ -312,9 +310,9 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
           case DESTROY_ENTITY:
             return begun;
           case INVOKE_ACTION:
-            if (liveSet.contains(eid)) {
+            if (liveFetch.contains(activity.getFetchID())) {
               return true;
-            } else if (syncingID.equals(eid)) {
+            } else if (syncingFetch.equals(activity.getFetchID())) {
               int concurrencyKey = activity.getConcurrency();
               if (syncingConcurrency == concurrencyKey) {
 //  special case.  passive will apply this after sync of the key is complete

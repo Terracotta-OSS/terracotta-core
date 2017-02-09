@@ -19,7 +19,7 @@
 package com.tc.services;
 
 import com.tc.net.NodeID;
-import com.tc.object.EntityDescriptor;
+import com.tc.object.ClientInstanceID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.util.Assert;
@@ -56,9 +56,9 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
     ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)clientDescriptor;
     ClientAccount clientAccount = clientAccounts.get(rawDescriptor.getNodeID());
     if (clientAccount != null) {
-      EntityDescriptor entityDescriptor = rawDescriptor.getEntityDescriptor();
+      ClientInstanceID clientInstance = rawDescriptor.getClientInstanceID();
       byte[] payload = serialize(this.owningEntity.getCodec(), message);
-      clientAccount.sendNoResponse(entityDescriptor, payload);
+      clientAccount.sendNoResponse(clientInstance, payload);
     }
   }
 
@@ -68,9 +68,9 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
     ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)clientDescriptor;
     ClientAccount clientAccount = clientAccounts.get(rawDescriptor.getNodeID());
     if (clientAccount != null) {
-      EntityDescriptor entityDescriptor = rawDescriptor.getEntityDescriptor();
+      ClientInstanceID clientInstance = rawDescriptor.getClientInstanceID();
       byte[] payload = serialize(this.owningEntity.getCodec(), message);
-      return clientAccount.send(entityDescriptor, payload);
+      return clientAccount.send(clientInstance, payload);
     } else {
       return new Future<Void>() {
         @Override

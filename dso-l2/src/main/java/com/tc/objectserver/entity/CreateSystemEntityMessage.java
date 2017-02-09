@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
-import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
@@ -53,7 +52,7 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
 
   @Override
   public EntityDescriptor getEntityDescriptor() {
-    return new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version);
+    return EntityDescriptor.createDescriptorForLifecycle(eid, version);
   }
 
   @Override
@@ -61,6 +60,11 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
     return true;
   }
 
+  @Override
+  public boolean doesRequestReceived() {
+    return false;
+  }
+  
   @Override
   public Type getVoltronType() {
     return VoltronEntityMessage.Type.CREATE_ENTITY;

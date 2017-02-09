@@ -43,6 +43,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
@@ -94,6 +95,7 @@ public class ProcessTransactionHandlerTest {
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
     this.source = mock(ClientID.class);
     
+    when(this.entityPersistor.getNextConsumerID()).thenReturn(1L);
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(mock(VoltronEntityReceivedResponse.class));
@@ -126,8 +128,8 @@ public class ProcessTransactionHandlerTest {
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
   
-  private void sendNoop(EntityID eid, long version, ServerEntityAction action) {
-    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), (action == ServerEntityAction.DESTROY_ENTITY)));
+  private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
+    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
   @After
@@ -187,11 +189,11 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage request = createMockRequest(VoltronEntityMessage.Type.CREATE_ENTITY, entityID, new TransactionID(1));
     this.processTransactionHandler.getVoltronMessageHandler().handleEvent(request);
     this.requestProcessorSink.runUntilEmpty();
-    Assert.assertTrue(entityManager.getEntity(entityID, 1L).isPresent());
+    Assert.assertTrue(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(entityID, 1L)).isPresent());
     NetworkVoltronEntityMessage destroy = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(1));
     this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroy);
     this.requestProcessorSink.runUntilEmpty();
-    Assert.assertFalse(entityManager.getEntity(entityID, 1L).isPresent());
+    Assert.assertFalse(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(entityID, 1L)).isPresent());
   }
     
 
@@ -230,13 +232,18 @@ public class ProcessTransactionHandlerTest {
     ClientID sender = new ClientID(-1);
     NetworkVoltronEntityMessage invokeRequest = createMockRequestWithSender(VoltronEntityMessage.Type.INVOKE_ACTION, entityID, new TransactionID(2), sender);
     // Send the message.
-    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(invokeRequest);
-    this.requestProcessorSink.runUntilEmpty();
-    
-    // The only way to observe that this was properly cleaned is to destroy it and ensure that there are no assertion failures when the RetirementManager comes down.
-    NetworkVoltronEntityMessage destroyRequest = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(3));
-    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroyRequest);
-    this.requestProcessorSink.runUntilEmpty();
+    try {
+      this.processTransactionHandler.getVoltronMessageHandler().handleEvent(invokeRequest);
+      this.requestProcessorSink.runUntilEmpty();
+
+      // The only way to observe that this was properly cleaned is to destroy it and ensure that there are no assertion failures when the RetirementManager comes down.
+      NetworkVoltronEntityMessage destroyRequest = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(3));
+      this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroyRequest);
+      this.requestProcessorSink.runUntilEmpty();
+    } catch (Throwable t) {
+      t.printStackTrace();
+      throw t;
+    }
   }
 
 
@@ -260,9 +267,11 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
     when(request.getSource()).thenReturn(sender);
     when(request.getVoltronType()).thenReturn(type);
-    EntityDescriptor entityDescriptor = mock(EntityDescriptor.class);
-    when(entityDescriptor.getClientSideVersion()).thenReturn((long) 1);
-    when(entityDescriptor.getEntityID()).thenReturn(entityID);
+    EntityDescriptor entityDescriptor = (type == VoltronEntityMessage.Type.INVOKE_ACTION) ?
+      EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), ClientInstanceID.NULL_ID)
+            :
+      EntityDescriptor.createDescriptorForLifecycle(entityID, 1);
+
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(0));

@@ -34,6 +34,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.util.Assert;
 import static com.tc.util.Assert.assertEquals;
 import java.util.Collection;
 import java.util.List;
@@ -68,18 +69,26 @@ public class ClientEntityStateManagerImplTest {
 
   @Test
   public void testAddForNewClient() throws Exception {
-    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    assertTrue(addReference(cd, new EntityID("foo", "bar")));
   }
 
   @Test
   public void testAddTwice() throws Exception {
-    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
-    assertFalse(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    assertTrue(addReference(cd, new EntityID("foo", "bar")));
+    assertFalse(addReference(cd, new EntityID("foo", "bar")));
   }
 
   @Test
   public void testRemoveUnknown() throws Exception {
-    assertFalse(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    try {
+      assertFalse(removeReference(cd));
+      Assert.fail();
+    } catch (Throwable ee) {
+      // expected
+    }
   }
 
   @Test
@@ -89,7 +98,7 @@ public class ClientEntityStateManagerImplTest {
     long version = 1;
     ClientID clientID = new ClientID(1);
 
-    clientEntityStateManager.addReference(clientID, new EntityDescriptor(entityID, clientInstanceID, version));
+    clientEntityStateManager.addReference(new ClientDescriptorImpl(clientID, clientInstanceID), entityID);
     List<VoltronEntityMessage> list = clientEntityStateManager.clientDisconnected(clientID);
 
     assertEquals(1, list.size());
@@ -101,16 +110,17 @@ public class ClientEntityStateManagerImplTest {
     // Verify that there are no references.
     assertTrue(verifyNoReferences(new EntityID("foo", "bar")));
     // Add a reference.
-    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    assertTrue(addReference(cd, new EntityID("foo", "bar")));
     // Verify that there now are references.
     assertFalse(verifyNoReferences(new EntityID("foo", "bar")));
     // Remove the reference.
-    assertTrue(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertTrue(removeReference(cd));
     // Verify that there are no references.
     assertTrue(verifyNoReferences(new EntityID("foo", "bar")));
   }
 
-  private boolean addReference(ClientID clientID, EntityDescriptor descriptor) {
+  private boolean addReference(ClientDescriptorImpl clientID, EntityID descriptor) {
     // This only fails by asserting.
     boolean didSucceed = false;
     try {
@@ -122,8 +132,8 @@ public class ClientEntityStateManagerImplTest {
     return didSucceed;
   }
 
-  private boolean removeReference(ClientID clientID, EntityDescriptor descriptor) {
-    return clientEntityStateManager.removeReference(clientID, descriptor);
+  private boolean removeReference(ClientDescriptorImpl clientID) {
+      return clientEntityStateManager.removeReference(clientID);
   }
 
   private boolean verifyNoReferences(EntityID eid) {

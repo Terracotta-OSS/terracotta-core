@@ -19,9 +19,9 @@
 package com.tc.objectserver.api;
 
 import com.tc.net.ClientID;
-import org.terracotta.entity.ClientDescriptor;
 
 import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
 import java.util.Set;
 
@@ -40,8 +40,11 @@ public interface ServerEntityRequest {
   TransactionID getOldestTransactionOnClient();
   /**
    * The descriptor referring to the specific client-side object instance which issued the request.
+   * @return 
    */
-  ClientDescriptor getSourceDescriptor();
+  ClientInstanceID getClientInstance();
+  
+  boolean requiresReceived();
 /**
  * Provide the nodes which need to be replicated to for this request
  * @param passives current set of passive nodes

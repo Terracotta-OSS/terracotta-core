@@ -37,6 +37,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.UUID;
 import java.util.Arrays;
@@ -210,10 +211,8 @@ public class ManagementTopologyEventCollectorTest {
     MessageChannel channel = mockMessageChannel();
     
     ClientID client = mock(ClientID.class);
-    EntityDescriptor entityDescriptor1 = mockDescriptor(id, new ClientInstanceID(1));
-    EntityDescriptor entityDescriptor2 = mockDescriptor(id, new ClientInstanceID(2));
-    ClientDescriptor clientDescriptor1 = mock(ClientDescriptor.class);
-    ClientDescriptor clientDescriptor2 = mock(ClientDescriptor.class);
+    ClientInstanceID instance1 = new ClientInstanceID(1);
+    ClientInstanceID instance2 = new ClientInstanceID(2);
     
     // Put us into the active state.
     this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, System.currentTimeMillis());
@@ -226,18 +225,18 @@ public class ManagementTopologyEventCollectorTest {
     this.collector.clientDidConnect(channel, client);
     
     // Fetch the entity.
-    this.collector.clientDidFetchEntity(client, entityDescriptor1, clientDescriptor1);
+    this.collector.clientDidFetchEntity(client, id, instance1);
     
     // Fetch again, since there can be multiple fetches from the same client.
-    this.collector.clientDidFetchEntity(client, entityDescriptor2, clientDescriptor2);
+    this.collector.clientDidFetchEntity(client, id, instance2);
     
     // Release the entity twice.
-    this.collector.clientDidReleaseEntity(client, entityDescriptor1);
-    this.collector.clientDidReleaseEntity(client, entityDescriptor2);
+    this.collector.clientDidReleaseEntity(client, id, instance1);
+    this.collector.clientDidReleaseEntity(client, id, instance2);
     
     // NOTE:  This used to throw an assertion error but that is no longer the case since the value being used in the
     //  assert came from external code.
-    this.collector.clientDidReleaseEntity(client, entityDescriptor1);
+    this.collector.clientDidReleaseEntity(client, id, instance1);
     
     // Disconnect the client.
     this.collector.clientDidDisconnect(client);
@@ -292,16 +291,15 @@ public class ManagementTopologyEventCollectorTest {
     when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 2));
 
     EntityID entityID = mock(EntityID.class);
-    EntityDescriptor entityDescriptor1 = mockDescriptor(entityID, new ClientInstanceID(1));
-    ClientID client = mock(ClientID.class);
-    ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+    ClientInstanceID instance = new ClientInstanceID(1);
+    ClientID client = new ClientID(1);
     this.collector.clientDidConnect(channel, client);
-    this.collector.clientDidFetchEntity(client, entityDescriptor1, clientDescriptor);
+    this.collector.clientDidFetchEntity(client, entityID, instance);
 
     // verify
     ArgumentCaptor<PlatformClientFetchedEntity> argumentCaptor = ArgumentCaptor.forClass(PlatformClientFetchedEntity.class);
     verify(monitoringProducer).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), any(), argumentCaptor.capture());
-    Assert.assertEquals(clientDescriptor, argumentCaptor.getValue().clientDescriptor);
+    Assert.assertEquals(new ClientDescriptorImpl(client, instance), argumentCaptor.getValue().clientDescriptor);
   }
 
   @Test
@@ -412,21 +410,20 @@ public class ManagementTopologyEventCollectorTest {
         this.collector.entityWasCreated(eid, 1, true);
       }
       for (EntityID eid : entities) {
-        ClientDescriptor descriptor = mock(ClientDescriptor.class);
-        EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));
-        this.collector.clientDidFetchEntity(cid, entityDescriptor1, descriptor);
+        ClientInstanceID instance =  new ClientInstanceID(1);
+        this.collector.clientDidFetchEntity(cid, eid, instance);
       }
       verify(monitoringProducer, never()).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.anyString(), Matchers.any());
       this.collector.clientDidConnect(channel, cid);
       verify(monitoringProducer, times(count)).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.anyString(), Matchers.any());
   //  simulate ClientEntityStateManger detecting a client disconnect
-      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1)).collect(Collectors.toList()));
+      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->EntityDescriptor.createDescriptorForFetch(eid, 1, new ClientInstanceID(1))).collect(Collectors.toList()));
   //  now disconnect the client
       this.collector.clientDidDisconnect(cid);
       for (EntityID eid : entities) {
         verify(monitoringProducer, Mockito.never()).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
-        EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));
-        this.collector.clientDidReleaseEntity(cid, entityDescriptor1);
+        ClientInstanceID instance =  new ClientInstanceID(1);
+        this.collector.clientDidReleaseEntity(cid, eid, instance);
         verify(monitoringProducer).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() + "_1"));
       }
       verify(monitoringProducer).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));
@@ -470,17 +467,17 @@ public class ManagementTopologyEventCollectorTest {
       }
       for (EntityID eid : entities) {
         ClientDescriptor descriptor = mock(ClientDescriptor.class);
-        EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));
-        this.collector.clientDidFetchEntity(cid, entityDescriptor1, descriptor);
+        ClientInstanceID instance = new ClientInstanceID(1);
+        this.collector.clientDidFetchEntity(cid, eid, instance);
       }
   //  simulate ClientEntityStateManger detecting a client disconnect
-      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->new EntityDescriptor(eid, new ClientInstanceID(1), 1)).collect(Collectors.toList()));
+      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->EntityDescriptor.createDescriptorForFetch(eid, 1, new ClientInstanceID(1))).collect(Collectors.toList()));
   //  now disconnect the client
       this.collector.clientDidDisconnect(cid);
       for (EntityID eid : entities) {
         verify(monitoringProducer, Mockito.never()).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
-        EntityDescriptor entityDescriptor1 = mockDescriptor(eid, new ClientInstanceID(1));
-        this.collector.clientDidReleaseEntity(cid, entityDescriptor1);
+        ClientInstanceID instance = new ClientInstanceID(1);
+        this.collector.clientDidReleaseEntity(cid, eid, instance);
         verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() + "_1"));
       }
       verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));

@@ -20,10 +20,10 @@ package com.tc.objectserver.core.api;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.State;
-import org.terracotta.entity.ClientDescriptor;
 
 
 /**
@@ -89,7 +89,7 @@ public interface ITopologyEventCollector {
    * @param entityDescriptor The descriptor describing which entity is fetched and which fetch instance this was, on the client.
    * @param clientDescriptor corresponding ClientDescriptor for client
    */
-  public void clientDidFetchEntity(ClientID client, EntityDescriptor entityDescriptor, ClientDescriptor clientDescriptor);
+  public void clientDidFetchEntity(ClientID client, EntityID entity, ClientInstanceID entityDescriptor);
 
   /**
    * Called when a given client successfully releases a specific entity.  Note that the same client can fetch a given entity
@@ -99,5 +99,5 @@ public interface ITopologyEventCollector {
    * @param client The client.
    * @param entityDescriptor The descriptor describing which entity is fetched and which fetch instance this was, on the client.
    */
-  public void clientDidReleaseEntity(ClientID client, EntityDescriptor entityDescriptor);
+  public void clientDidReleaseEntity(ClientID client, EntityID entity, ClientInstanceID entityDescriptor);
 }

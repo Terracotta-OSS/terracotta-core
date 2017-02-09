@@ -78,8 +78,7 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     EntityClientEndpoint endpoint = null;
     try {
       final ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
-      final EntityDescriptor entityDescriptor = new EntityDescriptor(getEntityID(), clientInstanceID, this.version);
-      endpoint = entityManager.fetchEntity(entityDescriptor, entityClientService.getMessageCodec(), null);
+      endpoint = entityManager.fetchEntity(this.getEntityID(), this.version, clientInstanceID, entityClientService.getMessageCodec(), null);
     } catch (EntityException e) {
       // In this case, we want to close the endpoint but still throw back the exception.
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check

@@ -62,6 +62,11 @@ public class ReferenceMessage implements VoltronEntityMessage {
   }
 
   @Override
+  public boolean doesRequestReceived() {
+    return true;
+  }
+
+  @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return type;
   }

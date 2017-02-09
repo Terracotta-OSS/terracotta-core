@@ -30,9 +30,9 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.api.ServerEntityRequest;
 
 import java.util.Optional;
 
@@ -57,7 +57,7 @@ public class ServerEntityRequestImplTest {
     responseMessage = mock(VoltronEntityAppliedResponse.class);
     retiredMessage = mock(VoltronEntityRetiredResponse.class);
     messageChannel = mockMessageChannel(requestAckMessage, responseMessage, retiredMessage);
-    entityDescriptor = new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1);
+    entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(new EntityID("foo", "bar"), 1);
     transactionID = new TransactionID(1);
     nodeID = mock(ClientID.class);
   }
@@ -78,7 +78,7 @@ public class ServerEntityRequestImplTest {
   public void testCompleteCreate() throws Exception {
     boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), requiresReplication, isReplicatedMessage);
 
     serverEntityRequest.complete();
     serverEntityRequest.retired();
@@ -107,8 +107,9 @@ public class ServerEntityRequestImplTest {
   }
 
   private ServerEntityRequestResponse buildInvoke() {
-    boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), isReplicatedMessage);
+    boolean isReceivedRequested = false;
+    EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
+    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), isReceivedRequested, isReplicatedMessage);
   }
 }

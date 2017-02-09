@@ -25,84 +25,50 @@ import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import org.terracotta.entity.EntityMessage;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
-  private final Map<ClientID, Set<EntityDescriptor>> clientStates = new ConcurrentHashMap<>();
-  private final Set<ClientID> clientGC = new CopyOnWriteArraySet<>();
+  private final Map<ClientDescriptorImpl, EntityID> clientStates = new ConcurrentHashMap<>();
   private static final TCLogger logger    = TCLogging.getLogger(ClientEntityStateManagerImpl.class);
 
   public ClientEntityStateManagerImpl() {
   }
 
   @Override
-  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor) {
-    Set<EntityDescriptor> led = clientStates.get(clientID);
-    if (led == null) {
-      led = new CopyOnWriteArraySet<>();
-      Set<EntityDescriptor> check = clientStates.putIfAbsent(clientID, led);
-      if (check != null) {
-        led = check;
-      }
-    }
-    Assert.assertNotNull(led);
-    boolean didAdd = led.add(entityDescriptor);
-    logger.debug("Adding reference:" + clientID + " " + entityDescriptor.getEntityID());
+  public boolean addReference(ClientDescriptorImpl instance, EntityID eid) {
+    EntityID check = clientStates.put(instance, eid);
+    Assert.assertNull(check);
+    logger.debug("Adding reference:" + instance + " " + eid);
     // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
-    Assert.assertTrue(didAdd);
-    return didAdd;
+    return true;
   }
 
   @Override
-  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor) {
-    Set<EntityDescriptor> refs = clientStates.get(clientID);
-    logger.debug("Removing reference:" + clientID + " " + entityDescriptor.getEntityID());
-    boolean didRemove = false;
-    if (refs != null) {
-      didRemove = refs.remove(entityDescriptor);
-      // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
-      Assert.assertTrue(didRemove);
-      if (refs.isEmpty() && this.clientGC.contains(clientID)) {
-        this.clientGC.remove(clientID);
-        this.clientStates.remove(clientID);
-      }
-    }
-    return didRemove;
+  public boolean removeReference(ClientDescriptorImpl descriptor) {
+    EntityID eid = clientStates.remove(descriptor);
+    Assert.assertNotNull(eid);
+    logger.debug("Removing reference:" + descriptor + " " + eid);
+    return true;
   }
 
   @Override
   public boolean verifyNoReferences(EntityID eid) {
-    return !clientStates.values().stream().anyMatch((led)->led.stream().anyMatch(ed->ed.getEntityID().equals(eid)));
+    return !clientStates.values().stream().anyMatch((led)->led.equals(eid));
   }
 
   @Override
   public List<VoltronEntityMessage> clientDisconnected(ClientID client) {
-    Set<EntityDescriptor> list = this.clientStates.get(client);
-    if (list != null) {
-      ArrayList<VoltronEntityMessage> msgs = new ArrayList<>(list.size());
-      if (!list.isEmpty()) {
-        this.clientGC.add(client);
-        logger.debug("list has: " + client + " " + list);
-      } else {
-        this.clientStates.remove(client);
-        logger.debug("list empty: removing " + client);
-      }
+    ArrayList<VoltronEntityMessage> msgs = new ArrayList<>();
 
-      for (EntityDescriptor oneInstance : list) {
-        msgs.add(new ReferenceMessage(client, false, oneInstance, null));
-      }
-      return msgs;
-    }
-    return Collections.emptyList();
+    clientStates.entrySet().stream().filter(e->e.getKey().getNodeID().equals(client)).forEach(e->
+            //  don't care about version for reslease.  Is this OK?
+      msgs.add(new ReferenceMessage(client, false, EntityDescriptor.createDescriptorForFetch(e.getValue(), EntityDescriptor.INVALID_VERSION, e.getKey().getClientInstanceID()), null))
+    );
+    return msgs;
   }
 }

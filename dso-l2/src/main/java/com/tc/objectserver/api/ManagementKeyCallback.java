@@ -20,9 +20,10 @@
 package com.tc.objectserver.api;
 
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 
 
 public interface ManagementKeyCallback {
-  void completed(EntityID id, long version, ServerEntityAction action);
+  void completed(EntityID id, FetchID fetch, ServerEntityAction action);
 }
 

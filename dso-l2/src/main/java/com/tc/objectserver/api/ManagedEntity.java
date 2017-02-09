@@ -51,12 +51,13 @@ public interface ManagedEntity extends StateDumpable {
   * Schedules the request with the entity on the execution queue.
   * 
   * @param request translated request for execution on the server
-  * @param entityMessage The message instance, if it was generated internally (the extendedData is still expected)
-  * @param extendedData payload of the invoke
-  * @param defaultKey default concurrency key if no concurrency strategy is installed
-  * @throws EntityUserException A state-safe exception (MessageCodecException) was encountered while setting up the invoke.
+   * @param data the payload data of the message
+   * @param received callback run once the message has been received by all the replicas.  NOTE: only happens when requested by the message
+   * @param completion complete callback called once completed locally and all the replicas
+   * @param exception exception callback called once execution is completed on all replicas.  NOTE: completion callback or exception will be called, not both
+   * @return a token which can be waited on
   */ 
-  SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Consumer<byte[]> completion, Consumer<EntityException> exception);
+  SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception);
 
   /**
    * Called to sync an entity.  Caller initiates sync of an entity through this method.  

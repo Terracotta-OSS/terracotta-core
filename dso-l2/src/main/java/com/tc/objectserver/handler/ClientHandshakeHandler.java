@@ -24,7 +24,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.objectserver.api.EntityManager;
@@ -65,17 +64,15 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     try {
-      if (stateManager.isActiveCoordinator()) {
+      if (clientMsg.diagnosticClient()) {
+        this.handshakeManager.notifyDiagnosticClient(clientMsg);
+      } else if (stateManager.isActiveCoordinator()) {
         NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
         checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
         checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
         this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
       } else {
-        if (clientMsg.diagnosticClient()) {
-          this.handshakeManager.notifyDiagnosticClient(clientMsg);
-        } else {
-          this.handshakeManager.notifyClientRefused(clientMsg, "do not handshake with passive");
-        }
+        this.handshakeManager.notifyClientRefused(clientMsg, "do not handshake with passive");
       }
     } catch (ClientHandshakeException e) {
       getLogger().error("Handshake Error : ", e);

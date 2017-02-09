@@ -22,8 +22,7 @@ package com.tc.services;
 import com.tc.entity.ServerEntityMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityDescriptor;
-import com.tc.util.Assert;
+import com.tc.object.ClientInstanceID;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,14 +37,14 @@ public class ClientAccount {
     this.channel = channel;
   }
 
-  synchronized ResponseWaiter send(EntityDescriptor entityDescriptor, byte[] payload) {
+  synchronized ResponseWaiter send(ClientInstanceID clientInstance, byte[] payload) {
     ResponseWaiter responseWaiter = new ResponseWaiter();
     if (!open) {
       responseWaiter.done();
     } else {
       waitingResponse.put(responseId, responseWaiter);
       ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
-      message.setMessage(entityDescriptor, payload, responseId++);
+      message.setMessage(clientInstance, payload, responseId++);
       if (!message.send()) {
         if (waitingResponse.remove(responseId, responseWaiter)) {
           responseWaiter.done();
@@ -55,10 +54,10 @@ public class ClientAccount {
     return responseWaiter;
   }
 
-  synchronized void sendNoResponse(EntityDescriptor entityDescriptor, byte[] payload) {
+  synchronized void sendNoResponse(ClientInstanceID clientInstance, byte[] payload) {
     if (open) {
       ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
-      message.setMessage(entityDescriptor, payload);
+      message.setMessage(clientInstance, payload);
       if (!message.send()) {
 //  message not delivered.  This call is only best efforts so ignore.        
       }

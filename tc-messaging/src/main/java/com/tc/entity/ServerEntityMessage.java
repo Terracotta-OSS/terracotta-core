@@ -20,18 +20,18 @@
 package com.tc.entity;
 
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.EntityDescriptor;
+import com.tc.object.ClientInstanceID;
 
 /**
  * @author twu
  */
 public interface ServerEntityMessage extends TCMessage {
 
-  void setMessage(EntityDescriptor entityDescriptor, byte[] payload);
+  void setMessage(ClientInstanceID clientInstance, byte[] payload);
 
-  void setMessage(EntityDescriptor entityDescriptor, byte[] payload, long responseId);
+  void setMessage(ClientInstanceID clientInstance, byte[] payload, long responseId);
 
-  EntityDescriptor getEntityDescriptor();
+  ClientInstanceID getClientInstanceID();
   
   byte[] getMessage();
 

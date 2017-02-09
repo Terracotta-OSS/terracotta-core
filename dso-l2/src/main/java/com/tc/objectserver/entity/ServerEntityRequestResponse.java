@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -27,7 +28,6 @@ import com.tc.util.Assert;
 
 import java.util.Optional;
 import java.util.function.Supplier;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.exception.EntityException;
 
 
@@ -40,12 +40,14 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   protected final Supplier<Optional<MessageChannel>> returnChannel;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
+  private final boolean requiresReceived;
 
   public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, boolean isReplicatedMessage) {
+      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, boolean requiresReceived, boolean isReplicatedMessage) {
     super(action, transaction, oldest, src);
     this.descriptor = descriptor;
     this.returnChannel = returnChannel;
+    this.requiresReceived = requiresReceived;
     this.isReplicatedMessage = isReplicatedMessage;
   }
 
@@ -81,6 +83,11 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   }
 
   @Override
+  public boolean requiresReceived() {
+    return requiresReceived;
+  }
+ 
+  @Override
   public synchronized void retired() {
     // Replicated messages are never retired.
     Assert.assertFalse(this.isReplicatedMessage);
@@ -92,9 +99,10 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   }
 
   @Override
-  public ClientDescriptor getSourceDescriptor() {
-    return new ClientDescriptorImpl(getNodeID(), this.descriptor);
+  public ClientInstanceID getClientInstance() {
+    return this.descriptor.getClientInstanceID();
   }
+
 
   @Override
   public String toString() {

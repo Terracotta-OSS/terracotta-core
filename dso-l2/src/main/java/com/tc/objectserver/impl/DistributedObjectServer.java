@@ -146,6 +146,7 @@ import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -884,7 +885,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     );
   }
   
-  private void flushLocalPipeline(EntityID eid, long version, ServerEntityAction action) {
+  private void flushLocalPipeline(EntityID eid, FetchID fetch, ServerEntityAction action) {
     switch(action) {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
@@ -902,7 +903,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(eid, version, forDestroy)));
+            .getSink().addSingleThreaded(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
@@ -911,7 +912,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 //  must be active, noop the ProcessTransactionHandler
     this.seda.getStageManager()
         .getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class)
-        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), forDestroy));
+        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {

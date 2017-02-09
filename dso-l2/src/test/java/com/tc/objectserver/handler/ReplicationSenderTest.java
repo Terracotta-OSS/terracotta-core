@@ -34,6 +34,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
@@ -114,6 +115,7 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
     }};
   EntityID entity = EntityID.NULL_ID;
+  FetchID fetch = new FetchID(1L);
   int concurrency = 1;
   
   public ReplicationSenderTest() {
@@ -151,33 +153,34 @@ public class ReplicationSenderTest {
   }
   
   private SyncReplicationActivity makeMessage(SyncReplicationActivity.ActivityType type) {
+    ClientID source = new ClientID(1);
     switch (type) {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
-      case INVOKE_ACTION:
       case RECONFIGURE_ENTITY:
-        ClientID source = new ClientID(1);
-        return SyncReplicationActivity.createReplicatedMessage(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+        return SyncReplicationActivity.createLifecycleMessage(entity, 1, fetch, source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0]);
+      case INVOKE_ACTION:
+        return SyncReplicationActivity.createInvokeMessage(fetch, source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
       case ORDERING_PLACEHOLDER:
-        return SyncReplicationActivity.createOrderingPlaceholder(new EntityDescriptor(entity, ClientInstanceID.NULL_ID, 1), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
+        return SyncReplicationActivity.createOrderingPlaceholder(new FetchID(1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
       case LOCAL_ENTITY_GC:
-        return SyncReplicationActivity.createFlushLocalPipelineMessage(entity, 1, true);
+        return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), true);
       case FLUSH_LOCAL_PIPELINE:
-        return SyncReplicationActivity.createFlushLocalPipelineMessage(entity, 1, false);
+        return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), false);
       case SYNC_BEGIN:
         return SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0] );
       case SYNC_END:
         return SyncReplicationActivity.createEndSyncMessage(new byte[0]);
       case SYNC_ENTITY_BEGIN:
-        return SyncReplicationActivity.createStartEntityMessage(entity, 1, new byte[0], 0);
+        return SyncReplicationActivity.createStartEntityMessage(entity, 1, new FetchID(1L), new byte[0], 0);
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
-        return SyncReplicationActivity.createStartEntityKeyMessage(entity, 1, concurrency);
+        return SyncReplicationActivity.createStartEntityKeyMessage(entity, 1, new FetchID(1L), concurrency);
       case SYNC_ENTITY_CONCURRENCY_END:
-        return SyncReplicationActivity.createEndEntityKeyMessage(entity, 1, concurrency++);
+        return SyncReplicationActivity.createEndEntityKeyMessage(entity, 1, new FetchID(1L), concurrency++);
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-        return SyncReplicationActivity.createPayloadMessage(entity, 1, concurrency, new byte[0], "");
+        return SyncReplicationActivity.createPayloadMessage(entity, 1, new FetchID(1L), concurrency, new byte[0], "");
       case SYNC_ENTITY_END:
-        return SyncReplicationActivity.createEndEntityMessage(entity, 1);
+        return SyncReplicationActivity.createEndEntityMessage(entity, 1, new FetchID(1L));
       default:
         throw new AssertionError("bad message type");
     }
@@ -281,7 +284,7 @@ public class ReplicationSenderTest {
   }
   
   @Test
-  public void validateSyncState() {
+  public void validateSyncState() throws Exception {
     entity = new EntityID("TEST", "test");
     List<SyncReplicationActivity> origin = new LinkedList<>();
     List<SyncReplicationActivity> validation = new LinkedList<>();
