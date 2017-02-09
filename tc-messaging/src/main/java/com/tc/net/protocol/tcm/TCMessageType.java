@@ -50,7 +50,7 @@ public final class TCMessageType {
   public static final int           TYPE_SERVER_ENTITY_MESSAGE                        = 15;
   public static final int           TYPE_SERVER_ENTITY_RESPONSE_MESSAGE               = 16;
   public static final int           TYPE_VOLTRON_ENTITY_MESSAGE                       = 17;
-  public static final int           TYPE_VOLTRON_ENTITY_APPLIED_RESPONSE              = 18;
+  public static final int           TYPE_VOLTRON_ENTITY_COMPLETED_RESPONSE              = 18;
   public static final int           TYPE_VOLTRON_ENTITY_RETIRED_RESPONSE              = 19;
   public static final int           TYPE_VOLTRON_ENTITY_MULTI_RESPONSE              = 20;
   public static final int           TYPE_NOOP_MESSAGE              = 21;
@@ -74,7 +74,7 @@ public final class TCMessageType {
   public static final TCMessageType SERVER_ENTITY_MESSAGE                             = new TCMessageType();
   public static final TCMessageType SERVER_ENTITY_RESPONSE_MESSAGE                    = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_MESSAGE                            = new TCMessageType();
-  public static final TCMessageType VOLTRON_ENTITY_APPLIED_RESPONSE                   = new TCMessageType();
+  public static final TCMessageType VOLTRON_ENTITY_COMPLETED_RESPONSE                   = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_RETIRED_RESPONSE                   = new TCMessageType();
   public static final TCMessageType VOLTRON_ENTITY_MULTI_RESPONSE                   = new TCMessageType();
   public static final TCMessageType NOOP_MESSAGE                   = new TCMessageType();  

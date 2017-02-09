@@ -44,7 +44,7 @@ public class RequestReceiveHandler extends AbstractEventHandler<VoltronEntityRes
         case RETIRED:
           this.handler.retired(transactionID);
           break;
-        case APPLIED:
+        case COMPLETED:
           if (response instanceof DiagnosticResponse) {
             this.handler.complete(transactionID, ((DiagnosticResponse)response).getResponse());
           } else {

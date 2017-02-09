@@ -44,7 +44,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private final VoltronEntityMessage message;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
-   * client code.  This is different from being "done" which specifically means that the APPLIED has happened,
+   * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
    * potentially returning a value or exception.
    * ACKs are removed from this pending set, as they arrive.
    */
@@ -182,7 +182,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public synchronized void setResult(byte[] value, EntityException error) {
-    this.pendingAcks.remove(VoltronEntityMessage.Acks.APPLIED);
+    this.pendingAcks.remove(VoltronEntityMessage.Acks.COMPLETED);
     if (this.canSetResult) {
       this.exception = error;
       this.value = value;

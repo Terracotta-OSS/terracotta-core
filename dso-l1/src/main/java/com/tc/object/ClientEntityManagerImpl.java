@@ -480,8 +480,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private void internalRelease(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
     stateManager.waitUntilRunning();
 
-    // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
-    Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
+    // We need to provide fully blocking semantics with this call so we will wait for the "COMPLETED" ack.
+    Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.COMPLETED);
     // A "RELEASE" doesn't matter to the passive.
     boolean shouldBlockOnRetire = false;
     boolean requiresReplication = true;
@@ -523,8 +523,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private byte[] internalRetrieve(EntityDescriptor entityDescriptor) throws EntityException {
     stateManager.waitUntilRunning();
 
-    // We need to provide fully blocking semantics with this call so we will wait for the "APPLIED" ack.
-    Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.APPLIED);
+    // We need to provide fully blocking semantics with this call so we will wait for the "COMPLETED" ack.
+    Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.COMPLETED);
 
     boolean shouldBlockOnRetire = false;
     boolean requiresReplication = true;

@@ -97,7 +97,7 @@ public class ProcessTransactionHandlerTest {
     
     when(this.entityPersistor.getNextConsumerID()).thenReturn(1L);
     MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(mock(VoltronEntityReceivedResponse.class));
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(mock(VoltronEntityRetiredResponse.class));
     

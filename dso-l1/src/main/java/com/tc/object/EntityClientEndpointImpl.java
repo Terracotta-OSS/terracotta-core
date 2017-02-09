@@ -145,7 +145,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
 
     @Override
     public InvocationBuilder<M, R> ackCompleted() {
-      acks.add(VoltronEntityMessage.Acks.APPLIED);
+      acks.add(VoltronEntityMessage.Acks.COMPLETED);
       return this;
     }
 

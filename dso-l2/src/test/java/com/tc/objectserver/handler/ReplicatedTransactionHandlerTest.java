@@ -118,7 +118,7 @@ public class ReplicatedTransactionHandlerTest {
     this.source = new ClientID(1);
     
     MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(mock(VoltronEntityReceivedResponse.class));
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);

@@ -309,7 +309,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               retireMessagesForEntity(locked, message);
             }, (fail)-> {
               safeGetChannel(sourceNodeID).ifPresent(channel -> {
-                VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE);
+                VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
                 failMessage.setFailure(transactionID, fail, false);
                 invokeReturn.put(sourceNodeID, failMessage);
                 multiSend.addSingleThreaded(failMessage);

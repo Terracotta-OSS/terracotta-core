@@ -35,19 +35,19 @@ public interface RequestResponseHandler {
 
   /**
    * Called when the server sends back a response that the request completed successfully, with no return value.  This
-   * implies an APPLIED acknowledgement.
+   * implies an COMPLETED acknowledgement.
    */
   void complete(TransactionID id);
 
   /**
    * Called when the server sends back a response that the request completed successfully, with a return value.  This
-   * implies an APPLIED acknowledgement.
+   * implies an COMPLETED acknowledgement.
    */
   void complete(TransactionID id, byte[] value);
 
   /**
    * Called when the server sends back a response that the request completed with a failure, as described by the
-   * exception.  This implies an APPLIED acknowledgement.  Note that all of our wire-level exceptions are now
+   * exception.  This implies an COMPLETED acknowledgement.  Note that all of our wire-level exceptions are now
    * EntityException instances.
    */
   void failed(TransactionID id, EntityException e);
