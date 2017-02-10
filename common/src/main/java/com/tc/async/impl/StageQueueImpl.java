@@ -69,7 +69,18 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     this.sourceQueues = new SourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
   }
-
+  
+  @SuppressWarnings("unchecked")  // for tests
+  StageQueueImpl(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory,
+                        TCLoggerProvider loggerProvider, String stageName, int queueSize, int fc) {
+    Assert.eval(queueCount > 0);
+    this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
+    this.stageName = stageName;
+    this.sourceQueues = new SourceQueueImpl[queueCount];
+    this.fcheck = fc;
+    createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
+  }
+  
   private void createWorkerQueues(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
     BlockingQueue<ContextWrapper<EC>> q = null;
@@ -185,7 +196,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   private volatile int fcheck = 0;
 //  TODO:  Way too busy. need a better way
   private int findShortestQueueIndex() {
-      int stop = (fcheck++) % this.sourceQueues.length;
+      int stop = Math.abs(fcheck++) % this.sourceQueues.length;
       int pointer = stop+1;
       int min = Integer.MAX_VALUE;
       int can = -1;

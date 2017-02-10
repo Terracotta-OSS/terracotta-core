@@ -21,6 +21,7 @@ package com.tc.async.impl;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import java.util.ArrayList;
 import java.util.List;
@@ -132,5 +133,31 @@ public class StageQueueImplTest {
     instance.addMultiThreaded(context1);
 //  tests specific implementation.  test expectation
     assertEquals(cxts.get(rand % cxts.size()).poll(), context1);
+  }
+  
+  @Test
+  public void testShortestRollover() {
+    TCLoggerProvider logger = new DefaultLoggerProvider();
+    final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
+    
+    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+
+      @Override
+      public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[0]);
+        cxts.add(queue);
+        return queue;
+      }
+    
+    });
+    StageQueueImpl impl = new StageQueueImpl(1, context, logger, "mock", 16, Integer.MAX_VALUE);
+    MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
+    when(cxt.getSchedulingKey()).thenReturn(null);
+ // hit int max
+    impl.addMultiThreaded(cxt);
+ // rollover
+    impl.addMultiThreaded(cxt);
+    Assert.assertEquals(cxts.get(0).size(), 2);
   }
 }
