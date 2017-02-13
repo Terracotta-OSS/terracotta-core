@@ -69,22 +69,10 @@ exit /b 1
 REM $ENV{NULLGLOB} = 1; 
 REM todo do i still need to enable nullglob?
 
-for %%I in (%PLUGIN_LIB_DIR% %PLUGIN_API_DIR%) do (
-
-	if exist %%I (
-		for %%J in (%%I\*.jar) do (
-			
-			if defined PLUGIN_CLASSPATH (
-			  set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;"%%J"
-			) else (
-			  set PLUGIN_CLASSPATH="%%J"
-			)
-
-		)
-	) else (
-		echo plugin dir does not exist! %%I
-	)
-)
+REM fixes bug when command length exceeds max windows command length of 8191
+set PLUGIN_CLASSPATH="%PLUGIN_LIB_DIR%\*;%PLUGIN_API_DIR%\*"
+REM allows whitespace in directories
+set PLUGIN_CLASSPATH="%PLUGIN_CLASSPATH:"=%"
 
 REM   Adding SLF4j libraries to the classpath of the server to 
 REM   support services that may use SLF4j for logging
