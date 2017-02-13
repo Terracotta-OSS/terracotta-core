@@ -22,6 +22,7 @@ import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
+import com.tc.exception.VoltronWrapperException;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -597,7 +598,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       // We want to ensure that nobody somehow has a reference to this entity.
       if (!this.canDelete) {
         Assert.assertTrue(clientReferenceCount < 0);
-        response.failure(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));
+        response.failure(new VoltronWrapperException(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName())));
       } else if (clientReferenceCount == 0) {
         Assert.assertTrue(!isInActiveState || clientEntityStateManager.verifyNoReferences(entityDescriptor.getEntityID()));
         Assert.assertFalse(this.isDestroyed);

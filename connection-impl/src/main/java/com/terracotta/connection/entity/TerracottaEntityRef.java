@@ -38,7 +38,6 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientEntityManagerImpl;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
 import com.tc.util.Throwables;
@@ -166,12 +165,12 @@ public class TerracottaEntityRef<T extends Entity, C> implements EntityRef<T, C>
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
+      // NOTE: PermanentEntityException is thrown by this method.
+      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
-      } else if (e instanceof PermanentEntityException) {
-        throw (PermanentEntityException)e;
       } else {
         // This is something unsupported so there is probably some wire-level corruption so throw it as runtime so we can
         //  examine what went wrong, at a higher level.
