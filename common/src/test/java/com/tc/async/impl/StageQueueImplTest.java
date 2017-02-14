@@ -34,10 +34,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.mockito.Matchers;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -136,7 +135,7 @@ public class StageQueueImplTest {
   }
   
   @Test
-  public void testShortestRollover() {
+  public void testShortestRollover() throws Exception {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
     
@@ -151,13 +150,38 @@ public class StageQueueImplTest {
       }
     
     });
-    StageQueueImpl impl = new StageQueueImpl(1, context, logger, "mock", 16, Integer.MAX_VALUE);
+    StageQueueImpl impl = new StageQueueImpl(6, context, logger, "mock", 16);
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.getSchedulingKey()).thenReturn(null);
- // hit int max
+ // fcheck starts at zero and should stay at zero because first queue is always empty
+    for (int x=0;x<6;x++) {
+      Assert.assertTrue(impl.getSource(0).isEmpty());
+      impl.addMultiThreaded(cxt);
+      Assert.assertNotNull(impl.getSource(0).poll(0));
+    }
+//  now try and fill one each on the the queues
+    for (int x=0;x<6;x++) {
+      Assert.assertTrue(impl.getSource(x).isEmpty());
+      impl.addMultiThreaded(cxt);
+      Assert.assertFalse(cxts.get(x).isEmpty());
+    }
+//  now clear the last three and re-fill them
+    for (int x=3;x<6;x++) {
+      Assert.assertFalse(impl.getSource(x).isEmpty());
+      Assert.assertNotNull(impl.getSource(x).poll(0));
+      Assert.assertTrue(cxts.get(x).isEmpty());
+      impl.addMultiThreaded(cxt);
+      Assert.assertFalse(cxts.get(x).isEmpty());
+    }
+//  now clear all again
+    for (int x=0;x<6;x++) {
+      Assert.assertFalse(impl.getSource(x).isEmpty());
+      Assert.assertNotNull(impl.getSource(x).poll(0));
+      Assert.assertTrue(cxts.get(x).isEmpty());
+    }
+// now add one more and make sure it is at the last queue since that was the 
+// last to be cleared
     impl.addMultiThreaded(cxt);
- // rollover
-    impl.addMultiThreaded(cxt);
-    Assert.assertEquals(cxts.get(0).size(), 2);
+    Assert.assertFalse(cxts.get(5).isEmpty());
   }
 }
