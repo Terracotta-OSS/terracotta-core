@@ -361,6 +361,18 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         }
       }
     }
+
+    // Close implementation provided service providers as well
+    for (PassthroughImplementationProvidedServiceProvider provider : this.implementationProvidedServiceProviders) {
+      if (provider instanceof Closeable) {
+        try {
+          ((Closeable)provider).close();
+        } catch (IOException e) {
+          // We do not permit exceptions here since that would imply a bug in the service being tested.
+          Assert.unexpected(e);
+        }
+      }
+    }
   }
 
   public synchronized void sendMessageToServer(final PassthroughConnection sender, byte[] message) {
