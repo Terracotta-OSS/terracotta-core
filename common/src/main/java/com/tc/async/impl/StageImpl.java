@@ -57,12 +57,7 @@ public class StageImpl<EC> implements Stage<EC> {
    * @param loggerProvider : logger
    * @param name : The stage name
    * @param handler : Event handler for this stage
-   * @param threadCount : Number of threads working on this stage
-   * @param threadsToQueueRatio : The ratio determines the number of queues internally used and the number of threads
-   *        per each queue. Ideally you would want this to be same as threadCount, in which case there is only 1 queue
-   *        used internally and all thread are working on the same queue (which doesn't guarantee order in processing)
-   *        or set it to 1 where each thread gets its own queue but the (multithreaded) event contexts are distributed
-   *        based on the key they return.
+   * @param queueCount : Number of threads and queues working on this stage with 1 thread bound to 1 queue
    * @param group : The thread group to be used
    * @param queueFactory : Factory used to create the queues
    * @param queueSize : Max queue Size allowed

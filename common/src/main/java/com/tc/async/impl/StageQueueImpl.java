@@ -46,15 +46,11 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   private final TCLogger          logger;
   private final SourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
   private volatile boolean closed = false;
+  private volatile int fcheck = 0;  // used to start the shortest queue search
   /**
    * The Constructor.
    * 
-   * @param threadCount : Number of threads working on this stage
-   * @param threadsToQueueRatio : The ratio determines the number of queues internally used and the number of threads
-   *        per each queue. Ideally you would want this to be same as threadCount, in which case there is only 1 queue
-   *        used internally and all thread are working on the same queue (which doesn't guarantee order in processing)
-   *        or set it to 1 where each thread gets its own queue but the (multithreaded) event contexts are distributed
-   *        based on the key they return.
+   * @param queueCount : Number of queues working on this stage
    * @param queueFactory : Factory used to create the queues
    * @param loggerProvider : logger
    * @param stageName : The stage name
@@ -70,17 +66,6 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
   }
   
-  @SuppressWarnings("unchecked")  // for tests
-  StageQueueImpl(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory,
-                        TCLoggerProvider loggerProvider, String stageName, int queueSize, int fc) {
-    Assert.eval(queueCount > 0);
-    this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
-    this.stageName = stageName;
-    this.sourceQueues = new SourceQueueImpl[queueCount];
-    this.fcheck = fc;
-    createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
-  }
-  
   private void createWorkerQueues(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
     BlockingQueue<ContextWrapper<EC>> q = null;
@@ -92,7 +77,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
 
     for (int i = 0; i < queueCount; i++) {
       q = queueFactory.createInstance(queueSize);
-      this.sourceQueues[i] = new SourceQueueImpl<ContextWrapper<EC>>(q, String.valueOf(queueCount), statsCollector);
+      this.sourceQueues[i] = new SourceQueueImpl<ContextWrapper<EC>>(q, i, statsCollector);
     }
   }
 
@@ -193,29 +178,27 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     }
   }
   
-  private volatile int fcheck = 0;
-//  TODO:  Way too busy. need a better way
+//  TODO:  Way too busy. REALLY need a better way
   private int findShortestQueueIndex() {
-      int stop = Math.abs(fcheck++) % this.sourceQueues.length;
-      int pointer = stop+1;
-      int min = Integer.MAX_VALUE;
-      int can = -1;
+    final int pointer = fcheck;
+    int min = Integer.MAX_VALUE;
+    int can = -1;
 // special case where context can go to any queue, pick the shortest
-      while (pointer != stop) {
-        if (++pointer >= this.sourceQueues.length) {
-          pointer = 0;
-        }
-        SourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[pointer];
-        if (impl.isEmpty()) {
-          return pointer;
-        } else {
-          if (Math.min(min, impl.size()) != min) {
-            can = pointer;
-            min = impl.size();
-          }
+    for (int x=0;x<this.sourceQueues.length;x++) {
+      int index = (pointer + x) % this.sourceQueues.length;
+      SourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[index];
+      if (impl.isEmpty()) {
+        return index;
+      } else {
+        int checkMin = impl.size(); // concurrent access so just use current value.  this method is best efforts
+        if (Math.min(min, checkMin) != min) {
+          can = index;
+          min = checkMin;
         }
       }
-      return can;
+    }
+    Assert.assertTrue(can >= 0 && can < this.sourceQueues.length);
+    return can;
   }
 
   private int getSourceQueueFor(MultiThreadedEventContext context) {
@@ -321,15 +304,15 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     this.sourceQueues[0].getStatsCollector().reset();
   }
 
-  private static final class SourceQueueImpl<W> implements Source<W> {
+  private final class SourceQueueImpl<W> implements Source<W> {
 
     private final BlockingQueue<W> queue;
-    private final String                      sourceName;
+    private final int                      sourceIndex;
     private volatile StageQueueStatsCollector statsCollector;
 
-    public SourceQueueImpl(BlockingQueue<W> queue, String sourceName, StageQueueStatsCollector statsCollector) {
+    public SourceQueueImpl(BlockingQueue<W> queue, int sourceIndex, StageQueueStatsCollector statsCollector) {
       this.queue = queue;
-      this.sourceName = sourceName;
+      this.sourceIndex = sourceIndex;
       this.statsCollector = statsCollector;
     }
 
@@ -364,6 +347,12 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       W rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       if (rv != null) {
         this.statsCollector.contextRemoved();
+        if (queue.isEmpty()) {
+          // set the empty index for shortest queue in hopes of catching it on the first try
+          fcheck = this.sourceIndex;
+        }
+      } else {
+        fcheck = this.sourceIndex;
       }
       return rv;
     }
@@ -379,7 +368,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
 
     @Override
     public String getSourceName() {
-      return this.sourceName;
+      return Integer.toString(this.sourceIndex);
     }
   }
 
