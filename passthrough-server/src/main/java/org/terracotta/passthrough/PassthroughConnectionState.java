@@ -138,4 +138,11 @@ public class PassthroughConnectionState {
     
     this.serverProcess = null;
   }
+
+  public synchronized void forceClose() {
+    Assert.assertTrue(null != this.inFlightMessages);
+    for (PassthroughWait waiter : this.inFlightMessages.values()) {
+      waiter.forceDisconnect();
+    }
+  }
 }

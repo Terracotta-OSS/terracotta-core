@@ -37,6 +37,7 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodecException;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.passthrough.PassthroughMessage.Type;
 
@@ -149,7 +150,7 @@ public class PassthroughConnection implements Connection {
   private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
     // If we have already disconnected, fail with IllegalStateException (this is consistent with the double-close case).
     if (!this.isRunning) {
-      throw new IllegalStateException("Connection already closed");
+      throw new ConnectionClosedException("Connection already closed");
     }
     PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
     if (Thread.currentThread() == clientThread) {
@@ -344,7 +345,10 @@ public class PassthroughConnection implements Connection {
       } catch (IllegalStateException e) {
         // Ignore this - it just means the server is shut down so we don't need to send them any messages.
       }
-     
+      
+      // Tell the connection state that it is now invalid and must force-fail all in-flight messages.
+      this.connectionState.forceClose();
+      
       // We are going to stop processing messages so set us not running and stop our thread.
       synchronized (this) {
         this.isRunning = false;
