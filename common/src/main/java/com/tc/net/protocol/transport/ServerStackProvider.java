@@ -20,6 +20,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.IllegalReconnectException;
@@ -66,7 +67,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final NodeNameProvider                 activeProvider;
 
   // used only in test
-  public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ClientID> initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -77,7 +78,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
          CommunicationsManager.COMMSMGR_SERVER, null);
   }
 
-  public ServerStackProvider(Set<ConnectionID>  initialConnectionIDs, NodeNameProvider activeProvider, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ClientID>  initialConnectionIDs, NodeNameProvider activeProvider, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -99,10 +100,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     Assert.assertNotNull(licenseLock);
     this.licenseLock = licenseLock;
     this.commsMgrName = commsMgrName;
-    for (final Object initialConnectionID : initialConnectionIDs) {
-      ConnectionID connectionID = (ConnectionID)initialConnectionID;
-      logger.info("Preparing comms stack for previously connected client: " + connectionID);
-      newStackHarness(connectionID, messageTransportFactory.createNewTransport(connectionID,
+    for (final ClientID initialConnectionID : initialConnectionIDs) {
+      logger.info("Preparing comms stack for previously connected client: " + initialConnectionID);
+      ConnectionID cid = connectionIdFactory.buildConnectionID(initialConnectionID);
+      newStackHarness(cid, messageTransportFactory.createNewTransport(cid,
           createHandshakeErrorHandler(),
           handshakeMessageFactory,
           transportListeners));

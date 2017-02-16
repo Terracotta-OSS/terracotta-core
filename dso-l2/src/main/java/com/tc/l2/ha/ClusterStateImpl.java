@@ -24,8 +24,9 @@ import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.objectserver.api.ClientNotFoundException;
+import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.UUID;
 
@@ -38,6 +39,7 @@ public class ClusterStateImpl implements ClusterState {
   private static final TCLogger                     logger                 = TCLogging.getLogger(ClusterState.class);
 
   private final ClusterStatePersistor               clusterStatePersistor;
+  private final ClientStatePersistor                clientStatePersistor;
   private final ConnectionIDFactory                 connectionIdFactory;
   private final StripeIDStateManager                stripeIDStateManager;
 
@@ -46,9 +48,10 @@ public class ClusterStateImpl implements ClusterState {
   private State                                     currentState;
   private StripeID                                  stripeID;
 
-  public ClusterStateImpl(ClusterStatePersistor clusterStatePersistor,
+  public ClusterStateImpl(ClusterStatePersistor clusterStatePersistor, ClientStatePersistor clientStatePersistor, 
                           ConnectionIDFactory connectionIdFactory, StripeIDStateManager stripeIDStateManager) {
     this.clusterStatePersistor = clusterStatePersistor;
+    this.clientStatePersistor = clientStatePersistor;
     this.connectionIdFactory = connectionIdFactory;
     this.stripeIDStateManager = stripeIDStateManager;
     this.stripeID = clusterStatePersistor.getThisStripeID();
@@ -69,20 +72,18 @@ public class ClusterStateImpl implements ClusterState {
       return;
     }
     this.nextAvailChannelID = nextAvailableCID;
+    clientStatePersistor.getConnectionIDSequence().setNext(nextAvailChannelID);
   }
 
   @Override
   public void syncActiveState() {
-    syncConnectionIDsToDisk();
+// activate the connection id factory so that it can be used to create connection ids
+// this happens for active only
+    connectionIdFactory.activate(stripeID, nextAvailChannelID);
   }
 
   @Override
   public void syncSequenceState() {
-  }
-
-  private void syncConnectionIDsToDisk() {
-    Assert.assertNotNull(stripeID);
-    connectionIdFactory.init(stripeID.getName(), nextAvailChannelID, connections);
   }
 
   @Override
@@ -125,8 +126,10 @@ public class ClusterStateImpl implements ClusterState {
   public void addNewConnection(ConnectionID connID) {
     if (connID.getChannelID() >= nextAvailChannelID) {
       nextAvailChannelID = connID.getChannelID() + 1;
+      clientStatePersistor.getConnectionIDSequence().setNext(nextAvailChannelID);
     }
     connections.add(connID);
+    clientStatePersistor.saveClientState(connID.getClientID());
   }
 
   @Override
@@ -134,6 +137,12 @@ public class ClusterStateImpl implements ClusterState {
     boolean removed = connections.remove(connectionID);
     if (!removed) {
       logger.warn("Connection ID not found : " + connectionID + " Current Connections count : " + connections.size());
+    } else {
+      try {
+        clientStatePersistor.deleteClientState(connectionID.getClientID());
+      } catch (ClientNotFoundException notfound) {
+        logger.warn("not found", notfound);
+      }
     }
   }
 

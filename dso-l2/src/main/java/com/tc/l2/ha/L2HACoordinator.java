@@ -34,6 +34,7 @@ import com.tc.net.groups.StripeIDStateManager;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
@@ -54,7 +55,7 @@ public class L2HACoordinator implements L2Coordinator {
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                          StageManager stageManager, StateManager stateManager, 
                          GroupManager<AbstractGroupMessage> groupCommsManager,
-                         ClusterStatePersistor clusterStatePersistor,
+                         Persistor persistor,
                          WeightGeneratorFactory weightGeneratorFactory,
                          L2ConfigurationSetupManager configurationSetupManager,
                          StripeIDStateManager stripeIDStateManager, 
@@ -65,14 +66,14 @@ public class L2HACoordinator implements L2Coordinator {
     this.stateManager = stateManager;
     this.configSetupManager = configurationSetupManager;
 
-    init(stageManager, clusterStatePersistor,
+    init(stageManager, persistor,
         weightGeneratorFactory, stripeIDStateManager, clm);
   }
 
-  private void init(StageManager stageManager, ClusterStatePersistor statePersistor,
+  private void init(StageManager stageManager, Persistor persistor,
                     WeightGeneratorFactory weightGeneratorFactory,
                     StripeIDStateManager stripeIDStateManager, ChannelLifeCycleHandler clm) {
-    final ClusterState clusterState = new ClusterStateImpl(statePersistor,
+    final ClusterState clusterState = new ClusterStateImpl(persistor.getClusterStatePersistor(),  persistor.getClientStatePersistor(), 
                                                            this.server.getConnectionIdFactory(),
                                                        stripeIDStateManager);
 
@@ -80,7 +81,7 @@ public class L2HACoordinator implements L2Coordinator {
                                                                                      this.stateManager,
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
-                                                                                     statePersistor);
+                                                                                     persistor.getClusterStatePersistor());
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 

@@ -20,6 +20,7 @@ package com.tc.net.protocol.transport;
 
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
+import com.tc.net.ClientID;
 import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
 
@@ -216,5 +217,9 @@ public class ConnectionID {
 
   public ProductID getProductId() {
     return productId;
+  }
+  
+  public ClientID getClientID() {
+    return new ClientID(channelID);
   }
 }

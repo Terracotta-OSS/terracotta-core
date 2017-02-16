@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.ClientID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.Set;
 
 public interface NetworkListener {
 
-  public void start(Set<ConnectionID> initialConnectionIDs) throws IOException;
+  public void start(Set<ClientID> initialConnectionIDs) throws IOException;
 
   public void stop(long timeout) throws TCTimeoutException;
 

@@ -49,11 +49,11 @@ public class TransactionOrderPersistor {
   private List<ClientTransaction> globalList = null;
   private final Set<Long> clientNodeIDs;
   
-  public TransactionOrderPersistor(IPlatformPersistence storageManager, Set<ChannelID> clients) {
+  public TransactionOrderPersistor(IPlatformPersistence storageManager, Set<ClientID> clients) {
     this.storageManager = storageManager;
     
     this.clientNodeIDs = new HashSet<>();
-    for (ChannelID oneClient : clients) {
+    for (ClientID oneClient : clients) {
       this.clientNodeIDs.add(oneClient.toLong());
     }
   }

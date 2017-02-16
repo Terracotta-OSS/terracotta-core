@@ -318,10 +318,10 @@ public class EntityPersistor {
     storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
   }
   
-  public synchronized void setState(State state, Set<ConnectionID> connectedClients) {
+  public synchronized void setState(State state, Set<ClientID> connectedClients) {
     Set<ClientID> clients = new HashSet<>();
-    for (ConnectionID c : connectedClients) {
-      clients.add(new ClientID(c.getChannelID()));
+    for (ClientID c : connectedClients) {
+      clients.add(c);
     }
     clients.removeAll(this.entityLifeJournal.keySet());
     for (ClientID client : clients) {

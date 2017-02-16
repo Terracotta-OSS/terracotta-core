@@ -18,11 +18,11 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.ClientID;
+import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.UUID;
 
-import java.util.Collections;
-import java.util.Set;
 
 public class DefaultConnectionIdFactory implements ConnectionIDFactory {
 
@@ -48,12 +48,7 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   @Override
-  public Set<ConnectionID> loadConnectionIDs() {
-    return Collections.emptySet();
-  }
-
-  @Override
-  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
+  public void activate(StripeID stripeID, long nextAvailChannelID) {
     throw new UnsupportedOperationException();
   }
 
@@ -75,4 +70,11 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   public String getServerID() {
     return serverID;
   }
+
+  @Override
+  public ConnectionID buildConnectionID(ClientID client) {
+    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), serverID);
+  }
+  
+  
 }

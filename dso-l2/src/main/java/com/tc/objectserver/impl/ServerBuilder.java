@@ -41,7 +41,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.runtime.logging.LongGCLogger;
 
@@ -66,7 +65,7 @@ public interface ServerBuilder extends TCDumper, PostInit {
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, StateManager stateMgr, 
                                       GroupManager<AbstractGroupMessage> groupCommsManager,
-                                      ClusterStatePersistor clusterStatePersistor,
+                                      Persistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager,
                                       StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm);

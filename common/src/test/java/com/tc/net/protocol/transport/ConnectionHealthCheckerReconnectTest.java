@@ -21,6 +21,7 @@ package com.tc.net.protocol.transport;
 import com.tc.logging.LogLevels;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -46,7 +47,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
-import java.util.Arrays;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -140,7 +140,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     serverLsnr = serverComms.createListener(new TCSocketAddress(0), false,
                                             new DefaultConnectionIdFactory());
 
-    serverLsnr.start(new HashSet<ConnectionID>());
+    serverLsnr.start(new HashSet<ClientID>());
 
     int serverPort = serverLsnr.getBindPort();
     proxyPort = new PortChooser().chooseRandomPort();

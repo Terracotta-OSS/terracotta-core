@@ -35,6 +35,7 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -64,7 +65,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -72,7 +72,6 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.config.schema.L2Config;
-import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -103,7 +102,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -421,7 +419,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     discover.setupNodes(thisNode, nodesStore.getAllNodes());
     discover.start();
     try {
-      groupListener.start(new HashSet<ConnectionID>());
+      groupListener.start(new HashSet<ClientID>());
     } catch (IOException e) {
       throw new GroupException(e);
     }

@@ -222,15 +222,15 @@ public class StateManagerImpl implements StateManager {
 
   private synchronized void moveToPassiveReady(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
-    logger.debug("moving to passive ready " + state + " " + winningEnrollment);
+    logger.info("moving to passive ready " + state + " " + winningEnrollment);
     if (state == START_STATE) {
       setActiveNodeID(winningEnrollment.getNodeID());
       state = (startState == null) ? PASSIVE_UNINITIALIZED : startState;
       if (!state.equals(PASSIVE_STANDBY) && !state.equals(PASSIVE_UNINITIALIZED)) {
 // TODO:  make sure this is the proper way to handle this.
-        logger.fatal("Passive only partially synced when active disappeared.  Restarting");
+        logger.fatal("caught in an unclean state " + state);
         clusterStatePersistor.setDBClean(false);
-        throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
+        throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB"); 
       }
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();

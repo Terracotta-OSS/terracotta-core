@@ -20,6 +20,7 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -175,7 +176,7 @@ try {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
             new DefaultConnectionIdFactory());
       }
-      lsnr.start(new HashSet<ConnectionID>());
+      lsnr.start(new HashSet<ClientID>());
       connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
   }
 
@@ -316,7 +317,7 @@ try {
                                        new DefaultConnectionIdFactory());
     }
 
-    rv.start(new HashSet<ConnectionID>());
+    rv.start(new HashSet<ClientID>());
     return rv;
   }
 

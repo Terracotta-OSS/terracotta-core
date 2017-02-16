@@ -18,10 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
+import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCListener;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.operatorevent.NodeNameProvider;
@@ -68,7 +67,7 @@ class NetworkListenerImpl implements NetworkListener {
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified port/address)
    */
   @Override
-  public synchronized void start(Set<ConnectionID> initialConnectionIDs) throws IOException {
+  public synchronized void start(Set<ClientID> initialConnectionIDs) throws IOException {
     this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
                                                   this.connectionIdFactory, this.wireProtoMsgSnk);
     this.started = true;

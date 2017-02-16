@@ -109,12 +109,12 @@ public class StandardServerBuilder implements ServerBuilder {
   public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                              StageManager stageManager, StateManager stateMgr, 
                                              GroupManager<AbstractGroupMessage> groupCommsManager,
-                                             ClusterStatePersistor clusterStatePersistor,
+                                             Persistor persistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
                                              L2ConfigurationSetupManager configurationSetupManager,
                                              StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm) {
     return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
-        groupCommsManager, clusterStatePersistor,
+        groupCommsManager, persistor,
         weightGeneratorFactory, configurationSetupManager, stripeStateManager, clm);
   }
 

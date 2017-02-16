@@ -72,7 +72,9 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.ChannelWeightGenerator;
+import com.tc.l2.ha.ConnectionIDWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
+import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
@@ -110,6 +112,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
+import com.tc.net.ClientID;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -137,7 +140,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -602,10 +604,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
     final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(channelManager);
     weightGeneratorFactory.add(connectedClientCountWeightGenerator);
-    // 3)  ServerUptimeWeightGenerator.
+    // 3)  ConnectionIDWeightGenerator - How many connection ids have been created.  Greater wins
+    final ConnectionIDWeightGenerator connectionsMade = new ConnectionIDWeightGenerator(connectionIdFactory);
+    weightGeneratorFactory.add(connectionsMade);
+    // 4)  InitialStateWeightGenerator - If it gets down to here, give some weight to a persistent server that went down as active
+    final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
+    weightGeneratorFactory.add(initialState);
+    // 5)  ServerUptimeWeightGenerator.
     final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator();
     weightGeneratorFactory.add(serverUptimeWeightGenerator);
-    // 4)  RandomWeightGenerator.
+    // 6)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom());
     weightGeneratorFactory.add(randomWeightGenerator);
     // -We can now install the generator as it is built.
@@ -748,7 +756,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
                                                                   stageManager, state,
                                                                   this.groupCommManager,
-                                                                  this.persistor.getClusterStatePersistor(),
+                                                                  this.persistor,
                                                                   this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
                                                                   this.stripeIDStateManager,
@@ -980,7 +988,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
-        final Set<ConnectionID> existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
+        final Set<ClientID> existingConnections = Collections.unmodifiableSet(persistor.getClientStatePersistor().loadClientIDs());
         persistor.getEntityPersistor().setState(sce.getCurrentState(), existingConnections);
         if (sce.movedToActive()) {
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
@@ -1090,7 +1098,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
   }
 
-  public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
+  public void startL1Listener(Set<ClientID> existingConnections) throws IOException {
     try {
       this.l1Diagnostics.stop(0L);
     } catch (TCTimeoutException to) {

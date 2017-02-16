@@ -16,23 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol.transport;
+package com.tc.l2.ha;
 
-import com.tc.net.ClientID;
-import com.tc.net.StripeID;
+import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
+import com.tc.l2.state.StateManager;
+import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.util.Assert;
 
-public interface ConnectionIDFactory {
+public class InitialStateWeightGenerator implements WeightGenerator {
+  private final ClusterStatePersistor state;
 
-  public long getCurrentConnectionID();
+  public InitialStateWeightGenerator(ClusterStatePersistor state) {
+    Assert.assertNotNull(state);
+    this.state = state;
+  }
 
-  public ConnectionID populateConnectionID(ConnectionID connectionID);
-
-  public void restoreConnectionId(ConnectionID rv);
-
-  public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener);
-
-  public void activate(StripeID clusterID, long nextID);
-  
-  public ConnectionID buildConnectionID(ClientID client);
+  @Override
+  public long getWeight() {
+    // active initially should win
+    return StateManager.ACTIVE_COORDINATOR.equals(state.getInitialState()) ? 1 : 0;
+  }
 
 }
