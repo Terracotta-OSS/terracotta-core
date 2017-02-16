@@ -21,13 +21,13 @@ package com.tc.net.protocol.tcm;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ClientMessageTransport;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
@@ -40,7 +40,6 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.HashSet;
 
 /**
@@ -85,7 +84,7 @@ public class LazyHandshakeTest extends TCTestCase {
                                           new DefaultConnectionIdFactory());
 
     try {
-      listener.start(new HashSet<ConnectionID>());
+      listener.start(new HashSet<ClientID>());
     } catch (Exception e) {
       System.out.println("lsnr Excep");
     }

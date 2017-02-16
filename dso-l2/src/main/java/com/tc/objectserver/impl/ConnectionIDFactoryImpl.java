@@ -19,6 +19,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.net.ClientID;
 import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -113,11 +114,11 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   @Override
-  public Set<ConnectionID> loadConnectionIDs() {
+  public Set<ClientID> loadConnectionIDs() {
     Assert.assertNotNull(this.serverUUID);
-    Set<ConnectionID> connections = new HashSet<>();
+    Set<ClientID> connections = new HashSet<>();
     for (final ChannelID channelID : clientStateStore.loadClientIDs()) {
-      connections.add(new ConnectionID(ConnectionID.NULL_JVM_ID, (channelID).toLong(), this.serverUUID));
+      connections.add(new ClientID(channelID.toLong()));
     }
     return connections;
   }
@@ -146,6 +147,12 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   @Override
   public long getCurrentConnectionID() {
     return connectionIDSequence.current();
+  }
+//  using this to build the reconnect ConnectionIDs.  ServerID and ChannelID need to match
+  @Override
+  public ConnectionID buildConnectionID(ClientID client) {
+    Assert.assertNotNull(serverUUID);
+    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), serverUUID);
   }
 
 }

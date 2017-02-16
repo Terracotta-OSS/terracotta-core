@@ -18,14 +18,12 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
-import com.tc.object.session.NullSessionManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -67,14 +65,14 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), true, cidf);
 
     try {
-      lsnr.start(Collections.<ConnectionID>emptySet());
+      lsnr.start(Collections.<ClientID>emptySet());
     } catch (IOException ioe) {
       fail(ioe.getMessage());
     }
 
     NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf);
     try {
-      lsnr2.start(Collections.<ConnectionID>emptySet());
+      lsnr2.start(Collections.<ClientID>emptySet());
       fail();
     } catch (IOException ioe) {
       // expect a bind exception
@@ -98,7 +96,7 @@ public class NetworkListenerTest extends TestCase {
           .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory());
 
       try {
-        lsnr.start(Collections.<ConnectionID>emptySet());
+        lsnr.start(Collections.<ClientID>emptySet());
         listeners[i] = lsnr;
       } catch (IOException ioe) {
         fail(ioe.getMessage());

@@ -22,6 +22,7 @@ import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
+import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
@@ -135,7 +136,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     NetworkListener lsnr = serverComms.createListener(new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
                                                       new DefaultConnectionIdFactory());
 
-    lsnr.start(new HashSet<ConnectionID>());
+    lsnr.start(new HashSet<>());
     return (lsnr);
   }
 

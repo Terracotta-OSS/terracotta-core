@@ -23,6 +23,7 @@ import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
+import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.Constants;
@@ -44,7 +45,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
-import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
@@ -352,7 +352,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, ConnectionIDFactory connectionIdFactory,
+                                 boolean resueAddr, Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
@@ -436,7 +436,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
       NetworkListener callbackPortListener = createListener(address, true, new DefaultConnectionIdFactory());
       try {
-        callbackPortListener.start(Collections.<ConnectionID>emptySet());
+        callbackPortListener.start(Collections.<ClientID>emptySet());
         this.callbackPort = callbackPortListener.getBindPort();
         this.callbackportListener = callbackPortListener;
         logger.info("HealthCheck CallbackPort Listener started at " + callbackPortListener.getBindAddress() + ":"

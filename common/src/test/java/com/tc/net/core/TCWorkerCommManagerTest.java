@@ -21,6 +21,7 @@ package com.tc.net.core;
 import com.tc.logging.LogLevels;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -38,7 +39,6 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
@@ -64,7 +64,6 @@ import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -119,7 +118,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 4);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ConnectionID>emptySet());
+    listener.start(Collections.<ClientID>emptySet());
     int port = listener.getBindPort();
 
     ClientMessageTransport client1 = createClient("client1", port);
@@ -168,7 +167,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ConnectionID>emptySet());
+    listener.start(Collections.<ClientID>emptySet());
     int port = listener.getBindPort();
     
     ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
@@ -224,7 +223,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ConnectionID>emptySet());
+    listener.start(Collections.<ClientID>emptySet());
     int port = listener.getBindPort();
     
     ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
@@ -319,7 +318,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ConnectionID>emptySet());
+    listener.start(Collections.<ClientID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

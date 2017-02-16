@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.UUID;
 
@@ -48,7 +49,7 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   @Override
-  public Set<ConnectionID> loadConnectionIDs() {
+  public Set<ClientID> loadConnectionIDs() {
     return Collections.emptySet();
   }
 
@@ -75,4 +76,11 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   public String getServerID() {
     return serverID;
   }
+
+  @Override
+  public ConnectionID buildConnectionID(ClientID client) {
+    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), serverID);
+  }
+  
+  
 }

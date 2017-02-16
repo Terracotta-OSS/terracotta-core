@@ -19,6 +19,7 @@
 package com.tc.net.core;
 
 
+import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -39,7 +40,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -55,7 +55,6 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
 
 import java.net.InetAddress;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -120,7 +119,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          null);
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
-    listener.start(Collections.<ConnectionID>emptySet());
+    listener.start(Collections.<ClientID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();
@@ -184,7 +183,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          null);
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
-    listener.start(Collections.<ConnectionID>emptySet());
+    listener.start(Collections.<ClientID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

@@ -215,14 +215,14 @@ public class ServerClientHandshakeManager {
     waitingForReconnect.add(rl);
   }
 
-  public synchronized void setStarting(Set<ConnectionID> existingConnections) {
+  public synchronized void setStarting(Set<ClientID> existingClients) {
     assertInit();
     this.state = State.STARTING;
-    if (existingConnections.isEmpty()) {
+    if (existingClients.isEmpty()) {
       start();
     } else {
-      for (ConnectionID connID : existingConnections) {
-        this.existingUnconnectedClients.add(this.channelManager.getClientIDFor(new ChannelID(connID.getChannelID())));
+      for (ClientID connID : existingClients) {
+        this.existingUnconnectedClients.add(connID);
       }
     }
   }

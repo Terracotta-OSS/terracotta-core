@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.ClientID;
 import com.tc.util.Assert;
 import java.util.Collections;
 
@@ -51,7 +52,7 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   }
 
   @Override
-  public Set<ConnectionID> loadConnectionIDs() {
+  public Set<ClientID> loadConnectionIDs() {
     return Collections.emptySet();
   }
 
@@ -64,4 +65,10 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
 
   }
+  
+
+  @Override
+  public ConnectionID buildConnectionID(ClientID client) {
+    throw new AssertionError();
+  }  
 }

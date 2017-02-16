@@ -110,6 +110,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
+import com.tc.net.ClientID;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -980,7 +981,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
-        final Set<ConnectionID> existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
+        final Set<ClientID> existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
         persistor.getEntityPersistor().setState(sce.getCurrentState(), existingConnections);
         if (sce.movedToActive()) {
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
@@ -1090,7 +1091,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
   }
 
-  public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
+  public void startL1Listener(Set<ClientID> existingConnections) throws IOException {
     try {
       this.l1Diagnostics.stop(0L);
     } catch (TCTimeoutException to) {
