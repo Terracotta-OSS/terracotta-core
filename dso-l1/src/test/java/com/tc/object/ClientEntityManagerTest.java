@@ -32,13 +32,13 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
-import com.tc.exception.TCNotRunningException;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -264,7 +264,7 @@ public class ClientEntityManagerTest extends TestCase {
     try {
       fetcher.getResult();
       fail();
-    } catch (TCNotRunningException e) {
+    } catch (ConnectionClosedException e) {
       // Expected.
     } catch (Throwable t) {
       // Unexpected.
@@ -361,7 +361,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    byte[] waiter = this.manager.createEntity(entityID, version, config);
+    this.manager.createEntity(entityID, version, config);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
   }
 

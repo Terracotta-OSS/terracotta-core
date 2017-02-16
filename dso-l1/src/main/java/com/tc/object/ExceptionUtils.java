@@ -4,6 +4,7 @@ import com.tc.exception.EntityBusyException;
 import com.tc.exception.VoltronWrapperException;
 import com.tc.util.Assert;
 
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
@@ -53,6 +54,8 @@ public class ExceptionUtils {
   private static void throwRuntimeExceptionWithLocalStack(RuntimeEntityException wrappedException) throws RuntimeEntityException {
     if (wrappedException instanceof PermanentEntityException) {
       throw new PermanentEntityException(wrappedException.getClassName(), wrappedException.getEntityName(), wrappedException);
+    } else if (wrappedException instanceof ConnectionClosedException) {
+      throw new ConnectionClosedException(wrappedException.getDescription(), wrappedException);
     } else {
       // Unknown exception - this must be populated.
       Assert.fail("Unhandled runtime exception type");
