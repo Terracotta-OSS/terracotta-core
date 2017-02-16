@@ -749,7 +749,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
                                                                   stageManager, state,
                                                                   this.groupCommManager,
-                                                                  this.persistor.getClusterStatePersistor(),
+                                                                  this.persistor,
                                                                   this.globalWeightGeneratorFactory,
                                                                   this.configSetupManager,
                                                                   this.stripeIDStateManager,
@@ -981,7 +981,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
-        final Set<ClientID> existingConnections = Collections.unmodifiableSet(connectionIdFactory.loadConnectionIDs());
+        final Set<ClientID> existingConnections = Collections.unmodifiableSet(persistor.getClientStatePersistor().loadClientIDs());
         persistor.getEntityPersistor().setState(sce.getCurrentState(), existingConnections);
         if (sce.movedToActive()) {
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));

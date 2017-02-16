@@ -19,10 +19,8 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.net.ClientID;
+import com.tc.net.StripeID;
 import com.tc.util.Assert;
-import java.util.Collections;
-
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
@@ -52,23 +50,17 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   }
 
   @Override
-  public Set<ClientID> loadConnectionIDs() {
-    return Collections.emptySet();
-  }
-
-  @Override
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener) {
 
   }
 
   @Override
-  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
-
+  public void activate(StripeID stripeID, long nextAvailChannelID) {
+    
   }
-  
 
   @Override
   public ConnectionID buildConnectionID(ClientID client) {
     throw new AssertionError();
-  }  
+  }
 }

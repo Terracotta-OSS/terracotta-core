@@ -19,14 +19,15 @@
 
 package com.tc.objectserver.impl;
 
-import com.tc.exception.TCRuntimeException;
-import com.tc.net.ClientID;
+import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.sequence.MutableSequence;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -39,13 +40,16 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   private ConnectionIDFactoryImpl connectionIDFactory;
   private ClientStatePersistor persistor;
   private MutableSequence sequence;
+  private ConnectionIDFactoryListener listener;
 
   @Override
   public void setUp() throws Exception {
     sequence = createSequence();
     persistor = createPersistor(sequence);
-    when(persistor.getServerUUID()).thenReturn("abc123");
     connectionIDFactory = new ConnectionIDFactoryImpl(persistor);
+    listener = mock(ConnectionIDFactoryListener.class);
+    connectionIDFactory.activate(new StripeID("abc123"), 0);
+    connectionIDFactory.registerForConnectionIDEvents(listener);
   }
 
   public void testNextID() throws Exception {
@@ -57,26 +61,17 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
 
   public void testCreateExistingID() throws Exception {
-    setContainsId(0, true);
-    try {
-      connectionIDFactory.populateConnectionID(idWith("aaa", 0));
-      fail();
-    } catch (TCRuntimeException e) {
-      // expected
-    }
+//  implementation can no longer check existing
+    connectionIDFactory.populateConnectionID(idWith("aaa", 0));
   }
 
   public void testRemoveId() throws Exception {
     connectionIDFactory.channelRemoved(channelWithId(0), true);
-    verify(persistor).deleteClientState(new ClientID(0));
+    verify(listener).connectionIDDestroyed(Mockito.any(ConnectionID.class));
   }
 
   private void nextChannelId(long id) {
     when(sequence.next()).thenReturn(id);
-  }
-
-  private void setContainsId(long id, boolean contains) {
-    when(persistor.containsClient(new ClientID(id))).thenReturn(contains);
   }
 
   private static MutableSequence createSequence() {

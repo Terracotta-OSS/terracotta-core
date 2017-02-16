@@ -18,8 +18,8 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.net.ClientID;
+import com.tc.net.StripeID;
 import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -27,27 +27,21 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
-  private final ClientStatePersistor              clientStateStore;
   private final MutableSequence                   connectionIDSequence;
-  private String                                  serverUUID;
+  private StripeID                                stripe;
   private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
 
   public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
-    this.clientStateStore = clientStateStore;
     this.connectionIDSequence = clientStateStore.getConnectionIDSequence();
-    this.serverUUID = this.clientStateStore.getServerUUID();
   }
 
   @Override
@@ -64,23 +58,16 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   private ConnectionID buildConnectionId(String jvmID, long channelID, ProductID productId) {
-    Assert.assertNotNull(this.serverUUID);
-    // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
-    clientStateStore.saveClientState(new ClientID(channelID));
-    ConnectionID rv = new ConnectionID(jvmID, channelID, this.serverUUID, null, null, productId);
+    Assert.assertNotNull(stripe);
+    // this is confusing but StripeID is being used as serverID.  When a passive transitions to 
+    // active and allows reconnects, it expects the serverID to match which can only be the stripeID
+    ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), null, null, productId);
     fireCreationEvent(rv);
     return rv;
   }
 
   private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID productId) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
-    // provided channelID shall not be using
-    if (clientStateStore.containsClient(new ClientID(channelID))) { throw new TCRuntimeException(
-                                                                                                  "The connectionId "
-                                                                                                      + channelID
-                                                                                                      + " has been used. "
-                                                                                                      + " One possible cause: restarted some mirror groups but not all."); }
-
     return buildConnectionId(clientJvmID, channelID, productId);
   }
 
@@ -102,25 +89,11 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   @Override
-  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
-    this.serverUUID = clusterID;
+  public void activate(StripeID stripeID, long nextAvailChannelID) {
+    this.stripe = stripeID;
     if (nextAvailChannelID >= 0) {
       this.connectionIDSequence.setNext(nextAvailChannelID);
     }
-    for (final ConnectionID cid : connections) {
-      Assert.assertEquals(clusterID, cid.getServerID());
-      this.clientStateStore.saveClientState(cid.getClientID());
-    }
-  }
-
-  @Override
-  public Set<ClientID> loadConnectionIDs() {
-    Assert.assertNotNull(this.serverUUID);
-    Set<ClientID> connections = new HashSet<>();
-    for (final ClientID clientID : clientStateStore.loadClientIDs()) {
-      connections.add(clientID);
-    }
-    return connections;
   }
 
   @Override
@@ -135,13 +108,9 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   @Override
   public void channelRemoved(MessageChannel channel, boolean wasActive)  {
-    ChannelID clientID = channel.getChannelID();
-    try {
-      clientStateStore.deleteClientState(new ClientID(clientID.toLong()));
-    } catch (ClientNotFoundException e) {
-      throw new AssertionError(e);
-    }
-    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, clientID.toLong(), this.serverUUID));
+    Assert.assertNotNull(stripe);
+    ChannelID channelID = channel.getChannelID();
+    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, channelID.toLong(), stripe.getName()));
   }
 
   @Override
@@ -151,8 +120,8 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 //  using this to build the reconnect ConnectionIDs.  ServerID and ChannelID need to match
   @Override
   public ConnectionID buildConnectionID(ClientID client) {
-    Assert.assertNotNull(serverUUID);
-    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), serverUUID);
+    Assert.assertNotNull(stripe);
+    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), stripe.getName());
   }
 
 }
