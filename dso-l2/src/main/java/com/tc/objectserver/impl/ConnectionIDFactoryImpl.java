@@ -66,7 +66,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   private ConnectionID buildConnectionId(String jvmID, long channelID, ProductID productId) {
     Assert.assertNotNull(this.serverUUID);
     // Make sure we save the fact that we are giving out this id to someone in the database before giving it out.
-    clientStateStore.saveClientState(new ChannelID(channelID));
+    clientStateStore.saveClientState(new ClientID(channelID));
     ConnectionID rv = new ConnectionID(jvmID, channelID, this.serverUUID, null, null, productId);
     fireCreationEvent(rv);
     return rv;
@@ -75,7 +75,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID productId) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
     // provided channelID shall not be using
-    if (clientStateStore.containsClient(new ChannelID(channelID))) { throw new TCRuntimeException(
+    if (clientStateStore.containsClient(new ClientID(channelID))) { throw new TCRuntimeException(
                                                                                                   "The connectionId "
                                                                                                       + channelID
                                                                                                       + " has been used. "
@@ -109,7 +109,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     }
     for (final ConnectionID cid : connections) {
       Assert.assertEquals(clusterID, cid.getServerID());
-      this.clientStateStore.saveClientState(new ChannelID(cid.getChannelID()));
+      this.clientStateStore.saveClientState(cid.getClientID());
     }
   }
 
@@ -117,8 +117,8 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   public Set<ClientID> loadConnectionIDs() {
     Assert.assertNotNull(this.serverUUID);
     Set<ClientID> connections = new HashSet<>();
-    for (final ChannelID channelID : clientStateStore.loadClientIDs()) {
-      connections.add(new ClientID(channelID.toLong()));
+    for (final ClientID clientID : clientStateStore.loadClientIDs()) {
+      connections.add(clientID);
     }
     return connections;
   }
@@ -137,7 +137,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   public void channelRemoved(MessageChannel channel, boolean wasActive)  {
     ChannelID clientID = channel.getChannelID();
     try {
-      clientStateStore.deleteClientState(clientID);
+      clientStateStore.deleteClientState(new ClientID(clientID.toLong()));
     } catch (ClientNotFoundException e) {
       throw new AssertionError(e);
     }

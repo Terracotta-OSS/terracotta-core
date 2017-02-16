@@ -20,6 +20,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -67,7 +68,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
 
   public void testRemoveId() throws Exception {
     connectionIDFactory.channelRemoved(channelWithId(0), true);
-    verify(persistor).deleteClientState(new ChannelID(0));
+    verify(persistor).deleteClientState(new ClientID(0));
   }
 
   private void nextChannelId(long id) {
@@ -75,7 +76,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
 
   private void setContainsId(long id, boolean contains) {
-    when(persistor.containsClient(new ChannelID(id))).thenReturn(contains);
+    when(persistor.containsClient(new ClientID(id))).thenReturn(contains);
   }
 
   private static MutableSequence createSequence() {
