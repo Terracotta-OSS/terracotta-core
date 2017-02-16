@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.terracotta.entity.InvokeFuture;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
+import org.terracotta.exception.RuntimeEntityException;
 
 
 /**
@@ -51,7 +53,8 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   private boolean canGetReturn;
   private boolean canChangeResponse;
   private byte[] response;
-  private EntityException error;
+  private EntityException checkedException;
+  private RuntimeEntityException uncheckedException;
 
   public PassthroughWait(boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
     this.shouldWaitForReceived = shouldWaitForReceived;
@@ -68,7 +71,6 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     // We can always change the response, when we first start.
     this.canChangeResponse = true;
     this.response = null;
-    this.error = null;
   }
   
   public synchronized void waitForAck() {
@@ -125,8 +127,11 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
       // We will hit this path on interrupt, for example.
       this.waitingThreads.remove(callingThread);
     }
-    if (null != this.error) {
-      throw this.error;
+    if (null != this.checkedException) {
+      throw this.checkedException;
+    }
+    if (null != this.uncheckedException) {
+      throw this.uncheckedException;
     }
     return this.response;
   }
@@ -150,7 +155,7 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     this.waitingForComplete = false;
     if (this.canChangeResponse) {
       this.response = result;
-      this.error = error;
+      this.checkedException = error;
       // We will only allow more changes to this response if we are blocking the get on the retire.  Otherwise, we only
       // want to return the first value.
       this.canChangeResponse = this.forceGetToBlockOnRetire;
@@ -182,8 +187,15 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     this.canGetReturn = false;
     this.canChangeResponse = true;
     this.response = null;
-    this.error = null;
+    this.checkedException = null;
     return this.rawMessageForResend;
+  }
+
+  public synchronized void forceDisconnect() {
+    this.waitingForComplete = false;
+    this.uncheckedException = new ConnectionClosedException("Connection closed");
+    this.canGetReturn = true;
+    notifyAll();
   }
 
   public void blockGetOnRetire() {
