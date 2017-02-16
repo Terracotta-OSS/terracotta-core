@@ -32,6 +32,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodecException;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -41,6 +42,8 @@ import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
+import com.tc.exception.TCNotRunningException;
+import com.tc.exception.VoltronWrapperException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -71,7 +74,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityUserException;
 
@@ -145,7 +147,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
               }
           } else {
             requestTickets.release();
-            throwClosedExceptionOnMessage(first);
+            throwClosedExceptionOnMessage(first, "Connection closed before sending message");
           }
         } catch (InterruptedException ie) {
           throw new EventHandlerException(ie);
@@ -364,7 +366,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public synchronized void initializeHandshake(ClientHandshakeMessage handshakeMessage) {
     stateManager.start();
     // Walk the objectStoreMap and add reconnect references for any objects found there.
-    for (EntityClientEndpointImpl endpoint : this.objectStoreMap.values()) {
+    for (EntityClientEndpointImpl<?, ?> endpoint : this.objectStoreMap.values()) {
       EntityDescriptor descriptor = endpoint.getEntityDescriptor();
       EntityID entityID = endpoint.getEntityID();
       long entityVersion = endpoint.getVersion();
@@ -398,7 +400,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     isShutdown = true;
     stateManager.stop();
     for (InFlightMessage msg : inFlightMessages.values()) {
-      throwClosedExceptionOnMessage(msg);
+      throwClosedExceptionOnMessage(msg, "Connection closed under in-flight message");
     }
     // We also want to notify any end-points that they have been disconnected.
     for(EntityClientEndpoint<?, ?> endpoint : this.objectStoreMap.values()) {
@@ -414,13 +416,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     notifyAll();
   }
   
-  private void throwClosedExceptionOnMessage(InFlightMessage msg) {
+  private void throwClosedExceptionOnMessage(InFlightMessage msg, String description) {
     msg.received();
-    msg.setResult(null, new EntityException(
-        "",
-        "",
-        "connection closed",
-        new ConnectionException(null)) {});
+    // Synthesize the disconnect runtime exception for this message.
+    msg.setResult(null, new VoltronWrapperException(new ConnectionClosedException(description)));
     msg.retired();
   }
 
@@ -478,17 +477,27 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private void internalRelease(EntityDescriptor entityDescriptor, Runnable closeHook) throws EntityException {
-    stateManager.waitUntilRunning();
-
-    // We need to provide fully blocking semantics with this call so we will wait for the "COMPLETED" ack.
-    Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.COMPLETED);
-    // A "RELEASE" doesn't matter to the passive.
-    boolean shouldBlockOnRetire = false;
-    boolean requiresReplication = true;
-    byte[] payload = new byte[0];
-    NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY, requestedAcks);
-    sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire);
-          
+    // See if the connection has already been closed.
+    ConnectionClosedException alreadyClosed = null;
+    try {
+      stateManager.waitUntilRunning();
+    } catch (TCNotRunningException closedException) {
+      // In these cases, we want to convert this into a public exception type.
+      alreadyClosed = new ConnectionClosedException("Endpoint connection already closed", closedException);
+    }
+    
+    // Only send the message if we haven't been shut down.
+    if (null == alreadyClosed) {
+      // We need to provide fully blocking semantics with this call so we will wait for the "COMPLETED" ack.
+      Set<VoltronEntityMessage.Acks> requestedAcks = EnumSet.of(VoltronEntityMessage.Acks.COMPLETED);
+      // A "RELEASE" doesn't matter to the passive.
+      boolean shouldBlockOnRetire = false;
+      boolean requiresReplication = true;
+      byte[] payload = new byte[0];
+      NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY, requestedAcks);
+      sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire);
+    }
+    
     // Note that we remove the entity from the local object store only after this release call returns in order to avoid
     // the case where a reconnect might happen before the message completes, thus causing a re-send.  If we don't include
     // this reference in the reconnect handshake, the re-sent release will try to release a non-fetched entity.
@@ -496,6 +505,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     
     if (closeHook != null) {
       closeHook.run();
+    }
+    
+    // If there was a problem, we have done our cleanup so we can now throw the exception.
+    if (null != alreadyClosed) {
+      throw alreadyClosed;
     }
   }
   
@@ -535,6 +549,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) {
     InFlightMessage inFlight = new InFlightMessage(message, requestedAcks, shouldBlockGetOnRetire);
+    
+    // NOTE:  If we are already shutdown, the handler in outbound will fail this message for us.
     outbound.addSingleThreaded(inFlight);
     inFlight.waitForAcks();
     return inFlight;
