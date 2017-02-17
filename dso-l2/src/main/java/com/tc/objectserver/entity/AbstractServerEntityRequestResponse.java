@@ -50,7 +50,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   private boolean isRetired = false;
   private boolean alsoRetire = false;
 
-  private Future<Void> transactionOrderPersistenceFuture;
+  private volatile Future<Void> transactionOrderPersistenceFuture;
 
   public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src) {
     this.action = action;

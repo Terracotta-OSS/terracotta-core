@@ -62,6 +62,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -90,6 +91,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   
   private Sink<TCMessage> multiSend;
   private ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
   
   private void sendMultiResponse(VoltronEntityMultiResponse response) {
     multiSend.addSingleThreaded(response);
@@ -106,6 +108,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
     public void handleEvent(TCMessage context) throws EventHandlerException {
       NodeID destinationID = context.getDestinationNodeID();
       invokeReturn.remove((ClientID)destinationID, context);
+      if(context instanceof VoltronEntityMultiResponse) {
+        VoltronEntityMultiResponse voltronEntityMultiResponse = (com.tc.entity.VoltronEntityMultiResponse) context;
+        for (TransactionID transactionID : voltronEntityMultiResponse.getReceivedTransactions()) {
+          waitForTransactionOrderPersistenceFuture(transactionID);
+        }
+      } else if(context instanceof VoltronEntityAppliedResponse) {
+        waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)context).getTransactionID());
+      } else {
+        Assert.fail("Unexpected message type: " + context.getClass());
+      }
       boolean didSend = context.send();
       if (!didSend) {
         // It is possible for this send to fail.  Typically, it means that the client has disconnected.
@@ -232,10 +244,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
+    Future<Void> transactionOrderPersistenceFuture = null;
     if (!ClientID.NULL_ID.equals(sourceNodeID)) {
       if (null != oldestTransactionOnClient) {
         // This client still needs transaction order persistence.
-        Future<Void> transactionOrderPersistenceFuture = this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
+        transactionOrderPersistenceFuture = this.transactionOrderPersistor.updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
         serverEntityRequest.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
       } else {
         // This is probably a disconnect: we can discard transaction order persistence for this client.
@@ -289,6 +302,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
         if (ServerEntityAction.INVOKE_ACTION == action) {
           ManagedEntity locked = entity;
           try {
+            if(transactionOrderPersistenceFuture != null) {
+              transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
+            }
             EntityMessage message = entityMessage.decodeMessage(raw->locked.getCodec().decodeMessage(raw));
             
             locked.addRequestMessage(serverEntityRequest, entityMessage, ()->addSequentially(sourceNodeID, addto->addto.addReceived(transactionID)), (result)-> {
@@ -375,6 +391,19 @@ public class ProcessTransactionHandler implements ReconnectListener {
       } catch (EntityException ee) {
         serverEntityRequest.failure(ee);
         serverEntityRequest.retired();
+      }
+    }
+  }
+
+  private void waitForTransactionOrderPersistenceFuture(TransactionID transactionID) {
+    Future<Void> future = transactionOrderPersistenceFutures.get(transactionID);
+    if(future != null) {
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      } finally {
+        transactionOrderPersistenceFutures.remove(transactionID);
       }
     }
   }

@@ -109,17 +109,17 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   }
   
   @Override
-  public TransactionID[] getReceivedTransactions() {
+  public synchronized TransactionID[] getReceivedTransactions() {
     return (this.receivedIDs != null) ? receivedIDs.toArray(new TransactionID[receivedIDs.size()]) : new TransactionID[0];
   }
   
   @Override
-  public TransactionID[] getRetiredTransactions() {
+  public synchronized TransactionID[] getRetiredTransactions() {
     return (this.retiredIDs != null) ? retiredIDs.toArray(new TransactionID[retiredIDs.size()]) : new TransactionID[0];
   }
 
   @Override
-  public Map<TransactionID, byte[]> getResults() {
+  public synchronized Map<TransactionID, byte[]> getResults() {
     return (this.results == null) ? Collections.<TransactionID, byte[]>emptyMap() : Collections.unmodifiableMap(this.results);
   }
 
