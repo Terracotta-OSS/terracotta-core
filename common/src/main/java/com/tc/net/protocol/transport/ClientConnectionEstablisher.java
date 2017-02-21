@@ -165,6 +165,9 @@ public class ClientConnectionEstablisher {
       } catch (NoActiveException noactive) {
         info = null;
         LOGGER.debug(noactive);
+        // if there is no active, throw an IOException and let upper layers of 
+        // the network stack handle the issue
+        throw new IOException(noactive);
       } catch (TCTimeoutException e) {
         info = null;
         if (!addresses.hasNext()) { throw e; }
