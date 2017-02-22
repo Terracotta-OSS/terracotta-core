@@ -36,4 +36,5 @@ public interface VoltronEntityMultiResponse extends TCMessage {
   boolean addReceived(TransactionID tid);
   boolean addRetired(TransactionID tid);
   boolean addResult(TransactionID tid, byte[] result);
+  void stopAdding();
 }

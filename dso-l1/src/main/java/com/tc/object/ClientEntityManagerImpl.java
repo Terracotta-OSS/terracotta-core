@@ -672,7 +672,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     public boolean addResult(TransactionID tid, byte[] result) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
+    @Override
+    public void stopAdding() {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     public synchronized void waitForAccess() {
       boolean interrupted = false;
       while (!accessed) {
