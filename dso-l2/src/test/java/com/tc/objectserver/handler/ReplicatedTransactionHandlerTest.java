@@ -86,7 +86,6 @@ public class ReplicatedTransactionHandlerTest {
   private ReplicatedTransactionHandler rth;
   private ClientID source;
   private ForwardingSink<ReplicationMessage> loopbackSink;
-  private ProcessTransactionHandlerTest.RunnableSink requestProcessorSink;
   private StateManager stateManager;
   private EntityManager entityManager;
   private ManagedEntity platform;
@@ -230,6 +229,34 @@ public class ReplicatedTransactionHandlerTest {
   public void testDestroy() throws Exception {
     this.rth.getEventHandler().destroy();
     verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any(), Matchers.any(), Matchers.any());
+  }
+  
+  @Test
+  public void testLifecycleGetsJournaled() throws Exception {
+    EntityID eid = new EntityID("test","test");
+    FetchID fetch = new FetchID(1L);
+    ClientID cid = new ClientID(1L);
+    TransactionID tid = new TransactionID(1L);
+    TransactionID old = new TransactionID(0L);
+    ReplicationMessage start = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0]));
+    ByteArrayOutputStream raw = new ByteArrayOutputStream();
+    ObjectOutputStream out = new ObjectOutputStream(raw);
+    out.writeInt(0);
+    out.close();
+    ReplicationMessage end = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(raw.toByteArray()));
+    ReplicationMessage create = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createLifecycleMessage(eid,1L,fetch,cid,tid,old,SyncReplicationActivity.ActivityType.CREATE_ENTITY,new byte[0]));
+    ManagedEntity entity = mock(ManagedEntity.class);
+    when(entity.getConsumerID()).thenReturn(1L);
+    when(entity.addRequestMessage(any(), any(), any(), any(), any())).then((in)->{
+      ((Consumer)in.getArguments()[3]).accept(new byte[0]);
+      return mock(SimpleCompletion.class);
+    });
+    when(entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).thenReturn(entity);
+    when(entityManager.getEntity(EntityDescriptor.NULL_ID)).thenReturn(Optional.empty());
+    this.rth.getEventHandler().handleEvent(start);
+    this.rth.getEventHandler().handleEvent(end);
+    this.rth.getEventHandler().handleEvent(create);
+    verify(entityPersistor).entityCreated(eq(cid), eq(tid.toLong()), eq(old.toLong()), eq(eid), eq(1L), eq(1L), eq(true), any(byte[].class));
   }
   
   @Test

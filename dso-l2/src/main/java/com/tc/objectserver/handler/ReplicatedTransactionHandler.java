@@ -528,9 +528,9 @@ public class ReplicatedTransactionHandler {
 
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
     ActivityType activityType = activity.getActivityType();
-    ClientID source = ClientID.NULL_ID;
-    TransactionID transactionID = TransactionID.NULL_ID;
-    TransactionID oldestTransactionID = TransactionID.NULL_ID;
+    ClientID source = activity.getSource();
+    TransactionID transactionID = activity.getTransactionID();
+    TransactionID oldestTransactionID = activity.getOldestTransactionOnClient();
     Assert.assertTrue(ActivityType.SYNC_BEGIN != activityType);
     return new BasicServerEntityRequest(decodeReplicationType(activityType), source, transactionID, oldestTransactionID);
   }
