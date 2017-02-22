@@ -46,6 +46,8 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   private List<TransactionID> receivedIDs;
   private List<TransactionID> retiredIDs;
   private Map<TransactionID, byte[]> results;
+
+  private boolean stopAdding;
   
   public VoltronEntityMultiResponseImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
@@ -74,7 +76,7 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
 
   @Override
   public synchronized boolean addReceived(TransactionID tid) {
-    if (!isSealed()) {
+    if (!stopAdding) {
       if (receivedIDs == null) {
         receivedIDs = new ArrayList<TransactionID>(128);
       }
@@ -86,7 +88,7 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   
   @Override
   public synchronized boolean addRetired(TransactionID tid) {
-    if (!isSealed()) {
+    if (!stopAdding) {
       if (retiredIDs == null) {
         retiredIDs = new ArrayList<TransactionID>(128);
       }
@@ -98,7 +100,7 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
 
   @Override
   public synchronized boolean addResult(TransactionID tid, byte[] result) {
-    if (!isSealed()) {
+    if (!stopAdding) {
       if (results == null) {
         results = new HashMap<TransactionID, byte[]>();
       }
@@ -121,6 +123,11 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   @Override
   public synchronized Map<TransactionID, byte[]> getResults() {
     return (this.results == null) ? Collections.<TransactionID, byte[]>emptyMap() : Collections.unmodifiableMap(this.results);
+  }
+
+  @Override
+  public synchronized void stopAdding() {
+    stopAdding = true;
   }
 
   @Override

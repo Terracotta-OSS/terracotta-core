@@ -110,6 +110,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       invokeReturn.remove((ClientID)destinationID, context);
       if(context instanceof VoltronEntityMultiResponse) {
         VoltronEntityMultiResponse voltronEntityMultiResponse = (com.tc.entity.VoltronEntityMultiResponse) context;
+        voltronEntityMultiResponse.stopAdding();
         for (TransactionID transactionID : voltronEntityMultiResponse.getReceivedTransactions()) {
           waitForTransactionOrderPersistenceFuture(transactionID);
         }
