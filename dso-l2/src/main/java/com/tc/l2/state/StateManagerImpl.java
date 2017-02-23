@@ -96,9 +96,11 @@ public class StateManagerImpl implements StateManager {
   private boolean electionStarted() {
     boolean isElectionStarted = elections.electionStarted();
     if(isElectionStarted) {
-      prevKnownServers.clear();
-      prevKnownServers.addAll(currKnownServers);
-      currKnownServers.clear();
+      synchronized(this) {
+        prevKnownServers.clear();
+        prevKnownServers.addAll(currKnownServers);
+        currKnownServers.clear();
+      }
     }
     return isElectionStarted;
   }
@@ -314,12 +316,8 @@ public class StateManagerImpl implements StateManager {
    * servers which are not connected yet
    */
   @Override
-  public void cleanupKnownServers() {
-    for(NodeID nodeID : currKnownServers) {
-      if(!groupManager.isNodeConnected(nodeID)) {
-        currKnownServers.remove(nodeID);
-      }
-    }
+  public synchronized void cleanupKnownServers() {
+    currKnownServers.removeIf(node->!groupManager.isNodeConnected(node));
   }
 
   @Override
@@ -469,7 +467,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   //used in testing
-  public void addKnownServersList(Set<NodeID> nodeIDs) {
+  public synchronized void addKnownServersList(Set<NodeID> nodeIDs) {
     currKnownServers.addAll(nodeIDs);
   }
 
@@ -490,14 +488,14 @@ public class StateManagerImpl implements StateManager {
   @Override
   public void startElectionIfNecessary(NodeID disconnectedNode) {
     Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
-    currKnownServers.remove(disconnectedNode);
     boolean elect = false;
-    if (!initiated) {
-//  election has never been initiated.  do not participate
-      return;
-    }
 
     synchronized (this) {
+      currKnownServers.remove(disconnectedNode);
+      if (!initiated) {
+  //  election has never been initiated.  do not participate
+        return;
+      }
       if (state == START_STATE || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
