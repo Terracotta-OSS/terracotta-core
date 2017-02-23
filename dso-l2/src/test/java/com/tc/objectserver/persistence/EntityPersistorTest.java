@@ -21,6 +21,7 @@ package com.tc.objectserver.persistence;
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.test.TCTestCase;
+import java.util.Collections;
 
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
@@ -220,5 +221,11 @@ public class EntityPersistorTest extends TCTestCase {
     } catch (EntityException e) {
       // Expected.
     }
+  }
+  
+  public void testOrphanedClientGC() throws Exception {
+    this.entityPersistor.entityCreated(client, 1L, 0L, new EntityID("test", "test"), 1L, 1L, true, new byte[0]);
+    this.entityPersistor.removeOrphanedClientsFromJournal(Collections.emptySet());
+    Assert.assertFalse(this.entityPersistor.wasEntityCreatedInJournal(client, 1L));
   }
 }

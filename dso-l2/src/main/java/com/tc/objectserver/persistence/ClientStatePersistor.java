@@ -24,8 +24,9 @@ import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
@@ -35,18 +36,18 @@ public class ClientStatePersistor {
   
   
   private final IPlatformPersistence storageManager;
-  private final HashMap<ClientID, Boolean> clients;
+  private final ConcurrentHashMap<ClientID, Boolean> clients;
   private final MutableSequence clientIDSequence;
 
   @SuppressWarnings("unchecked")
   public ClientStatePersistor(IPlatformPersistence storageManager) {
     this.storageManager = storageManager;
     
-    HashMap<ClientID, Boolean> clientsMap = null;
+    ConcurrentHashMap<ClientID, Boolean> clientsMap = null;
     try {
-      clientsMap = (HashMap<ClientID, Boolean>) this.storageManager.loadDataElement(CLIENTS_MAP_FILE_NAME);
+      clientsMap = (ConcurrentHashMap<ClientID, Boolean>) this.storageManager.loadDataElement(CLIENTS_MAP_FILE_NAME);
       if (null == clientsMap) {
-        clientsMap = new HashMap<>();
+        clientsMap = new ConcurrentHashMap<>();
       }
     } catch (IOException e) {
       // We don't expect this during startup so just throw it as runtime.
