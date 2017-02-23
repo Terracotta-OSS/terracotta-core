@@ -961,12 +961,22 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void nodeJoined(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           delegate.passiveServerJoined((ServerID)nodeID);
-          PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
-          try {
-            groupCommManager.sendTo(nodeID, req);
- // monitor will be updated when the remote server responds with it's info
-          } catch (GroupException g) {
-            
+          
+          // Note that this passive may have joined in the time between when we decided to enter the active state and
+          // when we ran the event to initialize LocalMonitoringProducer to receive events, as an active.
+          // In those cases, we should avoid sending the request to this passive as we will send it to all of them, when
+          // that happens.
+          if (monitoringShimService.isReadyToReceiveRemoteEvents()) {
+            PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
+            try {
+              groupCommManager.sendTo(nodeID, req);
+   // monitor will be updated when the remote server responds with it's info
+            } catch (GroupException g) {
+              // This is unexpected but the rest of the system should be able to recover so just log it.
+              logger.error("Failed to send PlatformInfoRequest to new passive", g);
+            }
+          } else {
+            logger.warn("Deferring PlatformInfoRequest to new passive: " + nodeID);
           }
         }
       }
