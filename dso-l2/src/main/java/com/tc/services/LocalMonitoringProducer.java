@@ -224,6 +224,16 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     }
   }
 
+  /**
+   * @return True if the receiver is in a mode to receive events from passives, as the active.  False is returned if
+   * the receiver still believes it is running in a passive mode.
+   */
+  public synchronized boolean isReadyToReceiveRemoteEvents() {
+    // The presence of cachedTreeRoot implies that we are still caching, as a passive, so null means we are active.
+    return (null == this.cachedTreeRoot);
+  }
+
+
   private synchronized boolean addNodeFromShim(long consumerID, IStripeMonitoring underlyingCollector, String[] parents, String name, Serializable value) {
     boolean didStore = false;
     // First off, see if we have a cache - this determines if we are in active or passive mode.
