@@ -989,7 +989,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
         final Set<ClientID> existingConnections = Collections.unmodifiableSet(persistor.getClientStatePersistor().loadClientIDs());
-        persistor.getEntityPersistor().setState(sce.getCurrentState(), existingConnections);
+        persistor.getEntityPersistor().removeOrphanedClientsFromJournal(existingConnections);
         if (sce.movedToActive()) {
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
