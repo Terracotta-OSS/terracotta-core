@@ -852,6 +852,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.clientReferenceCount = 0;
 
     if (!this.isDestroyed) {
+      logger.info("promoteEntity: " + getID());
       if (null != this.passiveServerEntity) {
         this.activeServerEntity = factory.createActiveEntity(this.registry, this.constructorInfo);
         this.concurrencyStrategy = factory.getConcurrencyStrategy(this.constructorInfo);
@@ -927,6 +928,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
 
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
+    logger.info("loadExisting entity: " + getID());
     this.constructorInfo = constructorInfo;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
