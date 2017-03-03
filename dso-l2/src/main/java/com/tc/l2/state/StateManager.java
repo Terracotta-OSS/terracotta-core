@@ -42,7 +42,8 @@ public interface StateManager {
                                                                    ACTIVE_COORDINATOR, STOP_STATE, RECOVERING));
   public static final List<State> PASSIVE_STATES          = Collections.unmodifiableList(Arrays
                                                            .asList(PASSIVE_UNINITIALIZED, PASSIVE_SYNCING, PASSIVE_STANDBY));
-  public void startElection();
+
+  public void initializeAndStartElection();
 
   public State getCurrentState();
 

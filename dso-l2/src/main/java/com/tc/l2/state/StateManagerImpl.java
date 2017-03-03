@@ -58,7 +58,6 @@ public class StateManagerImpl implements StateManager {
   private final WeightGeneratorFactory weightsFactory;
 
   private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<>();
-  private volatile boolean       initiated;
   // Used to determine whether or not the L2HACoordinator has started up and told us to start (it puts us into the
   //  started state - startElection()).
   private boolean didStartElection;
@@ -120,20 +119,14 @@ public class StateManagerImpl implements StateManager {
 //  now make sure elections are done
     elections.waitForElectionToFinish();
   }
-  
-  public void endElection() {
-    initiated = false;
-    state = STOP_STATE;
-    activeNode = ServerID.NULL_ID;
-  }
+
   /*
    * XXX:: If ACTIVE went dead before any passive moved to STANDBY state, then the cluster is hung and there is no going
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
    */
   @Override
-  public void startElection() {
+  public void initializeAndStartElection() {
     debugInfo("Starting election");
-    initiated = true;
     startState = clusterStatePersistor.getInitialState();
     // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
     // the election and wait for a zap.
@@ -508,10 +501,6 @@ public class StateManagerImpl implements StateManager {
 
     synchronized (this) {
       currKnownServers.remove(disconnectedNode);
-      if (!initiated) {
-  //  election has never been initiated.  do not participate
-        return;
-      }
       if (state == START_STATE || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);

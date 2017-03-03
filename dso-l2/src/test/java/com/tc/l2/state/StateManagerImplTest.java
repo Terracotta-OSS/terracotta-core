@@ -47,6 +47,7 @@ public class StateManagerImplTest {
 
   private final StateManagerImpl[] stateManagers = new StateManagerImpl[NUM_OF_SERVERS];
 
+  @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
     TCLogger tcLogger = mock(TCLogger.class);
@@ -94,7 +95,7 @@ public class StateManagerImplTest {
     }
 
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
-      stateManagers[i].startElection();
+      stateManagers[i].initializeAndStartElection();
     }
 
     NodeID[] actives = new NodeID[NUM_OF_SERVERS];
@@ -114,7 +115,7 @@ public class StateManagerImplTest {
 
     NodesStore nodesStore = new NodesStoreImpl(nodeSet);
     groupManagers[0].join(nodes[0], nodesStore);
-    stateManagers[0].startElection();
+    stateManagers[0].initializeAndStartElection();
     stateManagers[0].waitForDeclaredActive();
     NodeID active = stateManagers[0].getActiveNodeID();
 
@@ -124,7 +125,7 @@ public class StateManagerImplTest {
       TimeUnit.SECONDS.sleep(2);
     }
     Assert.assertEquals(1, groupManagers[1].getMembers().size());
-    stateManagers[1].startElection();
+    stateManagers[1].initializeAndStartElection();
     stateManagers[1].waitForDeclaredActive();
     Assert.assertEquals(active, stateManagers[1].getActiveNodeID());
 
@@ -134,7 +135,7 @@ public class StateManagerImplTest {
       TimeUnit.SECONDS.sleep(2);
     }
     Assert.assertEquals(2, groupManagers[2].getMembers().size());
-    stateManagers[2].startElection();
+    stateManagers[2].initializeAndStartElection();
     stateManagers[2].waitForDeclaredActive();
     Assert.assertEquals(active, stateManagers[2].getActiveNodeID());
   }
