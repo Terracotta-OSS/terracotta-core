@@ -510,6 +510,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if(!persistor.wasDBClean()) {
       // make sure peristor is not using any storage service
       persistor.close();
+      // Log that that the state was not clean so we are going to clear all service provider state.
+      logger.warn("DB state not clean!  Clearing all ServiceProvider state (ZAP request)");
       serviceRegistry.clearServiceProvidersState();
       // create the persistor once again as underlying storage service might have cleared its internal state
       persistor = serverBuilder.createPersistor(platformServiceRegistry);

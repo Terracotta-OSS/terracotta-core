@@ -21,7 +21,6 @@ package com.tc.l2.state;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.exception.TCServerRestartException;
-import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -47,8 +46,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class StateManagerImpl implements StateManager {
 
+public class StateManagerImpl implements StateManager {
   private static final TCLogger        logger              = TCLogging.getLogger(StateManagerImpl.class);
 
   private final TCLogger               consoleLogger;
@@ -59,7 +58,9 @@ public class StateManagerImpl implements StateManager {
   private final WeightGeneratorFactory weightsFactory;
 
   private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<>();
-  private volatile boolean       initiated;
+  // Used to determine whether or not the L2HACoordinator has started up and told us to start (it puts us into the
+  //  started state - startElection()).
+  private boolean didStartElection;
   private final ClusterStatePersistor  clusterStatePersistor;
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
@@ -118,20 +119,14 @@ public class StateManagerImpl implements StateManager {
 //  now make sure elections are done
     elections.waitForElectionToFinish();
   }
-  
-  public void endElection() {
-    initiated = false;
-    state = STOP_STATE;
-    activeNode = ServerID.NULL_ID;
-  }
+
   /*
    * XXX:: If ACTIVE went dead before any passive moved to STANDBY state, then the cluster is hung and there is no going
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster
    */
   @Override
-  public void startElection() {
+  public void initializeAndStartElection() {
     debugInfo("Starting election");
-    initiated = true;
     startState = clusterStatePersistor.getInitialState();
     // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
     // the election and wait for a zap.
@@ -141,7 +136,13 @@ public class StateManagerImpl implements StateManager {
     } else if (state == START_STATE || state == PASSIVE_STANDBY) {
       runElection();
     } else {
-      info("Ignoring Election request since not in right state");
+      info("Ignoring Election request since not in right state: " + this.state);
+    }
+    // Now that we are ready, put us into the started state and notify anyone stuck waiting.
+    synchronized (this) {
+      Assert.assertFalse(this.didStartElection);
+      this.didStartElection = true;
+      this.notifyAll();
     }
   }
 
@@ -261,6 +262,7 @@ public class StateManagerImpl implements StateManager {
   
   @Override
   public synchronized void moveToPassiveSyncing(NodeID connectedTo) {
+    synchronizedWaitForStart();
     if (state == PASSIVE_UNINITIALIZED) {
       syncdTo = connectedTo;
       stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_SYNCING));
@@ -272,6 +274,7 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public synchronized void moveToPassiveStandbyState() {
+    synchronizedWaitForStart();
     if (state == ACTIVE_COORDINATOR) {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
@@ -331,6 +334,9 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void handleClusterStateMessage(L2StateMessage clusterMsg) {
+    synchronized (this) {
+      synchronizedWaitForStart();
+    }
     debugInfo("Received cluster state message: " + clusterMsg);
     try {
       switch (clusterMsg.getType()) {
@@ -487,15 +493,14 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void startElectionIfNecessary(NodeID disconnectedNode) {
+    synchronized (this) {
+      synchronizedWaitForStart();
+    }
     Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
     boolean elect = false;
 
     synchronized (this) {
       currKnownServers.remove(disconnectedNode);
-      if (!initiated) {
-  //  election has never been initiated.  do not participate
-        return;
-      }
       if (state == START_STATE || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
@@ -571,7 +576,25 @@ public class StateManagerImpl implements StateManager {
   private static void debugInfo(String message) {
     logger.debug(message);
   }
-  
+
+  /**
+   * Internal helper which MUST BE CALLED UNDER MONITOR to wait until the L2HACoordinator has made its initial call to
+   * put the receiver into a valid state.
+   * This addresses a race between the L2HACoordinator thread, which initializes this object, and the other threads
+   * which notify it when messages arrive.
+   */
+  private void synchronizedWaitForStart() {
+    while (!this.didStartElection) {
+      try {
+        wait();
+      } catch (InterruptedException e) {
+        // We don't expect interruption.
+        throw Assert.failure("synchronizedWaitForStart() interrupted", e);
+      }
+    }
+  }
+
+
   private static class ElectionGate {
     private boolean electionInProgress = false;
     
@@ -591,10 +614,6 @@ public class StateManagerImpl implements StateManager {
         electionInProgress = false;
         notifyAll();
       }
-    }    
-    
-    public synchronized boolean isFinished() {
-      return electionInProgress;
     }
     
     public synchronized void waitForElectionToFinish() throws InterruptedException {

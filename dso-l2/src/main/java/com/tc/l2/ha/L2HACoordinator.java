@@ -96,7 +96,7 @@ public class L2HACoordinator implements L2Coordinator {
 
   @Override
   public void start() {
-    this.stateManager.startElection();
+    this.stateManager.initializeAndStartElection();
   }
 
   @Override

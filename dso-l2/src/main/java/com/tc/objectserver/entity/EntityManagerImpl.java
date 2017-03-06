@@ -44,6 +44,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -309,7 +310,10 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
-    for (Map.Entry<EntityID, FetchID> entry : entities.entrySet()) {
+    // We want to dump a size, minimally acting as a heading for the section (in case there is nothing).
+    Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
+    stateDumper.dumpState("EntityManagerImpl size", Integer.toString(entries.size()));
+    for (Map.Entry<EntityID, FetchID> entry : entries) {
       EntityID entityID = entry.getKey();
       entityIndex.get(entry.getValue()).dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
     }
