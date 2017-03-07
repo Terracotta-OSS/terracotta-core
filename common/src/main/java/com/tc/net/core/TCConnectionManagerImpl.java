@@ -79,13 +79,11 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     this.comm.start();
   }
 
-  protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
+  private TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
     return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, securityManager);
   }
 
-  @SuppressWarnings("resource")
-  protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
-                                          boolean reuseAddr) throws IOException {
+  private ServerSocketChannel createBoundSocket(TCSocketAddress addr, int backlog, boolean reuseAddr) throws IOException {
     ServerSocketChannel ssc = ServerSocketChannel.open();
     ssc.configureBlocking(false);
     ServerSocket serverSocket = ssc.socket();
@@ -102,14 +100,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     if (logger.isDebugEnabled()) {
       logger.debug("Bind: " + serverSocket.getLocalSocketAddress());
     }
-
-    CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
-
-    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
-
-    commThread.registerListener(rv, ssc);
-
-    return rv;
+    return ssc;
   }
 
   @Override
@@ -159,9 +150,12 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
                                                       int backlog, boolean reuseAddr) throws IOException {
     checkShutdown();
 
-    TCListener rv = createListenerImpl(addr, factory, backlog, reuseAddr);
-    rv.addEventListener(listenerEvents);
+    ServerSocketChannel ssc = createBoundSocket(addr, backlog, reuseAddr);
+    CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
+    commThread.registerListener(rv, ssc);
 
+    rv.addEventListener(listenerEvents);
     synchronized (listeners) {
       listeners.add(rv);
     }

@@ -410,7 +410,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportRedirect(active), 
                 source, isMaxConnectionsReached, maxConnections);
         } else {
-          synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportHandshakeErrorContext("no active", errorContext.ERROR_NONE), 
+          synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportHandshakeErrorContext("no active", TransportHandshakeError.ERROR_NONE), 
                 source, isMaxConnectionsReached, maxConnections);
         }
       } else {
