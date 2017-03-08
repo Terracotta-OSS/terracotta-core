@@ -176,7 +176,8 @@ try {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
             new DefaultConnectionIdFactory());
       }
-      lsnr.start(new HashSet<ClientID>());
+      boolean shouldRetryBind = false;
+      lsnr.start(new HashSet<ClientID>(), shouldRetryBind);
       connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
   }
 
@@ -317,7 +318,8 @@ try {
                                        new DefaultConnectionIdFactory());
     }
 
-    rv.start(new HashSet<ClientID>());
+    boolean shouldRetryBind = false;
+    rv.start(new HashSet<ClientID>(), shouldRetryBind);
     return rv;
   }
 

@@ -111,7 +111,8 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                    Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

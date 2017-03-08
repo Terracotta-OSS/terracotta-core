@@ -27,7 +27,7 @@ import java.util.Set;
 
 public interface NetworkListener {
 
-  public void start(Set<ClientID> initialConnectionIDs) throws IOException;
+  public void start(Set<ClientID> initialConnectionIDs, boolean shouldRetryBind) throws IOException;
 
   public void stop(long timeout) throws TCTimeoutException;
 

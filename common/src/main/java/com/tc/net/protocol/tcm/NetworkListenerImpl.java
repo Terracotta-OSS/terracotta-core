@@ -65,9 +65,9 @@ class NetworkListenerImpl implements NetworkListener {
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified port/address)
    */
   @Override
-  public synchronized void start(Set<ClientID> initialConnectionIDs) throws IOException {
+  public synchronized void start(Set<ClientID> initialConnectionIDs, boolean shouldRetryBind) throws IOException {
     this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, initialConnectionIDs, this.activeProvider,
-                                                  this.connectionIdFactory, this.wireProtoMsgSnk);
+                                                  this.connectionIdFactory, this.wireProtoMsgSnk, shouldRetryBind);
     this.started = true;
     this.commsMgr.registerListener(this);
   }

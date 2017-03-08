@@ -65,14 +65,16 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), true, cidf);
 
     try {
-      lsnr.start(Collections.<ClientID>emptySet());
+      boolean shouldRetryBind = false;
+      lsnr.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     } catch (IOException ioe) {
       fail(ioe.getMessage());
     }
 
     NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf);
     try {
-      lsnr2.start(Collections.<ClientID>emptySet());
+      boolean shouldRetryBind = false;
+      lsnr2.start(Collections.<ClientID>emptySet(), shouldRetryBind);
       fail();
     } catch (IOException ioe) {
       // expect a bind exception
@@ -91,12 +93,13 @@ public class NetworkListenerTest extends TestCase {
     final int cnt = 20;
     NetworkListener[] listeners = new NetworkListener[cnt];
 
+    boolean shouldRetryBind = false;
     for (int i = 0; i < cnt; i++) {
       NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(InetAddress
           .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory());
 
       try {
-        lsnr.start(Collections.<ClientID>emptySet());
+        lsnr.start(Collections.<ClientID>emptySet(), shouldRetryBind);
         listeners[i] = lsnr;
       } catch (IOException ioe) {
         fail(ioe.getMessage());

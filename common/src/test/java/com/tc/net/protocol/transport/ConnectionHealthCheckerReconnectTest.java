@@ -140,7 +140,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     serverLsnr = serverComms.createListener(new TCSocketAddress(0), false,
                                             new DefaultConnectionIdFactory());
 
-    serverLsnr.start(new HashSet<ClientID>());
+    boolean shouldRetryBind = false;
+    serverLsnr.start(new HashSet<ClientID>(), shouldRetryBind);
 
     int serverPort = serverLsnr.getBindPort();
     proxyPort = new PortChooser().chooseRandomPort();

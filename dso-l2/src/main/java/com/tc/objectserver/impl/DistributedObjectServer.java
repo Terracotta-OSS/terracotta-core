@@ -1117,7 +1117,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       throw Assert.failure("no timeout set!", to);
     }
     this.context.getClientHandshakeManager().setStarting(existingConnections);
-    this.l1Listener.start(existingConnections);
+    // We just released the diagnostic listener so the port is expected to be free.
+    boolean shouldRetryBind = true;
+    this.l1Listener.start(existingConnections, shouldRetryBind);
     if (!existingConnections.isEmpty()) {
       this.context.getClientHandshakeManager().startReconnectWindow();
     }
@@ -1126,7 +1128,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public void startDiagnosticListener() throws IOException {
-    this.l1Diagnostics.start(Collections.emptySet());
+    // We haven't used this port before so we want to fail if there are any issues (since they aren't related to our
+    // activity).
+    boolean shouldRetryBind = false;
+    this.l1Diagnostics.start(Collections.emptySet(), shouldRetryBind);
   }
   
   private static String format(NetworkListener listener) {

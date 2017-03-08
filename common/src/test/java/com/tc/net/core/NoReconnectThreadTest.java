@@ -119,7 +119,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          null);
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();
@@ -183,7 +184,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          null);
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

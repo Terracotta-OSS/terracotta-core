@@ -84,7 +84,8 @@ public class LazyHandshakeTest extends TCTestCase {
                                           new DefaultConnectionIdFactory());
 
     try {
-      listener.start(new HashSet<ClientID>());
+      boolean shouldRetryBind = false;
+      listener.start(new HashSet<ClientID>(), shouldRetryBind);
     } catch (Exception e) {
       System.out.println("lsnr Excep");
     }

@@ -136,7 +136,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
     NetworkListener lsnr = serverComms.createListener(new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
                                                       new DefaultConnectionIdFactory());
 
-    lsnr.start(new HashSet<>());
+    boolean shouldRetryBind = false;
+    lsnr.start(new HashSet<>(), shouldRetryBind);
     return (lsnr);
   }
 
