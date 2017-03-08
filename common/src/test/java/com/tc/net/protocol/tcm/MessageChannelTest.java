@@ -26,7 +26,6 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -54,6 +53,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+
 
 /*
  * This test really belongs in the TC Messaging module but it's dependencies
@@ -163,7 +163,7 @@ try {
           });
       if (dumbServerSink) {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
-            new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
+            new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
 
           @Override
           public void putMessage(WireProtocolMessage message) {
@@ -303,7 +303,7 @@ try {
     NetworkListener rv;
     if (dumbServerSink) {
       rv = serverComms1.createListener(new TCSocketAddress(0), false,
-                                       new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
+                                       new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
 
                                          @Override
                                         public void putMessage(WireProtocolMessage message) {

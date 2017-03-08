@@ -55,10 +55,8 @@ public interface TCConnectionManager {
    * @param addr the address to bind the listener to
    * @param factory protocol adaptor factory used to attach protocol adaptors to newly accpted connections
    * @param backlog accept queue backlog depth
-   * @param reuseAddr whether the bind port will be reused if in use by open sockets
    */
-  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean reuseAddr)
-      throws IOException;
+  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog) throws IOException;
 
   /**
    * Close any open connections created through this connection manager instance

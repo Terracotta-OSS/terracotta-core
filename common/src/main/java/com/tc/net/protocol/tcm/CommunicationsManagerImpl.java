@@ -302,13 +302,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
                                         NodeNameProvider activeNameProvider) {
-    return createListener(addr, transportDisconnectRemovesChannel, new NullConnectionIDFactoryImpl(), true, null, activeNameProvider);
+    return createListener(addr, transportDisconnectRemovesChannel, new NullConnectionIDFactoryImpl(), null, activeNameProvider);
   }
 
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,
           ConnectionIDFactory connectionIdFactory) {
-    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, null);
+    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, null, null);
   }
 
   /**
@@ -316,7 +316,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   NetworkListener createListener(TCSocketAddress addr,
                                          boolean transportDisconnectRemovesChannel,
-                                         ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
+                                         ConnectionIDFactory connectionIdFactory,
                                          WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider) {
     if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }
 
@@ -347,12 +347,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
-    return new NetworkListenerImpl(addr, this, channelManager, msgFactory, reuseAddr,
+    return new NetworkListenerImpl(addr, this, channelManager, msgFactory,
                                    connectionIdFactory, wireProtoMsgSnk, activeProvider);
   }
 
   TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, ConnectionIDFactory connectionIdFactory,
+                                 Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
@@ -394,7 +394,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 new WireProtocolAdaptorFactoryImpl(),
                                                                 wireProtocolMessageSink, licenseLock,
                                                                 this.commsMgrName, this.securityManager);
-    return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
+    return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH);
   }
 
   private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckrConfig) {

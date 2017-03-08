@@ -195,9 +195,8 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     }
 
     @Override
-    public final TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
-                                           boolean reuseAddr) throws IOException {
-      return delegate.createListener(addr, factory, backlog, reuseAddr);
+    public final TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog) throws IOException {
+      return delegate.createListener(addr, factory, backlog);
     }
 
     @Override

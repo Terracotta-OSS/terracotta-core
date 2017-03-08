@@ -83,10 +83,12 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, securityManager);
   }
 
-  private ServerSocketChannel createBoundSocket(TCSocketAddress addr, int backlog, boolean reuseAddr) throws IOException {
+  private ServerSocketChannel createBoundSocket(TCSocketAddress addr, int backlog) throws IOException {
     ServerSocketChannel ssc = ServerSocketChannel.open();
     ssc.configureBlocking(false);
     ServerSocket serverSocket = ssc.socket();
+    // We always want to re-use the address when we are opening for bind.
+    boolean reuseAddr = true;
     this.socketParams.applyServerSocketParams(serverSocket, reuseAddr);
 
     try {
@@ -142,15 +144,14 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   @Override
   public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory)
       throws IOException {
-    return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, true);
+    return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH);
   }
 
   @Override
-  public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory,
-                                                      int backlog, boolean reuseAddr) throws IOException {
+  public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog) throws IOException {
     checkShutdown();
 
-    ServerSocketChannel ssc = createBoundSocket(addr, backlog, reuseAddr);
+    ServerSocketChannel ssc = createBoundSocket(addr, backlog);
     CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
     TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
     commThread.registerListener(rv, ssc);
