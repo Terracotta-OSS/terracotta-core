@@ -419,7 +419,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     discover.setupNodes(thisNode, nodesStore.getAllNodes());
     discover.start();
     try {
-      groupListener.start(new HashSet<ClientID>());
+      // We want to fail fast when opening this port.
+      boolean shouldRetryBind = false;
+      groupListener.start(new HashSet<ClientID>(), shouldRetryBind);
     } catch (IOException e) {
       throw new GroupException(e);
     }

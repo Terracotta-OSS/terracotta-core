@@ -41,14 +41,13 @@ class NetworkListenerImpl implements NetworkListener {
   private final TCSocketAddress addr;
   private TCListener lsnr;
   private boolean started;
-  private final boolean reuseAddr;
   private final ConnectionIDFactory connectionIdFactory;
   private final WireProtocolMessageSink wireProtoMsgSnk;
   private final NodeNameProvider activeProvider;
 
   // this constructor is intentionally not public, only the Comms Manager should be creating them
   NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
-                      TCMessageFactory msgFactory, boolean reuseAddr, ConnectionIDFactory connectionIdFactory,
+                      TCMessageFactory msgFactory, ConnectionIDFactory connectionIdFactory,
                       WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider) {
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
@@ -56,7 +55,6 @@ class NetworkListenerImpl implements NetworkListener {
     this.connectionIdFactory = connectionIdFactory;
     this.wireProtoMsgSnk = wireProtoMsgSnk;
     this.started = false;
-    this.reuseAddr = reuseAddr;
     this.activeProvider = activeProvider;
   }
 
@@ -67,9 +65,9 @@ class NetworkListenerImpl implements NetworkListener {
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified port/address)
    */
   @Override
-  public synchronized void start(Set<ClientID> initialConnectionIDs) throws IOException {
-    this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
-                                                  this.connectionIdFactory, this.wireProtoMsgSnk);
+  public synchronized void start(Set<ClientID> initialConnectionIDs, boolean shouldRetryBind) throws IOException {
+    this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, initialConnectionIDs, this.activeProvider,
+                                                  this.connectionIdFactory, this.wireProtoMsgSnk, shouldRetryBind);
     this.started = true;
     this.commsMgr.registerListener(this);
   }

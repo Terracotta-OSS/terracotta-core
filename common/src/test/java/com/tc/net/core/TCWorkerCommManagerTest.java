@@ -118,7 +118,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 4);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int port = listener.getBindPort();
 
     ClientMessageTransport client1 = createClient("client1", port);
@@ -167,7 +168,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int port = listener.getBindPort();
     
     ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
@@ -223,7 +225,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int port = listener.getBindPort();
     
     ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
@@ -318,7 +321,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

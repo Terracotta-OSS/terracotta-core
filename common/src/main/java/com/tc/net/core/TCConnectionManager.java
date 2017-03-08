@@ -44,21 +44,21 @@ public interface TCConnectionManager {
    * will be used, and reuseAddress will be true
    * 
    * @param addr the address to bind the listener to
-   * @param factory protocol adaptor factory used to attach protocol adaptors to newly accpted connections
+   * @param factory protocol adaptor factory used to attach protocol adaptors to newly accepted connections
    */
   public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory) throws IOException;
 
   /**
-   * Create a new listening socket (ie. java.net.ServerSocket) on the given socket address with the given accect queue
+   * Create a new listening socket (ie. java.net.ServerSocket) on the given socket address with the given accept queue
    * depth
    * 
    * @param addr the address to bind the listener to
-   * @param factory protocol adaptor factory used to attach protocol adaptors to newly accpted connections
+   * @param factory protocol adaptor factory used to attach protocol adaptors to newly accepted connections
    * @param backlog accept queue backlog depth
-   * @param reuseAddr whether the bind port will be reused if in use by open sockets
+   * @param shouldRetryBind If true, will retry on BindException (can be useful if the port is waiting for a timeout of
+   * a disconnect).
    */
-  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean reuseAddr)
-      throws IOException;
+  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean shouldRetryBind) throws IOException;
 
   /**
    * Close any open connections created through this connection manager instance

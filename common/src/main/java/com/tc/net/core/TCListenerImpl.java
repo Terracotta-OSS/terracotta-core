@@ -77,13 +77,9 @@ final class TCListenerImpl implements TCListener {
     this.commNIOServiceThread = commNIOServiceThread;
   }
 
-  protected void stopImpl(Runnable callback) {
-    commNIOServiceThread.stopListener(ssc, callback);
-  }
-
   TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
       throws IOException {
-    TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
+    TCProtocolAdaptor adaptor = this.factory.getInstance();
     TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams,
                                                securityManager);
     rv.finishConnect();
@@ -115,7 +111,7 @@ final class TCListenerImpl implements TCListener {
     if (stopPending.attemptSet()) {
       final TCFuture future = new TCFuture();
 
-      stopImpl(new Runnable() {
+      commNIOServiceThread.stopListener(ssc, new Runnable() {
         @Override
         public void run() {
           future.set("stop done");
@@ -192,9 +188,5 @@ final class TCListenerImpl implements TCListener {
         }
       }
     }
-  }
-
-  final ProtocolAdaptorFactory getProtocolAdaptorFactory() {
-    return factory;
   }
 }

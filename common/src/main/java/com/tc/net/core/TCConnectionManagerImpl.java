@@ -35,6 +35,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
@@ -53,6 +54,11 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final TCConnection[] EMPTY_CONNECTION_ARRAY = new TCConnection[] {};
   protected static final TCListener[]   EMPTY_LISTENER_ARRAY   = new TCListener[] {};
   protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManager.class);
+  // We will retry the bind for 2 minutes (should be enough time for any hold on the port to timeout).
+  // NOTE:  Since this only done in the cases where we know we can't be conflicting, waiting forever might be the better
+  // option.
+  private static final int BIND_ATTEMPTS = 120;
+  private static final long BIND_DELAY_MILLIS = 1000;
 
   private final TCCommImpl              comm;
   private final HealthCheckerConfig     healthCheckerConfig;
@@ -79,37 +85,50 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     this.comm.start();
   }
 
-  protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
+  private TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
     return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, securityManager);
   }
 
-  @SuppressWarnings("resource")
-  protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
-                                          boolean reuseAddr) throws IOException {
+  private ServerSocketChannel createBoundSocket(TCSocketAddress addr, int backlog, boolean shouldRetryBind) throws IOException {
     ServerSocketChannel ssc = ServerSocketChannel.open();
     ssc.configureBlocking(false);
     ServerSocket serverSocket = ssc.socket();
+    // We always want to re-use the address when we are opening for bind.
+    boolean reuseAddr = true;
     this.socketParams.applyServerSocketParams(serverSocket, reuseAddr);
 
-    try {
-      serverSocket.bind(new InetSocketAddress(addr.getAddress(), addr.getPort()), backlog);
-    } catch (IOException ioe) {
-      logger.warn("Unable to bind socket on address " + addr.getAddress() + ", port " + addr.getPort() + ", "
-                  + ioe.getMessage());
-      throw ioe;
+    int bindAttemptsRemaining = shouldRetryBind ? BIND_ATTEMPTS : 1;
+    while (bindAttemptsRemaining > 0) {
+      try {
+        serverSocket.bind(new InetSocketAddress(addr.getAddress(), addr.getPort()), backlog);
+        // We succeeded, so fall out of the loop.
+        bindAttemptsRemaining = 0;
+      } catch (BindException bindException) {
+        String message = "Unable to bind socket on address " + addr.getAddress() + ", port " + addr.getPort() + ", " + bindException.getMessage();
+        bindAttemptsRemaining -= 1;
+        if (bindAttemptsRemaining > 0) {
+          logger.warn(message + ".  Retrying " + bindAttemptsRemaining + " more times");
+          try {
+            Thread.sleep(BIND_DELAY_MILLIS);
+          } catch (InterruptedException e) {
+            // If this happens, avoid the wait and just throw the exception.
+            logger.error("Received interrupt while waiting to retry bind.  Aborting...");
+            throw bindException;
+          }
+        } else {
+          logger.warn(message + ".  Failing");
+          throw bindException;
+        }
+      } catch (IOException ioe) {
+        logger.error("Unable to bind socket on address " + addr.getAddress() + ", port " + addr.getPort() + ", " + ioe.getMessage());
+        throw ioe;
+      }
     }
 
     if (logger.isDebugEnabled()) {
       logger.debug("Bind: " + serverSocket.getLocalSocketAddress());
     }
-
-    CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
-
-    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
-
-    commThread.registerListener(rv, ssc);
-
-    return rv;
+    return ssc;
   }
 
   @Override
@@ -151,17 +170,21 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   @Override
   public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory)
       throws IOException {
-    return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, true);
+    // This path is only used in tests so we will NOT retry on bind.
+    boolean shouldRetryBind = false;
+    return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, shouldRetryBind);
   }
 
   @Override
-  public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory,
-                                                      int backlog, boolean reuseAddr) throws IOException {
+  public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean shouldRetryBind) throws IOException {
     checkShutdown();
 
-    TCListener rv = createListenerImpl(addr, factory, backlog, reuseAddr);
-    rv.addEventListener(listenerEvents);
+    ServerSocketChannel ssc = createBoundSocket(addr, backlog, shouldRetryBind);
+    CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
+    commThread.registerListener(rv, ssc);
 
+    rv.addEventListener(listenerEvents);
     synchronized (listeners) {
       listeners.add(rv);
     }

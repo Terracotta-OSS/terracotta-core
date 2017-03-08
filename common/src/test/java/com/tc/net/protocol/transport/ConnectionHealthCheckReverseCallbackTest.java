@@ -127,7 +127,8 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
         .createListener(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, listenPort), true,
                         new DefaultConnectionIdFactory());
 
-    listener.start(Collections.<ClientID>emptySet());
+    boolean shouldRetryBind = false;
+    listener.start(Collections.<ClientID>emptySet(), shouldRetryBind);
     
     clientComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     channel = clientComms.createClientChannel(new NullSessionManager(), -1, 30000, true);
@@ -195,9 +196,8 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     }
 
     @Override
-    public final TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
-                                           boolean reuseAddr) throws IOException {
-      return delegate.createListener(addr, factory, backlog, reuseAddr);
+    public final TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean shouldRetryBind) throws IOException {
+      return delegate.createListener(addr, factory, backlog, shouldRetryBind);
     }
 
     @Override
