@@ -252,8 +252,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.management.ManagementFactory;
+import java.net.BindException;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 
 
@@ -1117,7 +1119,23 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       throw Assert.failure("no timeout set!", to);
     }
     this.context.getClientHandshakeManager().setStarting(existingConnections);
-    this.l1Listener.start(existingConnections);
+    boolean clientBound = false;
+    while (!clientBound) {
+      try {
+        this.l1Listener.start(existingConnections);
+        clientBound = true;
+      } catch (BindException bind) {
+  // this seems to happen on windows but should not.  we just gave up the port.  
+  // loop forever as a hack.
+        logger.warn("client server port not available for binding:", bind);
+        try {
+          TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException ie) {
+          logger.warn("client server port binding interrupted:", ie);
+          throw bind;
+        }
+      }
+    }
     if (!existingConnections.isEmpty()) {
       this.context.getClientHandshakeManager().startReconnectWindow();
     }
