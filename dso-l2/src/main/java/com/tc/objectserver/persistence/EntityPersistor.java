@@ -97,11 +97,11 @@ public class EntityPersistor {
     }
   }
 
-  public Collection<EntityData.Value> loadEntityData() {
+  public synchronized Collection<EntityData.Value> loadEntityData() {
     return this.entities.values();
   }
 
-  public boolean containsEntity(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
+  public synchronized boolean containsEntity(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
     LOGGER.debug("containsEntity " + clientID + " " + transactionID + " " + id);
     // This is new so look up the answer and store it in the journal.
     EntityData.Key key = new EntityData.Key();
@@ -118,7 +118,7 @@ public class EntityPersistor {
    * If an attempt was made, true is returned (on success) or EntityException is thrown (if it was a failure).
    * False is returned if this clientID and transactionID seem new.
    */
-  public boolean wasEntityCreatedInJournal(ClientID clientID, long transactionID) throws EntityException {
+  public synchronized boolean wasEntityCreatedInJournal(ClientID clientID, long transactionID) throws EntityException {
     boolean didSucceed = false;
     LOGGER.debug("wasEntityCreatedInJournal " + clientID + " " + transactionID);
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
@@ -132,12 +132,12 @@ public class EntityPersistor {
     return didSucceed;
   }
 
-  public void entityCreateFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityCreateFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("createFailed " + clientID + " " + transactionID, error);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, error);
   }
 
-  public void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
+  public synchronized void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreated " + clientID + " " + transactionID + " " + id + " " + version);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     
@@ -145,7 +145,7 @@ public class EntityPersistor {
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, null);
   }
   
-  public void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
+  public synchronized void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreatedNoJournal " + id);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     // (Note that we don't store this into the journal - this is used for passive sync).
@@ -156,7 +156,7 @@ public class EntityPersistor {
    * If an attempt was made, true is returned (on success) or EntityAlreadyExistsException is thrown.
    * False is returned if this clientID and transactionID seem new.
    */
-  public boolean wasEntityDestroyedInJournal(ClientID clientID, long transactionID) throws EntityException {
+  public synchronized boolean wasEntityDestroyedInJournal(ClientID clientID, long transactionID) throws EntityException {
     LOGGER.debug("wasEntityDestroyedInJournal " + clientID + " " + transactionID);
     boolean didSucceed = false;
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
@@ -170,12 +170,12 @@ public class EntityPersistor {
     return didSucceed;
   }
 
-  public void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("entityDestroyFailed " + clientID + " " + transactionID);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, error);
   }
 
-  public void entityDestroyed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
+  public synchronized void entityDestroyed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
     LOGGER.debug("entityDestroyed " + clientID + " " + transactionID + " " + id);
     EntityData.Key key = new EntityData.Key();
     key.className = id.getClassName();
@@ -188,7 +188,7 @@ public class EntityPersistor {
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, null);
   }
 
-  public byte[] reconfiguredResultInJournal(ClientID clientID, long transactionID) throws EntityException {
+  public synchronized byte[] reconfiguredResultInJournal(ClientID clientID, long transactionID) throws EntityException {
     LOGGER.debug("reconfiguredResultInJournal " + clientID + " " + transactionID);
     byte[] cachedResult = null;
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
@@ -203,7 +203,7 @@ public class EntityPersistor {
     return cachedResult;
   }
 
-  public void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("entityReconfigureFailed " + clientID + " " + transactionID);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, null, error);
   }
@@ -211,7 +211,7 @@ public class EntityPersistor {
   /**
    * @return The over-written configuration value.
    */
-  public byte[] entityReconfigureSucceeded(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, byte[] configuration) {
+  public synchronized byte[] entityReconfigureSucceeded(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, byte[] configuration) {
     LOGGER.debug("entityReconfigureSucceeded " + clientID + " " + transactionID);
     String className = id.getClassName();
     String entityName = id.getEntityName();
@@ -236,14 +236,14 @@ public class EntityPersistor {
     return previousConfiguration;
   }
 
-  public long getNextConsumerID() {
+  public synchronized long getNextConsumerID() {
     long consumerID = this.counters.get(COUNTERS_CONSUMER_ID);
     this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
     storeToDisk(COUNTERS_FILE_NAME, this.counters);
     return consumerID;
   }
 
-  public void setNextConsumerID(long consumerID) {
+  public synchronized void setNextConsumerID(long consumerID) {
     long checkID = this.counters.get(COUNTERS_CONSUMER_ID);
     if (consumerID >= checkID) {
       this.counters.put(COUNTERS_CONSUMER_ID, new Long(consumerID + 1));
@@ -267,7 +267,7 @@ public class EntityPersistor {
     return newList;
   }
 
-  private synchronized void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, EntityException error) {
+  private void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, EntityException error) {
     List<EntityData.JournalEntry> rawJournal = this.entityLifeJournal.get(clientID);
     // Note that this may be the first time we encountered this client.
     if (null == rawJournal) {
@@ -284,7 +284,7 @@ public class EntityPersistor {
     storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
 
-  private synchronized JournalEntry getEntryForTransaction(ClientID clientID, long transactionID) {
+  private JournalEntry getEntryForTransaction(ClientID clientID, long transactionID) {
     JournalEntry foundEntry = null;
     List<EntityData.JournalEntry> clientJournal =  this.entityLifeJournal.get(clientID);
     // Note that we may not know anything about this client.
