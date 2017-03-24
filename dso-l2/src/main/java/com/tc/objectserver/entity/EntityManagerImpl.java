@@ -117,27 +117,32 @@ public class EntityManagerImpl implements EntityManager {
   public void enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
-    
-    // Tell our implementation-provided services to become active (since they might have modes of operation).
-    this.serviceRegistry.notifyServerDidBecomeActive();
-    
-    // Set the state of the manager.
-    this.shouldCreateActiveEntities = true;
-    // We can promote directly because this method is only called from PTH initialize 
-    //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
+    //  locking the snapshotting until full active is achieved 
+    snapshotLock.acquireUninterruptibly();
     try {
-      // issue-439: We need to sort these entities, ascending by consumerID.
-      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
-      Collections.sort(sortingList, this.consumerIdSorter);
-      for (ManagedEntity entity : sortingList) {
-        entity.promoteEntity();
+      // Tell our implementation-provided services to become active (since they might have modes of operation).
+      this.serviceRegistry.notifyServerDidBecomeActive();
+
+      // Set the state of the manager.
+      this.shouldCreateActiveEntities = true;
+      // We can promote directly because this method is only called from PTH initialize 
+      //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
+      try {
+        // issue-439: We need to sort these entities, ascending by consumerID.
+        List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
+        Collections.sort(sortingList, this.consumerIdSorter);
+        for (ManagedEntity entity : sortingList) {
+          entity.promoteEntity();
+        }
+      } catch (ConfigurationException ce) {
+        LOGGER.warn("failure to promote all entities.  Server is crashing", ce);
+        throw new TCShutdownServerException("failure to promote all entities.  Server is crashing");
       }
-    } catch (ConfigurationException ce) {
-      LOGGER.warn("failure to promote all entities.  Server is crashing", ce);
-      throw new TCShutdownServerException("failure to promote all entities.  Server is crashing");
+  //  only enter active state after all the entities have promoted to active
+      processorPipeline.enterActiveState();
+    } finally {
+      snapshotLock.release();
     }
-//  only enter active state after all the entities have promoted to active
-    processorPipeline.enterActiveState();
   }
 
   @Override
