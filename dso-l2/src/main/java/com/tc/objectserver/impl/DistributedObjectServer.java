@@ -583,7 +583,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                 this.connectionIdFactory);
     
     this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, () -> {
-                                                                  ServerID server1 = (ServerID)l2Coordinator.getStateManager().getActiveNodeID();
+      StateManager stateMgr = l2Coordinator.getStateManager();
+      // only provide an active name if this server is not active
+      ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
       if (!server1.isNull()) {
         return server1.getName();
       }
