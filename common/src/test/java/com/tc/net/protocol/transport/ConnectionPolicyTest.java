@@ -116,5 +116,6 @@ public class ConnectionPolicyTest extends TestCase {
     assertTrue(policy.connectClient(new ConnectionID("bar", 2, null, null, ProductID.WAN)));
     policy.clientDisconnected(new ConnectionID("foo", 4, null, null, ProductID.TMS));
     assertFalse(policy.connectClient(new ConnectionID("baz", 3)));
+    assertTrue(policy.connectClient(new ConnectionID("redirect", -2)));
   }
 }
