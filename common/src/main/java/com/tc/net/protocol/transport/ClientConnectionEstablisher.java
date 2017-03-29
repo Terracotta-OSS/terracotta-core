@@ -257,6 +257,7 @@ public class ClientConnectionEstablisher {
           } catch (NoActiveException noactive) {
             target = null;
             LOGGER.debug(noactive);
+            handleConnectException(new IOException(noactive), false, connectionErrorLossyLogger);
           } catch (MaxConnectionsExceededException e) {
             target = null;
             reset();

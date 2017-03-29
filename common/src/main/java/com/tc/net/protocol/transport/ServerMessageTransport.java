@@ -71,7 +71,7 @@ public class ServerMessageTransport extends MessageTransportBase {
     boolean notifyTransportConnected = false;
     boolean recycleAndReturn = false;
     synchronized (status) {
-      if (status.isStart()) {
+      if (status.isConnected()) {
         recycleAndReturn = true;
         notifyTransportConnected = verifyAndHandleAck(message);
       } else if (!status.isEstablished()) {
@@ -116,7 +116,7 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private void handleAck(TransportHandshakeMessage ack) {
     synchronized (status) {
-      Assert.eval(status.isStart());
+      Assert.eval(status.isConnected());
       Assert.eval("Wrong connection ID: [" + getConnectionId() + "] != [" + ack.getConnectionId() + "]",
                   !getConnectionId().isValid() || getConnectionId().equals(ack.getConnectionId()));
       status.established();

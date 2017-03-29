@@ -265,6 +265,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   @Override
   public void connectEvent(TCConnectionEvent event) {
+    status.connected();
     return;
   }
 
@@ -284,7 +285,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       boolean forcedDisconnect = false;
       synchronized (status) {
         getLogger().warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
-        if (status.isEstablished() || status.isDisconnected()) {
+        if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
           if (status.isDisconnected()) forcedDisconnect = true;
           status.reset();
         } else {
@@ -361,6 +362,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       } else {
         setConnection(conn);
         this.status.reset();
+        //  connection is already connected.  set proper status
+        if (conn.isConnected()) {
+          this.status.connected();
+        }
         return true;
       }
     }

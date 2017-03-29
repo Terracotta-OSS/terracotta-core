@@ -23,7 +23,9 @@ public enum MessageTransportState {
    * XXX: move to client state machine Initial state for client transports.
    */
   STATE_START("START"),
-
+  
+  STATE_CONNECTED("CONNECTED"),
+  
   STATE_RESTART("RESTART"),
 
   /**

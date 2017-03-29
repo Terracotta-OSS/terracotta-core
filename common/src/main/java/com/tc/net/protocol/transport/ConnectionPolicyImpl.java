@@ -42,7 +42,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean isConnectAllowed(ConnectionID connID) {
-    if (connID.getProductId().isInternal()) {
+    if (connID.getProductId().isInternal() || !connID.isValid()) {
       // Don't count internal clients.
       return true;
     }
@@ -63,7 +63,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean connectClient(ConnectionID connID) {
-    if (connID.getProductId().isInternal()) {
+    if (connID.getProductId().isInternal() || !connID.isValid()) {
       // Always allow connections from internal products
       return true;
     }
@@ -92,7 +92,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized void clientDisconnected(ConnectionID connID) {
-    if (connID.getProductId().isInternal()) {
+    if (connID.getProductId().isInternal() || !connID.isValid()) {
       // ignore internal clients
       return;
     }
