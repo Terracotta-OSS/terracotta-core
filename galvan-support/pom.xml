@@ -48,6 +48,12 @@ limitations under the License.
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>terracotta-kit</artifactId>
+      <type>zip</type>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
       <version>${galvan.version}</version>
