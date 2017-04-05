@@ -52,7 +52,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   private Map<Long, CacheNode> cachedTreeRoot;
   private BestEffortsMonitoring bestEfforts;
 
-  public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, SingleThreadedTimer timer) {
+  public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ISimpleTimer timer) {
     this.globalRegistry = globalRegistry;
     this.thisServer = thisServer;
     this.otherServers = new HashMap<ServerID, PlatformServer>();

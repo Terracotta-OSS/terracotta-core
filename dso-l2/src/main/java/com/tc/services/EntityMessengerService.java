@@ -42,7 +42,7 @@ import com.tc.util.Assert;
  * a client) and using that to send "fake" VoltronEntityMessage instances into the server's message sink.
  */
 public class EntityMessengerService implements IEntityMessenger, CreateListener {
-  private final SingleThreadedTimer timer;
+  private final ISimpleTimer timer;
   private final Sink<VoltronEntityMessage> messageSink;
   private final ManagedEntity owningEntity;
   private final RetirementManager retirementManager;
@@ -51,7 +51,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   private Map<TokenWrapper, EarlyInvokeWrapper> earlyInvokeCache;
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(SingleThreadedTimer timer, Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+  public EntityMessengerService(ISimpleTimer timer, Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
     Assert.assertNotNull(timer);
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
@@ -268,7 +268,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     private final Sink<VoltronEntityMessage> messageSink;
     private final ManagedEntity owningEntity;
     private final FakeEntityMessage message;
-    private SingleThreadedTimer timer;
+    private ISimpleTimer timer;
     private long id;
     
     public SelfDestructiveRunnable(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity, FakeEntityMessage message) {
@@ -277,7 +277,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
       this.message = message;
     }
     
-    public void prepareForCancel(SingleThreadedTimer timer, long id) {
+    public void prepareForCancel(ISimpleTimer timer, long id) {
       this.timer = timer;
       this.id = id;
     }

@@ -36,11 +36,11 @@ import com.tc.util.Assert;
  * These messages are fed into the general VoltronEntityMessage sink, provided by the server implementation.
  */
 public class EntityMessengerProvider implements ImplementationProvidedServiceProvider {
-  private final SingleThreadedTimer timer;
+  private final ISimpleTimer timer;
   private Sink<VoltronEntityMessage> messageSink;
   private boolean serverIsActive;
 
-  public EntityMessengerProvider(SingleThreadedTimer timer) {
+  public EntityMessengerProvider(ISimpleTimer timer) {
     Assert.assertNotNull(timer);
     
     this.timer = timer;

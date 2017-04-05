@@ -22,13 +22,13 @@ public class BestEffortsMonitoring {
   // (this is marked public for tests)
   public static final long ASYNC_FLUSH_DELAY_MILLIS = 1000;
 
-  private final SingleThreadedTimer timer;
+  private final ISimpleTimer timer;
   private final Map<Long, Map<String, Serializable>> bestEffortsCache;
   private ActivePipeWrapper activeWrapper;
   private long outstandingTimerToken;
 
 
-  public BestEffortsMonitoring(SingleThreadedTimer timer) {
+  public BestEffortsMonitoring(ISimpleTimer timer) {
     this.timer = timer;
     this.bestEffortsCache = new HashMap<Long, Map<String, Serializable>>();
   }
