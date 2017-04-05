@@ -66,6 +66,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     // Note that the codec will actually expect to work on a sub-type of EntityMessage but this service isn't explicitly
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();
+    Assert.assertNotNull(codec);
     
     this.fakeDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
     
