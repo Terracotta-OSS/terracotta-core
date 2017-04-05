@@ -30,7 +30,7 @@ import com.tc.util.Assert;
  *  future.
  * NOTE:  This timer is single-threaded as it is expected that all tasks it runs are small.
  */
-public class SingleThreadedTimer {
+public class SingleThreadedTimer implements ISimpleTimer {
   private final TimeSource timeSource;
   private final Thread timerThread = new Thread() {
     @Override
@@ -68,11 +68,13 @@ public class SingleThreadedTimer {
     this.timerThread.setName("SingleThreadedTimer");
   }
 
+  @Override
   public synchronized void start() {
     this.threadIsRunning = true;
     this.timerThread.start();
   }
 
+  @Override
   public void stop() throws InterruptedException {
     synchronized (this) {
       this.threadIsRunning = false;
@@ -94,18 +96,25 @@ public class SingleThreadedTimer {
     }
   }
 
+  @Override
   public long currentTimeMillis() {
     return this.timeSource.currentTimeMillis();
   }
 
+  @Override
   public synchronized long addDelayed(Runnable toRun, long startTimeMillis) {
+    Assert.assertNotNull(toRun);
     return enqueueNewElement(toRun, startTimeMillis, 0L);
   }
 
+  @Override
   public synchronized long addPeriodic(Runnable toRun, long startTimeMillis, long repeatPeriodMillis) {
+    Assert.assertNotNull(toRun);
+    Assert.assertTrue(repeatPeriodMillis > 0);
     return enqueueNewElement(toRun, startTimeMillis, repeatPeriodMillis);
   }
 
+  @Override
   public synchronized boolean cancel(long id) {
     // Note that, if this is a hot-point, we could change it to be a side Map which points into the list but this keeps things simple and the list is currently always short.
     boolean didCancel = false;
