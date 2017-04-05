@@ -59,7 +59,7 @@ public class PassthroughServer implements PassthroughDumper {
     
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
-  private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
+  private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices;
   private PassthroughConnection pseudoConnection;
   private PassthroughMonitoringProducer monitoringProducer;
   
@@ -74,7 +74,7 @@ public class PassthroughServer implements PassthroughDumper {
   
   
   public PassthroughServer() {
-    this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>>();
+    this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>>();
     
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
     this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
@@ -107,7 +107,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.savedServerEntityServices.add(service);
   }
 
-  public void registerClientEntityService(EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service) {
+  public void registerClientEntityService(EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> service) {
     Assert.assertFalse(this.hasStarted);
     this.entityClientServices.add(service);
   }

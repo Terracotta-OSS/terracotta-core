@@ -53,7 +53,7 @@ public class PassthroughConnection implements Connection {
 
   private final PassthroughConnectionState connectionState;
   
-  private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices;
+  private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices;
   private long nextClientEndpointID;
   private final Map<Long, PassthroughEntityClientEndpoint<?, ?>> localEndpoints;
   private final Runnable onClose;
@@ -74,7 +74,7 @@ public class PassthroughConnection implements Connection {
   private Map<Long, PassthroughWait> waitersToResend;
 
 
-  public PassthroughConnection(String connectionName, String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
+  public PassthroughConnection(String connectionName, String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
     this.connectionName = connectionName;
     this.uuid = java.util.UUID.randomUUID().toString();
     
@@ -169,13 +169,13 @@ public class PassthroughConnection implements Connection {
   }
 
   @SuppressWarnings({ "unchecked" })
-  public <T> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config) {
-    EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service = getEntityClientService(cls);
-    return (T) storeNewEndpointAndCreateInstance(cls, name, clientInstanceID, config, service);
+  public <T, U> T createEntityInstance(Class<T> cls, String name, final long clientInstanceID, long clientSideVersion, byte[] config, U userData) {
+    EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, U>) getEntityClientService(cls);
+    return (T) storeNewEndpointAndCreateInstance(cls, name, clientInstanceID, config, service, userData);
   }
 
   // Exists to create a generic type context for M and R.
-  private <M extends EntityMessage, R extends EntityResponse> Entity storeNewEndpointAndCreateInstance(Class<?> cls, String name, final long clientInstanceID, byte[] config, EntityClientService<?, ?, M, R> service) {
+  private <M extends EntityMessage, R extends EntityResponse, U> Entity storeNewEndpointAndCreateInstance(Class<?> cls, String name, final long clientInstanceID, byte[] config, EntityClientService<?, ?, M, R, U> service, U userData) {
     Runnable onClose = new Runnable() {
       @Override
       public void run() {
@@ -184,7 +184,7 @@ public class PassthroughConnection implements Connection {
     };
     PassthroughEntityClientEndpoint<M, R> endpoint = new PassthroughEntityClientEndpoint<M, R>(this, cls, name, clientInstanceID, config, service.getMessageCodec(), onClose);
     this.localEndpoints.put(clientInstanceID, endpoint);
-    return service.create(endpoint);
+    return service.create(endpoint, userData);
   }
 
   public synchronized void sendMessageToClient(PassthroughServerProcess sender, byte[] payload) {
@@ -394,16 +394,16 @@ public class PassthroughConnection implements Connection {
   }
 
   @Override
-  public <T extends Entity, C> EntityRef<T, C> getEntityRef(Class<T> cls, long version, String name) {
+  public <T extends Entity, C, U> EntityRef<T, C, U> getEntityRef(Class<T> cls, long version, String name) {
     @SuppressWarnings("unchecked")
-    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> service = (EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse>) getEntityClientService(cls);
-    return new PassthroughEntityRef<T, C>(this, service, cls, version, name);
+    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U>) getEntityClientService(cls);
+    return new PassthroughEntityRef<T, C, U>(this, service, cls, version, name);
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> getEntityClientService(Class rawClass) {
-    EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> selected = null;
-    for (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse> service : this.entityClientServices) {
+  private EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> getEntityClientService(Class rawClass) {
+    EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> selected = null;
+    for (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> service : this.entityClientServices) {
       if (service.handlesEntityType(rawClass)) {
         Assert.assertTrue(null == selected);
         selected = service;

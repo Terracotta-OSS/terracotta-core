@@ -39,15 +39,16 @@ import org.terracotta.exception.EntityVersionMismatchException;
  * 
  * @param <T> The entity type
  * @param <C> The configuration type
+ * @param <U> User data type
  */
-public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C> {
+public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
   private final PassthroughConnection passthroughConnection;
-  private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> service;
+  private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service;
   private final Class<T> clazz;
   private final long version;
   private final String name;
   
-  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> service, Class<T> clazz, long version, String name) {
+  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service, Class<T> clazz, long version, String name) {
     this.passthroughConnection = passthroughConnection;
     this.service = service;
     this.clazz = clazz;
@@ -56,7 +57,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
   }
 
   @Override
-  public T fetchEntity() throws EntityNotFoundException, EntityVersionMismatchException {
+  public T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
     PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz.getCanonicalName(), this.name, clientInstanceID, this.version);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
@@ -77,7 +78,7 @@ public class PassthroughEntityRef<T extends Entity, C> implements EntityRef<T, C
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
-    return this.passthroughConnection.createEntityInstance(this.clazz, this.name, clientInstanceID, this.version, rawConfig);
+    return this.passthroughConnection.createEntityInstance(this.clazz, this.name, clientInstanceID, this.version, rawConfig, userData);
   }
 
   @Override
