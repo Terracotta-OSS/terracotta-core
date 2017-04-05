@@ -42,12 +42,11 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
-import java.util.List;
 import java.util.ServiceLoader;
 
 
 public class EntityClientServiceFactory {
-  public static <T extends Entity, C> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> creationServiceForType(Class<T> cls) {
+  public static <T extends Entity, C, U> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> creationServiceForType(Class<T> cls) {
     return creationServiceForType(cls, EntityClientServiceFactory.class.getClassLoader());
   }
 
@@ -55,8 +54,8 @@ public class EntityClientServiceFactory {
    * Note that this returns the service or null if no service could be found.
    */
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends Entity, C> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> creationServiceForType(Class<T> cls, ClassLoader classLoader) {
-    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> foundService = null;
+  public static <T extends Entity, C, U> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> creationServiceForType(Class<T> cls, ClassLoader classLoader) {
+    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> foundService = null;
     ServiceLoader<EntityClientService> implementations = ServiceLoader.load(EntityClientService.class,  classLoader);
     for (EntityClientService instance : implementations) {
       if (instance.handlesEntityType(cls)) {
