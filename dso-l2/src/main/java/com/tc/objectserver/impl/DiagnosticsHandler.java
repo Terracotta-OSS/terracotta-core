@@ -20,18 +20,40 @@ package com.tc.objectserver.impl;
 
 import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
+import com.tc.exception.TCRuntimeException;
+import com.tc.l2.logging.TCLoggingLog4J;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TCLoggingService;
+import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.logging.TCLoggingBroadcaster;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
+import com.tc.server.TCServer;
+import com.tc.util.StringUtil;
+import com.tc.util.runtime.ThreadDumpUtil;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.spi.LoggingEvent;
+
+import javax.management.JMException;
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.NotCompliantMBeanException;
+import javax.management.Notification;
+import javax.management.ObjectName;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -40,9 +62,33 @@ public class DiagnosticsHandler implements TCMessageSink {
   
   private final TCLogger logger = TCLogging.getLogger(DiagnosticsHandler.class);
   private final DistributedObjectServer server;
+  private final TCServer tcServer;
+  private final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+  private TCServerInfoMBean tcServerInfoMBean;
+  private static DiagnosticAppender diagnosticAppender;
 
-  public DiagnosticsHandler(DistributedObjectServer server) {
+  // basically copied form JMXLogging.java
+  static {
+    //  hack to get the underlying service for logging implementation
+    TCLoggingService service = TCLogging.getLoggingService();
+    // all logging goes to JMX based appender
+    if (service instanceof TCLoggingLog4J) {
+      diagnosticAppender = new DiagnosticAppender();
+      diagnosticAppender.setLayout(new PatternLayout(TCLoggingLog4J.FILE_AND_JMX_PATTERN));
+      diagnosticAppender.setName("JMX appender");
+      ((TCLoggingLog4J)service).addToAllLoggers(diagnosticAppender);
+    }
+  }
+
+  public DiagnosticsHandler(DistributedObjectServer server, TCServer tcServer) {
     this.server = server;
+    this.tcServer = tcServer;
+    try {
+      ObjectName internalTerracottaServerObjectName = new ObjectName("org.terracotta:name=TerracottaServer");
+      tcServerInfoMBean = JMX.newMBeanProxy(mBeanServer, internalTerracottaServerObjectName, TCServerInfoMBean.class);
+    } catch (JMException e) {
+      System.err.println("Ouch, Diagnostic entity won't work properly because of a JMX Exception !" +  e.getMessage());
+    }
   }
   
   @Override
@@ -66,6 +112,52 @@ public class DiagnosticsHandler implements TCMessageSink {
         case "getClusterState":
           result = server.getClusterState(set);
           break;
+        case "getConfig":
+          result = tcServer.getConfig().getBytes(set);
+          break;
+        case "getProcessArguments":
+          result = StringUtil.toString(tcServer.processArguments(), " ", null, null).getBytes(set);
+          break;
+        case "getServerInfoAttributes":
+          if(tcServerInfoMBean == null) {
+            result = "500 KIND_OF : The tcServerInfoMBean could not be initialized.".getBytes(set);
+          } else {
+            StringBuilder stringBuilder =  new StringBuilder();
+            Map<String, Object> resultMap = new HashMap<String, Object>();
+            resultMap.put("tcProperties", tcServerInfoMBean.getTCProperties());
+            resultMap.put("config", tcServerInfoMBean.getConfig());
+            resultMap.put("environment", tcServerInfoMBean.getEnvironment());
+            resultMap.put("processArguments", tcServerInfoMBean.getProcessArguments());
+
+            for (Map.Entry<String, Object> stringObjectEntry : resultMap.entrySet()) {
+              stringBuilder
+                  .append(stringObjectEntry.getKey())
+                  .append("$KEY_VALUE_SEPARATOR$")
+                  .append(stringObjectEntry.getValue())
+                  .append("$ENTRY_SEPARATOR$");
+            }
+            result = stringBuilder.toString().getBytes(set);
+          }
+          break;
+
+        case "takeThreadDump":
+          result = ThreadDumpUtil.getThreadDump().getBytes(set);
+          break;
+        case "terminateServer":
+          tcServer.shutdown();
+          break;
+        case "forceTerminateServer":
+          Runtime.getRuntime().exit(0);
+          break;
+        case "getLogs":
+          StringBuilder stringBuilder =  new StringBuilder();
+          List<Notification> logNotifications = diagnosticAppender.getBroadcastingBean().getLogNotifications();
+          for (Notification logNotification : logNotifications) {
+            stringBuilder.append(logNotification.getMessage());
+          }
+          result = stringBuilder.toString().getBytes(set);
+          break;
+
         default:
           result = "UNKNOWN CMD".getBytes(set);
           break;
@@ -83,5 +175,40 @@ public class DiagnosticsHandler implements TCMessageSink {
       resp.setResponse(msg.getTransactionID(), out.toByteArray());
       resp.send();
     }
+  }
+
+  // basically copied from JMXAppender.java
+  private static class DiagnosticAppender extends AppenderSkeleton {
+
+    private final TCLoggingBroadcaster broadcastingBean;
+
+    public DiagnosticAppender() {
+      try {
+        broadcastingBean = new TCLoggingBroadcaster();
+      } catch (NotCompliantMBeanException ncmbe) {
+        throw new TCRuntimeException("Unable to construct the broadcasting bean: this is a programming error in "
+            + TCLoggingBroadcaster.class.getName(), ncmbe);
+      }
+    }
+
+    public final TCLoggingBroadcaster getBroadcastingBean() {
+      return broadcastingBean;
+    }
+
+    @Override
+    protected void append(LoggingEvent event) {
+      broadcastingBean.broadcastLogEvent(getLayout().format(event), event.getThrowableStrRep());
+    }
+
+    @Override
+    public boolean requiresLayout() {
+      return false;
+    }
+
+    @Override
+    public void close() {
+      // Do nothing
+    }
+
   }
 }
