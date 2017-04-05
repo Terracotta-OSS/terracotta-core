@@ -60,7 +60,7 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
     Future<Void> waiter = connection.createClientResponseFuture();
     
     // We know that the entity better exist, by this point, to use the service.
-    CommonServerEntity<?, ?> entity = this.container.entity;
+    CommonServerEntity<?, ?> entity = this.container.getEntity();
     Assert.assertTrue(null != entity);
     byte[] payload = serialize(this.container.codec, entityMessage);
     PassthroughMessage message = PassthroughMessageCodec.createMessageToClient(clientInstanceID, payload);

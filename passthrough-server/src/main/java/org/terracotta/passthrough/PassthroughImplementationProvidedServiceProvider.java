@@ -56,11 +56,39 @@ public interface PassthroughImplementationProvidedServiceProvider {
    * so we use this class in order to describe where an entity will eventually live when creating the service instance for
    * this entity.
    * The reason for this is that the entity constructor may ask to get a service which means that the entity isn't yet known
-   * to the platform.  So long as the entity doesn't try to use a built-in service in its constructor, but only requests it,
-   * then this allows us to defer the connection.
+   * to the platform.
+   * If the entity actually tries to use a built-in service, in its constructor, and that service needs direct access
+   * to the entity instance, it must register for notifyOnEntitySet and cache the request until it can apply it when the
+   * instance is known.
    */
   public static class DeferredEntityContainer {
-    public CommonServerEntity<?, ?> entity;
     public MessageCodec<?, ?> codec;
+    private CommonServerEntity<?, ?> entity;
+    private EntityContainerListener listener;
+    
+    public void notifyOnEntitySet(EntityContainerListener listener) {
+      // Note that our current implementation only handles one such listener (only used by PassthroughMessengerService).
+      Assert.assertTrue(null == this.listener);
+      this.listener = listener;
+    }
+    public CommonServerEntity<?, ?> getEntity() {
+      return this.entity;
+    }
+    public void setEntity(CommonServerEntity<?, ?> entity) {
+      Assert.assertTrue(null == this.entity);
+      Assert.assertTrue(null != entity);
+      this.entity = entity;
+      if (null != this.listener) {
+        this.listener.entitySetInContainer(this);
+      }
+    }
+    public void clearEntity() {
+      this.entity = null;
+    }
+  }
+
+
+  public interface EntityContainerListener {
+    public void entitySetInContainer(DeferredEntityContainer container);
   }
 }

@@ -208,6 +208,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         // We don't expect a version mismatch here or other failure in this test system.
         Assert.unexpected(e);
       }
+      // We know the codec, immediately, so pass that in.  We will need to register the entity instance after it is
+      // created.
+      container.codec = service.getMessageCodec();
+      
       PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityData.className, entityData.entityName);
       CommonServerEntity<?, ?> newEntity = null;
       try {
@@ -217,8 +221,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         Assert.unexpected(e);
       }
       // We can now store the entity into the deferred container.
-      container.entity = newEntity;
-      container.codec = service.getMessageCodec();
+      container.setEntity(newEntity);
       // Tell the entity to load itself from storage.
       if (newEntity instanceof ActiveServerEntity) {
         ((ActiveServerEntity<?, ?>)newEntity).loadExisting();
@@ -711,6 +714,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     EntityServerService<?, ?> service = getServerEntityServiceForVersion(entityClassName, entityName, version);
     // This is an entity consumer so we use the deferred container.
     DeferredEntityContainer container = new DeferredEntityContainer();
+    // We know the codec, immediately, so pass that in.  We will need to register the entity instance after it is
+    // created.
+    container.codec = service.getMessageCodec();
     this.consumerToLiveContainerMap.put(consumerID, container);
     PassthroughServiceRegistry registry = getNextServiceRegistry(entityClassName, entityName, container);
     // Before we create the entity, we want to store this information regarding class and name, since that might be needed by a service in its start up.
@@ -730,8 +736,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // Wrap this and re-throw.
       throw new EntityConfigurationException(entityClassName, entityName, e);
     }
-    container.entity = newEntity;
-    container.codec = service.getMessageCodec();
+    container.setEntity(newEntity);
     
     // Store the tuple for this entity, so it can see itself via monitoring.
     if (null != this.serviceInterface) {
@@ -802,7 +807,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         } catch (IOException e) {
           Assert.unexpected(e);
         }
-        container.entity = null;
+        container.clearEntity();
       }
       if (success && null != this.activeEntities) {
         boolean didRemove = false;
