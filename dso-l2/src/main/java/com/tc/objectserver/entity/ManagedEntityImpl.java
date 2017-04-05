@@ -102,6 +102,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   private int clientReferenceCount = 0;
   private final boolean canDelete;
   private volatile boolean isDestroyed;
+  // We only track a single CreateListener since it is intended to be the EntityMessengerService attached to this.
+  private CreateListener createListener;
   
   private final MessageCodec<EntityMessage, EntityResponse> codec;
   private final SyncMessageCodec<EntityMessage> syncCodec;
@@ -689,6 +691,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     this.isDestroyed = false;
+    if (null != this.createListener) {
+      this.createListener.entityCreationSucceeded(this);
+    }
     eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
     response.complete();
   }
@@ -926,6 +931,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     return this.consumerID;
   }
 
+  @Override
+  public void setSuccessfulCreateListener(CreateListener listener) {
+    Assert.assertNull(this.createListener);
+    this.createListener = listener;
+  }
+
 
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     logger.info("loadExisting entity: " + getID());
@@ -953,6 +964,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     this.isDestroyed = false;
+    if (null != this.createListener) {
+      this.createListener.entityCreationSucceeded(this);
+    }
   }
 
   private static class PassiveSyncServerEntityRequest implements ServerEntityRequest {

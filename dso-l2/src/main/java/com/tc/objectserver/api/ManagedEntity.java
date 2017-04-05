@@ -33,7 +33,6 @@ import org.terracotta.entity.EntityResponse;
 
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityUserException;
 
 
 /**
@@ -93,6 +92,7 @@ public interface ManagedEntity extends StateDumpable {
    * @return The codec which can translate to/from this entity's message dialect.
    */
   MessageCodec<? extends EntityMessage, ? extends EntityResponse> getCodec();
+
   /**
    * Of specific interest to the EntityMessengerService since it may need to install dependencies between messages to this
    * entity.
@@ -107,4 +107,25 @@ public interface ManagedEntity extends StateDumpable {
    * @return The unique ID associated with the receiver.
    */
   public long getConsumerID();
+
+  /**
+   * Sets the listener to be notified once this instance finishes being created from new or loaded from existing.
+   * The implementation is allowed to assume that there will only be, at most, one of these listeners.  This is
+   * ultimately expected to be the EntityMessengerService associated with the managed entity.
+   * @param listener The listener to notify when the receiver is finished being created or loaded.
+   */
+  public void setSuccessfulCreateListener(CreateListener listener);
+
+
+  /**
+   * Interface used to describe the argument to setSuccessfulCreateListener.
+   */
+  public interface CreateListener {
+    /**
+     * Called by sender when it is finished being created from new or loaded from existing.
+     * 
+     * @param sender The entity which is ready.
+     */
+    public void entityCreationSucceeded(ManagedEntity sender);
+  }
 }

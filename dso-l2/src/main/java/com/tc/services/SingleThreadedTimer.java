@@ -99,10 +99,13 @@ public class SingleThreadedTimer {
   }
 
   public synchronized long addDelayed(Runnable toRun, long startTimeMillis) {
+    Assert.assertNotNull(toRun);
     return enqueueNewElement(toRun, startTimeMillis, 0L);
   }
 
   public synchronized long addPeriodic(Runnable toRun, long startTimeMillis, long repeatPeriodMillis) {
+    Assert.assertNotNull(toRun);
+    Assert.assertTrue(repeatPeriodMillis > 0);
     return enqueueNewElement(toRun, startTimeMillis, repeatPeriodMillis);
   }
 

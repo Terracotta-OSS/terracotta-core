@@ -20,8 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.objectserver.api.ManagedEntity;
@@ -39,7 +37,6 @@ import org.terracotta.exception.EntityException;
 public class PlatformEntity implements ManagedEntity {
   public static EntityID PLATFORM_ID = new EntityID("platform", "root");
   public static long VERSION = 1L;
-  private static EntityDescriptor descriptor = EntityDescriptor.NULL_ID;
   public final RequestProcessor processor;
   private boolean isActive;
 
@@ -141,5 +138,11 @@ public class PlatformEntity implements ManagedEntity {
   public long getConsumerID() {
     // The platform uses the consumerID 0 constant.
     return ServiceProvider.PLATFORM_CONSUMER_ID;
+  }
+
+  @Override
+  public void setSuccessfulCreateListener(CreateListener listener) {
+    // Not expected on this entity.
+    Assert.assertFalse(true);
   }
 }

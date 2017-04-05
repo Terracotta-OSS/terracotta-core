@@ -83,6 +83,8 @@ import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
+
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
 
 
@@ -396,9 +398,8 @@ public class ManagedEntityImplTest {
   }
 
   @Test
-  public void testPerformAction() throws Exception {    
+  public void testPerformAction() throws Exception {
     TestingResponse response = mockResponse();
-    byte[] payload = { 0 };
     byte[] returnValue = { 1 };
     when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
@@ -462,7 +463,6 @@ public class ManagedEntityImplTest {
   @Test
   public void testNoopFlush() throws Exception {
     TestingResponse response = mockResponse();
-    byte[] payload = { 0 };
     byte[] returnValue = { 1 };
     when(serverEntityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>(){
       @Override
@@ -747,7 +747,24 @@ public class ManagedEntityImplTest {
     response2.waitFor();
     verify(activeServerEntity).destroy();
   }
-  
+
+  @Test
+  public void testCreateListener() throws Exception {
+    // We will set this flag from inside the listener.
+    final boolean[] indirectFlag = new boolean[1];
+    managedEntity.setSuccessfulCreateListener(new ManagedEntity.CreateListener(){
+      @Override
+      public void entityCreationSucceeded(ManagedEntity sender) {
+        indirectFlag[0] = true;
+      }});
+    TestingResponse response = mockResponse();
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
+    response.waitFor();
+    
+    Assert.assertTrue(indirectFlag[0]);
+  }
+
+
   private MessagePayload mockCreatePayload(Serializable config) {
     try {
       return MessagePayload.commonMessagePayloadBusy(serialize(config), null, true);
