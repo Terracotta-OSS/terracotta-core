@@ -73,7 +73,13 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf);
     try {
       lsnr2.start(Collections.<ClientID>emptySet());
-      fail();
+      // NOTE (issue-529):  When running on Windows, in a pre-Java7u25 JVM, this bind succeeds.
+      if (isWindows() && isJava6()) {
+        System.err.println("WARNING:  bind success due to lack of SO_EXCLUSIVEADDRUSE - ignoring test failure");
+        lsnr2.stop(5000);
+      } else {
+        fail();
+      }
     } catch (IOException ioe) {
       // expect a bind exception
     }
@@ -115,4 +121,11 @@ public class NetworkListenerTest extends TestCase {
     assertTrue(commsMgr.getAllListeners().length == 0);
   }
 
+  private static boolean isWindows() {
+    return (-1 != System.getProperty("os.name").toLowerCase().indexOf("windows"));
+  }
+
+  private static boolean isJava6() {
+    return (0 == System.getProperty("java.version").toLowerCase().indexOf("1.6"));
+  }
 }
