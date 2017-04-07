@@ -33,6 +33,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,7 +54,7 @@ public class TCLoggingTest extends TCTestCase {
   }
 
   public void testRollover() throws Exception {
-    String logDir = "/tmp/terracotta/test/com/tc/logging";
+    String logDir = Files.createTempDirectory("tc-logging").toFile().getAbsolutePath();
     File logDirFolder = new File(logDir);
     logDirFolder.mkdirs();
 
