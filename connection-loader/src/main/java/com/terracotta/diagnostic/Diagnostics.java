@@ -23,6 +23,21 @@ import org.terracotta.connection.entity.Entity;
 
 public interface Diagnostics extends Entity {
   String getState();
-  
-  String getClusterState();  
+
+  String getClusterState();
+
+  String getConfig();
+
+  String getProcessArguments();
+
+  String getServerInfoAttributes();
+
+  String takeThreadDump();
+
+  void terminateServer();
+
+  void forceTerminateServer();
+
+  String getLogs();
+
 }
