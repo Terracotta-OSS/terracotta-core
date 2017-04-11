@@ -842,7 +842,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   @Override
   public void resetReferences(int count) {
-    this.clientReferenceCount = count;
+    if (canDelete) {
+      this.clientReferenceCount = count;
+    } else {
+      Assert.assertEquals(this.clientReferenceCount, ManagedEntityImpl.UNDELETABLE_ENTITY);
+    }
   }
   
   @Override
@@ -854,8 +858,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.isInActiveState = true;
 // any clients, previously connected will reconnect or not.  Failed reconnects will be cleaned
 // up on passives 
-    this.clientReferenceCount = 0;
-
+    if (canDelete) {
+      this.clientReferenceCount = 0;
+    } else {
+      Assert.assertEquals(this.clientReferenceCount, ManagedEntityImpl.UNDELETABLE_ENTITY);
+    }
     if (!this.isDestroyed) {
       logger.info("promoteEntity: " + getID());
       if (null != this.passiveServerEntity) {

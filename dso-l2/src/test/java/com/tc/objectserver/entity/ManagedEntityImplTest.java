@@ -253,6 +253,27 @@ public class ManagedEntityImplTest {
   
   
   @Test 
+  public void testPromotePermanentEntity() throws Exception {
+    // first create a passive entity and then promote
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, false);
+    ServerEntityRequest request = mockCreateEntityRequest();
+    TestingResponse response = mockResponse();
+    String config = "foo";
+    MessagePayload arg = mockCreatePayload(config);
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    response.waitFor();
+    verify(response).complete(Mockito.any());
+    promote();
+
+    ServerEntityRequest request2 = mockDestroyEntityRequest();
+    TestingResponse response2 = mockResponse();
+    MessagePayload arg2 = mockInvokePayload();
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request2, arg2, null, response2::complete, response2::failure));
+    response2.waitFor();
+    verify(response2).failure(Mockito.any());
+  }
+  
+  @Test 
   public void testExecutionStrategy() throws Exception {
     // first create a passive entity and then promote
     ServerEntityRequest request = mockCreateEntityRequest();
@@ -802,6 +823,12 @@ public class ManagedEntityImplTest {
     return request;
   }
 
+  private ServerEntityRequest mockDestroyEntityRequest() {
+    ServerEntityRequest request = mockRequestForAction(ServerEntityAction.DESTROY_ENTITY);
+    when(request.getNodeID()).thenReturn(nodeID);
+    return request;
+  }
+  
   private ServerEntityRequest mockReconfigureEntityRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RECONFIGURE_ENTITY);
     when(request.getNodeID()).thenReturn(nodeID);
