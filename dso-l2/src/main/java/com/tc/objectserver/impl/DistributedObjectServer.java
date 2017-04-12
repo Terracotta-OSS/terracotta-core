@@ -1156,14 +1156,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return sb.toString();
   }
 
-  public boolean stopActiveMode() throws TCTimeoutException {
-    // TODO:: Make this not take timeout and force stop
-    consoleLogger.info("Stopping ACTIVE Terracotta Server instance on " + format(this.l1Listener) + ".");
-    this.l1Listener.stop(10000);
-    this.l1Listener.getChannelManager().closeAllChannels();
-    return true;
-  }
-
   /**
    * Since this is accessed via JMX and l1Listener isn't initialed when a secondary is waiting on the lock file, use the
    * config value unless the special value 0 is specified for use in the tests to get a random port.

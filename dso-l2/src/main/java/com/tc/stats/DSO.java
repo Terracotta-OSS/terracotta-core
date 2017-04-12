@@ -224,41 +224,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  private ObjectName makeRootObjectName(String name, ObjectID id) {
-    try {
-      return new ObjectName(DSO_OBJECT_NAME_PREFIX + "rootID=" + id.toLong());
-    } catch (MalformedObjectNameException e) {
-      // this shouldn't happen
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void addRootMBean(String name, ObjectID rootID) {
-    // XXX: There should be a cleaner way to do this ignore
-    if (name.startsWith("@")) {
-      // ignore literal roots
-      return;
-    }
-
-    synchronized (rootObjectNames) {
-      ObjectName rootName = makeRootObjectName(name, rootID);
-      if (mbeanServer.isRegistered(rootName)) {
-        // this can happen since the initial root setup races with the object manager "root created" event
-        logger.debug("Root MBean already registered for name " + rootName);
-        return;
-      }
-
-      try {
-        Root dsoRoot = new Root(rootID, name);
-        mbeanServer.registerMBean(dsoRoot, rootName);
-        rootObjectNames.add(rootName);
-        sendNotification(ROOT_ADDED, rootName);
-      } catch (Exception e) {
-        logger.error(e);
-      }
-    }
-  }
-
   private void removeClientMBean(MessageChannel channel) {
     ObjectName clientName = makeClientObjectName(channel);
 
