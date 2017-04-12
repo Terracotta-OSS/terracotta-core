@@ -25,6 +25,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
@@ -54,13 +55,17 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
       @Override
       public Object invoke(Object proxy, final Method method, Object[] args) throws Throwable {
         try {
-          return ece.beginInvoke().message(new EntityMessage() {
+          final String methodName = method.getName();
+          InvokeFuture returnValue = ece.beginInvoke().message(new EntityMessage() {
             @Override
             public String toString() {
               return method.getName();
             }
-
-          }).invoke().get().toString();
+          }).invoke();
+          // if the server is terminating, never going to get a message back.  just return null
+          if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer")) {
+            return returnValue.get().toString();
+          }
         } catch (EntityException ee) {
           
         } catch (InterruptedException ie) {

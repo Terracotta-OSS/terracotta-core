@@ -25,4 +25,15 @@ public interface Diagnostics extends Entity {
   String getState();
   
   String getClusterState();  
+  
+  String getConfig();
+
+  String getProcessArguments();
+
+  String getThreadDump();
+
+  String terminateServer();
+
+  String forceTerminateServer();  
+  
 }
