@@ -36,4 +36,10 @@ public interface Diagnostics extends Entity {
 
   String forceTerminateServer();  
   
+  String get(String name, String attribute);
+ 
+  String set(String name, String attribute, String arg);
+  
+  String invoke(String name, String cmd);
+  
 }

@@ -53,13 +53,21 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
     return (Diagnostics)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {Diagnostics.class},
             new java.lang.reflect.InvocationHandler() {
       @Override
-      public Object invoke(Object proxy, final Method method, Object[] args) throws Throwable {
+      public Object invoke(Object proxy, Method method, final Object[] args) throws Throwable {
         try {
           final String methodName = method.getName();
           InvokeFuture returnValue = ece.beginInvoke().message(new EntityMessage() {
             @Override
             public String toString() {
-              return method.getName();
+              if (methodName.equals("get")) {
+                return "getJMX " + args[0] + " " + args[1];
+              } else if (methodName.equals("set")) {
+                return "setJMX " + args[0] + " " + args[1] + " " + args[2];
+              } else if (methodName.equals("invoke")) {
+                return "invokeJMX " + args[0] + " " + args[1];
+              } else {
+                return methodName;
+              }
             }
           }).invoke();
           // if the server is terminating, never going to get a message back.  just return null
