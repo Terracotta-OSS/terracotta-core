@@ -18,6 +18,10 @@
  */
 package com.tc.objectserver.impl;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import com.tc.management.TerracottaManagement;
+import com.tc.management.TerracottaManagement.MBeanKeys;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.util.StringUtil;
 import java.lang.management.ManagementFactory;
@@ -38,22 +42,30 @@ import javax.management.ReflectionException;
  *
  */
 public class JMXSubsystem {
+  private static final TCLogger LOGGER = TCLogging.getLogger(DiagnosticsHandler.class);
   private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-
+  
   public JMXSubsystem() {
   }
   
   private ObjectName getObjectName(String id) throws MalformedObjectNameException {
-    switch(id) {
+    ObjectName name = null;
+// support some shortcuts regardless of registration
+    switch (id) {
       case "Server":
-        return L2MBeanNames.TC_SERVER_INFO;
+        name = L2MBeanNames.TC_SERVER_INFO;
+        break;
       case "Dumper":
-        return L2MBeanNames.DUMPER;
+        name = L2MBeanNames.DUMPER;
+        break;
       case "DSO":
-        return L2MBeanNames.DSO;
+        name = L2MBeanNames.DSO;
+        break;
       default:
-        return ObjectName.getInstance(id);
+        name = new ObjectName(TerracottaManagement.MBeanDomain.PUBLIC + ":" + MBeanKeys.NAME + "=" + id);
+        break;
     }
+    return name;
   }
   
   public String get(String target, String attribute) {
