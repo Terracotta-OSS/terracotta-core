@@ -217,7 +217,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private ObjectName makeClientObjectName(MessageChannel channel) {
     try {
-      return TerracottaManagement.createObjectName(TerracottaManagement.Type.Client, TerracottaManagement.Subsystem.None, null, channel.getProductId().toString() + "" + channel.getChannelID().toLong(), TerracottaManagement.MBeanDomain.PUBLIC);
+      return TerracottaManagement.createObjectName(TerracottaManagement.Type.Client, channel.getProductId().toString() + "" + channel.getChannelID().toLong(), TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException e) {
       // this shouldn't happen
       throw new RuntimeException(e);

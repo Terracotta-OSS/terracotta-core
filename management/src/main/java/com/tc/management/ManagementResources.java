@@ -36,20 +36,12 @@ class ManagementResources {
     return resources.getString("domain.internal");
   }
 
-  String getTimMBeanDomain() {
-    return resources.getString("domain.tim");
-  }
-
   String getNodeNameSystemProperty() {
     return resources.getString("system-property.node-name");
   }
 
   String getDsoClientType() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.client"));
-  }
-
-  String getSessionsType() {
-    return TerracottaManagement.quoteIfNecessary(resources.getString("type.sessions"));
   }
 
   public String getTerracottaClusterType() {
@@ -62,18 +54,6 @@ class ManagementResources {
 
   String getTerracottaAgentType() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.agent"));
-  }
-
-  String getTerracottaTimType() {
-    return TerracottaManagement.quoteIfNecessary(resources.getString("type.tim"));
-  }
-
-  String getTransactionSubsystem() {
-    return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.tx"));
-  }
-
-  String getLockingSubsystem() {
-    return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.locking"));
   }
 
   String getObjectManagementSubsystem() {

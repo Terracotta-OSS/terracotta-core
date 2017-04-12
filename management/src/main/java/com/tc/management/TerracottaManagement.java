@@ -19,8 +19,8 @@
 package com.tc.management;
 
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.MBeanNames;
 import com.tc.net.TCSocketAddress;
+import com.tc.util.Assert;
 import com.tc.util.UUID;
 
 import java.io.IOException;
@@ -36,7 +36,6 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
-import javax.management.Query;
 import javax.management.QueryExp;
 
 public abstract class TerracottaManagement {
@@ -47,12 +46,7 @@ public abstract class TerracottaManagement {
 
     private static final Map<String, Type> typesByName      = Collections.synchronizedMap(new HashMap<String, Type>());
     public static final Type Client        = new Type(MANAGEMENT_RESOURCES.getDsoClientType());
-    public static final Type Sessions         = new Type(MANAGEMENT_RESOURCES.getSessionsType());
     public static final Type Server           = new Type(MANAGEMENT_RESOURCES.getTerracottaServerType());
-    public static final Type Cluster          = new Type(MANAGEMENT_RESOURCES.getTerracottaClusterType());
-    public static final Type Agent            = new Type(MANAGEMENT_RESOURCES.getTerracottaAgentType());
-    public static final Type Tim              = new Type(MANAGEMENT_RESOURCES.getTerracottaTimType());
-    public static final Type TcOperatorEvents = new Type(MANAGEMENT_RESOURCES.getTerracottaOperatorEventType());
 
     private final String     type;
 
@@ -74,9 +68,6 @@ public abstract class TerracottaManagement {
   public static class Subsystem {
 
     private static final Map<String, Subsystem>      subsystemByName  = Collections.synchronizedMap(new HashMap<String, Subsystem>());
-    public static final Subsystem Tx               = new Subsystem(MANAGEMENT_RESOURCES.getTransactionSubsystem());
-    public static final Subsystem Locking          = new Subsystem(MANAGEMENT_RESOURCES.getLockingSubsystem());
-    public static final Subsystem ObjectManagement = new Subsystem(MANAGEMENT_RESOURCES.getObjectManagementSubsystem());
     public static final Subsystem Logging          = new Subsystem(MANAGEMENT_RESOURCES.getLoggingSubsystem());
     public static final Subsystem Statistics       = new Subsystem(MANAGEMENT_RESOURCES.getStatisticsSubsystem());
     public static final Subsystem None             = new Subsystem(MANAGEMENT_RESOURCES.getNoneSubsystem());
@@ -107,8 +98,7 @@ public abstract class TerracottaManagement {
   }
 
   public enum MBeanDomain {
-    PUBLIC(MANAGEMENT_RESOURCES.getPublicMBeanDomain()), INTERNAL(MANAGEMENT_RESOURCES.getInternalMBeanDomain()), TIM(
-        MANAGEMENT_RESOURCES.getTimMBeanDomain());
+    PUBLIC(MANAGEMENT_RESOURCES.getPublicMBeanDomain());
 
     private final String value;
 
@@ -130,29 +120,14 @@ public abstract class TerracottaManagement {
   private static final String NODE_PREFIX_KEY = "clients";
   private static final String NODE_PREFIX     = NODE_PREFIX_KEY + EQUALS + "Clients";
 
-  private static final String NODE_NAME       = System.getProperty(MANAGEMENT_RESOURCES.getNodeNameSystemProperty());
-
-  public static ObjectName createObjectName(Type type, Subsystem subsystem,
-                                            TCSocketAddress remoteBeanHome, String uiFriendlyName,
+  public static ObjectName createObjectName(Type type, String uiFriendlyName,
                                             MBeanDomain domain) throws MalformedObjectNameException {
-    final StringBuffer objName = new StringBuffer(null == domain ? MBeanDomain.INTERNAL.toString() : domain.toString());
+    Assert.assertNotNull(domain);
+    final StringBuffer objName = new StringBuffer(domain.toString());
     objName.append(COLON);
-    if (NODE_NAME != null || remoteBeanHome != null) {
-      objName.append(NODE_PREFIX);
-      if (NODE_NAME != null) {
-        objName.append(COMMA).append(MBeanKeys.MBEAN_NODE_NAME).append(EQUALS).append(NODE_NAME);
-      }
-      if (remoteBeanHome != null) {
-        addNodeInfo(objName, remoteBeanHome);
-      }
-      objName.append(COMMA);
-    }
     objName.append(MBeanKeys.NAME).append(EQUALS).append(uiFriendlyName);
     if (type != null) {
       objName.append(COMMA).append(MBeanKeys.TYPE).append(EQUALS).append(type);
-    }
-    if (subsystem != Subsystem.None) {
-      objName.append(COMMA).append(MBeanKeys.SUBSYSTEM).append(EQUALS).append(subsystem);
     }
     try {
       return new ObjectName(objName.toString());
@@ -217,17 +192,8 @@ public abstract class TerracottaManagement {
 
   public static final QueryExp matchAllTerracottaMBeans(UUID id) {
     try {
-      QueryExp query = Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
-                                new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id));
+      QueryExp query = new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id);
       return query;
-    } catch (MalformedObjectNameException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static final QueryExp matchAllTimMBeans() {
-    try {
-      return new ObjectName(MBeanDomain.TIM + ":*");
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);
     }
@@ -236,11 +202,6 @@ public abstract class TerracottaManagement {
   public static final String quoteIfNecessary(String objectNamePart) {
     if (objectNamePart.matches("[,=:*?\"']")) { return ObjectName.quote(objectNamePart); }
     return objectNamePart;
-  }
-
-  public static final Set<ObjectName> getAllL1DumperMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
-      NullPointerException, IOException {
-    return mbs.queryNames(new ObjectName(MBeanNames.L1DUMPER_INTERNAL.getCanonicalName() + ",*"), null);
   }
 
   public static final Set<ObjectName> getAllL2DumperMBeans(MBeanServerConnection mbs) throws MalformedObjectNameException,
