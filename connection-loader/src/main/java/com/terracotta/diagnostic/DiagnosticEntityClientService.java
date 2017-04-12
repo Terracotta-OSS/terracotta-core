@@ -21,6 +21,9 @@ package com.terracotta.diagnostic;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
@@ -31,7 +34,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 
-public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Void>{
+public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Properties>{
 
   @Override
   public boolean handlesEntityType(Class<Diagnostics> type) {
@@ -49,7 +52,9 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
   }
 
   @Override
-  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Void ignore) {
+  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Properties possible) {
+    final int timeoutInMillis = possible != null ? Integer.parseInt(possible.getProperty("request.timeout", "2000")) : 2000;
+    final String timeoutMessage = possible != null ? possible.getProperty("request.timeoutMessage", "Request Timeout") : "Request Timeout";
     return (Diagnostics)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {Diagnostics.class},
             new java.lang.reflect.InvocationHandler() {
       @Override
@@ -72,7 +77,11 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
           }).invoke();
           // if the server is terminating, never going to get a message back.  just return null
           if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer")) {
-            return returnValue.get().toString();
+            try {
+              return returnValue.getWithTimeout(timeoutInMillis, TimeUnit.MILLISECONDS).toString();
+            } catch (TimeoutException timeout) {
+              return timeoutMessage;
+            }
           }
         } catch (EntityException ee) {
           
