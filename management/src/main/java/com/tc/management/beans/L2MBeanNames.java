@@ -19,8 +19,6 @@
 package com.tc.management.beans;
 
 import com.tc.management.TerracottaManagement;
-import com.tc.management.TerracottaManagement.Subsystem;
-import com.tc.management.TerracottaManagement.Type;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -35,9 +33,9 @@ public class L2MBeanNames {
 
   static {
     try {
-      TC_SERVER_INFO = TerracottaManagement.createObjectName(null, Subsystem.None, null, "TerracottaServer", TerracottaManagement.MBeanDomain.PUBLIC);
-      DSO = TerracottaManagement.createObjectName(null, Subsystem.None, null, "DSO", TerracottaManagement.MBeanDomain.PUBLIC);
-      DUMPER = TerracottaManagement.createObjectName(null, Subsystem.None, null, "L2Dumper", TerracottaManagement.MBeanDomain.PUBLIC);
+      TC_SERVER_INFO = TerracottaManagement.createObjectName(null, "TerracottaServer", TerracottaManagement.MBeanDomain.PUBLIC);
+      DSO = TerracottaManagement.createObjectName(null, "DSO", TerracottaManagement.MBeanDomain.PUBLIC);
+      DUMPER = TerracottaManagement.createObjectName(null, "L2Dumper", TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

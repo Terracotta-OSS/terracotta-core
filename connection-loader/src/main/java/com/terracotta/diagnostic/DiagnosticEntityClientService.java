@@ -21,16 +21,20 @@ package com.terracotta.diagnostic;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 
-public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Void>{
+public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Properties>{
 
   @Override
   public boolean handlesEntityType(Class<Diagnostics> type) {
@@ -48,19 +52,37 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
   }
 
   @Override
-  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Void ignore) {
+  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Properties possible) {
+    final int timeoutInMillis = possible != null ? Integer.parseInt(possible.getProperty("request.timeout", "2000")) : 2000;
+    final String timeoutMessage = possible != null ? possible.getProperty("request.timeoutMessage", "Request Timeout") : "Request Timeout";
     return (Diagnostics)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {Diagnostics.class},
             new java.lang.reflect.InvocationHandler() {
       @Override
-      public Object invoke(Object proxy, final Method method, Object[] args) throws Throwable {
+      public Object invoke(Object proxy, Method method, final Object[] args) throws Throwable {
         try {
-          return ece.beginInvoke().message(new EntityMessage() {
+          final String methodName = method.getName();
+          InvokeFuture returnValue = ece.beginInvoke().message(new EntityMessage() {
             @Override
             public String toString() {
-              return method.getName();
+              if (methodName.equals("get")) {
+                return "getJMX " + args[0] + " " + args[1];
+              } else if (methodName.equals("set")) {
+                return "setJMX " + args[0] + " " + args[1] + " " + args[2];
+              } else if (methodName.equals("invoke")) {
+                return "invokeJMX " + args[0] + " " + args[1];
+              } else {
+                return methodName;
+              }
             }
-
-          }).invoke().get().toString();
+          }).invoke();
+          // if the server is terminating, never going to get a message back.  just return null
+          if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer")) {
+            try {
+              return returnValue.getWithTimeout(timeoutInMillis, TimeUnit.MILLISECONDS).toString();
+            } catch (TimeoutException timeout) {
+              return timeoutMessage;
+            }
+          }
         } catch (EntityException ee) {
           
         } catch (InterruptedException ie) {

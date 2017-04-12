@@ -22,11 +22,15 @@ import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.ThreadDumpHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
+import com.tc.server.TCServerMain;
+import com.tc.util.StringUtil;
+import com.tc.util.runtime.ThreadDumpUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -40,9 +44,11 @@ public class DiagnosticsHandler implements TCMessageSink {
   
   private final TCLogger logger = TCLogging.getLogger(DiagnosticsHandler.class);
   private final DistributedObjectServer server;
+  private final JMXSubsystem subsystem;
 
   public DiagnosticsHandler(DistributedObjectServer server) {
     this.server = server;
+    this.subsystem = new JMXSubsystem();
   }
   
   @Override
@@ -56,15 +62,56 @@ public class DiagnosticsHandler implements TCMessageSink {
     }
     DiagnosticMessage msg = (DiagnosticMessage)message;
     byte[] data = msg.getExtendedData();
-    String cmd = new String(data, set);
+    String raw = new String(data, set);
+    String[] cmd = raw.split(" ");
     byte[] result = null;
     try {
-      switch (cmd) {
+      switch (cmd[0]) {
         case "getState":
           result = server.getContext().getL2Coordinator().getStateManager().getCurrentState().getName().getBytes(set);
           break;
         case "getClusterState":
           result = server.getClusterState(set);
+          break;
+        case "getConfig":
+          result = TCServerMain.getServer().getConfig().getBytes(set);
+          break;
+        case "getProcessArguments":
+          result = StringUtil.toString(TCServerMain.getServer().processArguments(), " ", null, null).getBytes(set);
+          break;
+        case "getThreadDump":
+          result = ThreadDumpUtil.getThreadDump().getBytes(set);
+          break;
+        case "terminateServer":
+          TCServerMain.getServer().shutdown();
+          // never used, server is dead
+          result = "".getBytes(set);
+          break;
+        case "forceTerminateServer":
+          Runtime.getRuntime().exit(0);
+          // never used, server is dead
+          result = "".getBytes(set);
+          break;
+        case "getJMX":
+          if (cmd.length != 3) {
+            result = ("Invalid JMX get:" + raw).getBytes(set);
+          } else {
+            result = subsystem.get(cmd[1], cmd[2]).getBytes(set);
+          }
+          break;
+        case "setJMX":
+          if (cmd.length != 4) {
+            result = ("Invalid JMX set:" + raw).getBytes(set);
+          } else {
+            result = subsystem.set(cmd[1], cmd[2], cmd[3]).getBytes(set);
+          }
+          break;
+        case "invokeJMX":
+          if (cmd.length != 3) {
+            result = ("Invalid JMX call:" + raw).getBytes(set);
+          } else {
+            result = subsystem.call(cmd[1], cmd[2]).getBytes(set);
+          }
           break;
         default:
           result = "UNKNOWN CMD".getBytes(set);

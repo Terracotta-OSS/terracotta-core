@@ -107,22 +107,6 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
         logger.error("error dumping on " + l2DumperBean, e);
       }
     }
-
-    Set<ObjectName> allL1DumperMBeans;
-    try {
-      allL1DumperMBeans = TerracottaManagement.getAllL1DumperMBeans(mbs);
-    } catch (Exception e) {
-      logger.error(e);
-      return;
-    }
-
-    for (ObjectName l1DumperBean : allL1DumperMBeans) {
-      try {
-        mbs.invoke(l1DumperBean, "doClientDump", new Object[] {}, new String[] {});
-      } catch (Exception e) {
-        logger.error("error dumping on " + l1DumperBean, e);
-      }
-    }
   }
 
 }
