@@ -18,16 +18,16 @@
  */
 package com.tc.services;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.IEntityMessenger;
-import org.terracotta.entity.MessageCodec;
-
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
+import org.junit.Assert;
+import org.junit.Test;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.ExplicitRetirementHandle;
+import org.terracotta.entity.IEntityMessenger;
+import org.terracotta.entity.MessageCodec;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
@@ -55,13 +55,13 @@ public class EntityMessengerServiceTest {
     @SuppressWarnings("rawtypes")
     MessageCodec codec = mock(MessageCodec.class);
     when(entity.getCodec()).thenReturn(codec);
-    
+
     // Create the service.
     EntityMessengerService service = new EntityMessengerService(timer, sink, entity);
-    
+
     // Verify that the service was registered to be told when the entity activates.
     verify(entity).setSuccessfulCreateListener(service);
-    
+
     // Register a few calls.
     EntityMessage delayMessage = mock(EntityMessage.class);
     EntityMessage periodicMessage = mock(EntityMessage.class);
@@ -69,17 +69,48 @@ public class EntityMessengerServiceTest {
     Assert.assertNotNull(delayToken);
     IEntityMessenger.ScheduledToken periodicToken = service.messageSelfPeriodically(periodicMessage, 1L);
     Assert.assertNotNull(periodicToken);
-    
+
     // Verify that the timer didn't see them.
     verify(timer, never()).addDelayed(any(), anyLong());
     verify(timer, never()).addPeriodic(any(), anyLong(), anyLong());
-    
+
     // Activate the entity.
     when(entity.isDestroyed()).thenReturn(false);
     service.entityCreationSucceeded(entity);
-    
+
     // Verify that the timer did see them.
     verify(timer).addDelayed(any(), anyLong());
     verify(timer).addPeriodic(any(), anyLong(), anyLong());
+  }
+
+  @Test
+  public void testExplicitRetirement() throws Exception {
+    // Thank god I can steal Jeff's mocks.
+    ISimpleTimer timer = mock(ISimpleTimer.class);
+    when(timer.addPeriodic(any(), anyLong(), anyLong())).thenReturn(1L);
+    when(timer.addDelayed(any(), anyLong())).thenReturn(1L);
+    Sink<VoltronEntityMessage> sink = mock(Sink.class);
+    ManagedEntity entity = mock(ManagedEntity.class);
+    when(entity.isDestroyed()).thenReturn(true);
+    RetirementManager retirementManager = mock(RetirementManager.class);
+    when(entity.getRetirementManager()).thenReturn(retirementManager);
+    @SuppressWarnings("rawtypes") MessageCodec codec = mock(MessageCodec.class);
+    when(entity.getCodec()).thenReturn(codec);
+
+    // Create the service.
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity);
+    when(entity.isDestroyed()).thenReturn(false);
+    service.entityCreationSucceeded(entity);
+
+    EntityMessage deferrableMessage = mock(EntityMessage.class);
+    EntityMessage futureMessage = mock(EntityMessage.class);
+    ExplicitRetirementHandle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
+
+    // verify it was deferred
+    verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);
+    handle.release();
+    // verify that got scheduled.
+    verify(sink).addSingleThreaded(any());
+
   }
 }
