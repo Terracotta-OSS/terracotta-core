@@ -446,12 +446,17 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
-    if (state == ACTIVE_COORDINATOR) {
-      // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
-      AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
-      info("Forcing Abort Election for " + msg + " with " + abortMsg);
-      groupManager.sendTo(msg.messageFrom(), abortMsg);
+    if (state.equals(ACTIVE_COORDINATOR)) {
+      //  if this is not a new candidate, zap it and start over
+      if (!msg.getEnrollment().isANewCandidate() && msg.getState().equals(START_STATE)) {
+        groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "");
+      } else {
+        // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
+        AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
+            .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
+        info("Forcing Abort Election for " + msg + " with " + abortMsg);
+        groupManager.sendTo(msg.messageFrom(), abortMsg);
+      }
     } else {
       currKnownServers.add(msg.getEnrollment().getNodeID());
       if (!electionMgr.handleStartElectionRequest(msg, state)) {
