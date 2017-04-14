@@ -133,7 +133,7 @@ public class StateManagerImpl implements StateManager {
     info("Starting election initial state:" + startState);
     if (startState != null && !startState.equals(ACTIVE_COORDINATOR)) {
       info("Skipping election and waiting for the active to zap since this L2 did not go down as active.");
-    } else if (state == START_STATE || state == PASSIVE_STANDBY) {
+    } else if (state.equals(START_STATE) || state.equals(PASSIVE_STANDBY)) {
       runElection();
     } else {
       info("Ignoring Election request since not in right state: " + this.state);
@@ -153,7 +153,7 @@ public class StateManagerImpl implements StateManager {
     NodeID myNodeID = getLocalNodeID();
     // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
     // concluded)
-    boolean isNew = state == START_STATE && startState == null;
+    boolean isNew = state.equals(START_STATE) && startState == null;
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
       electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, state, (nodeid)-> {
@@ -226,7 +226,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void moveToPassiveReady(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
     logger.info("moving to passive ready " + state + " " + winningEnrollment);
-    if (state == START_STATE) {
+    if (state.equals(START_STATE)) {
       setActiveNodeID(winningEnrollment.getNodeID());
       state = (startState == null) ? PASSIVE_UNINITIALIZED : startState;
       if (!state.equals(PASSIVE_STANDBY) && !state.equals(PASSIVE_UNINITIALIZED)) {
@@ -238,11 +238,11 @@ public class StateManagerImpl implements StateManager {
       info("Moved to " + state, true);
       fireStateChangedOperatorEvent();
       stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state));
-    } else if (state == PASSIVE_UNINITIALIZED) {
+    } else if (state.equals(PASSIVE_UNINITIALIZED)) {
 // double election
       Assert.assertTrue(syncdTo.isNull());
       setActiveNodeID(winningEnrollment.getNodeID());
-    } else if (state == PASSIVE_SYNCING) {
+    } else if (state.equals(PASSIVE_SYNCING)) {
       setActiveNodeID(winningEnrollment.getNodeID());
       if (!syncdTo.equals(winningEnrollment.getNodeID())) {
 // TODO:  make sure this is the proper way to handle this.
@@ -250,7 +250,7 @@ public class StateManagerImpl implements StateManager {
         clusterStatePersistor.setDBClean(false);
         throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting");
       }
-    } else if (state == ACTIVE_COORDINATOR) {
+    } else if (state.equals(ACTIVE_COORDINATOR)) {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_UNINITIALIZED + " from " + ACTIVE_COORDINATOR
                                + " at least for now");
@@ -263,7 +263,7 @@ public class StateManagerImpl implements StateManager {
   @Override
   public synchronized void moveToPassiveSyncing(NodeID connectedTo) {
     synchronizedWaitForStart();
-    if (state == PASSIVE_UNINITIALIZED) {
+    if (state.equals(PASSIVE_UNINITIALIZED)) {
       syncdTo = connectedTo;
       stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_SYNCING));
       state = PASSIVE_SYNCING;
@@ -275,7 +275,7 @@ public class StateManagerImpl implements StateManager {
   @Override
   public synchronized void moveToPassiveStandbyState() {
     synchronizedWaitForStart();
-    if (state == ACTIVE_COORDINATOR) {
+    if (state.equals(ACTIVE_COORDINATOR)) {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
     } else if (state != PASSIVE_STANDBY) {
@@ -289,7 +289,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void moveToActiveState() {
-    if (state == START_STATE || state == PASSIVE_STANDBY) {
+    if (state.equals(START_STATE) || state.equals(PASSIVE_STANDBY)) {
       // TODO :: If state == START_STATE publish cluster ID
       debugInfo("Moving to active state");
       StateChangedEvent event = new StateChangedEvent(state, ACTIVE_COORDINATOR);
@@ -325,11 +325,11 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public boolean isActiveCoordinator() {
-    return (state == ACTIVE_COORDINATOR);
+    return (state.equals(ACTIVE_COORDINATOR));
   }
 
   public boolean isPassiveUnitialized() {
-    return (state == PASSIVE_UNINITIALIZED);
+    return (state.equals(PASSIVE_UNINITIALIZED));
   }
 
   @Override
@@ -366,7 +366,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won or election_already_won msg: " + clusterMsg);
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
-    if (state == ACTIVE_COORDINATOR) {
+    if (state.equals(ACTIVE_COORDINATOR)) {
       // Can't get Election Won from another node : Split brain
       String error = state + " Received Election Won Msg : " + clusterMsg
                      + ". A Terracotta server tried to join the mirror group as a second ACTIVE";
@@ -380,7 +380,7 @@ public class StateManagerImpl implements StateManager {
       // There is no active server for this node or the other node just detected a failure of ACTIVE server and ran an
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
-      if (startState == null || startState == START_STATE) {
+      if (startState == null || startState.equals(START_STATE)) {
         moveToPassiveReady(winningEnrollment);
         if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
           sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
@@ -410,7 +410,7 @@ public class StateManagerImpl implements StateManager {
       AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state);
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
-    } else if (state == ACTIVE_COORDINATOR || !activeNode.isNull()
+    } else if (state.equals(ACTIVE_COORDINATOR) || !activeNode.isNull()
                || (msg.getEnrollment().isANewCandidate() && state != START_STATE)) {
       // Condition 1 :
       // Obviously an issue.
@@ -433,7 +433,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void handleElectionAbort(L2StateMessage clusterMsg) {
-    if (state == ACTIVE_COORDINATOR) {
+    if (state.equals(ACTIVE_COORDINATOR)) {
       // Cant get Abort back to ACTIVE, if so then there is a split brain
       String error = state + " Received Abort Election  Msg : Possible split brain detected ";
       logger.error(error);
@@ -501,11 +501,11 @@ public class StateManagerImpl implements StateManager {
 
     synchronized (this) {
       currKnownServers.remove(disconnectedNode);
-      if (state == START_STATE || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
+      if (state.equals(START_STATE) || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
       }
-      if (state == PASSIVE_SYNCING && syncdTo.equals(disconnectedNode)) {
+      if (state.equals(PASSIVE_SYNCING) && syncdTo.equals(disconnectedNode)) {
         //  need to zap and start over.  The active being synced to is gone.
         logger.fatal("Passive only partially synced when active disappeared.  Restarting");
         clusterStatePersistor.setDBClean(false);
