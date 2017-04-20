@@ -1,6 +1,8 @@
 package com.tc.l2.state;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
@@ -13,6 +15,9 @@ import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
+import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.GroupMessage;
+import com.tc.net.groups.GroupResponse;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.groups.TCGroupMemberDiscoveryStatic;
@@ -21,15 +26,22 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.PortChooser;
+import com.tc.util.State;
 import com.tc.util.concurrent.QueueFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -109,7 +121,56 @@ public class StateManagerImplTest {
       Assert.assertEquals(expectedActive, actives[i]);
     }
   }
+  
+  @Test
+  public void testInitialElection() throws Exception {
+    TCLogger logger = mock(TCLogger.class);
+    GroupManager grp = mock(GroupManager.class);
+    
+    Sink stageChangeSinkMock = mock(Sink.class);
+    StageManager stageManager = mock(StageManager.class);
+    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
+    ClusterStatePersistor statePersistor = mock(ClusterStatePersistor.class);
+    when(statePersistor.getInitialState()).thenReturn(new State("PASSIVE-STANDBY"));
 
+    NodeID node = mock(NodeID.class);
+    when(grp.getLocalNodeID()).thenReturn(node);
+    when(grp.sendAllAndWaitForResponse(any())).thenReturn(new GroupResponse() {
+      @Override
+      public List getResponses() {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public GroupMessage getResponse(NodeID nodeID) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+    });
+    
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
+        .then((invoke)->{
+          Stage election = mock(Stage.class);
+          Sink electionSink = mock(Sink.class);
+          doAnswer((invoke2)-> {
+            try {
+              ((EventHandler)invoke.getArguments()[2]).handleEvent(invoke2.getArguments()[0]);
+            } catch (Throwable t) {
+              t.printStackTrace();
+            }
+            return null;
+          }).when(electionSink).addSingleThreaded(any());
+          when(election.getSink()).thenReturn(electionSink);
+          return election;
+        });
+    
+    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory,
+          statePersistor);
+    state.initializeAndStartElection();
+    
+    state.startElectionIfNecessary(mock(NodeID.class));
+    Assert.assertEquals(node, state.getActiveNodeID());
+  }
+  
   @Test
   public void testElectionWithNodeJoiningLater() throws Exception {
 
