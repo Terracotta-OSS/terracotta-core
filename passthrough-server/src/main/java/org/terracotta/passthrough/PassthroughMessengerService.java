@@ -18,15 +18,16 @@
  */
 package org.terracotta.passthrough;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.EntityContainerListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class PassthroughMessengerService implements IEntityMessenger, EntityContainerListener {
@@ -62,6 +63,30 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
     // Serialize the message.
     PassthroughMessage passthroughMessage = makePassthroughMessage(message);
     commonSendMessage(passthroughMessage);
+  }
+
+  @Override
+  public ExplicitRetirementHandle deferRetirement(final String tag,
+                                                  EntityMessage originalMessageToDefer,
+                                                  EntityMessage futureMessage) {
+    try {
+      PassthroughMessage passthroughMessage = makePassthroughMessage(futureMessage);
+      final PassthroughMessage futurePassThroughMessage = makePassthroughMessage(futureMessage);
+      return new ExplicitRetirementHandle() {
+        @Override
+        public String getTag() {
+          return tag;
+        }
+
+        @Override
+        public void release() throws MessageCodecException {
+          commonSendMessage(futurePassThroughMessage);
+        }
+      };
+    } catch (MessageCodecException e) {
+      System.err.println("Codec error in explicit retirement: " + e);
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
