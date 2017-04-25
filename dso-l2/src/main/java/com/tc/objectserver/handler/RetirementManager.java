@@ -19,19 +19,19 @@
 package com.tc.objectserver.handler;
 
 import com.tc.objectserver.api.Retiree;
+import com.tc.util.Assert;
+import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.ExplicitRetirementHandle;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.EntityMessage;
-
-import com.tc.util.Assert;
-import java.util.ArrayList;
-
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The ability to defer retirement introduces a complex dependency graph (tree) between the messages in the system.
@@ -42,7 +42,7 @@ import java.util.ArrayList;
  *  2) Any message which had deferred to it
  * The side-effect of these 2 statements is that it is possible for a single message completion to result in the
  * retirement of a great number of other messages, as each message unblocked can similarly unblock 2 more.
- * 
+ *
  * NOTE:  It may be possible to avoid the synchronization on most operations since we know that there is only one running
  * message, per key.
  */
@@ -51,24 +51,23 @@ public class RetirementManager {
   private final Map<EntityMessage, LogicalSequence> waitingForDeferredRegistration;
   private final Map<Integer, LogicalSequence> mostRecentRegisteredToKey;
 
-
   public RetirementManager() {
     this.currentlyRunning = new HashMap<EntityMessage, LogicalSequence>();
     this.waitingForDeferredRegistration = new HashMap<EntityMessage, LogicalSequence>();
     this.mostRecentRegisteredToKey = new HashMap<Integer, LogicalSequence>();
   }
-  
+
   public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
     LogicalSequence seq = this.currentlyRunning.get(invokeMessage);
     if (seq == null) {
-//  already gone.  retire directly
+      // already gone.  retire directly
       response.retired();
     } else {
       seq.updateWithRetiree(response);
     }
   }
 
-  public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey) {    
+  public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey) {
     LogicalSequence newWrapper = new LogicalSequence(invokeMessage);
     // if concurrencyKey is UNIVERSAL_KEY, then current request doesn't need to wait for other requests running on
     // UNIVERSAL_KEY
@@ -81,13 +80,13 @@ public class RetirementManager {
       }
       this.mostRecentRegisteredToKey.put(concurrencyKey, newWrapper);
     }
-    
+
     LogicalSequence toUpdateWithReference = waitingForDeferredRegistration.remove(invokeMessage);
     if (null != toUpdateWithReference) {
       Assert.assertTrue(toUpdateWithReference.isWaitingForExplicitDeferOf(invokeMessage));
       newWrapper.deferNotify = toUpdateWithReference;
     }
-    
+
     LogicalSequence previous = this.currentlyRunning.put(invokeMessage, newWrapper);
     // We can't find something else there.
     Assert.assertNull(previous);
@@ -96,13 +95,13 @@ public class RetirementManager {
   /**
    * This returns a list because it is possible to return a sequence of queued up retirements:  completedMessage may unblock
    * an earlier retirement which is followed by a logical sequence of operations which couldn't retire until it did.
-   * 
+   *
    * @param completedMessage
    * @return
    */
   public synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
     List<Retiree> toRetire = new ArrayList<>();
-    
+
     LogicalSequence completedRequest = this.currentlyRunning.remove(completedMessage);
     Assert.assertNotNull(completedRequest);
 
@@ -150,9 +149,9 @@ public class RetirementManager {
     LogicalSequence myRequest = this.currentlyRunning.get(invokeMessageToDefer);
     // We can only defer by currently running messages.
     Assert.assertNotNull(myRequest);
-    
+
     myRequest.retirementDeferredBy(laterMessage);
-    
+
     LogicalSequence previous = this.waitingForDeferredRegistration.put(laterMessage, myRequest);
     Assert.assertNull(previous);
   }
@@ -186,11 +185,11 @@ public class RetirementManager {
     public boolean isRetired;
 
     private Set<EntityMessage> entityMessagesDeferringRetirement = new HashSet<>();
-    
+
     public LogicalSequence(EntityMessage entityMessage) {
       this.entityMessage = entityMessage;
     }
-    
+
     public void updateWithRetiree(Retiree response) {
       this.response = response;
     }

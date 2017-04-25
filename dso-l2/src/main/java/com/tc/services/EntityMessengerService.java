@@ -18,14 +18,6 @@
  */
 package com.tc.services;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.IEntityMessenger;
-import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
-
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
@@ -35,7 +27,16 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.CreateListener;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.ExplicitRetirementHandle;
+import org.terracotta.entity.IEntityMessenger;
+import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implements the IEntityMessenger interface by maintaining a "fake" EntityDescriptor (as there is no actual reference from
@@ -49,13 +50,16 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   private final MessageCodec<EntityMessage, ?> codec;
   private final EntityDescriptor fakeDescriptor;
   private Map<TokenWrapper, EarlyInvokeWrapper> earlyInvokeCache;
+  private ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(ISimpleTimer timer, Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity) {
+  public EntityMessengerService(ISimpleTimer timer,
+                                Sink<VoltronEntityMessage> messageSink,
+                                ManagedEntity owningEntity) {
     Assert.assertNotNull(timer);
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
-    
+
     this.timer = timer;
     this.messageSink = messageSink;
     this.owningEntity = owningEntity;
@@ -67,9 +71,10 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     // given the actual type.  This means that incorrect usage will result in a runtime failure.
     this.codec = (MessageCodec<EntityMessage, ?>) owningEntity.getCodec();
     Assert.assertNotNull(codec);
-    
-    this.fakeDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
-    
+
+    this.fakeDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(),
+                                                                        owningEntity.getVersion());
+
     // If the entity isn't already created, register to be notified when it is.
     if (owningEntity.isDestroyed()) {
       // The entity is still in the process of being built so we need to build our local cache and register for the
@@ -90,7 +95,20 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   }
 
   @Override
-  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
+  public ExplicitRetirementHandle deferRetirement(String tag,
+                                                  EntityMessage originalMessageToDefer,
+                                                  EntityMessage futureMessage) {
+    // Make sure we have started.
+    checkCreationFinished();
+    // defer, as normal
+    retirementManager.deferRetirement(originalMessageToDefer, futureMessage);
+    // return handle
+    return new Handle(tag, futureMessage);
+  }
+
+  @Override
+  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer,
+                                            EntityMessage newMessageToSchedule) throws MessageCodecException {
     // Make sure we have started.
     checkCreationFinished();
     // This requires that we access the RetirementManager to change the retirement of the current message.
@@ -100,7 +118,8 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   }
 
   @Override
-  public ScheduledToken messageSelfAfterDelay(EntityMessage message, long millisBeforeSend) throws MessageCodecException {
+  public ScheduledToken messageSelfAfterDelay(EntityMessage message,
+                                              long millisBeforeSend) throws MessageCodecException {
     FakeEntityMessage interEntityMessage = encodeAsFake(message);
     long startTimeMillis = this.timer.currentTimeMillis() + millisBeforeSend;
     Runnable delayedRunnable = new Runnable() {
@@ -110,8 +129,9 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
         if (!EntityMessengerService.this.owningEntity.isDestroyed()) {
           EntityMessengerService.this.messageSink.addSingleThreaded(interEntityMessage);
         }
-      }};
-    
+      }
+    };
+
     TokenWrapper token = null;
     if (null != this.earlyInvokeCache) {
       // Cache this until the entity is online.
@@ -127,14 +147,17 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   }
 
   @Override
-  public ScheduledToken messageSelfPeriodically(EntityMessage message, long millisBetweenSends) throws MessageCodecException {
+  public ScheduledToken messageSelfPeriodically(EntityMessage message,
+                                                long millisBetweenSends) throws MessageCodecException {
     if (millisBetweenSends <= 0) {
       throw new IllegalArgumentException("Period of message send must be greater than 0 milliseconds");
     }
     FakeEntityMessage interEntityMessage = encodeAsFake(message);
     long startTimeMillis = this.timer.currentTimeMillis() + millisBetweenSends;
-    SelfDestructiveRunnable runnable = new SelfDestructiveRunnable(this.messageSink, this.owningEntity, interEntityMessage);
-    
+    SelfDestructiveRunnable runnable = new SelfDestructiveRunnable(this.messageSink,
+                                                                   this.owningEntity,
+                                                                   interEntityMessage);
+
     TokenWrapper token = null;
     if (null != this.earlyInvokeCache) {
       // Cache this until the entity is online.
@@ -158,7 +181,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     } else {
       // If this is the wrong type, the ClassCastException is a reasonable error since it means we got something invalid.
       // Note that we ignore whether or not the cancel succeeded but we may want to log this, in the future.
-      long realToken = ((TokenWrapper)token).getToken();
+      long realToken = ((TokenWrapper) token).getToken();
       Assert.assertTrue(realToken > 0L);
       this.timer.cancel(realToken);
     }
@@ -190,7 +213,6 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     this.earlyInvokeCache = null;
   }
 
-
   private void scheduleMessage(EntityMessage message) throws MessageCodecException {
     // We first serialize the message (note that this is partially so we can use the common message processor, which expects
     // to deserialize, but also because we may have to replicate the message to the passive).
@@ -210,7 +232,6 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     }
   }
 
-
   /**
    * We fake up a Voltron entity message to enqueue for the entity to process in the future.
    */
@@ -224,18 +245,22 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
       this.identityMessage = identityMessage;
       this.message = message;
     }
+
     @Override
     public ClientID getSource() {
       return ClientID.NULL_ID;
     }
+
     @Override
     public TransactionID getTransactionID() {
       return TransactionID.NULL_ID;
     }
+
     @Override
     public EntityDescriptor getEntityDescriptor() {
       return this.descriptor;
     }
+
     @Override
     public boolean doesRequireReplication() {
       return true;
@@ -245,25 +270,27 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     public boolean doesRequestReceived() {
       return false;
     }
-    
+
     @Override
     public Type getVoltronType() {
       return Type.INVOKE_ACTION;
     }
+
     @Override
     public byte[] getExtendedData() {
       return this.message;
     }
+
     @Override
     public TransactionID getOldestTransactionOnClient() {
       return TransactionID.NULL_ID;
     }
+
     @Override
     public EntityMessage getEntityMessage() {
       return this.identityMessage;
     }
   }
-
 
   private static class SelfDestructiveRunnable implements Runnable {
     private final Sink<VoltronEntityMessage> messageSink;
@@ -271,18 +298,20 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     private final FakeEntityMessage message;
     private ISimpleTimer timer;
     private long id;
-    
-    public SelfDestructiveRunnable(Sink<VoltronEntityMessage> messageSink, ManagedEntity owningEntity, FakeEntityMessage message) {
+
+    public SelfDestructiveRunnable(Sink<VoltronEntityMessage> messageSink,
+                                   ManagedEntity owningEntity,
+                                   FakeEntityMessage message) {
       this.messageSink = messageSink;
       this.owningEntity = owningEntity;
       this.message = message;
     }
-    
+
     public void prepareForCancel(ISimpleTimer timer, long id) {
       this.timer = timer;
       this.id = id;
     }
-    
+
     @Override
     public void run() {
       if (this.owningEntity.isDestroyed()) {
@@ -293,38 +322,78 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     }
   }
 
-
   private static class TokenWrapper implements ScheduledToken {
     public static long UNINITIALIZED_TOKEN = -1;
-    
+
     private long token;
-    
+
     public TokenWrapper(long token) {
       this.token = token;
     }
-    
+
     public long getToken() {
       return this.token;
     }
-    
+
     public void setToken(long token) {
       Assert.assertTrue(UNINITIALIZED_TOKEN == this.token);
       this.token = token;
     }
   }
 
-
   private static class EarlyInvokeWrapper {
     public final Runnable delayedRunnable;
     public final SelfDestructiveRunnable periodicRunnable;
     public final long startTimeMillis;
     public final long repeatPeriodMillis;
-    
-    public EarlyInvokeWrapper(Runnable delayedRunnable, SelfDestructiveRunnable periodicRunnable, long startTimeMillis, long repeatPeriodMillis) {
+
+    public EarlyInvokeWrapper(Runnable delayedRunnable,
+                              SelfDestructiveRunnable periodicRunnable,
+                              long startTimeMillis,
+                              long repeatPeriodMillis) {
       this.delayedRunnable = delayedRunnable;
       this.periodicRunnable = periodicRunnable;
       this.startTimeMillis = startTimeMillis;
       this.repeatPeriodMillis = repeatPeriodMillis;
+    }
+  }
+
+  public class Handle implements ExplicitRetirementHandle {
+    private final String tag;
+    private final EntityMessage futureMessage;
+    private final long nowTimeNS;
+    private final boolean active = true;
+
+    private Handle(String tag, EntityMessage futureMessage) {
+      this.tag = tag;
+      this.futureMessage = futureMessage;
+      this.nowTimeNS = System.nanoTime();
+      retirementHandles.put(this, this);
+    }
+
+    @Override
+    public String getTag() {
+      return tag;
+    }
+
+    @Override
+    public void release() throws MessageCodecException {
+      if (retirementHandles.remove(this) != null) {
+        EntityMessengerService.this.messageSelf(futureMessage);
+      }
+    }
+
+    public boolean isActive() {
+      return active;
+    }
+
+    public long getCreationTimeMS() {
+      return TimeUnit.MILLISECONDS.convert(nowTimeNS, TimeUnit.NANOSECONDS);
+    }
+
+    @Override
+    public String toString() {
+      return "ExplicitRetirementHandle: { active=" + active + " tag=" + tag + " age=" + nowTimeNS + "ns";
     }
   }
 }
