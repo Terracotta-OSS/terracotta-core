@@ -269,10 +269,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
         temp.addRequestMessage(serverEntityRequest, entityMessage, serverEntityRequest::received, 
           (result) -> {
             if (!sourceNodeID.isNull()) {
-              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, true, entityMessage.getRawPayload());
+              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityID, descriptor.getClientSideVersion(), consumerID, canDelete, entityMessage.getRawPayload());
               serverEntityRequest.complete();
             } else {
-              entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, true, entityMessage.getRawPayload());
+              entityPersistor.entityCreatedNoJournal(entityID, descriptor.getClientSideVersion(), consumerID, canDelete, entityMessage.getRawPayload());
               serverEntityRequest.complete();
             }
           }, (exception) -> {
