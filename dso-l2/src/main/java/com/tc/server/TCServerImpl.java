@@ -42,7 +42,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
@@ -91,7 +90,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
-  protected final TCSecurityManager         securityManager;
 
   /**
    * This should only be used for tests.
@@ -114,9 +112,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
     if (configurationSetupManager.isSecure()) {
 // no security implemention
-      this.securityManager = null;
-    } else {
-      this.securityManager = null;
     }
   }
   
@@ -388,7 +383,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
                                                                   ConnectionPolicy policy, 
                                                                   TCServerImpl serverImpl) {
-    DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this, securityManager);
+    DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
     try {
       registerServerMBeans(dso, ManagementFactory.getPlatformMBeanServer());
     } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
