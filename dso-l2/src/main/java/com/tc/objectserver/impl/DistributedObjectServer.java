@@ -567,14 +567,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300,
                                                                                                              true, 0L);
 
-    final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(this.threadGroup);
-    final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
-    final LongGCLogger gcLogger = this.serverBuilder.createLongGCLogger(timeOut);
-
-    tcMemManager.registerForMemoryEvents(gcLogger);
-    // CDV-1181 warn if using CMS
-    tcMemManager.checkGarbageCollectors();
-
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
