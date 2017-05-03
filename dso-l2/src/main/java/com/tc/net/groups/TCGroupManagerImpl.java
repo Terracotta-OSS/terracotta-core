@@ -633,8 +633,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private boolean isSecured() {
-    // TODO this is lame... see com.tc.server.TCServerImpl#TCServerImpl line 48 though...
-    return securityManager != null;
+    return false;
   }
 
   /*

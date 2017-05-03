@@ -327,4 +327,16 @@ public class BasicExternalCluster extends Cluster {
   private synchronized boolean checkSafe() {
     return this.isSafe;
   }
+  
+  public boolean checkForFailure() throws GalvanFailureException {
+    return stateManager.checkDidPass();
+  }
+  
+  public void waitForFinish() throws GalvanFailureException {
+    stateManager.waitForFinish();
+  }
+  
+  public void failTestOnServerCrash(boolean value) throws GalvanFailureException {
+    interlock.ignoreServerCrashes(value);
+  }
 }

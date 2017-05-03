@@ -359,8 +359,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         return;
       }
       Principal principal = null;
-      if (securityManager != null) {
-        if (!connectionId.isSecured()) {
+      if (connectionId.isSecured()) {
+        if (securityManager == null) {
           logger.fatal("Security is enabled here on the server, but we didn't get credentials on the handshake!");
           this.isHandshakeError = true;
           return;

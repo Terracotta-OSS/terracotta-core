@@ -30,6 +30,7 @@ import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.TCDumper;
 import com.tc.net.ServerID;
+import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -50,7 +51,7 @@ import java.io.IOException;
 public interface ServerBuilder extends TCDumper, PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID,
-                                      StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory);
+                                      StripeIDStateManager stripeStateManager, TCSecurityManager mgr, WeightGeneratorFactory weightGeneratorFactory);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
                                                               LockManager lockMgr, DSOChannelManager channelManager,

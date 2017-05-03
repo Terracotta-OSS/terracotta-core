@@ -18,7 +18,6 @@
  */
 package com.tc.server;
 
-import org.apache.commons.io.IOUtils;
 
 import com.tc.async.api.SEDA;
 import com.tc.config.schema.ActiveServerGroupConfig;
@@ -42,7 +41,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
@@ -56,15 +54,16 @@ import com.tc.text.StringUtils;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
+import com.tc.util.io.IOUtils;
+import java.io.ByteArrayOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -91,7 +90,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
-  protected final TCSecurityManager         securityManager;
 
   /**
    * This should only be used for tests.
@@ -114,9 +112,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
     if (configurationSetupManager.isSecure()) {
 // no security implemention
-      this.securityManager = null;
-    } else {
-      this.securityManager = null;
     }
   }
   
@@ -260,14 +255,16 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
   @Override
   public String getConfig() {
-    InputStream is = null;
-    try {
-      is = this.configurationSetupManager.rawConfigFile();
-      return IOUtils.toString(is);
+    try (InputStream is = this.configurationSetupManager.rawConfigFile()) {
+      ByteArrayOutputStream writer = new ByteArrayOutputStream();
+      int c = is.read();
+      while (c >= 0) {
+        writer.write((byte)c);
+        c = is.read();
+      }
+      return new String(writer.toByteArray(), Charset.defaultCharset());
     } catch (IOException ioe) {
       return ioe.getLocalizedMessage();
-    } finally {
-      IOUtils.closeQuietly(is);
     }
   }
 
@@ -388,7 +385,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
                                                                   ConnectionPolicy policy, 
                                                                   TCServerImpl serverImpl) {
-    DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this, securityManager);
+    DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
     try {
       registerServerMBeans(dso, ManagementFactory.getPlatformMBeanServer());
     } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {

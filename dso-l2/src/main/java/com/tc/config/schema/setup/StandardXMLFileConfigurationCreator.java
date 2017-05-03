@@ -18,7 +18,6 @@
  */
 package com.tc.config.schema.setup;
 
-import org.apache.commons.io.IOUtils;
 import org.terracotta.config.TcConfig;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -26,8 +25,6 @@ import org.xml.sax.SAXParseException;
 import org.terracotta.config.TcConfiguration;
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
-import com.tc.config.schema.repository.BeanRepository;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.sources.ConfigurationSource;
 import com.tc.config.schema.setup.sources.FileConfigurationSource;
 import com.tc.config.schema.setup.sources.ResourceConfigurationSource;
@@ -42,6 +39,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
