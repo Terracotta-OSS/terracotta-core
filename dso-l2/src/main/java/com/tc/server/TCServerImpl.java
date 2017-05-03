@@ -18,7 +18,6 @@
  */
 package com.tc.server;
 
-import org.apache.commons.io.IOUtils;
 
 import com.tc.async.api.SEDA;
 import com.tc.config.schema.ActiveServerGroupConfig;
@@ -55,15 +54,16 @@ import com.tc.text.StringUtils;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
+import com.tc.util.io.IOUtils;
+import java.io.ByteArrayOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -255,14 +255,16 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
   @Override
   public String getConfig() {
-    InputStream is = null;
-    try {
-      is = this.configurationSetupManager.rawConfigFile();
-      return IOUtils.toString(is);
+    try (InputStream is = this.configurationSetupManager.rawConfigFile()) {
+      ByteArrayOutputStream writer = new ByteArrayOutputStream();
+      int c = is.read();
+      while (c >= 0) {
+        writer.write((byte)c);
+        c = is.read();
+      }
+      return new String(writer.toByteArray(), Charset.defaultCharset());
     } catch (IOException ioe) {
       return ioe.getLocalizedMessage();
-    } finally {
-      IOUtils.closeQuietly(is);
     }
   }
 
