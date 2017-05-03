@@ -36,6 +36,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   private final ContextualLogger logger;
   private final ITestWaiter sharedLockState;
   private boolean isShuttingDown;
+  private boolean ignoreServerCrashes;
 
 
   // ----- SERVER STATE -----
@@ -59,11 +60,23 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
     this.sharedLockState = sharedLockState;
   }
 
+  public void ignoreServerCrashes(boolean set) {
+    synchronized (this.sharedLockState) {
+      ignoreServerCrashes = set;
+      if (activeServer != null) {
+        activeServer.setCrashExpected(ignoreServerCrashes);
+      }
+      passiveServers.forEach(process->process.setCrashExpected(ignoreServerCrashes));
+      unknownRunningServers.forEach(process->process.setCrashExpected(ignoreServerCrashes));
+      terminatedServers.forEach(process->process.setCrashExpected(ignoreServerCrashes));
+    }
+  }
 
   // ----- REGISTRATION -----
   @Override
   public void registerNewServer(ServerProcess newServer) {
     synchronized (this.sharedLockState) {
+      newServer.setCrashExpected(ignoreServerCrashes);
       this.logger.output("registerNewServer: " + newServer);
       // No new registration during shutdown.
       Assert.assertFalse(this.isShuttingDown);

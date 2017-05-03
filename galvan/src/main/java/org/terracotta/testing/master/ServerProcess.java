@@ -178,9 +178,8 @@ public class ServerProcess {
     return this.isCrashExpected;
   }
   
-  private synchronized void setCrashExpected() {
-    Assert.assertFalse(this.isCrashExpected);
-    this.isCrashExpected = true;
+  public synchronized void setCrashExpected(boolean expect) {
+    this.isCrashExpected = expect;
   }
   
   private synchronized long waitForPid(){
@@ -388,7 +387,7 @@ public class ServerProcess {
     // Log the intent.
     this.harnessLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
     // Mark this as expected.
-    this.setCrashExpected();
+    this.setCrashExpected(true);
     
     Process process = null;
 
