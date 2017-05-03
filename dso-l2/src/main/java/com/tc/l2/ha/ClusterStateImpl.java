@@ -136,13 +136,12 @@ public class ClusterStateImpl implements ClusterState {
   public void removeConnection(ConnectionID connectionID) {
     boolean removed = connections.remove(connectionID);
     if (!removed) {
-      logger.warn("Connection ID not found : " + connectionID + " Current Connections count : " + connections.size());
-    } else {
-      try {
-        clientStatePersistor.deleteClientState(connectionID.getClientID());
-      } catch (ClientNotFoundException notfound) {
-        logger.warn("not found", notfound);
-      }
+      logger.warn("Connection ID not found, must be a failed reconnect : " + connectionID + " Current Connections count : " + connections.size());
+    }
+    try {
+      clientStatePersistor.deleteClientState(connectionID.getClientID());
+    } catch (ClientNotFoundException notfound) {
+      logger.warn("not found", notfound);
     }
   }
 
