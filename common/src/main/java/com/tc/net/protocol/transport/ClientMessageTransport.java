@@ -233,6 +233,11 @@ public class ClientMessageTransport extends MessageTransportBase {
   public void closeEvent(TCConnectionEvent event) {
     if (isNotOpen()) { return; }
     super.closeEvent(event);
+    synchronized (status) {
+      if (this.waitForSynAckResult != null) {
+        this.waitForSynAckResult.setException(new IOException("connection closed"));
+      }
+    }
   }
 
   @Override
@@ -285,7 +290,10 @@ public class ClientMessageTransport extends MessageTransportBase {
         Assert.assertNotNull(this.waitForSynAckResult);
       }
       getConnection().setTransportEstablished();
-      this.waitForSynAckResult.set(synAck);
+      synchronized (status) {
+        this.waitForSynAckResult.set(synAck);
+        this.waitForSynAckResult = null;
+      }
       setRemoteCallbackPort(synAck.getCallbackPort());
     }
   }
@@ -318,20 +326,20 @@ public class ClientMessageTransport extends MessageTransportBase {
    * 
    * @throws TCTimeoutException
    */
-  HandshakeResult handShake() throws TCTimeoutException {
+  HandshakeResult handShake() throws TCTimeoutException, TransportHandshakeException {
     sendSyn();
     SynAckMessage synAck = waitForSynAck();
     return new HandshakeResult(synAck);
   }
 
-  private SynAckMessage waitForSynAck() throws TCTimeoutException {
+  private SynAckMessage waitForSynAck() throws TCTimeoutException, TransportHandshakeException {
     try {
       SynAckMessage synAck = (SynAckMessage) this.waitForSynAckResult.get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
       return synAck;
     } catch (InterruptedException e) {
-      throw new TCRuntimeException(e);
+      throw new TransportHandshakeException(e);
     } catch (TCExceptionResultException e) {
-      throw new TCInternalError(e);
+      throw new TransportHandshakeException(e);
     }
   }
 

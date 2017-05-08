@@ -83,6 +83,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private volatile PipeSocket                   pipeSocket;
 
   private final BufferManagerFactory            bufferManagerFactory;
+  private final boolean                         clientConnection;              
   private final AtomicBoolean                   transportEstablished        = new AtomicBoolean(false);
   private final LinkedList<TCNetworkMessage>    writeMessages               = new LinkedList<TCNetworkMessage>();
   private final TCConnectionManagerImpl         parent;
@@ -154,7 +155,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     if (ch != null) {
       socketParams.applySocketParams(ch.socket());
-      this.bufferManager = bufferManagerFactory.createBufferManager(ch, false);
+      this.clientConnection = false;
+    } else {
+      this.clientConnection = true;
     }
 
     this.socketParams = socketParams;
@@ -193,6 +196,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   protected void finishConnect() throws IOException {
     Assert.assertNotNull("channel", this.channel);
+    installBufferManager();
     recordSocketAddress(this.channel.socket());
     setConnected(true);
     this.eventCaller.fireConnectEvent(this.eventListeners, this);
@@ -224,8 +228,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.channel = newSocket;
     newSocket.configureBlocking(false);
     Assert.eval(this.commWorker != null);
-    this.bufferManager = bufferManagerFactory.createBufferManager(newSocket, true);
     this.commWorker.requestReadInterest(this, newSocket);
+  }
+  
+  private void installBufferManager() throws IOException {
+    this.bufferManager = bufferManagerFactory.createBufferManager(channel, clientConnection);
+    if (this.bufferManager == null) {
+      throw new IOException("buffer manager not provided");
+    }
   }
 
   private SocketChannel createChannel() throws IOException, SocketException {

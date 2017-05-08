@@ -70,6 +70,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
+import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.context.PauseContext;
@@ -465,6 +466,10 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.fatal(e.getMessage());
           CONSOLE_LOGGER.fatal(e.getMessage());
           throw new IllegalStateException(e.getMessage(), e);
+        } catch (TransportHandshakeException handshake) {
+          DSO_LOGGER.fatal(handshake.getMessage());
+          CONSOLE_LOGGER.fatal(handshake.getMessage());
+          throw new IllegalStateException(handshake.getMessage(), handshake);
         } catch (final IOException ioe) {
           CONSOLE_LOGGER.warn("IOException connecting to server: " + hostname + ":" + port + ". "
                               + ioe.getMessage());
