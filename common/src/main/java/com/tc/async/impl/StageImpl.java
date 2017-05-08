@@ -83,7 +83,12 @@ public class StageImpl<EC> implements Stage<EC> {
 
   @Override
   public void destroy() {
-    shutdown = true;
+    synchronized (this) {
+      if (shutdown) {
+        return;
+      }
+      shutdown = true;
+    }
     stageQueue.setClosed(true);
     stopThreads();
     handler.destroy();
@@ -91,10 +96,12 @@ public class StageImpl<EC> implements Stage<EC> {
 
   @Override
   public void start(ConfigurationContext context) {
-    if (!shutdown) {
-      return;
+    synchronized (this) {
+      if (!shutdown) {
+        return;
+      }
+      shutdown = false;
     }
-    shutdown = false;
     stageQueue.setClosed(false);
     handler.initializeContext(context);
     startThreads();
@@ -129,7 +136,7 @@ public class StageImpl<EC> implements Stage<EC> {
     }
   }
 
-  private void stopThreads() {
+  private synchronized void stopThreads() {
     for (WorkerThread<EC> thread : threads) {
       thread.interrupt();
       try {

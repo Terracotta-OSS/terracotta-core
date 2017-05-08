@@ -39,8 +39,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.anyInt;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
@@ -77,7 +79,30 @@ public class StageImplTest {
     testMultiContextFlush(4);
     testMultiContextFlush(12);
   }
+  
+  @Test
+  public void testRapidTeardown() throws Exception {
+    TCLoggerProvider logger = new DefaultLoggerProvider();
+    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
+    when(context.createInstance()).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
+    when(context.createInstance(anyInt())).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
+    EventHandler handler = mock(EventHandler.class);
 
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, 1, null, context, 16);
+    instance.destroy();
+    verify(handler, never()).destroy();
+    
+    instance.start(null);
+    verify(handler).initializeContext(Mockito.any(ConfigurationContext.class));
+    instance.start(null);
+    verify(handler).initializeContext(Mockito.any(ConfigurationContext.class));
+    instance.destroy();
+    verify(handler).destroy();
+    instance.destroy();
+    verify(handler).destroy();
+    
+  }
+  
   private void testMultiContextFlush(int size) throws Exception {
     System.out.println("test a multi context flush");
     TCLoggerProvider logger = new DefaultLoggerProvider();
