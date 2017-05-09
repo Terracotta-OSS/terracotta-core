@@ -730,7 +730,7 @@ public class DistributedObjectClient implements TCClient {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
-      DSO_LOGGER.info("shuting down Terracotta Client hook=" + fromShutdownHook + " force=" + forceImmediate);
+      DSO_LOGGER.info("shutting down Terracotta Client hook=" + fromShutdownHook + " force=" + forceImmediate);
       shutdownClient(fromShutdownHook, forceImmediate);
     } else {
       DSO_LOGGER.info("Client already shutdown.");
