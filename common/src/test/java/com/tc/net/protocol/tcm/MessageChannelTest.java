@@ -30,6 +30,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
@@ -245,9 +246,9 @@ try {
     try {
       clientChannel.open(connectTo);
       fail();
-    } catch (TCTimeoutException e) {
+    } catch (TransportHandshakeException e) {
       // expected;
-      System.err.println("Expected: got timeout exception for first open() : " + e);
+      System.err.println("Expected: got handshake exception for first open() : " + e);
     }
 
     try {
