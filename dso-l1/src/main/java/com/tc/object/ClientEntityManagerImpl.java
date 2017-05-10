@@ -27,6 +27,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
@@ -75,7 +76,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.exception.EntityServerUncaughtException;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
@@ -524,12 +525,14 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException in) {
-          throw new EntityUserException(eid.getClassName(), eid.getEntityName(), in);
+          throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", in));
         }
         logger.info("Operation delayed:" + msg.getVoltronType() + ", busy wait");
         msg = createMessageWithDescriptor(msg.getEntityDescriptor(), msg.doesRequireReplication(), msg.getExtendedData(), msg.getVoltronType(), requestedAcks);
       } catch (InterruptedException ie) {
-        throw new EntityUserException(eid.getClassName(), eid.getEntityName(), ie);
+        throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
+      } catch (EntityUserException e) {
+        //not expected
       }
     }
   }

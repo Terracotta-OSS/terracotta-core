@@ -25,6 +25,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
@@ -117,7 +118,11 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      try {
+        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      } catch (EntityUserException e1) {
+        //not expected
+      }
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityAlreadyExistsException) {
@@ -142,7 +147,11 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      try {
+        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      } catch (EntityUserException e1) {
+        //not expected
+      }
       if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
       } else if (e instanceof EntityNotProvidedException) {
@@ -166,7 +175,11 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
       // NOTE: PermanentEntityException is thrown by this method.
-      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      try {
+        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      } catch (EntityUserException e1) {
+        //not expected
+      }
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityNotFoundException) {

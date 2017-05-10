@@ -27,6 +27,8 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.exception.VoltronEntityUserExceptionWrapper;
+import com.tc.exception.VoltronWrapperException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -67,10 +69,11 @@ import java.util.function.Consumer;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.exception.EntityServerUncaughtException;
 
 
 public class ProcessTransactionHandler implements ReconnectListener {
@@ -347,7 +350,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               retireMessagesForEntity(locked, message);
             });
           } catch (MessageCodecException codec) {
-            serverEntityRequest.failure(new EntityUserException(locked.getID().getClassName(), locked.getID().getEntityName(), codec));
+            serverEntityRequest.failure(new VoltronEntityUserExceptionWrapper(new EntityUserException("Caught MessageCodecException while decoding message", codec)));
             serverEntityRequest.retired();
           }
         } else if (ServerEntityAction.RECONFIGURE_ENTITY == action) {

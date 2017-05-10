@@ -2,15 +2,17 @@ package com.tc.object;
 
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.VoltronWrapperException;
+import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.util.Assert;
 
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.exception.EntityServerUncaughtException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 import org.terracotta.exception.RuntimeEntityException;
@@ -19,10 +21,11 @@ import java.util.Arrays;
 
 
 public class ExceptionUtils {
-  public static EntityException addLocalStackTraceToEntityException(EntityException e) throws RuntimeEntityException {
+  public static EntityException addLocalStackTraceToEntityException(EntityException e) throws RuntimeEntityException, EntityUserException {
     EntityException wrappedException;
-    if(e instanceof EntityUserException) {
-      wrappedException = new EntityUserException(e.getClassName(), e.getEntityName(), e);
+    if(e instanceof VoltronEntityUserExceptionWrapper) {
+      //should we add local stack trace here?
+      throw (EntityUserException)e.getCause();
     } else if(e instanceof EntityNotFoundException) {
       wrappedException = new EntityNotFoundException(e.getClassName(), e.getEntityName(), e);
     } else if(e instanceof VoltronWrapperException) {
@@ -56,6 +59,8 @@ public class ExceptionUtils {
       throw new PermanentEntityException(wrappedException.getClassName(), wrappedException.getEntityName(), wrappedException);
     } else if (wrappedException instanceof ConnectionClosedException) {
       throw new ConnectionClosedException(wrappedException.getDescription(), wrappedException);
+    } else if (wrappedException instanceof EntityServerUncaughtException) {
+      throw new EntityServerUncaughtException(wrappedException.getClassName(), wrappedException.getEntityName(), wrappedException.getDescription(), wrappedException);
     } else {
       // Unknown exception - this must be populated.
       Assert.fail("Unhandled runtime exception type");
