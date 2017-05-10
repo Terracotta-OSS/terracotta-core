@@ -131,7 +131,12 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     
     clientComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     channel = clientComms.createClientChannel(new NullSessionManager(), -1, 30000, true);
-    channel.open(new ConnectionInfo(host,proxyPort));
+    try {
+      channel.open(new ConnectionInfo(host, proxyPort));
+    } catch (Throwable t) {
+      t.printStackTrace();
+      throw new RuntimeException(t);
+    }
   }
 
   public void testReverseCallback() throws Exception {

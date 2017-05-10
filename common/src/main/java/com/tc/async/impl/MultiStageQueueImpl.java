@@ -24,32 +24,65 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.api.StageQueueStats;
+import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
+import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
+import com.tc.util.UpdatableFixedHeap;
 import com.tc.util.concurrent.QueueFactory;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
+import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
+import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollector;
+import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
+
 /**
- * This StageQueueImpl represents the sink and gives a handle to the source. We are internally justun using a queue
+ * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
  * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
  * across process boundaries.
  */
-public class StageQueueImpl<EC> implements Sink<EC> {
+public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
 
-  private final String            stageName;
-  private final TCLogger          logger;
-  private final SourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
+  static final String FINDSTRATEGY_PROPNAME = "tc.stagequeueimpl.findstrategy";
+
+
+  private static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
+
+  static {
+    ShortestFindStrategy strat = ShortestFindStrategy.PARTITION;
+    try {
+      strat = chooseStrategy(ShortestFindStrategy.PARTITION);
+    } catch (Throwable t) {
+    }
+    SHORTEST_FIND_STRATEGY = strat;
+  }
+
+  static enum ShortestFindStrategy {
+    BRUTE,
+    PARTITION
+  }
+
+  private final boolean moduloAnd;
+  private final int moduleMask;
+  private final int PARTITION_SHIFT;
+  private final String stageName;
+  private final ShortestFindStrategy myShortestFindStrategy;
+  private final TCLogger logger;
+  private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
   private volatile boolean closed = false;
   private volatile int fcheck = 0;  // used to start the shortest queue search
+  private AtomicInteger partitionHand =new AtomicInteger(0);
+
   /**
    * The Constructor.
-   * 
+   *
    * @param queueCount : Number of queues working on this stage
    * @param queueFactory : Factory used to create the queues
    * @param loggerProvider : logger
@@ -57,15 +90,55 @@ public class StageQueueImpl<EC> implements Sink<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  public StageQueueImpl(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory,
-                        TCLoggerProvider loggerProvider, String stageName, int queueSize) {
+  MultiStageQueueImpl(int queueCount,
+                      QueueFactory<ContextWrapper<EC>> queueFactory,
+                      TCLoggerProvider loggerProvider,
+                      String stageName,
+                      int queueSize) {
     Assert.eval(queueCount > 0);
+
+    myShortestFindStrategy = SHORTEST_FIND_STRATEGY;
+
+    if (queueCount >= 8) {
+      PARTITION_SHIFT = 2;
+    } else {
+      PARTITION_SHIFT = 1;
+    }
+
     this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
     this.stageName = stageName;
-    this.sourceQueues = new SourceQueueImpl[queueCount];
+    this.sourceQueues = new MultiSourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
+
+    int sz=sourceQueues.length;
+    if (Integer.bitCount(sz) == 1) {
+      this.moduloAnd = true;
+      this.moduleMask = sz - 1;
+    } else {
+      this.moduloAnd = false;
+      this.moduleMask = 0;
+    }
   }
-  
+
+  private static ShortestFindStrategy chooseStrategy(ShortestFindStrategy defaultVal) {
+    String stratName = System.getProperty(FINDSTRATEGY_PROPNAME, defaultVal.name());
+    for (ShortestFindStrategy s : ShortestFindStrategy.values()) {
+      if (s.name().toUpperCase().equals(stratName.toUpperCase())) {
+        return s;
+      }
+    }
+    System.err.println("Unrecognized '" + FINDSTRATEGY_PROPNAME + "' value: " + stratName + "; using: " + defaultVal);
+    return defaultVal;
+  }
+
+  private int moduloQueueCount(int i) {
+    if (moduloAnd) {
+      return i & moduleMask;
+    } else {
+      return i % this.sourceQueues.length;
+    }
+  }
+
   private void createWorkerQueues(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
     BlockingQueue<ContextWrapper<EC>> q = null;
@@ -77,10 +150,11 @@ public class StageQueueImpl<EC> implements Sink<EC> {
 
     for (int i = 0; i < queueCount; i++) {
       q = queueFactory.createInstance(queueSize);
-      this.sourceQueues[i] = new SourceQueueImpl<ContextWrapper<EC>>(q, i, statsCollector);
+      this.sourceQueues[i] = new MultiSourceQueueImpl<ContextWrapper<EC>>(q, i, statsCollector);
     }
   }
 
+  @Override
   public Source<ContextWrapper<EC>> getSource(int index) {
     return (index < 0 || index >= this.sourceQueues.length) ? null : this.sourceQueues[index];
   }
@@ -130,12 +204,13 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-    // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
 
+    // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
     boolean interrupted = Thread.interrupted();
-    MultiThreadedEventContext cxt = (MultiThreadedEventContext)context;
+    MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
     int index = getSourceQueueFor(cxt);
-    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context, index) : new HandledContext<EC>(context);
+    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context, index) : new HandledContext<EC>(
+      context);
     try {
       while (true) {
         try {
@@ -177,28 +252,47 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       }
     }
   }
-  
-//  TODO:  Way too busy. REALLY need a better way
+
+  // TODO:  Way too busy. REALLY need a better way
   private int findShortestQueueIndex() {
-    final int pointer = fcheck;
-    int min = Integer.MAX_VALUE;
-    int can = -1;
-// special case where context can go to any queue, pick the shortest
-    for (int x=0;x<this.sourceQueues.length;x++) {
-      int index = (pointer + x) % this.sourceQueues.length;
-      SourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[index];
-      if (impl.isEmpty()) {
-        return index;
-      } else {
-        int checkMin = impl.size(); // concurrent access so just use current value.  this method is best efforts
-        if (Math.min(min, checkMin) != min) {
-          can = index;
-          min = checkMin;
+    switch (SHORTEST_FIND_STRATEGY) {
+      case PARTITION: {
+        int offset = moduloQueueCount(partitionHand.getAndIncrement() << PARTITION_SHIFT);
+        int min = Integer.MAX_VALUE;
+        int can = -1;
+        for (int i = 0; i < (1 << PARTITION_SHIFT); i++) {
+          int checkMin = this.sourceQueues[offset].size();
+          if (checkMin < min) {
+            can = offset;
+            min = checkMin;
+          }
+          offset = moduloQueueCount(offset + 1);
         }
+        return can;
+      }
+      case BRUTE: {
+        final int pointer = fcheck;
+        int min = Integer.MAX_VALUE;
+        int can = -1;
+        // special case where context can go to any queue, pick the shortest
+        for (int x = 0; x < this.sourceQueues.length; x++) {
+          int index = moduloQueueCount(pointer + x);
+          MultiSourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[index];
+          if (impl.isEmpty()) {
+            return index;
+          } else {
+            int checkMin = impl.size(); // concurrent access so just use current value.  this method is best efforts
+            if (Math.min(min, checkMin) != min) {
+              can = index;
+              min = checkMin;
+            }
+          }
+        }
+        Assert.assertTrue(can >= 0 && can < this.sourceQueues.length);
+        return can;
       }
     }
-    Assert.assertTrue(can >= 0 && can < this.sourceQueues.length);
-    return can;
+    throw new IllegalStateException();
   }
 
   private int getSourceQueueFor(MultiThreadedEventContext context) {
@@ -219,7 +313,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   @Override
   public int size() {
     int totalQueueSize = 0;
-    for (SourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
+    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
       totalQueueSize += sourceQueue.size();
     }
     return totalQueueSize;
@@ -233,7 +327,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   @Override
   public void clear() {
     int clearCount = 0;
-    for (SourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
+    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
     this.logger.info("Cleared " + clearCount);
@@ -247,7 +341,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
   @Override
   public void enableStatsCollection(boolean enable) {
     StageQueueStatsCollector collector = null;
-    for (SourceQueueImpl<ContextWrapper<EC>> src : this.sourceQueues) {
+    for (MultiSourceQueueImpl<ContextWrapper<EC>> src : this.sourceQueues) {
       String name = this.stageName + "[" + src.getSourceName() + "]";
       if (collector == null || !collector.getName().equals(name)) {
         collector = (enable) ? new StageQueueStatsCollectorImpl(name) : new NullStageQueueStatsCollector(name);
@@ -268,7 +362,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
         public String getDetails() {
           StringBuilder build = new StringBuilder();
           StageQueueStatsCollector stats = null;
-          for (SourceQueueImpl<ContextWrapper<EC>> impl : sourceQueues) {
+          for (MultiSourceQueueImpl<ContextWrapper<EC>> impl : sourceQueues) {
             StageQueueStatsCollector current = impl.getStatsCollector();
             if (stats != current) {
               if (stats != null) build.append('\n');
@@ -304,27 +398,36 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     this.sourceQueues[0].getStatsCollector().reset();
   }
 
-  private final class SourceQueueImpl<W> implements Source<W> {
+  private final class MultiSourceQueueImpl<W> implements UpdatableFixedHeap.Ordered, SourceQueue<W> {
 
     private final BlockingQueue<W> queue;
     private final int                      sourceIndex;
     private volatile StageQueueStatsCollector statsCollector;
+    private UpdatableFixedHeap.UpdatableWrapper<MultiSourceQueueImpl<ContextWrapper<EC>>> heapWrapper;
 
-    public SourceQueueImpl(BlockingQueue<W> queue, int sourceIndex, StageQueueStatsCollector statsCollector) {
+    public MultiSourceQueueImpl(BlockingQueue<W> queue, int sourceIndex, StageQueueStatsCollector statsCollector) {
       this.queue = queue;
       this.sourceIndex = sourceIndex;
       this.statsCollector = statsCollector;
     }
 
+    @Override
+    public String toString() {
+      return "SourceQueueImpl{" + sourceIndex + "size=" + queue.size() + '}';
+    }
+
+    @Override
     public StageQueueStatsCollector getStatsCollector() {
       return this.statsCollector;
     }
 
+    @Override
     public void setStatsCollector(StageQueueStatsCollector collector) {
       this.statsCollector = collector;
     }
 
     // XXX: poor man's clear.
+    @Override
     public int clear() {
       int cleared = 0;
       try {
@@ -357,11 +460,13 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       return rv;
     }
 
+    @Override
     public void put(W context) throws InterruptedException {
       this.queue.put(context);
       this.statsCollector.contextAdded();
     }
 
+    @Override
     public int size() {
       return this.queue.size();
     }
@@ -370,147 +475,17 @@ public class StageQueueImpl<EC> implements Sink<EC> {
     public String getSourceName() {
       return Integer.toString(this.sourceIndex);
     }
-  }
 
-  private static abstract class StageQueueStatsCollector implements StageQueueStats {
-
-    @Override
-    public void logDetails(TCLogger statsLogger) {
-      statsLogger.info(getDetails());
+    public void setHeapWrapper(UpdatableFixedHeap.UpdatableWrapper<MultiSourceQueueImpl<ContextWrapper<EC>>> heapWrapper) {
+      this.heapWrapper = heapWrapper;
     }
 
-    public abstract void contextAdded();
-
-    public abstract void reset();
-
-    public abstract void contextRemoved();
-
-    protected String makeWidth(String name, int width) {
-      final int len = name.length();
-      if (len == width) { return name; }
-      if (len > width) { return name.substring(0, width); }
-
-      StringBuffer buf = new StringBuffer(name);
-      for (int i = len; i < width; i++) {
-        buf.append(' ');
-      }
-      return buf.toString();
+    @Override
+    public int getHeapOrderingAmount() {
+      return size();
     }
   }
 
-  private static class NullStageQueueStatsCollector extends StageQueueStatsCollector {
-
-    private final String name;
-    private final String trimmedName;
-
-    public NullStageQueueStatsCollector(String stage) {
-      this.trimmedName = stage.trim();
-      this.name = makeWidth(stage, 40);
-    }
-
-    @Override
-    public String getDetails() {
-      return this.name + " : Not Monitored";
-    }
-
-    @Override
-    public void contextAdded() {
-      // NO-OP
-    }
-
-    @Override
-    public void contextRemoved() {
-      // NO-OP
-    }
-
-    @Override
-    public void reset() {
-      // NO-OP
-    }
-
-    @Override
-    public String getName() {
-      return this.trimmedName;
-    }
-
-    @Override
-    public int getDepth() {
-      return -1;
-    }
-  }
-
-  private static class StageQueueStatsCollectorImpl extends StageQueueStatsCollector {
-
-    private final AtomicInteger count = new AtomicInteger(0);
-    private final String        name;
-    private final String        trimmedName;
-
-    public StageQueueStatsCollectorImpl(String stage) {
-      this.trimmedName = stage.trim();
-      this.name = makeWidth(stage, 40);
-    }
-
-    @Override
-    public String getDetails() {
-      return this.name + " : " + this.count;
-    }
-
-    @Override
-    public void contextAdded() {
-      this.count.incrementAndGet();
-    }
-
-    @Override
-    public void contextRemoved() {
-      this.count.decrementAndGet();
-    }
-
-    @Override
-    public void reset() {
-      this.count.set(0);
-    }
-
-    @Override
-    public String getName() {
-      return this.trimmedName;
-    }
-
-    @Override
-    public int getDepth() {
-      return this.count.get();
-    }
-  }
-  
-  private static class DirectExecuteContext<EC> implements ContextWrapper<EC> {
-    private final SpecializedEventContext context;
-    public DirectExecuteContext(SpecializedEventContext context) {
-      this.context = context;
-    }
-    @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      this.context.execute();
-    }
-  }
-  
-  private static class HandledContext<EC> implements ContextWrapper<EC> {
-    private final EC context;
-    public HandledContext(EC context) {
-      this.context = context;
-    }
-    @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      handler.handleEvent(this.context);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
-    }
-  }
-  
   private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
     private final EC context;
     private final int offset;
@@ -519,7 +494,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       this.context = context;
       this.offset = offset;
     }
-    
+
     @Override
     public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
       if (++executionCount == sourceQueues.length) {
@@ -531,7 +506,7 @@ public class StageQueueImpl<EC> implements Sink<EC> {
         try {
           while (true) {
             try {
-              sourceQueues[(executionCount + offset) % sourceQueues.length].put(this);
+              sourceQueues[moduloQueueCount(executionCount + offset)].put(this);
               break;
             } catch (InterruptedException e) {
               logger.debug("FlushingHandledContext move to next queue: " + e + " : " + ((executionCount + offset) % sourceQueues.length));
@@ -553,5 +528,5 @@ public class StageQueueImpl<EC> implements Sink<EC> {
       }
       return super.equals(obj);
     }
-  }  
+  }
 }
