@@ -293,7 +293,7 @@ public class DistributedObjectClient implements TCClient {
                                      new NullConnectionPolicy(),
                                      1,
                                      new HealthCheckerConfigClientImpl(tcProperties
-                                         .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "DSO Client"),
+                                         .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client"),
                                      getMessageTypeClassMapping(),
             ReconnectionRejectedHandlerL1.SINGLETON, securityManager, productId);
 
