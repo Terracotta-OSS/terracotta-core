@@ -20,6 +20,9 @@ package com.tc.services;
 
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 
 import org.terracotta.entity.ServiceConfiguration;
@@ -82,6 +85,18 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         : externalService;
   }
 
+  @Override
+  public <T> Collection<T> getServices(ServiceConfiguration<T> configuration) {
+    Collection<T> builtInServices = getBuiltInServices(configuration);
+    Collection<T> externalServices = getExternalServices(configuration);
+
+    List<T> allServices = new ArrayList<>();
+    allServices.addAll(builtInServices);
+    allServices.addAll(externalServices);
+
+    return Collections.unmodifiableList(allServices);
+  }
+
   public void setOwningEntity(ManagedEntity entity) {
     Assert.assertNull(this.owningEntity);
     Assert.assertNotNull(entity);
@@ -129,5 +144,37 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
       }
     }
     return service;
+  }
+
+
+  private <T> Collection<T> getBuiltInServices(ServiceConfiguration<T> configuration) {
+    List<T> services = new ArrayList<>();
+    Class<T> serviceType = configuration.getServiceType();
+    List<ImplementationProvidedServiceProvider> serviceProviders = implementationProvidedServiceProviderMap.get(serviceType);
+    if (null != serviceProviders) {
+      for (ImplementationProvidedServiceProvider provider : serviceProviders) {
+        T aService = provider.getService(this.consumerID, this.owningEntity, configuration);
+        if (null != aService) {
+          services.add(aService);
+        }
+      }
+    }
+    return services;
+  }
+
+  private <T> Collection<T> getExternalServices(ServiceConfiguration<T> configuration) {
+    List<T> services = new ArrayList<>();
+    Class<T> serviceType = configuration.getServiceType();
+    List<ServiceProvider> serviceProviders = serviceProviderMap.get(serviceType);
+    if (serviceProviders == null) {
+      return null;
+    }
+    for (ServiceProvider provider : serviceProviders) {
+      T aService = provider.getService(this.consumerID, configuration);
+      if (null != aService) {
+        services.add(aService);
+      }
+    }
+    return services;
   }
 }
