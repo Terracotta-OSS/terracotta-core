@@ -67,6 +67,8 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
@@ -285,6 +287,8 @@ public class DistributedObjectClient implements TCClient {
     this.counterManager = new CounterManagerImpl();
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
+    final HealthCheckerConfig hc = (diagnostic) ? new DisabledHealthCheckerConfigImpl() : new HealthCheckerConfigClientImpl(tcProperties
+                                         .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
     this.communicationsManager = this.clientBuilder
         .createCommunicationsManager(mm,
@@ -292,8 +296,7 @@ public class DistributedObjectClient implements TCClient {
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
                                      1,
-                                     new HealthCheckerConfigClientImpl(tcProperties
-                                         .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client"),
+                                     hc,
                                      getMessageTypeClassMapping(),
             ReconnectionRejectedHandlerL1.SINGLETON, securityManager, productId);
 
