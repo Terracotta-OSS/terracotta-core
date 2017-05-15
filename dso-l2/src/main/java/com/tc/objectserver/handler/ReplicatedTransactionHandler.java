@@ -316,11 +316,11 @@ public class ReplicatedTransactionHandler {
         Assert.assertTrue(temp.getConsumerID() + " == " + activity.getFetchID().toLong(), temp.getConsumerID() == activity.getFetchID().toLong());
         temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
           (result) -> {
-            if (!sourceNodeID.isNull()) {
-              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), true /*from client checked*/, extendedData);
+            if (canDelete) {
+              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             } else {
-              entityPersistor.entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), true, extendedData);
+              entityPersistor.entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }
           }, (exception) -> {
