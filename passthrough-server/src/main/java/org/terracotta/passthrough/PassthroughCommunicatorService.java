@@ -44,6 +44,13 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
   }
 
   @Override
+  public void closeClientConnection(ClientDescriptor clientDescriptor) {
+    PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;
+    PassthroughConnection connection = rawDescriptor.sender;
+    connection.close();
+  }
+
+  @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
     prepareAndSendMessage(clientDescriptor, message);
   }

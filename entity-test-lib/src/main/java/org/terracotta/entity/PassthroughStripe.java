@@ -115,12 +115,17 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     FakeEndpoint endpoint = endpoints.get(clientDescriptor);
     byte[] payload = endpoint.serializeResponse(message);
     try {
-      endpoints.get(clientDescriptor).sendNoResponse(payload);
+      endpoint.sendNoResponse(payload);
     } catch (MessageCodecException e) {
       // Not expected in the testing environment.
       Assert.fail(e.getLocalizedMessage());
     }
     return Futures.immediateFuture(null);
+  }
+
+  @Override
+  public void closeClientConnection(ClientDescriptor clientDescriptor) {
+    endpoints.get(clientDescriptor).close();
   }
 
   private class FakeServiceRegistry {
@@ -177,6 +182,21 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
           }
           return null;
         }
+
+        @Override
+        public <T> Collection<T> getServices(ServiceConfiguration<T> configuration) {
+          List<T> choices = new ArrayList<T>();
+          for (ServiceProvider provider : builtins) {
+            if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
+              T service = provider.getService(cid, configuration);
+              if (service != null) {
+                choices.add(service);
+              }
+            }
+          }
+          return choices;
+        }
+        
       };
     }
   }

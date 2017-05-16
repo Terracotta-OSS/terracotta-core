@@ -18,16 +18,16 @@
  */
 package org.terracotta.passthrough;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 
 /**
@@ -37,8 +37,8 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   private final String entityClassName;
   private final String entityName;
   private final long consumerID;
-  private final Map<Class<?>, ServiceProvider> serviceProviderMap;
-  private final Map<Class<?>, PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
+  private final List<ServiceProvider> serviceProviders;
+  private final List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   private final DeferredEntityContainer owningEntityContainer;
   
   public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders,
@@ -46,42 +46,14 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     this.entityClassName = entityClassName;
     this.entityName = entityName;
     this.consumerID = consumerID;
+    //  override service providers come first
+    List<ServiceProvider> services = new ArrayList<ServiceProvider>(overrideServiceProviders);
+    //  regular service providers come next
+    services.addAll(serviceProviders);
     
-    Map<Class<?>, ServiceProvider> overrideServiceTypes = new HashMap<Class<?>, ServiceProvider>();
-    for (ServiceProvider overrideServiceProvider : overrideServiceProviders) {
-      for (Class<?> serviceType : overrideServiceProvider.getProvidedServiceTypes()) {
-        overrideServiceTypes.put(serviceType, overrideServiceProvider);
-      }
-    }
+    this.serviceProviders = Collections.unmodifiableList(services);
 
-    Map<Class<?>, ServiceProvider> tempProviders = new HashMap<Class<?>, ServiceProvider>();
-    for(ServiceProvider provider : serviceProviders) {
-      for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
-        // We currently have no way of handling multiple providers.
-        //Note that all override ServiceProviders are part of this serviceProviders 
-        if(overrideServiceTypes.containsKey(serviceType)) {
-          //install override ServiceProvider
-          if(!tempProviders.containsKey(serviceType)) {
-            tempProviders.put(serviceType, overrideServiceTypes.get(serviceType));
-          }
-        } else {
-          //real server behaviour
-          Assert.assertTrue(null == tempProviders.get(serviceType));
-          tempProviders.put(serviceType, provider);
-        }
-      }
-    }
-    this.serviceProviderMap = ImmutableMap.copyOf(tempProviders);
-    
-    Map<Class<?>, PassthroughImplementationProvidedServiceProvider> tempInternalProviders = new HashMap<Class<?>, PassthroughImplementationProvidedServiceProvider>();
-    for(PassthroughImplementationProvidedServiceProvider provider : implementationProvidedServiceProviders) {
-      for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
-        // We currently have no way of handling multiple providers.
-        Assert.assertTrue(null == tempInternalProviders.get(serviceType));
-        tempInternalProviders.put(serviceType, provider);
-      }
-    }
-    this.implementationProvidedServiceProviders = ImmutableMap.copyOf(tempInternalProviders);
+    this.implementationProvidedServiceProviders = Collections.unmodifiableList(implementationProvidedServiceProviders);
     
     this.owningEntityContainer = container;
   }
@@ -97,24 +69,50 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
         : externalService;
   }
 
+  @Override
+  public <T> Collection<T> getServices(ServiceConfiguration<T> configuration) {
+    return getExternals(configuration);
+  }
+
   private <T> T getBuiltIn(ServiceConfiguration<T> configuration) {
-    PassthroughImplementationProvidedServiceProvider provider = this.implementationProvidedServiceProviders.get(configuration.getServiceType());
+    Class<?> serviceType = configuration.getServiceType();
     T service = null;
-    if (null != provider) {
-      service = provider.getService(this.entityClassName, this.entityName, this.consumerID, this.owningEntityContainer, configuration);
+    for (PassthroughImplementationProvidedServiceProvider provider : this.implementationProvidedServiceProviders) {
+      if (provider.getProvidedServiceTypes().contains(serviceType)) {
+        service = provider.getService(this.entityClassName, this.entityName, this.consumerID, this.owningEntityContainer, configuration);
+        if (service != null) {
+          return service;
+        }
+      }
     }
-    return service;
+    return null;
   }
 
   private <T> T getExternal(ServiceConfiguration<T> configuration) {
-    ServiceProvider provider = this.serviceProviderMap.get(configuration.getServiceType());
-    T service = null;
-    if (null != provider) {
-      service = provider.getService(this.consumerID, configuration);
+    for (ServiceProvider provider : this.serviceProviders) {
+      if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
+        T service = provider.getService(this.consumerID, configuration);
+        if (service != null) {
+          return service;
+        }
+      }
     }
-    return service;
+    return null;
   }
 
+  private <T> Collection<T> getExternals(ServiceConfiguration<T> configuration) {
+    List<T> items = new ArrayList<T>();
+    for (ServiceProvider provider : this.serviceProviders) {
+      if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
+        T service = provider.getService(this.consumerID, configuration);
+        if (service != null) {
+          items.add(service);
+        }
+      }
+    }
+    return items;
+  }
+  
   public long getConsumerID() {
     return consumerID;
   }
