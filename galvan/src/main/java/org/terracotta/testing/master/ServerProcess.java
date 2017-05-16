@@ -194,8 +194,6 @@ public class ServerProcess {
   }
   
   private synchronized void reset(boolean running) {
-    // We aren't expecting a crash and we are now running.
-    this.isCrashExpected = false;
     this.pid = 0;
     this.wasZapped = this.isRunning;
     this.isRunning = running;

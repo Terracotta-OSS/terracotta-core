@@ -281,6 +281,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
   @Override
   public void serverDidStartup(ServerProcess server) {
     synchronized (this.sharedLockState) {
+      server.setCrashExpected(ignoreServerCrashes);
       this.logger.output("serverDidStartup: " + server);
       boolean didRemove = this.terminatedServers.remove(server);
       localAssert(didRemove, server);
