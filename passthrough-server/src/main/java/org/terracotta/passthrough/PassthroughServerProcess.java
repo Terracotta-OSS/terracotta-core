@@ -150,6 +150,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.crasher = crasher;
   }
 
+  public PassthroughRetirementManager getRetirementManager() {
+    return retirementManager;
+  }
+
   @SuppressWarnings("unchecked")
   public void start(boolean shouldLoadStorage) {
     // Make sure that we install the in-memory registry, if needed.
@@ -430,8 +434,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // When handling re-sends, we are effectively paused so this shouldn't happen.
       Assert.assertTrue(!this.isHandlingResends);
       
-      // Defer the current message, blocking it on the new one.
-      this.retirementManager.deferCurrentMessage(newMessage);
       PassthroughMessageContainer container = new PassthroughMessageContainer();
       container.sender = new IMessageSenderWrapper() {
         @Override

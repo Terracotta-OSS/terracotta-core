@@ -33,6 +33,7 @@ import java.util.Map;
 public class PassthroughMessengerService implements IEntityMessenger, EntityContainerListener {
   private final PassthroughTimerThread timerThread;
   private final PassthroughServerProcess passthroughServerProcess;
+  private final PassthroughRetirementManager retirementManager;
   private final PassthroughConnection pseudoConnection;
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
@@ -43,6 +44,7 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, String entityClassName, String entityName) {
     this.timerThread = timerThread;
     this.passthroughServerProcess = passthroughServerProcess;
+    this.retirementManager = passthroughServerProcess.getRetirementManager();
     this.pseudoConnection = pseudoConnection;
     // Note that we hold the entity container to get the codec but this container is deferred so we hold onto it, instead of
     // the codec (which probably isn't set yet).
@@ -68,10 +70,11 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   @Override
   public ExplicitRetirementHandle deferRetirement(final String tag,
                                                   EntityMessage originalMessageToDefer,
-                                                  EntityMessage futureMessage) {
+                                                  final EntityMessage futureMessage) {
     try {
       PassthroughMessage passthroughMessage = makePassthroughMessage(futureMessage);
       final PassthroughMessage futurePassThroughMessage = makePassthroughMessage(futureMessage);
+      retirementManager.deferCurrentMessage(futureMessage);
       return new ExplicitRetirementHandle() {
         @Override
         public String getTag() {
@@ -80,7 +83,7 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
 
         @Override
         public void release() throws MessageCodecException {
-          commonSendMessage(futurePassThroughMessage);
+          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage);
         }
       };
     } catch (MessageCodecException e) {
@@ -91,15 +94,9 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
 
   @Override
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
-    // Serialize the message.
-    @SuppressWarnings("unchecked")
-    MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
-    byte[] serializedMessage = codec.encodeMessage(newMessageToSchedule);
-    // We use the invalid instance 0 since this is not a connected client.
-    long clientInstanceID = 0;
-    boolean shouldReplicateToPassives = true;
-    PassthroughMessage passthroughMessage = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, clientInstanceID, serializedMessage, shouldReplicateToPassives);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, passthroughMessage);
+    retirementManager.deferCurrentMessage(newMessageToSchedule);
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule,
+        makePassthroughMessage(newMessageToSchedule));
   }
 
   @Override
