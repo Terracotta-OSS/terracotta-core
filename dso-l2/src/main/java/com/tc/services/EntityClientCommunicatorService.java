@@ -100,6 +100,12 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
       };
     }
   }
+  
+  @Override
+  public void closeClientConnection(ClientDescriptor clientDescriptor) {
+    ClientDescriptorImpl descriptor = (ClientDescriptorImpl)clientDescriptor;
+    clientAccounts.computeIfPresent(descriptor.getNodeID(), (node, account)->{account.close(); return null;});
+  }
 
   @SuppressWarnings("unchecked")
   private <R extends EntityResponse> byte[] serialize(MessageCodec<?, R> codec, EntityResponse response) throws MessageCodecException {

@@ -22,7 +22,6 @@ import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.ThreadDumpHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;

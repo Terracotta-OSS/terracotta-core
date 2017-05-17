@@ -22,7 +22,6 @@ import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
 import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -43,7 +42,6 @@ import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
-import java.util.Collection;
 
 import java.util.Map;
 
@@ -51,9 +49,9 @@ import java.util.Map;
 public class StandardClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         SessionProvider sessionProvider, int maxReconnectTries,
+                                                         SessionProvider sessionProvider, 
                                                          int socketConnectTimeout, TCClient client) {
-    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, socketConnectTimeout, true);
+    return commMgr.createClientChannel(sessionProvider, -1 /*  reconnect retry forever  */, socketConnectTimeout, true);
   }
 
   @Override

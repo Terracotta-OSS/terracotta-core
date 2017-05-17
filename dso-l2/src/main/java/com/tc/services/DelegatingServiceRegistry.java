@@ -20,52 +20,30 @@ package com.tc.services;
 
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 
 public class DelegatingServiceRegistry implements InternalServiceRegistry {
   private final long consumerID;
-  private final Map<Class<?>, List<ServiceProvider>> serviceProviderMap;
-  private final Map<Class<?>, List<ImplementationProvidedServiceProvider>> implementationProvidedServiceProviderMap;
+  private final Collection<ServiceProvider> serviceProviders;
+  private final Collection<ImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   // Both the registry and the entity refer to each other so this is late-bound.
   private ManagedEntity owningEntity;
 
   public DelegatingServiceRegistry(long consumerID, ServiceProvider[] providers, ImplementationProvidedServiceProvider[] implementationProvidedProviders) {
     this.consumerID = consumerID;
     
-    Map<Class<?>, List<ServiceProvider>> tempProviders = new HashMap<>();
-    for(ServiceProvider provider : providers) {
-      for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
-        List<ServiceProvider> listForType = tempProviders.get(serviceType);
-        if (null == listForType) {
-          listForType = new LinkedList<>();
-          tempProviders.put(serviceType, listForType);
-        }
-        listForType.add(provider);
-      }
-    }
-    serviceProviderMap = Collections.unmodifiableMap(tempProviders);
+    serviceProviders = Collections.unmodifiableCollection(Arrays.asList(providers));
     
-    Map<Class<?>, List<ImplementationProvidedServiceProvider>> tempBuiltInProviders = new HashMap<>();
-    for(ImplementationProvidedServiceProvider provider : implementationProvidedProviders) {
-      for (Class<?> serviceType : provider.getProvidedServiceTypes()) {
-        List<ImplementationProvidedServiceProvider> listForType = tempBuiltInProviders.get(serviceType);
-        if (null == listForType) {
-          listForType = new LinkedList<>();
-          tempBuiltInProviders.put(serviceType, listForType);
-        }
-        listForType.add(provider);
-      }
-    }
-    implementationProvidedServiceProviderMap = Collections.unmodifiableMap(tempBuiltInProviders);
+    implementationProvidedServiceProviders = Collections.unmodifiableCollection(Arrays.asList(implementationProvidedProviders));
   }
 
   @Override
@@ -81,7 +59,13 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         ? builtInService
         : externalService;
   }
-
+  
+  @Override
+  public <T> Collection<T> getServices(ServiceConfiguration<T> configuration) {
+    return getExternalServices(configuration);
+  }
+  
+  @Override
   public void setOwningEntity(ManagedEntity entity) {
     Assert.assertNull(this.owningEntity);
     Assert.assertNotNull(entity);
@@ -90,10 +74,9 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
 
   private <T> T getBuiltInService(ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
-    List<ImplementationProvidedServiceProvider> serviceProviders = implementationProvidedServiceProviderMap.get(serviceType);
     T service = null;
-    if (null != serviceProviders) {
-      for (ImplementationProvidedServiceProvider provider : serviceProviders) {
+    for (ImplementationProvidedServiceProvider provider : implementationProvidedServiceProviders) {
+      if (provider.getProvidedServiceTypes().contains(serviceType)) {
         T oneService = provider.getService(this.consumerID, this.owningEntity, configuration);
         if (null != oneService) {
           // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
@@ -111,23 +94,34 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
 
   private <T> T getExternalService(ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
-    List<ServiceProvider> serviceProviders = serviceProviderMap.get(serviceType);
-    if (serviceProviders == null) {
-     return null;
-    }
-    T service = null;
+    T theService = null;
     for (ServiceProvider provider : serviceProviders) {
-      T oneService = provider.getService(this.consumerID, configuration);
-      if (null != oneService) {
-        // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
-        //  given type.
-        if (null != service) {
-          throw new IllegalArgumentException("Multiple service providers matched for type: " + serviceType);
-        } else {
-          service = oneService;
+      if (provider.getProvidedServiceTypes().contains(serviceType)) {
+        T oneService = provider.getService(this.consumerID, configuration);
+        if (null != oneService) {
+          if (theService != null) {
+            throw new IllegalArgumentException("Multiple service providers matched for type: " + serviceType);
+          } else {
+            theService = oneService;
+          }
         }
       }
     }
-    return service;
+    return theService;
   }
+  
+  private <T> Collection<T> getExternalServices(ServiceConfiguration<T> configuration) {
+    Class<T> serviceType = configuration.getServiceType();
+    List<T> choices = new ArrayList<>();
+
+    for (ServiceProvider provider : serviceProviders) {
+      if (provider.getProvidedServiceTypes().contains(serviceType)) {
+        T oneService = provider.getService(this.consumerID, configuration);
+        if (oneService != null) {
+          choices.add(oneService);
+        }
+      }
+    }
+    return choices;
+  }  
 }

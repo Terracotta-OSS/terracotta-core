@@ -159,7 +159,7 @@ public class DistributedObjectClientTest extends TestCase {
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class)));
     ClientBuilder builder = new StandardClientBuilder() {
       @Override
-      public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int maxReconnectTries, int socketConnectTimeout, TCClient client) {
+      public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
         try {
           Mockito.when(channel.open(Mockito.anyCollection(), Matchers.anyString(), Matchers.any(char[].class))).thenThrow(new RuntimeException("bad connection"));

@@ -51,9 +51,9 @@ import java.util.Map;
 public class DiagnosticClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         SessionProvider sessionProvider, int maxReconnectTries,
+                                                         SessionProvider sessionProvider, 
                                                          int socketConnectTimeout, TCClient client) {
-    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, socketConnectTimeout, false);
+    return commMgr.createClientChannel(sessionProvider, 0 /* never try and reconnect */, socketConnectTimeout, false);
   }
 
   @Override
