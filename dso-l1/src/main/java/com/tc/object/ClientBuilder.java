@@ -45,7 +45,7 @@ import java.util.Map;
 
 public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                     SessionProvider sessionProvider, int maxReconnectTries,
+                                                     SessionProvider sessionProvider,
                                                      int socketConnectTimeout, TCClient client);
 
   CommunicationsManager createCommunicationsManager(MessageMonitor monitor,

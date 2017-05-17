@@ -137,7 +137,6 @@ public class DistributedObjectClient implements TCClient {
                                                                                              .getDSOGenericLogger();
   private static final TCLogger                      CONSOLE_LOGGER                      = CustomerLogging
                                                                                              .getConsoleLogger();
-  private static final int                           MAX_CONNECT_TRIES                   = -1;
 
   private static final String                        L1VMShutdownHookName                = "L1 VM Shutdown Hook";
   
@@ -309,8 +308,7 @@ public class DistributedObjectClient implements TCClient {
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
     this.channel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
-                                                                 sessionManager,
-                                                                 MAX_CONNECT_TRIES, socketConnectTimeout, this);
+                                                                 sessionManager, socketConnectTimeout, this);
 
     final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(this.channel);
     this.communicationStageManager.setLoggerProvider(cidLoggerProvider);
