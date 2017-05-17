@@ -596,14 +596,8 @@ public class ReplicatedTransactionHandler {
       this.cachedBatchAck = new GroupMessageBatchContext<>(factory, this.groupManager, this.cachedMessageAckFrom, maximumBatchSize, idealMessagesInFlight, this.handleMessageSend);
     }
     
-    boolean didCreate = false;
-    try {
-      didCreate = this.cachedBatchAck.batchMessage(new ReplicationAckTuple(respondTo, code));
-    } catch (GroupException e) {
-      // Active must have died.  Swallow the exception after logging.
-      LOGGER.debug("active died on ack", e);
-    }
-    
+    boolean didCreate = this.cachedBatchAck.batchMessage(new ReplicationAckTuple(respondTo, code));
+
     // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
     //  available).
     if (didCreate) {

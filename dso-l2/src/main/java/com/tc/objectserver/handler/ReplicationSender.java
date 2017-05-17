@@ -76,15 +76,10 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     // Set up the sync state.
     createAndRegisterSyncState(dest);
     // Send the message.
-    try {
-      doSendActivity(dest, activity);
-    } catch (GroupException e) {
-      // This can't happen at this point since these exceptions only happen asynchronously but this is the first
-      //  message we are batching.
-      throw Assert.failure("Unexpected GroupException while adding new passive", e);
-    }
+    if (doSendActivity(dest, activity)) {
     // Try to flush the message.
-    this.selfSink.addSingleThreaded(dest);
+      this.selfSink.addSingleThreaded(dest);
+    }
   }
 
   public boolean replicateMessage(NodeID dest, SyncReplicationActivity activity) {
@@ -96,17 +91,12 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     if (!shouldRemoveFromStream) {
       // We want to send this message.
       syncing.validateSending(activity);
-      try {
-        doSendActivity(dest, activity);
-        didSend = true;
-      } catch (GroupException e) {
-        // This can happen if the previous flush for this node failed.
-        logger.error("Replication to node " + dest + " failed due to previous flush exception", e);
-      }
-      if (didSend) {
+
+      if (doSendActivity(dest, activity)) {  
         // We were able to add the message to the batch so try to flush it.
         this.selfSink.addSingleThreaded(dest);
       }
+      didSend = true;
     } else {
       // We are filtering this out so don't send it.
       // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
@@ -145,14 +135,14 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     return shouldRemoveFromStream;
   }
 
-  private void doSendActivity(NodeID nodeid, SyncReplicationActivity activity) throws GroupException {
+  private boolean doSendActivity(NodeID nodeid, SyncReplicationActivity activity) {
     if (debugLogging) {
       logger.debug("WIRE:" + activity);
     }
     if (debugMessaging) {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
-    this.batchContexts.get(nodeid).batchMessage(activity);
+    return this.batchContexts.get(nodeid).batchMessage(activity);
   }
   
   private void createAndRegisterSyncState(NodeID nodeid) {
