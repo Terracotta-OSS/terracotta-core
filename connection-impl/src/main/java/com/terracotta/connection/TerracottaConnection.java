@@ -47,6 +47,10 @@ public class TerracottaConnection implements Connection {
     this.shutdown = shutdown;
   }
 
+  public boolean isShutdown() {
+    return isShutdown;
+  }
+
   @Override
   public synchronized <T extends Entity, C, U> EntityRef<T, C, U> getEntityRef(Class<T> cls, long version, String name) throws EntityNotProvidedException {
     checkShutdown();
