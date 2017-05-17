@@ -21,8 +21,6 @@ package org.terracotta.passthrough;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.base.Throwables;
-
 
 /**
  * Maintains the association that a connection has to its server and the in-flight messages associated with it.
@@ -53,7 +51,7 @@ public class PassthroughConnectionState {
         wait();
       } catch (InterruptedException e) {
         // The only reason we would interrupt is to kill the test.
-        Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
     long oldestTransactionID = 0;
