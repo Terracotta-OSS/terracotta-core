@@ -21,7 +21,6 @@ package com.tc.objectserver.entity;
 import com.tc.net.ClientID;
 import org.terracotta.entity.ClientDescriptor;
 
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.util.Assert;
 

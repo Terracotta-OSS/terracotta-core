@@ -63,8 +63,19 @@ public class ClientAccount {
       }
     }
   }
+  /** 
+   * going to initiate the close here.  also want to shutdown all the waiters because 
+   * the mapping is going to be removed from above
+   */
 
   synchronized void close() {
+    if (channel.isOpen()) {
+      // if the channel is open, this means that a consumer of the ClientCommunicator API
+      // has directly requested a close on the client connection.  This slightly reorders things
+      // but it shouldn't matter here.  waiting on response is not something that is really supported anyways
+      // (API is deprecated)
+      channel.close();
+    }
     open = false;
     for (ResponseWaiter responseWaiter : waitingResponse.values()) {
       // Client closed, whether or not it received the message is not important anymore since it's gone.
