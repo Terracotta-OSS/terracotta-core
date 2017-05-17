@@ -181,7 +181,10 @@ public class ClientMessageTransport extends MessageTransportBase {
     if (result.hasErrorContext()) {
       switch (result.getErrorType()) {
         case TransportHandshakeError.ERROR_NONE:
-          throw new NoActiveException();
+          if (this.followRedirects) {
+            throw new NoActiveException();
+          }
+          break;
         case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
           cleanConnectionWithoutNotifyListeners();
           throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
