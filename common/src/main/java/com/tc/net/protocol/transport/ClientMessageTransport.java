@@ -295,7 +295,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       getConnection().setTransportEstablished();
       synchronized (status) {
         this.waitForSynAckResult.set(synAck);
-        this.waitForSynAckResult = null;
+        this.waitForSynAckResult = null; /* synack received, clear this result waiter */
       }
       setRemoteCallbackPort(synAck.getCallbackPort());
     }
@@ -330,15 +330,9 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @throws TCTimeoutException
    */
   HandshakeResult handShake() throws TCTimeoutException, TransportHandshakeException {
-    sendSyn();
-    SynAckMessage synAck = waitForSynAck();
-    return new HandshakeResult(synAck);
-  }
-
-  private SynAckMessage waitForSynAck() throws TCTimeoutException, TransportHandshakeException {
     try {
-      SynAckMessage synAck = (SynAckMessage) this.waitForSynAckResult.get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
-      return synAck;
+      SynAckMessage synAck = (SynAckMessage)sendSyn().get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
+      return new HandshakeResult(synAck);
     } catch (InterruptedException e) {
       throw new TransportHandshakeException(e);
     } catch (TCExceptionResultException e) {
@@ -346,12 +340,13 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  private void sendSyn() {
+  private TCFuture sendSyn() {
+    TCFuture targetFuture = new TCFuture(this.status);
     getConnection().addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
     synchronized (this.status) {
       if (this.status.isEstablished() || this.status.isSynSent()) { throw new AssertionError(" ERROR !!! "
                                                                                              + this.status); }
-      this.waitForSynAckResult = new TCFuture(this.status);
+      this.waitForSynAckResult = targetFuture;
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
       if (getConnectionId().isSecured() && getConnectionId().getPassword() == null) {
@@ -370,6 +365,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         logger.warn("trouble syn", ioe);
       }
     }
+    
+    return targetFuture;
   }
 
   private void sendAck() throws TransportHandshakeException {
