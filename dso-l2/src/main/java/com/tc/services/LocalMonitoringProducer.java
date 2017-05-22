@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -72,7 +73,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     if ((null != this.cachedTreeRoot) && !this.cachedTreeRoot.containsKey(consumerID)) {
       this.cachedTreeRoot.put(consumerID, new CacheNode(null));
     }
-    IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+    IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
     T service = null;
     if (null != underlyingCollector) {
       service = type.cast(new IMonitoringProducer() {
@@ -110,7 +111,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   
   public synchronized void serverIsActive() {
     // Tell the ID0 instance that the server is active.
-    IStripeMonitoring platformCollector = this.globalRegistry.subRegistry(ServiceProvider.PLATFORM_CONSUMER_ID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+    IStripeMonitoring platformCollector = getIStripeMonitoringService(ServiceProvider.PLATFORM_CONSUMER_ID);
     
     // Note that the underlying collector will be present for all or none of the consumerIDs.
     if (null != platformCollector) {
@@ -119,7 +120,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
       // Pass our cached state into the underlying services and then drop our cache and pipe to the active
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
         long consumerID = entry.getKey();
-        IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+        IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
         walkCacheChildren(new String[0], entry.getValue().children, new CacheWalker() {
           @Override
           public void didEnterNode(String[] parents, String name, Serializable value) {
@@ -170,7 +171,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     }
     
     // Notify the platform collector.
-    IStripeMonitoring platformCollector = this.globalRegistry.subRegistry(ServiceProvider.PLATFORM_CONSUMER_ID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+    IStripeMonitoring platformCollector = getIStripeMonitoringService(ServiceProvider.PLATFORM_CONSUMER_ID);
     if (null != platformCollector) {
       platformCollector.serverDidJoinStripe(platformServer);
     }
@@ -181,7 +182,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     PlatformServer platformServer = this.otherServers.remove(nodeID);
     if (null != platformServer) {
       // Notify the platform collector.
-      IStripeMonitoring platformCollector = this.globalRegistry.subRegistry(ServiceProvider.PLATFORM_CONSUMER_ID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      IStripeMonitoring platformCollector = getIStripeMonitoringService(ServiceProvider.PLATFORM_CONSUMER_ID);
       if (null != platformCollector) {
         platformCollector.serverDidLeaveStripe(platformServer);
       }
@@ -192,7 +193,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     // If we are getting these, we MUST be in active mode.
     Assert.assertNull(this.cachedTreeRoot);
     
-    IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+    IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
     if (null != underlyingCollector) {
       PlatformServer sendingServer = this.otherServers.get(sender);
       Assert.assertNotNull(sendingServer);
@@ -204,7 +205,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     // If we are getting these, we MUST be in active mode.
     Assert.assertNull(this.cachedTreeRoot);
     
-    IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+    IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
     if (null != underlyingCollector) {
       PlatformServer sendingServer = this.otherServers.get(sender);
       Assert.assertNotNull(sendingServer);
@@ -217,7 +218,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     Assert.assertNull(this.cachedTreeRoot);
     
     for (int i = 0; i < consumerIDs.length; ++i) {
-      IStripeMonitoring underlyingCollector = this.globalRegistry.subRegistry(consumerIDs[i]).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerIDs[i]);
       if (null != underlyingCollector) {
         PlatformServer sendingServer = this.otherServers.get(sender);
         Assert.assertNotNull(sendingServer);
@@ -233,6 +234,15 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   public synchronized boolean isReadyToReceiveRemoteEvents() {
     // The presence of cachedTreeRoot implies that we are still caching, as a passive, so null means we are active.
     return (null == this.cachedTreeRoot);
+  }
+
+  private IStripeMonitoring getIStripeMonitoringService(long consumerID) {
+    try {
+      return this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+    } catch (ServiceException e) {
+      Assert.fail("Multiple IStripeMonitoring implementations found!");
+    }
+    return null;
   }
 
 
