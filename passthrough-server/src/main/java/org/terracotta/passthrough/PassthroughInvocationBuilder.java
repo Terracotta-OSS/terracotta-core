@@ -25,10 +25,10 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityUserException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.exception.EntityServerException;
 
 
 /**
@@ -122,7 +122,7 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
         try {
           return messageCodec.decodeResponse(invokeFuture.get());
         } catch (MessageCodecException e) {
-          throw new EntityUserException(null, null, e);
+          throw new EntityServerException(null, null, null, e);
         }
       }
 
@@ -131,7 +131,7 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
         try {
           return messageCodec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
         } catch (MessageCodecException e) {
-          throw new EntityUserException(null, null, e);
+          throw new EntityServerException(null, null, null, e);
         }
       }
 

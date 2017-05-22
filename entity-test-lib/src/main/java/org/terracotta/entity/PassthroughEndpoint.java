@@ -24,7 +24,7 @@ import java.util.concurrent.Future;
 
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.exception.EntityServerException;
 
 
 /**
@@ -133,21 +133,21 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         EntityException error = null;
         try {
           result = sendInvocation(codec.encodeMessage(request));
-        } catch (EntityUserException e) {
-          error = e;
+        } catch (EntityException ee) {
+          error = ee;
         }
         return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
       }
     }
     
-    private byte[] sendInvocation(byte[] payload) throws EntityUserException {
+    private byte[] sendInvocation(byte[] payload) throws EntityException {
       byte[] result = null;
       try {
         M message = codec.decodeMessage(payload);
         R response = entity.invoke(clientDescriptor, message);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
-        throw new EntityUserException(null, null, e);
+        throw new EntityServerException(null, null, null, e);
       }
       return result;
     }
