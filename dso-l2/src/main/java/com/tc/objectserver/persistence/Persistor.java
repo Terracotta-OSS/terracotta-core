@@ -81,11 +81,14 @@ public class Persistor implements PrettyPrintable {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(getClass().getName()).flush();
+    out.print("Persistor State: " + getClass().getName()).flush();
     if (!started) {
       out.indent().print("PersistorImpl not started.").flush();
     } else {
-      out.println(persistentStorage);
+      if(clusterStatePersistor != null) clusterStatePersistor.prettyPrint(out);
+      if(entityPersistor != null) entityPersistor.prettyPrint(out);
+      if(clientStatePersistor != null) clientStatePersistor.prettyPrint(out);
+      if(transactionOrderPersistor != null) transactionOrderPersistor.prettyPrint(out);
     }
     return out;
   }

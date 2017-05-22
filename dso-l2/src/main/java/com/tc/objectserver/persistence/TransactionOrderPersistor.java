@@ -23,6 +23,8 @@ import org.terracotta.persistence.IPlatformPersistence;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TransactionID;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -42,7 +44,7 @@ import java.util.concurrent.Future;
  * This is persisted because reconnect on restart needs to ensure that the transactions being replayed are done so in
  * the same order as their original order.
  */
-public class TransactionOrderPersistor {
+public class TransactionOrderPersistor implements PrettyPrintable {
   private final IPlatformPersistence storageManager;
   private Long receivedTransactionCount = new Long(0L);
     
@@ -128,6 +130,14 @@ public class TransactionOrderPersistor {
       }
       return isEqual;
     }
+
+    @Override
+    public String toString() {
+      return "{clientID=" + clientID +
+             ", localTransactionID=" + localTransactionID +
+             ", globalTransactionID=" + globalTransactionID +
+             '}';
+    }
   }
   
   private List<ClientTransaction> buildGlobalListIfNessessary() {
@@ -195,5 +205,34 @@ public class TransactionOrderPersistor {
    */
   public long getReceivedTransactionCount() {
     return this.receivedTransactionCount;
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.indent().println(this.getClass().getName());
+    out.indent().indent().println("Received transaction count = " + getReceivedTransactionCount());
+    if(globalList != null) {
+      out.indent().indent().println("Existing Global List: ");
+      for (ClientTransaction clientTransaction : globalList) {
+        out.indent().indent().indent().print(clientTransaction);
+      }
+    }
+
+    if(clientNodeIDs != null && storageManager != null) {
+      for (Long clientNodeID : clientNodeIDs) {
+        List<IPlatformPersistence.SequenceTuple> transactions = null;
+        try {
+          transactions = this.storageManager.loadSequence(clientNodeID);
+        } catch (IOException e) {
+          Assert.fail(e.getLocalizedMessage());
+        }
+        out.indent().indent().println("Persisted transaction order for client " + clientNodeID);
+        for (IPlatformPersistence.SequenceTuple transaction : transactions) {
+          out.indent().indent().indent()
+              .println("Global seq Id = " + transaction.localSequenceID + ", local seq id = " + transaction.localSequenceID);
+        }
+      }
+    }
+    return out;
   }
 }

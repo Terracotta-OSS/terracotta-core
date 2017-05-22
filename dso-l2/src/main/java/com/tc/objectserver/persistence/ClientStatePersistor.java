@@ -20,6 +20,8 @@ package com.tc.objectserver.persistence;
 
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
@@ -30,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
-public class ClientStatePersistor {
+public class ClientStatePersistor implements PrettyPrintable {
   private static final String CLIENTS_MAP_FILE_NAME =  "clients_map.map";
   private static final String NEXT_CLIENT_ID_FILE_NAME =  "next_client_id.dat";
   
@@ -79,6 +81,19 @@ public class ClientStatePersistor {
       throw new ClientNotFoundException();
     }
     safeStoreClients();
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.indent().println(this.getClass().getName());
+    if(clients != null) {
+      out.indent().indent().println("Connected clients: ");
+      for (ClientID clientID : clients.keySet()) {
+        out.indent().indent().indent().println(clientID);
+      }
+      out.indent().indent().println("Next client id: " + clientIDSequence.current());
+    }
+    return out;
   }
 
   private void safeStoreClients() {
