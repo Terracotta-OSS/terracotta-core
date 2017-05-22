@@ -180,7 +180,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         }
 
         @Override
-        public R get() throws InterruptedException, EntityUserException, EntityException {
+        public R get() throws InterruptedException, EntityException {
           try {
             return codec.decodeResponse(invokeFuture.get());
           } catch (MessageCodecException e) {
@@ -189,7 +189,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         }
 
         @Override
-        public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, EntityUserException, TimeoutException {
+        public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
           try {
             return codec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
           } catch (MessageCodecException e) {

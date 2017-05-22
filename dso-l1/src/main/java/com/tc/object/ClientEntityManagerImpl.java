@@ -531,8 +531,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         msg = createMessageWithDescriptor(msg.getEntityDescriptor(), msg.doesRequireReplication(), msg.getExtendedData(), msg.getVoltronType(), requestedAcks);
       } catch (InterruptedException ie) {
         throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
-      } catch (EntityUserException e) {
-        //not expected
       }
     }
   }

@@ -132,7 +132,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public synchronized byte[] get() throws InterruptedException, EntityUserException, EntityException {
+  public synchronized byte[] get() throws InterruptedException, EntityException {
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
@@ -156,7 +156,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, EntityUserException, TimeoutException {
+  public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.

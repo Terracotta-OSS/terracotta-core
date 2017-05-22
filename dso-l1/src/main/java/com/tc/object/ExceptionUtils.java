@@ -5,13 +5,13 @@ import com.tc.exception.VoltronWrapperException;
 import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.util.Assert;
 
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.EntityServerException;
 import org.terracotta.exception.EntityServerUncaughtException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
@@ -21,11 +21,11 @@ import java.util.Arrays;
 
 
 public class ExceptionUtils {
-  public static EntityException addLocalStackTraceToEntityException(EntityException e) throws RuntimeEntityException, EntityUserException {
+  public static EntityException addLocalStackTraceToEntityException(EntityException e) throws RuntimeEntityException {
     EntityException wrappedException;
     if(e instanceof VoltronEntityUserExceptionWrapper) {
       //should we add local stack trace here?
-      throw (EntityUserException)e.getCause();
+      wrappedException = new EntityServerException(e.getClassName(), e.getEntityName(), e.getDescription(), e.getCause());
     } else if(e instanceof EntityNotFoundException) {
       wrappedException = new EntityNotFoundException(e.getClassName(), e.getEntityName(), e);
     } else if(e instanceof VoltronWrapperException) {

@@ -118,11 +118,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      try {
-        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
-      } catch (EntityUserException e1) {
-        //not expected
-      }
+      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityAlreadyExistsException) {
@@ -147,11 +143,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      try {
-        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
-      } catch (EntityUserException e1) {
-        //not expected
-      }
+      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
       if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
       } else if (e instanceof EntityNotProvidedException) {
@@ -175,11 +167,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
       // NOTE: PermanentEntityException is thrown by this method.
-      try {
-        e = ExceptionUtils.addLocalStackTraceToEntityException(e);
-      } catch (EntityUserException e1) {
-        //not expected
-      }
+      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityNotFoundException) {
