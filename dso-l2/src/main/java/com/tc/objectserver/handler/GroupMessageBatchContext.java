@@ -19,6 +19,8 @@
 package com.tc.objectserver.handler;
 
 import com.tc.l2.msg.IBatchableGroupMessage;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -26,6 +28,8 @@ import com.tc.net.groups.GroupManager;
 
 
 public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
+  private static final TCLogger LOGGER = TCLogging.getLogger(GroupMessageBatchContext.class);
+  
   private final IBatchableMessageFactory<M, E> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final NodeID target;
@@ -36,8 +40,6 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   private int messagesInFlight;
   private M cachedMessage;
   private long nextReplicationID;
-  // Note that we may see this exception, asynchronously.  In that case, we will just hold it and fail in the next call.
-  private GroupException mostRecentException;
 
 
   public GroupMessageBatchContext(IBatchableMessageFactory<M, E> messageFactory, GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Runnable networkDoneTarget) {
@@ -61,14 +63,9 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
    *  case, this isn't sent now, but might be sent during the next call to flushBatch().
    *  
    * @param activity The activity to batch.
-   * @throws GroupException The exception cached from the most recent attempt to send.
    * @return True if this required creating a new batch (the message is batched, either way).
    */
-  public synchronized boolean batchMessage(E activity) throws GroupException {
-    // Throw any async exception.
-    if (null != this.mostRecentException) {
-      throw this.mostRecentException;
-    }
+  public synchronized boolean batchMessage(E activity) {
     
     // See if we have an existing message we must batch.
     boolean didCreateNewBatch = false;
@@ -112,12 +109,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
       try {
         this.groupManager.sendToWithSentCallback(this.target, messageToSend.asAbstractGroupMessage(), this.handleMessageSend);
       } catch (GroupException e) {
-        // Set the exception, before throwing it, so the next call also fails.
-        synchronized (this) {
-          this.mostRecentException = e;
-          this.messagesInFlight -= 1;
-        }
-        throw e;
+        LOGGER.warn("replication message failed", e);
       }
     }
   }
