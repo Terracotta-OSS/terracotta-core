@@ -29,6 +29,7 @@ import com.tc.services.SingleThreadedTimer;
 
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformServer;
@@ -654,12 +655,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledCumulativeCounterConfig);
 
     // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
-    IMonitoringProducer serviceInterface = platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>(){
-      @Override
-      public Class<IMonitoringProducer> getServiceType() {
-        return IMonitoringProducer.class;
-      }});
-    
+    IMonitoringProducer serviceInterface = null;
+    try {
+      serviceInterface = platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>(){
+        @Override
+        public Class<IMonitoringProducer> getServiceType() {
+          return IMonitoringProducer.class;
+        }});
+    } catch (ServiceException e) {
+      Assert.fail("Multiple IMonitoringProducer implementations found!");
+    }
+
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;

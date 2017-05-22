@@ -19,6 +19,7 @@
 package com.tc.objectserver.impl;
 
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.ConfigurationContext;
@@ -122,7 +123,12 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public Persistor createPersistor(ServiceRegistry serviceRegistry) {
-    IPlatformPersistence platformPersistence = serviceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    IPlatformPersistence platformPersistence = null;
+    try {
+      platformPersistence = serviceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    } catch (ServiceException e) {
+      Assert.fail("Multiple IPlatformPersistence implementations found!");
+    }
     // We can't fail to look this up as the implementation will install an in-memory implementation if an on-disk on
     //  wasn't provided
     Assert.assertNotNull(platformPersistence);

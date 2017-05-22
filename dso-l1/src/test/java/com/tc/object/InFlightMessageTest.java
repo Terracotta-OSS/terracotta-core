@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -80,6 +81,9 @@ public class InFlightMessageTest extends TestCase {
       } catch (EntityException e) {
         // This was NOT expected in this test.
         fail();
+      } catch (EntityUserException e) {
+        // This was NOT expected in this test.
+        fail();
       }
     }
   }
@@ -97,7 +101,7 @@ public class InFlightMessageTest extends TestCase {
     }
 
     @Override
-    public synchronized byte[] get() throws InterruptedException, EntityException {
+    public synchronized byte[] get() throws InterruptedException, EntityUserException, EntityException {
       // Notify anyone waiting so that they know we now have the monitor and are going to block in get().
       this.didEnter = true;
       notifyAll();

@@ -232,7 +232,7 @@ public class BestEffortsMonitoringTest {
 
 
   @SuppressWarnings("unchecked")
-  private TerracottaServiceProviderRegistry mockRegistry(IStripeMonitoring consumer1, IStripeMonitoring consumer2) {
+  private TerracottaServiceProviderRegistry mockRegistry(IStripeMonitoring consumer1, IStripeMonitoring consumer2) throws Exception {
     TerracottaServiceProviderRegistry globalRegistry = mock(TerracottaServiceProviderRegistry.class);
     if (null != consumer1) {
       InternalServiceRegistry registry1 = mock(InternalServiceRegistry.class);

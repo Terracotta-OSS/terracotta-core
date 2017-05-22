@@ -21,10 +21,13 @@ package com.tc.objectserver.impl;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.security.TCSecurityManager;
+import com.tc.util.Assert;
+
 import java.net.URI;
 import java.security.Principal;
 import javax.net.ssl.SSLContext;
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
 /**
@@ -35,7 +38,12 @@ public class PluggableSecurityManager implements TCSecurityManager {
   private final BufferManagerFactory buffers;
 
   public PluggableSecurityManager(ServiceRegistry registry) {
-    BufferManagerFactory factory = registry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
+    BufferManagerFactory factory = null;
+    try {
+      factory = registry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
+    } catch (ServiceException e) {
+      Assert.fail("Multiple BufferManagerFactory implementations found!");
+    }
     if (factory == null) {
       factory = new ClearTextBufferManagerFactory();
     }

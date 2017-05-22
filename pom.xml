@@ -41,7 +41,7 @@
     <tc-shader.version>1.2</tc-shader.version>
     <skip.deploy>false</skip.deploy>
 
-    <terracotta-apis.version>1.3.0-pre3</terracotta-apis.version>
+    <terracotta-apis.version>1.3.0-pre4</terracotta-apis.version>
     <terracotta-configuration.version>10.3.0-pre4</terracotta-configuration.version>
     <galvan.version>1.3.0-pre3</galvan.version>
   </properties>

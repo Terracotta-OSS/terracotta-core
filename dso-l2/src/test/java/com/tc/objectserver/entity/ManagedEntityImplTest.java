@@ -31,7 +31,7 @@ import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.entity.EntityUserException;
 
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
@@ -83,6 +83,7 @@ import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.exception.EntityServerUncaughtException;
 
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
@@ -680,7 +681,7 @@ public class ManagedEntityImplTest {
   @Test (expected = EntityUserException.class)
   public void testCodecException() throws Exception {
 // this test is no longer relevant, decode is done in the hydrate stage or process/replicated transaction handler
-    throw new EntityUserException(entityID.getClassName(), entityID.getEntityName(), new MessageCodecException("fake", new IOException()));
+    throw new EntityUserException("fake", new MessageCodecException("fake", new IOException()));
   }
 
   @Test

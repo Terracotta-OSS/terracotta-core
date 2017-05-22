@@ -23,6 +23,7 @@ import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.VoltronWrapperException;
+import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -69,12 +70,13 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.entity.EntityUserException;
 import java.util.function.Consumer;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.exception.EntityConfigurationException;
+import org.terracotta.exception.EntityServerUncaughtException;
 import org.terracotta.exception.PermanentEntityException;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -390,15 +392,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     public R run() throws MessageCodecException;
   }
   private <R> R runWithHelper(CodecHelper<R> helper) throws EntityUserException {
-    R message = null;
+    R message;
     try {
       message = helper.run();
     } catch (MessageCodecException deserializationException) {
-      throw new EntityUserException(this.getID().getClassName(), this.getID().getEntityName(), deserializationException);
-    } catch (RuntimeException e) {
-      // We first want to wrap this in a codec exception to convey the meaning of where this happened.
-      MessageCodecException deserializationException = new MessageCodecException("Runtime exception in deserializer", e);
-      throw new EntityUserException(this.getID().getClassName(), this.getID().getEntityName(), deserializationException);
+      throw new EntityUserException("caught exception during invoke ", deserializationException);
     }
     return message;
   }
@@ -454,9 +452,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw shutdown;
     } catch (Exception e) {
       // Wrap this exception.
-      EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
+      EntityServerUncaughtException wrapper = new EntityServerUncaughtException(this.getID().getClassName(), this.getID().getEntityName(), "caught exception during invoke ", e);
       logger.error("caught exception during invoke ", wrapper);
-      throw new RuntimeException(wrapper);
+      throw wrapper;
     } finally {
       read.unlock();
       if (this.isInActiveState) {
@@ -510,10 +508,8 @@ public class ManagedEntityImpl implements ManagedEntity {
             throw new IllegalArgumentException("Unknown request " + request);
         }
       } catch (Exception e) {
-        // Wrap this exception.
-        EntityUserException wrapper = new EntityUserException(id.getClassName(), id.getEntityName(), e);
-        logger.error("caught exception during invoke ", wrapper);
-        throw new RuntimeException(wrapper);
+        logger.error("caught exception during invoke ", e);
+        throw new RuntimeException(e);
       } finally {
         read.unlock();
       }
@@ -568,7 +564,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void receiveSyncEntityPayload(ResultCapture response, MessagePayload message) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
-    this.passiveServerEntity.invoke(message.decodeRawMessage(raw->syncCodec.decode(message.getConcurrency(), raw)));
+    try {
+      this.passiveServerEntity.invoke(message.decodeRawMessage(raw->syncCodec.decode(message.getConcurrency(), raw)));
+    } catch (EntityUserException e) {
+      logger.error("Caught EntityUserException during sync invoke", e);
+      throw new RuntimeException("Caught EntityUserException during sync invoke", e);
+    }
     response.complete();
     // No retire on passive.
     Assert.assertFalse(this.isInActiveState);
@@ -750,15 +751,21 @@ public class ManagedEntityImpl implements ManagedEntity {
             response.complete(new byte[0]);
           }
         } catch (EntityUserException e) {
-          response.failure(e);
-          throw new RuntimeException(e);
+          //on Active, log error and send the exception to the client - don't crash server
+          logger.error("Caught EntityUserException during invoke", e);
+          response.failure(new VoltronEntityUserExceptionWrapper(e));
         }
       }
     } else {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
-        this.passiveServerEntity.invoke(em);
+        try {
+          this.passiveServerEntity.invoke(em);
+        } catch (EntityUserException e) {
+          //on passives, just log the exception - don't crash server
+          logger.error("Caught EntityUserException during invoke", e);
+        }
         response.complete();
         // No retire on passive.
         Assert.assertFalse(this.isInActiveState);

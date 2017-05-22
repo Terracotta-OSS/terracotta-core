@@ -20,6 +20,7 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.VoltronWrapperException;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -37,7 +38,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityUserException;
+import org.terracotta.exception.EntityServerUncaughtException;
 
 
 public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements VoltronEntityAppliedResponse {
@@ -148,7 +149,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
       } catch (ClassNotFoundException e) {
         // We may want to make this into an assertion but we do have a mechanism to pass it up to the next level so wrap
         // it in a user exception.
-        this.failureException = new EntityUserException(null, null, e);
+        this.failureException = new VoltronWrapperException(new EntityServerUncaughtException(null, null, "caught exception during invoke ", e));
       } finally {
         objectInput.close();
       }

@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 
@@ -131,7 +132,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public synchronized byte[] get() throws InterruptedException, EntityException {
+  public synchronized byte[] get() throws InterruptedException, EntityUserException, EntityException {
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
@@ -155,7 +156,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+  public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, EntityUserException, TimeoutException {
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.

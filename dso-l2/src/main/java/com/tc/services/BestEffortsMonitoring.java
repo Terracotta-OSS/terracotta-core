@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
@@ -39,7 +40,12 @@ public class BestEffortsMonitoring {
     
     // Walk each consumerID, looking up their registries, and flushing all entries to the implementation.
     for (Map.Entry<Long, Map<String, Serializable>> perConsumerEntry : this.bestEffortsCache.entrySet()) {
-      IStripeMonitoring collector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      IStripeMonitoring collector = null;
+      try {
+        collector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      } catch (ServiceException e) {
+        Assert.fail("Multiple IStripeMonitoring implementations found!");
+      }
       // NOTE:  We assert that there _is_ a registry for IStripeMonitoring if we received this call.
       Assert.assertNotNull(collector);
       for (Map.Entry<String, Serializable> entry : perConsumerEntry.getValue().entrySet()) {

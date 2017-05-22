@@ -21,6 +21,7 @@ package com.tc.object;
 
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
@@ -179,7 +180,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         }
 
         @Override
-        public R get() throws InterruptedException, EntityException {
+        public R get() throws InterruptedException, EntityUserException, EntityException {
           try {
             return codec.decodeResponse(invokeFuture.get());
           } catch (MessageCodecException e) {
@@ -188,7 +189,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         }
 
         @Override
-        public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+        public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, EntityUserException, TimeoutException {
           try {
             return codec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
           } catch (MessageCodecException e) {
