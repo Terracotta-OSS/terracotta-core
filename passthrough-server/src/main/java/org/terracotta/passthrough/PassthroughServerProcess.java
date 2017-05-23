@@ -49,6 +49,7 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.ExecutionStrategy;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.SyncMessageCodec;
@@ -104,8 +105,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private final Map<Long, DeferredEntityContainer> consumerToLiveContainerMap;
   // The service providers offered by the user.
   private final List<ServiceProvider> serviceProviders;
-  // The override service providers offered by the user.
-  private final List<ServiceProvider> overrideServiceProviders;
   // The service providers offered by the server's implementation.
   private final List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders;
   // Note that we will set the service provider collections into a read-only mode as we try to create a registry over them, to catch bugs.
@@ -141,7 +140,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.passiveEntities = (isActiveMode ? null : new HashMap<PassthroughEntityTuple, CreationData<?, ?>>());
     this.consumerToLiveContainerMap = new HashMap<Long, DeferredEntityContainer>();
     this.serviceProviders = new Vector<ServiceProvider>();
-    this.overrideServiceProviders = new Vector<ServiceProvider>();
     this.implementationProvidedServiceProviders = new Vector<PassthroughImplementationProvidedServiceProvider>();
     // Consumer IDs start at 0 since that is the one the platform gives itself.
     this.nextConsumerID = 0;
@@ -180,7 +178,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.platformServiceRegistry = getNextServiceRegistry(null, null, null);
     
     // Look up our persistence support (which might be in-memory-only).
-    this.platformPersistence = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    try {
+      this.platformPersistence = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    } catch (ServiceException se) {
+      throw new AssertionError(se);
+    }
+    
     Assert.assertTrue(null != this.platformPersistence);
     // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
     // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
@@ -204,7 +207,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.consumerToLiveContainerMap.put(consumerID, container);
       EntityData entityData = this.persistedEntitiesByConsumerIDMap.get(consumerID);
       // Create the registry for the entity.
-      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
+      PassthroughServiceRegistry registry = new PassthroughServiceRegistry(entityData.className, entityData.entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
       // Construct the entity.
       EntityServerService<?, ?> service = null;
       try {
@@ -242,7 +245,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(platformPersistence, shouldLoadStorage);
     
     // Look up the service interface the platform will use to publish events.
-    this.serviceInterface = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IMonitoringProducer>(IMonitoringProducer.class));
+    try {
+      this.serviceInterface = this.platformServiceRegistry.getService(new BasicServiceConfiguration<IMonitoringProducer>(IMonitoringProducer.class));
+    } catch (ServiceException se) {
+      throw new AssertionError(se);
+    }
     if (null != this.serviceInterface) {
       // Create the root of the platform tree.
       this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
@@ -974,7 +981,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
   public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
     registerServiceProvider(serviceProvider, providerConfiguration);
-    this.overrideServiceProviders.add(serviceProvider);
   }
 
   public synchronized void addDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
@@ -1135,7 +1141,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
    */
   public PassthroughServiceRegistry createServiceRegistryForInternalConsumer(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
     this.serviceProvidersReadOnly = true;
-    return new PassthroughServiceRegistry(entityClassName, entityName, consumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
+    return new PassthroughServiceRegistry(entityClassName, entityName, consumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
   }
 
   public PlatformServer getServerInfo() {
@@ -1146,7 +1152,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     long thisConsumerID = this.nextConsumerID;
     this.nextConsumerID += 1;
     this.serviceProvidersReadOnly = true;
-    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.overrideServiceProviders, this.implementationProvidedServiceProviders, container);
+    return new PassthroughServiceRegistry(entityClassName, entityName, thisConsumerID, this.serviceProviders, this.implementationProvidedServiceProviders, container);
   }
 
   private EntityServerService<?, ?> getServerEntityServiceForVersion(String entityClassName, String entityName, long version) throws EntityVersionMismatchException, EntityNotProvidedException {

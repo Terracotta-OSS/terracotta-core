@@ -171,12 +171,17 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     public ServiceRegistry create(final long cid) {
       return new ServiceRegistry() {
         @Override
-        public <T> T getService(ServiceConfiguration<T> configuration) {
+        public <T> T getService(ServiceConfiguration<T> configuration) throws ServiceException {
+          T rService = null;
           for (ServiceProvider provider : builtins) {
             if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
               T service = provider.getService(cid, configuration);
               if (service != null) {
-                return service;
+                if (rService != null) {
+                  throw new ServiceException("multiple services defined");
+                } else {
+                  rService = service;
+                }
               }
             }
           }
