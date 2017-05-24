@@ -41,7 +41,7 @@ public class StageImpl<EC> implements Stage<EC> {
                                                 // stage
   private final String         name;
   private final EventHandler<EC> handler;
-  private final StageQueueImpl<EC> stageQueue;
+  private final StageQueue<EC> stageQueue;
   private final WorkerThread<EC>[] threads;
   private final ThreadGroup    group;
   private final TCLogger       logger;
@@ -69,7 +69,7 @@ public class StageImpl<EC> implements Stage<EC> {
     this.name = name;
     this.handler = handler;
     this.threads = new WorkerThread[queueCount];
-    this.stageQueue = new StageQueueImpl<EC>(queueCount, queueFactory, loggerProvider, name, queueSize);
+    this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, loggerProvider, name, queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {

@@ -25,6 +25,16 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.concurrent.QueueFactory;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,21 +42,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.mockito.Matchers;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyInt;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -146,9 +148,12 @@ public class StageImplTest {
     when(cxt.flush()).thenReturn(Boolean.TRUE);
     
     instance.getSink().addMultiThreaded(cxt);
-    verify(cxt).getSchedulingKey();
+    if (size > 1) {
+      // if size is one, this will not be called.
+      verify(cxt).getSchedulingKey();
+    }
     verify(cxt).flush();
-    
+
     barrier.await();
     for (BlockingQueue q : cxts) {
       verify(q).put(Matchers.any(MultiThreadedEventContext.class));
