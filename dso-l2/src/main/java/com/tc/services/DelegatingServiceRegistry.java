@@ -29,6 +29,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 
 import java.util.List;
+import org.terracotta.entity.ServiceException;
 
 
 public class DelegatingServiceRegistry implements InternalServiceRegistry {
@@ -47,13 +48,13 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
   }
 
   @Override
-  public <T> T getService(ServiceConfiguration<T> configuration) {
+  public <T> T getService(ServiceConfiguration<T> configuration) throws ServiceException {
     T builtInService = getBuiltInService(configuration);
     T externalService = getExternalService(configuration);
     // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
     //  given type.
     if ((null != builtInService) && (null != externalService)) {
-      throw new IllegalArgumentException("Both built-in and external service found for type: " + configuration.getServiceType());
+      throw new ServiceException("Both built-in and external service found for type: " + configuration.getServiceType());
     }
     return (null != builtInService)
         ? builtInService
@@ -72,7 +73,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
     this.owningEntity = entity;
   }
 
-  private <T> T getBuiltInService(ServiceConfiguration<T> configuration) {
+  private <T> T getBuiltInService(ServiceConfiguration<T> configuration) throws ServiceException {
     Class<T> serviceType = configuration.getServiceType();
     T service = null;
     for (ImplementationProvidedServiceProvider provider : implementationProvidedServiceProviders) {
@@ -82,7 +83,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
           // Service look-ups cannot be ambiguous:  there must be precisely 0 or 1 successfully-returned service for a
           //  given type.
           if (null != service) {
-            throw new IllegalArgumentException("Multiple built-in service providers matched for type: " + serviceType);
+            throw new ServiceException("Multiple built-in service providers matched for type: " + serviceType);
           } else {
             service = oneService;
           }
@@ -92,7 +93,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
     return service;
   }
 
-  private <T> T getExternalService(ServiceConfiguration<T> configuration) {
+  private <T> T getExternalService(ServiceConfiguration<T> configuration) throws ServiceException {
     Class<T> serviceType = configuration.getServiceType();
     T theService = null;
     for (ServiceProvider provider : serviceProviders) {
@@ -100,7 +101,7 @@ public class DelegatingServiceRegistry implements InternalServiceRegistry {
         T oneService = provider.getService(this.consumerID, configuration);
         if (null != oneService) {
           if (theService != null) {
-            throw new IllegalArgumentException("Multiple service providers matched for type: " + serviceType);
+            throw new ServiceException("Multiple service providers matched for type: " + serviceType);
           } else {
             theService = oneService;
           }
