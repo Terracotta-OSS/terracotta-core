@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
@@ -52,6 +53,7 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
     Assert.assertTrue(null != serverInfo);
     this.serverInfoToken = serverInfo;
     // Get the service for the platform's consumerID.
+
     final IStripeMonitoring platformMonitoring = getUnderlyingService(null, null, ServiceProvider.PLATFORM_CONSUMER_ID, null);
     // Make sure that we are actually running with a monitoring service.
     if (null != platformMonitoring) {
@@ -63,11 +65,12 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
         walkCacheChildren(entityMonitoring, new String[0], entry.getValue().children);
       }
     }
+
     this.cachedTreeRoot = null;
   }
 
   @Override
-  public <T> T getService(String entityClassName, String entityName, final long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
+  public <T> T getService(String entityClassName, String entityName, final long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) throws ServiceException {
     T service = null;
     Class<T> serviceType = configuration.getServiceType();
     if (serviceType.equals(IMonitoringProducer.class)) {
@@ -128,9 +131,13 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
 
 
   private IStripeMonitoring getUnderlyingService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
-    PassthroughServiceRegistry registry = PassthroughMonitoringProducer.this.serverProcess.createServiceRegistryForInternalConsumer(entityClassName, entityName, consumerID, container);
-    final IStripeMonitoring underlying = registry.getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
-    return underlying;
+    try {
+      PassthroughServiceRegistry registry = PassthroughMonitoringProducer.this.serverProcess.createServiceRegistryForInternalConsumer(entityClassName, entityName, consumerID, container);
+      final IStripeMonitoring underlying = registry.getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      return underlying;    
+    } catch (ServiceException se) {
+      throw new AssertionError(se);
+    }
   }
 
   private synchronized boolean addNodeFromShim(long consumerID, IStripeMonitoring underlyingCollector, String[] parents, String name, Serializable value) {

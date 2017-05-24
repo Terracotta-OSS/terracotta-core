@@ -28,6 +28,7 @@ import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvid
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import org.terracotta.entity.ServiceException;
 
 
 /**
@@ -42,14 +43,12 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   private final DeferredEntityContainer owningEntityContainer;
   
   public PassthroughServiceRegistry(String entityClassName, String entityName, long consumerID, List<ServiceProvider> serviceProviders,
-                                    List<ServiceProvider> overrideServiceProviders, List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders, DeferredEntityContainer container) {
+      List<PassthroughImplementationProvidedServiceProvider> implementationProvidedServiceProviders, DeferredEntityContainer container) {
     this.entityClassName = entityClassName;
     this.entityName = entityName;
     this.consumerID = consumerID;
-    //  override service providers come first
-    List<ServiceProvider> services = new ArrayList<ServiceProvider>(overrideServiceProviders);
-    //  regular service providers come next
-    services.addAll(serviceProviders);
+
+    List<ServiceProvider> services = new ArrayList<ServiceProvider>(serviceProviders);
     
     this.serviceProviders = Collections.unmodifiableList(services);
 
@@ -59,9 +58,13 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
   }
 
   @Override
-  public <T> T getService(ServiceConfiguration<T> configuration) {
+  public <T> T getService(ServiceConfiguration<T> configuration) throws ServiceException {
     T builtInService = getBuiltIn(configuration);
     T externalService = getExternal(configuration);
+    
+    if (builtInService != null && externalService != null) {
+      throw new ServiceException("multiple services defined");
+    }
     // We need at most one match.
     Assert.assertTrue((null == builtInService) || (null == externalService));
     return (null != builtInService)
@@ -74,26 +77,35 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
     return getExternals(configuration);
   }
 
-  private <T> T getBuiltIn(ServiceConfiguration<T> configuration) {
+  private <T> T getBuiltIn(ServiceConfiguration<T> configuration) throws ServiceException {
     Class<?> serviceType = configuration.getServiceType();
-    T service = null;
+    T rService = null;
     for (PassthroughImplementationProvidedServiceProvider provider : this.implementationProvidedServiceProviders) {
       if (provider.getProvidedServiceTypes().contains(serviceType)) {
-        service = provider.getService(this.entityClassName, this.entityName, this.consumerID, this.owningEntityContainer, configuration);
+        T service = provider.getService(this.entityClassName, this.entityName, this.consumerID, this.owningEntityContainer, configuration);
         if (service != null) {
-          return service;
+          if (rService != null) {
+            throw new ServiceException("multiple services defined");
+          } else {
+            return service;
+          }
         }
       }
     }
     return null;
   }
 
-  private <T> T getExternal(ServiceConfiguration<T> configuration) {
+  private <T> T getExternal(ServiceConfiguration<T> configuration) throws ServiceException {
+    T rService = null;
     for (ServiceProvider provider : this.serviceProviders) {
       if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
         T service = provider.getService(this.consumerID, configuration);
         if (service != null) {
-          return service;
+          if (rService != null) {
+            throw new ServiceException("multiple services defined");
+          } else {
+            return service;
+          }
         }
       }
     }

@@ -23,6 +23,7 @@ import java.util.Collection;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 
 
 /**
@@ -40,7 +41,7 @@ public interface PassthroughImplementationProvidedServiceProvider {
    * @param configuration Service configuration which is to be used
    * @return service instance
    */
-  <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration);
+  <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) throws ServiceException;
 
   /**
    * Since a service provider can know how to build more than one type of service, this method allows the platform to query
