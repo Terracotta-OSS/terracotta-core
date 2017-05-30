@@ -60,18 +60,15 @@ public class Directories {
   /**
    * Get installation root directory.
    * 
-   * @return Installation root directory or null if TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME is set and
+   * @return Installation root directory or {@code user.dir} if TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME is set and
    *         TC_INSTALL_ROOT_PROPERTY_NAME is not.
-   * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_PROPERTY_NAME} has not been set. If
-   *         {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set, this exception may be thrown if the
-   *         installation root directory has not been set, is not a directory
+   * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set,
+   *         this exception may be thrown if the installation root directory is not a directory
    */
-  public static File getInstallationRoot() throws FileNotFoundException {
+  static File getInstallationRoot() throws FileNotFoundException {
     boolean ignoreCheck = Boolean.getBoolean(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME);
     if (ignoreCheck) {
-      // XXX hack to have enterprise system tests to find license key under <ee-branch>/code/base
-      String baseDir = System.getProperty("tc.base-dir");
-      return new File(baseDir != null ? baseDir : ".", "../../../code/base");
+      return new File(System.getProperty("user.dir"));
     } else {
       String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
       if (StringUtils.isBlank(path)) {
