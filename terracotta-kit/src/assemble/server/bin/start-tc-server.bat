@@ -33,13 +33,13 @@ exit /b 0
 :start
 setlocal enabledelayedexpansion enableextensions
 
-set TC_INSTALL_DIR=%~d0%~p0..\..
-set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
-set PLUGIN_LIB_DIR=%TC_INSTALL_DIR%\server\plugins\lib
-set PLUGIN_API_DIR=%TC_INSTALL_DIR%\server\plugins\api
+set TC_SERVER_DIR=%~d0%~p0..\..
+set TC_SERVER_DIR="%TC_SERVER_DIR:"=%"
+set PLUGIN_LIB_DIR=%TC_SERVER_DIR%\plugins\lib
+set PLUGIN_API_DIR=%TC_SERVER_DIR%\plugins\api
 
-if exist %TC_INSTALL_DIR%\server\bin\setenv.bat (
-  call %TC_INSTALL_DIR%\server\bin\setenv.bat
+if exist %TC_SERVER_DIR%\bin\setenv.bat (
+  call %TC_SERVER_DIR%\bin\setenv.bat
 )
 
 if not defined JAVA_HOME (
@@ -76,24 +76,24 @@ set PLUGIN_CLASSPATH="%PLUGIN_CLASSPATH:"=%"
 
 REM   Adding SLF4j libraries to the classpath of the server to 
 REM   support services that may use SLF4j for logging
-if exist %TC_INSTALL_DIR%\server\lib (
-	for %%K in (%TC_INSTALL_DIR%\server\lib\slf4j*.jar) do (
+if exist %TC_SERVER_DIR%\lib (
+	for %%K in (%TC_SERVER_DIR%\lib\slf4j*.jar) do (
 		set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;"%%K"
 	)
 ) else (
-		echo %TC_INSTALL_DIR%\server\lib does not exist!
+		echo %TC_SERVER_DIR%\lib does not exist!
 	)
 	
 REM todo do i still need to enable nullglob?
 REM $ENV{NULLGLOB} = 0;
 
-set CLASSPATH=%TC_INSTALL_DIR%\server\lib\tc.jar;%PLUGIN_CLASSPATH%
+set CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 rem rmi.dgc.server.gcInterval is set as year to avoid system gc in case authentication is enabled
 rem users may change it accordingly
 set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000000
-set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
+set OPTS=%OPTS% -Dtc.install-root=%TC_SERVER_DIR%
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
 

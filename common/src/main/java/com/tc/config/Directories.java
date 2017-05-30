@@ -45,17 +45,17 @@ public class Directories {
   /**
    * Relative location for server lib directory under Terracotta installation directory
    */
-  public static final String SERVER_LIB_DIR                                  = "server/lib";
+  public static final String SERVER_LIB_DIR                                  = "lib";
 
   /**
    * Relative location for server plugin api directory under Terracotta installation directory
    */
-  public static final String SERVER_PLUGIN_API_DIR                           = "server/plugins/api";
+  public static final String SERVER_PLUGIN_API_DIR                           = "plugins/api";
 
   /**
    * Relative location for server plugin lib directory under Terracotta installation directory
    */
-  public static final String SERVER_PLUGIN_LIB_DIR                           = "server/plugins/lib";
+  public static final String SERVER_PLUGIN_LIB_DIR                           = "plugins/lib";
 
   /**
    * Get installation root directory.
