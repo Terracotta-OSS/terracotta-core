@@ -24,11 +24,18 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
+import org.terracotta.exception.EntityVersionMismatchException;
+import org.terracotta.helper.client.HelperEntity;
+import org.terracotta.helper.common.HelperEntityConstants;
 
 import com.tc.object.ClientEntityManager;
 import com.terracotta.connection.entity.TerracottaEntityRef;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -39,12 +46,25 @@ public class TerracottaConnection implements Connection {
   private final Runnable shutdown;
   private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> cachedEntityServices = new ConcurrentHashMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>>();
   private final AtomicLong  clientIds = new AtomicLong(1); // initialize to 1 because zero client is a special case for uninitialized
+  private final Set<TerracottaEntityRef> entityRefs = Collections.newSetFromMap(new WeakHashMap<TerracottaEntityRef, Boolean>());
+  private final HelperEntity helperEntity;
 
   private boolean isShutdown = false;
 
-  public TerracottaConnection(ClientEntityManager entityManager, Runnable shutdown) {
+  public TerracottaConnection(final ClientEntityManager entityManager, Runnable shutdown) {
     this.entityManager = entityManager;
     this.shutdown = shutdown;
+    HelperEntity tmpHelperEntity = null;
+    try {
+      tmpHelperEntity = getEntityRef(HelperEntity.class, HelperEntityConstants.HELPER_ENTITY_VERSION, HelperEntityConstants.HELPER_ENTITY_NAME).fetchEntity(null);
+    } catch (EntityNotProvidedException e) {
+      //should not happen
+    } catch (EntityNotFoundException e) {
+      //should not happen
+    } catch (EntityVersionMismatchException e) {
+      //should not happen
+    }
+    this.helperEntity = tmpHelperEntity;
   }
 
   @Override
@@ -56,7 +76,9 @@ public class TerracottaConnection implements Connection {
       // We failed to find a provider for this class.
       throw new EntityNotProvidedException(cls.getName(), name);
     }
-    return new TerracottaEntityRef<T, C, U>(this.entityManager, cls, version, name, service, clientIds);
+    TerracottaEntityRef<T, C, U> terracottaEntityRef = new TerracottaEntityRef<T, C, U>(this.entityManager, cls, version, name, service, clientIds);
+    entityRefs.add(terracottaEntityRef);
+    return terracottaEntityRef;
   }
 
   private <T extends Entity, U> EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U> getEntityService(Class<T> entityClass) {
@@ -76,6 +98,7 @@ public class TerracottaConnection implements Connection {
   @Override
   public synchronized void close() {
     checkShutdown();
+    helperEntity.close();
     shutdown.run();
     isShutdown = true;
   }

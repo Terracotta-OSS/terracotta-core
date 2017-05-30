@@ -26,6 +26,16 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.terracotta.internal.helper</groupId>
+            <artifactId>helper-entity-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.terracotta.internal.helper</groupId>
+            <artifactId>helper-entity-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.terracotta.internal</groupId>
             <artifactId>client-logging</artifactId>
             <version>${project.version}</version>

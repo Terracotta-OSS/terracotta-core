@@ -105,5 +105,12 @@ The Initial Developer of the Covered Software is
         <include>org.slf4j:slf4j-log4j12</include>
       </includes>
     </dependencySet>
+    <dependencySet>
+      <outputDirectory>server/plugins/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta.internal.helper:helper-entity-server</include>
+        <include>org.terracotta.internal.helper:helper-entity-common</include>
+      </includes>
+    </dependencySet>
   </dependencySets>
 </assembly>

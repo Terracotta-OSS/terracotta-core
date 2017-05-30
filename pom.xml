@@ -62,6 +62,7 @@
     <module>client-runtime</module>
     <module>client-logging</module>
     <module>galvan-support</module>
+    <module>helper-entity</module>
   </modules>
 
   <build>
