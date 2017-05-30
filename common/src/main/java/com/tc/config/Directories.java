@@ -45,33 +45,30 @@ public class Directories {
   /**
    * Relative location for server lib directory under Terracotta installation directory
    */
-  public static final String SERVER_LIB_DIR                                  = "server/lib";
+  public static final String SERVER_LIB_DIR                                  = "lib";
 
   /**
    * Relative location for server plugin api directory under Terracotta installation directory
    */
-  public static final String SERVER_PLUGIN_API_DIR                           = "server/plugins/api";
+  public static final String SERVER_PLUGIN_API_DIR                           = "plugins/api";
 
   /**
    * Relative location for server plugin lib directory under Terracotta installation directory
    */
-  public static final String SERVER_PLUGIN_LIB_DIR                           = "server/plugins/lib";
+  public static final String SERVER_PLUGIN_LIB_DIR                           = "plugins/lib";
 
   /**
    * Get installation root directory.
    * 
-   * @return Installation root directory or null if TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME is set and
+   * @return Installation root directory or {@code user.dir} if TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME is set and
    *         TC_INSTALL_ROOT_PROPERTY_NAME is not.
-   * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_PROPERTY_NAME} has not been set. If
-   *         {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set, this exception may be thrown if the
-   *         installation root directory has not been set, is not a directory
+   * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set,
+   *         this exception may be thrown if the installation root directory is not a directory
    */
-  public static File getInstallationRoot() throws FileNotFoundException {
+  static File getInstallationRoot() throws FileNotFoundException {
     boolean ignoreCheck = Boolean.getBoolean(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME);
     if (ignoreCheck) {
-      // XXX hack to have enterprise system tests to find license key under <ee-branch>/code/base
-      String baseDir = System.getProperty("tc.base-dir");
-      return new File(baseDir != null ? baseDir : ".", "../../../code/base");
+      return new File(System.getProperty("user.dir"));
     } else {
       String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
       if (StringUtils.isBlank(path)) {

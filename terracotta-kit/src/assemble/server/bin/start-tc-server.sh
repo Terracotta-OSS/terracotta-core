@@ -30,9 +30,9 @@ esac
 
 
 THIS_DIR=`dirname $0`
-TC_INSTALL_DIR=`cd $THIS_DIR;pwd`/../..
-PLUGIN_LIB_DIR="$TC_INSTALL_DIR/server/plugins/lib"
-PLUGIN_API_DIR="$TC_INSTALL_DIR/server/plugins/api"
+TC_SERVER_DIR=`cd $THIS_DIR;pwd`/..
+PLUGIN_LIB_DIR="$TC_SERVER_DIR/plugins/lib"
+PLUGIN_API_DIR="$TC_SERVER_DIR/plugins/api"
 
 if test \! -d "${JAVA_HOME}"; then
   echo "$0: the JAVA_HOME environment variable is not defined correctly"
@@ -65,7 +65,7 @@ function setPluginClasspath {
             done
 #  Adding SLF4j libraries to the classpath of the server to 
 #  support services that may use SLF4j for logging
-            for jarFile in "${TC_INSTALL_DIR}"/server/lib/slf4j*.jar
+            for jarFile in "${TC_SERVER_DIR}"/lib/slf4j*.jar
             do
                 PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${jarFile}
             done
@@ -87,10 +87,10 @@ do
 # the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
 ${JAVA_COMMAND} -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
-   -Dtc.install-root="${TC_INSTALL_DIR}" \
+   -Dtc.install-root="${TC_SERVER_DIR}" \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\
    ${JAVA_OPTS} \
-   -cp "${TC_INSTALL_DIR}/server/lib/tc.jar:${PLUGIN_CLASSPATH}" \
+   -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}" \
    com.tc.server.TCServerMain "$@"
  exitValue=$?
  start=false;
