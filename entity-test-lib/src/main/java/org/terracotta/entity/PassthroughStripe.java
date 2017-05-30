@@ -185,7 +185,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
               }
             }
           }
-          return null;
+          return rService;
         }
 
         @Override
