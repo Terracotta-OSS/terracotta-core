@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tc-config xmlns="http://www.terracotta.org/config">
+  <servers>
+    <server host="localhost">
+      <logs>logs</logs>
+      <tsa-port>19510</tsa-port>
+      <tsa-group-port>19530</tsa-group-port>
+    </server>
+  </servers>
+</tc-config>

@@ -37,6 +37,8 @@ set TC_INSTALL_DIR=%~d0%~p0..\..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 set PLUGIN_LIB_DIR=%TC_INSTALL_DIR%\server\plugins\lib
 set PLUGIN_API_DIR=%TC_INSTALL_DIR%\server\plugins\api
+set SPM_DIR=%TC_INSTALL_DIR%\server\SPM
+set SPM_DIR="%SPM_DIR:"=%"
 
 if exist %TC_INSTALL_DIR%\server\bin\setenv.bat (
   call %TC_INSTALL_DIR%\server\bin\setenv.bat
@@ -58,7 +60,7 @@ do (
   set JAVA_COMMAND=%JAVA_HOME%%%~C
   %JAVA_HOME%%%~C -version > NUL 2>&1
 
-  if not errorlevel 1 (  
+  if not errorlevel 1 (
 	goto setJavaOptsAndClasspath
   )
 )
@@ -98,12 +100,43 @@ set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
 
 :START_TCSERVER
-REM echo START_TCSERVER: %JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
+rem call START_TCSERVER_AND_SAVE_PID when SPM directory exists, i.e. Terracotta is being used as an SPM plugin
+set cmd=%JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
 
-%JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
+if exist %SPM_DIR% (
+	call :START_TCSERVER_AND_SAVE_PID %cmd%
+) else (
+	%cmd%
+)
+
 if %ERRORLEVEL% EQU 11 (
 	echo start-tc-server: Restarting the server...
 	goto START_TCSERVER
 )
+exit /b %ERRORLEVEL%
+endlocal
+
+:START_TCSERVER_AND_SAVE_PID
+setlocal enabledelayedexpansion enableextensions
+rem Change the startup behavior of Winmgmt service to automatic
+sc config Winmgmt start= auto > nul
+set PID=
+set tab=
+set COMMAND=%*
+set cur_dir=%cd%
+set "COMMAND=%COMMAND:"=%"
+
+for /F "usebackq tokens=1,2 delims=;=%tab% " %%i in (
+    `wmic process call create "%COMMAND%"^, "%cur_dir%"`
+) do (
+    if /I %%i EQU ProcessId (
+        set PID=%%j
+    )
+)
+if not exist %SPM_DIR%\instance (
+	mkdir %SPM_DIR%\instance
+)
+echo %PID% > %SPM_DIR%\instance\run.pid
+
 exit /b %ERRORLEVEL%
 endlocal
