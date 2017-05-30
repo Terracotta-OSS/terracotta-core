@@ -16,6 +16,7 @@ import org.terracotta.helper.common.HelperEntityResponse;
 public class HelperEntity implements Entity, StateDumpable {
   
   private final EntityClientEndpoint<HelperEntityMessage, HelperEntityResponse> entityClientEndpoint;
+  private volatile Runnable collectState;
   
   public HelperEntity(final EntityClientEndpoint<HelperEntityMessage, HelperEntityResponse> entityClientEndpoint) {
     this.entityClientEndpoint = entityClientEndpoint;
@@ -28,6 +29,9 @@ public class HelperEntity implements Entity, StateDumpable {
           switch (type) {
             case DUMP:
               ThreadDumpUtil.getThreadDump();
+              if(collectState != null) {
+                collectState.run();
+              }
               break;
             default:
               throw new IllegalArgumentException("Unknown message type: " + type);
@@ -63,6 +67,8 @@ public class HelperEntity implements Entity, StateDumpable {
     }
   }
   
+  
+  
   @Override
   public void close() {
     entityClientEndpoint.close();
@@ -71,5 +77,9 @@ public class HelperEntity implements Entity, StateDumpable {
   @Override
   public void dumpStateTo(final StateDumper stateDumper) {
     stateDumper.dumpState("key", "value");
+  }
+
+  public void setCollectState(final Runnable collectState) {
+    this.collectState = collectState;
   }
 }

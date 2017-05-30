@@ -53,6 +53,6 @@ public class SimpleDumpTestIT extends MultiProcessGalvanTest {
       helperEntity.dumpState();
       helperEntity.close();
     }
-    Thread.sleep(20 * 1000);
+    Thread.sleep(10 * 1000);
   }
 }

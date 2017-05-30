@@ -24,6 +24,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
@@ -65,6 +66,18 @@ public class TerracottaConnection implements Connection {
       //should not happen
     }
     this.helperEntity = tmpHelperEntity;
+    this.helperEntity.setCollectState(new Runnable() {
+      @Override
+      public void run() {
+        LogBasedStateDumper stateDumper = new LogBasedStateDumper("platform");
+        StateDumper entitystateDumper = stateDumper.subStateDumper("entityRefs");
+        for (TerracottaEntityRef entityRef : entityRefs) {
+          entityRef.dumpStateTo(entitystateDumper);
+        }
+        entityManager.dumpStateTo(stateDumper.subStateDumper("entityManager"));
+        stateDumper.logState();
+      }
+    });
   }
 
   @Override

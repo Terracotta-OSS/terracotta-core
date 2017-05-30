@@ -43,6 +43,7 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityException;
 
 /**
@@ -155,5 +156,10 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     Assert.assertNotNull(config);
     message.setContents(transactionID, config);
     return message;
+  }
+
+  @Override
+  public void dumpStateTo(final StateDumper stateDumper) {
+    //TODO: implement this
   }
 }

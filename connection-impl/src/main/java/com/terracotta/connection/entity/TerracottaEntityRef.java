@@ -26,6 +26,8 @@ import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
@@ -44,16 +46,19 @@ import com.tc.util.Assert;
 import com.tc.util.Throwables;
 import com.tc.util.Util;
 
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
+public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U>, StateDumpable {
   private final static TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
   private final ClientEntityManager entityManager;
   private final Class<T> type;
   private final long version;
   private final String name;
   private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> entityClientService;
+  private final WeakHashMap<T, ClientInstanceID> fetchedEntities = new WeakHashMap<T, ClientInstanceID>();
 
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
   private final AtomicLong nextClientInstanceID;
@@ -76,8 +81,8 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
   @Override
   public synchronized T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
     EntityClientEndpoint endpoint = null;
+    final ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
     try {
-      final ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
       endpoint = entityManager.fetchEntity(this.getEntityID(), this.version, clientInstanceID, entityClientService.getMessageCodec(), null);
     } catch (EntityException e) {
       // In this case, we want to close the endpoint but still throw back the exception.
@@ -98,7 +103,9 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     if (endpoint == null) {
       Assert.assertNotNull(endpoint);
     }
-    return (T)entityClientService.create(endpoint, userData);
+    T t = (T)entityClientService.create(endpoint, userData);
+    fetchedEntities.put(t, clientInstanceID);
+    return t;
   }
 
   @Override
@@ -178,5 +185,16 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
         throw Throwables.propagate(e);
       }
     }    
+  }
+  
+  @Override
+  public void dumpStateTo(StateDumper stateDumper) {
+    stateDumper.dumpState("Size", String.valueOf(fetchedEntities.size()));
+    for (Map.Entry<T, ClientInstanceID> entry : fetchedEntities.entrySet()) {
+      T entity = entry.getKey();
+      if(entity instanceof StateDumpable) {
+        ((StateDumpable)entity).dumpStateTo(stateDumper.subStateDumper(type.getName() + ":" + name + ":" + entry.getValue().getID()));
+      }
+    }
   }
 }

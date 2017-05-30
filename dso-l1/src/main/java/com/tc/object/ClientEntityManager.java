@@ -22,6 +22,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
 
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -36,7 +37,7 @@ import com.tc.text.PrettyPrintable;
  * 
  * NOTE:  This interface assumes nothing about locking or access mode semantics so the caller must handle that.
  */
-public interface ClientEntityManager extends PrettyPrintable, RequestResponseHandler, ClientHandshakeCallback, InvocationHandler {
+public interface ClientEntityManager extends PrettyPrintable, RequestResponseHandler, ClientHandshakeCallback, InvocationHandler, StateDumpable {
 
   /**
    * Find named entity, returning and end-point to access it.
