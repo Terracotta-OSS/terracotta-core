@@ -75,6 +75,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
+    this.replicationSender.addFailedToSendListener(this::removeWaiters);
   }
 
   @Override
@@ -261,13 +262,16 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  acknowledge all the messages for this node because it is gone, this may result in 
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
     if (activated) {
+//  remove the passive node from the sender first.  nothing else is going out
+      this.replicationSender.removePassive(nodeID);
+      removeWaiters(nodeID);
+    }
+  }
+  
+  private void removeWaiters(NodeID nodeID) {
       // This is a an unexpected kind of completion.
       boolean isNormalComplete = false;
       waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
-//  this is a flush message (null).  Tell the sink there will be no more 
-//  messages targeted at this nodeid
-      this.replicationSender.removePassive(nodeID);
-    }
   }
 
   @Override
