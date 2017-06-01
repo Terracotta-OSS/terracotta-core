@@ -30,7 +30,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.3-SNAPSHOT</version>
+    <version>5.3.0-pre9</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
