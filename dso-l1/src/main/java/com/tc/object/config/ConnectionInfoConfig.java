@@ -57,14 +57,14 @@ public class ConnectionInfoConfig {
       for (int i = 0; i < count; i++) {
         String[] serverDesc = serverDescs[i].split(":");
         String host = serverDesc.length > 0 ? serverDesc[0] : "localhost";
-        int tsaPort = 9510;
+        int tsaPort = 9410;
 
         if (serverDesc.length == 2) {
           try {
             tsaPort = Integer.parseInt(serverDesc[1]);
           } catch (NumberFormatException nfe) {
             consoleLogger.warn("Cannot parse port for tc.server element '" + serverDescs[i]
-                               + "'; Using default of 9510.");
+                               + "'; Using default of 9410.");
           }
         }
 
