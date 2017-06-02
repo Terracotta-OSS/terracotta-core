@@ -454,14 +454,14 @@ public class ClientConnectionEstablisher {
           throw new AssertionError("not stopped");
         }
         connectionRequests.clear();
-        LOGGER.info("waiting for connection establisher to finish " + connectionEstablisherThread);
+        LOGGER.debug("waiting for connection establisher to finish " + connectionEstablisherThread);
         this.notifyAll();
       }
       waitForThread(connectionEstablisherThread, mayInterruptIfRunning);
     }
 
     public synchronized void stop() {
-      logger.info("Connection establisher stopping " + System.identityHashCode(this));
+      logger.debug("Connection establisher stopping " + System.identityHashCode(this));
       stopped = true;
       this.notifyAll();
     }
@@ -509,7 +509,7 @@ public class ClientConnectionEstablisher {
 
     @Override
     public void run() {
-      logger.info("Connection establisher starting. " + System.identityHashCode(this));
+      logger.debug("Connection establisher starting. " + System.identityHashCode(this));
       while (!isStopped()) {
         ConnectionRequest request = waitUntilRequestAvailableOrStopped();
         if (request != null) {

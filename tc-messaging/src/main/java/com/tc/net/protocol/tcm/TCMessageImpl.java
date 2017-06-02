@@ -388,7 +388,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 //  suppress some warnings when the channel is closed as this is expected, client is not
 //  there anymore
         if (channel.isOpen()) {
-          LOGGER.warn("message not sent", ioe);
+          LOGGER.warn("Message not sent: " + ioe.getMessage());
         }
       }
     }

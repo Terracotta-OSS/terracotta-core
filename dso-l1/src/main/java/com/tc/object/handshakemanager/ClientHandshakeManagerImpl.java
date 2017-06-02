@@ -113,7 +113,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient(), diagnostic);
     notifyCallbackOnHandshake(handshakeMessage);
 
-    this.logger.info("Sending handshake message");
+    this.logger.debug("Sending handshake message");
     if (!handshakeMessage.send()) {
       if (handshakeMessage.getChannel().isConnected()) {
         CONSOLE_LOGGER.fatal("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
@@ -146,14 +146,14 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
         notifyAll();
         pauseCallbacks();
         this.sessionManager.newSession();
-        this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
+        this.logger.debug("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
       }
     }
   }
 
   @Override
   public synchronized void connected() {
-    this.logger.info("Connected: Unpausing from " + getState());
+    this.logger.debug("Connected: Unpausing from " + getState());
     if (getState() != State.PAUSED) {
       this.logger.warn("Ignoring unpause while " + getState());
     } else if (!checkShutdown()) {
@@ -169,7 +169,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   protected synchronized void acknowledgeHandshake(boolean persistentServer, ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
-    this.logger.info("Received Handshake ack");
+    this.logger.debug("Received Handshake ack");
     if (getState() != State.STARTING) {
       this.logger.warn("Ignoring handshake acknowledgement while " + getState());
     } else {
@@ -243,7 +243,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       this.state = State.PAUSED;
       didChangeToPaused = true;
 
-      this.logger.info("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
+      this.logger.debug("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
 
       if (old == State.RUNNING) {
         this.disconnected = true;

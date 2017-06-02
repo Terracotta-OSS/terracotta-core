@@ -486,7 +486,7 @@ public class DistributedObjectClient implements TCClient {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
       CONSOLE_LOGGER.info(infoMsg);
-      DSO_LOGGER.info(infoMsg);
+//      DSO_LOGGER.info(infoMsg);
     }
   }
 
@@ -620,9 +620,9 @@ public class DistributedObjectClient implements TCClient {
           while (System.currentTimeMillis() < end && t[x].isAlive()) {
             t[x].join(1000);
           }
-          logger.info("Destroyed thread " + t[x].getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
+          logger.debug("Destroyed thread " + t[x].getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
         }
-        logger.info("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
+        logger.debug("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
 
         if (this.threadGroup.activeCount() > 0) {
           logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
@@ -635,7 +635,7 @@ public class DistributedObjectClient implements TCClient {
           threadGroupCleanerThread.start();
           logger.warn("Spawning TCThreadGroup last chance cleaner thread");
         } else {
-          logger.info("Destroying TC thread group");
+          logger.debug("Destroying TC thread group");
           this.threadGroup.destroy();
         }
       } catch (final Throwable t) {
