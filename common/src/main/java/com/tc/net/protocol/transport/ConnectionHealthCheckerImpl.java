@@ -53,7 +53,6 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
     logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                  + healthCheckerConfig.getHealthCheckerName());
-    logger.setLevel(LogLevels.DEBUG);
     monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
     monitorThread = new Thread(monitorThreadEngine, "HealthChecker");
     monitorThread.setDaemon(true);
@@ -81,9 +80,9 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       monitorThreadEngine.stop();
 // don't bother to join the monitorThread here.  shutdown should take care of all the 
 // threads in the thread group
-      logger.info("HealthChecker STOP requested");
+      logger.debug("HealthChecker STOP requested");
     } else {
-      logger.info("HealthChecker STOP already requested");
+      logger.warn("HealthChecker STOP already requested");
     }
   }
 

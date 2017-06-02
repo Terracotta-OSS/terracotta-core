@@ -284,7 +284,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     if (isSameConnection) {
       boolean forcedDisconnect = false;
       synchronized (status) {
-        getLogger().warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
+        getLogger().debug("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
         if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
           if (status.isDisconnected()) forcedDisconnect = true;
           status.reset();

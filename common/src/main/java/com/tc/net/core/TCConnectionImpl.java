@@ -121,7 +121,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final Object                          writerLock                  = new Object();
 
   static {
-    logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
+    logger.debug("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
   }
 
   // for creating unconnected client connections

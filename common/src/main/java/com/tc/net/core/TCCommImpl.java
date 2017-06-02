@@ -40,7 +40,7 @@ class TCCommImpl implements TCComm {
     if (workerCommCount > 0) {
       workerCommMgr = new TCWorkerCommManager(name, workerCommCount, socketParams);
     } else {
-      logger.info("Comm Worker Threads NOT requested");
+      logger.debug("Comm Worker Threads NOT requested");
       workerCommMgr = null;
     }
 
