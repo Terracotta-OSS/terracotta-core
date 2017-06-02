@@ -37,7 +37,7 @@ public interface L2ConfigForL1 {
     public L2Data(String host, int tsaPort, boolean secure) {
       Assert.assertNotBlank(host);
       this.host = host;
-      this.tsaPort = tsaPort;
+      this.tsaPort = tsaPort < 0 ? 9410 : tsaPort; // use default port if given one is not valid
       this.secure = secure;
     }
 
