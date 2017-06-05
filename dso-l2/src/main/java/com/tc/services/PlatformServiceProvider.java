@@ -4,6 +4,7 @@ import com.tc.management.beans.TCDumper;
 import com.tc.objectserver.api.ManagedEntity;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.monitoring.PlatformService;
 
 import java.util.Collection;
@@ -37,5 +38,10 @@ public class PlatformServiceProvider implements ImplementationProvidedServicePro
     @Override
     public void serverDidBecomeActive() {
       // The platform service works the same way whether active or passive - ignore.
+    }
+
+    @Override
+    public void dumpStateTo(final StateDumper stateDumper) {
+        //nothing to do
     }
 }

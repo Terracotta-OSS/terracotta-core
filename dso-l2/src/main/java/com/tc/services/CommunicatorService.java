@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumper;
 
 
 public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
@@ -99,5 +100,9 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
   public void setChannelManager(DSOChannelManager dsoChannelManager) {
     dsoChannelManager.addEventListener(this);
     this.wasInitialized = true;
+  }
+
+  @Override
+  public void dumpStateTo(final StateDumper stateDumper) {
   }
 }

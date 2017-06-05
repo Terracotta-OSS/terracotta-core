@@ -26,6 +26,8 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
 import com.tc.objectserver.persistence.EntityData.Key;
 import com.tc.objectserver.persistence.EntityData.Value;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.io.IOException;
@@ -36,6 +38,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
@@ -46,7 +49,7 @@ import org.terracotta.persistence.IPlatformPersistence;
 /**
  * Stores the information relating to the entities currently alive on the platform into persistent storage.
  */
-public class EntityPersistor {
+public class EntityPersistor implements PrettyPrintable {
   private static final TCLogger LOGGER = TCLogging.getLogger(EntityPersistor.class);
   
   private static final String ENTITIES_ALIVE_FILE_NAME = "entities_alive.map";
@@ -253,6 +256,33 @@ public class EntityPersistor {
   
   public synchronized void removeTrackingForClient(ClientID sourceNodeID) {
     this.entityLifeJournal.remove(sourceNodeID);
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.indent().println(this.getClass().getName());
+    if(entities != null) {
+      out.indent().indent().println("Existing entities: ");
+      for (Key key : entities.keySet()) {
+        out.indent().indent().indent().println(key.className + ":" + key.entityName);
+      }
+    }
+
+    if(entityLifeJournal != null) {
+      out.indent().indent().println("Client Journals: ");
+      for (Map.Entry<ClientID, List<EntityData.JournalEntry>> entry : entityLifeJournal.entrySet()) {
+        out.indent().indent().indent().println("Journal operations for client " + entry.getKey());
+        for (JournalEntry journalEntry : entry.getValue()) {
+          out.indent().indent().indent().indent().println(journalEntry);
+        }
+
+      }
+    }
+
+    if(counters != null) {
+      out.indent().indent().println("Next consumer ID = " + this.counters.get(COUNTERS_CONSUMER_ID));
+    }
+    return out;
   }
 
 

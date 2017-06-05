@@ -26,6 +26,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumper;
 
 
 public class TestServiceProvider implements ServiceProvider {
@@ -47,5 +48,10 @@ public class TestServiceProvider implements ServiceProvider {
   @Override
   public void prepareForSynchronization() throws ServiceProviderCleanupException {
     // nothing to do
+  }
+
+  @Override
+  public void dumpStateTo(final StateDumper stateDumper) {
+    //nothing to dump
   }
 }

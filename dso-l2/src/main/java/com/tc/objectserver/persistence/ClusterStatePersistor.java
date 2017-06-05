@@ -19,6 +19,8 @@
 package com.tc.objectserver.persistence;
 
 import com.tc.net.StripeID;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
 import com.tc.util.version.Version;
 import java.io.IOException;
@@ -26,7 +28,7 @@ import java.util.HashMap;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
-public class ClusterStatePersistor {
+public class ClusterStatePersistor implements PrettyPrintable {
   private static final String MAP_FILE_NAME = "ClusterStatePersistor.map";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
@@ -104,6 +106,17 @@ public class ClusterStatePersistor {
   public void clear() {
     map.clear();
     initialState = null;
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.indent().println(this.getClass().getName());
+    out.indent().indent().println("StripeID = " + getStripeID());
+    out.indent().indent().println("Version = " + getVersion());
+    out.indent().indent().println("Initial State = " + getInitialState());
+    out.indent().indent().println("Current State = " + getCurrentL2State());
+    out.indent().indent().println("isDBClean = " + isDBClean());
+    return out;
   }
 
   // This isn't called from different threads but we can easily synchronize around the putAndStore.

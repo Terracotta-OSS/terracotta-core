@@ -24,6 +24,7 @@ import org.terracotta.entity.ServiceConfiguration;
 
 import com.tc.objectserver.api.ManagedEntity;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpable;
 
 
 /**
@@ -37,7 +38,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
  * This has no explicit initialization routine as it is expected that the implementation will be initialized with rich
  * context, inline, prior to being registered with the platform's provider registry.
  */
-public interface ImplementationProvidedServiceProvider {
+public interface ImplementationProvidedServiceProvider extends StateDumpable {
   /**
    * Get an instance of service from the provider.
    *
