@@ -24,6 +24,7 @@ import com.tc.object.config.schema.L2ConfigObject;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import org.apache.commons.io.IOUtils;
+import org.terracotta.config.TCConfigDefaults;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -82,8 +83,8 @@ public class ConfigDefaultPortTest extends TCTestCase {
 
       // case 4: all ports are default
       configSetupMgr = factory.createL2TVSConfigurationSetupManager("server4", getClass().getClassLoader());
-      Assert.assertEquals(9510, configSetupMgr.dsoL2Config().tsaPort().getValue());
-      Assert.assertEquals(9530, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
+      Assert.assertEquals(TCConfigDefaults.TSA_PORT, configSetupMgr.dsoL2Config().tsaPort().getValue());
+      Assert.assertEquals(TCConfigDefaults.GROUP_PORT, configSetupMgr.dsoL2Config().tsaGroupPort().getValue());
 
       // case 5: ports range overflow
       configSetupMgr = factory.createL2TVSConfigurationSetupManager("server5", getClass().getClassLoader());
