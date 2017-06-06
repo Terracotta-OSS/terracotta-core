@@ -34,8 +34,6 @@ public interface CommonL2Config extends Config<TcConfiguration> {
 
   BindPort tsaGroupPort();
 
-  BindPort managementPort();
-
   String host();
 
   boolean authentication();

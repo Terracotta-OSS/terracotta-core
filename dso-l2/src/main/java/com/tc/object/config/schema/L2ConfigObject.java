@@ -46,7 +46,6 @@ public class L2ConfigObject implements L2Config {
 
   private final BindPort tsaPort;
   private final BindPort tsaGroupPort;
-  private final BindPort managementPort;
   private final String host;
   private final String serverName;
   private final String bind;
@@ -67,7 +66,6 @@ public class L2ConfigObject implements L2Config {
     this.serverName = server.getName();
     this.tsaPort = server.getTsaPort();
     this.tsaGroupPort = server.getTsaGroupPort();
-    this.managementPort = server.getManagementPort();
   }
 
 
@@ -89,11 +87,6 @@ public class L2ConfigObject implements L2Config {
   @Override
   public BindPort tsaGroupPort() {
     return this.tsaGroupPort;
-  }
-
-  @Override
-  public BindPort managementPort() {
-    return this.managementPort;
   }
 
   @Override
