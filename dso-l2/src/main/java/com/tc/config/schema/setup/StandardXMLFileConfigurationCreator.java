@@ -30,7 +30,6 @@ import com.tc.config.schema.setup.sources.FileConfigurationSource;
 import com.tc.config.schema.setup.sources.ResourceConfigurationSource;
 import com.tc.config.schema.setup.sources.ServerConfigurationSource;
 import com.tc.config.schema.setup.sources.URLConfigurationSource;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
@@ -59,7 +58,7 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger consoleLogger = TCLogging.getConsoleLogger();
   private static final long GET_CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl.getProperties()
       .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
 

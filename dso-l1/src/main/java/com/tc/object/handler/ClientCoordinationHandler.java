@@ -20,8 +20,8 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -30,7 +30,7 @@ import com.tc.object.msg.ClientHandshakeRefusedMessage;
 
 public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
 
-  private static final TCLogger  consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger  consoleLogger = TCLogging.getConsoleLogger();
   private ClientHandshakeManager clientHandshakeManager;
 
   @Override

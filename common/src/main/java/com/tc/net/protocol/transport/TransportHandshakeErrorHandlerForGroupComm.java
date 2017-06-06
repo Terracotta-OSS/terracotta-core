@@ -18,12 +18,12 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 
 public class TransportHandshakeErrorHandlerForGroupComm implements TransportHandshakeErrorHandler {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger consoleLogger = TCLogging.getConsoleLogger();
 
   @Override
   public void handleHandshakeError(TransportHandshakeErrorContext e) {

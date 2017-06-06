@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.logging.TCLogger;
@@ -530,7 +529,7 @@ public class ClientConnectionEstablisher {
             }
           } catch (MaxConnectionsExceededException e) {
             String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-            CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
+            TCLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
             if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
             return;
           } catch (Throwable t) {

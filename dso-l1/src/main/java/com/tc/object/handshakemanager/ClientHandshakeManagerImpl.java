@@ -18,8 +18,8 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -49,7 +49,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     PAUSED, STARTING, RUNNING
   }
 
-  private static final TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  private static final TCLogger CONSOLE_LOGGER = TCLogging.getConsoleLogger();
 
   private final ClientHandshakeCallback callBacks;
   private final boolean diagnostic;

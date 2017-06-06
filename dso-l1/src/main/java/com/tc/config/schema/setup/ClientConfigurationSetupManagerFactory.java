@@ -19,9 +19,8 @@
 
 package com.tc.config.schema.setup;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
 
@@ -34,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public class ClientConfigurationSetupManagerFactory {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger consoleLogger = TCLogging.getConsoleLogger();
   private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
   private final String[] args;
   private final List<String> stripeMemberUris;

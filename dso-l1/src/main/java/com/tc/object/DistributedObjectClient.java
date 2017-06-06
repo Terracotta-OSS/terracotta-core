@@ -44,7 +44,6 @@ import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TCClient;
@@ -133,10 +132,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class DistributedObjectClient implements TCClient {
 
-  protected static final TCLogger                    DSO_LOGGER                          = CustomerLogging
-                                                                                             .getDSOGenericLogger();
-  private static final TCLogger                      CONSOLE_LOGGER                      = CustomerLogging
-                                                                                             .getConsoleLogger();
+  protected static final TCLogger                    DSO_LOGGER = TCLogging.getLogger(DistributedObjectClient.class);
+  private static final TCLogger                      CONSOLE_LOGGER = TCLogging.getConsoleLogger();
 
   private static final String                        L1VMShutdownHookName                = "L1 VM Shutdown Hook";
   

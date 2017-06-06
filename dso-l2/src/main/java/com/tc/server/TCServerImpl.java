@@ -33,7 +33,6 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
@@ -76,7 +75,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
   private static final TCLogger             logger                                       = TCLogging
                                                                                              .getLogger(TCServer.class);
-  private static final TCLogger             consoleLogger                                = CustomerLogging
+  private static final TCLogger             consoleLogger                                = TCLogging
                                                                                              .getConsoleLogger();
 
   private volatile long                     startTime                                    = -1;
