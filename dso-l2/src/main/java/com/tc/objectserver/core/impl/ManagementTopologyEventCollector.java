@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformClientFetchedEntity;
@@ -31,8 +33,6 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -54,7 +54,7 @@ import org.terracotta.monitoring.ServerState;
  */
 public class ManagementTopologyEventCollector implements ITopologyEventCollector {
   // Note that serviceInterface may be null if there isn't an IMonitoringProducer service registered.
-  private static final TCLogger LOGGER = TCLogging.getLogger(ManagementTopologyEventCollector.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ManagementTopologyEventCollector.class);
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;

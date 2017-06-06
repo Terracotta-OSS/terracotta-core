@@ -18,8 +18,9 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaManagement.MBeanKeys;
 import com.tc.management.beans.L2MBeanNames;
@@ -42,7 +43,7 @@ import javax.management.ReflectionException;
  *
  */
 public class JMXSubsystem {
-  private static final TCLogger LOGGER = TCLogging.getLogger(DiagnosticsHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticsHandler.class);
   private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
   
   public JMXSubsystem() {

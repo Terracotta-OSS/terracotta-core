@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
@@ -71,7 +72,7 @@ public class MessageChannelTest extends TCTestCase {
   static final int             WAIT          = ITERATIONS * WAIT_PERIOD;
   static final int             MESSAGE_COUNT = 250;
 
-  TCLogger                     logger        = TCLogging.getLogger(getClass());
+  Logger logger = LoggerFactory.getLogger(getClass());
   NetworkListener              lsnr;
   ConnectionInfo               connectTo;
   CommunicationsManagerImpl        clientComms;

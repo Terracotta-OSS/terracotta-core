@@ -18,8 +18,9 @@
  */
 package com.tc.statistics.util;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.ThreadUtil;
@@ -37,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class StatsPrinter implements StatsRecorder, Runnable {
   private static final Aggregator aggregator   = new Aggregator();
 
-  private final static TCLogger   statsLogger  = TCLogging.getLogger(StatsPrinter.class);
+  private final static Logger statsLogger  = LoggerFactory.getLogger(StatsPrinter.class);
   private final long              timeInterval;
   private final ConcurrentMap<String, StatsRecord> statsRecords = new ConcurrentHashMap<String, StatsRecord>();
   private final MessageFormat     formatLine;

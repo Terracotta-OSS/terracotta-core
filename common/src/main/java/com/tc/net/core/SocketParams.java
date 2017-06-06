@@ -18,8 +18,9 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
@@ -32,7 +33,7 @@ import java.net.SocketException;
  * Nothing particularly fancy, just a common place that defines the socket options we set for our connections
  */
 class SocketParams {
-  private static final TCLogger logger       = TCLogging.getLogger(SocketParams.class);
+  private static final Logger logger       = LoggerFactory.getLogger(SocketParams.class);
 
   private static final String   RECV_BUFFER  = "recv.buffer";
   private static final String   SEND_BUFFER  = "send.buffer";

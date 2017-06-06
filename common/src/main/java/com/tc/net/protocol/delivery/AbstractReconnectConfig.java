@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.delivery;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.properties.ReconnectConfig;
 
 public class AbstractReconnectConfig implements ReconnectConfig {
@@ -31,7 +32,7 @@ public class AbstractReconnectConfig implements ReconnectConfig {
   private final int             reconnectSendQueueCap;
   private final int             reconnectMaxDelayedAcks;
   private final int             reconnectSendWindow;
-  private static final TCLogger logger = TCLogging.getLogger(AbstractReconnectConfig.class);
+  private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectConfig.class);
 
   public AbstractReconnectConfig(boolean reconnectEnabled, int reconnectTimeout, int reconnectSendQueueCap,
                                  int reconnectMaxDelayedAcks, int reconnectSendWindow, String name) {

@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.delivery;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
@@ -48,7 +49,7 @@ public class SendStateMachine extends AbstractStateMachine {
   private final String                     debugId;
 
   private static final boolean             debug                 = false;
-  private static final TCLogger            logger                = TCLogging.getLogger(SendStateMachine.class);
+  private static final Logger logger                = LoggerFactory.getLogger(SendStateMachine.class);
 
   private long                             sent                  = -1;
   private long                             acked                 = -1;

@@ -18,13 +18,14 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 
 public class HydrateHandler extends AbstractEventHandler<HydrateContext> {
-  private static TCLogger logger = TCLogging.getLogger(HydrateHandler.class);
+  private static Logger logger = LoggerFactory.getLogger(HydrateHandler.class);
 
   @Override
   public void handleEvent(HydrateContext hc) {

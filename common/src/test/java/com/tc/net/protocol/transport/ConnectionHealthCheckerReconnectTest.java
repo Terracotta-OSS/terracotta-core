@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.LogLevels;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
@@ -63,8 +64,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   TCMessageRouter                                         clientMessageRouter;
 
   NetworkListener                                         serverLsnr;
-  TCLogger                                                logger       = TCLogging
-                                                                           .getLogger(ConnectionHealthCheckerImpl.class);
+  Logger logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class);
   TCPProxy                                                proxy        = null;
   int                                                     proxyPort    = 0;
   ConnectionInfo                                          connectTo;
@@ -74,8 +74,6 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     super.setUp();
 
     NetworkStackHarnessFactory networkStackHarnessFactory;
-
-    logger.setLevel(LogLevels.DEBUG);
 
     serverMessageRouter = new TCMessageRouterImpl();
     clientMessageRouter = new TCMessageRouterImpl();
@@ -311,7 +309,6 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   @Override
   public void tearDown() throws Exception {
     super.tearDown();
-    logger.setLevel(LogLevels.INFO);
     closeCommsMgr();
   }
 }

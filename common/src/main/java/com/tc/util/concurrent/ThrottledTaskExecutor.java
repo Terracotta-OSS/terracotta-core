@@ -18,8 +18,9 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.Assert;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -40,7 +41,7 @@ public class ThrottledTaskExecutor {
   private final ConcurrentLinkedQueue<Task> scheduledTasks;
   private final Semaphore                   semaphore;
   private final AtomicLong                  sequenceID;
-  private static final TCLogger             logger = TCLogging.getLogger(ThrottledTaskExecutor.class);
+  private static final Logger logger = LoggerFactory.getLogger(ThrottledTaskExecutor.class);
 
   public ThrottledTaskExecutor(int maxOutstandingTasks) {
     Assert.eval(maxOutstandingTasks > 0);

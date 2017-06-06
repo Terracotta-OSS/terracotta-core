@@ -18,9 +18,10 @@
  */
 package com.tc.net.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.LogLevels;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -72,7 +73,7 @@ import java.util.concurrent.Callable;
 
 public class TCWorkerCommManagerTest extends TCTestCase {
   private static final int L1_RECONNECT_TIMEOUT = 15000;
-  TCLogger          logger               = TCLogging.getLogger(TCWorkerCommManager.class);
+  Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
   List<ClientMessageTransport> transports = new ArrayList<ClientMessageTransport>();
 
   public TCWorkerCommManagerTest() {
@@ -106,7 +107,6 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    logger.setLevel(LogLevels.DEBUG);
     super.setUp();
   }
 

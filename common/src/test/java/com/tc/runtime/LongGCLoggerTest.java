@@ -18,10 +18,11 @@
  */
 package com.tc.runtime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventLevel;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
@@ -48,19 +49,19 @@ public class LongGCLoggerTest extends TCTestCase {
   public void testBasic() throws Exception {
     TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
 
-      TCLogger logger = TCLogging.getLogger(LongGCLoggerTest.class);
+      Logger logger = LoggerFactory.getLogger(LongGCLoggerTest.class);
 
       @Override
       public void logOperatorEvent(TerracottaOperatorEvent event) {
         if (event.getEventLevel() == EventLevel.WARN) {
-          logger.warn(event);
+          logger.warn("{}", event);
           if (event.toString().contains("Frequent long GC")) {
             latch.countDown();
           } else {
             logger.warn("testBasic: latch not counted down");
           }
         } else {
-          logger.info(event);
+          logger.info("{}", event);
         }
       }
     });
@@ -120,7 +121,7 @@ public class LongGCLoggerTest extends TCTestCase {
   }
 
   private void register() {
-    TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(LongGCLoggerTest.class)));
+    TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(LongGCLoggerTest.class)));
     TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1, 2, thrdGrp);
     LongGCLogger logger = new TestLongGCLogger(1);
     tcMemManager.registerForMemoryEvents(logger);

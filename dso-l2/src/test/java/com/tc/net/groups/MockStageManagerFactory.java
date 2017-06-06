@@ -24,7 +24,6 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.logging.TCLogger;
 import static java.lang.Thread.State.RUNNABLE;
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +35,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.mockito.Matchers;
+import org.slf4j.Logger;
+
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -46,10 +47,10 @@ import static org.mockito.Mockito.when;
 public class MockStageManagerFactory {
   
   private final ThreadGroup threadGroup;
-  private final TCLogger logging;
+  private final Logger logging;
   private volatile boolean alive = true;
 
-  public MockStageManagerFactory(TCLogger logging, ThreadGroup group) {
+  public MockStageManagerFactory(Logger logging, ThreadGroup group) {
     this.threadGroup = group;
     this.logging = logging;
   }

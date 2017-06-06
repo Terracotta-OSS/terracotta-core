@@ -23,10 +23,7 @@ import java.net.URI;
 public interface TCLoggingService {
   TCLogger getLogger(Class<?> className);
   TCLogger getLogger(String className);
-  TCLogger getTestingLogger(String name);
   TCLogger getConsoleLogger();
-  TCLogger getOperatorEventLogger();
   TCLogger getDumpLogger();
-  TCLogger getCustomerLogger(String name);
-  void setLogLocationAndType(URI location, int processType);
+  void setLogLocationAndType(URI location);
 }

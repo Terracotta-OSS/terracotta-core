@@ -18,8 +18,9 @@
  */
 package com.tc.stats;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
@@ -72,8 +73,7 @@ import javax.management.ObjectName;
  */
 public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
-  private final static TCLogger                        logger                 = TCLogging.getLogger(DSO.class);
-  
+  private final static Logger logger = LoggerFactory.getLogger(DSO.class);
   private final StatsImpl                           dsoStats;
   private final MBeanServer                            mbeanServer;
   
@@ -218,7 +218,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
           mbeanServer.unregisterMBean(clientName);
         }
       } catch (Exception e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
       } finally {
         clientObjectNames.remove(clientName);
         Client client = clientMap.remove(clientName);

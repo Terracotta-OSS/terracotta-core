@@ -18,6 +18,9 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
@@ -33,8 +36,6 @@ import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -115,8 +116,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyChangeListener {
-  private static final TCLogger                             logger                      = TCLogging
-                                                                                            .getLogger(TCGroupManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCGroupManagerImpl.class);
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   private final ReconnectConfig                             l2ReconnectConfig;

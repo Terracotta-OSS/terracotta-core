@@ -25,7 +25,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.config.ClientConfig;
@@ -39,6 +38,8 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 public class DistributedObjectClientFactory {
@@ -73,7 +74,7 @@ public class DistributedObjectClientFactory {
     }
 
     final ClientConfig configHelper = new ClientConfigImpl(config);
-    L1ThrowableHandler throwableHandler = new L1ThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class),
+    L1ThrowableHandler throwableHandler = new L1ThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class),
                                                                  new Callable<Void>() {
 
                                                                    @Override

@@ -18,9 +18,10 @@
  */
 package com.tc.object.config;
 
+import org.slf4j.Logger;
+
 import com.tc.config.schema.L2ConfigForL1.L2Data;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 
@@ -32,7 +33,7 @@ import java.util.Arrays;
  * Returns a {@link ConnectionInfo} array from the L2 data.
  */
 public class ConnectionInfoConfig {
-  static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  static Logger consoleLogger = TCLogging.getConsoleLogger();
   private final ConnectionInfo[] connectionInfos;
 
   public ConnectionInfoConfig(L2Data[] l2sData) {

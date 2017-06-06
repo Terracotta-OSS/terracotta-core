@@ -18,7 +18,8 @@
  */
 package com.tc.net.core.event;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -37,9 +38,9 @@ public class TCConnectionEventCaller {
   private final SetOnceFlag errorEvent   = new SetOnceFlag();
   private final SetOnceFlag closeEvent   = new SetOnceFlag();
 
-  private final TCLogger    logger;
+  private final Logger logger;
 
-  public TCConnectionEventCaller(TCLogger logger) {
+  public TCConnectionEventCaller(Logger logger) {
     this.logger = logger;
   }
 
@@ -72,7 +73,7 @@ public class TCConnectionEventCaller {
     }
   }
 
-  private static void fireEvent(List<TCConnectionEventListener> eventListeners, TCConnectionEvent event, TCLogger logger, int type) {
+  private static void fireEvent(List<TCConnectionEventListener> eventListeners, TCConnectionEvent event, Logger logger, int type) {
     for (TCConnectionEventListener listener : eventListeners) {
       try {
         switch (type) {

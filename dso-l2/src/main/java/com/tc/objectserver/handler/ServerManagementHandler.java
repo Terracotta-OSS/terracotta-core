@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.ManagementEventListener;
 import com.tc.management.ManagementResponseListener;
 import com.tc.management.TCManagementEvent;
@@ -39,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class ServerManagementHandler {
-  private static final TCLogger logger = TCLogging.getLogger(ServerManagementHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerManagementHandler.class);
   private static final int MAX_UNFIRED_EVENT_COUNT = 15;
   private static final int MAX_UNFIRED_EVENT_RETENTION_MILLIS = 30000;
 

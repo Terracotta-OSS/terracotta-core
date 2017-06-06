@@ -18,14 +18,15 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 import com.tc.util.Assert;
 
 class MessageTransportStatus {
   private MessageTransportState state;
-  private final TCLogger              logger;
+  private final Logger logger;
 
-  MessageTransportStatus(MessageTransportState initialState, TCLogger logger) {
+  MessageTransportStatus(MessageTransportState initialState, Logger logger) {
     this.state = initialState;
     this.logger = logger;
   }

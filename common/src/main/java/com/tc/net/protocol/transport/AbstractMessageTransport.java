@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.slf4j.Logger;
+
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.ConnectionIdLogger;
-import com.tc.logging.TCLogger;
 import com.tc.net.protocol.NetworkLayer;
 
 import java.util.Collections;
@@ -39,7 +40,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   protected ConnectionIdLogger       logger;
   private final CopyOnWriteArrayList<MessageTransportListener> listeners             = new CopyOnWriteArrayList<MessageTransportListener>();
 
-  public AbstractMessageTransport(TCLogger logger) {
+  public AbstractMessageTransport(Logger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
   }
 

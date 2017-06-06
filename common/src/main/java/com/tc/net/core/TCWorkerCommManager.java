@@ -18,10 +18,11 @@
  */
 package com.tc.net.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -34,9 +35,8 @@ import java.util.Arrays;
  * @author Manoj G
  */
 public class TCWorkerCommManager {
-  private static final TCLogger   logger             = TCLogging.getLogger(TCWorkerCommManager.class);
-  private static final TCLogger   lossyLogger        = new LossyTCLogger(logger, 10, LossyTCLoggerType.COUNT_BASED,
-                                                                         false);
+  private static final Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
+  private static final LossyTCLogger lossyLogger = new LossyTCLogger(logger, 10, LossyTCLoggerType.COUNT_BASED, false);
 
   private static final String     WORKER_NAME_PREFIX = "TCWorkerComm # ";
 

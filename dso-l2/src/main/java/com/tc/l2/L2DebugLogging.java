@@ -18,8 +18,9 @@
  */
 package com.tc.l2;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.objectserver.impl.ThisServerNodeId;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -30,7 +31,7 @@ public abstract class L2DebugLogging {
                                                               .getBoolean(L2_DEBUG_LOGGING_PROP_NAME, false);
 
   static {
-    TCLogger logger = TCLogging.getLogger(L2DebugLogging.class);
+    Logger logger = LoggerFactory.getLogger(L2DebugLogging.class);
     logger.info("L2 debug logging: " + (ENABLED ? "ENABLED" : "DISABLED"));
   }
 
@@ -42,7 +43,7 @@ public abstract class L2DebugLogging {
     return ENABLED;
   }
 
-  public static void log(TCLogger log, LogLevel level, String message, Throwable throwable) {
+  public static void log(Logger log, LogLevel level, String message, Throwable throwable) {
     if (!ENABLED) return;
 
     message = "[" + ThisServerNodeId.getThisServerNodeId() + "] " + message;

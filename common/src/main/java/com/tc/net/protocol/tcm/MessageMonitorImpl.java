@@ -18,7 +18,8 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.text.StringFormatter;
@@ -39,7 +40,7 @@ public class MessageMonitorImpl implements MessageMonitor {
   private final Timer                              timer;
   private int                                      maxTypeWidth = 0;
 
-  public static MessageMonitor createMonitor(TCProperties tcProps, TCLogger logger) {
+  public static MessageMonitor createMonitor(TCProperties tcProps, Logger logger) {
     final MessageMonitor mm;
     if (tcProps.getBoolean(TCPropertiesConsts.TCM_MONITOR_ENABLED, false)) {
       mm = new MessageMonitorImpl();
@@ -55,7 +56,7 @@ public class MessageMonitorImpl implements MessageMonitor {
     this.timer = new Timer("MessageMonitor logger", true);
   }
 
-  public void startLogging(final TCLogger logger, int intervalSeconds) {
+  public void startLogging(final Logger logger, int intervalSeconds) {
     if (intervalSeconds < 1) { throw new IllegalArgumentException("invalid interval: " + intervalSeconds); }
     TimerTask task = new TimerTask() {
       @Override

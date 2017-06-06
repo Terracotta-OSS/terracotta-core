@@ -18,8 +18,9 @@
  */
 package com.tc.object.net;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
@@ -46,7 +47,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * clients and hides the channel to client ID mapping from the rest of the world.
  */
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
-  private static final TCLogger      logger         = TCLogging.getLogger(DSOChannelManager.class);
+  private static final Logger logger = LoggerFactory.getLogger(DSOChannelManager.class);
 
   private final CopyOnWriteSequentialMap<NodeID, MessageChannel> activeChannels = new CopyOnWriteSequentialMap<NodeID, MessageChannel>(
                                                                                       new CopyOnWriteSequentialMap.TypedArrayFactory() {

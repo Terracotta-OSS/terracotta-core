@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 /**
@@ -30,7 +31,7 @@ import java.io.IOException;
 public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthCheckerContext {
   private final MessageTransportBase             transport;
   private final HealthCheckerProbeMessageFactory messageFactory;
-  private final TCLogger                         logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
+  private final Logger logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class);
 
   public ConnectionHealthCheckerContextEchoImpl(MessageTransportBase mtb) {
     this.transport = mtb;

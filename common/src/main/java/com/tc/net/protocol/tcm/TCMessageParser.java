@@ -18,16 +18,17 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 
 /**
  * A class that knows how to parse TCMessages out of raw bytes
  */
 class TCMessageParser {
-   private static final TCLogger logger = TCLogging.getLogger(TCMessageParser.class);
+   private static final Logger logger = LoggerFactory.getLogger(TCMessageParser.class);
   private final TCMessageFactory factory;
 
   TCMessageParser(TCMessageFactory factory) {

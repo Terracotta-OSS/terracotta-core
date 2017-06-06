@@ -18,11 +18,12 @@
  */
 package com.tc.l2.state;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.Assert;
@@ -32,7 +33,7 @@ import java.util.Arrays;
 
 public class Enrollment implements TCSerializable<Enrollment> {
 
-  private static final TCLogger logger = TCLogging.getLogger(Enrollment.class);
+  private static final Logger logger = LoggerFactory.getLogger(Enrollment.class);
   private NodeID                nodeID;
   private long[]                weights;
   private boolean               isNew;

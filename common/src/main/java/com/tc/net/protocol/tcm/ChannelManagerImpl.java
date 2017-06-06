@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
@@ -36,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author steve
  */
 class ChannelManagerImpl implements ChannelManager, ChannelEventListener, ServerMessageChannelFactory {
-  private static final TCLogger                        logger              = TCLogging.getLogger(ChannelManager.class);
+  private static final Logger logger              = LoggerFactory.getLogger(ChannelManager.class);
   private static final MessageChannelInternal[]        EMPTY_CHANNEL_ARARY = new MessageChannelInternal[] {};
 
   private final Map<ChannelID, MessageChannelInternal> channels;

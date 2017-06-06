@@ -18,8 +18,9 @@
  */
 package com.tc.management.beans;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.L1Info;
 import com.tc.management.TCClient;
@@ -30,7 +31,7 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
 
   private static final boolean  DEBUG                        = false;
 
-  private static final TCLogger logger                       = TCLogging.getLogger(L1Dumper.class);
+  private static final Logger logger = LoggerFactory.getLogger(L1Dumper.class);
   private static final int      DEFAULT_THREAD_DUMP_COUNT    = 3;
   private static final long     DEFAULT_THREAD_DUMP_INTERVAL = 1000;
 

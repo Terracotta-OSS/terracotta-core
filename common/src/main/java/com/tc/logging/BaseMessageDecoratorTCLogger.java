@@ -18,16 +18,19 @@
  */
 package com.tc.logging;
 
-public abstract class BaseMessageDecoratorTCLogger implements TCLogger {
+import org.slf4j.Logger;
+import org.slf4j.Marker;
 
-  private final TCLogger          logger;
+public abstract class BaseMessageDecoratorTCLogger implements Logger {
+
+  private final Logger logger;
   
-  public BaseMessageDecoratorTCLogger(TCLogger logger) {
+  public BaseMessageDecoratorTCLogger(Logger logger) {
     this.logger = logger;
   }
 
   // Method base classes should implement
-  protected abstract Object decorate(Object message);
+  protected abstract String decorate(Object message);
   
   @Override
   public String getName() {
@@ -35,53 +38,63 @@ public abstract class BaseMessageDecoratorTCLogger implements TCLogger {
   }
 
   @Override
-  public void debug(Object message) {
-    logger.debug(decorate(message));
+  public boolean isTraceEnabled() {
+    return logger.isTraceEnabled();
   }
 
   @Override
-  public void debug(Object message, Throwable t) {
-    logger.debug(decorate(message), t);
+  public void trace(String s) {
+    logger.trace(decorate(s));
   }
 
   @Override
-  public void error(Object message) {
-    logger.error(decorate(message));
+  public void trace(String s, Object o) {
+    logger.trace(decorate(s), o);
   }
 
   @Override
-  public void error(Object message, Throwable t) {
-    logger.error(decorate(message), t);
+  public void trace(String s, Object o, Object o1) {
+    logger.trace(decorate(s), o, o1);
   }
 
   @Override
-  public void fatal(Object message) {
-    logger.fatal(decorate(message));
+  public void trace(String s, Object... objects) {
+    logger.trace(decorate(s), objects);
   }
 
   @Override
-  public void fatal(Object message, Throwable t) {
-    logger.fatal(decorate(message), t);
+  public void trace(String s, Throwable throwable) {
+    logger.trace(decorate(s), throwable);
   }
 
   @Override
-  public void info(Object message) {
-    logger.info(decorate(message));
+  public boolean isTraceEnabled(Marker marker) {
+    return logger.isTraceEnabled(marker);
   }
 
   @Override
-  public void info(Object message, Throwable t) {
-    logger.info(decorate(message), t);
+  public void trace(Marker marker, String s) {
+    logger.trace(marker, decorate(s));
   }
 
   @Override
-  public void warn(Object message) {
-    logger.warn(decorate(message));
+  public void trace(Marker marker, String s, Object o) {
+    logger.trace(marker, decorate(s), o);
   }
 
   @Override
-  public void warn(Object message, Throwable t) {
-    logger.warn(decorate(message), t);
+  public void trace(Marker marker, String s, Object o, Object o1) {
+    logger.trace(marker, decorate(s), o, o1);
+  }
+
+  @Override
+  public void trace(Marker marker, String s, Object... objects) {
+    logger.trace(marker, decorate(s), objects);
+  }
+
+  @Override
+  public void trace(Marker marker, String s, Throwable throwable) {
+    logger.trace(marker, decorate(s), throwable);
   }
 
   @Override
@@ -90,17 +103,237 @@ public abstract class BaseMessageDecoratorTCLogger implements TCLogger {
   }
 
   @Override
+  public void debug(String s) {
+    logger.debug(decorate(s));
+  }
+
+  @Override
+  public void debug(String s, Object o) {
+    logger.debug(decorate(s), o);
+  }
+
+  @Override
+  public void debug(String s, Object o, Object o1) {
+    logger.debug(decorate(s), o, o1);
+  }
+
+  @Override
+  public void debug(String s, Object... objects) {
+    logger.debug(decorate(s), objects);
+  }
+
+  @Override
+  public void debug(String s, Throwable throwable) {
+    logger.debug(decorate(s), throwable);
+  }
+
+  @Override
+  public boolean isDebugEnabled(Marker marker) {
+    return logger.isDebugEnabled(marker);
+  }
+
+  @Override
+  public void debug(Marker marker, String s) {
+    logger.debug(marker, decorate(s));
+  }
+
+  @Override
+  public void debug(Marker marker, String s, Object o) {
+    logger.debug(marker, decorate(s), o);
+  }
+
+  @Override
+  public void debug(Marker marker, String s, Object o, Object o1) {
+    logger.debug(marker, decorate(s), o, o1);
+  }
+
+  @Override
+  public void debug(Marker marker, String s, Object... objects) {
+    logger.debug(marker, decorate(s), objects);
+  }
+
+  @Override
+  public void debug(Marker marker, String s, Throwable throwable) {
+    logger.debug(marker, decorate(s), throwable);
+  }
+
+  @Override
   public boolean isInfoEnabled() {
     return logger.isInfoEnabled();
   }
 
   @Override
-  public void setLevel(LogLevel level) {
-    logger.setLevel(level);
+  public void info(String s) {
+    logger.info(decorate(s));
   }
 
   @Override
-  public LogLevel getLevel() {
-    return logger.getLevel();
+  public void info(String s, Object o) {
+    logger.info(decorate(s), o);
+  }
+
+  @Override
+  public void info(String s, Object o, Object o1) {
+    logger.info(decorate(s), o, o1);
+  }
+
+  @Override
+  public void info(String s, Object... objects) {
+    logger.info(decorate(s), objects);
+  }
+
+  @Override
+  public void info(String s, Throwable throwable) {
+    logger.info(decorate(s), throwable);
+  }
+
+  @Override
+  public boolean isInfoEnabled(Marker marker) {
+    return logger.isInfoEnabled(marker);
+  }
+
+  @Override
+  public void info(Marker marker, String s) {
+    logger.info(marker, decorate(s));
+  }
+
+  @Override
+  public void info(Marker marker, String s, Object o) {
+    logger.info(marker, decorate(s), o);
+  }
+
+  @Override
+  public void info(Marker marker, String s, Object o, Object o1) {
+    logger.info(marker, decorate(s), o, o1);
+  }
+
+  @Override
+  public void info(Marker marker, String s, Object... objects) {
+    logger.info(marker, decorate(s), objects);
+  }
+
+  @Override
+  public void info(Marker marker, String s, Throwable throwable) {
+    logger.info(marker, decorate(s), throwable);
+  }
+
+  @Override
+  public boolean isWarnEnabled() {
+    return logger.isWarnEnabled();
+  }
+
+  @Override
+  public void warn(String s) {
+    logger.warn(decorate(s));
+  }
+
+  @Override
+  public void warn(String s, Object o) {
+    logger.warn(decorate(s), o);
+  }
+
+  @Override
+  public void warn(String s, Object... objects) {
+    logger.warn(decorate(s), objects);
+  }
+
+  @Override
+  public void warn(String s, Object o, Object o1) {
+    logger.warn(decorate(s), o, o1);
+  }
+
+  @Override
+  public void warn(String s, Throwable throwable) {
+    logger.warn(decorate(s), throwable);
+  }
+
+  @Override
+  public boolean isWarnEnabled(Marker marker) {
+    return logger.isWarnEnabled(marker);
+  }
+
+  @Override
+  public void warn(Marker marker, String s) {
+    logger.warn(marker, decorate(s));
+  }
+
+  @Override
+  public void warn(Marker marker, String s, Object o) {
+    logger.warn(marker, decorate(s), o);
+  }
+
+  @Override
+  public void warn(Marker marker, String s, Object o, Object o1) {
+    logger.warn(marker, decorate(s), o, o1);
+  }
+
+  @Override
+  public void warn(Marker marker, String s, Object... objects) {
+    logger.warn(marker, decorate(s), objects);
+  }
+
+  @Override
+  public void warn(Marker marker, String s, Throwable throwable) {
+    logger.warn(marker, decorate(s), throwable);
+  }
+
+  @Override
+  public boolean isErrorEnabled() {
+    return logger.isErrorEnabled();
+  }
+
+  @Override
+  public void error(String s) {
+    logger.error(decorate(s));
+  }
+
+  @Override
+  public void error(String s, Object o) {
+    logger.error(decorate(s), o);
+  }
+
+  @Override
+  public void error(String s, Object o, Object o1) {
+    logger.error(decorate(s), o, o1);
+  }
+
+  @Override
+  public void error(String s, Object... objects) {
+    logger.error(decorate(s), objects);
+  }
+
+  @Override
+  public void error(String s, Throwable throwable) {
+    logger.error(decorate(s), throwable);
+  }
+
+  @Override
+  public boolean isErrorEnabled(Marker marker) {
+    return logger.isErrorEnabled(marker);
+  }
+
+  @Override
+  public void error(Marker marker, String s) {
+    logger.error(marker, decorate(s));
+  }
+
+  @Override
+  public void error(Marker marker, String s, Object o) {
+    logger.error(marker, decorate(s), o);
+  }
+
+  @Override
+  public void error(Marker marker, String s, Object o, Object o1) {
+    logger.error(marker, decorate(s), o, o1);
+  }
+
+  @Override
+  public void error(Marker marker, String s, Object... objects) {
+    logger.error(marker, decorate(s), objects);
+  }
+
+  @Override
+  public void error(Marker marker, String s, Throwable throwable) {
+    logger.error(marker, decorate(s), throwable);
   }
 }

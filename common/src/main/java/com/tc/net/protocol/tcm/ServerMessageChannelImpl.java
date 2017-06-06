@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
@@ -33,7 +34,7 @@ import java.util.Collection;
  * @author teck
  */
 public class ServerMessageChannelImpl extends AbstractMessageChannel implements ServerMessageChannel {
-  private static final TCLogger logger = TCLogging.getLogger(ServerMessageChannel.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerMessageChannel.class);
   private final ChannelID       sessionID;
 
   /**

@@ -18,12 +18,13 @@
  */
 package com.tc.l2.ha;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -47,7 +48,7 @@ import java.util.Iterator;
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
     ConnectionIDFactoryListener, PrettyPrintable {
 
-  private static final TCLogger logger   = TCLogging.getLogger(ReplicatedClusterStateManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
 
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;

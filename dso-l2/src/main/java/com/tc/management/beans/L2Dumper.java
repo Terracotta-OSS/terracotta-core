@@ -18,8 +18,9 @@
  */
 package com.tc.management.beans;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
 
@@ -31,7 +32,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
-  private static final TCLogger logger                        = TCLogging.getLogger(L2Dumper.class);
+  private static final Logger logger = LoggerFactory.getLogger(L2Dumper.class);
 
   private static final boolean  DEBUG                         = false;
 
@@ -96,7 +97,7 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
     try {
       allL2DumperMBeans = TerracottaManagement.getAllL2DumperMBeans(mbs);
     } catch (Exception e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return;
     }
 

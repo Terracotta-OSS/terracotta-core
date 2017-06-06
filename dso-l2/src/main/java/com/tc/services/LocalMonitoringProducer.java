@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
@@ -34,8 +36,6 @@ import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.classloader.BuiltinService;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
@@ -61,7 +61,7 @@ import com.tc.util.Assert;
  */
 @BuiltinService
 public class LocalMonitoringProducer implements ImplementationProvidedServiceProvider {
-  private static final TCLogger LOGGER = TCLogging.getLogger(LocalMonitoringProducer.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(LocalMonitoringProducer.class);
   private final TerracottaServiceProviderRegistry globalRegistry;
   private final PlatformServer thisServer;
   private final Map<ServerID, PlatformServer> otherServers;

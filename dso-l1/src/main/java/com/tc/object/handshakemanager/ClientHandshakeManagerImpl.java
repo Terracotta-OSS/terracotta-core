@@ -18,8 +18,9 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+
 import com.tc.net.ClientID;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -49,12 +50,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     PAUSED, STARTING, RUNNING
   }
 
-  private static final TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  private static final Logger CONSOLE_LOGGER = TCLogging.getConsoleLogger();
 
   private final ClientHandshakeCallback callBacks;
   private final boolean diagnostic;
   private final ClientHandshakeMessageFactory chmf;
-  private final TCLogger logger;
+  private final Logger logger;
   private final SessionManager sessionManager;
   private final String clientVersion;
   
@@ -67,7 +68,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private final ClusterInternalEventsGun clusterEventsGun;
 
-  public ClientHandshakeManagerImpl(TCLogger logger, ClientHandshakeMessageFactory chmf,
+  public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
                                     SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
                                     String uuid, String name, String clientVersion,
                                     ClientHandshakeCallback entities, boolean diagnostic) {
@@ -115,7 +116,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.logger.debug("Sending handshake message");
     if (!handshakeMessage.send()) {
       if (handshakeMessage.getChannel().isConnected()) {
-        CONSOLE_LOGGER.fatal("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
+        CONSOLE_LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
       } else {
         CONSOLE_LOGGER.info("handshake failed. channel not connected");
       }

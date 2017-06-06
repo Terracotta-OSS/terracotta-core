@@ -18,23 +18,23 @@
  */
 package com.tc.services;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-
+import org.slf4j.Logger;
 import org.terracotta.entity.StateDumpCollector;
+
+import com.tc.logging.TCLogging;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * A Log based implementation of {@link StateDumpCollector}, key-value mappings will be logged using {@link TCLogger}
+ * A Log based implementation of {@link StateDumpCollector}, key-value mappings will be logged using {@link Logger}
  *
  * @author vmad
  */
 public class LogBasedStateDumpCollector implements StateDumpCollector {
 
-  private static final TCLogger LOGGER = TCLogging.getDumpLogger();
+  private static final Logger LOGGER = TCLogging.getDumpLogger();
   private final ConcurrentMap<String, LogBasedStateDumpCollector> instances = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, String> dumpState = new ConcurrentHashMap<>();
 

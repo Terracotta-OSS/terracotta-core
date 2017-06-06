@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.impl;
 
+import org.slf4j.Logger;
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.PostInit;
@@ -27,7 +28,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.TCLogger;
 import com.tc.management.beans.TCDumper;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
@@ -63,8 +63,8 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                                               int maxStageSize, ChannelManager genericChannelManager,
                                                               DumpHandlerStore dumpHandlerStore);
 
-  L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
-                                      StageManager stageManager, StateManager stateMgr, 
+  L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
+                                      StageManager stageManager, StateManager stateMgr,
                                       GroupManager<AbstractGroupMessage> groupCommsManager,
                                       Persistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,

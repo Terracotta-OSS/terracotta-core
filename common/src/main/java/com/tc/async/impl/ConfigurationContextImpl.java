@@ -18,11 +18,12 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 
 /**
  * Used to initialize and event handlers. This needs to grow up a lot. I want to beable to have null stages and tracing
@@ -45,7 +46,7 @@ public class ConfigurationContextImpl implements ConfigurationContext {
   }
 
   @Override
-  public TCLogger getLogger(Class<?> clazz) {
-    return TCLogging.getLogger(clazz);
+  public Logger getLogger(Class<?> clazz) {
+    return LoggerFactory.getLogger(clazz);
   }
 }

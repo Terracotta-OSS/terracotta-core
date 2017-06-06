@@ -18,9 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.LogLevels;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
@@ -55,11 +55,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
-  static {
-    TCLogging.getLogger(ConnectionHealthCheckerImpl.class).setLevel(LogLevels.DEBUG);
-  }
-
-  private final TCLogger            logger               = TCLogging.getLogger(getClass());
+  private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final PortChooser         pc                   = new PortChooser();
   private final int                 listenPort           = pc.chooseRandomPort();

@@ -18,7 +18,8 @@
  */
 package com.tc.lang;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 
 import java.util.concurrent.Callable;
 
@@ -29,7 +30,7 @@ import java.util.concurrent.Callable;
 public class L1ThrowableHandler extends ThrowableHandlerImpl {
   private final Callable<Void> l1ShutdownCallable;
 
-  public L1ThrowableHandler(TCLogger logger, Callable<Void> l1ShutdownCallable) {
+  public L1ThrowableHandler(Logger logger, Callable<Void> l1ShutdownCallable) {
     super(logger);
     this.l1ShutdownCallable = l1ShutdownCallable;
   }

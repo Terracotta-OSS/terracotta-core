@@ -18,8 +18,9 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
@@ -45,7 +46,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author teck
  */
 final class TCListenerImpl implements TCListener {
-  protected final static TCLogger                            logger          = TCLogging.getLogger(TCListener.class);
+  protected final static Logger logger = LoggerFactory.getLogger(TCListener.class);
 
   private final ServerSocketChannel                          ssc;
   private final TCConnectionEventListener                    listener;
@@ -129,7 +130,7 @@ final class TCListenerImpl implements TCListener {
         Thread.currentThread().interrupt();
         return;
       } catch (TCExceptionResultException e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
         Assert.eval("exception result set in future", false);
         return;
       } finally {

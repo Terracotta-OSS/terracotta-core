@@ -18,9 +18,10 @@
  */
 package com.tc.objectserver.locks;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCLockUpgradeNotSupportedError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -55,8 +56,8 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   private final static EnumSet<Type> SET_OF_WAITERS                = EnumSet.of(Type.WAITER);
   private final static EnumSet<Type> SET_OF_HOLDERS                = EnumSet.of(Type.HOLDER, Type.GREEDY_HOLDER);
 
-  protected final static TCLogger    logger                        = TCLogging.getLogger(AbstractServerLock.class);
-  protected final LockID             lockID;
+  protected final static Logger logger = LoggerFactory.getLogger(AbstractServerLock.class);
+  protected final LockID lockID;
 
   public AbstractServerLock(LockID lockID) {
     this.lockID = lockID;

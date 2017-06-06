@@ -18,6 +18,8 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -26,7 +28,6 @@ import com.tc.async.api.Source;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
@@ -44,7 +45,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final StageQueue<EC> stageQueue;
   private final WorkerThread<EC>[] threads;
   private final ThreadGroup    group;
-  private final TCLogger       logger;
+  private final Logger logger;
   private final int            sleepMs;
   private final boolean        pausable;
 
@@ -160,12 +161,12 @@ public class StageImpl<EC> implements Stage<EC> {
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
     private final EventHandler<EC> handler;
-    private final TCLogger     tcLogger;
+    private final Logger     tcLogger;
     private final int          sleepMs;
     private final boolean      pausable;
     private final String       stageName;
 
-    public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler, ThreadGroup group, TCLogger logger, int sleepMs, boolean pausable, String stageName) {
+    public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler, ThreadGroup group, Logger logger, int sleepMs, boolean pausable, String stageName) {
       super(group, name);
       tcLogger = logger;
       setDaemon(true);

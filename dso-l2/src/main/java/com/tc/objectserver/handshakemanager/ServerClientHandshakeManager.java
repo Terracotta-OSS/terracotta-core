@@ -19,11 +19,12 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.StageManager;
+
+import org.slf4j.Logger;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -71,14 +72,14 @@ public class ServerClientHandshakeManager {
   private final StageManager             stageManager;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
-  private final TCLogger                 logger;
+  private final Logger logger;
   private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
-  private final TCLogger                 consoleLogger;
+  private final Logger consoleLogger;
 
-  public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
+  public ServerClientHandshakeManager(Logger logger, DSOChannelManager channelManager,
                                       StageManager stageManager, 
                                       Timer timer, long reconnectTimeout,
-                                      TCLogger consoleLogger) {
+                                      Logger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.stageManager = stageManager;

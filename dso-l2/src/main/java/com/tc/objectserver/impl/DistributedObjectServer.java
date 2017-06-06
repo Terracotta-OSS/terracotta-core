@@ -21,12 +21,15 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.LogBasedStateDumpCollector;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
 import com.tc.services.SingleThreadedTimer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
@@ -98,10 +101,7 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.RemoteManagement;
 import com.tc.management.RemoteManagementImpl;
@@ -271,8 +271,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   protected final L2ConfigurationSetupManager    configSetupManager;
   protected final HaConfigImpl                   haConfig;
 
-  private static final TCLogger                  logger           = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger                  consoleLogger    = CustomerLogging.getConsoleLogger();
+  private static final Logger logger = LoggerFactory.getLogger(DistributedObjectServer.class);
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
@@ -335,7 +335,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
   }
 
-  protected ServerBuilder createServerBuilder(HaConfig config, TCLogger tcLogger, TCServer server,
+  protected ServerBuilder createServerBuilder(HaConfig config, Logger tcLogger, TCServer server,
                                                  L2Config l2dsoConfig) {
     return new StandardServerBuilder(config, tcLogger);
   }
@@ -412,7 +412,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // perform the DSO network config verification
     final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
 
-    TCLogging.setLogLocationAndType(configSetupManager.commonl2Config().logsPath().toURI(), TCLogging.ProcessType.SERVER);
+    TCLogging.setLogLocationAndType(configSetupManager.commonl2Config().logsPath().toURI());
     
     // verify user input host name, DEV-2293
     final String host = l2DSOConfig.host();
@@ -678,7 +678,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                                 TCLogging
+                                                                                                 LoggerFactory
                                                                                                      .getLogger(ServerClientHandshakeManager.class),
                                                                                                  channelManager,
                                                                                                  stageManager,
@@ -1052,7 +1052,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return messageTypeClassMapping;
   }
 
-  protected TCLogger getLogger() {
+  protected Logger getLogger() {
     return logger;
   }
 

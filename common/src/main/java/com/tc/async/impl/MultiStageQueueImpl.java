@@ -18,6 +18,8 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
@@ -27,7 +29,6 @@ import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
@@ -73,7 +74,7 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
   private final int PARTITION_SHIFT;
   private final String stageName;
   private final ShortestFindStrategy myShortestFindStrategy;
-  private final TCLogger logger;
+  private final Logger logger;
   private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
   private volatile boolean closed = false;
   private volatile int fcheck = 0;  // used to start the shortest queue search
@@ -373,7 +374,7 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
         }
 
         @Override
-        public void logDetails(TCLogger statsLogger) {
+        public void logDetails(Logger statsLogger) {
           statsLogger.info(getDetails());
         }
       };

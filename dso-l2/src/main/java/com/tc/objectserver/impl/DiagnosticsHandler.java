@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
@@ -41,7 +42,7 @@ import java.nio.charset.Charset;
  */
 public class DiagnosticsHandler implements TCMessageSink {
   
-  private final TCLogger logger = TCLogging.getLogger(DiagnosticsHandler.class);
+  private final Logger logger = LoggerFactory.getLogger(DiagnosticsHandler.class);
   private final DistributedObjectServer server;
   private final JMXSubsystem subsystem;
 

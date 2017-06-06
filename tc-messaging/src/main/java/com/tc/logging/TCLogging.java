@@ -18,6 +18,9 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ServiceLoader;
 
 /**
@@ -26,6 +29,9 @@ import java.util.ServiceLoader;
  * @author teck
  */
 public class TCLogging {
+
+  private static final Logger DUMP_LOGGER = LoggerFactory.getLogger("com.tc.dumper.dump");
+  private static final Logger CONSOLE_LOGGER = LoggerFactory.getLogger("com.terracottatech.console");
 
   private static TCLoggingService  service;
   
@@ -48,48 +54,16 @@ public class TCLogging {
     return service.getLogger(name);    
   }
 
-  /**
-   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
-   */
-  public static TCLogger getTestingLogger(String name) {
-    if (name == null) { throw new IllegalArgumentException("Name cannot be null"); }
-    return service.getTestingLogger(name);
+  public static Logger getConsoleLogger() {
+    return CONSOLE_LOGGER;
   }
 
-  /**
-   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
-   */
-  public static TCLogger getTestingLogger(Class<?> clazz) {
-    if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
-    return getTestingLogger(clazz.getName());
-  }
-
-  // You want to look at CustomerLogging to get customer facing logger instances
-  static TCLogger getCustomerLogger(String name) {
-    return service.getCustomerLogger(name);
-  }
-
-  // this method not public on purpose, use CustomerLogging.getConsoleLogger() instead
-  static TCLogger getConsoleLogger() {
-    return service.getConsoleLogger();
-  }
-
-  static TCLogger getOperatorEventLogger() {
-    return service.getOperatorEventLogger();
+  public static Logger getDumpLogger() {
+    return DUMP_LOGGER;
   }
   
-  public enum ProcessType {
-    GENERIC,
-    CLIENT,
-    SERVER
-  }
-
-  public static TCLogger getDumpLogger() {
-    return service.getDumpLogger();
-  }
-  
-  public static void setLogLocationAndType(java.net.URI logLocation, ProcessType processType) {
-    service.setLogLocationAndType(logLocation, processType.ordinal());
+  public static void setLogLocationAndType(java.net.URI logLocation) {
+    service.setLogLocationAndType(logLocation);
   }
   
   public static void setLoggingService(TCLoggingService service) {

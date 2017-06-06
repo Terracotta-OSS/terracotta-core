@@ -13,7 +13,6 @@ import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
@@ -31,6 +30,7 @@ import com.tc.util.concurrent.QueueFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +62,7 @@ public class StateManagerImplTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
-    TCLogger tcLogger = mock(TCLogger.class);
+    Logger tcLogger = mock(Logger.class);
     PortChooser pc = new PortChooser();
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
@@ -124,7 +124,7 @@ public class StateManagerImplTest {
   
   @Test
   public void testInitialElection() throws Exception {
-    TCLogger logger = mock(TCLogger.class);
+    Logger logger = mock(Logger.class);
     GroupManager grp = mock(GroupManager.class);
     
     Sink stageChangeSinkMock = mock(Sink.class);

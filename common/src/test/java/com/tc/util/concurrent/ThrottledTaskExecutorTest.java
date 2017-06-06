@@ -18,8 +18,9 @@
  */
 package com.tc.util.concurrent;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.LogLevels;
-import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -32,7 +33,6 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    TCLogging.getLogger(ThrottledTaskExecutor.class).setLevel(LogLevels.DEBUG);
   }
 
   public void testLinearExecute() {

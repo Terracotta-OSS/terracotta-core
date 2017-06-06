@@ -21,8 +21,6 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -36,6 +34,9 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
@@ -43,7 +44,7 @@ public class RequestProcessor {
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
   private boolean isActive = false;
-  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
+  private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
 //  TODO: do some accounting for transaction de-dupping on failover
 
   public RequestProcessor(Sink<Runnable> requestExecution) {

@@ -20,6 +20,9 @@ package com.terracotta.connection.entity;
 
 import com.tc.object.ExceptionUtils;
 import com.terracotta.connection.EndpointConnector;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -35,8 +38,6 @@ import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientEntityManagerImpl;
 import com.tc.object.ClientInstanceID;
@@ -49,7 +50,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 
 public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
-  private final static TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
+  private final static Logger logger = LoggerFactory.getLogger(TerracottaEntityRef.class);
   private final ClientEntityManager entityManager;
   private final EndpointConnector endpointConnector;
   private final Class<T> type;

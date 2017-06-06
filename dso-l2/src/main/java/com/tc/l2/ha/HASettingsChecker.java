@@ -18,9 +18,10 @@
  */
 package com.tc.l2.ha;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 
@@ -35,10 +36,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author dkumar
  */
 public class HASettingsChecker {
+  private static final Logger logger = LoggerFactory.getLogger(HASettingsChecker.class);
 
   private final L2ConfigurationSetupManager tcConfig;
   private final TCProperties                tcProperties;
-  private static final TCLogger             logger = CustomerLogging.getDSOGenericLogger();
   private final boolean                     isHighAvailabilityEnabled;
   private final int                         l1l2PingIdleTime;
   private final int                         l1l2SocketConnectCount;

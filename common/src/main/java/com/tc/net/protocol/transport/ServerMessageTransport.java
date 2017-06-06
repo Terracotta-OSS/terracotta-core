@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -28,7 +29,7 @@ import com.tc.util.Assert;
 
 public class ServerMessageTransport extends MessageTransportBase {
 
-  private static final TCLogger smtLogger = TCLogging.getLogger(ServerMessageTransport.class);
+  private static final Logger smtLogger = LoggerFactory.getLogger(ServerMessageTransport.class);
 
   public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {

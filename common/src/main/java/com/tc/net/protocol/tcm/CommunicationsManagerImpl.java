@@ -18,10 +18,11 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
@@ -85,8 +86,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
-  private static final TCLogger                                                logger                    = TCLogging
-                                                                                                             .getLogger(CommunicationsManager.class);
+  private static final Logger logger = LoggerFactory.getLogger(CommunicationsManager.class);
 
   private final SetOnceFlag                                                    shutdown                  = new SetOnceFlag();
   private final Set<NetworkListener>                                           listeners                 = new HashSet<NetworkListener>();

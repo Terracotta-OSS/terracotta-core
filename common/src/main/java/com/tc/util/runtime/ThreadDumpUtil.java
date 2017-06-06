@@ -18,8 +18,9 @@
  */
 package com.tc.util.runtime;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.object.locks.ThreadID;
 import com.tc.util.Conversion;
 
@@ -40,7 +41,7 @@ public class ThreadDumpUtil {
   public static final String            ZIP_BUFFER_NAME         = "threadDumps.zip";
   private static final short            ZIP_BUFFER_INITIAL_SIZE = 10 * 1024;
 
-  protected static final TCLogger       logger                  = TCLogging.getLogger(ThreadDumpUtil.class);
+  protected static final Logger logger = LoggerFactory.getLogger(ThreadDumpUtil.class);
   protected static final ThreadMXBean   threadMXBean            = ManagementFactory.getThreadMXBean();
   protected static volatile ThreadGroup rootThreadGroup;
 
@@ -51,7 +52,7 @@ public class ThreadDumpUtil {
     try {
       zout.putNextEntry(zEntry);
     } catch (IOException e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return null;
     }
 
@@ -62,14 +63,14 @@ public class ThreadDumpUtil {
       zout.write(Conversion.string2Bytes(threadDump));
       zout.flush();
     } catch (IOException e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return null;
     } finally {
       try {
         zout.closeEntry();
         zout.close();
       } catch (IOException e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
         return null;
       }
     }

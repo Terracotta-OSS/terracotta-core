@@ -18,6 +18,9 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.object.ClientIDProvider;
 
 public class ClientIDLoggerProvider implements TCLoggerProvider {
@@ -29,13 +32,13 @@ public class ClientIDLoggerProvider implements TCLoggerProvider {
   }
   
   @Override
-  public TCLogger getLogger(Class<?> clazz) {
-    return new ClientIDLogger(cidProvider, TCLogging.getLogger(clazz));
+  public Logger getLogger(Class<?> clazz) {
+    return new ClientIDLogger(cidProvider, LoggerFactory.getLogger(clazz));
   }
 
   @Override
-  public TCLogger getLogger(String name) {
-    return new ClientIDLogger(cidProvider, TCLogging.getLogger(name));
+  public Logger getLogger(String name) {
+    return new ClientIDLogger(cidProvider, LoggerFactory.getLogger(name));
   }
 
 }

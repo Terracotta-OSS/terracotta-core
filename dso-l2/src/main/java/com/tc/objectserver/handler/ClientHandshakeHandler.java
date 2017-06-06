@@ -18,11 +18,12 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -47,7 +48,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
                                                                       .getInt(
                                                                               TCPropertiesConsts.TC_TIME_SYNC_THRESHOLD,
                                                                               30) * 1000;
-  private static final TCLogger        LOGGER                     = TCLogging.getLogger(ClientHandshakeHandler.class);
+  private static final Logger LOGGER                     = LoggerFactory.getLogger(ClientHandshakeHandler.class);
 
   private ServerClientHandshakeManager handshakeManager;
   private StateManager                 stateManager;
@@ -112,7 +113,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
         LOGGER.debug(event.getEventMessage());
         break;
       case CRITICAL:
-        LOGGER.fatal(event.getEventMessage());
+        LOGGER.error(event.getEventMessage());
         break;
       default:
         break;

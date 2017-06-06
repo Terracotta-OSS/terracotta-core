@@ -18,8 +18,9 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -35,7 +36,7 @@ import java.util.Set;
 
 public class ClusterStateImpl implements ClusterState {
 
-  private static final TCLogger                     logger                 = TCLogging.getLogger(ClusterState.class);
+  private static final Logger logger = LoggerFactory.getLogger(ClusterState.class);
 
   private final Persistor               persistor;
   private final ConnectionIDFactory                 connectionIdFactory;

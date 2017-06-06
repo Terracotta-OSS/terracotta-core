@@ -24,7 +24,6 @@ import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
-import com.tc.logging.TCLogging;
 import com.tc.management.TCClient;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
@@ -43,6 +42,7 @@ import junit.framework.TestCase;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
+import org.slf4j.LoggerFactory;
 
 
 public class DistributedObjectClientTest extends TestCase {
@@ -92,7 +92,7 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
-    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class)));
+    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup, l2connection, cluster);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
@@ -158,7 +158,7 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
-    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class)));
+    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     ClientBuilder builder = new StandardClientBuilder(ProductID.PERMANENT) {
       @Override
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {

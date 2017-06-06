@@ -18,9 +18,10 @@
  */
 package com.tc.objectserver.locks;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.locks.ClientServerExchangeLockContext;
@@ -61,7 +62,7 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
   private boolean                                       isStarted        = false;
   private final LinkedBlockingQueue<RequestLockContext> lockRequestQueue = new LinkedBlockingQueue<>();
 
-  private static final TCLogger                         logger           = TCLogging.getLogger(LockManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(LockManagerImpl.class);
 
   public LockManagerImpl(Sink lockSink, DSOChannelManager channelManager) {
     this(lockSink, channelManager, new ServerLockFactoryImpl());

@@ -18,6 +18,9 @@
  */
 package com.tc.l2.state;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.exception.TCServerRestartException;
@@ -25,8 +28,6 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.NodeID;
@@ -48,9 +49,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class StateManagerImpl implements StateManager {
-  private static final TCLogger        logger              = TCLogging.getLogger(StateManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(StateManagerImpl.class);
 
-  private final TCLogger               consoleLogger;
+  private final Logger consoleLogger;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final ElectionManagerImpl        electionMgr;
   private final Sink<StateChangedEvent> stateChangeSink;
@@ -76,7 +77,7 @@ public class StateManagerImpl implements StateManager {
   // Known servers from current election
   Set<NodeID> currKnownServers = new HashSet<>();
 
-  public StateManagerImpl(TCLogger consoleLogger, GroupManager<AbstractGroupMessage> groupManager, 
+  public StateManagerImpl(Logger consoleLogger, GroupManager<AbstractGroupMessage> groupManager,
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
                           int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
                           ClusterStatePersistor clusterStatePersistor) {
@@ -231,7 +232,7 @@ public class StateManagerImpl implements StateManager {
       state = (startState == null) ? PASSIVE_UNINITIALIZED : startState;
       if (!state.equals(PASSIVE_STANDBY) && !state.equals(PASSIVE_UNINITIALIZED)) {
 // TODO:  make sure this is the proper way to handle this.
-        logger.fatal("caught in an unclean state " + state);
+        logger.error("caught in an unclean state " + state);
         clusterStatePersistor.setDBClean(false);
         throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB"); 
       }
@@ -246,7 +247,7 @@ public class StateManagerImpl implements StateManager {
       setActiveNodeID(winningEnrollment.getNodeID());
       if (!syncdTo.equals(winningEnrollment.getNodeID())) {
 // TODO:  make sure this is the proper way to handle this.
-        logger.fatal("Passive only partially synced when active disappeared.  Restarting");
+        logger.error("Passive only partially synced when active disappeared.  Restarting");
         clusterStatePersistor.setDBClean(false);
         throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting");
       }
@@ -512,7 +513,7 @@ public class StateManagerImpl implements StateManager {
       }
       if (state.equals(PASSIVE_SYNCING) && syncdTo.equals(disconnectedNode)) {
         //  need to zap and start over.  The active being synced to is gone.
-        logger.fatal("Passive only partially synced when active disappeared.  Restarting");
+        logger.error("Passive only partially synced when active disappeared.  Restarting");
         clusterStatePersistor.setDBClean(false);
         throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
       } else if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {

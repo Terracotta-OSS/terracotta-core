@@ -18,8 +18,9 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.nio.channels.SocketChannel;
  * @author Ludovic Orban
  */
 class ClearTextBufferManager implements BufferManager {
-  private static final TCLogger logger         = TCLogging.getLogger(ClearTextBufferManager.class);
+  private static final Logger logger         = LoggerFactory.getLogger(ClearTextBufferManager.class);
   private static final String   BUFFER_SIZE    = "clear.text.buffer.size";
   private static final int      BUFFER_SIZE_KB = Integer.getInteger(BUFFER_SIZE, 16) * 1024;
   private final SocketChannel   channel;

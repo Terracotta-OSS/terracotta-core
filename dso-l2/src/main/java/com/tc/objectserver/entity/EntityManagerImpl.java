@@ -19,9 +19,10 @@
 package com.tc.objectserver.entity;
 
 import com.tc.exception.TCShutdownServerException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.EntityDescriptor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.StateDumpCollector;
@@ -57,7 +58,7 @@ import com.tc.objectserver.api.ManagementKeyCallback;
 
 
 public class EntityManagerImpl implements EntityManager {
-  private static final TCLogger LOGGER = TCLogging.getLogger(EntityManagerImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EntityManagerImpl.class);
   private final ConcurrentMap<EntityID, FetchID> entities = new ConcurrentHashMap<>();
   private final ConcurrentMap<FetchID, ManagedEntity> entityIndex = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();

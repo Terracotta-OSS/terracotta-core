@@ -18,10 +18,11 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
-import com.tc.logging.TCLogger;
 import com.tc.stats.Stats;
 
 import java.util.Comparator;
@@ -38,7 +39,7 @@ import java.util.TreeSet;
 public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
   private final Sink<T> sink;
-  private final TCLogger logger;
+  private final Logger logger;
 
   private long           current = 0;
   private final SortedSet<T> pending = new TreeSet<T>(new Comparator<T>() {
@@ -52,7 +53,7 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
       }
   });
 
-  public OrderedSink(TCLogger logger, Sink<T> sink) {
+  public OrderedSink(Logger logger, Sink<T> sink) {
     this.logger = logger;
     this.sink = sink;
   }

@@ -18,8 +18,9 @@
  */
 package com.tc.platform.rejoin;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientChannelEventController {
 
-  private static final TCLogger         LOGGER   = TCLogging.getLogger(ClientChannelEventController.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientChannelEventController.class);
 
   private final ClientHandshakeManager clientHandshakeManager;
   private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
@@ -83,7 +84,7 @@ public class ClientChannelEventController {
     clientHandshakeManager.fireNodeError();
     //Shutdown instead of disconnect as now it should go into disconnected state
     clientHandshakeManager.shutdown(false);
-    LOGGER.fatal("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
+    LOGGER.error("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
   }
 
   private static class ChannelEventListenerImpl implements ChannelEventListener {

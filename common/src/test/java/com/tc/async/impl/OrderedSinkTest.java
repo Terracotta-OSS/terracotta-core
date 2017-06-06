@@ -18,9 +18,10 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 
 import java.security.SecureRandom;
@@ -31,7 +32,7 @@ public class OrderedSinkTest extends TCTestCase {
 
   public void testBasic() throws Exception {
     MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
-    Sink<OrderedEventContext> s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
+    Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
 
     OrderedEventContext oc = new MyOrderedEventContext(1);
     s.addSingleThreaded(oc);
@@ -62,7 +63,7 @@ public class OrderedSinkTest extends TCTestCase {
 
   public void testComplex() throws Exception {
     MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
-    Sink<OrderedEventContext> s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
+    Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
     
     List<MyOrderedEventContext> l = createOrderedEvents(1000);
     SecureRandom r = new SecureRandom();

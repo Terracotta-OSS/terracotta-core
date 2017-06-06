@@ -23,9 +23,9 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import com.tc.entity.ResendVoltronEntityMessage;
-import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -60,13 +60,13 @@ public class ServerClientHandshakeManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    TCLogger logger = mock(TCLogger.class);
+    Logger logger = mock(Logger.class);
     this.channelManager = mock(DSOChannelManager.class);
     this.transactionHandler = mock(ProcessTransactionHandler.class);
     StageManager stageManager = mock(StageManager.class);
     Timer timer = mock(Timer.class);
     long reconnectTimeout = 1000;
-    TCLogger consoleLogger = mock(TCLogger.class);
+    Logger consoleLogger = mock(Logger.class);
     voltronStage = mock(Stage.class);
     voltronSink = mock(Sink.class);
     when(voltronStage.getSink()).thenReturn(voltronSink);

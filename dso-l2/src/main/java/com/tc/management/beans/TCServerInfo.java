@@ -18,13 +18,14 @@
  */
 package com.tc.management.beans;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -53,7 +54,7 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 
 public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInfoMBean, StateChangeListener {
-  private static final TCLogger                logger          = TCLogging.getLogger(TCServerInfo.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCServerInfo.class);
 
   private static final boolean                 DEBUG           = false;
 

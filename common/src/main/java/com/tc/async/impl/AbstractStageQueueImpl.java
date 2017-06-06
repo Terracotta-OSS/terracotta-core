@@ -1,12 +1,13 @@
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageQueueStats;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
 import com.tc.util.UpdatableFixedHeap;
 
 import java.util.concurrent.BlockingQueue;
@@ -44,7 +45,7 @@ public class AbstractStageQueueImpl<EC> {
 
   static abstract class StageQueueStatsCollector implements StageQueueStats {
 
-    public void logDetails(TCLogger statsLogger) {
+    public void logDetails(Logger statsLogger) {
       statsLogger.info(getDetails());
     }
 

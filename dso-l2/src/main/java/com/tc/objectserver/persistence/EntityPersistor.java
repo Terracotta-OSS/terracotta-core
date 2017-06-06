@@ -18,8 +18,6 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
@@ -40,6 +38,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.exception.EntityException;
 import org.terracotta.persistence.IPlatformPersistence;
 
@@ -48,8 +48,8 @@ import org.terracotta.persistence.IPlatformPersistence;
  * Stores the information relating to the entities currently alive on the platform into persistent storage.
  */
 public class EntityPersistor implements PrettyPrintable {
-  private static final TCLogger LOGGER = TCLogging.getLogger(EntityPersistor.class);
-  
+  private static final Logger LOGGER = LoggerFactory.getLogger(EntityPersistor.class);
+
   private static final String ENTITIES_ALIVE_FILE_NAME = "entities_alive.map";
   private static final String JOURNAL_CONTAINER_FILE_NAME = "journal_container.map";
   private static final String COUNTERS_FILE_NAME = "counters.map";

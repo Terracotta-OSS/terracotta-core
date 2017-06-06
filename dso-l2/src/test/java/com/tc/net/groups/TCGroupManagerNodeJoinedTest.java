@@ -18,6 +18,9 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
@@ -27,8 +30,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
@@ -57,7 +58,7 @@ import java.util.concurrent.Callable;
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   private final static String   LOCALHOST = "localhost";
-  private static final TCLogger logger    = TCLogging.getLogger(TCGroupManagerNodeJoinedTest.class);
+  private static final Logger logger    = LoggerFactory.getLogger(TCGroupManagerNodeJoinedTest.class);
   private TCThreadGroup         threadGroup;
   private TCGroupManagerImpl[]  groupManagers;
   private MyListener[]          listeners;

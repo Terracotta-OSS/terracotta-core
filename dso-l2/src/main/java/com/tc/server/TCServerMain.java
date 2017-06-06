@@ -26,7 +26,6 @@ import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.TCLogging;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.MalformedURLException;
@@ -34,6 +33,8 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+
+import org.slf4j.LoggerFactory;
 import org.terracotta.config.service.ServiceConfigParser;
 
 public class TCServerMain {
@@ -42,7 +43,7 @@ public class TCServerMain {
   public static L2ConfigurationSetupManager setup;
 
   public static void main(String[] args) {
-    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(TCServerMain.class));
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(TCServerMain.class));
 
     try {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);

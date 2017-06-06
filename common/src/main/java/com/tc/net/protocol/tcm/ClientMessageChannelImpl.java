@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -45,8 +46,8 @@ import java.util.Collection;
 
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
-  private static final TCLogger           logger           = TCLogging.getLogger(ClientMessageChannel.class);
-  
+  private static final Logger logger = LoggerFactory.getLogger(ClientMessageChannel.class);
+
   private int                             connectAttemptCount;
   private int                             connectCount;
   private volatile ChannelID              channelID = ChannelID.NULL_ID;
@@ -89,9 +90,9 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       // initialize the connection ID, using the local JVM ID
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
                                                 username, pw, getProductId());
-      
+
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
-      
+
       if (id.isValid()) {
  //  why are all these identifiers intermingled?
         long validID = id.toLong();
@@ -127,7 +128,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
    */
   @Override
   public void send(TCNetworkMessage message) throws IOException {
-// used to do session filtering here.  This wreaks havoc on upper layers to silently drop 
+// used to do session filtering here.  This wreaks havoc on upper layers to silently drop
 // messages on the floor.  send everything through
     super.send(message);
   }

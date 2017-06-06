@@ -18,8 +18,9 @@
  */
 package com.tc.objectserver.locks.timer;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ThreadID;
@@ -30,7 +31,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class LockTimer {
-  private static final TCLogger logger    = TCLogging.getLogger(LockTimer.class);
+  private static final Logger logger = LoggerFactory.getLogger(LockTimer.class);
 
   private final Timer           timer     = new Timer("DSO Lock Object.wait() timer", true);
   private boolean               started   = false;

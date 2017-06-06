@@ -18,6 +18,8 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.StageManager;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
@@ -31,7 +33,6 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
@@ -96,7 +97,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groupEventListeners = new TestGroupEventListener[n];
     nodes = new Node[n];
     error = new AtomicReference<>();
-    stages = new MockStageManagerFactory(TCLogging.getLogger(TCGroupManagerImplTest.class), new ThreadGroup("stage-manager"));
+    stages = new MockStageManagerFactory(LoggerFactory.getLogger(TCGroupManagerImplTest.class), new ThreadGroup("stage-manager"));
 
     PortChooser pc = new PortChooser();
     for (int i = 0; i < n; ++i) {

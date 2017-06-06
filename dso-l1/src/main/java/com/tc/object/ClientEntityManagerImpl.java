@@ -26,6 +26,9 @@ import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
@@ -45,8 +48,6 @@ import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.VoltronWrapperException;
 import com.tc.logging.ClientIDLogger;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -79,7 +80,7 @@ import org.terracotta.exception.EntityServerUncaughtException;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
-  private final TCLogger logger;
+  private final Logger logger;
   
   private final ClientMessageChannel channel;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
@@ -99,7 +100,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private boolean wasBusy = false;
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
-    this.logger = new ClientIDLogger(channel, TCLogging.getLogger(ClientEntityManager.class));
+    this.logger = new ClientIDLogger(channel, LoggerFactory.getLogger(ClientEntityManager.class));
     
     this.channel = channel;
 

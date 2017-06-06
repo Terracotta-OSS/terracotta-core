@@ -18,14 +18,15 @@
  */
 package com.tc.text;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 import com.tc.logging.TCLogging;
 
 import java.io.IOException;
 import java.io.StringWriter;
 
 public class DumpLoggerWriter extends StringWriter {
-  private static final TCLogger logger = TCLogging.getDumpLogger();
+  private static final Logger logger = TCLogging.getDumpLogger();
   
   @Override
   public void flush() {

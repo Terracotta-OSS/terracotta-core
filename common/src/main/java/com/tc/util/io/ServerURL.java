@@ -20,9 +20,10 @@ package com.tc.util.io;
 
 import sun.misc.BASE64Encoder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
 import com.tc.security.TCAuthenticationException;
@@ -51,7 +52,7 @@ import javax.net.ssl.X509TrustManager;
 @SuppressWarnings("restriction")
 public class ServerURL {
 
-  private static final TCLogger logger                    = TCLogging.getLogger(ServerURL.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerURL.class);
 
   private static final boolean  DISABLE_HOSTNAME_VERIFIER = Boolean.getBoolean("tc.ssl.disableHostnameVerifier");
   private static final boolean  TRUST_ALL_CERTS           = Boolean.getBoolean("tc.ssl.trustAllCerts");

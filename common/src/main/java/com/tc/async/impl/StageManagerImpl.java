@@ -18,13 +18,14 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.logging.DefaultLoggerProvider;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -70,7 +71,7 @@ public class StageManagerImpl implements StageManager {
   }
 
   private void startMonitor() {
-    final TCLogger logger = loggerProvider.getLogger(getClass());
+    final Logger logger = loggerProvider.getLogger(getClass());
     Thread t = new Thread("SEDA Stage Monitor") {
       @Override
       public void run() {
@@ -89,7 +90,7 @@ public class StageManagerImpl implements StageManager {
             stat.logDetails(logger);
           }
         } catch (Throwable th) {
-          logger.error(th);
+          logger.error("Exception :", th);
         }
       }
     };

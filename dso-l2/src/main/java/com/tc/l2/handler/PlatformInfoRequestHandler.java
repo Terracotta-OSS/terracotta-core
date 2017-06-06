@@ -20,14 +20,14 @@ package com.tc.l2.handler;
 
 import java.io.Serializable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.l2.msg.PlatformInfoRequest;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -40,7 +40,7 @@ import java.util.Set;
 
 
 public class PlatformInfoRequestHandler {
-  private static final TCLogger LOGGER = TCLogging.getLogger(PlatformInfoRequestHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(PlatformInfoRequestHandler.class);
 
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final LocalMonitoringProducer monitoringSupport;

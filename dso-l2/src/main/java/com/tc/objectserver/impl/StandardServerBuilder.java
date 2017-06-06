@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
@@ -31,7 +33,6 @@ import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
@@ -60,9 +61,9 @@ import org.terracotta.persistence.IPlatformPersistence;
 public class StandardServerBuilder implements ServerBuilder {
   private final HaConfig            haConfig;
 
-  protected final TCLogger          logger;
+  protected final Logger logger;
 
-  public StandardServerBuilder(HaConfig haConfig, TCLogger logger) {
+  public StandardServerBuilder(HaConfig haConfig, Logger logger) {
     this.logger = logger;
     this.logger.info("Standard TSA Server created");
     this.haConfig = haConfig;
@@ -104,7 +105,7 @@ public class StandardServerBuilder implements ServerBuilder {
   }
 
   @Override
-  public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
+  public L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
                                              StageManager stageManager, StateManager stateMgr, 
                                              GroupManager<AbstractGroupMessage> groupCommsManager,
                                              Persistor persistor,

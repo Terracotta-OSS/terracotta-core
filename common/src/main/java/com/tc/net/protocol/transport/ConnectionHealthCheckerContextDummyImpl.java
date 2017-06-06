@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * A Dummy HealthChecker Context. Doesn't send any probe signals to peers. This is just a dumb context, keeps mouth shut
@@ -28,7 +29,7 @@ import com.tc.logging.TCLogging;
  * @author Manoj
  */
 public class ConnectionHealthCheckerContextDummyImpl implements ConnectionHealthCheckerContext {
-  private static final TCLogger logger = TCLogging.getLogger(ConnectionHealthCheckerContextDummyImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(ConnectionHealthCheckerContextDummyImpl.class);
 
   @Override
   public boolean receiveProbe(HealthCheckerProbeMessage message) {

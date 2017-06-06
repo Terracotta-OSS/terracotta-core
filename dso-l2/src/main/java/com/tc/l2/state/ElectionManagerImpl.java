@@ -18,13 +18,14 @@
  */
 package com.tc.l2.state;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
@@ -40,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ElectionManagerImpl implements ElectionManager {
 
-  private static final TCLogger logger               = TCLogging.getLogger(ElectionManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(ElectionManagerImpl.class);
 
   private static final State    INIT                 = new State("Initial-State");
   private static final State    ELECTION_COMPLETE    = new State("Election-Complete");

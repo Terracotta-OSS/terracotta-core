@@ -52,6 +52,10 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
     <!-- tests dependencies -->
     <dependency>
       <groupId>junit</groupId>

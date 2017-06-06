@@ -18,9 +18,10 @@
  */
 package com.tc.object;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.io.TCDataInput;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.compression.CompressedData;
 import com.tc.object.compression.StringCompressionUtil;
 import com.tc.object.dna.impl.BaseDNAEncodingImpl;
@@ -31,7 +32,7 @@ import java.io.UnsupportedEncodingException;
 
 public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   
-  private static final TCLogger    logger = TCLogging.getLogger(ApplicatorDNAEncodingImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(ApplicatorDNAEncodingImpl.class);
 
   /**
    * Used in the Applicators. The policy is set to APPLICATOR.
