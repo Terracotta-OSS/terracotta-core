@@ -33,6 +33,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodecException;
+import org.terracotta.entity.StateDumper;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 
@@ -64,6 +65,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 
@@ -581,7 +583,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     message.setContents(clientID, transactionID, entityDescriptor, type, requiresReplication, config, oldestTransactionPending, acks);
     return message;
   }
-  
+
+  @Override
+  public void dumpStateTo(final StateDumper stateDumper) {
+    stateDumper.dumpState("state" , this.stateManager.getCurrentState());
+    stateDumper.dumpState("inFlightMessages size", String.valueOf(this.inFlightMessages.size()));
+    stateDumper.dumpState("outbound size", String.valueOf(outbound.size()));
+    stateDumper.dumpState("objectStoreMap size", String.valueOf(this.objectStoreMap.size()));
+  }
+
   private static class FlushResponse implements VoltronEntityResponse, VoltronEntityMultiResponse {
     private boolean accessed = false;
     
