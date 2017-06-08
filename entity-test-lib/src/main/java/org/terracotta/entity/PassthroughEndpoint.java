@@ -19,18 +19,19 @@
 package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
-
-import java.util.concurrent.Future;
-
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
+
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
  * Used for basic testing (not part of the in-process testing framework) of an entity, to act like the client end-point.
  */
-public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
+public class PassthroughEndpoint<M extends EntityMessage, R extends EntityResponse> implements
+  TxIdAwareClientEndpoint<M, R> {
   private final ClientDescriptor clientDescriptor = new FakeClientDescriptor();
   private ActiveServerEntity<M, R> entity;
   private MessageCodec<M, R> codec;
@@ -38,6 +39,8 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   private EndpointDelegate delegate;
   private final ClientCommunicator clientCommunicator = new TestClientCommunicator();
   private boolean isOpen;
+  private AtomicLong idGenerator = new AtomicLong(0);
+  private volatile long eldest = -1L;
 
   public PassthroughEndpoint() {
     // We start in the open state.
@@ -144,7 +147,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       byte[] result = null;
       try {
         M message = codec.decodeMessage(payload);
-        R response = entity.invoke(clientDescriptor, message);
+        R response = entity.invokeActive(clientDescriptor, idGenerator.incrementAndGet(), eldest, message);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityServerException(null, null, null, e);
@@ -212,5 +215,14 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     if (!this.isOpen) {
       throw new IllegalStateException("Endpoint closed");
     }
+  }
+
+  public long getCurrentId() {
+    return idGenerator.get();
+  }
+
+  public long resetEldestId() {
+    eldest = idGenerator.get();
+    return eldest;
   }
 }

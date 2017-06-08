@@ -18,15 +18,14 @@
  */
 package org.terracotta.passthrough;
 
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityServerException;
+import org.terracotta.passthrough.PassthroughMessage.Type;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-import org.terracotta.entity.EntityUserException;
-
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityServerException;
-import org.terracotta.passthrough.PassthroughMessage.Type;
 
 
 /**
@@ -294,7 +293,13 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         EntityException error = null;
         try {
           // We respond with the config, if found.
-          response = this.messageHandler.invoke(sender, clientInstanceID, entityClassName, entityName, payload);
+          response = this.messageHandler.invoke(sender,
+                                                clientInstanceID,
+                                                transactionID,
+                                                oldestTransactionID,
+                                                entityClassName,
+                                                entityName,
+                                                payload);
         } catch (EntityException e) {
           error = e;
         } catch (RuntimeException e) {
@@ -488,7 +493,13 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     boolean destroy(String entityClassName, String entityName) throws EntityException;
     void fetch(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, long version, IFetchResult onFetch);
     void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws EntityException;
-    byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws EntityException;
+    byte[] invoke(IMessageSenderWrapper sender,
+                  long clientInstanceID,
+                  long transactionId,
+                  long eldestTransactionId,
+                  String entityClassName,
+                  String entityName,
+                  byte[] payload) throws EntityException;
     void reconnect(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] extendedData);
     void syncEntityStart(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException;
     void syncEntityEnd(IMessageSenderWrapper sender, String entityClassName, String entityName) throws EntityException;

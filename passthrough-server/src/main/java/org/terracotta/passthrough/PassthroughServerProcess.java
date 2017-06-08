@@ -18,22 +18,6 @@
  */
 package org.terracotta.passthrough;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.Serializable;
-import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.Vector;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientDescriptor;
@@ -42,13 +26,13 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.EntityServerService;
+import org.terracotta.entity.EntityUserException;
+import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -71,6 +55,22 @@ import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvid
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.LifeCycleMessageHandler;
 import org.terracotta.passthrough.PassthroughServerMessageDecoder.MessageHandler;
 import org.terracotta.persistence.IPlatformPersistence;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -534,7 +534,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   @Override
-  public byte[] invoke(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName, byte[] payload) throws EntityException {
+  public byte[] invoke(IMessageSenderWrapper sender,
+                       long clientInstanceID,
+                       long transactionId,
+                       long eldestTransactionId,
+                       String entityClassName,
+                       String entityName,
+                       byte[] payload) throws EntityException {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     byte[] response = null;
     if (null != this.activeEntities) {
@@ -542,7 +548,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       CreationData<?, ?> data = this.activeEntities.get(entityTuple);
       if (null != data) {
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-        response = sendActiveInvocation(entityClassName, entityName, clientDescriptor, data, payload);
+        response = sendActiveInvocation(entityClassName,
+                                        entityName,
+                                        clientDescriptor,
+                                        transactionId,
+                                        eldestTransactionId,
+                                        data,
+                                        payload);
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
@@ -550,8 +562,16 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // Invoke on passive.
       CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
       if (null != data) {
+        PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(this, null, clientInstanceID);
+
         // There is no return type in the passive case.
-        sendPassiveInvocation(entityClassName, entityName, data, payload);
+        sendPassiveInvocation(entityClassName,
+                              entityName,
+                              clientDescriptor,
+                              transactionId,
+                              eldestTransactionId,
+                              data,
+                              payload);
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
@@ -559,13 +579,19 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return response;
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(String className, String entityName, ClientDescriptor clientDescriptor, CreationData<M, R> data, byte[] payload) throws EntityException {
+  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(String className,
+                                                                                          String entityName,
+                                                                                          ClientDescriptor clientDescriptor,
+                                                                                          long transactionId,
+                                                                                          long eldestTransactionId,
+                                                                                          CreationData<M, R> data,
+                                                                                          byte[] payload) throws EntityException {
     ActiveServerEntity<M, R> entity = data.getActive();
     MessageCodec<M, R> codec = data.messageCodec;
     M msg = deserialize(className, entityName, codec, payload);
     if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
       try {
-        R response = entity.invoke(clientDescriptor, msg);
+        R response = entity.invokeActive(clientDescriptor, transactionId, eldestTransactionId, msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {
         throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
@@ -575,29 +601,40 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(String className, String entityName, CreationData<M, R> data, byte[] payload) throws EntityException {
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveInvocation(String className,
+                                                                                         String entityName,
+                                                                                         ClientDescriptor clientDescriptor,
+                                                                                         long transactionId,
+                                                                                         long eldestTransactionId,
+                                                                                         CreationData<M, R> data,
+                                                                                         byte[] payload) throws EntityException {
     PassiveServerEntity<M, R> entity = data.getPassive();
     MessageCodec<M, R> codec = data.messageCodec;
     M msg = deserialize(className, entityName, codec, payload);
     if (data.executionStrategy.getExecutionLocation(msg).runOnPassive()) {
       try {
-        entity.invoke(msg);
+        entity.invokePassive(clientDescriptor, transactionId, eldestTransactionId, msg);
       } catch (EntityUserException eu) {
         throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
       }
     }
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String entityName, CreationData<M, R> data, int concurrencyKey, byte[] payload) throws EntityException {
+  private <M extends EntityMessage, R extends EntityResponse> void sendPassiveSyncPayload(String className, String
+    entityName, ClientDescriptor clientDescriptor, CreationData<M, R> data, int concurrencyKey, byte[] payload) throws
+    EntityException {
     PassiveServerEntity<M, R> entity = data.getPassive();
     SyncMessageCodec<M> codec = data.syncMessageCodec;
     try {
-      entity.invoke(deserializeForSync(className, entityName, codec, concurrencyKey, payload));
+      entity.invokePassive(clientDescriptor,
+                    -1l,
+                    -1l,
+                    deserializeForSync(className, entityName, codec, concurrencyKey, payload));
     } catch (EntityUserException eu) {
       throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
     }
   }
-  
+
   private <M extends EntityMessage, R extends EntityResponse> M deserialize(String className, String entityName, final MessageCodec<M, R> codec, final byte[] payload) throws EntityException {
     return runWithHelper(className, entityName, new CodecHelper<M>() {
       @Override
@@ -934,7 +971,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
     CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
     if (null != data) {
-      sendPassiveSyncPayload(entityClassName, entityName, data, concurrencyKey, payload);
+      PassthroughClientDescriptor cdescr = sender.clientDescriptorForID(sender.getClientOriginID());
+      sendPassiveSyncPayload(entityClassName, entityName, cdescr, data, concurrencyKey, payload);
     } else {
       throw new EntityNotFoundException(entityClassName, entityName);
     }

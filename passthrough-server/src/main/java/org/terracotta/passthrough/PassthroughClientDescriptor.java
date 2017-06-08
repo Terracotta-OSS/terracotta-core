@@ -39,7 +39,9 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
 
   @Override
   public int hashCode() {
-    return this.sender.hashCode() ^ (int)this.clientInstanceID;
+    int result = sender != null ? sender.hashCode() : 0;
+    result = 31 * result + (int) (clientInstanceID ^ (clientInstanceID >>> 32));
+    return result;
   }
 
   @Override
@@ -56,6 +58,10 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
 
   @Override
   public String toString() {
-    return "PassthroughClientDescriptor{" + "server=" + server + ", sender=" + sender + ", clientInstanceID=" + clientInstanceID + '}';
+    String ret = "PassthroughClientDescriptor{server=";
+    ret = ret + (server != null ? server.toString() : "<no server>");
+    ret = ret + "," + (sender != null ? sender.toString() : "<no sender>");
+    ret = ret + ",clientInstanceID=" + clientInstanceID + '}';
+    return ret;
   }
 }

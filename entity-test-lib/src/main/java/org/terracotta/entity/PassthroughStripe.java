@@ -18,21 +18,22 @@
  */
 package org.terracotta.entity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Future;
-
 import com.google.common.util.concurrent.Futures;
 import com.tc.classloader.BuiltinService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ServiceLoader;
-import java.util.Set;
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -52,6 +53,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   
   private int nextClientID = 1;
   private int consumerID = 1;
+  private AtomicLong txIdGenerator=new AtomicLong(0);
+  private long eldestTxid=-1;
 
   public PassthroughStripe(EntityServerService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
@@ -145,6 +148,11 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 //  add the ClientCommunicator builtin
       builtins.add(new ServiceProvider() {
         @Override
+        public void dumpStateTo(StateDumper stateDumper) {
+
+        }
+
+        @Override
         public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
           return true;
         }
@@ -206,12 +214,14 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
   }
   
-  private class FakeEndpoint implements EntityClientEndpoint<M, R> {
+  private class FakeEndpoint implements TxIdAwareClientEndpoint<M, R> {
     private EndpointDelegate delegate;
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
     private final MessageCodec<M, R> codec;
-    
+    private AtomicLong currentId = new AtomicLong(0);
+    private volatile long eldestid = -1;
+
     public FakeEndpoint(String name, ClientDescriptor clientDescriptor, MessageCodec<M, R> codec) {
       this.entityName = name;
       this.clientDescriptor = clientDescriptor;
@@ -253,6 +263,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     public InvocationBuilder<M, R> beginInvoke() {
       return new StripeInvocationBuilder(
           this.clientDescriptor,
+          currentId.incrementAndGet(),
+          eldestid,
           PassthroughStripe.this.activeMap.get(this.entityName),
           PassthroughStripe.this.passiveMap.get(this.entityName),
           PassthroughStripe.this.codecs.get(this.entityName)
@@ -272,6 +284,16 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     @Override
     public void didCloseUnexpectedly() {
       Assert.fail("Not expecting this close");
+    }
+
+    @Override
+    public long getCurrentId() {
+      return currentId.get();
+    }
+
+    @Override
+    public long resetEldestId() {
+      return eldestid;
     }
   }
   
@@ -301,14 +323,19 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     // Note that the passiveServerEntity is not yet used in tests related to this class.
     @SuppressWarnings("unused")
     private final PassiveServerEntity<M, R> passiveServerEntity;
+    private final long eldestid;
+    private final long currentId;
     private M request = null;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
-        ActiveServerEntity<M, R> activeServerEntity,
-        PassiveServerEntity<M, R> passiveServerEntity,
-        MessageCodec<M, R> codec
-        ) {
+                                   long currentId,
+                                   long eldestid,
+                                   ActiveServerEntity<M, R> activeServerEntity,
+                                   PassiveServerEntity<M, R> passiveServerEntity,
+                                   MessageCodec<M, R> codec) {
       this.clientDescriptor = clientDescriptor;
+      this.currentId=currentId;
+      this.eldestid=eldestid;
       this.activeServerEntity = activeServerEntity;
       this.passiveServerEntity = passiveServerEntity;
       this.codec = codec;
@@ -361,17 +388,18 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       byte[] result = null;
       EntityException error = null;
       try {
-        result = sendInvocation(activeServerEntity, codec);
+        result = sendInvocation(currentId, eldestid, activeServerEntity, codec);
       } catch (EntityException e) {
         error = e;
       }
       return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
     }
     
-    private byte[] sendInvocation(ActiveServerEntity<M, R> entity, MessageCodec<M, R> codec) throws EntityException {
+    private byte[] sendInvocation(long currentId, long eldestId, ActiveServerEntity<M, R> entity, MessageCodec<M, R>
+      codec) throws EntityException {
       byte[] result = null;
       try {
-        R response = entity.invoke(clientDescriptor, request);
+        R response = entity.invokeActive(clientDescriptor, currentId, eldestId, request);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityServerException(null, null, null, e);
