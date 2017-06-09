@@ -19,10 +19,9 @@
 package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
-import org.terracotta.entity.ClientDescriptor;
-
 import com.tc.object.ClientInstanceID;
 import com.tc.util.Assert;
+import org.terracotta.entity.ClientDescriptor;
 
 /**
  * An opaque token representing a specific entity instance on a specific client node.
@@ -33,6 +32,7 @@ import com.tc.util.Assert;
  * client-side entity lives.
  */
 public class ClientDescriptorImpl implements ClientDescriptor {
+  public static ClientDescriptorImpl NULL_ID = new ClientDescriptorImpl(ClientID.NULL_ID, ClientInstanceID.NULL_ID);
   // The specific node where the referenced instance lives.
   private final ClientID nodeID;
   private final ClientInstanceID clientInstance;

@@ -59,6 +59,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -485,7 +486,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             receiveSyncEntityKeyEnd(response, concurrencyKey);
             break;
           case RECEIVE_SYNC_PAYLOAD:
-            receiveSyncEntityPayload(request, response, message);
+            receiveSyncEntityPayload(response, message);
             break;
           case LOCAL_FLUSH:
           case LOCAL_FLUSH_AND_SYNC:
@@ -549,20 +550,16 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertFalse(this.isInActiveState);
   }
 
-  private void receiveSyncEntityPayload(ServerEntityRequest request, ResultCapture response, MessagePayload message) {
+  private void receiveSyncEntityPayload(ResultCapture response, MessagePayload message) {
     // This only makes sense if we have a passive instance.
     Assert.assertNotNull(this.passiveServerEntity);
     try {
-      ClientDescriptorImpl cdescr = new ClientDescriptorImpl(request.getNodeID(),
-                                                             request.getClientInstance());
-      long eldestId = request.getOldestTransactionOnClient().toLong();
-      long currentId = request.getTransaction().toLong();
 
-      this.passiveServerEntity.invokePassive(cdescr,
-                                             currentId,
-                                             eldestId,
+      this.passiveServerEntity.invokePassive(ClientDescriptorImpl.NULL_ID,
+                                             TransactionID.NULL_ID.toLong(),
+                                             TransactionID.NULL_ID.toLong(),
                                              message.decodeRawMessage(raw -> syncCodec.decode(message.getConcurrency(),
-                                                                                        raw)));
+                                                                                              raw)));
     } catch (EntityUserException e) {
       logger.error("Caught EntityUserException during sync invoke", e);
       throw new RuntimeException("Caught EntityUserException during sync invoke", e);
@@ -812,8 +809,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         // finally notify the entity that it was fetched
         this.activeServerEntity.connected(descriptor);
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
-//   this is a reconnection, handle the extended reconnect data
-          this.activeServerEntity.handleReconnect(descriptor, extendedData);
+          //   this is a reconnection, handle the extended reconnect data
+          try {
+            this.activeServerEntity.handleReconnect(descriptor, extendedData);
+          } catch (ReconnectRejectedException e) {
+            throw new RuntimeException(e);
+          }
         }
       }
       ByteBuffer buffer = ByteBuffer.allocate(this.constructorInfo.length + Long.BYTES);
