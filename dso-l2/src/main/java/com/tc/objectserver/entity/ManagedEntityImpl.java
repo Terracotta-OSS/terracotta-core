@@ -369,12 +369,16 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
-    if(activeServerEntity != null) {
-      activeServerEntity.dumpStateTo(stateDumper);
-    }
+    try {
+      if(activeServerEntity != null) {
+        activeServerEntity.dumpStateTo(stateDumper);
+      }
 
-    if(passiveServerEntity != null) {
-      passiveServerEntity.dumpStateTo(stateDumper);
+      if(passiveServerEntity != null) {
+        passiveServerEntity.dumpStateTo(stateDumper);
+      }
+    } catch (Throwable t) {
+      logger.warn("unable to collect state for " + getID(), t);
     }
   }
 
