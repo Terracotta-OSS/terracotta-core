@@ -851,8 +851,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     });
 
     // XXX: yucky casts
-    this.managementContext = new ServerManagementContext(
-        this.lockManager, (DSOChannelManagerMBean) channelManager,
+    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats, instanceMonitor,
                                                          connectionPolicy,
                                                          remoteManagement);
