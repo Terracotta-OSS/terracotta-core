@@ -67,6 +67,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.doAnswer;
@@ -290,7 +291,7 @@ public class ManagedEntityImplTest {
     TestingResponse piResp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, null, piResp::complete, piResp::failure));
     piResp.waitFor();
-    verify(passiveServerEntity).invoke(any(EntityMessage.class));
+    verify(passiveServerEntity).invokePassive(eq(clientDescriptor), eq(1l), eq(1l), any(EntityMessage.class));
     
     promote();
 
@@ -300,14 +301,15 @@ public class ManagedEntityImplTest {
     TestingResponse anoResp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(activeNoop, anoLoc, null, anoResp::complete, anoResp::failure));
     anoResp.waitFor();
-    verify(activeServerEntity, Mockito.never()).invoke(eq(clientDescriptor), any(EntityMessage.class));
+    verify(activeServerEntity, Mockito.never()).invokeActive(eq(clientDescriptor), eq(1l), eq(1l), any(EntityMessage
+                                                                                                     .class));
     
     ServerEntityRequest active = mockExecutionInvokeRequest(ExecutionStrategy.Location.ACTIVE);
     MessagePayload activeLoc = mockLocationPayload(ExecutionStrategy.Location.ACTIVE);
     TestingResponse aResp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(active, activeLoc, null, aResp::complete, aResp::failure));
     aResp.waitFor();
-    verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
+    verify(activeServerEntity).invokeActive(eq(clientDescriptor), eq(1l), eq(1l), any(EntityMessage.class));
   }  
 
   @Test
@@ -474,11 +476,13 @@ public class ManagedEntityImplTest {
     promote();
 
 
-    when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).thenReturn(new EntityResponse() {});
+    when(activeServerEntity.invokeActive(eq(clientDescriptor), eq(1L), eq(1L), any(EntityMessage.class))).thenReturn
+      (new
+                                                                                                      EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(invokeRequest, mockInvokePayload(), null, response::complete, response::failure));
     response.waitFor();
-    verify(activeServerEntity).invoke(eq(clientDescriptor), any(EntityMessage.class));
+    verify(activeServerEntity).invokeActive(eq(clientDescriptor), eq(1L), eq(1L), any(EntityMessage.class));
     verify(response).complete(returnValue);
   }
   
@@ -540,7 +544,9 @@ public class ManagedEntityImplTest {
         
     CyclicBarrier barrier = new CyclicBarrier(2);
 
-    when(activeServerEntity.invoke(eq(clientDescriptor), any(EntityMessage.class))).then((InvocationOnMock invocation) -> {
+    when(activeServerEntity.invokeActive(eq(clientDescriptor), eq(1L), eq(1L), any(EntityMessage.class))).then(
+      (InvocationOnMock
+                                                                                             invocation) -> {
       barrier.await();
       return new EntityResponse() {};
     });
@@ -554,7 +560,7 @@ public class ManagedEntityImplTest {
     fin.waitFor();
     
     verify(loopback, times(1)).completed(Matchers.any(), Matchers.any(FetchID.class), Matchers.any());
-    verify(activeServerEntity, times(2)).invoke(eq(clientDescriptor), any(EntityMessage.class));
+    verify(activeServerEntity, times(2)).invokeActive(eq(clientDescriptor), eq(1L), eq(1L), any(EntityMessage.class));
     verify(response, times(1)).complete(any());
     verify(fin, times(1)).complete(any());
   }
@@ -821,24 +827,32 @@ public class ManagedEntityImplTest {
   private ServerEntityRequest mockCreateEntityRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.CREATE_ENTITY);
     when(request.getNodeID()).thenReturn(nodeID);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
 
   private ServerEntityRequest mockDestroyEntityRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.DESTROY_ENTITY);
     when(request.getNodeID()).thenReturn(nodeID);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
   
   private ServerEntityRequest mockReconfigureEntityRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RECONFIGURE_ENTITY);
     when(request.getNodeID()).thenReturn(nodeID);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
   
   private ServerEntityRequest mockInvokeRequest() {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.INVOKE_ACTION);
     when(request.getNodeID()).thenReturn(nodeID);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
 
@@ -847,6 +861,8 @@ public class ManagedEntityImplTest {
     when(request.getClientInstance()).thenReturn(clientInstanceID);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     when(request.getNodeID()).thenReturn(nodeID);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
   
@@ -854,6 +870,7 @@ public class ManagedEntityImplTest {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.FETCH_ENTITY);
     when(request.getNodeID()).thenReturn(requester.getNodeID());
     when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
 
@@ -861,6 +878,7 @@ public class ManagedEntityImplTest {
     ServerEntityRequest request = mockRequestForAction(ServerEntityAction.RELEASE_ENTITY);
     when(request.getNodeID()).thenReturn(requester.getNodeID());
     when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
     
@@ -868,6 +886,8 @@ public class ManagedEntityImplTest {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getClientInstance()).thenReturn(ClientInstanceID.NULL_ID);
     when(request.getAction()).thenReturn(ServerEntityAction.LOCAL_FLUSH);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
 
@@ -876,6 +896,8 @@ public class ManagedEntityImplTest {
     when(request.getClientInstance()).thenReturn(clientInstanceID);
     when(request.getAction()).thenReturn(action);
     when(request.getNodeID()).thenReturn(nodeID);
+    when(request.getTransaction()).thenReturn(new TransactionID(1));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;
   }
 

@@ -22,6 +22,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.StateDumper;
 
@@ -40,9 +41,12 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {
   }
-  
+
   @Override
-  public EntityResponse invoke(ClientDescriptor clientDescriptor, EntityMessage message) {
+  public EntityResponse invokeActive(ClientDescriptor clientDescriptor,
+                               long currentOrderedId,
+                               long eldestOrderedId,
+                               EntityMessage message) throws EntityUserException {
     return null;
   }
 
