@@ -31,7 +31,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
-import com.tc.util.UpdatableFixedHeap;
 import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.BlockingQueue;
@@ -398,12 +397,11 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
     this.sourceQueues[0].getStatsCollector().reset();
   }
 
-  private final class MultiSourceQueueImpl<W> implements UpdatableFixedHeap.Ordered, SourceQueue<W> {
+  private final class MultiSourceQueueImpl<W> implements SourceQueue<W> {
 
     private final BlockingQueue<W> queue;
     private final int                      sourceIndex;
     private volatile StageQueueStatsCollector statsCollector;
-    private UpdatableFixedHeap.UpdatableWrapper<MultiSourceQueueImpl<ContextWrapper<EC>>> heapWrapper;
 
     public MultiSourceQueueImpl(BlockingQueue<W> queue, int sourceIndex, StageQueueStatsCollector statsCollector) {
       this.queue = queue;
@@ -476,14 +474,6 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
       return Integer.toString(this.sourceIndex);
     }
 
-    public void setHeapWrapper(UpdatableFixedHeap.UpdatableWrapper<MultiSourceQueueImpl<ContextWrapper<EC>>> heapWrapper) {
-      this.heapWrapper = heapWrapper;
-    }
-
-    @Override
-    public int getHeapOrderingAmount() {
-      return size();
-    }
   }
 
   private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
