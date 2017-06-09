@@ -49,6 +49,7 @@ import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.stats.Stats;
+import com.tc.util.ProductID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
@@ -85,6 +86,7 @@ public class ClientEntityManagerTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
+    when(this.channel.getProductId()).thenReturn(ProductID.STRIPE);
     this.stageMgr = mock(StageManager.class);
     when(this.stageMgr.createStage(any(String.class), any(Class.class), any(EventHandler.class), anyInt(), anyInt())).then(new Answer() {
       @Override

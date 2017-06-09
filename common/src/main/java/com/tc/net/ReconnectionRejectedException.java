@@ -23,4 +23,8 @@ public class ReconnectionRejectedException extends Exception {
   public ReconnectionRejectedException(String msg) {
     super(msg);
   }
+
+  public ReconnectionRejectedException(Throwable cause) {
+    super(cause);
+  }
 }

@@ -26,7 +26,9 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
+import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
+import java.util.EnumSet;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
@@ -46,7 +48,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void setUp() throws Exception {
     sequence = createSequence();
     persistor = createPersistor(sequence);
-    connectionIDFactory = new ConnectionIDFactoryImpl(persistor);
+    connectionIDFactory = new ConnectionIDFactoryImpl(persistor, EnumSet.allOf(ProductID.class));
     listener = mock(ConnectionIDFactoryListener.class);
     connectionIDFactory.activate(new StripeID("abc123"), 0);
     connectionIDFactory.registerForConnectionIDEvents(listener);

@@ -148,7 +148,6 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     // Get the clientID for our channel.
     // Get the next transaction ID.
     TransactionID transactionID = new TransactionID(tid.incrementAndGet());
-    // Figure out the "trailing edge" of the current progress through the transaction stream.
 
     // Create the message and populate it.
     DiagnosticMessage message = (DiagnosticMessage) channel.createMessage(TCMessageType.DIAGNOSTIC_REQUEST);

@@ -46,6 +46,7 @@ import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
@@ -130,7 +131,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     listener.start(Collections.<ClientID>emptySet());
     
     clientComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    channel = clientComms.createClientChannel(new NullSessionManager(), -1, 30000, true);
+    channel = clientComms.createClientChannel(ProductID.STRIPE, new NullSessionManager(),30000);
     try {
       channel.open(new ConnectionInfo(host, proxyPort));
     } catch (Throwable t) {

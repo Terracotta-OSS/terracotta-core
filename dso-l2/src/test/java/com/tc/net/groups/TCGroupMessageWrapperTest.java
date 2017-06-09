@@ -48,6 +48,7 @@ import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.object.session.NullSessionManager;
+import com.tc.util.ProductID;
 import com.tc.util.State;
 import com.tc.util.UUID;
 
@@ -144,8 +145,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ClientMessageChannel channel;
     clientComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel = clientComms
-        .createClientChannel(sessionManager,
-                             0, 3000, true);
+        .createClientChannel(ProductID.SERVER, sessionManager,
+                             3000);
     channel.open(Collections.singleton(new ConnectionInfo(LOCALHOST, lsnr.getBindPort())));
 
     assertTrue(channel.isConnected());

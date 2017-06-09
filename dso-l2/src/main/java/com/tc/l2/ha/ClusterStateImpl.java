@@ -129,7 +129,9 @@ public class ClusterStateImpl implements ClusterState {
       clientStatePersistor.getConnectionIDSequence().setNext(nextAvailChannelID);
     }
     connections.add(connID);
-    clientStatePersistor.saveClientState(connID.getClientID());
+    if (connID.getProductId().isReconnectEnabled()) {
+      clientStatePersistor.saveClientState(connID.getClientID());
+    }
   }
 
   @Override
@@ -139,7 +141,9 @@ public class ClusterStateImpl implements ClusterState {
       logger.warn("Connection ID not found, must be a failed reconnect : " + connectionID + " Current Connections count : " + connections.size());
     }
     try {
-      clientStatePersistor.deleteClientState(connectionID.getClientID());
+      if (connectionID.getProductId().isReconnectEnabled()) {
+        clientStatePersistor.deleteClientState(connectionID.getClientID());
+      }
     } catch (ClientNotFoundException notfound) {
       logger.warn("not found", notfound);
     }

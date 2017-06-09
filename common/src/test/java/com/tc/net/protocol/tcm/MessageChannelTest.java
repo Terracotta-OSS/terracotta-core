@@ -36,6 +36,7 @@ import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
@@ -90,20 +91,20 @@ public class MessageChannelTest extends TCTestCase {
     }
   }
 
-  protected void setUp(int maxReconnectTries) throws Exception {
-    setUp(maxReconnectTries, false);
+  protected void setUp(ProductID product) throws Exception {
+    setUp(product, false);
   }
 
-  protected void setUp(int maxReconnectTries, boolean allowConnectionReplace) throws Exception {
-    setUp(maxReconnectTries, allowConnectionReplace, false);
+  protected void setUp(ProductID product, boolean allowConnectionReplace) throws Exception {
+    setUp(product, allowConnectionReplace, false);
   }
 
-  protected void setUp(int maxReconnectTries, boolean allowConnectionReplace, boolean dumbSink) throws Exception {
-    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(allowConnectionReplace),
+  protected void setUp(ProductID product, boolean allowConnectionReplace, boolean dumbSink) throws Exception {
+    setUp(product, new PlainNetworkStackHarnessFactory(allowConnectionReplace),
           new PlainNetworkStackHarnessFactory(allowConnectionReplace), dumbSink);
   }
 
-  protected void setUp(int maxReconnectTries, NetworkStackHarnessFactory clientStackHarnessFactory,
+  protected void setUp(ProductID product, NetworkStackHarnessFactory clientStackHarnessFactory,
                        NetworkStackHarnessFactory serverStackHarnessFactory, boolean dumbServerSink) throws Exception {
     super.setUp();
 try {
@@ -124,7 +125,7 @@ try {
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
-    this.clientChannel = createClientMessageChannel(maxReconnectTries);
+    this.clientChannel = createClientMessageChannel(product);
     this.setUpClientReceiveSink();
 } catch (Exception ex) {
   ex.printStackTrace();
@@ -200,14 +201,14 @@ try {
   }
 
   public void testAttachments() throws Exception {
-    setUp(10);
+    setUp(ProductID.STRIPE);
     try {
       clientChannel.open(connectTo);
     } catch (Exception e) {
       e.printStackTrace();
     }
     String key = "key";
-    MessageChannel channel = createClientMessageChannel(10);
+    MessageChannel channel = createClientMessageChannel(ProductID.STRIPE);
     assertNull(channel.getAttachment(key));
     assertNull(channel.removeAttachment(key));
 
@@ -230,7 +231,7 @@ try {
   }
 
   public void testOpenRaceWithAutoReconnect() throws Exception {
-    setUp(-1, false, true);
+    setUp(ProductID.STRIPE, false, true);
 
     Thread t = new Thread() {
       @Override
@@ -287,7 +288,7 @@ try {
                                                                   new NullConnectionPolicy(), 0);
 
     this.setUpClientReceiveSink();
-    this.clientChannel = createClientMessageChannel(clComms, -1);
+    this.clientChannel = createClientMessageChannel(ProductID.STRIPE, clComms);
 
     try {
       clientChannel.open(Arrays.asList(new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort())));
@@ -352,7 +353,7 @@ try {
   }
 
   public void testAutomaticReconnect() throws Exception {
-    setUp(10, true);
+    setUp(ProductID.STRIPE, true);
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
     clientChannel.open(connectTo);
@@ -393,7 +394,7 @@ try {
   }
 
   public void testManualReconnectAfterFailure() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
 
     int port = lsnr.getBindPort();
 
@@ -422,7 +423,7 @@ try {
   }
 
   public void testSendAfterDisconnect() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
     clientChannel.open(connectTo);
 
     createAndSendMessage();
@@ -436,7 +437,7 @@ try {
   }
 
   public void testZeroMaxRetriesDoesntAutoreconnect() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
     assertEquals(0, clientChannel.getConnectAttemptCount());
     assertEquals(0, clientChannel.getConnectCount());
 
@@ -450,7 +451,7 @@ try {
   }
 
   public void testNegativeMaxRetriesAlwaysReconnects() throws Exception {
-    setUp(-1);
+    setUp(ProductID.STRIPE);
 
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
@@ -501,7 +502,7 @@ try {
   // }
 
   public void testGetStatus() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
     clientChannel.open(connectTo);
     assertTrue(clientChannel.isOpen());
     clientChannel.close();
@@ -509,7 +510,7 @@ try {
   }
 
   public void testSend() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
     clientChannel.open(connectTo);
     int count = 100;
     List<PingMessage> messages = new LinkedList<PingMessage>();
@@ -521,7 +522,7 @@ try {
   }
 
   public void testSocketInfo() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
 
     assertNull(clientChannel.getRemoteAddress());
     assertNull(clientChannel.getLocalAddress());
@@ -564,13 +565,13 @@ try {
     }
   }
   
-  private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
-    return createClientMessageChannel(clientComms, maxReconnectTries);
+  private ClientMessageChannel createClientMessageChannel(ProductID product) {
+    return createClientMessageChannel(product, clientComms);
   }
 
-  private ClientMessageChannel createClientMessageChannel(CommunicationsManager clComms, int maxReconnectTries) {
+  private ClientMessageChannel createClientMessageChannel(ProductID product, CommunicationsManager clComms) {
     clComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    ClientMessageChannel ch = clientComms.createClientChannel(new NullSessionManager(), maxReconnectTries, WAIT, true);
+    ClientMessageChannel ch = clientComms.createClientChannel(product, new NullSessionManager(), WAIT);
     return ch;
   }
 

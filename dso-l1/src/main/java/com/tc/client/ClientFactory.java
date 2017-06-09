@@ -35,9 +35,9 @@ public class ClientFactory {
                                                      PreparedComponentsFromL2Connection connectionComponents,
                                                      ClusterInternal cluster,
                                                      TCSecurityManager securityManager,
-                                                     String uuid, String name, ProductID productId, boolean diagnostic) {
+                                                     String uuid, String name) {
     return new DistributedObjectClient(config, builder, threadGroup, connectionComponents,
         cluster, null,
-        uuid, name, productId, diagnostic);
+        uuid, name);
   }
 }

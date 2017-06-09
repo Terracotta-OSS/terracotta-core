@@ -36,6 +36,7 @@ import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import java.io.IOException;
 
 import java.security.Principal;
@@ -114,7 +115,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
   @Override
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection)
-      throws RejectReconnectionException {
+      throws RejectReconnectionException, ProductNotSupportedException {
     Assert.assertNotNull(connection);
 
     final NetworkStackHarness harness;
@@ -122,6 +123,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     ConnectionID ourConnectionId;
     if (this.activeProvider != null || connectionId.isNewConnection()) {
       ourConnectionId = connectionIdFactory.populateConnectionID(connectionId);
+      
+      if (ourConnectionId == ConnectionID.NULL_ID) {
+        throw new ProductNotSupportedException(connectionId.getProductId() + " not supported");
+      }
 
       rv = messageTransportFactory.createNewTransport(ourConnectionId, connection, createHandshakeErrorHandler(),
           handshakeMessageFactory, transportListeners);

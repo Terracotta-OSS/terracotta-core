@@ -21,6 +21,7 @@ package com.tc.net.protocol.transport;
 import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.util.ProductID;
 import com.tc.util.UUID;
 
 
@@ -33,18 +34,18 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
     if (new ChannelID(connectionID.getChannelID()).isNull()) {
-      return nextConnectionId(connectionID.getJvmID());
+      return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
     } else {
-      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID());
+      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
     }
   }
 
-  private synchronized ConnectionID nextConnectionId(String clientJvmID) {
-    return new ConnectionID(clientJvmID, sequence++, serverID);
+  private synchronized ConnectionID nextConnectionId(String clientJvmID, ProductID product) {
+    return new ConnectionID(clientJvmID, sequence++, serverID, null, null, product);
   }
 
-  private ConnectionID makeConnectionId(String clientJvmID, long channelID) {
-    return new ConnectionID(clientJvmID, channelID, serverID);
+  private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID product) {
+    return new ConnectionID(clientJvmID, channelID, serverID, null, null, product);
   }
 
   @Override

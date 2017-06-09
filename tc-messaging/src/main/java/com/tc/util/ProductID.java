@@ -23,16 +23,28 @@ package com.tc.util;
  * @author tim
  */
 public enum ProductID {
-  DIAGNOSTIC(true), TMS(true), WAN(true), USER(false);
+  DIAGNOSTIC(true, false, false), STRIPE(false, true, true), SERVER(true, false, true);
 
   private final boolean internal;
+  private final boolean reconnect;
+  private final boolean redirect;
 
-  ProductID(boolean internal) {
+  ProductID(boolean internal, boolean reconnect, boolean redirect) {
     this.internal = internal;
+    this.reconnect = reconnect;
+    this.redirect = redirect;
   }
 
   public boolean isInternal() {
     return internal;
+  }
+  
+  public boolean isReconnectEnabled() {
+    return reconnect;
+  }
+
+  public boolean isRedirectEnabled() {
+    return redirect;
   }
   
   public String toString() {

@@ -27,7 +27,6 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.util.Throwables;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
@@ -94,6 +93,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final StageManager stages;
   
   private boolean isShutdown = false;
+  private final boolean reconnectable;
 
 //  for testing
   private boolean wasBusy = false;
@@ -111,6 +111,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.stages = mgr;
     
     this.outbound = createSendStage();
+    
+    this.reconnectable = channel.getProductId().isReconnectEnabled();
   }
   
   public boolean checkBusy() {
@@ -570,10 +572,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     TransactionID transactionID = new TransactionID(currentTransactionID.incrementAndGet());
     // Figure out the "trailing edge" of the current progress through the transaction stream.
     TransactionID oldestTransactionPending = transactionID;
-    for (TransactionID pendingID : this.inFlightMessages.keySet()) {
-      if (oldestTransactionPending.compareTo(pendingID) > 0) {
-        // peindingID is earlier than oldestTransactionPending.
-        oldestTransactionPending = pendingID;
+    // if reconnectable, discover the oldest transaction still being waited for
+    if (reconnectable) {
+      for (TransactionID pendingID : this.inFlightMessages.keySet()) {
+        if (oldestTransactionPending.compareTo(pendingID) > 0) {
+          // pendingID is earlier than oldestTransactionPending.
+          oldestTransactionPending = pendingID;
+        }
       }
     }
     // Create the message and populate it.

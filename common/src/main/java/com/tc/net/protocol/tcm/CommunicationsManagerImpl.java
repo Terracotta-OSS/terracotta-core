@@ -100,7 +100,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final HealthCheckerConfig                                            healthCheckerConfig;
   private final ConnectionPolicy                                               connectionPolicy;
   private final ReconnectionRejectedHandler                                    reconnectionRejectedHandler;
-  protected final ProductID                                                    productId;
   protected final ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class<? extends TCMessage>>();
   protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>    messageTypeFactoryMapping = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
 
@@ -157,7 +156,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
          transportHandshakeErrorHandler, messageTypeClassMapping, ReconnectionRejectedHandlerL2.SINGLETON,
-         securityManager, null);
+         securityManager);
     this.serverID = serverID;
   }
 
@@ -171,7 +170,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TCSecurityManager securityManager) {
     this(commsMgrName, monitor, messageRouter, stackHarnessFactory, connMgr, connectionPolicy, workerCommCount,
          healthCheckerConf, transportHandshakeErrorHandler, messageTypeClassMapping,
-         ReconnectionRejectedHandlerL1.SINGLETON, securityManager, null);
+         ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
   }
 
   /**
@@ -188,11 +187,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler,
                                    Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                    ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                   TCSecurityManager securityManager, ProductID productId) {
+                                   TCSecurityManager securityManager) {
     this.commsMgrName = commsMgrName;
     this.monitor = monitor;
     this.messageRouter = messageRouter;
-    this.productId = productId;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
     this.stackHarnessFactory = stackHarnessFactory;
@@ -257,12 +255,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessions, int maxReconnectTries, int timeout, boolean followRedirects) {
-    return createClientChannel(sessions, maxReconnectTries, timeout, followRedirects, null, null);
+  public ClientMessageChannel createClientChannel(ProductID productId, SessionProvider sessions, int timeout) {
+    return createClientChannel(productId, sessions, timeout, null, null);
   }
   
-  public ClientMessageChannel createClientChannel(SessionProvider sessions, int maxReconnectTries,
-                                                  int timeout, boolean followRedirects, 
+  public ClientMessageChannel createClientChannel(ProductID productId, SessionProvider sessions, 
+                                                  int timeout, 
                                                   MessageTransportFactory transportFactory,
                                                   TCMessageFactory messageFactory) {
 
@@ -286,8 +284,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
                                                                                      connectionManager,
-                                                                                     maxReconnectTries, timeout,
-                                                                                     callbackPort, followRedirects, handshakeErrHandler,
+                                                                                     timeout,
+                                                                                     callbackPort, handshakeErrHandler,
                                                                                      reconnectionRejectedHandler,
                                                                                      securityManager);
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,

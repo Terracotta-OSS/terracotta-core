@@ -36,11 +36,13 @@ import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductID;
 import com.tcclient.cluster.ClusterInternal;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.when;
 
 
 public class DistributedObjectClientTest extends TestCase {
@@ -157,7 +159,7 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class)));
-    ClientBuilder builder = new StandardClientBuilder() {
+    ClientBuilder builder = new StandardClientBuilder(true) {
       @Override
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
@@ -166,11 +168,12 @@ public class DistributedObjectClientTest extends TestCase {
         } catch (Exception exp) {
           
         }
+        when(channel.getProductId()).thenReturn(ProductID.STRIPE);
         return channel;
       }
     };
     
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null, null, null, false);
+    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null, null);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();

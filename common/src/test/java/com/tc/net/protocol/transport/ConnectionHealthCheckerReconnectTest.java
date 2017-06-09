@@ -45,6 +45,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductID;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -175,8 +176,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     });
     
     ClientMessageChannel clientMsgCh = commsMgr
-        .createClientChannel(new NullSessionManager(), 0,
-                             1000, true);
+        .createClientChannel(ProductID.SERVER, new NullSessionManager(),
+                             1000);
 
     return clientMsgCh;
   }

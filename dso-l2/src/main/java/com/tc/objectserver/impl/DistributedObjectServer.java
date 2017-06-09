@@ -190,8 +190,6 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.runtime.TCMemoryManagerImpl;
-import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
@@ -246,6 +244,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
+import com.tc.util.ProductID;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -253,6 +252,7 @@ import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.nio.charset.Charset;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
@@ -561,7 +561,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                              true, 0L);
 
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
-    this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
+    this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore, EnumSet.allOf(ProductID.class));
 
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,

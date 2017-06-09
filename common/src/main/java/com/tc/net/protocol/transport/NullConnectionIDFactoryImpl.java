@@ -39,7 +39,7 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
 // only assign invalid IDs as these connections are not real
-    ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet());
+    ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet(), null, null, connectionID.getProductId());
     Assert.assertTrue(!connection.isValid());
     return connection;
   }
