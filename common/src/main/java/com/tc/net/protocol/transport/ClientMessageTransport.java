@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.logging.TCLogging;
@@ -179,30 +178,31 @@ public class ClientMessageTransport extends MessageTransportBase {
   private void handleHandshakeError(HandshakeResult result) throws TransportHandshakeException, MaxConnectionsExceededException,
       CommStackMismatchException, ReconnectionRejectedException {
     if (result.hasErrorContext()) {
-      switch (result.getErrorType()) {
-        case TransportHandshakeError.ERROR_NONE:
+      switch (result.getError()) {
+        case ERROR_NO_ACTIVE:
           if (this.followRedirects) {
             throw new NoActiveException();
           }
           break;
-        case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
+        case ERROR_MAX_CONNECTION_EXCEED:
           cleanConnectionWithoutNotifyListeners();
           throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
-        case TransportHandshakeError.ERROR_STACK_MISMATCH:
+        case ERROR_STACK_MISMATCH:
           cleanConnectionWithoutNotifyListeners();
           throw new CommStackMismatchException("Disconnected due to comm stack mismatch");
-        case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
+        case ERROR_RECONNECTION_REJECTED:
           cleanConnectionWithoutNotifyListeners();
           fireTransportReconnectionRejectedEvent();
           throw new ReconnectionRejectedException(
                                                   "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
-        case TransportHandshakeError.ERROR_REDIRECT_CONNECTION:
+        case ERROR_REDIRECT_CONNECTION:
           if (this.followRedirects) {
             throw new TransportRedirect(result.synAck.getErrorContext());
           }
           break;
+        case ERROR_PRODUCT_NOT_SUPPORTED:
         default:
-          throw new TransportHandshakeException("Disconnected due to transport handshake error");
+          throw new TransportHandshakeException("Disconnected due to transport handshake error: " + result.getError());
       }
     }
   }
@@ -477,7 +477,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       return synAck.getConnectionId().isValid();
     }
 
-    public short getErrorType() {
+    public TransportHandshakeError getError() {
       if (this.synAck.isMaxConnectionsExceeded()) {
         return TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED;
       } else {

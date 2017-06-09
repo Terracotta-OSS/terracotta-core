@@ -18,9 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-public class TransportRedirect extends TransportHandshakeException implements TransportHandshakeError {
+public class TransportRedirect extends TransportHandshakeException {
   private final String    hostname;
-  private final short     errorType;
+  private final TransportHandshakeError     errorType;
   private final int port;
 
   public TransportRedirect(String activeHost) {
@@ -28,11 +28,10 @@ public class TransportRedirect extends TransportHandshakeException implements Tr
     int index = activeHost.indexOf(':');
     hostname = activeHost.substring(0, index);
     port = Integer.parseInt(activeHost.substring(index + 1));          
-    this.errorType = ERROR_REDIRECT_CONNECTION;
+    this.errorType = TransportHandshakeError.ERROR_REDIRECT_CONNECTION;
   }
 
-  @Override
-  public short getErrorType() {
+  public TransportHandshakeError getErrorType() {
     return errorType;
   }
 

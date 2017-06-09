@@ -27,6 +27,7 @@ import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.ProductNotSupportedException;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.RejectReconnectionException;
 import com.tc.net.protocol.TCProtocolAdaptor;
@@ -278,12 +279,24 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                                                                       ((SynMessage) message).getSource(),
                                                                       createHandshakeErrorHandler(),
                                                                       handshakeMessageFactory, transportListeners);
-          sendSynAck(((SynMessage) message).getConnectionId(),
-                     new TransportHandshakeErrorContext(errorMessage,
-                                                        TransportHandshakeError.ERROR_RECONNECTION_REJECTED),
-                     ((SynMessage) message).getSource(), false);
+          TransportHandshakeErrorContext cxt = new TransportHandshakeErrorContext(errorMessage,
+                                                        TransportHandshakeError.ERROR_RECONNECTION_REJECTED);
+          sendSynAck(((SynMessage) message).getConnectionId(), cxt, ((SynMessage) message).getSource(), false);
 
           handleHandshakeError(new TransportHandshakeErrorContext(errorMessage, e));
+        } catch (ProductNotSupportedException product) {
+          // send connection rejected SycAck back to L1
+          // since stack no found, create a temp transport for sending sycAck message back
+          this.transport = messageTransportFactory.createNewTransport(((SynMessage) message).getConnectionId(),
+                                                                      ((SynMessage) message).getSource(),
+                                                                      createHandshakeErrorHandler(),
+                                                                      handshakeMessageFactory, transportListeners);
+          TransportHandshakeErrorContext cxt = new TransportHandshakeErrorContext(product.getMessage(),
+                                                        TransportHandshakeError.ERROR_PRODUCT_NOT_SUPPORTED);
+          sendSynAck(((SynMessage) message).getConnectionId(), cxt,
+                     ((SynMessage) message).getSource(), false);
+
+          handleHandshakeError(cxt);
         }
       }
       return isSynced;
@@ -294,7 +307,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       this.handshakeErrorHandler.handleHandshakeError(ctxt);
     }
 
-    private void handleSyn(SynMessage syn) throws RejectReconnectionException {
+    private void handleSyn(SynMessage syn) throws RejectReconnectionException, ProductNotSupportedException {
       ConnectionID connectionId = syn.getConnectionId();
       boolean isMaxConnectionReached = false;
 
@@ -327,11 +340,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           // Update the connection ID with the new channel id and server id from server
           connectionId = new ConnectionID(sentConnectionId.getJvmID(), transportConnectionId.getChannelID(),
               transportConnectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword(),
-              sentConnectionId.getProductId());
+              transportConnectionId.getProductId());
           // populate the jvmid on the server copy of the connection id if it's null
           if (transportConnectionId.isJvmIDNull()) {
             transport.initConnectionID(new ConnectionID(sentConnectionId.getJvmID(), connectionId.getChannelID(),
-                connectionId.getServerID()));
+              connectionId.getServerID(), sentConnectionId.getUsername(), sentConnectionId.getPassword(),
+              transportConnectionId.getProductId()));
           }
           isMaxConnectionReached = !connectionPolicy.connectClient(connectionId);
         }
@@ -402,15 +416,15 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       boolean isError = (errorContext != null);
       int maxConnections = connectionPolicy.getMaxConnections();
       if (isError) {
-        synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsReached,
+        synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext.getErrorType(), errorContext.getMessage(), source, isMaxConnectionsReached,
                                                       maxConnections);
       } else if (activeProvider != null) {
         String active = activeProvider.getNodeName();
         if (active != null) {
-          synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportRedirect(active), 
+          synAck = handshakeMessageFactory.createSynAck(connectionId, TransportHandshakeError.ERROR_REDIRECT_CONNECTION, active,
                 source, isMaxConnectionsReached, maxConnections);
         } else {
-          synAck = handshakeMessageFactory.createSynAck(connectionId, new TransportHandshakeErrorContext("no active", errorContext.ERROR_NONE), 
+          synAck = handshakeMessageFactory.createSynAck(connectionId, TransportHandshakeError.ERROR_NO_ACTIVE, "no active", 
                 source, isMaxConnectionsReached, maxConnections);
         }
       } else {

@@ -16,22 +16,16 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol.transport;
+package com.tc.net.protocol;
 
-public interface SynAckMessage extends TransportHandshakeMessage {
+import com.tc.net.TCSocketAddress;
 
-  public String getErrorContext();
+/**
+ * Thrown by Stack providers when a connecting product is not supported by the server
+ */
+public class ProductNotSupportedException extends Exception {
 
-  public TransportHandshakeError getErrorType();
-
-  public boolean hasErrorContext();
-
-  @Override
-  public boolean isMaxConnectionsExceeded();
-
-  int getCallbackPort();
-
-  @Override
-  public int getMaxConnections();
-
+  public ProductNotSupportedException(String reason) {
+    super(reason);
+  }
 }
