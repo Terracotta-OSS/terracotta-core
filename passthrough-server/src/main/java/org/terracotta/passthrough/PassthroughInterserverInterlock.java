@@ -29,7 +29,7 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   private boolean isComplete = false;
   private boolean didSucceed = false;
   private boolean isRetired = false;
-  
+
   public PassthroughInterserverInterlock(IMessageSenderWrapper sender) {
     this.sender = sender;
   }
@@ -55,25 +55,29 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
     }
     return this.didSucceed;
   }
+
   @Override
   public void sendAck(PassthroughMessage ack) {
   }
+
   @Override
   public synchronized void sendComplete(PassthroughMessage complete, EntityException error) {
     this.isComplete = true;
     this.didSucceed = (null == error);
     notifyAll();
   }
+
   @Override
   public synchronized void sendRetire(PassthroughMessage retire) {
     this.isRetired = true;
     notifyAll();
   }
+
   @Override
   public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
-    Assert.unreachable();
-    return null;
+    return new PassthroughClientDescriptor(null, null, clientInstanceID);
   }
+
   @Override
   public long getClientOriginID() {
     // Note that we will have a null sender when this is being used for sync messages.  Those are
