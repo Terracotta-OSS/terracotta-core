@@ -692,7 +692,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline);
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
-    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor.getEntityPersistor(), this.persistor.getTransactionOrderPersistor(), channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
+    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
     final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
@@ -737,7 +737,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     state.registerForStateChangeEvents(this.server);
 //  routing for passive to receive replication    
-    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, this.persistor.getTransactionOrderPersistor(), entityManager, this.persistor.getEntityPersistor(), groupCommManager);
+    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, this.persistor, entityManager, groupCommManager);
     // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
@@ -994,7 +994,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
         final Set<ClientID> existingConnections = Collections.unmodifiableSet(persistor.getClientStatePersistor().loadClientIDs());
-        persistor.getEntityPersistor().removeOrphanedClientsFromJournal(existingConnections);
+//        persistor.getEntityPersistor().removeOrphanedClientsFromJournal(existingConnections);
         if (sce.movedToActive()) {
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {

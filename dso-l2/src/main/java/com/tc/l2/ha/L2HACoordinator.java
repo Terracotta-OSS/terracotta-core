@@ -73,8 +73,7 @@ public class L2HACoordinator implements L2Coordinator {
   private void init(StageManager stageManager, Persistor persistor,
                     WeightGeneratorFactory weightGeneratorFactory,
                     StripeIDStateManager stripeIDStateManager, ChannelLifeCycleHandler clm) {
-    final ClusterState clusterState = new ClusterStateImpl(persistor.getClusterStatePersistor(),  persistor.getClientStatePersistor(), 
-                                                           this.server.getConnectionIdFactory(),
+    final ClusterState clusterState = new ClusterStateImpl(persistor, this.server.getConnectionIdFactory(),
                                                        stripeIDStateManager);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,

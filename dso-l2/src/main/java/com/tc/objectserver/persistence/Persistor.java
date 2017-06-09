@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.net.ClientID;
+import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 
@@ -50,6 +52,20 @@ public class Persistor implements PrettyPrintable {
   }
 
   public void close() {
+  }
+  
+  public void addClientState(ClientID node) {
+    clientStatePersistor.saveClientState(node);
+    entityPersistor.addTrackingForClient(node);
+    transactionOrderPersistor.addTrackingForClient(node);
+  }
+  
+  public void removeClientState(ClientID node) throws ClientNotFoundException {
+    //  removing the client state.  threading doesn't matter here.  A client that is gone will never come back
+    //  code the underlying defensively to handle the fat that the client is gone
+    transactionOrderPersistor.removeTrackingForClient(node);
+    entityPersistor.removeTrackingForClient(node);
+    clientStatePersistor.deleteClientState(node);
   }
   
   public ClientStatePersistor getClientStatePersistor() {

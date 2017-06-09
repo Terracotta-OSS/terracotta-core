@@ -52,8 +52,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.BarrierCompletion;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
-import com.tc.objectserver.persistence.EntityPersistor;
-import com.tc.objectserver.persistence.TransactionOrderPersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.io.ByteArrayInputStream;
@@ -78,9 +77,8 @@ public class ReplicatedTransactionHandler {
   private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
 
   private final EntityManager entityManager;
-  private final EntityPersistor entityPersistor;
+  private final Persistor persistor;
   private final GroupManager<AbstractGroupMessage> groupManager;
-  private final TransactionOrderPersistor orderedTransactions;
   private final StateManager stateManager;
   private final ManagedEntity platform;
   
@@ -96,13 +94,12 @@ public class ReplicatedTransactionHandler {
     }
   };
   
-  public ReplicatedTransactionHandler(StateManager state, TransactionOrderPersistor transactionOrderPersistor, 
-      EntityManager manager, EntityPersistor entityPersistor, GroupManager<AbstractGroupMessage> groupManager) {
+  public ReplicatedTransactionHandler(StateManager state, Persistor persistor, 
+      EntityManager manager, GroupManager<AbstractGroupMessage> groupManager) {
     this.stateManager = state;
     this.entityManager = manager;
-    this.entityPersistor = entityPersistor;
+    this.persistor = persistor;
     this.groupManager = groupManager;
-    this.orderedTransactions = transactionOrderPersistor;
     try {
       platform = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, PlatformEntity.VERSION)).get();
     } catch (EntityException ee) {
@@ -268,7 +265,7 @@ public class ReplicatedTransactionHandler {
       
       if (!this.entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(eid, version)).isPresent()) {
         this.entityManager.createEntity(eid, version, consumerID, canDelete);
-        this.entityPersistor.entityCreatedNoJournal(eid, version, consumerID, canDelete, config);
+        this.persistor.getEntityPersistor().entityCreatedNoJournal(eid, version, consumerID, canDelete, config);
       } else {
         Assert.fail("this entity should not be here");
       }
@@ -287,16 +284,9 @@ public class ReplicatedTransactionHandler {
     Future<Void> tmpFuture = null;
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
-    if (!ClientInstanceID.NULL_ID.equals(sourceNodeID)) {
-      if (!oldestTransactionOnClient.isNull()) {
-        tmpFuture = this.orderedTransactions.updateWithNewMessage(sourceNodeID, transactionID,
-          oldestTransactionOnClient);
-
-      } else {
-        // This corresponds to a disconnect.
-        this.orderedTransactions.removeTrackingForClient(sourceNodeID);
-        this.entityPersistor.removeTrackingForClient(sourceNodeID);
-      }
+    if (sourceNodeID != null && !sourceNodeID.isNull() && transactionID.isValid()) {
+      Assert.assertTrue(oldestTransactionOnClient.isValid());
+      tmpFuture = this.persistor.getTransactionOrderPersistor().updateWithNewMessage(sourceNodeID, transactionID,oldestTransactionOnClient);
     }
 
     final Future<Void> transactionOrderPersistenceFuture = tmpFuture;
@@ -308,7 +298,7 @@ public class ReplicatedTransactionHandler {
     // If we satisfied this as a known re-send, don't add the request to the entity.
     if (request.getAction() == ServerEntityAction.CREATE_ENTITY) {
 // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-      this.entityPersistor.setNextConsumerID(activity.getFetchID().toLong());
+      this.persistor.getEntityPersistor().setNextConsumerID(activity.getFetchID().toLong());
       try {
         // TODO:  When a permanent entity is being synced, should we be creating it or ensuring it already exists?
         boolean canDelete = !sourceNodeID.isNull();
@@ -317,25 +307,25 @@ public class ReplicatedTransactionHandler {
         temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
           (result) -> {
             if (canDelete) {
-              entityPersistor.entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
+              this.persistor.getEntityPersistor().entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             } else {
-              entityPersistor.entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
+              this.persistor.getEntityPersistor().entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }
           }, (exception) -> {
-            entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+            this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
           });
       } catch (EntityException ee) {
         acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
         if (!sourceNodeID.isNull()) {
-          entityPersistor.entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
+          this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         }
       }
     } else {
     // At this point, we can now look up the managed entity (used later).
-      Assert.assertFalse(activity.getFetchID().isNull());
+      Assert.assertFalse(activity.getActivityType(), activity.getFetchID().isNull());
       EntityDescriptor desp = EntityDescriptor.createDescriptorForInvoke(activity.getFetchID(), ClientInstanceID.NULL_ID);
       Optional<ManagedEntity> entity = entityManager.getEntity(desp);
       if (entity.isPresent()) {
@@ -345,20 +335,20 @@ public class ReplicatedTransactionHandler {
           case RECONFIGURE_ENTITY:  
             entity.get().addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
               (result)->{
-                entityPersistor.entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID(), entityInstance.getVersion(), result);
+                this.persistor.getEntityPersistor().entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID(), entityInstance.getVersion(), result);
                 acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
               } , (exception) -> {
-                entityPersistor.entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+                this.persistor.getEntityPersistor().entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
                 acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
               });
             break;
           case DESTROY_ENTITY:
             entityInstance.addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
               (result)-> {
-                entityPersistor.entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID());
+                this.persistor.getEntityPersistor().entityDestroyed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID());
                 acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
               }, (exception) -> {
-               entityPersistor.entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+               this.persistor.getEntityPersistor().entityDestroyFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
                 acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
               });
             break;
@@ -462,7 +452,7 @@ public class ReplicatedTransactionHandler {
           platform.addRequestMessage(activityToLocalRequest(activity), payload, null, (result)-> {
             if (SyncReplicationActivity.ActivityType.SYNC_END == thisActivityType) {
               try {
-                entityPersistor.layer(new ObjectInputStream(new ByteArrayInputStream(payload.getRawPayload())));
+                this.persistor.getEntityPersistor().layer(new ObjectInputStream(new ByteArrayInputStream(payload.getRawPayload())));
               } catch (IOException ioe) {
                 throw new RuntimeException(ioe);
               }

@@ -39,6 +39,8 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage, Collections.emptySet());
     this.client1 = new ClientID(1);
     this.client2 = new ClientID(2);
+    this.orderPersistor.addTrackingForClient(client1);
+    this.orderPersistor.addTrackingForClient(client2);
   }
 
   /**
