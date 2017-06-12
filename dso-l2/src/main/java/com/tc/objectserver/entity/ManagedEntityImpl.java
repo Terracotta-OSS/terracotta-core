@@ -55,6 +55,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.ExecutionStrategy;
+import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
@@ -555,9 +556,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertNotNull(this.passiveServerEntity);
     try {
 
-      this.passiveServerEntity.invokePassive(ClientDescriptorImpl.NULL_ID,
-                                             TransactionID.NULL_ID.toLong(),
-                                             TransactionID.NULL_ID.toLong(),
+      this.passiveServerEntity.invokePassive(InvokeContextImpl.NULL_CONTEXT,
                                              message.decodeRawMessage(raw -> syncCodec.decode(message.getConcurrency(),
                                                                                               raw)));
     } catch (EntityUserException e) {
@@ -742,7 +741,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           this.retirementManager.registerWithMessage(em, concurrencyKey);
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
           if (loc.runOnActive()) {
-            EntityResponse resp = this.activeServerEntity.invokeActive(clientDescriptor, currentId, oldestId, em);
+            EntityResponse resp = this.activeServerEntity.invokeActive(
+              new InvokeContextImpl(clientDescriptor, currentId, oldestId),
+              em);
             byte[] er = runWithHelper(()->codec.encodeResponse(resp));
             response.complete(er);
           } else {
@@ -759,7 +760,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
-          this.passiveServerEntity.invokePassive(clientDescriptor, currentId, oldestId, em);
+          this.passiveServerEntity.invokePassive(new InvokeContextImpl(clientDescriptor, currentId, oldestId), em);
         } catch (EntityUserException e) {
           //on passives, just log the exception - don't crash server
           logger.error("Caught EntityUserException during invoke", e);
