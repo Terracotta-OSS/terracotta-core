@@ -61,6 +61,7 @@ import com.tc.util.CallableWaiter;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.util.ProductID;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -77,16 +78,13 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   }
   
-  private synchronized ClientMessageTransport createClient(String clientName, int serverPort) {
+  private synchronized ClientMessageTransport createClient(String clientName) {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(clientName + "CommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy());
 
-    final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, serverPort);
-    ClientConnectionEstablisher cce = new ClientConnectionEstablisher(0, ReconnectionRejectedHandlerL1.SINGLETON);
-
     ClientMessageTransport cmt = new ClientMessageTransport(commsMgr.getConnectionManager(), createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
-                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT, 1000, true);
+                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT, 1000);
     transports.add(cmt);
     return cmt;
   }
@@ -121,10 +119,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.start(Collections.<ClientID>emptySet());
     int port = listener.getBindPort();
 
-    ClientMessageTransport client1 = createClient("client1", port);
-    ClientMessageTransport client2 = createClient("client2", port);
-    ClientMessageTransport client3 = createClient("client3", port);
-    ClientMessageTransport client4 = createClient("client4", port);
+    ClientMessageTransport client1 = createClient("client1");
+    ClientMessageTransport client2 = createClient("client2");
+    ClientMessageTransport client3 = createClient("client3");
+    ClientMessageTransport client4 = createClient("client4");
     ConnectionInfo info = new ConnectionInfo("localhost", port);
 
     client1.open(info);
@@ -296,9 +294,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                       new NullConnectionPolicy());
 
     ClientMessageChannel clientMsgCh = clientComms
-        .createClientChannel(new NullSessionManager(),
-                             -1,
-                             1000, true);
+        .createClientChannel(ProductID.STRIPE, new NullSessionManager(),
+                             1000);
     return clientMsgCh;
   }
 

@@ -50,6 +50,7 @@ import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.util.ProductID;
 
 import java.net.InetAddress;
 import java.util.Collections;
@@ -74,9 +75,8 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                       new NullConnectionPolicy());
 
     ClientMessageChannel clientMsgCh = clientComms
-        .createClientChannel(new NullSessionManager(),
-                             -1,
-                             1000, true);
+        .createClientChannel(ProductID.STRIPE, new NullSessionManager(),
+                             1000);
     return clientMsgCh;
   }
 

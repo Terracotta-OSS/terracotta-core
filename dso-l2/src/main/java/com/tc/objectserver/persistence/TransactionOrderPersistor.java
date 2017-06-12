@@ -21,7 +21,6 @@ package com.tc.objectserver.persistence;
 import org.terracotta.persistence.IPlatformPersistence;
 
 import com.tc.net.ClientID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
@@ -29,13 +28,11 @@ import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 
@@ -77,22 +74,24 @@ public class TransactionOrderPersistor implements PrettyPrintable {
     // This operation requires that the globalList be rebuilt.
     this.globalList = null;
     
-    // Make sure we have tracking for this client.
-    this.clientNodeIDs.add(source.toLong());
-    
     // Increment the number of received transactions.
     this.receivedTransactionCount += 1;
     
-    // Create the new pair.
-    IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
-    transaction.localSequenceID = transactionID.toLong();
-    transaction.globalSequenceID = this.receivedTransactionCount;
-    
     // We now pass this straight into the underlying storage.
-    if (!source.isNull()) {
+    if (this.clientNodeIDs.contains(source.toLong())) {
+      // Create the new pair.
+      IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
+      transaction.localSequenceID = transactionID.toLong();
+      transaction.globalSequenceID = this.receivedTransactionCount;
+    
       return this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
     }
     return null;
+  }
+  
+  public synchronized void addTrackingForClient(ClientID source) {
+    // Make sure we have tracking for this client.
+    this.clientNodeIDs.add(source.toLong());
   }
 
   /**
@@ -140,7 +139,7 @@ public class TransactionOrderPersistor implements PrettyPrintable {
     }
   }
   
-  private List<ClientTransaction> buildGlobalListIfNessessary() {
+  private List<ClientTransaction> buildGlobalListIfNecessary() {
     if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
       for (long clientID : this.clientNodeIDs) {
@@ -150,12 +149,14 @@ public class TransactionOrderPersistor implements PrettyPrintable {
         } catch (IOException e) {
           Assert.fail(e.getLocalizedMessage());
         }
-        for (IPlatformPersistence.SequenceTuple tuple : transactions) {
-          ClientTransaction transaction = new ClientTransaction();
-          transaction.clientID = clientID;
-          transaction.localTransactionID = tuple.localSequenceID;
-          transaction.globalTransactionID = tuple.globalSequenceID;
-          sortMap.put(tuple.globalSequenceID, transaction);
+        if (transactions != null) {
+          for (IPlatformPersistence.SequenceTuple tuple : transactions) {
+            ClientTransaction transaction = new ClientTransaction();
+            transaction.clientID = clientID;
+            transaction.localTransactionID = tuple.localSequenceID;
+            transaction.globalTransactionID = tuple.globalSequenceID;
+            sortMap.put(tuple.globalSequenceID, transaction);
+          }
         }
       }
       globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
@@ -173,7 +174,7 @@ public class TransactionOrderPersistor implements PrettyPrintable {
     long transactionID = transaction.toLong();
     
     int index = -1;
-    List<ClientTransaction> list = buildGlobalListIfNessessary();
+    List<ClientTransaction> list = buildGlobalListIfNecessary();
     int seek = 0;
     for (ClientTransaction oneTransaction : list) {
       if ((oneTransaction.clientID == sourceID) && (oneTransaction.localTransactionID == transactionID)) {
@@ -197,7 +198,6 @@ public class TransactionOrderPersistor implements PrettyPrintable {
         Assert.fail(e.getLocalizedMessage());
       }
     }
-    this.clientNodeIDs.clear();
   }
 
   /**
@@ -227,9 +227,11 @@ public class TransactionOrderPersistor implements PrettyPrintable {
           Assert.fail(e.getLocalizedMessage());
         }
         out.indent().indent().println("Persisted transaction order for client " + clientNodeID);
-        for (IPlatformPersistence.SequenceTuple transaction : transactions) {
-          out.indent().indent().indent()
-              .println("Global seq Id = " + transaction.localSequenceID + ", local seq id = " + transaction.localSequenceID);
+        if (transactions != null) {
+          for (IPlatformPersistence.SequenceTuple transaction : transactions) {
+            out.indent().indent().indent()
+                .println("Global seq Id = " + transaction.localSequenceID + ", local seq id = " + transaction.localSequenceID);
+          }
         }
       }
     }

@@ -47,11 +47,18 @@ import java.util.Map;
 
 
 public class StandardClientBuilder implements ClientBuilder {
+  
+  private final boolean isReconnectEnabled;
+
+  public StandardClientBuilder(boolean noreconnect) {
+    this.isReconnectEnabled = !noreconnect;
+  }
+  
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
                                                          int socketConnectTimeout, TCClient client) {
-    return commMgr.createClientChannel(sessionProvider, -1 /*  reconnect retry forever  */, socketConnectTimeout, true);
+    return commMgr.createClientChannel(isReconnectEnabled ? ProductID.STRIPE : ProductID.SERVER, sessionProvider, socketConnectTimeout);
   }
 
   @Override
@@ -61,10 +68,10 @@ public class StandardClientBuilder implements ClientBuilder {
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                                           TCSecurityManager securityManager, ProductID productId) {
+                                                           TCSecurityManager securityManager) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
                                          connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         reconnectionRejectedHandler, securityManager, productId);
+                                         reconnectionRejectedHandler, securityManager);
   }
 
   @Override

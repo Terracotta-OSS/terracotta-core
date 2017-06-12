@@ -21,7 +21,6 @@ package com.tc.objectserver.persistence;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
 import com.tc.objectserver.persistence.EntityData.Key;
@@ -29,14 +28,13 @@ import com.tc.objectserver.persistence.EntityData.Value;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
-import com.tc.util.State;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -254,8 +252,15 @@ public class EntityPersistor implements PrettyPrintable {
     }
   }
   
+  public synchronized void addTrackingForClient(ClientID sourceNodeID) {
+    if (this.entityLifeJournal.putIfAbsent(sourceNodeID, new ArrayList<>()) == null) {
+      storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
+    }
+  }
+  
   public synchronized void removeTrackingForClient(ClientID sourceNodeID) {
     this.entityLifeJournal.remove(sourceNodeID);
+    storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
 
   @Override
@@ -299,19 +304,18 @@ public class EntityPersistor implements PrettyPrintable {
 
   private void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, EntityException error) {
     List<EntityData.JournalEntry> rawJournal = this.entityLifeJournal.get(clientID);
-    // Note that this may be the first time we encountered this client.
-    if (null == rawJournal) {
-      rawJournal = new Vector<>();
+    // If the list is not here, the client has already left the custer, don't bother saving the result
+    if (rawJournal != null) {
+      List<EntityData.JournalEntry> clientJournal = filterJournal(rawJournal, oldestTransactionOnClient);
+      JournalEntry newEntry = new JournalEntry();
+      newEntry.operation = operation;
+      newEntry.transactionID = transactionID;
+      newEntry.failure = error;
+      newEntry.reconfigureResponse = reconfigureResult;
+      clientJournal.add(newEntry);
+      this.entityLifeJournal.put(clientID, clientJournal);
+      storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
     }
-    List<EntityData.JournalEntry> clientJournal = filterJournal(rawJournal, oldestTransactionOnClient);
-    JournalEntry newEntry = new JournalEntry();
-    newEntry.operation = operation;
-    newEntry.transactionID = transactionID;
-    newEntry.failure = error;
-    newEntry.reconfigureResponse = reconfigureResult;
-    clientJournal.add(newEntry);
-    this.entityLifeJournal.put(clientID, clientJournal);
-    storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
 
   private JournalEntry getEntryForTransaction(ClientID clientID, long transactionID) {

@@ -26,9 +26,7 @@ import java.util.Vector;
 
 public class TerracottaClientConfigParams {
   private final List<String> stripeMembers;
-  private boolean     rejoin;
-  private boolean     nonStop;
-  private String      productId;
+  private boolean disableReconnect = false;
   private ClassLoader clasLoader;
   private final Properties properties = new Properties();
 
@@ -44,40 +42,14 @@ public class TerracottaClientConfigParams {
     this.stripeMembers.add(stripeMember);
     return this;
   }
-
-  public boolean isRejoin() {
-    return rejoin;
-  }
-
-  public void setRejoin(boolean rejoin) {
-    this.rejoin = rejoin;
-  }
-
-  public TerracottaClientConfigParams rejoin(boolean rejoinParam) {
-    this.rejoin = rejoinParam;
+  
+  public TerracottaClientConfigParams disableReconnect() {
+    disableReconnect = true;
     return this;
   }
 
-  public TerracottaClientConfigParams nonStopEnabled(boolean nonStopParam) {
-    this.nonStop = nonStopParam;
-    return this;
-  }
-
-  public boolean isNonStop() {
-    return nonStop;
-  }
-
-  public String getProductId() {
-    return productId;
-  }
-
-  public void setProductId(String productId) {
-    this.productId = productId;
-  }
-
-  public TerracottaClientConfigParams productId(String appName) {
-    setProductId(appName);
-    return this;
+  public boolean isDisableReconnect() {
+    return disableReconnect;
   }
 
   public ClassLoader getClassLoader() {

@@ -73,17 +73,14 @@ import javax.management.ObjectName;
 public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private final static TCLogger                        logger                 = TCLogging.getLogger(DSO.class);
-  private final static String                          DSO_OBJECT_NAME_PREFIX = L2MBeanNames.DSO.getCanonicalName()
-                                                                                + ",";
+  
   private final StatsImpl                           dsoStats;
   private final MBeanServer                            mbeanServer;
-  private final List<ObjectName>                       rootObjectNames        = new ArrayList<>();
   
   private final Set<ObjectName>                        clientObjectNames      = new LinkedHashSet<>();
   
   private final Map<ObjectName, Client>             clientMap              = new HashMap<>();
   private final DSOChannelManagerMBean                 channelMgr;
-  private final LockManagerMBean                       lockMgr;
   private final ChannelStats                           channelStats;
   private final ObjectInstanceMonitorMBean             instanceMonitor;
   private final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
@@ -101,7 +98,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
     this.mbeanServer = mbeanServer;
     this.dsoStats = new StatsImpl(managementContext);
-    this.lockMgr = managementContext.getLockManager();
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
     this.instanceMonitor = managementContext.getInstanceMonitor();
@@ -173,18 +169,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public Map<String, Integer> getUnreadOperatorEventCount() {
     return operatorEventHistoryProvider.getUnreadCounts();
-  }
-
-  @Override
-  public ObjectName[] getRoots() {
-    synchronized (rootObjectNames) {
-      return rootObjectNames.toArray(new ObjectName[rootObjectNames.size()]);
-    }
-  }
-
-  @Override
-  public LockMBean[] getLocks() {
-    return (this.lockMgr != null) ? this.lockMgr.getAllLocks() : new LockMBean[0];
   }
 
   @Override

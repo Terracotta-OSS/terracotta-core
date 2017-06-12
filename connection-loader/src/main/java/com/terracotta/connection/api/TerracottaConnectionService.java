@@ -34,6 +34,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 
 /**

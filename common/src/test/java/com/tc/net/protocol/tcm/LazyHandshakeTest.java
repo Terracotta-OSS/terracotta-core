@@ -35,6 +35,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -103,8 +104,8 @@ public class LazyHandshakeTest extends TCTestCase {
 
   private ClientMessageChannel createClientMessageChannel() {
     return clientComms
-        .createClientChannel(new NullSessionManager(), 0,
-                             (int) PROXY_SYNACK_DELAY, true);
+        .createClientChannel(ProductID.STRIPE, new NullSessionManager(),
+                             (int) PROXY_SYNACK_DELAY);
   }
 
   @Override

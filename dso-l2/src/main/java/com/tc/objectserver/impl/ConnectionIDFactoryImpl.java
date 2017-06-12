@@ -32,16 +32,19 @@ import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
   private final MutableSequence                   connectionIDSequence;
   private StripeID                                stripe;
+  private final Set<ProductID>                          supported;
   private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
 
-  public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore) {
+  public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore, Set<ProductID> supported) {
     this.connectionIDSequence = clientStateStore.getConnectionIDSequence();
+    this.supported = supported;
   }
 
   @Override
@@ -61,6 +64,13 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     Assert.assertNotNull(stripe);
     // this is confusing but StripeID is being used as serverID.  When a passive transitions to 
     // active and allows reconnects, it expects the serverID to match which can only be the stripeID
+    if (!supported.contains(productId)) {
+      if (productId == ProductID.STRIPE && supported.contains(ProductID.SERVER)) {
+        productId = ProductID.SERVER;
+      } else {
+        return ConnectionID.NULL_ID;
+      }
+    }
     ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), null, null, productId);
     fireCreationEvent(rv);
     return rv;

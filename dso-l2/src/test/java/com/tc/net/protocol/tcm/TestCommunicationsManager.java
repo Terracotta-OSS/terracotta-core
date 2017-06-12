@@ -19,14 +19,11 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.net.protocol.transport.MessageTransportFactory;
-import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
-import java.util.Collection;
+import com.tc.util.ProductID;
 
 public class TestCommunicationsManager implements CommunicationsManager {
 
@@ -48,7 +45,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider provider, int maxReconnectTries, int timeout, boolean followRedirects) {
+  public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout) {
     throw new UnsupportedOperationException(); 
   }
 

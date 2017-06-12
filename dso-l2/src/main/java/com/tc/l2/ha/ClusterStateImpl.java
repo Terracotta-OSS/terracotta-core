@@ -25,8 +25,7 @@ import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.objectserver.persistence.ClientStatePersistor;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.State;
 import com.tc.util.UUID;
 
@@ -38,8 +37,7 @@ public class ClusterStateImpl implements ClusterState {
 
   private static final TCLogger                     logger                 = TCLogging.getLogger(ClusterState.class);
 
-  private final ClusterStatePersistor               clusterStatePersistor;
-  private final ClientStatePersistor                clientStatePersistor;
+  private final Persistor               persistor;
   private final ConnectionIDFactory                 connectionIdFactory;
   private final StripeIDStateManager                stripeIDStateManager;
 
@@ -48,13 +46,12 @@ public class ClusterStateImpl implements ClusterState {
   private State                                     currentState;
   private StripeID                                  stripeID;
 
-  public ClusterStateImpl(ClusterStatePersistor clusterStatePersistor, ClientStatePersistor clientStatePersistor, 
+  public ClusterStateImpl(Persistor persistor, 
                           ConnectionIDFactory connectionIdFactory, StripeIDStateManager stripeIDStateManager) {
-    this.clusterStatePersistor = clusterStatePersistor;
-    this.clientStatePersistor = clientStatePersistor;
+    this.persistor = persistor;
     this.connectionIdFactory = connectionIdFactory;
     this.stripeIDStateManager = stripeIDStateManager;
-    this.stripeID = clusterStatePersistor.getThisStripeID();
+    this.stripeID = persistor.getClusterStatePersistor().getThisStripeID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
   }
 
@@ -72,7 +69,7 @@ public class ClusterStateImpl implements ClusterState {
       return;
     }
     this.nextAvailChannelID = nextAvailableCID;
-    clientStatePersistor.getConnectionIDSequence().setNext(nextAvailChannelID);
+    persistor.getClientStatePersistor().getConnectionIDSequence().setNext(nextAvailChannelID);
   }
 
   @Override
@@ -109,7 +106,7 @@ public class ClusterStateImpl implements ClusterState {
   }
 
   private void syncStripeIDToDB() {
-    clusterStatePersistor.setThisStripeID(stripeID);
+    persistor.getClusterStatePersistor().setThisStripeID(stripeID);
   }
 
   @Override
@@ -119,17 +116,19 @@ public class ClusterStateImpl implements ClusterState {
   }
 
   private void syncCurrentStateToDB() {
-    clusterStatePersistor.setCurrentL2State(currentState);
+    persistor.getClusterStatePersistor().setCurrentL2State(currentState);
   }
 
   @Override
   public void addNewConnection(ConnectionID connID) {
     if (connID.getChannelID() >= nextAvailChannelID) {
       nextAvailChannelID = connID.getChannelID() + 1;
-      clientStatePersistor.getConnectionIDSequence().setNext(nextAvailChannelID);
+      persistor.getClientStatePersistor().getConnectionIDSequence().setNext(nextAvailChannelID);
     }
     connections.add(connID);
-    clientStatePersistor.saveClientState(connID.getClientID());
+    if (connID.getProductId().isReconnectEnabled()) {
+      persistor.addClientState(connID.getClientID());
+    }
   }
 
   @Override
@@ -139,7 +138,9 @@ public class ClusterStateImpl implements ClusterState {
       logger.warn("Connection ID not found, must be a failed reconnect : " + connectionID + " Current Connections count : " + connections.size());
     }
     try {
-      clientStatePersistor.deleteClientState(connectionID.getClientID());
+      if (connectionID.getProductId().isReconnectEnabled()) {
+        persistor.removeClientState(connectionID.getClientID());
+      }
     } catch (ClientNotFoundException notfound) {
       logger.warn("not found", notfound);
     }

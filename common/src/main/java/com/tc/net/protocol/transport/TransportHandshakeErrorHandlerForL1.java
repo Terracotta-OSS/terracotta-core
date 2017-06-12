@@ -37,6 +37,8 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
       //  don't log these, not real errors
     } else if (e.getErrorType() == TransportHandshakeError.ERROR_REDIRECT_CONNECTION) {
       //  don't log these, not real errors
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_NO_ACTIVE) {
+      //  don't log these, not real errors
     } else {
       consoleLogger.error(e);
     }
@@ -49,11 +51,12 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
      */
 
     switch (e.getErrorType()) {
-      case TransportHandshakeError.ERROR_STACK_MISMATCH:
-      case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
-      case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
-      case TransportHandshakeError.ERROR_REDIRECT_CONNECTION:
-      case TransportHandshakeError.ERROR_NONE:
+      case ERROR_STACK_MISMATCH:
+      case ERROR_MAX_CONNECTION_EXCEED:
+      case ERROR_RECONNECTION_REJECTED:
+      case ERROR_REDIRECT_CONNECTION:
+      case ERROR_NO_ACTIVE:
+      case ERROR_NONE:
         // no sleep;
         break;
       default:
@@ -61,8 +64,9 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     }
 
     switch (e.getErrorType()) {
-      case TransportHandshakeError.ERROR_STACK_MISMATCH:
-      case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
+      case ERROR_STACK_MISMATCH:
+      case ERROR_MAX_CONNECTION_EXCEED:
+      case ERROR_PRODUCT_NOT_SUPPORTED:
         consoleLogger.error("Crashing the client due to handshake errors.");
         break;
       default:

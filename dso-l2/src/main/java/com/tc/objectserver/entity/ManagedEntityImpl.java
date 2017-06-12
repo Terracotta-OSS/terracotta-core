@@ -29,6 +29,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.ReconnectionRejectedException;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -60,7 +61,6 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.entity.StateDumper;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -80,6 +80,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import org.terracotta.exception.EntityServerException;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -369,12 +370,16 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public void dumpStateTo(StateDumper stateDumper) {
-    if(activeServerEntity != null) {
-      activeServerEntity.dumpStateTo(stateDumper);
-    }
+    try {
+      if(activeServerEntity != null) {
+        activeServerEntity.dumpStateTo(stateDumper);
+      }
 
-    if(passiveServerEntity != null) {
-      passiveServerEntity.dumpStateTo(stateDumper);
+      if(passiveServerEntity != null) {
+        passiveServerEntity.dumpStateTo(stateDumper);
+      }
+    } catch (Throwable t) {
+      logger.warn("unable to collect state for " + getID(), t);
     }
   }
 
@@ -810,11 +815,13 @@ public class ManagedEntityImpl implements ManagedEntity {
         // finally notify the entity that it was fetched
         this.activeServerEntity.connected(descriptor);
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
-          //   this is a reconnection, handle the extended reconnect data
+//   this is a reconnection, handle the extended reconnect data
           try {
             this.activeServerEntity.handleReconnect(descriptor, extendedData);
-          } catch (ReconnectRejectedException e) {
-            throw new RuntimeException(e);
+          } catch (Exception e) {
+//  something happened during reconnection, force a disconnection, see ProcessTransactionHandler.disconnectClientDueToFailure for handling
+            response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), e.getMessage(), new ReconnectionRejectedException(e)));
+            return;
           }
         }
       }

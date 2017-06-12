@@ -41,14 +41,6 @@ public interface DSOMBean extends Stats, TerracottaMBean {
 
   Stats getStats();
 
-  static final String GC_STATUS_UPDATE = "dso.gc.status.update";
-
-  static final String ROOT_ADDED       = "dso.root.added";
-
-  ObjectName[] getRoots();
-
-  LockMBean[] getLocks();
-
   static final String CLIENT_ATTACHED = "dso.client.attached";
   static final String CLIENT_DETACHED = "dso.client.detached";
 

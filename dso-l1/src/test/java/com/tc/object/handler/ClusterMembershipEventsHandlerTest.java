@@ -50,25 +50,25 @@ public class ClusterMembershipEventsHandlerTest {
 
   @Test
   public void testInternalNodeJoined() throws Exception {
-    handler.handleEvent(joinedMsg(clientID, ProductID.TMS));
+    handler.handleEvent(joinedMsg(clientID, ProductID.DIAGNOSTIC));
     verify(clusterEventsGun, never()).fireNodeJoined(clientID);
   }
 
   @Test
   public void testInternalNodeLeft() throws Exception {
-    handler.handleEvent(leftMsg(clientID, ProductID.WAN));
+    handler.handleEvent(leftMsg(clientID, ProductID.DIAGNOSTIC));
     verify(clusterEventsGun, never()).fireNodeLeft(clientID);
   }
 
   @Test
   public void testUserNodeJoined() throws Exception {
-    handler.handleEvent(joinedMsg(clientID, ProductID.USER));
+    handler.handleEvent(joinedMsg(clientID, ProductID.STRIPE));
     verify(clusterEventsGun).fireNodeJoined(clientID);
   }
 
   @Test
   public void testUserNodeLeft() throws Exception {
-    handler.handleEvent(leftMsg(clientID, ProductID.USER));
+    handler.handleEvent(leftMsg(clientID, ProductID.STRIPE));
     verify(clusterEventsGun).fireNodeLeft(clientID);
   }
 

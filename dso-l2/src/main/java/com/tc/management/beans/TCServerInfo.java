@@ -111,6 +111,16 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public boolean isReconnectWindow() {
+    return server.isReconnectWindow();
+  }
+
+  @Override
+  public int getReconnectWindowTimeout() {
+    return server.getReconnectWindowTimeout();
+  }
+
+  @Override
   public long getStartTime() {
     return server.getStartTime();
   }
@@ -188,6 +198,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public String getBuildID() {
     return buildID;
   }
+  
+  
 
   @Override
   public boolean isPatched() {

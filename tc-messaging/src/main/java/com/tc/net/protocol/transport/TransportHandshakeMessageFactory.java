@@ -30,7 +30,7 @@ public interface TransportHandshakeMessageFactory {
   public TransportHandshakeMessage createSynAck(ConnectionID connectionId, TCConnection source,
                                                 boolean isMaxConnectionsExceeded, int maxConnections, int callbackPort);
 
-  public TransportHandshakeMessage createSynAck(ConnectionID connectionId, TransportHandshakeError error,
+  public TransportHandshakeMessage createSynAck(ConnectionID connectionId, TransportHandshakeError error, String message, 
                                                 TCConnection source, boolean isMaxConnectionsExceeded,
                                                 int maxConnections);
 }

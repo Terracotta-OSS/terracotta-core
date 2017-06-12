@@ -54,7 +54,6 @@ import com.tc.text.StringUtils;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
-import com.tc.util.io.IOUtils;
 import java.io.ByteArrayOutputStream;
 
 import java.io.IOException;
@@ -320,6 +319,16 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     }
   }
 
+  @Override
+  public boolean isReconnectWindow() {
+    return dsoServer.getContext().getClientHandshakeManager().isStarting();
+  }
+
+  @Override
+  public int getReconnectWindowTimeout() {
+    return configurationSetupManager.dsoL2Config().clientReconnectWindow();
+  }
+  
   @Override
   public State getState() {
     return this.serverState;

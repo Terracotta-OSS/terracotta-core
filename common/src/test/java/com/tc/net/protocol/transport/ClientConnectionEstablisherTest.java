@@ -34,6 +34,8 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
+import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.delivery.OOOConnectionWatcher;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayer;
@@ -45,6 +47,11 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class ClientConnectionEstablisherTest {
   private ClientConnectionEstablisher         connEstablisher;
@@ -54,7 +61,7 @@ public class ClientConnectionEstablisherTest {
   private OnceAndOnlyOnceProtocolNetworkLayer layer;
   @Mock
   private ReconnectionRejectedHandler         reconnectionRejectedHandler;
-  @Mock
+
   private ClientMessageTransport              cmt;
 
   private ClientConnectionEstablisher         spyConnEstablisher;
@@ -77,8 +84,14 @@ public class ClientConnectionEstablisherTest {
   public void setup() throws Exception {
     MockitoAnnotations.initMocks(this);
     try {
-      Mockito.doReturn(logger).when(cmt).getLogger();
-      connEstablisher = new ClientConnectionEstablisher(1, reconnectionRejectedHandler);
+      cmt = spy(new ClientMessageTransport(connManager, mock(TransportHandshakeErrorHandler.class), mock(TransportHandshakeMessageFactory.class), mock(WireProtocolAdaptorFactory.class), 0, 0));
+      doNothing().when(cmt).sendToConnection(any(TCNetworkMessage.class));
+      doNothing().when(cmt).reconnect(any(TCSocketAddress.class));
+      doReturn(new NetworkStackID(0)).when(cmt).open(any(ConnectionInfo.class));
+      doNothing().when(cmt).openConnection(any(TCConnection.class));
+      ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), 0);
+      cmt.initConnectionID(cid);
+      connEstablisher = new ClientConnectionEstablisher(reconnectionRejectedHandler);
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
@@ -209,6 +222,7 @@ public class ClientConnectionEstablisherTest {
 
   @Test
   public void test_client_keeps_trying_for_reconnect_after_unknownHostException() throws Exception {
+    spyConnEstablisher.open(Collections.singleton(connInfo), cmt);
     Mockito.doThrow(new UnknownHostException("Host can not be resolved!")).when(spyConnEstablisher)
         .getHostByName(connInfo);
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) Matchers.any());

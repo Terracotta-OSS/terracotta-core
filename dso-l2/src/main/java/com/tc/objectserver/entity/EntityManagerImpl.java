@@ -320,7 +320,11 @@ public class EntityManagerImpl implements EntityManager {
     stateDumper.dumpState("EntityManagerImpl size", Integer.toString(entries.size()));
     for (Map.Entry<EntityID, FetchID> entry : entries) {
       EntityID entityID = entry.getKey();
-      entityIndex.get(entry.getValue()).dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
+      try {
+        entityIndex.get(entry.getValue()).dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
+      } catch (Throwable t) {
+        stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()).dumpState("exception", t.getMessage());
+      }
     }
   }
 

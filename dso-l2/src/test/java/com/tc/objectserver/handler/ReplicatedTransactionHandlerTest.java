@@ -50,6 +50,7 @@ import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
@@ -98,6 +99,11 @@ public class ReplicatedTransactionHandlerTest {
   public void setUp() throws Exception {
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
+    
+    Persistor persistor = mock(Persistor.class);
+    when(persistor.getEntityPersistor()).thenReturn(this.entityPersistor);
+    when(persistor.getTransactionOrderPersistor()).thenReturn(this.transactionOrderPersistor);
+    
     this.stateManager = mock(StateManager.class);
     this.entityManager = mock(EntityManager.class);
     this.groupManager = mock(GroupManager.class);
@@ -111,7 +117,7 @@ public class ReplicatedTransactionHandlerTest {
       return null;
     }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(Runnable.class), any(Consumer.class), any(Consumer.class));
     when(entityManager.getEntity(Matchers.eq(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, 1L)))).thenReturn(Optional.of(platform));
-    this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
+    this.rth = new ReplicatedTransactionHandler(stateManager, persistor, this.entityManager, this.groupManager);
     this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
     this.source = new ClientID(1);

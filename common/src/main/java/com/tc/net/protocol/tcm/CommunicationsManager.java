@@ -19,12 +19,11 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
-import java.util.Collection;
+import com.tc.util.ProductID;
 
 /**
  * CommsMgr provides Listener and Channel endpoints for exchanging <code>TCMessage</code> type messages
@@ -48,15 +47,11 @@ public interface CommunicationsManager {
   /**
    * Creates a client message channel to the given host/port.
    * 
-   * @param maxReconnectTries The number of times the channel will attempt to reestablish communications with the server
-   *        if the connection is lost. If n==0, the channel will not attempt to reestablish communications. If n>0, the
-   *        channel will attempt to reestablish communications n times. If n<0 the channel will always try to
-   *        reestablish communications.
    * @param timeout The maximum time (in milliseconds) to wait for the underlying connection to be established before
    *        giving up.
    */
 
-  public ClientMessageChannel createClientChannel(SessionProvider provider, int maxReconnectTries, int timeout, boolean followRedirects);
+  public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout);
     
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
                                         ConnectionIDFactory connectionIdFactory);

@@ -146,7 +146,6 @@ public class DistributedObjectClient implements TCClient {
   private final TCThreadGroup                        threadGroup;
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
-  private final ProductID                            productId;
 
   private ClientMessageChannel                       channel;
   private CommunicationsManager                      communicationsManager;
@@ -161,7 +160,6 @@ public class DistributedObjectClient implements TCClient {
 
   private final String                                 uuid;
   private final String                               name;
-  private final boolean                              diagnostic;
 
   private ClientShutdownManager                      shutdownManager;
 
@@ -178,15 +176,14 @@ public class DistributedObjectClient implements TCClient {
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster) {
-    this(config, new StandardClientBuilder(), threadGroup, connectionComponents, cluster, null,
-        UUID.NULL_ID.toString(), "", null, false);
+    this(config, new StandardClientBuilder(true), threadGroup, connectionComponents, cluster, null,
+        UUID.NULL_ID.toString(), "");
   }
 
   public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster, TCSecurityManager securityManager,
-                                 String uuid, String name, ProductID productId,  boolean diagnostic) {
-    this.productId = productId;
+                                 String uuid, String name) {
     Assert.assertNotNull(config);
     this.config = config;
     this.securityManager = securityManager;
@@ -196,7 +193,6 @@ public class DistributedObjectClient implements TCClient {
     this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
-    this.diagnostic = diagnostic;
     this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
     Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     
@@ -286,7 +282,7 @@ public class DistributedObjectClient implements TCClient {
     this.counterManager = new CounterManagerImpl();
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
-    final HealthCheckerConfig hc = (diagnostic) ? new DisabledHealthCheckerConfigImpl() : new HealthCheckerConfigClientImpl(tcProperties
+    final HealthCheckerConfig hc = new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
     this.communicationsManager = this.clientBuilder
@@ -297,7 +293,7 @@ public class DistributedObjectClient implements TCClient {
                                      1,
                                      hc,
                                      getMessageTypeClassMapping(),
-            ReconnectionRejectedHandlerL1.SINGLETON, securityManager, productId);
+            ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
@@ -361,7 +357,7 @@ public class DistributedObjectClient implements TCClient {
                                                                          this.clientHandshakeManager);
     // DO NOT create any stages after this call
     
-    String[] exclusion = (diagnostic) ? 
+    String[] exclusion = this.channel.getProductId() == ProductID.DIAGNOSTIC ? 
     new String[] {
       ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
       ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,

@@ -50,13 +50,11 @@ public class DiagnosticClientImpl implements TerracottaInternalClient {
   }
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    ProductID productId = ProductID.DIAGNOSTIC;
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
          new DiagnosticClientBuilder(),
          null,  // no security features
          new SecurityInfo(false, null),  // no security info
-         productId,
-         props, true);
+         props);
   }
 
   public synchronized void init() throws TimeoutException, InterruptedException, ConfigurationSetupException {

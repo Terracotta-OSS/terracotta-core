@@ -26,7 +26,6 @@ import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.terracotta.persistence.IPlatformPersistence;
@@ -57,6 +56,7 @@ public class ClientStatePersistor implements PrettyPrintable {
     }
     this.clients = clientsMap;
     this.clientIDSequence = new Sequence(this.storageManager);
+    Assert.assertNotNull(this.clients);
   }
 
   public MutableSequence getConnectionIDSequence() {
@@ -71,9 +71,13 @@ public class ClientStatePersistor implements PrettyPrintable {
     return clients.containsKey(id);
   }
 
-  public void saveClientState(ClientID channelID) {
-    clients.put(channelID, true);
-    safeStoreClients();
+  public boolean saveClientState(ClientID channelID) {
+    if (clients.put(channelID, true) == null) {
+      safeStoreClients();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void deleteClientState(ClientID id) throws ClientNotFoundException {
@@ -86,13 +90,13 @@ public class ClientStatePersistor implements PrettyPrintable {
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.indent().println(this.getClass().getName());
-    if(clients != null) {
-      out.indent().indent().println("Connected clients: ");
-      for (ClientID clientID : clients.keySet()) {
-        out.indent().indent().indent().println(clientID);
-      }
-      out.indent().indent().println("Next client id: " + clientIDSequence.current());
+
+    out.indent().indent().println("Connected clients: ");
+    for (ClientID clientID : clients.keySet()) {
+      out.indent().indent().indent().println(clientID);
     }
+    out.indent().indent().println("Next client id: " + clientIDSequence.current());
+
     return out;
   }
 

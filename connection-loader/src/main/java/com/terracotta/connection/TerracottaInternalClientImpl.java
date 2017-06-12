@@ -24,11 +24,11 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.object.StandardClientBuilder;
-import com.tc.util.ProductID;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 
 public class TerracottaInternalClientImpl implements TerracottaInternalClient {
@@ -41,22 +41,21 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
 
-  TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productId, Properties props) {
+  TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     try {
-      this.clientCreator = buildClientCreator(stripeConnectionConfig, productId, props);
+      this.clientCreator = buildClientCreator(stripeConnectionConfig, props);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
   
-  private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, String productIdName, Properties props) {
-    ProductID productId = productIdName == null ? ProductID.USER : ProductID.valueOf(productIdName);
+  private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
+    boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  // TODO: replace with ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT once API is released
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-         new StandardClientBuilder(), 
+         new StandardClientBuilder(noreconnect), 
          null,  // no security features
          new SecurityInfo(false, null),  // no security info
-         productId,
-         props, false);
+         props);
   }
 
   @Override

@@ -58,6 +58,7 @@ import com.tc.objectserver.entity.PassiveReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
@@ -93,6 +94,11 @@ public class ProcessTransactionHandlerTest {
     when(this.terracottaServiceProviderRegistry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
+
+    Persistor persistor = mock(Persistor.class);
+    when(persistor.getEntityPersistor()).thenReturn(this.entityPersistor);
+    when(persistor.getTransactionOrderPersistor()).thenReturn(this.transactionOrderPersistor);
+    
     this.source = mock(ClientID.class);
     
     when(this.entityPersistor.getNextConsumerID()).thenReturn(1L);
@@ -117,7 +123,7 @@ public class ProcessTransactionHandlerTest {
     entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
     entityManager.enterActiveState();
 
-    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager, mock(Runnable.class));
+    this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager, mock(Runnable.class));
 
     this.loopbackSink = new ForwardingSink(this.processTransactionHandler.getVoltronMessageHandler());
     Stage mockStage = mock(Stage.class);

@@ -84,6 +84,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
@@ -608,7 +609,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
-    ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0 /* no reconnect */, 10000 /*  timeout */, false /* no redirects */);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(ProductID.SERVER, sessionProvider, 10000 /*  timeout */);
 
     channel.addListener(listener);
     channel.open(Collections.singleton(info), username, password);

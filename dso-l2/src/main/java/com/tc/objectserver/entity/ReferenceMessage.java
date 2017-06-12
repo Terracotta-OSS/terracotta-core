@@ -82,7 +82,7 @@ public class ReferenceMessage implements VoltronEntityMessage {
     // Since it is a disconnect, that means that this client can't end up in a reconnect scenario.  Therefore, we
     // will return null, here, and define that to mean that the client is no longer requiring persistent ordering.
     // Note that it may be worth making this a more explicit case in case other unexpected null cases are found.
-    return null;
+    return TransactionID.NULL_ID;
   }
 
   @Override

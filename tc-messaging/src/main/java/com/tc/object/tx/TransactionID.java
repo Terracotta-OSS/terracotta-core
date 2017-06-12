@@ -38,9 +38,4 @@ public class TransactionID extends AbstractIdentifier {
   public String getIdentifierType() {
     return "TransactionID";
   }
-
-  public TransactionID next() {
-    return new TransactionID(toLong() + 1);
-  }
-
 }

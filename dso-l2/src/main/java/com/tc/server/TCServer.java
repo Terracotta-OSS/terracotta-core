@@ -41,6 +41,8 @@ public interface TCServer extends StateChangeListener {
   boolean isPassiveUnitialized();
   
   boolean isPassiveStandby();
+  
+  boolean isReconnectWindow();
     
   State getState();
 
@@ -67,6 +69,8 @@ public interface TCServer extends StateChangeListener {
   int getTSAListenPort();
 
   int getTSAGroupPort();
+  
+  int getReconnectWindowTimeout();
 
   void waitUntilShutdown();
 

@@ -39,6 +39,7 @@ public class EntityPersistorTest extends TCTestCase {
     this.persistentStorage = new NullPlatformPersistentStorage();
     this.entityPersistor = new EntityPersistor(this.persistentStorage);
     this.client = new ClientID(1);
+    this.entityPersistor.addTrackingForClient(client);
   }
 
   /**
