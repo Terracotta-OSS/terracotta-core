@@ -33,6 +33,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -591,7 +592,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     M msg = deserialize(className, entityName, codec, payload);
     if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
       try {
-        R response = entity.invokeActive(clientDescriptor, transactionId, eldestTransactionId, msg);
+        R response = entity.invokeActive(new PassThroughServerInvokeContext(clientDescriptor, transactionId, eldestTransactionId), msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {
         throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
@@ -613,7 +614,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     M msg = deserialize(className, entityName, codec, payload);
     if (data.executionStrategy.getExecutionLocation(msg).runOnPassive()) {
       try {
-        entity.invokePassive(clientDescriptor, transactionId, eldestTransactionId, msg);
+        entity.invokePassive(new PassThroughServerInvokeContext(clientDescriptor, transactionId, eldestTransactionId),
+                             msg);
       } catch (EntityUserException eu) {
         throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
       }
@@ -626,9 +628,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     PassiveServerEntity<M, R> entity = data.getPassive();
     SyncMessageCodec<M> codec = data.syncMessageCodec;
     try {
-      entity.invokePassive(clientDescriptor,
-                    -1l,
-                    -1l,
+      entity.invokePassive(new PassThroughServerInvokeContext(clientDescriptor, -1l, -1l),
                     deserializeForSync(className, entityName, codec, concurrencyKey, payload));
     } catch (EntityUserException eu) {
       throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
@@ -897,7 +897,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     CreationData<?, ?> entityData = PassthroughServerProcess.this.activeEntities.get(entityTuple);
     if (null != entityData) {
       PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-      entityData.reconnect(clientInstanceID, clientDescriptor, extendedData);
+      try {
+        entityData.reconnect(clientInstanceID, clientDescriptor, extendedData);
+      } catch (ReconnectRejectedException e) {
+        throw new RuntimeException(e);
+      }
     } else {
       Assert.unexpected(new Exception("Entity not found in reconnect"));
     }
@@ -1307,7 +1311,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
     }
 
-    synchronized void reconnect(long clientid, ClientDescriptor clientDescriptor, byte[] data) {
+    synchronized void reconnect(long clientid, ClientDescriptor clientDescriptor, byte[] data) throws ReconnectRejectedException {
       Assert.assertTrue(isActive);
       this.reference(clientDescriptor);
       getActive().connected(clientDescriptor);
@@ -1348,4 +1352,5 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
     }
   }
+
 }
