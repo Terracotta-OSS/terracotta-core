@@ -399,7 +399,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       codec) throws EntityException {
       byte[] result = null;
       try {
-        R response = entity.invokeActive(clientDescriptor, currentId, eldestId, request);
+        R response = entity.invokeActive(new PassThroughEntityInvokeContext(clientDescriptor, currentId, eldestId),
+                                         request);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityServerException(null, null, null, e);

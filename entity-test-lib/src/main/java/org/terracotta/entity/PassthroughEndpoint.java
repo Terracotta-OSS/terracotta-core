@@ -147,7 +147,9 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       byte[] result = null;
       try {
         M message = codec.decodeMessage(payload);
-        R response = entity.invokeActive(clientDescriptor, idGenerator.incrementAndGet(), eldest, message);
+        R response = entity.invokeActive(new PassThroughEntityInvokeContext(clientDescriptor,
+                                                                            idGenerator.incrementAndGet(),
+                                                                            eldest), message);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityServerException(null, null, null, e);
