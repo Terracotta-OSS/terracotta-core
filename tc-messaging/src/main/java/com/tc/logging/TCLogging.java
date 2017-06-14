@@ -48,48 +48,16 @@ public class TCLogging {
     return service.getLogger(name);    
   }
 
-  /**
-   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
-   */
-  public static TCLogger getTestingLogger(String name) {
-    if (name == null) { throw new IllegalArgumentException("Name cannot be null"); }
-    return service.getTestingLogger(name);
-  }
-
-  /**
-   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
-   */
-  public static TCLogger getTestingLogger(Class<?> clazz) {
-    if (clazz == null) { throw new IllegalArgumentException("Class cannot be null"); }
-    return getTestingLogger(clazz.getName());
-  }
-
-  // You want to look at CustomerLogging to get customer facing logger instances
-  static TCLogger getCustomerLogger(String name) {
-    return service.getCustomerLogger(name);
-  }
-
-  // this method not public on purpose, use CustomerLogging.getConsoleLogger() instead
-  static TCLogger getConsoleLogger() {
+  public static TCLogger getConsoleLogger() {
     return service.getConsoleLogger();
-  }
-
-  static TCLogger getOperatorEventLogger() {
-    return service.getOperatorEventLogger();
-  }
-  
-  public enum ProcessType {
-    GENERIC,
-    CLIENT,
-    SERVER
   }
 
   public static TCLogger getDumpLogger() {
     return service.getDumpLogger();
   }
   
-  public static void setLogLocationAndType(java.net.URI logLocation, ProcessType processType) {
-    service.setLogLocationAndType(logLocation, processType.ordinal());
+  public static void setLogLocationAndType(java.net.URI logLocation) {
+    service.setLogLocationAndType(logLocation);
   }
   
   public static void setLoggingService(TCLoggingService service) {

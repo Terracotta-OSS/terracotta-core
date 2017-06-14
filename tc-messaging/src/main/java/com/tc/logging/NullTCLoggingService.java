@@ -36,34 +36,18 @@ public class NullTCLoggingService implements TCLoggingService {
   }
 
   @Override
-  public TCLogger getTestingLogger(String name) {
-    return new NullTCLogger();
-  }
-
-  @Override
   public TCLogger getConsoleLogger() {
     return new NullTCLogger();
   }
   
-  @Override
-  public TCLogger getOperatorEventLogger() {
-    return new NullTCLogger();
-  }
-
   @Override
   public TCLogger getDumpLogger() {
     return new NullTCLogger();
   }
 
   @Override
-  public void setLogLocationAndType(URI location, int processType) {
+  public void setLogLocationAndType(URI location) {
 
   }
 
-  @Override
-  public TCLogger getCustomerLogger(String name) {
-    return new NullTCLogger();
-  }
-  
-  
 }

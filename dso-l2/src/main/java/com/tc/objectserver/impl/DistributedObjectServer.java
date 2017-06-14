@@ -98,7 +98,6 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -269,8 +268,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   protected final L2ConfigurationSetupManager    configSetupManager;
   protected final HaConfigImpl                   haConfig;
 
-  private static final TCLogger                  logger           = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger                  consoleLogger    = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                  logger           = TCLogging.getLogger(DistributedObjectServer.class);
+  private static final TCLogger                  consoleLogger    = TCLogging.getConsoleLogger();
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
@@ -410,7 +409,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // perform the DSO network config verification
     final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
 
-    TCLogging.setLogLocationAndType(configSetupManager.commonl2Config().logsPath().toURI(), TCLogging.ProcessType.SERVER);
+    TCLogging.setLogLocationAndType(configSetupManager.commonl2Config().logsPath().toURI());
     
     // verify user input host name, DEV-2293
     final String host = l2DSOConfig.host();

@@ -32,18 +32,8 @@ public class TestLoggingService implements TCLoggingService {
   }
 
   @Override
-  public TCLogger getTestingLogger(String name) {
-    return getLogger(name);
-  }
-
-  @Override
   public TCLogger getConsoleLogger() {
     return getLogger("console");
-  }
-
-  @Override
-  public TCLogger getOperatorEventLogger() {
-    return getLogger("operator");
   }
 
   @Override
@@ -52,12 +42,7 @@ public class TestLoggingService implements TCLoggingService {
   }
 
   @Override
-  public TCLogger getCustomerLogger(String name) {
-    return getLogger("customer");
-  }
-
-  @Override
-  public void setLogLocationAndType(URI location, int processType) {
+  public void setLogLocationAndType(URI location) {
     //no-op
   }
 

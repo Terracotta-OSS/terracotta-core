@@ -64,10 +64,8 @@ import java.util.Properties;
  * @author teck
  */
 public class TCLoggingLog4J implements TCLoggingService {
-  private static final String       TERRACOTTA_L1_LOG_FILE_NAME        = "terracotta-client.log";
   private static final String       TERRACOTTA_L2_LOG_FILE_NAME        = "terracotta-server.log";
-  private static final String       TERRACOTTA_GENERIC_LOG_FILE_NAME   = "terracotta-generic.log";
-  
+
   private static final int          MAX_BUFFERED_LOG_MESSAGES          = 10 * 1000;
 
   private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
@@ -79,17 +77,12 @@ public class TCLoggingLog4J implements TCLoggingService {
 
   private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
   public static final String        DUMP_PATTERN                       = "[dump] %m%n";
-  public static final String        DERBY_PATTERN                      = "[derby.log] %m%n";
   private static final String       CONSOLE_PATTERN_DEVELOPMENT        = "%d [%t] %p %c - %m%n";
   // This next pattern is used when we're *only* logging to the console.
   private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
   public static final String        FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
-  private static final String       CUSTOMER_LOGGER_NAMESPACE          = "com.terracottatech";
-  private static final String       CUSTOMER_LOGGER_NAMESPACE_WITH_DOT = CUSTOMER_LOGGER_NAMESPACE + ".";
-
-  private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
-  private static final String       OPERATOR_EVENT_LOGGER_NAME         = "tc.operator.event";
+  private static final String       CONSOLE_LOGGER_NAME                = "org.terracotta.console";
   public static final String        DUMP_LOGGER_NAME                   = "com.tc.dumper.dump";
 
   public static final String        LOG_CONFIGURATION_PREFIX           = "The configuration read for Logging: ";
@@ -99,7 +92,6 @@ public class TCLoggingLog4J implements TCLoggingService {
   private static final String       LOCK_FILE_NAME                     = ".terracotta-logging.lock";
 
   private final static TCLogger     console;
-  private final static TCLogger     operatorEventLogger;
   private final static Appender     consoleAppender;
   private final static Logger[]     allLoggers;  
 
@@ -147,36 +139,9 @@ public class TCLoggingLog4J implements TCLoggingService {
     return new TCLoggerImpl(name);
   }
 
-  /**
-   * This method lets you get a logger w/o any name restrictions. FOR TESTS ONLY (ie. not for shipping code)
-   */
-  @Override
-  public TCLogger getTestingLogger(String name) {
-    if (name == null) { throw new IllegalArgumentException("Name cannot be null"); }
-    return new TCLoggerImpl(name);
-  }
-
-  // You want to look at CustomerLogging to get customer facing logger instances
-  @Override
-  public TCLogger getCustomerLogger(String name) {
-    if (name == null) { throw new IllegalArgumentException("name cannot be null"); }
-
-    name = CUSTOMER_LOGGER_NAMESPACE_WITH_DOT + name;
-
-    if (CONSOLE_LOGGER_NAME.equals(name)) { throw new IllegalArgumentException("Illegal name: " + name); }
-
-    return new TCLoggerImpl(name);
-  }
-
-  // this method not public on purpose, use CustomerLogging.getConsoleLogger() instead
   @Override
   public TCLogger getConsoleLogger() {
     return console;
-  }
-
-  @Override
-  public TCLogger getOperatorEventLogger() {
-    return operatorEventLogger;
   }
 
   private static void reportLoggingError(Exception e) {
@@ -282,32 +247,8 @@ public class TCLoggingLog4J implements TCLoggingService {
     }
   }
 
-  /**
-   * <strong>FOR TESTS ONLY</strong>. This allows tests to successfully blow away directories containing log files on
-   * Windows. This is a bit of a hack, but working around it is otherwise an enormous pain &mdash; tests only fail on
-   * Windows, and you must then very carefully go around, figure out exactly why, and then work around it. Use of this
-   * method makes everything a great deal simpler.
-   */
-  public synchronized void disableLocking() {
-    lockingDisabled = true;
-
-    if (currentLoggingDirectoryFileLock != null) {
-      try {
-        currentLoggingDirectoryFileLock.release();
-        currentLoggingDirectoryFileLock.channel().close();
-        currentLoggingDirectoryFileLock = null;
-      } catch (IOException ioe) {
-        throw Assert.failure("Unable to release file lock?", ioe);
-      }
-    }
-  }
-
-  public static final int PROCESS_TYPE_GENERIC = 0;
-  public static final int PROCESS_TYPE_L1      = 1;
-  public static final int PROCESS_TYPE_L2      = 2;
-
   @SuppressWarnings("resource")
-  public void setLogDirectory(File theDirectory, int processType) {
+  public void setLogDirectory(File theDirectory) {
     Assert.assertNotNull(theDirectory);
 
     if (theDirectory.getName().trim().equalsIgnoreCase("stdout:")
@@ -392,26 +333,7 @@ public class TCLoggingLog4J implements TCLoggingService {
 
     RollingFileAppender newFileAppender;
 
-    String logFileName;
-
-    switch (processType) {
-      case PROCESS_TYPE_L1:
-        logFileName = TERRACOTTA_L1_LOG_FILE_NAME;
-        break;
-
-      case PROCESS_TYPE_L2:
-        logFileName = TERRACOTTA_L2_LOG_FILE_NAME;
-        break;
-
-      case PROCESS_TYPE_GENERIC:
-        logFileName = TERRACOTTA_GENERIC_LOG_FILE_NAME;
-        break;
-
-      default:
-        throw Assert.failure("Unknown process type: " + processType);
-    }
-
-    String logFilePath = new File(theDirectory, logFileName).getAbsolutePath();
+    String logFilePath = new File(theDirectory, TERRACOTTA_L2_LOG_FILE_NAME).getAbsolutePath();
 
     synchronized (TCLoggingLog4J.class) {
       try {
@@ -465,12 +387,10 @@ public class TCLoggingLog4J implements TCLoggingService {
 
     Log4jSafeInit.init();
 
-    Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
     Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
 
     console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
     consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
-    operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
 
     List<Logger> internalLoggers = new ArrayList<Logger>();
     for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
@@ -481,7 +401,7 @@ public class TCLoggingLog4J implements TCLoggingService {
      * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any appenders.
      * If you DO add consoleLogger here, you'll see duplicate messages in the log file.
      */
-    allLoggers = createAllLoggerList(internalLoggers, customerLogger);
+    allLoggers = createAllLoggerList(internalLoggers);
 
     try {
       boolean customLogging = customConfiguration();
@@ -491,7 +411,6 @@ public class TCLoggingLog4J implements TCLoggingService {
         for (Logger internalLogger : internalLoggers) {
           internalLogger.setLevel(Level.INFO);
         }
-        customerLogger.setLevel(Level.INFO);
         consoleLogger.setLevel(Level.INFO);
 
         if (!isDev) {
@@ -526,14 +445,7 @@ public class TCLoggingLog4J implements TCLoggingService {
     }
   }
 
-  // for test use only!
-  public Log4JAppenderToTCAppender addAppender(String loggerName, TCAppender appender) {
-    Log4JAppenderToTCAppender wrappedAppender = new Log4JAppenderToTCAppender(appender);
-    new TCLoggerImpl(loggerName).getLogger().addAppender(wrappedAppender);
-    return wrappedAppender;
-  }
-
-  private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
+  private static Logger[] createAllLoggerList(List<Logger> internalLoggers) {
     List<Logger> loggers = new ArrayList<Logger>();
     loggers.addAll(internalLoggers);
 //  do not add the customer logger anymore since it is covered by the "com" internal namespace
@@ -626,13 +538,6 @@ public class TCLoggingLog4J implements TCLoggingService {
     }
   }
 
-
-  // This method for use in tests only
-  public void closeFileAppender() {
-    if (delegateFileAppender != null) delegateFileAppender.close();
-  }
-
-  
   /**
    * This method will print the logging configurations being used by the logger.
    */
@@ -643,8 +548,8 @@ public class TCLoggingLog4J implements TCLoggingService {
   }
 
   @Override
-  public void setLogLocationAndType(URI location, int processType) {
-    setLogDirectory(new File(location), processType);
+  public void setLogLocationAndType(URI location) {
+    setLogDirectory(new File(location));
   }
 
   

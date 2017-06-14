@@ -47,8 +47,8 @@ public class TCLoggingTest extends TCTestCase {
   public static class LogWorker {
     public static void main(String[] args) {
       System.out.println("did logging");
-      TCLogging.setLogLocationAndType(new File(args[0]).toURI(), TCLogging.ProcessType.GENERIC);
-      TCLogger logger = TCLogging.getTestingLogger(LogWorker.class);
+      TCLogging.setLogLocationAndType(new File(args[0]).toURI());
+      TCLogger logger = TCLogging.getLogger(LogWorker.class);
       logger.info("Data for Logs");
     }
   }

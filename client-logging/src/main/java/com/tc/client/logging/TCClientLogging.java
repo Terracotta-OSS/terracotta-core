@@ -39,18 +39,8 @@ public class TCClientLogging implements TCLoggingService {
   }
 
   @Override
-  public TCLogger getTestingLogger(String name) {
-    return new TCLoggerClientSLF4J(LoggerFactory.getLogger("testing.logger." + name));
-  }
-
-  @Override
   public TCLogger getConsoleLogger() {
     return new TCLoggerClientSLF4J(LoggerFactory.getLogger("console.logger"));
-  }
-
-  @Override
-  public TCLogger getOperatorEventLogger() {
-    return new TCLoggerClientSLF4J(LoggerFactory.getLogger("operator.events"));
   }
 
   @Override
@@ -59,11 +49,6 @@ public class TCClientLogging implements TCLoggingService {
   }
 
   @Override
-  public TCLogger getCustomerLogger(String name) {
-    return new TCLoggerClientSLF4J(LoggerFactory.getLogger("customer.logger." + name));
-  }
-
-  @Override
-  public void setLogLocationAndType(URI location, int processType) {
+  public void setLogLocationAndType(URI location) {
   }
 }
