@@ -60,7 +60,6 @@
     <module>terracotta-kit</module>
     <module>terracotta</module>
     <module>client-runtime</module>
-    <module>client-logging</module>
     <module>galvan-support</module>
   </modules>
 

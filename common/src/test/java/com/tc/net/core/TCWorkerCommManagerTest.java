@@ -21,7 +21,6 @@ package com.tc.net.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.logging.LogLevels;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;

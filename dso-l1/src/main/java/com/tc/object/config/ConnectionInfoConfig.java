@@ -19,9 +19,9 @@
 package com.tc.object.config;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 
@@ -33,7 +33,7 @@ import java.util.Arrays;
  * Returns a {@link ConnectionInfo} array from the L2 data.
  */
 public class ConnectionInfoConfig {
-  static Logger consoleLogger = TCLogging.getConsoleLogger();
+  static Logger LOGGER = LoggerFactory.getLogger(ConnectionInfoConfig.class);
   private final ConnectionInfo[] connectionInfos;
 
   public ConnectionInfoConfig(L2Data[] l2sData) {
@@ -49,7 +49,7 @@ public class ConnectionInfoConfig {
 
     String serversProperty = System.getProperty("tc.server");
     if (serversProperty != null && (serversProperty = serversProperty.trim()) != null && serversProperty.length() > 0) {
-      consoleLogger.info("tc.server: " + serversProperty);
+      LOGGER.info("tc.server: " + serversProperty);
 
       String[] serverDescs = serversProperty.split(",");
       int count = serverDescs.length;
@@ -64,8 +64,8 @@ public class ConnectionInfoConfig {
           try {
             tsaPort = Integer.parseInt(serverDesc[1]);
           } catch (NumberFormatException nfe) {
-            consoleLogger.warn("Cannot parse port for tc.server element '" + serverDescs[i]
-                               + "'; Using default of 9410.");
+            LOGGER.warn("Cannot parse port for tc.server element '" + serverDescs[i]
+                        + "'; Using default of 9410.");
           }
         }
 

@@ -18,9 +18,6 @@
  */
 package com.tc.util.concurrent;
 
-import org.slf4j.LoggerFactory;
-
-import com.tc.logging.LogLevels;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 

@@ -18,8 +18,8 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tc.net.ClientID;
 import com.tc.object.msg.ClientHandshakeAckMessage;
@@ -50,7 +50,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     PAUSED, STARTING, RUNNING
   }
 
-  private static final Logger CONSOLE_LOGGER = TCLogging.getConsoleLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandshakeManagerImpl.class);
 
   private final ClientHandshakeCallback callBacks;
   private final boolean diagnostic;
@@ -116,9 +116,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.logger.debug("Sending handshake message");
     if (!handshakeMessage.send()) {
       if (handshakeMessage.getChannel().isConnected()) {
-        CONSOLE_LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
+        LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
       } else {
-        CONSOLE_LOGGER.info("handshake failed. channel not connected");
+        LOGGER.info("handshake failed. channel not connected");
       }
     }
   }
@@ -131,7 +131,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public void fireNodeError() {
     final String msg = "Reconnection was rejected from server. This client will never be able to join the cluster again.";
     logger.error(msg);
-    CONSOLE_LOGGER.error(msg);
+    LOGGER.error(msg);
     clusterEventsGun.fireNodeError();
   }
 
@@ -189,7 +189,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     if (check && !new VersionCompatibility().isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion))) {
       final String msg = "Client/Server versions are not compatible: Client Version: " + clientVersion + ", Server Version: "
                          + serverVersion + ".  Terminating client now.";
-      CONSOLE_LOGGER.error(msg);
+      LOGGER.error(msg);
       throw new IllegalStateException(msg);
     }
   }

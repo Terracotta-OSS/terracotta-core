@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -520,7 +519,7 @@ public class ClientConnectionEstablisher {
             }
           } catch (MaxConnectionsExceededException e) {
             String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-            TCLogging.getConsoleLogger().error(connInfo + e.getMessage());
+            cmt.getLogger().error(connInfo + e.getMessage());
             if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
             return;
           } catch (Throwable t) {

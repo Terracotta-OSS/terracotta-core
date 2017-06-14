@@ -19,8 +19,8 @@
 
 package com.tc.config.schema.setup;
 
-import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tc.net.core.SecurityInfo;
 import com.tc.security.PwProvider;
@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  */
 public class ClientConfigurationSetupManagerFactory {
 
-  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientConfigurationSetupManagerFactory.class);
   private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
   private final String[] args;
   private final List<String> stripeMemberUris;
@@ -64,7 +64,7 @@ public class ClientConfigurationSetupManagerFactory {
         ports[index] = port;
       } else {
         String errMsg = "Invalid configuration URL: " + stripeMemberUri;
-        consoleLogger.error(errMsg);
+        LOGGER.error(errMsg);
         throw new ConfigurationSetupException(errMsg);
       }
       index++;

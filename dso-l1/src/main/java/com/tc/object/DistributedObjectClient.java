@@ -138,7 +138,6 @@ import java.util.concurrent.TimeUnit;
 public class DistributedObjectClient implements TCClient {
 
   protected static final Logger DSO_LOGGER = LoggerFactory.getLogger(DistributedObjectClient.class);
-  private static final Logger CONSOLE_LOGGER = TCLogging.getConsoleLogger();
 
   private static final String                        L1VMShutdownHookName                = "L1 VM Shutdown Hook";
   
@@ -466,25 +465,22 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
-          CONSOLE_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
+          DSO_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
           clientStopped.wait(5000);
         } catch (final ConnectException e) {
-          CONSOLE_LOGGER.warn("Connection refused from server: " + e);
+          DSO_LOGGER.warn("Connection refused from server: " + e);
           clientStopped.wait(5000);
         } catch (final MaxConnectionsExceededException e) {
           DSO_LOGGER.error(e.getMessage());
-          CONSOLE_LOGGER.error(e.getMessage());
           throw new IllegalStateException(e.getMessage(), e);
         } catch (final CommStackMismatchException e) {
           DSO_LOGGER.error(e.getMessage());
-          CONSOLE_LOGGER.error(e.getMessage());
           throw new IllegalStateException(e.getMessage(), e);
         } catch (TransportHandshakeException handshake) {
           DSO_LOGGER.error(handshake.getMessage());
-          CONSOLE_LOGGER.error(handshake.getMessage());
           throw new IllegalStateException(handshake.getMessage(), handshake);
         } catch (final IOException ioe) {
-          CONSOLE_LOGGER.warn("IOException connecting to server: " + hostname + ":" + port + ". "
+          DSO_LOGGER.warn("IOException connecting to server: " + hostname + ":" + port + ". "
                               + ioe.getMessage());
           clientStopped.wait(5000);
         }
@@ -497,8 +493,7 @@ public class DistributedObjectClient implements TCClient {
     if (this.channel != null) {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
-      CONSOLE_LOGGER.info(infoMsg);
-//      DSO_LOGGER.info(infoMsg);
+      DSO_LOGGER.info(infoMsg);
     }
   }
 

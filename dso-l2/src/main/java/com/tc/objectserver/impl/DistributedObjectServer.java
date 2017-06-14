@@ -411,9 +411,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // perform the DSO network config verification
     final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
-
-    TCLogging.setLogLocationAndType(configSetupManager.commonl2Config().logsPath().toURI());
-    
     // verify user input host name, DEV-2293
     final String host = l2DSOConfig.host();
     final InetAddress ip = InetAddress.getByName(host);

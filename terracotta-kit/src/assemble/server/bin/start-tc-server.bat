@@ -87,7 +87,7 @@ if exist %TC_SERVER_DIR%\lib (
 REM todo do i still need to enable nullglob?
 REM $ENV{NULLGLOB} = 0;
 
-set CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%
+set CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%;%TC_SERVER_DIR%\lib
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 rem rmi.dgc.server.gcInterval is set as year to avoid system gc in case authentication is enabled
