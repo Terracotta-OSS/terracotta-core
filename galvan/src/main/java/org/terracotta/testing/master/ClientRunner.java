@@ -50,6 +50,7 @@ public class ClientRunner extends Thread {
   private VerboseOutputStream stderrLog;
   private AnyProcess process;
   private Listener listener;
+  private boolean initialized;
 
   public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, int debugPort, String clientClassName, List<String> extraArguments) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -101,6 +102,7 @@ public class ClientRunner extends Thread {
     
     // Start the process, passing back the pid.
     long thePid = startProcess();
+    notifyInitializationCompletion();
     // Report our PID.
     this.harnessLogger.output("PID: " + thePid);
     
@@ -131,6 +133,7 @@ public class ClientRunner extends Thread {
   public void forceTerminate() {
     // Force the process to terminate.
     // (if the process already terminated, this will have no effect).
+    waitForInitializationCompletion();
     this.process.destroyForcibly();
   }
   
@@ -223,6 +226,22 @@ public class ClientRunner extends Thread {
       command += " \"" + args[i] + "\"";
     }
     return command;
+  }
+
+
+  private synchronized void waitForInitializationCompletion() {
+    while (!this.initialized) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private synchronized void notifyInitializationCompletion() {
+    this.initialized = true;
+    this.notifyAll();
   }
 
 
