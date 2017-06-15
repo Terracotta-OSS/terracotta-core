@@ -37,8 +37,6 @@ public interface L2Config extends Config<Server> {
 
   BindPort tsaGroupPort();
 
-  BindPort managementPort();
-
   String host();
 
   String serverName();
