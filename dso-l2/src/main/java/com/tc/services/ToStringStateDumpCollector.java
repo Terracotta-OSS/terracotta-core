@@ -20,25 +20,24 @@ package com.tc.services;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.terracotta.entity.StateDumper;
-import static org.terracotta.entity.StateDumper.NAMESPACE_DELIMITER;
 
+import org.terracotta.entity.StateDumpCollector;
 /**
  *
  */
-public class ToStringStateDumper implements StateDumper {
+public class ToStringStateDumpCollector implements StateDumpCollector {
 
   private final StringBuilder builder = new StringBuilder();
-  private final Map<String, ToStringStateDumper> instances = new HashMap<>();
+  private final Map<String, ToStringStateDumpCollector> instances = new HashMap<>();
   private final Map<String, String> dumpState = new HashMap<>();
 
   private final String name;
 
-  public ToStringStateDumper(String name) {
+  public ToStringStateDumpCollector(String name) {
     this(name, null);
   }
 
-  public ToStringStateDumper(String name, ToStringStateDumper parent) {
+  public ToStringStateDumpCollector(String name, ToStringStateDumpCollector parent) {
     if(parent != null) {
       this.name = parent.getName() + NAMESPACE_DELIMITER + name;
     } else {
@@ -47,13 +46,13 @@ public class ToStringStateDumper implements StateDumper {
   }
 
   @Override
-  public StateDumper subStateDumper(String name) {
-    instances.putIfAbsent(name, new ToStringStateDumper(name, this));
+  public StateDumpCollector subStateDumpCollector(String name) {
+    instances.putIfAbsent(name, new ToStringStateDumpCollector(name, this));
     return instances.get(name);
   }
 
   @Override
-  public void dumpState(String key, String value) {
+  public void addState(String key, String value) {
     dumpState.put(key, value);
   }
 
@@ -70,7 +69,7 @@ public class ToStringStateDumper implements StateDumper {
       }
     }
 
-    for (ToStringStateDumper substate : instances.values()) {
+    for (ToStringStateDumpCollector substate : instances.values()) {
       substate.logState();
       builder.append(substate.toString());
     }

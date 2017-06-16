@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.StateDumper;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.exception.EntityException;
 
 
@@ -118,8 +118,8 @@ public class PlatformEntity implements ManagedEntity {
   }
  
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
-    stateDumper.dumpState(getID().toString(), "platform entity");
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState(getID().toString(), "platform entity");
   }
 
   @Override

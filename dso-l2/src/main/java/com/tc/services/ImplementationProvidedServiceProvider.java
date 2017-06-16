@@ -24,6 +24,7 @@ import org.terracotta.entity.ServiceConfiguration;
 
 import com.tc.objectserver.api.ManagedEntity;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 
 
@@ -75,4 +76,9 @@ public interface ImplementationProvidedServiceProvider extends StateDumpable {
    * state.
    */
   void serverDidBecomeActive();
+
+  @Override
+  default void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState(this.getClass().getName(), this.toString());
+  }
 }

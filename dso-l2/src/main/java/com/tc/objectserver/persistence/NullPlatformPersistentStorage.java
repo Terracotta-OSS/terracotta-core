@@ -1,7 +1,7 @@
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
@@ -73,9 +73,9 @@ public class NullPlatformPersistentStorage implements IPlatformPersistence, Stat
     }
 
     @Override
-    public void dumpStateTo(StateDumper stateDumper) {
+    public void addStateTo(StateDumpCollector stateDumpCollector) {
         for (Map.Entry<String, Serializable> entry : nameToDataMap.entrySet()) {
-          stateDumper.dumpState("key", entry.getKey());
+          stateDumpCollector.addState("key", entry.getKey());
         }
     }
 }
