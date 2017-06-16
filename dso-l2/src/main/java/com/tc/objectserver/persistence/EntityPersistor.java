@@ -18,12 +18,15 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
 import com.tc.objectserver.persistence.EntityData.Key;
 import com.tc.objectserver.persistence.EntityData.Value;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.io.IOException;
@@ -40,6 +43,10 @@ import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
+
 import org.terracotta.exception.EntityException;
 import org.terracotta.persistence.IPlatformPersistence;
 
@@ -47,7 +54,7 @@ import org.terracotta.persistence.IPlatformPersistence;
 /**
  * Stores the information relating to the entities currently alive on the platform into persistent storage.
  */
-public class EntityPersistor implements PrettyPrintable {
+public class EntityPersistor implements StateDumpable {
   private static final Logger LOGGER = LoggerFactory.getLogger(EntityPersistor.class);
 
   private static final String ENTITIES_ALIVE_FILE_NAME = "entities_alive.map";
@@ -273,7 +280,6 @@ public class EntityPersistor implements PrettyPrintable {
     storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
 
-  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.indent().println(this.getClass().getName());
     if(entities != null) {
@@ -298,6 +304,33 @@ public class EntityPersistor implements PrettyPrintable {
       out.indent().indent().println("Next consumer ID = " + this.counters.get(COUNTERS_CONSUMER_ID));
     }
     return out;
+  }
+
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode componentState = mapper.createObjectNode();
+      ArrayNode entityNodes = mapper.createArrayNode();
+      for (Key key : entities.keySet()) {
+        entityNodes.add(key.className + ":" + key.entityName);
+      }
+      componentState.set("Entities", entityNodes);
+
+      ObjectNode clientJournals = mapper.createObjectNode();
+      for (Map.Entry<ClientID, List<EntityData.JournalEntry>> entry : entityLifeJournal.entrySet()) {
+        ArrayNode journals = mapper.createArrayNode();
+        for (JournalEntry journalEntry : entry.getValue()) {
+          journals.add(journalEntry.toString());
+        }
+        clientJournals.set(entry.getKey().toString(), journals);
+      }
+      componentState.set("Client Journal operations", clientJournals);
+
+      stateDumpCollector.addState(StateDumpCollector.JSON_STATE_KEY, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(componentState));
+    } catch (Exception e) {
+      stateDumpCollector.addState("exception", e.getLocalizedMessage());
+    }
   }
 
 

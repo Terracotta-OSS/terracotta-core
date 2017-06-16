@@ -18,12 +18,12 @@
  */
 package com.tc.async.api;
 
-import com.tc.text.PrettyPrintable;
+import org.terracotta.entity.StateDumpable;
 
 /**
  * @author steve
  */
-public interface Stage<EC> extends PrettyPrintable {
+public interface Stage<EC> extends StateDumpable {
 
   public void destroy();
 

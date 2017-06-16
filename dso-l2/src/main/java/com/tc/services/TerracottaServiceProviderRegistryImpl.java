@@ -29,7 +29,6 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.util.LinkedHashSet;
@@ -174,13 +173,4 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     }
     return hasProvider;
   }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    ToStringStateDumpCollector dump = new ToStringStateDumpCollector("services");
-    addStateTo(dump);
-    out.println(dump);
-    return out;
-  }
-
 }

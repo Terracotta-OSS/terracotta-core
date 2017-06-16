@@ -18,9 +18,11 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
@@ -32,8 +34,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.terracotta.persistence.IPlatformPersistence;
 
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 
-public class ClientStatePersistor implements PrettyPrintable {
+public class ClientStatePersistor implements StateDumpable {
   private static final String CLIENTS_MAP_FILE_NAME =  "clients_map.map";
   private static final String NEXT_CLIENT_ID_FILE_NAME =  "next_client_id.dat";
   
@@ -93,7 +97,6 @@ public class ClientStatePersistor implements PrettyPrintable {
     safeStoreClients();
   }
 
-  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.indent().println(this.getClass().getName());
 
@@ -112,6 +115,23 @@ public class ClientStatePersistor implements PrettyPrintable {
     } catch (IOException e) {
       // Not expected during run.
       Assert.fail(e.getLocalizedMessage());
+    }
+  }
+
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode componentState = mapper.createObjectNode();
+      ArrayNode clientNodes = mapper.createArrayNode();
+      for (ClientID clientID : clients.keySet()) {
+        clientNodes.add(clientID.toString());
+      }
+      componentState.set("Connected clients", clientNodes);
+      componentState.put("Next client id", clientIDSequence.current());
+      stateDumpCollector.addState(StateDumpCollector.JSON_STATE_KEY, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(componentState));
+    } catch (Exception e) {
+      stateDumpCollector.addState("exception", e.getLocalizedMessage());
     }
   }
 

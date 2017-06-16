@@ -20,14 +20,15 @@ package com.tc.objectserver.persistence;
 
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductID;
 
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
-public class Persistor implements PrettyPrintable {
+public class Persistor implements StateDumpable {
   private final IPlatformPersistence persistentStorage;
   private boolean wasDBClean;
 
@@ -105,16 +106,22 @@ public class Persistor implements PrettyPrintable {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Persistor State: " + getClass().getName()).flush();
-    if (!started) {
-      out.indent().print("PersistorImpl not started.").flush();
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    if(!started) {
+      stateDumpCollector.addState("status", "PersistorImpl not started");
     } else {
-      if(clusterStatePersistor != null) clusterStatePersistor.prettyPrint(out);
-      if(entityPersistor != null) entityPersistor.prettyPrint(out);
-      if(clientStatePersistor != null) clientStatePersistor.prettyPrint(out);
-      if(transactionOrderPersistor != null) transactionOrderPersistor.prettyPrint(out);
+      if(clusterStatePersistor != null) {
+        clusterStatePersistor.addStateTo(stateDumpCollector.subStateDumpCollector(this.clusterStatePersistor.getClass().getName()));
+      }
+      if(entityPersistor != null) {
+        entityPersistor.addStateTo(stateDumpCollector.subStateDumpCollector(this.entityPersistor.getClass().getName()));
+      }
+      if(clientStatePersistor != null) {
+        clientStatePersistor.addStateTo(stateDumpCollector.subStateDumpCollector(this.clientStatePersistor.getClass().getName()));
+      }
+      if(transactionOrderPersistor != null) {
+        transactionOrderPersistor.addStateTo(stateDumpCollector.subStateDumpCollector(this.transactionOrderPersistor.getClass().getName()));
+      }
     }
-    return out;
   }
 }

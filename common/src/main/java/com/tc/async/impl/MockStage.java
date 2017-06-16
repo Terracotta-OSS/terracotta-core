@@ -18,10 +18,11 @@
  */
 package com.tc.async.impl;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.text.PrettyPrinter;
 
 /**
  * @author orion
@@ -73,8 +74,7 @@ public class MockStage implements Stage {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return null;
+  public void addStateTo(final StateDumpCollector stateDumper) {
   }
 
 }

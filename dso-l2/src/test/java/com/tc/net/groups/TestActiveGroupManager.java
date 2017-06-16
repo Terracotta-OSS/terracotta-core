@@ -18,6 +18,8 @@
  */
 package com.tc.net.groups;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.async.api.Sink;
 import com.tc.config.NodesStore;
 import com.tc.net.NodeID;
@@ -145,6 +147,11 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
     }
   }
 
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+
+  }
+
   static class SendToMessage {
     private final NodeID       nodeID;
     private final GroupMessage groupMessage;
@@ -180,10 +187,5 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   public void closeMember(ServerID next) {
 
     //
-  }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    throw new UnsupportedOperationException();
   }
 }

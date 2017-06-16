@@ -27,7 +27,6 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.DumpHandlerStore;
 import com.tc.management.beans.TCDumper;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
@@ -60,8 +59,7 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                                               ServerClientHandshakeManager clientHandshakeManager,
                                                               GlobalServerStats serverStats,
                                                               ConnectionIDFactory connectionIdFactory,
-                                                              int maxStageSize, ChannelManager genericChannelManager,
-                                                              DumpHandlerStore dumpHandlerStore);
+                                                              int maxStageSize, ChannelManager genericChannelManager);
 
   L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, StateManager stateMgr,

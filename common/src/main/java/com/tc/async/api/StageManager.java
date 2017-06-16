@@ -18,6 +18,8 @@
  */
 package com.tc.async.api;
 
+import org.terracotta.entity.StateDumpable;
+
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.text.PrettyPrintable;
@@ -25,7 +27,7 @@ import com.tc.text.PrettyPrintable;
 import java.util.List;
 
 
-public interface StageManager extends PrettyPrintable {
+public interface StageManager extends PrettyPrintable, StateDumpable {
   public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize);
 /**
  * Start all the stages created on this stage manager.

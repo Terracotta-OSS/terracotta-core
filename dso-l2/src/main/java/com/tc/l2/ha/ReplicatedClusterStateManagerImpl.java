@@ -21,6 +21,8 @@ package com.tc.l2.ha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
@@ -36,8 +38,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
-    ConnectionIDFactoryListener, PrettyPrintable {
+    ConnectionIDFactoryListener {
 
   private static final Logger logger = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
 
@@ -221,12 +221,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   @Override
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(ReplicatedClusterStateManagerImpl.class.getSimpleName() + " [ ");
-    strBuilder.append(this.state).append(" ").append(this.stateManager);
-    strBuilder.append(" ]");
-    out.print(strBuilder.toString());
-    return out;
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    this.state.addStateTo(stateDumpCollector.subStateDumpCollector(this.state.getClass().getName()));
+    this.stateManager.addStateTo(stateDumpCollector.subStateDumpCollector(this.stateManager.getClass().getName()));
   }
 }

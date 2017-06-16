@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.locks;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.net.ClientID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -424,10 +426,9 @@ public final class ServerLockImpl extends AbstractServerLock {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out = super.prettyPrint(out);
-    out.print("isRecalled=" + isRecalled).flush();
-    return out;
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    super.addStateTo(stateDumpCollector.subStateDumpCollector("parent"));
+    stateDumpCollector.addState("isRecalled", String.valueOf(isRecalled));
   }
 
   @Override

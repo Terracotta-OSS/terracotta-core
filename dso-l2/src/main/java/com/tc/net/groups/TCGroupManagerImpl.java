@@ -21,6 +21,13 @@ package com.tc.net.groups;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.StateDumpCollector;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
@@ -829,24 +836,33 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    StringBuilder strBuffer = new StringBuilder();
-    strBuffer.append(TCGroupManagerImpl.class.getSimpleName()).append(" [ ");
-    strBuffer.append("Channel to NodeId Map: {");
-    for (Entry<MessageChannel, ServerID> entry : this.channelToNodeID.entrySet()) {
-      strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
-    }
-    strBuffer.append("}\n\t");
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode componentState = mapper.createObjectNode();
 
-    strBuffer.append("members: {");
-    for (Entry<ServerID, TCGroupMember> entry : this.members.entrySet()) {
-      strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
-    }
-    strBuffer.append("}\n\t");
+      ArrayNode channelToNodeIDNodes = mapper.createArrayNode();
+      for (Entry<MessageChannel, ServerID> entry : channelToNodeID.entrySet()) {
+        channelToNodeIDNodes.add(entry.getKey().toString() + " -> " + entry.getValue().toString());
+      }
+      componentState.set("Channel to NodeId Map", channelToNodeIDNodes);
 
-    strBuffer.append("zappedSet: {").append(this.zappedSet).append(" ").append("} ]");
-    out.indent().print(strBuffer.toString()).flush();
-    return out;
+      ArrayNode groupMembersNodes = mapper.createArrayNode();
+      for (Entry<ServerID, TCGroupMember> entry : members.entrySet()) {
+        groupMembersNodes.add(entry.getKey().toString() + " -> " + entry.getValue().toString());
+      }
+      componentState.set("Group Members", groupMembersNodes);
+
+      ArrayNode zappedNodes = mapper.createArrayNode();
+      for (NodeID nodeID : zappedSet) {
+        zappedNodes.add(nodeID.toString());
+      }
+      componentState.set("Zapped Nodes", zappedNodes);
+
+      stateDumpCollector.addState(StateDumpCollector.JSON_STATE_KEY, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(componentState));
+    } catch (JsonProcessingException e) {
+      stateDumpCollector.addState("exception", e.getMessage());
+    }
   }
 
   private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {

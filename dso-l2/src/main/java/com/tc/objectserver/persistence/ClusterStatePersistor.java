@@ -19,16 +19,18 @@
 package com.tc.objectserver.persistence;
 
 import com.tc.net.StripeID;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
 import com.tc.util.version.Version;
 import java.io.IOException;
 import java.util.HashMap;
+
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
-public class ClusterStatePersistor implements PrettyPrintable {
+public class ClusterStatePersistor implements StateDumpable {
   private static final String MAP_FILE_NAME = "ClusterStatePersistor.map";
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
@@ -107,17 +109,6 @@ public class ClusterStatePersistor implements PrettyPrintable {
     initialState = null;
   }
 
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().println(this.getClass().getName());
-    out.indent().indent().println("StripeID = " + getStripeID());
-    out.indent().indent().println("Version = " + getVersion());
-    out.indent().indent().println("Initial State = " + getInitialState());
-    out.indent().indent().println("Current State = " + getCurrentL2State());
-    out.indent().indent().println("isDBClean = " + isDBClean());
-    return out;
-  }
-
   // This isn't called from different threads but we can easily synchronize around the putAndStore.
   private synchronized void putAndStore(String key, String value) {
     this.map.put(key, value);
@@ -127,5 +118,14 @@ public class ClusterStatePersistor implements PrettyPrintable {
       // In general, we have no way of solving this problem so throw it.
       throw new RuntimeException("Failure storing ClusterStatePersistor map file", e);
     }
+  }
+
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("StripeID", String.valueOf(getStripeID()));
+    stateDumpCollector.addState("Version", String.valueOf(getVersion()));
+    stateDumpCollector.addState("Initial State", String.valueOf(getInitialState()));
+    stateDumpCollector.addState("Current State", String.valueOf(getCurrentL2State()));
+    stateDumpCollector.addState("isDBClean", String.valueOf(isDBClean()));
   }
 }

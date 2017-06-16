@@ -18,7 +18,6 @@
  */
 package com.tc.services;
 
-import com.tc.text.PrettyPrintable;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -30,7 +29,7 @@ import org.terracotta.entity.StateDumpable;
  *
  * @author twu
  */
-public interface TerracottaServiceProviderRegistry extends StateDumpable, PrettyPrintable {
+public interface TerracottaServiceProviderRegistry extends StateDumpable {
 
   /**
    * Initialize each of the service provider with platform configuration
