@@ -22,15 +22,17 @@ package com.tc.object;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
+import com.tc.util.Assert;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * @author jdis
  * Used to identify a specific acquire result of an Entity, on a client.  Note that this ID isn't a global value, but must be
  * considered within the context of a specific Entity type on a specific client.
  */
-public class ClientInstanceID implements TCSerializable<ClientInstanceID> {
+public class ClientInstanceID implements TCSerializable<ClientInstanceID>, Serializable {
   // We create this NULL_ID for cases such as CREATE/DELETE where an instance ID is still needed for the request but ideally
   // this would be removed in the future as those calls will never have instance IDs.
   public static final ClientInstanceID NULL_ID = new ClientInstanceID(0);

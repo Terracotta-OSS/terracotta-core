@@ -102,7 +102,7 @@ public class ManagedEntityImplTest {
   private ClientEntityStateManager clientEntityStateManager;
   private ITopologyEventCollector eventCollector;
   private ClientID nodeID;
-  private ClientDescriptor clientDescriptor;
+  private ClientDescriptorImpl clientDescriptor;
   private static ExecutorService exec;
   private static ExecutorService pth;
   private InvokeContextImpl invokeContext;
