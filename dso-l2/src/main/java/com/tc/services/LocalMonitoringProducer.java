@@ -11,7 +11,6 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
-import org.terracotta.entity.StateDumper;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
@@ -331,12 +330,6 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     newParents[parents.length] = nodeName;
     walkCacheChildren(newParents, node.children, walker);
   }
-
-  @Override
-  public void dumpStateTo(final StateDumper stateDumper) {
-    //TODO: implement this
-  }
-
 
   public static interface ActivePipeWrapper {
     public void addNode(long consumerID, String[] parents, String name, Serializable value);

@@ -20,32 +20,33 @@ package com.tc.services;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import org.terracotta.entity.StateDumper;
+
+import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * A Log based implementation of {@link StateDumper}, key-value mappings will be logged using {@link TCLogger}
+ * A Log based implementation of {@link StateDumpCollector}, key-value mappings will be logged using {@link TCLogger}
  *
  * @author vmad
  */
-public class LogBasedStateDumper implements StateDumper {
+public class LogBasedStateDumpCollector implements StateDumpCollector {
 
   private static final TCLogger LOGGER = TCLogging.getDumpLogger();
-  private final ConcurrentMap<String, LogBasedStateDumper> instances = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, LogBasedStateDumpCollector> instances = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, String> dumpState = new ConcurrentHashMap<>();
 
 
-  private final LogBasedStateDumper parent;
+  private final LogBasedStateDumpCollector parent;
   private final String name;
 
-  public LogBasedStateDumper(String name) {
+  public LogBasedStateDumpCollector(String name) {
     this(name, null);
   }
 
-  public LogBasedStateDumper(String name, LogBasedStateDumper parent) {
+  public LogBasedStateDumpCollector(String name, LogBasedStateDumpCollector parent) {
     if(parent != null) {
       this.name = parent.getName() + NAMESPACE_DELIMITER + name;
     } else {
@@ -55,13 +56,13 @@ public class LogBasedStateDumper implements StateDumper {
   }
 
   @Override
-  public StateDumper subStateDumper(String name) {
-    instances.putIfAbsent(name, new LogBasedStateDumper(name, this));
+  public StateDumpCollector subStateDumpCollector(String name) {
+    instances.putIfAbsent(name, new LogBasedStateDumpCollector(name, this));
     return instances.get(name);
   }
 
   @Override
-  public void dumpState(String key, String value) {
+  public void addState(String key, String value) {
     dumpState.put(key, value);
   }
 
@@ -78,8 +79,8 @@ public class LogBasedStateDumper implements StateDumper {
       }
     }
 
-    for (LogBasedStateDumper logBasedStateDumper : instances.values()) {
-      logBasedStateDumper.logState();
+    for (LogBasedStateDumpCollector logBasedStateDumpCollector : instances.values()) {
+      logBasedStateDumpCollector.logState();
     }
   }
 }

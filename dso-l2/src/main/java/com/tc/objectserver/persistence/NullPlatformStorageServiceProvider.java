@@ -5,8 +5,8 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
@@ -46,9 +46,9 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider, Stat
     }
 
     @Override
-    public void dumpStateTo(StateDumper stateDumper) {
+    public void addStateTo(StateDumpCollector stateDumpCollector) {
         for (Map.Entry<Long, NullPlatformPersistentStorage> entry : providers.entrySet()) {
-            entry.getValue().dumpStateTo(stateDumper.subStateDumper(String.valueOf(entry.getKey())));
+            entry.getValue().addStateTo(stateDumpCollector.subStateDumpCollector(String.valueOf(entry.getKey())));
         }
     }
 }

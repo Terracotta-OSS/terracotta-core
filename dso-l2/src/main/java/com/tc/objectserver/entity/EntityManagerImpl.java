@@ -24,7 +24,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.EntityDescriptor;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.StateDumper;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
@@ -34,7 +34,7 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.services.ToStringStateDumper;
+import com.tc.services.ToStringStateDumpCollector;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
@@ -314,24 +314,24 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
     // We want to dump a size, minimally acting as a heading for the section (in case there is nothing).
     Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
-    stateDumper.dumpState("EntityManagerImpl size", Integer.toString(entries.size()));
+    stateDumpCollector.addState("EntityManagerImpl size", Integer.toString(entries.size()));
     for (Map.Entry<EntityID, FetchID> entry : entries) {
       EntityID entityID = entry.getKey();
       try {
-        entityIndex.get(entry.getValue()).dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
+        entityIndex.get(entry.getValue()).addStateTo(stateDumpCollector.subStateDumpCollector(entityID.getClassName() + ":" + entityID.getEntityName()));
       } catch (Throwable t) {
-        stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()).dumpState("exception", t.getMessage());
+        stateDumpCollector.subStateDumpCollector(entityID.getClassName() + ":" + entityID.getEntityName()).addState("exception", t.getMessage());
       }
     }
   }
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    ToStringStateDumper dump = new ToStringStateDumper("entities");
-    dumpStateTo(dump);
+    ToStringStateDumpCollector dump = new ToStringStateDumpCollector("entities");
+    addStateTo(dump);
     return out.println(dump);
   }
 }

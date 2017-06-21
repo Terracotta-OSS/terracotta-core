@@ -56,12 +56,11 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.ExecutionStrategy;
-import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.StateDumper;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
@@ -369,14 +368,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
     try {
       if(activeServerEntity != null) {
-        activeServerEntity.dumpStateTo(stateDumper);
+        activeServerEntity.addStateTo(stateDumpCollector);
       }
 
       if(passiveServerEntity != null) {
-        passiveServerEntity.dumpStateTo(stateDumper);
+        passiveServerEntity.addStateTo(stateDumpCollector);
       }
     } catch (Throwable t) {
       logger.warn("unable to collect state for " + getID(), t);

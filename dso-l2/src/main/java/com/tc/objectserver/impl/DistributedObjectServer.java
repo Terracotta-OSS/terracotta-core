@@ -22,7 +22,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.objectserver.api.EntityManager;
-import com.tc.services.LogBasedStateDumper;
+import com.tc.services.LogBasedStateDumpCollector;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
 import com.tc.services.SingleThreadedTimer;
@@ -371,10 +371,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public void dump() {
     this.dumpHandler.dump();
     this.serverBuilder.dump();
-    LogBasedStateDumper stateDumper = new LogBasedStateDumper("platform");
-    this.entityManager.dumpStateTo(stateDumper.subStateDumper("entities"));
-    this.serviceRegistry.dumpStateTo(stateDumper.subStateDumper("services"));
-    stateDumper.logState();
+    LogBasedStateDumpCollector stateDumpCollector = new LogBasedStateDumpCollector("platform");
+    this.entityManager.addStateTo(stateDumpCollector.subStateDumpCollector("entities"));
+    this.serviceRegistry.addStateTo(stateDumpCollector.subStateDumpCollector("services"));
+    stateDumpCollector.logState();
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {

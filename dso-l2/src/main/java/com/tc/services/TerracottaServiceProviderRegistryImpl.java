@@ -34,8 +34,8 @@ import com.tc.util.Assert;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumper;
+
+import org.terracotta.entity.StateDumpCollector;
 
 
 public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceProviderRegistry {
@@ -142,20 +142,20 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
 
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
     for (ServiceProvider serviceProvider : serviceProviders) {
       try {
-        serviceProvider.dumpStateTo(stateDumper.subStateDumper(serviceProvider.getClass().getName()));
+        serviceProvider.addStateTo(stateDumpCollector.subStateDumpCollector(serviceProvider.getClass().getName()));
       } catch (Throwable t) {
-        stateDumper.subStateDumper(serviceProvider.getClass().getName()).dumpState("exception", t.getMessage());
+        stateDumpCollector.subStateDumpCollector(serviceProvider.getClass().getName()).addState("exception", t.getMessage());
       }
     }
 
     for (ImplementationProvidedServiceProvider implementationProvidedServiceProvider : implementationProvidedServiceProviders) {
       try {
-        implementationProvidedServiceProvider.dumpStateTo(stateDumper.subStateDumper(implementationProvidedServiceProvider.getClass().getName()));
+        implementationProvidedServiceProvider.addStateTo(stateDumpCollector.subStateDumpCollector(implementationProvidedServiceProvider.getClass().getName()));
       } catch (Throwable t) {
-        stateDumper.subStateDumper(implementationProvidedServiceProvider.getClass().getName()).dumpState("exception", t.getMessage());
+        stateDumpCollector.subStateDumpCollector(implementationProvidedServiceProvider.getClass().getName()).addState("exception", t.getMessage());
       }
     }
   }
@@ -176,8 +176,8 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    ToStringStateDumper dump = new ToStringStateDumper("services");
-    dumpStateTo(dump);
+    ToStringStateDumpCollector dump = new ToStringStateDumpCollector("services");
+    addStateTo(dump);
     out.println(dump);
     return out;
   }

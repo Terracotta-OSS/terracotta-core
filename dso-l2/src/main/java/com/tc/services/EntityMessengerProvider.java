@@ -24,7 +24,6 @@ import java.util.Collections;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
-import org.terracotta.entity.StateDumper;
 
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
@@ -79,10 +78,5 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
   public void setMessageSink(Sink<VoltronEntityMessage> messageSink) {
     Assert.assertNotNull(messageSink);
     this.messageSink = messageSink;
-  }
-
-  @Override
-  public void dumpStateTo(final StateDumper stateDumper) {
-    //TODO: implement this
   }
 }
