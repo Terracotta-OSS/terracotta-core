@@ -21,6 +21,7 @@ package com.tc.net;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.Serializable;

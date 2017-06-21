@@ -8,7 +8,7 @@ public class InvokeContextImpl implements InvokeContext {
 
   public static InvokeContext NULL_CONTEXT=new InvokeContextImpl();
 
-  private final ClientDescriptor clientDescriptor;
+  private final ClientDescriptorImpl clientDescriptor;
   private final long oldestid;
   private final long currentId;
 
@@ -16,11 +16,11 @@ public class InvokeContextImpl implements InvokeContext {
     this(ClientDescriptorImpl.NULL_ID, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
   }
 
-  public InvokeContextImpl(ClientDescriptor descriptor) {
+  public InvokeContextImpl(ClientDescriptorImpl descriptor) {
     this(descriptor, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
   }
 
-  public InvokeContextImpl(ClientDescriptor descriptor, long oldestid, long currentId) {
+  public InvokeContextImpl(ClientDescriptorImpl descriptor, long oldestid, long currentId) {
     clientDescriptor = descriptor;
     this.oldestid = oldestid;
     this.currentId = currentId;
@@ -39,6 +39,11 @@ public class InvokeContextImpl implements InvokeContext {
   @Override
   public long getOldestTransactionId() {
     return oldestid;
+  }
+
+  @Override
+  public boolean isValidClientInformation() {
+    return oldestid >= 0 && currentId >= 0 && clientDescriptor.isValid();
   }
 
   @Override

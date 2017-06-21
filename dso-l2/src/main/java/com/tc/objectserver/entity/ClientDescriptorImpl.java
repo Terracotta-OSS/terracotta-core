@@ -36,14 +36,18 @@ public class ClientDescriptorImpl implements ClientDescriptor {
   // The specific node where the referenced instance lives.
   private final ClientID nodeID;
   private final ClientInstanceID clientInstance;
-  
+
   public ClientDescriptorImpl(ClientID nodeID, ClientInstanceID clientInstance) {
     Assert.assertNotNull(nodeID);
     Assert.assertNotNull(clientInstance);
     this.nodeID = nodeID;
     this.clientInstance = clientInstance;
   }
-  
+
+  public ClientDescriptorImpl() {
+    this(ClientID.NULL_ID, ClientInstanceID.NULL_ID);
+  }
+
   public ClientID getNodeID() {
     return this.nodeID;
   }
@@ -75,5 +79,9 @@ public class ClientDescriptorImpl implements ClientDescriptor {
           && this.clientInstance.equals(that.clientInstance);
     }
     return doesMatch;
+  }
+
+  public boolean isValid() {
+    return nodeID.toLong() >= 0 && clientInstance.getID() >= 0;
   }
 }
