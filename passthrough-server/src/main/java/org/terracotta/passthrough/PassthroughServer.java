@@ -20,7 +20,7 @@ package org.terracotta.passthrough;
 
 import com.tc.classloader.BuiltinService;
 import com.tc.classloader.PermanentEntity;
-import java.util.ArrayList;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +30,6 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
-import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceProvider;
@@ -68,7 +67,6 @@ public class PassthroughServer implements PassthroughDumper {
   // We also track various information for the restart case.
   private final List<EntityServerService<?, ?>> savedServerEntityServices;
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
-  private final List<ServiceProviderAndConfiguration> overrideServiceProviderData;
   private final Collection<Object> extendedConfigurationObjects;
   private final Map<Long, PassthroughConnection> savedClientConnections;
   
@@ -79,7 +77,6 @@ public class PassthroughServer implements PassthroughDumper {
     // Create the containers we will use for tracking the state we will need to repopulate on restart.
     this.savedServerEntityServices = new Vector<EntityServerService<?, ?>>();
     this.savedServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
-    this.overrideServiceProviderData = new Vector<ServiceProviderAndConfiguration>();
     this.extendedConfigurationObjects = new Vector<Object>();
     this.savedClientConnections = new HashMap<Long, PassthroughConnection>();
   }
@@ -200,29 +197,18 @@ public class PassthroughServer implements PassthroughDumper {
     this.pseudoConnection = internalConnectNewPseudoConnection();
     
     // Register built-in services.
-    registerBuiltInServices(pseudoConnection);
+    registerImplementationProvidedServices(pseudoConnection);
     
     findClasspathBuiltinServices();
-    // Install the user-created services.
-    internalInstallServiceProvider(false);
 
-    // Install the override service providers, if any, last in the list
-    // if any service provider was not previously installed for this type, this should still be installed
-    internalInstallServiceProvider(true);
+    // Install the user-created services.
+    internalInstallServiceProvider();
   }
 
-  private void internalInstallServiceProvider(boolean overrideFlag) {
-    final List<ServiceProviderAndConfiguration> fromList = (overrideFlag) ? this.overrideServiceProviderData :
-        this.savedServiceProviderData;
-    for (ServiceProviderAndConfiguration tuple : fromList) {
+  private void internalInstallServiceProvider() {
+      for (ServiceProviderAndConfiguration tuple : savedServiceProviderData) {
       try {
-        if (overrideFlag) {
-          this.serverProcess.registerOverrideServiceProvider(tuple.serviceProvider.getClass()
-              .newInstance(), tuple.providerConfiguration);
-        } else {
-          this.serverProcess.registerServiceProvider(tuple.serviceProvider.getClass()
-              .newInstance(), tuple.providerConfiguration);
-        }
+          serverProcess.registerServiceProvider(tuple.serviceProvider.getClass().newInstance(), tuple.providerConfiguration);
       } catch (IllegalAccessException a) {
         throw new RuntimeException(a);
       } catch (InstantiationException i) {
@@ -254,8 +240,13 @@ public class PassthroughServer implements PassthroughDumper {
     internalRegisterServiceProvider(serviceProvider, providerConfiguration);
   }
 
+  /**
+   *
+   * @deprecated Use registerServiceProvider instead. There are no overrides.
+   */
+  @Deprecated
   public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
-    this.overrideServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
+    registerServiceProvider(serviceProvider, providerConfiguration);
   }
 
   public void registerExtendedConfiguration(Object extendedConfigObject) {
@@ -340,7 +331,7 @@ public class PassthroughServer implements PassthroughDumper {
     }
   }
 
-  private void registerBuiltInServices(PassthroughConnection pseudoConnection) {
+  private void registerImplementationProvidedServices(PassthroughConnection pseudoConnection) {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
     this.serverProcess.registerImplementationProvidedServiceProvider(communicatorServiceProvider, null);
     PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess, pseudoConnection);
@@ -358,8 +349,22 @@ public class PassthroughServer implements PassthroughDumper {
           System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
         } else {
           // We want to initialize built-in providers with a null configuration.
-          this.serverProcess.registerServiceProvider(provider, null);
+          if (!hasConfigurationForServiceProvider(provider)) {
+            this.serverProcess.registerServiceProvider(provider, null);
+          }
         }
       }
+  }
+
+  private boolean hasConfigurationForServiceProvider(ServiceProvider provider) {
+    Class<? extends ServiceProvider> providerClass = provider.getClass();
+    for (ServiceProviderAndConfiguration configuredServiceProvider : savedServiceProviderData) {
+      Class<? extends ServiceProvider> existingServiceProviderClass = configuredServiceProvider.serviceProvider.getClass();
+      if (existingServiceProviderClass.equals(providerClass)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
