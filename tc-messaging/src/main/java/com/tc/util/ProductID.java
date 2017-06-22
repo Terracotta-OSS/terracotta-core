@@ -23,16 +23,18 @@ package com.tc.util;
  * @author tim
  */
 public enum ProductID {
-  DIAGNOSTIC(true, false, false), STRIPE(false, true, true), SERVER(true, false, true);
+  DIAGNOSTIC(true, false, false, false), STRIPE(false, true, true, false), SERVER(true, false, true, false), PERMANENT(false, true, true, true);
 
   private final boolean internal;
   private final boolean reconnect;
   private final boolean redirect;
+  private final boolean permanent;
 
-  ProductID(boolean internal, boolean reconnect, boolean redirect) {
+  ProductID(boolean internal, boolean reconnect, boolean redirect, boolean permanent) {
     this.internal = internal;
     this.reconnect = reconnect;
     this.redirect = redirect;
+    this.permanent = permanent;
   }
 
   public boolean isInternal() {
@@ -45,6 +47,10 @@ public enum ProductID {
 
   public boolean isRedirectEnabled() {
     return redirect;
+  }
+  
+  public boolean isPermanent() {
+    return permanent;
   }
   
   public String toString() {
