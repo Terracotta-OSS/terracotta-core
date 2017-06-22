@@ -44,11 +44,13 @@ public class Persistor implements PrettyPrintable {
     this.entityPersistor = new EntityPersistor(persistentStorage);
   }
 
-  public void start() {
-    clientStatePersistor = new ClientStatePersistor(persistentStorage);
-    this.transactionOrderPersistor = new TransactionOrderPersistor(persistentStorage, this.clientStatePersistor.loadClientIDs());
+  public boolean start(boolean trackClients) {
+    IPlatformPersistence storage = trackClients ? persistentStorage : new NullPlatformPersistentStorage();
+    clientStatePersistor = new ClientStatePersistor(storage);
+    this.transactionOrderPersistor = new TransactionOrderPersistor(storage, this.clientStatePersistor.loadClientIDs());
     wasDBClean = this.clusterStatePersistor.isDBClean();
     started = true;
+    return wasDBClean;
   }
 
   public void close() {
@@ -89,10 +91,6 @@ public class Persistor implements PrettyPrintable {
     if (!started) {
       throw new IllegalStateException("Persistor is not yet started.");
     }
-  }
-
-  public boolean wasDBClean() {
-    return wasDBClean;
   }
 
   @Override
