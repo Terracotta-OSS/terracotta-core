@@ -42,7 +42,7 @@ public class ConnectionID {
 
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
   public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
-  private static final ProductID   DEFAULT_PRODUCT_ID = ProductID.STRIPE;
+  private static final ProductID   DEFAULT_PRODUCT_ID = ProductID.PERMANENT;
   public static final ConnectionID NULL_ID        = new ConnectionID(NULL_JVM_ID, ChannelID.NULL_ID.toLong(),
                                                                      NULL_SERVER_ID);
 

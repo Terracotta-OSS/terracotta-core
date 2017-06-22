@@ -26,6 +26,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
 import java.util.EnumSet;
@@ -75,7 +76,28 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   private void nextChannelId(long id) {
     when(sequence.next()).thenReturn(id);
   }
-
+  
+  public void testProductNegotiation() {
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
+    factory.activate(StripeID.NULL_ID, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.PERMANENT));
+    
+    Assert.assertEquals(ProductID.SERVER, cid.getProductId());
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.STRIPE));
+    
+    Assert.assertEquals(ProductID.SERVER, cid.getProductId());
+  }
+  public void testProductRefusal() {
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.noneOf(ProductID.class));
+    factory.activate(StripeID.NULL_ID, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.PERMANENT));
+    
+    Assert.assertEquals(ConnectionID.NULL_ID, cid);
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.STRIPE));
+    
+    Assert.assertEquals(ConnectionID.NULL_ID, cid);
+  }
+  
   private static MutableSequence createSequence() {
     MutableSequence sequence = mock(MutableSequence.class);
     return sequence;

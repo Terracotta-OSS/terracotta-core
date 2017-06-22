@@ -110,6 +110,11 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         this.groupManager.sendToWithSentCallback(this.target, messageToSend.asAbstractGroupMessage(), this.handleMessageSend);
       } catch (GroupException e) {
         LOGGER.warn("replication message failed", e);
+        //  message failed but we still need to reset state
+        if (this.handleMessageSend != null) {
+          this.handleMessageSend.run();
+        }
+        throw e;
       }
     }
   }

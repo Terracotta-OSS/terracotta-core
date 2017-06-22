@@ -63,7 +63,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private State state;
   private volatile boolean disconnected;
-  private volatile boolean serverIsPersistent = false;
   private volatile boolean isShutdown = false;
 
   private final ClusterInternalEventsGun clusterEventsGun;
@@ -164,17 +163,16 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
-    acknowledgeHandshake(handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
+    acknowledgeHandshake(handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
         handshakeAck.getServerVersion());
   }
 
-  protected synchronized void acknowledgeHandshake(boolean persistentServer, ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
+  protected synchronized void acknowledgeHandshake(ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
     this.logger.debug("Received Handshake ack");
     if (getState() != State.STARTING) {
       this.logger.warn("Ignoring handshake acknowledgement while " + getState());
     } else {
       checkClientServerVersionCompatibility(serverVersion);
-      this.serverIsPersistent = persistentServer;
 
       changeToRunning();
       notifyAll();
@@ -211,11 +209,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private void unpauseCallbacks() {
     this.callBacks.unpause();
-  }
-
-  @Override
-  public boolean serverIsPersistent() {
-    return this.serverIsPersistent;
   }
 
   @Override

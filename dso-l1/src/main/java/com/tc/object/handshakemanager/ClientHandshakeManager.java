@@ -49,11 +49,6 @@ public interface ClientHandshakeManager {
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck);
 
   /**
-   * @return True if the remote server is running in a persistent mode.
-   */
-  public boolean serverIsPersistent();
-
-  /**
    * Blocks the caller until an acknowledgement of the handshake has been received, changing the receiver into a running
    * state.
    */

@@ -77,7 +77,7 @@ public class MockChannelManager implements DSOChannelManager {
   }
 
   @Override
-  public void makeChannelActive(ClientID clientID, boolean persistent) {
+  public void makeChannelActive(ClientID clientID) {
     throw new UnsupportedOperationException();
   }
 

@@ -49,7 +49,7 @@ public interface DSOChannelManager {
 
   public Set<NodeID> getAllClientIDs();
 
-  public void makeChannelActive(ClientID clientID, boolean persistent);
+  public void makeChannelActive(ClientID clientID);
 
   public void makeChannelRefuse(ClientID clientID, String message);
 

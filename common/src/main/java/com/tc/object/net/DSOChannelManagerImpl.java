@@ -135,13 +135,13 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   @Override
-  public void makeChannelActive(ClientID clientID, boolean persistent) {
+  public void makeChannelActive(ClientID clientID) {
     try {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion);
+        ackMsg.initialize(getAllActiveClientIDs(), clientID, serverVersion);
         if (!ackMsg.send()) {
           logger.warn("Not sending handshake message to disconnected client: " + clientID);
         }

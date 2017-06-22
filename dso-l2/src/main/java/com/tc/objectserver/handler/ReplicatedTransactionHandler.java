@@ -192,8 +192,6 @@ public class ReplicatedTransactionHandler {
       try {
         cachedBatchAck.flushBatch();
       } catch (GroupException e) {
-        // We can't handle this here, but the next attempt to add to a batch will see the exception from this same
-        //  context.
         LOGGER.error("Exception flushing ack batch context", e);
       }
     }

@@ -30,17 +30,20 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
@@ -56,11 +59,20 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
-  private final Map<NodeID, GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity>> batchContexts = new HashMap<>();
+  private final Map<NodeID, GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity>> batchContexts = new ConcurrentHashMap<>();
+  private final Collection<Consumer<NodeID>> failureListeners = new CopyOnWriteArrayList<>();
   private Sink<NodeID> selfSink;
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
+  }
+  
+  public void addFailedToSendListener(Consumer<NodeID> failed) {
+    failureListeners.add(failed);
+  }
+  
+  private void notifySendFailure(NodeID node) {
+    failureListeners.forEach(c->c.accept(node));
   }
 
   public void setSelfSink(Sink<NodeID> sink) {
@@ -69,13 +81,17 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
 
   public void removePassive(NodeID dest) {
     // this is a flush of the replication channel.  shut it down and return;
-    filtering.remove(dest);
+    synchronized (this) {
+      filtering.remove(dest);
+    }
     this.batchContexts.remove(dest);
   }
 
   public void addPassive(NodeID dest, SyncReplicationActivity activity) {
     // Set up the sync state.
-    createAndRegisterSyncState(dest);
+    synchronized (this) {
+      createAndRegisterSyncState(dest);
+    }
     // Send the message.
     if (doSendActivity(dest, activity)) {
     // Try to flush the message.
@@ -113,11 +129,15 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   @Override
   public void handleEvent(NodeID nodeToFlush) throws EventHandlerException {
     try {
-      this.batchContexts.get(nodeToFlush).flushBatch();
+      GroupMessageBatchContext cxt = this.batchContexts.get(nodeToFlush);
+      if (cxt != null) {
+        cxt.flushBatch();
+      } else {
+        notifySendFailure(nodeToFlush);
+      }
     } catch (GroupException e) {
-      // We can't handle this here, but the next attempt to add to a batch will see the exception from this same
-      //  context.
       logger.error("Exception flushing batch context", e);
+      notifySendFailure(nodeToFlush);
     }
   }
 

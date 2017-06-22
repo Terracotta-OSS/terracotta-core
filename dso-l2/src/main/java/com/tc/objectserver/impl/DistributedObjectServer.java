@@ -242,6 +242,7 @@ import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
+import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ProductID;
@@ -256,6 +257,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.entity.BasicServiceConfiguration;
 
 
 /**
@@ -466,14 +468,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     serviceRegistry.registerImplementationProvided(communicatorService);
     
     // See if we need to add an in-memory service for IPlatformPersistence.
-    boolean serverIsRestartable = this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class);
-    if (!serverIsRestartable) {
+    if (!this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class)) {
       // In this case, we do still need to provide an implementation of IPlatformPersistence, backed by memory, so that entities can request a service which is as persistent as this server is.
       NullPlatformStorageServiceProvider nullPlatformStorageServiceProvider = new NullPlatformStorageServiceProvider();
       nullPlatformStorageServiceProvider.initialize(new NullPlatformStorageProviderConfiguration(), platformConfiguration);
       serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
-    logger.debug("persistent: " + serverIsRestartable);
     
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
@@ -496,10 +496,19 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     long platformConsumerID = 0;
     ServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
     
-    persistor = serverBuilder.createPersistor(platformServiceRegistry);
-    persistor.start();
+    Set<ProductID> capablities = EnumSet.allOf(ProductID.class);
+    
+    if (serviceRegistry.hasUserProvidedServiceProvider(ProductCapabilities.class)) {
+      try {
+        capablities = platformServiceRegistry.getService(new BasicServiceConfiguration<>(ProductCapabilities.class)).supportedClients();
+      } catch (ServiceException s) {
+        logger.warn("multiple service providers for " + ProductCapabilities.class.getName());
+      }
+    }
 
-    if(!persistor.wasDBClean()) {
+    persistor = serverBuilder.createPersistor(platformServiceRegistry);
+
+    while(!persistor.start(capablities.contains(ProductID.PERMANENT))) {
       // make sure peristor is not using any storage service
       persistor.close();
       // Log that that the state was not clean so we are going to clear all service provider state.
@@ -507,7 +516,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       serviceRegistry.clearServiceProvidersState();
       // create the persistor once again as underlying storage service might have cleared its internal state
       persistor = serverBuilder.createPersistor(platformServiceRegistry);
-      persistor.start();
     }
 
     dumpHandler.registerForDump(new CallbackDumpAdapter(persistor));
@@ -561,7 +569,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                              true, 0L);
 
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
-    this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore, EnumSet.allOf(ProductID.class));
+    this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore, capablities);
 
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
@@ -678,7 +686,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                                  reconnectTimeout,
-                                                                                                 serverIsRestartable,
                                                                                                  consoleLogger);
     
     
@@ -701,9 +708,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     messengerProvider.setMessageSink(voltronMessageSink);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
-    if (serverIsRestartable) {
-      processTransactionHandler.loadExistingEntities();
-    }
+    processTransactionHandler.loadExistingEntities();
 
     final Stage<LockRequestMessage> requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE, LockRequestMessage.class, new RequestLockUnLockHandler(), 1, maxStageSize);
 

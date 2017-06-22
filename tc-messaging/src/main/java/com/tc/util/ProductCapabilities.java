@@ -16,22 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
-
-import com.tc.net.ClientID;
-import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.TCMessage;
+package com.tc.util;
 
 import java.util.Set;
 
-public interface ClientHandshakeAckMessage extends TCMessage {
-
-  public void initialize(Set<? extends NodeID> allNodes, ClientID thisNodeID, String serverVersion);
-
-  public ClientID[] getAllNodes();
-
-  public ClientID getThisNodeId();
-
-  public String getServerVersion();
-
+/**
+ *
+ */
+public interface ProductCapabilities {
+  Set<ProductID> supportedClients();
 }

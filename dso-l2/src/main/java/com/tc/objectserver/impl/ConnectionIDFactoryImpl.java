@@ -65,10 +65,22 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     // this is confusing but StripeID is being used as serverID.  When a passive transitions to 
     // active and allows reconnects, it expects the serverID to match which can only be the stripeID
     if (!supported.contains(productId)) {
-      if (productId == ProductID.STRIPE && supported.contains(ProductID.SERVER)) {
-        productId = ProductID.SERVER;
-      } else {
-        return ConnectionID.NULL_ID;
+      switch (productId) {
+        case PERMANENT:
+          if (supported.contains(ProductID.STRIPE)) {
+            productId = ProductID.STRIPE;
+            break;
+          }
+          //  fall through to next level if not supported
+        case STRIPE:
+          if (supported.contains(ProductID.SERVER)) {
+            productId = ProductID.SERVER;
+            break;
+          }
+          //  fall through to next level if not supported
+        case SERVER:
+          //  nothing supported, return the null id
+          return ConnectionID.NULL_ID;
       }
     }
     ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), null, null, productId);
