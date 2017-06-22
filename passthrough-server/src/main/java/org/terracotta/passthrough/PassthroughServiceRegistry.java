@@ -104,12 +104,12 @@ public class PassthroughServiceRegistry implements ServiceRegistry {
           if (rService != null) {
             throw new ServiceException("multiple services defined");
           } else {
-            return service;
+            rService = service;
           }
         }
       }
     }
-    return null;
+    return rService;
   }
 
   private <T> Collection<T> getExternals(ServiceConfiguration<T> configuration) {
