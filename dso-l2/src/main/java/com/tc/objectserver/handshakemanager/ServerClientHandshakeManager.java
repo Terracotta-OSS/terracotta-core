@@ -73,19 +73,17 @@ public class ServerClientHandshakeManager {
   private final DSOChannelManager        channelManager;
   private final TCLogger                 logger;
   private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
-  private final boolean                  persistent;
   private final TCLogger                 consoleLogger;
 
   public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
                                       StageManager stageManager, 
                                       Timer timer, long reconnectTimeout,
-                                      boolean persistent, TCLogger consoleLogger) {
+                                      TCLogger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
     this.stageManager = stageManager;
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
-    this.persistent = persistent;
     this.consoleLogger = consoleLogger;
     this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
   }
@@ -163,7 +161,7 @@ public class ServerClientHandshakeManager {
   public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
     ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
-    ack.initialize(false, Collections.emptySet(), clientID, ProductInfo.getInstance().version());
+    ack.initialize(Collections.emptySet(), clientID, ProductInfo.getInstance().version());
     ack.send();
   }  
 
@@ -172,7 +170,7 @@ public class ServerClientHandshakeManager {
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
-    this.channelManager.makeChannelActive(clientID, this.persistent);
+    this.channelManager.makeChannelActive(clientID);
   }
 
   public synchronized void notifyTimeout() {

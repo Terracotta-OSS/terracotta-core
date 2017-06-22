@@ -678,7 +678,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                            "Reconnect timer",
                                                                                                            true),
                                                                                                  reconnectTimeout,
-                                                                                                 serverIsRestartable,
                                                                                                  consoleLogger);
     
     

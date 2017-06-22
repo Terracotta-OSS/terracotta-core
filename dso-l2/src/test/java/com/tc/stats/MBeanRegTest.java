@@ -129,7 +129,7 @@ public class MBeanRegTest {
 
   @Test @Ignore // client tunneling is no longer valid
   public void testRemoveListenerOnDisconnect() throws Exception {
-    channelMgrMbean.makeChannelActive(clientId, false);
+    channelMgrMbean.makeChannelActive(clientId);
     channelMgrMbean.closeAll(Collections.singletonList(clientId));
     InOrder order = Mockito.inOrder(mbeanSvr);
 

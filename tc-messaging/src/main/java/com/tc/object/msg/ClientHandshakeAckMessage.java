@@ -26,9 +26,7 @@ import java.util.Set;
 
 public interface ClientHandshakeAckMessage extends TCMessage {
 
-  public boolean getPersistentServer();
-
-  public void initialize(boolean persistent, Set<? extends NodeID> allNodes, ClientID thisNodeID, String serverVersion);
+  public void initialize(Set<? extends NodeID> allNodes, ClientID thisNodeID, String serverVersion);
 
   public ClientID[] getAllNodes();
 

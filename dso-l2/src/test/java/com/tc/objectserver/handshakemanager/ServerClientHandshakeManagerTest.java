@@ -66,13 +66,12 @@ public class ServerClientHandshakeManagerTest {
     StageManager stageManager = mock(StageManager.class);
     Timer timer = mock(Timer.class);
     long reconnectTimeout = 1000;
-    boolean persistent = true;
     TCLogger consoleLogger = mock(TCLogger.class);
     voltronStage = mock(Stage.class);
     voltronSink = mock(Sink.class);
     when(voltronStage.getSink()).thenReturn(voltronSink);
     when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, stageManager, timer, reconnectTimeout, persistent, consoleLogger);
+    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, stageManager, timer, reconnectTimeout, consoleLogger);
   }
 
   @Test

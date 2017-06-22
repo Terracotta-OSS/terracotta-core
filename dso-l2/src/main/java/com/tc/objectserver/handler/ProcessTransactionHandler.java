@@ -51,9 +51,7 @@ import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
-import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
 

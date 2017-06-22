@@ -105,9 +105,6 @@ public class ClientShutdownManager {
     // open, but it can die before we start (or in the middle of) flushing the local work
     if (channel.isConnected()) { return false; }
 
-    // If we've connected to a persistent server, we should try to flush
-    if (handshakeManager.serverIsPersistent()) { return false; }
-
     // If we think there is more than one server out there, we should try to flush
     ConnectionInfoConfig connectionInfoItem = this.connectionComponents.createConnectionInfoConfigItem();
     ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
