@@ -20,6 +20,7 @@ package org.terracotta.passthrough;
 
 import com.tc.classloader.PermanentEntity;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.exception.EntityException;
@@ -192,12 +193,12 @@ public class PassthroughClusterControl implements IClusterControl {
     boolean isActive = true;
     boolean shouldStorageLoaded = false;
 
-    electedActive.start(isActive, shouldStorageLoaded);
+    electedActive.start(isActive, shouldStorageLoaded, Collections.<Long>emptySet());
     electedActive.addPermanentEntities();
 
     for (PassthroughServer passthroughServer : passthroughServers) {
       if(!electedActive.equals(passthroughServer)) {
-        passthroughServer.start(!isActive, shouldStorageLoaded);
+        passthroughServer.start(!isActive, shouldStorageLoaded, Collections.<Long>emptySet());
       }
     }
     attachPassivesToActive(electedActive);
@@ -239,15 +240,14 @@ public class PassthroughClusterControl implements IClusterControl {
     if(this.activeServer != null) {
       boolean isActive = false;
       boolean shouldStorageLoaded = false;
-      lastTerminatedServer.start(isActive, shouldStorageLoaded);
+      lastTerminatedServer.start(isActive, shouldStorageLoaded, Collections.<Long>emptySet());
       this.activeServer.attachDownstreamPassive(lastTerminatedServer);
     } else {
       boolean isActive = true;
       boolean shouldStorageLoaded = true;
-      lastTerminatedServer.start(isActive, shouldStorageLoaded);
-
-      attachPassivesToActive(lastTerminatedServer);
       Assert.assertTrue(null != this.mostRecentlyStoppedActiveServer);
+      lastTerminatedServer.start(isActive, shouldStorageLoaded, this.mostRecentlyStoppedActiveServer.getSavedClientConnections());
+      attachPassivesToActive(lastTerminatedServer);
       this.mostRecentlyStoppedActiveServer.connectSavedClientsTo(lastTerminatedServer);
       this.mostRecentlyStoppedActiveServer = null;
 

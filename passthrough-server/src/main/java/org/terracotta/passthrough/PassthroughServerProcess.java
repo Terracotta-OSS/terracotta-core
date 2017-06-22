@@ -155,7 +155,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   }
 
   @SuppressWarnings("unchecked")
-  public void start(boolean shouldLoadStorage) {
+  public void start(boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     // Make sure that we install the in-memory registry, if needed.
     boolean isStorageInstalled = false;
     for (ServiceProvider provider : this.serviceProviders) {
@@ -199,7 +199,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     
     // Load the transaction order.
-    this.transactionOrderManager = new PassthroughTransactionOrderManager(platformPersistence, shouldLoadStorage);
+    this.transactionOrderManager = new PassthroughTransactionOrderManager(platformPersistence, shouldLoadStorage, savedClientConnections);
     
     // Load the entities.
     for (long consumerID : this.persistedEntitiesByConsumerIDMap.keySet()) {
