@@ -251,7 +251,7 @@ public class ServerProcess {
     Map<String, String> eventMap = new HashMap<String, String>();
     eventMap.put("PID is", pidEventName);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
-    eventMap.put("console - Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
+    eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
     eventMap.put("Restarting the server", zapEventName);
     
     // We will attach the event stream to the stdout.

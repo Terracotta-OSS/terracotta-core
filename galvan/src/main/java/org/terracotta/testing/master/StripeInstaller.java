@@ -18,6 +18,11 @@ package org.terracotta.testing.master;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Vector;
 
@@ -59,8 +64,11 @@ public class StripeInstaller {
     String installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
     // Copy the extra jars this test needs into the new installation.
     FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
-    // Create the empty Log4J properties file to force the server to use the expected appender so we know the shape of text to read as events.
-    FileHelpers.touchEmptyFile(fileHelperLogger, installPath, ".tc.dev.log4j.properties");
+
+    //Copy a cutom logback configuration
+    Path serverPath = FileSystems.getDefault().getPath(installPath, "server", "lib", "logback-test.xml");
+    Files.copy(this.getClass().getResourceAsStream("/logback-test.xml"), serverPath);
+
     // Create the object representing this single installation and add it to the list for this stripe.
     ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), heapInM, debugPort);
     this.installedServers.add(installation);

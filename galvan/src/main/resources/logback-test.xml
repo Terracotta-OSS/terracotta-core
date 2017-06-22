@@ -1,0 +1,23 @@
+<configuration>
+
+  <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender">
+    <target>System.out</target>
+    <console>true</console>
+    <encoder>
+      <pattern>%d [%t] %p %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="SYSOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <encoder>
+      <pattern>%d [%t] %p %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="TC_BASE" />
+    <appender-ref ref="SYSOUT" />
+  </root>
+
+</configuration>
