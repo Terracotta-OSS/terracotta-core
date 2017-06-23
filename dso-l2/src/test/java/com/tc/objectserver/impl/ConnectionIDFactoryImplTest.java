@@ -30,11 +30,13 @@ import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
 import java.util.EnumSet;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.internal.matchers.CapturesArguments;
 
 /**
  * @author tim
@@ -96,6 +98,16 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.STRIPE));
     
     Assert.assertEquals(ConnectionID.NULL_ID, cid);
+  }
+  
+  public void testListenerGetsRightProductType() {
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getChannelID()).thenReturn(new ChannelID(1));
+    when(channel.getProductId()).thenReturn(ProductID.SERVER);
+    connectionIDFactory.channelRemoved(channel, true);
+    ArgumentCaptor<ConnectionID> cap = ArgumentCaptor.forClass(ConnectionID.class);
+    verify(listener).connectionIDDestroyed(cap.capture());
+    Assert.assertEquals(ProductID.SERVER, cap.getValue().getProductId());
   }
   
   private static MutableSequence createSequence() {
