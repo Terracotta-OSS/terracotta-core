@@ -23,9 +23,12 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.terracotta.connection.EndpointConnector;
+import com.terracotta.connection.EndpointConnectorImpl;
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -44,6 +47,8 @@ import org.mockito.Mockito;
 
 
 public class TerracottaEntityRefTest {
+  private static final EndpointConnector CONNECTOR = spy(new EndpointConnectorImpl());
+
   @Test
   /**
    * A VERY simple test to check that we can fetch an object and that the expected paths are called.
@@ -61,9 +66,10 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     Entity entity1 = testRef.fetchEntity(null);
     verify(mockClientEntityManager).fetchEntity(eq(new EntityID(Entity.class.getName(), "TEST")), anyLong(), any(ClientInstanceID.class), any(MessageCodec.class), any(Runnable.class));
+    verify(CONNECTOR).connect(mockTestEntityClientEndpoint, mockEntityClientService, null);
     Assert.assertNotNull(entity1);
     Assert.assertEquals(testEntity, entity1);
     entity1.close();
@@ -84,7 +90,7 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
     boolean didDestroy = testRef.destroy();
     Assert.assertTrue(didDestroy);
@@ -104,7 +110,7 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
     boolean didDestroy = testRef.destroy();
     Assert.assertFalse(didDestroy);

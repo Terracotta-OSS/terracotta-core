@@ -20,6 +20,8 @@
 package com.terracotta.connection.api;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.terracotta.connection.EndpointConnector;
+import com.terracotta.connection.EndpointConnectorImpl;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionService;
@@ -34,7 +36,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.connection.ConnectionPropertyNames;
 
 
 /**
@@ -46,9 +47,19 @@ import org.terracotta.connection.ConnectionPropertyNames;
 public class TerracottaConnectionService implements ConnectionService {
   private static final String SCHEME = "terracotta";
 
+  private final EndpointConnector endpointConnector;
+
   @Override
   public boolean handlesURI(URI uri) {
     return SCHEME.equals(uri.getScheme());
+  }
+
+  public TerracottaConnectionService() {
+    this(new EndpointConnectorImpl());
+  }
+
+  public TerracottaConnectionService(EndpointConnector endpointConnector) {
+    this.endpointConnector = endpointConnector;
   }
 
   @Override
@@ -94,7 +105,7 @@ public class TerracottaConnectionService implements ConnectionService {
       throw new ConnectionException(ie);
     }
 
-    return new TerracottaConnection(client.getClientEntityManager(), new Runnable() {
+    return new TerracottaConnection(client.getClientEntityManager(), endpointConnector, new Runnable() {
         public void run() {
           client.shutdown();
           }
