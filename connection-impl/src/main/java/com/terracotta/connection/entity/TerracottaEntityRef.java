@@ -19,6 +19,7 @@
 package com.terracotta.connection.entity;
 
 import com.tc.object.ExceptionUtils;
+import com.terracotta.connection.EndpointConnector;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientEndpoint;
@@ -50,6 +51,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
   private final static TCLogger logger = TCLogging.getLogger(TerracottaEntityRef.class);
   private final ClientEntityManager entityManager;
+  private final EndpointConnector endpointConnector;
   private final Class<T> type;
   private final long version;
   private final String name;
@@ -58,10 +60,11 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
   private final AtomicLong nextClientInstanceID;
 
-  public TerracottaEntityRef(ClientEntityManager entityManager, 
+  public TerracottaEntityRef(ClientEntityManager entityManager, EndpointConnector endpointConnector,
                              Class<T> type, long version, String name, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> entityClientService,
                              AtomicLong clientIds) {
     this.entityManager = entityManager;
+    this.endpointConnector = endpointConnector;
     this.type = type;
     this.version = version;
     this.name = name;
@@ -98,7 +101,8 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     if (endpoint == null) {
       Assert.assertNotNull(endpoint);
     }
-    return (T)entityClientService.create(endpoint, userData);
+
+    return (T) endpointConnector.connect(endpoint, entityClientService, userData);
   }
 
   @Override
