@@ -81,7 +81,7 @@ public class ClientStatePersistor implements PrettyPrintable {
   }
 
   public void deleteClientState(ClientID id) throws ClientNotFoundException {
-    if (!clients.remove(id)) {
+    if (clients.remove(id) == null) {
       throw new ClientNotFoundException();
     }
     safeStoreClients();
