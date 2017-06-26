@@ -161,7 +161,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    //
+    super.notifyTransportClosed(transport);
   }
 
   @Override

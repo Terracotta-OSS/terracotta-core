@@ -57,6 +57,9 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
+import com.tc.net.protocol.tcm.ChannelEvent;
+import com.tc.net.protocol.tcm.ChannelEventListener;
+import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -305,6 +308,20 @@ public class DistributedObjectClient implements TCClient {
                                                                        + socketConnectTimeout); }
     this.channel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
                                                                  sessionManager, socketConnectTimeout, this);
+    // add this listener so that the whole system is shutdown
+    // if the transport is closed from underneath.
+    //  this typically happens when the transport is disconnected and 
+    // reconnect is disabled
+    this.channel.addListener(new ChannelEventListener() {
+      @Override
+      public void notifyChannelEvent(ChannelEvent event) {
+        switch(event.getType()) {
+          case TRANSPORT_CLOSED_EVENT:
+          case TRANSPORT_RECONNECTION_REJECTED_EVENT:
+            shutdown();
+        }
+      }
+    });
 
     final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(this.channel);
     this.communicationStageManager.setLoggerProvider(cidLoggerProvider);
