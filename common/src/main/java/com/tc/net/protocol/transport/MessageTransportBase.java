@@ -290,7 +290,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
           status.reset();
         } else {
           status.reset();
-          getLogger().warn("closing down connection - " + event);
+          getLogger().debug("closing down connection - " + event);
           return;
         }
       }

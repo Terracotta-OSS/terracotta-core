@@ -108,9 +108,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public ChannelID getChannelID() {
     final ChannelStatus status = getStatus();
     synchronized (status) {
-      if (!status.isOpen()) {
-        logger.warn("Attempt to get the channel ID of an unopened channel - " + this.channelID);
-      }
       return this.channelID;
     }
   }
