@@ -70,6 +70,7 @@ import java.util.function.Predicate;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.MessageCodecException;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
@@ -372,7 +373,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
             (result) -> {
               serverEntityRequest.complete(result);
             }, (exception) -> {
-              if (exception.getCause() instanceof ReconnectionRejectedException) {
+              if (exception.getCause() instanceof ReconnectRejectedException) {
                 disconnectClientDueToFailure(sourceNodeID);
               } else {
                 serverEntityRequest.failure(exception);
