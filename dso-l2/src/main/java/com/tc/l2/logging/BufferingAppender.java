@@ -32,25 +32,25 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class BufferingAppender<E> extends ConsoleAppender<E> {
 
   private final Queue<E> buffer;
-  private boolean on;
-
+  private boolean console;
 
   public BufferingAppender() {
     this.buffer = new ConcurrentLinkedQueue<>();
-    this.on = true;
+  }
+
+  public void setConsole(boolean console) {
+    this.console = console;
   }
 
   @Override
   public void doAppend(E eventObject) {
+    if (console) {
+      super.doAppend(eventObject);
+    }
     buffer.add(eventObject);
-    super.doAppend(eventObject);
   }
 
-  public void stopAndSendContentsTo(Appender otherAppender) {
-    synchronized (this) {
-      on = false;
-    }
-
+  public void sendContentsTo(Appender otherAppender) {
     while (true) {
       E event = this.buffer.poll();
       if (event == null) break;

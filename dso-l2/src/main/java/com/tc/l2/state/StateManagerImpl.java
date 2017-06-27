@@ -562,9 +562,10 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void info(String message, boolean console) {
-    logger.info(message);
     if (console) {
       consoleLogger.info(message);
+    } else {
+      logger.info(message);
     }
   }
 
@@ -573,9 +574,10 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void warn(String message, boolean console) {
-    logger.warn(message);
     if (console) {
       consoleLogger.warn(message);
+    } else {
+      logger.warn(message);
     }
   }
 

@@ -91,17 +91,23 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public void debug(String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void debug(String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void debug(String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(s + this.lossyInfo, objects);
+    }
   }
 
   @Override
@@ -113,32 +119,42 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public boolean isDebugEnabled(Marker marker) {
-    return false;
+    return logger.isDebugEnabled(marker);
   }
 
   @Override
   public void debug(Marker marker, String s) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(marker, s + this.lossyInfo);
+    }
   }
 
   @Override
   public void debug(Marker marker, String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(marker, s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void debug(Marker marker, String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(marker, s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void debug(Marker marker, String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(marker, s + this.lossyInfo, objects);
+    }
   }
 
   @Override
   public void debug(Marker marker, String s, Throwable throwable) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.debug(marker, s + this.lossyInfo, throwable);
+    }
   }
 
   @Override
@@ -155,17 +171,23 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public void info(String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void info(String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void info(String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(s + this.lossyInfo, objects);
+    }
   }
 
   @Override
@@ -177,32 +199,42 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public boolean isInfoEnabled(Marker marker) {
-    return false;
+    return this.logger.isInfoEnabled(marker);
   }
 
   @Override
   public void info(Marker marker, String s) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(marker, s + this.lossyInfo);
+    }
   }
 
   @Override
   public void info(Marker marker, String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(marker, s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void info(Marker marker, String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(marker, s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void info(Marker marker, String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(marker, s + this.lossyInfo, objects);
+    }
   }
 
   @Override
   public void info(Marker marker, String s, Throwable throwable) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.info(marker, s + this.lossyInfo, throwable);
+    }
   }
 
   @Override
@@ -219,17 +251,23 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public void warn(String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void warn(String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(s + this.lossyInfo, objects);
+    }
   }
 
   @Override
   public void warn(String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
@@ -241,37 +279,47 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public boolean isWarnEnabled(Marker marker) {
-    return false;
+    return this.logger.isWarnEnabled(marker);
   }
 
   @Override
   public void warn(Marker marker, String s) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(marker, s + this.lossyInfo);
+    }
   }
 
   @Override
   public void warn(Marker marker, String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(marker, s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void warn(Marker marker, String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(marker, s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void warn(Marker marker, String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(marker, s + this.lossyInfo, objects);
+    }
   }
 
   @Override
   public void warn(Marker marker, String s, Throwable throwable) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.warn(marker, s + this.lossyInfo, throwable);
+    }
   }
 
   @Override
   public boolean isErrorEnabled() {
-    return false;
+    return this.logger.isErrorEnabled();
   }
 
   @Override
@@ -282,17 +330,17 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public void error(String s, Object o) {
-
+    this.logger.error(s, o);
   }
 
   @Override
   public void error(String s, Object o, Object o1) {
-
+    this.logger.error(s, o, o1);
   }
 
   @Override
   public void error(String s, Object... objects) {
-
+    this.logger.error(s, objects);
   }
 
   @Override
@@ -303,32 +351,32 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public boolean isErrorEnabled(Marker marker) {
-    return false;
+    return this.logger.isErrorEnabled(marker);
   }
 
   @Override
   public void error(Marker marker, String s) {
-
+    this.logger.error(marker, s);
   }
 
   @Override
   public void error(Marker marker, String s, Object o) {
-
+    this.logger.error(marker, s, o);
   }
 
   @Override
   public void error(Marker marker, String s, Object o, Object o1) {
-
+    this.logger.error(marker, s, o, o1);
   }
 
   @Override
   public void error(Marker marker, String s, Object... objects) {
-
+    this.logger.error(marker, s, objects);
   }
 
   @Override
   public void error(Marker marker, String s, Throwable throwable) {
-
+    this.logger.error(marker, s, throwable);
   }
 
   @Override
@@ -338,62 +386,82 @@ public class LossyTCLogger implements Logger {
 
   @Override
   public boolean isTraceEnabled() {
-    return false;
+    return this.logger.isTraceEnabled();
   }
 
   @Override
   public void trace(String s) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(s + this.lossyInfo);
+    }
   }
 
   @Override
   public void trace(String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void trace(String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void trace(String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(s + this.lossyInfo, objects);
+    }
   }
 
   @Override
   public void trace(String s, Throwable throwable) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(s + this.lossyInfo, throwable);
+    }
   }
 
   @Override
   public boolean isTraceEnabled(Marker marker) {
-    return false;
+    return this.logger.isTraceEnabled(marker);
   }
 
   @Override
   public void trace(Marker marker, String s) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(marker, s + this.lossyInfo);
+    }
   }
 
   @Override
   public void trace(Marker marker, String s, Object o) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(marker, s + this.lossyInfo, o);
+    }
   }
 
   @Override
   public void trace(Marker marker, String s, Object o, Object o1) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(marker, s + this.lossyInfo, o, o1);
+    }
   }
 
   @Override
   public void trace(Marker marker, String s, Object... objects) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(marker, s + this.lossyInfo, objects);
+    }
   }
 
   @Override
   public void trace(Marker marker, String s, Throwable throwable) {
-
+    if (this.decider.canLog(s)) {
+      this.logger.trace(marker, s + this.lossyInfo, throwable);
+    }
   }
 
   /**

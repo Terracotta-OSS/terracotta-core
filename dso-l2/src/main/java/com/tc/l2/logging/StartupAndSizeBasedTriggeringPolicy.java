@@ -9,7 +9,7 @@ public class StartupAndSizeBasedTriggeringPolicy<E> extends SizeBasedTriggeringP
     private final AtomicBoolean firstTime = new AtomicBoolean();
 
     public boolean isTriggeringEvent(final File activeFile, final E event) {
-        if (firstTime.compareAndSet(false, true) && activeFile != null && activeFile.length() > 0) {
+        if (firstTime.compareAndSet(false, true) && activeFile.length() > 0) {
             return true;
         }
         return super.isTriggeringEvent(activeFile, event);

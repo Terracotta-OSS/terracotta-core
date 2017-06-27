@@ -2,6 +2,7 @@
 
   <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender">
     <target>System.out</target>
+    <console>true</console>
     <encoder>
       <pattern>%d [%t] %p %c - %m%n</pattern>
     </encoder>
@@ -18,7 +19,7 @@
     <appender-ref ref="TC_BASE" />
   </root>
 
-  <logger name="org.terracotta.console" level="INFO"  additivity="false">
+  <logger name="org.terracotta.console" level="INFO">
     <appender-ref ref="STDOUT" />
   </logger>
 
