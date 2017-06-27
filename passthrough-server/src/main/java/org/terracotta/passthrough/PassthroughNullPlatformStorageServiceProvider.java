@@ -5,7 +5,6 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
-import org.terracotta.entity.StateDumper;
 import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.terracotta.entity.StateDumpCollector;
 
 
 /**
@@ -56,10 +56,5 @@ public class PassthroughNullPlatformStorageServiceProvider implements ServicePro
   @Override
   public synchronized void prepareForSynchronization() throws ServiceProviderCleanupException {
     providers.clear();
-  }
-
-  @Override
-  public void dumpStateTo(StateDumper stateDumper) {
-
   }
 }

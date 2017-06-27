@@ -97,7 +97,6 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     onClose.run();
   }
 
-  @Override
   public void didCloseUnexpectedly() {
     if (null != this.delegate) {
       this.delegate.didDisconnectUnexpectedly();
@@ -111,7 +110,6 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
     }
   }
 
-  @Override
   public byte[] getExtendedReconnectData() {
     byte[] toReturn = null;
     if (null != this.delegate) {
