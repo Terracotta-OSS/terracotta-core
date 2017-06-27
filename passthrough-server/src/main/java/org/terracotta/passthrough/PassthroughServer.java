@@ -22,10 +22,12 @@ import com.tc.classloader.BuiltinService;
 import com.tc.classloader.PermanentEntity;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -146,6 +148,10 @@ public class PassthroughServer implements PassthroughDumper {
   }
 
   public void start(boolean isActive, boolean shouldLoadStorage) {
+    start(isActive, shouldLoadStorage, Collections.<Long>emptySet());
+  }
+
+  public void start(boolean isActive, boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     this.isActive = isActive;
     // See if there is a monitoring service.
     // XXX: Currently, we do nothing to simulate reconnect after fail-over or restart, which should probably be addressed.
@@ -155,7 +161,7 @@ public class PassthroughServer implements PassthroughDumper {
     }
     this.hasStarted = true;
     bootstrapProcess(this.isActive);
-    this.serverProcess.start(shouldLoadStorage);
+    this.serverProcess.start(shouldLoadStorage, savedClientConnections);
     
     // If we are active, tell the monitoring system.
     if (this.isActive) {
@@ -318,6 +324,10 @@ public class PassthroughServer implements PassthroughDumper {
 
   public boolean isRunningProcess(PassthroughServerProcess victim) {
     return (this.serverProcess == victim);
+  }
+
+  public Set<Long> getSavedClientConnections() {
+    return savedClientConnections != null ? Collections.unmodifiableSet(savedClientConnections.keySet()) : Collections.<Long>emptySet();
   }
 
 

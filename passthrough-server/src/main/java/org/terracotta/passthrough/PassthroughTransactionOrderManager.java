@@ -20,66 +20,40 @@ package org.terracotta.passthrough;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class PassthroughTransactionOrderManager {
-  private static final String TRANSACTION_ORDER_FILE_NAME = "transaction_order.map";
-
   private final IPlatformPersistence platformPersistence;
 
-  // We will index this at 0 to get the actual list - only map types provided.
-  private HashMap<Long, List<ClientTransaction>> transactionOrderMap;
+  private List<ClientTransaction> clientTransactionList;
+  private long receivedTransactionCount;
   
   // This map is only available while handling re-sends.
   private Map<ClientTransaction, PassthroughMessageContainer> collectedResends;
 
-  @SuppressWarnings({ "unchecked" })
-  public PassthroughTransactionOrderManager(IPlatformPersistence platformPersistence, boolean shouldLoadStorage) {
+  public PassthroughTransactionOrderManager(IPlatformPersistence platformPersistence, boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     this.platformPersistence = platformPersistence;
-    try {
-      HashMap<Long, List<ClientTransaction>> loadedMap = (HashMap<Long, List<ClientTransaction>>) (shouldLoadStorage ? this.platformPersistence.loadDataElement(TRANSACTION_ORDER_FILE_NAME) : null);
-      if (null == loadedMap) {
-        loadedMap = new HashMap<Long, List<ClientTransaction>>();
-      }
-      this.transactionOrderMap = loadedMap;
-    } catch (IOException e) {
-      Assert.unexpected(e);
-    }
+    buildClientTransactionList(savedClientConnections, shouldLoadStorage);
   }
 
   public void updateTracking(long connectionID, long transactionID, long oldestIDOnConnection) {
-    List<ClientTransaction> oldList = this.transactionOrderMap.get(0L);
-    List<ClientTransaction> newList = new Vector<ClientTransaction>();
-    
-    if (null != oldList) {
-      for (ClientTransaction transaction : oldList) {
-        if (transaction.connectionID == connectionID) {
-          if (transaction.transactionID >= oldestIDOnConnection) {
-            newList.add(transaction);
-          } else {
-            // This is old, so drop it.
-          }
-        } else {
-          newList.add(transaction);
-        }
-      }
-    }
-    ClientTransaction newTransaction = new ClientTransaction();
-    newTransaction.connectionID = connectionID;
-    newTransaction.transactionID = transactionID;
-    newList.add(newTransaction);
-    this.transactionOrderMap.put(0L, newList);
-    try {
-      this.platformPersistence.storeDataElement(TRANSACTION_ORDER_FILE_NAME, this.transactionOrderMap);
-    } catch (IOException e) {
-      Assert.unexpected(e);
-    }
+    receivedTransactionCount++;
+
+    IPlatformPersistence.SequenceTuple sequenceTuple = new IPlatformPersistence.SequenceTuple();
+    sequenceTuple.globalSequenceID = receivedTransactionCount;
+    sequenceTuple.localSequenceID = transactionID;
+
+    this.platformPersistence.fastStoreSequence(connectionID, sequenceTuple, oldestIDOnConnection);
   }
 
   public void startHandlingResends() {
@@ -97,16 +71,14 @@ public class PassthroughTransactionOrderManager {
 
   public List<PassthroughMessageContainer> stopHandlingResends() {
     Assert.assertTrue(null != this.collectedResends);
+    Assert.assertTrue(null != this.clientTransactionList);
     List<PassthroughMessageContainer> orderToExecute = new Vector<PassthroughMessageContainer>();
     
     // First, walk the transaction order list, extracting any matches from the collectedResends.
-    List<ClientTransaction> orderList = this.transactionOrderMap.get(0L);
-    if (null != orderList) {
-      for (ClientTransaction transaction : orderList) {
-        PassthroughMessageContainer container = this.collectedResends.remove(transaction);
-        if (null != container) {
-          orderToExecute.add(container);
-        }
+    for (ClientTransaction transaction : clientTransactionList) {
+      PassthroughMessageContainer container = this.collectedResends.remove(transaction);
+      if (null != container) {
+        orderToExecute.add(container);
       }
     }
     
@@ -116,9 +88,36 @@ public class PassthroughTransactionOrderManager {
     }
     
     this.collectedResends = null;
+    this.clientTransactionList = null;
     return orderToExecute;
   }
 
+  private void buildClientTransactionList(Set<Long> savedClientConnections, boolean shouldLoadStorage) {
+    if(shouldLoadStorage) {
+      TreeMap<Long, ClientTransaction> sortMap = new TreeMap<Long, ClientTransaction>();
+      for (long clientID : savedClientConnections) {
+        List<IPlatformPersistence.SequenceTuple> transactions = null;
+        try {
+          transactions = this.platformPersistence.loadSequence(clientID);
+        } catch (IOException e) {
+          Assert.unexpected(e);
+        }
+        if (transactions != null) {
+          for (IPlatformPersistence.SequenceTuple tuple : transactions) {
+            ClientTransaction transaction = new ClientTransaction();
+            transaction.connectionID = clientID;
+            transaction.transactionID = tuple.localSequenceID;
+            sortMap.put(tuple.globalSequenceID, transaction);
+          }
+        }
+      }
+      clientTransactionList = Collections.unmodifiableList(new ArrayList<ClientTransaction>(sortMap.values()));
+      receivedTransactionCount = sortMap.size() != 0 ? sortMap.lastKey() : new Long(0L);
+    } else {
+      clientTransactionList = Collections.emptyList();
+      receivedTransactionCount = 0L;
+    }
+  }
 
   private static class ClientTransaction implements Serializable {
     private static final long serialVersionUID = 1L;
