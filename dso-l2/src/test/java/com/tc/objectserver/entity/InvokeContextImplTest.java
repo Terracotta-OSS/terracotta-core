@@ -25,7 +25,7 @@ public class InvokeContextImplTest {
     ctx = new InvokeContextImpl(new ClientDescriptorImpl(), -1, -1);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
     ctx = new InvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), -1, 2);
-    Assert.assertThat(ctx.isValidClientInformation(), is(false));
+    Assert.assertThat(ctx.isValidClientInformation(), is(true));
     ctx = new InvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
   }
