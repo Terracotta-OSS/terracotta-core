@@ -211,7 +211,6 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
   }
 
-  @Override
   public byte[] getExtendedReconnectData() {
     // TODO:  Determine if we need to limit anything here on closed.  The call can come from another thread so it may not
     // yet know that we are closed when the call originated.
@@ -236,7 +235,6 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     this.isOpen = false;
   }
 
-  @Override
   public void didCloseUnexpectedly() {
     // TODO:  Determine if we need to limit anything here on closed.  The call can come from another thread so it may not
     // yet know that we are closed when the call originated.

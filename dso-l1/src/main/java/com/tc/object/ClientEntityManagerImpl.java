@@ -406,7 +406,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throwClosedExceptionOnMessage(msg, "Connection closed under in-flight message");
     }
     // We also want to notify any end-points that they have been disconnected.
-    for(EntityClientEndpoint<?, ?> endpoint : this.objectStoreMap.values()) {
+    for(EntityClientEndpointImpl<?, ?> endpoint : this.objectStoreMap.values()) {
       try {
         endpoint.didCloseUnexpectedly();
       } catch (Throwable t) {
