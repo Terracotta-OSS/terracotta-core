@@ -67,6 +67,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 public class TCWorkerCommManagerTest extends TCTestCase {
@@ -301,14 +302,17 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testWorkerCommDistributionAfterReconnect() throws Exception {
     // comms manager with 3 worker comms
+    Properties props = new Properties();
+    TCPropertiesImpl
+                               .getProperties()
+                               .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY).addAllPropertiesTo(props);
+    props.list(System.out);
+    HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(1000, 1000, 1, "test server", false, 1, 1);
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                    new TCMessageRouterImpl(),
                                                                    getNetworkStackHarnessFactory(true),
                                                                    new NullConnectionPolicy(), 3,
-                                                                   new HealthCheckerConfigImpl(TCPropertiesImpl
-                                                                       .getProperties()
-                                                                       .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY),
-                                                                                               "Test Server"),
+                                                                   config,
                                                                    new ServerID(),
                                                                    new TransportHandshakeErrorNullHandler(),
                                                                    Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
@@ -470,6 +474,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
           total += ((TCCommImpl)communicationsManager.getConnectionManager()
               .getTcComm()).getWeightForWorkerComm(i);
         }
+        System.out.println("total weight " + total + " expected " + weight);
         return total == weight;
       }
     });

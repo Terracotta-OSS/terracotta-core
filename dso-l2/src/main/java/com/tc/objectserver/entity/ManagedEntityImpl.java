@@ -29,7 +29,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ReconnectionRejectedException;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -79,6 +78,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.exception.EntityServerException;
 
 
@@ -817,9 +817,12 @@ public class ManagedEntityImpl implements ManagedEntity {
 //   this is a reconnection, handle the extended reconnect data
           try {
             this.activeServerEntity.handleReconnect(descriptor, extendedData);
+          } catch (ReconnectRejectedException rejected) {
+            response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), rejected.getMessage(), rejected));
+            return;
           } catch (Exception e) {
 //  something happened during reconnection, force a disconnection, see ProcessTransactionHandler.disconnectClientDueToFailure for handling
-            response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), e.getMessage(), new ReconnectionRejectedException(e)));
+            response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), e.getMessage(), new ReconnectRejectedException(e.getMessage(), e)));
             return;
           }
         }

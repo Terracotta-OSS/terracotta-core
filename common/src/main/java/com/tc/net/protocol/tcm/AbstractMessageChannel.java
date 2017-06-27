@@ -245,6 +245,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
     // yeah, we know. We closed it.
+    fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_CLOSED_EVENT, AbstractMessageChannel.this));
     return;
   }
 

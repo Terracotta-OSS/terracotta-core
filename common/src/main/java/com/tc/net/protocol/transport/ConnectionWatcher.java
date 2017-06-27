@@ -41,7 +41,11 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
-    cce.asyncReconnect(cmt);
+    if (transport.getConnectionId().getProductId().isReconnectEnabled()) {
+      cce.asyncReconnect(cmt);
+    } else {
+      transport.close();
+    }
     target.notifyTransportDisconnected(transport, forcedDisconnect);
   }
 
