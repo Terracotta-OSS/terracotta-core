@@ -148,11 +148,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 //  add the ClientCommunicator builtin
       builtins.add(new ServiceProvider() {
         @Override
-        public void dumpStateTo(StateDumper stateDumper) {
-
-        }
-
-        @Override
         public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
           return true;
         }
@@ -274,16 +269,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     @Override
     public void close() {
       PassthroughStripe.this.connectCountMap.put(this.entityName, PassthroughStripe.this.connectCountMap.get(this.entityName).intValue() - 1);
-    }
-
-    @Override
-    public byte[] getExtendedReconnectData() {
-      return new byte[0];
-    }
-
-    @Override
-    public void didCloseUnexpectedly() {
-      Assert.fail("Not expecting this close");
     }
 
     @Override

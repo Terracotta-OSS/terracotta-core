@@ -28,4 +28,11 @@ public class PassThroughServerInvokeContext implements InvokeContext {
   public long getOldestTransactionId() {
     return oldest;
   }
+
+  @Override
+  public boolean isValidClientInformation() {
+    return current >= 0;
+  }
+  
+  
 }

@@ -201,18 +201,6 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     // In a real implementation, this is where a call to the PlatformService, to clean up, would be.
   }
 
-  @Override
-  public byte[] getExtendedReconnectData() {
-    // This should never be called since there is no reconnect.
-    Assert.fail("Reconnect not supported");
-    return null;
-  }
-
-  @Override
-  public void didCloseUnexpectedly() {
-    Assert.fail("Not expecting this close");
-  }
-
   private void checkEndpointOpen() {
     if (!this.isOpen) {
       throw new IllegalStateException("Endpoint closed");
