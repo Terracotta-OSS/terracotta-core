@@ -43,7 +43,7 @@ public class InvokeContextImpl implements InvokeContext {
 
   @Override
   public boolean isValidClientInformation() {
-    return oldestid >= 0 && currentId >= 0 && clientDescriptor.isValid();
+    return currentId >= 0 && clientDescriptor.isValid();
   }
 
   @Override
