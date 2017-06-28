@@ -58,6 +58,7 @@ public class PassthroughConnection implements Connection {
   private final Map<Long, PassthroughEntityClientEndpoint<?, ?>> localEndpoints;
   private final Runnable onClose;
   private final long uniqueConnectionID;
+  private final PassthroughEndpointConnector endpointConnector;
   
   // ivars related to message passing and client thread.
   private boolean isRunning;
@@ -73,8 +74,11 @@ public class PassthroughConnection implements Connection {
   // This is only used during reconnect.
   private Map<Long, PassthroughWait> waitersToResend;
 
-
   public PassthroughConnection(String connectionName, String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices, Runnable onClose, long uniqueConnectionID) {
+    this(connectionName, readerThreadName, serverProcess, entityClientServices, onClose, uniqueConnectionID, new PassthroughEndpointConnectorImpl());
+  }
+
+  public PassthroughConnection(String connectionName, String readerThreadName, PassthroughServerProcess serverProcess, List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices, Runnable onClose, long uniqueConnectionID, PassthroughEndpointConnector endpointConnector) {
     this.connectionName = connectionName;
     this.uuid = java.util.UUID.randomUUID().toString();
     
@@ -84,6 +88,7 @@ public class PassthroughConnection implements Connection {
     this.localEndpoints = new HashMap<Long, PassthroughEntityClientEndpoint<?, ?>>();
     this.onClose = onClose;
     this.uniqueConnectionID = uniqueConnectionID;
+    this.endpointConnector = endpointConnector;
     
     this.isRunning = true;
     this.clientThread = new Thread(new Runnable() {
@@ -184,7 +189,7 @@ public class PassthroughConnection implements Connection {
     };
     PassthroughEntityClientEndpoint<M, R> endpoint = new PassthroughEntityClientEndpoint<M, R>(this, cls, name, clientInstanceID, config, service.getMessageCodec(), onClose);
     this.localEndpoints.put(clientInstanceID, endpoint);
-    return service.create(endpoint, userData);
+    return this.endpointConnector.connect(endpoint, service, userData);
   }
 
   public synchronized void sendMessageToClient(PassthroughServerProcess sender, byte[] payload) {
