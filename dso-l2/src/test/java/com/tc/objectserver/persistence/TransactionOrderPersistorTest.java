@@ -22,6 +22,7 @@ import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
 
 import com.tc.test.TCTestCase;
+import com.tc.util.ProductID;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -39,8 +40,8 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage, Collections.emptySet());
     this.client1 = new ClientID(1);
     this.client2 = new ClientID(2);
-    this.orderPersistor.addTrackingForClient(client1);
-    this.orderPersistor.addTrackingForClient(client2);
+    this.orderPersistor.addTrackingForClient(client1, ProductID.PERMANENT);
+    this.orderPersistor.addTrackingForClient(client2, ProductID.PERMANENT);
   }
 
   /**

@@ -19,7 +19,6 @@
 package com.tc.client;
 
 import com.tc.lang.TCThreadGroup;
-import com.tc.util.ProductID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientBuilder;
 import com.tc.object.DistributedObjectClient;

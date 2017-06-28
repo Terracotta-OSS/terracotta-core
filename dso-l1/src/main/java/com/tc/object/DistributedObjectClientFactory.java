@@ -25,7 +25,6 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
-import com.tc.util.ProductID;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.net.core.security.TCSecurityManager;

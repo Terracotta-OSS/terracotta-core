@@ -22,6 +22,7 @@ import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.ProductID;
 
 import org.terracotta.persistence.IPlatformPersistence;
 
@@ -45,9 +46,19 @@ public class Persistor implements PrettyPrintable {
   }
 
   public boolean start(boolean trackClients) {
-    IPlatformPersistence storage = trackClients ? persistentStorage : new NullPlatformPersistentStorage();
-    clientStatePersistor = new ClientStatePersistor(storage);
-    this.transactionOrderPersistor = new TransactionOrderPersistor(storage, this.clientStatePersistor.loadClientIDs());
+    clientStatePersistor = new ClientStatePersistor(persistentStorage);
+    this.transactionOrderPersistor = new TransactionOrderPersistor(persistentStorage, this.clientStatePersistor.loadClientIDs());
+    for (ClientID orphan : clientStatePersistor.loadOrphanClientIDs()) {
+      try {
+        removeClientState(orphan);
+      } catch (ClientNotFoundException notfound) {
+        // do nothing
+      }
+    }
+    //  remove any entries in the entity journal, clients aren't tracked
+    if (!trackClients) {
+      entityPersistor.clearEntityClientJournal();
+    }
     wasDBClean = this.clusterStatePersistor.isDBClean();
     started = true;
     return wasDBClean;
@@ -56,15 +67,15 @@ public class Persistor implements PrettyPrintable {
   public void close() {
   }
   
-  public void addClientState(ClientID node) {
-    clientStatePersistor.saveClientState(node);
+  public void addClientState(ClientID node, ProductID product) {
+    clientStatePersistor.saveClientState(node, product);
     entityPersistor.addTrackingForClient(node);
-    transactionOrderPersistor.addTrackingForClient(node);
+    transactionOrderPersistor.addTrackingForClient(node, product);
   }
   
   public void removeClientState(ClientID node) throws ClientNotFoundException {
     //  removing the client state.  threading doesn't matter here.  A client that is gone will never come back
-    //  code the underlying defensively to handle the fat that the client is gone
+    //  code the underlying defensively to handle the fact that the client is gone
     transactionOrderPersistor.removeTrackingForClient(node);
     entityPersistor.removeTrackingForClient(node);
     clientStatePersistor.deleteClientState(node);

@@ -127,7 +127,7 @@ public class ClusterStateImpl implements ClusterState {
     }
     connections.add(connID);
     if (connID.getProductId().isReconnectEnabled()) {
-      persistor.addClientState(connID.getClientID());
+      persistor.addClientState(connID.getClientID(), connID.getProductId());
     }
   }
 

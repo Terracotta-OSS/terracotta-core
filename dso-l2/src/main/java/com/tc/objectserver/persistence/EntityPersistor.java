@@ -97,6 +97,16 @@ public class EntityPersistor implements PrettyPrintable {
       throw new RuntimeException("Failure storing EntityPersistor map files", e);
     }
   }
+  
+  public synchronized void clearEntityClientJournal() {
+    this.entityLifeJournal.clear();
+    try {
+      this.storageManager.storeDataElement(JOURNAL_CONTAINER_FILE_NAME, null);
+    } catch (IOException e) {
+      // In general, we have no way of solving this problem so throw it.
+      throw new RuntimeException("Failure storing EntityPersistor map files", e);
+    }
+  }
 
   public synchronized Collection<EntityData.Value> loadEntityData() {
     return this.entities.values();

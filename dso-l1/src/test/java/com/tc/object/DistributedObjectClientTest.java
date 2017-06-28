@@ -159,7 +159,7 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(TCLogging.getLogger(DistributedObjectClient.class)));
-    ClientBuilder builder = new StandardClientBuilder(true) {
+    ClientBuilder builder = new StandardClientBuilder(ProductID.PERMANENT) {
       @Override
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
@@ -168,7 +168,7 @@ public class DistributedObjectClientTest extends TestCase {
         } catch (Exception exp) {
           
         }
-        when(channel.getProductId()).thenReturn(ProductID.STRIPE);
+        when(channel.getProductId()).thenReturn(ProductID.PERMANENT);
         return channel;
       }
     };
