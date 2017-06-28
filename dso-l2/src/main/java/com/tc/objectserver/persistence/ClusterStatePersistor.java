@@ -33,7 +33,6 @@ public class ClusterStatePersistor implements PrettyPrintable {
   private static final String DB_CLEAN_KEY = "dbclean";
   private static final String L2_STATE_KEY = "l2state";
   private static final String STRIPE_ID_KEY = "stripeid";
-  private static final String GROUP_STRIPE_ID_PREFIX = "stripeid-for-";
   private static final String VERSION_KEY = "version";
 
   private final IPlatformPersistence storageManager;

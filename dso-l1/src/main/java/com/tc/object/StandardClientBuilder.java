@@ -48,17 +48,17 @@ import java.util.Map;
 
 public class StandardClientBuilder implements ClientBuilder {
   
-  private final boolean isReconnectEnabled;
+  private final ProductID typeOfClient;
 
-  public StandardClientBuilder(boolean noreconnect) {
-    this.isReconnectEnabled = !noreconnect;
+  public StandardClientBuilder(ProductID product) {
+    this.typeOfClient = product;
   }
   
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
                                                          int socketConnectTimeout, TCClient client) {
-    return commMgr.createClientChannel(isReconnectEnabled ? ProductID.STRIPE : ProductID.SERVER, sessionProvider, socketConnectTimeout);
+    return commMgr.createClientChannel(typeOfClient, sessionProvider, socketConnectTimeout);
   }
 
   @Override

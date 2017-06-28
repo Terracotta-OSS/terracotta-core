@@ -23,11 +23,13 @@ import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
@@ -63,16 +65,20 @@ public class ClientStatePersistor implements PrettyPrintable {
     return clientIDSequence;
   }
 
+  public Set<ClientID> loadOrphanClientIDs() {
+    return clients.entrySet().stream().filter(entry->!entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
+  }
+  
   public Set<ClientID> loadClientIDs() {
-    return clients.keySet();
+    return clients.entrySet().stream().filter(entry->entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
   }
 
   public boolean containsClient(ClientID id) {
     return clients.containsKey(id);
   }
 
-  public boolean saveClientState(ClientID channelID) {
-    if (clients.put(channelID, true) == null) {
+  public boolean saveClientState(ClientID channelID, ProductID product) {
+    if (clients.put(channelID, product.isPermanent()) == null) {
       safeStoreClients();
       return true;
     } else {

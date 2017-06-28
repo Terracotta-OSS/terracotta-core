@@ -25,14 +25,20 @@ import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 
@@ -46,14 +52,14 @@ public class TransactionOrderPersistor implements PrettyPrintable {
   private Long receivedTransactionCount = new Long(0L);
     
   private List<ClientTransaction> globalList = null;
-  private final Set<Long> clientNodeIDs;
+  private final Set<ClientID> permNodeIDs = new HashSet<>();
+  private final Map<ClientID, List<ClientTransaction>> fastSequenceCache = new HashMap<>();
   
   public TransactionOrderPersistor(IPlatformPersistence storageManager, Set<ClientID> clients) {
     this.storageManager = storageManager;
     
-    this.clientNodeIDs = new HashSet<>();
     for (ClientID oneClient : clients) {
-      this.clientNodeIDs.add(oneClient.toLong());
+      this.permNodeIDs.add(oneClient);
     }
   }
 
@@ -78,35 +84,68 @@ public class TransactionOrderPersistor implements PrettyPrintable {
     this.receivedTransactionCount += 1;
     
     // We now pass this straight into the underlying storage.
-    if (this.clientNodeIDs.contains(source.toLong())) {
+    if (this.permNodeIDs.contains(source)) {
       // Create the new pair.
       IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
       transaction.localSequenceID = transactionID.toLong();
       transaction.globalSequenceID = this.receivedTransactionCount;
     
       return this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
+    } else {
+      ClientTransaction transaction = new ClientTransaction();
+      transaction.localTransactionID = transactionID.toLong();
+      transaction.globalTransactionID = this.receivedTransactionCount;
+      return fastStoreSequence(source, new ClientTransaction(), 0);
     }
-    return null;
   }
   
-  public synchronized void addTrackingForClient(ClientID source) {
+  synchronized void addTrackingForClient(ClientID source, ProductID product) {
     // Make sure we have tracking for this client.
-    this.clientNodeIDs.add(source.toLong());
+    if (product.isPermanent()) {
+      this.permNodeIDs.add(source);
+    } else {
+      this.fastSequenceCache.put(source, new LinkedList<>());
+    }
   }
 
   /**
    * Called when we no longer need to track transaction ordering information from source (presumably due to a disconnect).
    */
-  public synchronized void removeTrackingForClient(ClientID source) {
+  synchronized void removeTrackingForClient(ClientID source) {
     long sourceID = source.toLong();
     try {
-      this.storageManager.deleteSequence(sourceID);
+      if (this.permNodeIDs.remove(source)) {
+        this.storageManager.deleteSequence(sourceID);
+      } else {
+        fastSequenceCache.remove(source);
+      }
     } catch (IOException e) {
       Assert.fail(e.getLocalizedMessage());
     }
-    this.clientNodeIDs.remove(sourceID);
   }
 
+  private Future<Void> fastStoreSequence(ClientID sequenceIndex, ClientTransaction newEntry, long oldestValidSequenceID) {
+    List<ClientTransaction> sequence = fastSequenceCache.get(sequenceIndex);
+    if (sequence != null) {
+      if (!sequence.isEmpty()) {
+  //  exploiting the knowledge that sequences are always updated in an increasing fashion, as soon as the first
+  //  cleaning function fails, bail on the iteration
+        Iterator<ClientTransaction> tuple = sequence.iterator();
+        while (tuple.hasNext()) {
+          if (tuple.next().localTransactionID < oldestValidSequenceID) {
+            tuple.remove();
+          } else {
+            break;
+          }
+        }
+      }
+      sequence.add(newEntry);
+    } else {
+      // must be a client that will not reconnect
+    }
+    return CompletableFuture.completedFuture(null);
+  }
+    
   private static class ClientTransaction {
     public long clientID;
     public long localTransactionID;
@@ -142,25 +181,32 @@ public class TransactionOrderPersistor implements PrettyPrintable {
   private List<ClientTransaction> buildGlobalListIfNecessary() {
     if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
-      for (long clientID : this.clientNodeIDs) {
+      for (ClientID clientID : this.permNodeIDs) {
         List<IPlatformPersistence.SequenceTuple> transactions = null;
         try {
-          transactions = this.storageManager.loadSequence(clientID);
+          transactions = this.storageManager.loadSequence(clientID.toLong());
         } catch (IOException e) {
           Assert.fail(e.getLocalizedMessage());
         }
         if (transactions != null) {
           for (IPlatformPersistence.SequenceTuple tuple : transactions) {
             ClientTransaction transaction = new ClientTransaction();
-            transaction.clientID = clientID;
+            transaction.clientID = clientID.toLong();
             transaction.localTransactionID = tuple.localSequenceID;
             transaction.globalTransactionID = tuple.globalSequenceID;
             sortMap.put(tuple.globalSequenceID, transaction);
           }
         }
       }
+      for (List<ClientTransaction> all : this.fastSequenceCache.values()) {
+        if (all != null) {
+          for (ClientTransaction t : all) {
+            sortMap.put(t.globalTransactionID, t);
+          }
+        }
+      }
       globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
-      receivedTransactionCount = sortMap.size() != 0 ? sortMap.lastKey() : new Long(0L);
+      receivedTransactionCount = !sortMap.isEmpty() ? sortMap.lastKey() : 0L;
     }
     return globalList;
   }
@@ -189,15 +235,16 @@ public class TransactionOrderPersistor implements PrettyPrintable {
   /**
    * Clears all internal state.
    */
-  public void clearAllRecords() {
+  public synchronized  void clearAllRecords() {
     this.globalList = null;
-    for (long nodeID : clientNodeIDs) {
+    for (ClientID nodeID : this.permNodeIDs) {
       try {
-        this.storageManager.deleteSequence(nodeID);
+        this.storageManager.deleteSequence(nodeID.toLong());
       } catch (IOException e) {
         Assert.fail(e.getLocalizedMessage());
       }
     }
+    this.fastSequenceCache.clear();
   }
 
   /**
@@ -218,11 +265,11 @@ public class TransactionOrderPersistor implements PrettyPrintable {
       }
     }
 
-    if(clientNodeIDs != null && storageManager != null) {
-      for (Long clientNodeID : clientNodeIDs) {
+    if(this.permNodeIDs != null && storageManager != null) {
+      for (ClientID clientNodeID : permNodeIDs) {
         List<IPlatformPersistence.SequenceTuple> transactions = null;
         try {
-          transactions = this.storageManager.loadSequence(clientNodeID);
+          transactions = this.storageManager.loadSequence(clientNodeID.toLong());
         } catch (IOException e) {
           Assert.fail(e.getLocalizedMessage());
         }
@@ -231,6 +278,15 @@ public class TransactionOrderPersistor implements PrettyPrintable {
           for (IPlatformPersistence.SequenceTuple transaction : transactions) {
             out.indent().indent().indent()
                 .println("Global seq Id = " + transaction.localSequenceID + ", local seq id = " + transaction.localSequenceID);
+          }
+        }
+      }
+      for (Map.Entry<ClientID, List<ClientTransaction>> entry : fastSequenceCache.entrySet()) {
+        out.indent().indent().println("Persisted transaction order for client " + entry.getKey());
+        if (entry.getValue() != null) {
+          for (ClientTransaction transaction : entry.getValue()) {
+            out.indent().indent().indent()
+                .println("Global seq Id = " + transaction.localTransactionID + ", local seq id = " + transaction.globalTransactionID);
           }
         }
       }

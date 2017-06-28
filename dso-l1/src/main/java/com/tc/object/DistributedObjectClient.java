@@ -179,7 +179,7 @@ public class DistributedObjectClient implements TCClient {
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster) {
-    this(config, new StandardClientBuilder(true), threadGroup, connectionComponents, cluster, null,
+    this(config, new StandardClientBuilder(ProductID.PERMANENT), threadGroup, connectionComponents, cluster, null,
         UUID.NULL_ID.toString(), "");
   }
 

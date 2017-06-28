@@ -24,6 +24,7 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.object.StandardClientBuilder;
+import com.tc.util.ProductID;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Properties;
@@ -51,8 +52,10 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  // TODO: replace with ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT once API is released
+    ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
+
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-         new StandardClientBuilder(noreconnect), 
+         new StandardClientBuilder(product), 
          null,  // no security features
          new SecurityInfo(false, null),  // no security info
          props);
