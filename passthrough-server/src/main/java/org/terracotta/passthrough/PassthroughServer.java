@@ -111,7 +111,11 @@ public class PassthroughServer implements PassthroughDumper {
     this.entityClientServices.add(service);
   }
 
-  public synchronized PassthroughConnection connectNewClient(String connectionName) {
+  public PassthroughConnection connectNewClient(String connectionName) {
+    return connectNewClient(connectionName, new PassthroughEndpointConnectorImpl());
+  }
+
+  public synchronized PassthroughConnection connectNewClient(String connectionName, PassthroughEndpointConnector endpointConnector) {
     Assert.assertTrue(this.hasStarted);
     final long thisConnectionID = nextConnectionID.incrementAndGet();
     // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
@@ -128,7 +132,7 @@ public class PassthroughServer implements PassthroughDumper {
       }
     };
     String readerThreadName = "Client connection " + thisConnectionID;
-    PassthroughConnection connection = new PassthroughConnection(connectionName, readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
+    PassthroughConnection connection = new PassthroughConnection(connectionName, readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID, endpointConnector);
     this.serverProcess.connectConnection(connection, thisConnectionID);
     this.savedClientConnections.put(thisConnectionID, connection);
     return connection;
