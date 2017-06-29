@@ -18,9 +18,10 @@
  */
 package com.terracotta.diagnostic;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.StageManager;
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -71,7 +72,7 @@ public class DiagnosticClientBuilder implements ClientBuilder {
   }
 
   @Override
-  public ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
+  public ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                              ClientHandshakeMessageFactory chmf, 
                                                              SessionManager sessionManager,
                                                              ClusterInternalEventsGun clusterEventsGun, 

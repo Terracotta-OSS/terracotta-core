@@ -18,8 +18,6 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -55,13 +53,15 @@ import com.tc.util.ProductID;
 import java.net.InetAddress;
 import java.util.Collections;
 import org.junit.Ignore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO: Fix test
 @Ignore
 public class OOOReconnectTimeoutTest extends TCTestCase {
   //
 
-  TCLogger          logger               = TCLogging.getLogger(TCWorkerCommManager.class);
+  Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
   private final int L1_RECONNECT_TIMEOUT = 15000;
 
   private ClientMessageChannel createClientMsgCh() {

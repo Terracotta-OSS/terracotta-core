@@ -18,6 +18,9 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
@@ -28,8 +31,6 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -58,7 +59,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   
   private final Set<ClientID>  knownClients = new HashSet<>();
 
-  private static final TCLogger         logger = TCLogging.getLogger(ChannelLifeCycleHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(ChannelLifeCycleHandler.class);
   private final Sink<HydrateContext> hydrateSink;
   private final Sink<VoltronEntityMessage> processTransactionSink;
   private final Sink<ReplicationMessage> replicatedTransactionSink;

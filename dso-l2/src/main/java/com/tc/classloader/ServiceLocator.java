@@ -19,9 +19,10 @@
 
 package com.tc.classloader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.config.Directories;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -35,7 +36,7 @@ import java.util.*;
  */
 public class ServiceLocator {
 
-  private static final TCLogger LOG = TCLogging.getLogger(ServiceLocator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
 
   private static final String METAINFCONST = "META-INF/services/";
 

@@ -18,6 +18,8 @@
  */
 package com.tc.object.config.schema;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
@@ -25,8 +27,6 @@ import org.terracotta.config.TcConfig;
 
 import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 
 import java.io.File;
 
@@ -35,7 +35,7 @@ import java.io.File;
  * The standard implementation of {@link L2Config}.
  */
 public class L2ConfigObject implements L2Config {
-  private static final TCLogger logger = TCLogging.getLogger(L2ConfigObject.class);
+  private static final Logger logger = LoggerFactory.getLogger(L2ConfigObject.class);
   private static final String LOCALHOST = "localhost";
   public static final short DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT = 10;
   public static final short DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT = 20;

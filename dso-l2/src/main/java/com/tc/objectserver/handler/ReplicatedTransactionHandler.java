@@ -31,8 +31,6 @@ import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.msg.SyncReplicationActivity.ActivityType;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -66,6 +64,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.exception.EntityException;
 
@@ -73,8 +74,8 @@ import org.terracotta.exception.EntityException;
 public class ReplicatedTransactionHandler {
   private static final int DEFAULT_BATCH_LIMIT = 64;
   private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
-  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
-  private static final TCLogger LOGGER = TCLogging.getLogger(ReplicatedTransactionHandler.class);
+  private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ReplicatedTransactionHandler.class);
 
   private final EntityManager entityManager;
   private final Persistor persistor;

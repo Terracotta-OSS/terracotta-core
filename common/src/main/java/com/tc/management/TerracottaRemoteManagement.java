@@ -18,15 +18,16 @@
  */
 package com.tc.management;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Holder of the {@link RemoteManagement} instance.
  */
 public class TerracottaRemoteManagement {
 
-  private static final TCLogger LOGGER = TCLogging.getLogger(TerracottaRemoteManagement.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TerracottaRemoteManagement.class);
 
   private static volatile RemoteManagement remoteManagement;
 

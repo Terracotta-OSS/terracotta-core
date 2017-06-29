@@ -18,9 +18,10 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -41,7 +42,7 @@ import java.util.Collection;
  */
 public class RespondToRequestLockHandler extends AbstractEventHandler<LockResponseContext> {
   private DSOChannelManager channelManager;
-  private TCLogger          logger;
+  private Logger logger;
 
   @Override
   public void handleEvent(LockResponseContext lrc) {

@@ -18,8 +18,9 @@
  */
 package com.tc.bytes;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.Assert;
 import com.tc.util.ServiceUtil;
 import com.tc.util.VicariousThreadLocal;
@@ -43,7 +44,7 @@ public class TCByteBufferFactory {
   private static final int                 WARN_THRESHOLD          = 10 * 1024 * 1024;                                                // 10MiB
   private static final TCByteBuffer[]      EMPTY_BB_ARRAY          = new TCByteBuffer[0];
   private static final TCByteBuffer        ZERO_BYTE_BUFFER        = TCByteBufferImpl.wrap(new byte[0]);
-  private static final TCLogger            logger                  = TCLogging.getLogger(TCByteBufferFactory.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCByteBufferFactory.class);
   
   private static final boolean             disablePooling;
   private static final int                 poolMaxBufCount;

@@ -18,6 +18,8 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
@@ -28,7 +30,6 @@ import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerImpl;
-import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
 import static com.tc.net.groups.MockStageManagerFactory.createEventHandler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -40,12 +41,12 @@ import com.tc.objectserver.persistence.TestClusterStatePersistor;
 public class TestStateManagerFactory {
   
   private final MockStageManagerFactory stageCreator;
-  private final TCLogger logging;
+  private final Logger logging;
 
   private StateManagerImpl mgr;
   private Sink stateMsgs;
   
-  public TestStateManagerFactory(MockStageManagerFactory stageCreator, GroupManager groupMgr, TCLogger logging) throws Exception {
+  public TestStateManagerFactory(MockStageManagerFactory stageCreator, GroupManager groupMgr, Logger logging) throws Exception {
     this.stageCreator = stageCreator;
     this.logging = logging;
     this.mgr = createStateManager(groupMgr);

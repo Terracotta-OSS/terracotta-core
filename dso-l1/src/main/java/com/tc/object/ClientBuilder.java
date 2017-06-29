@@ -18,8 +18,9 @@
  */
 package com.tc.object;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.StageManager;
-import com.tc.logging.TCLogger;
 import com.tc.management.TCClient;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -57,7 +58,7 @@ public interface ClientBuilder {
                                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour,
                                                     TCSecurityManager securityManager);
 
-  ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
+  ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
                                                       SessionManager sessionManager,
                                                       ClusterInternalEventsGun clusterEventsGun,

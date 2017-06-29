@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -114,7 +115,7 @@ public class LazyHandshakeTest extends TCTestCase {
   }
 
   public void testLazyHandshake() {
-    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(this.getClass())));
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(this.getClass())));
     // imitating TCGroupManager implementation of StaticMemberDiscovery on handshake timeouts
 
     Thread lazyThread = new Thread(threadGroup, new Runnable() {

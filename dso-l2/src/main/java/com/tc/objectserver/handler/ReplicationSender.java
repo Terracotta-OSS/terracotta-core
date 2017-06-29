@@ -24,8 +24,6 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -44,6 +42,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
@@ -55,8 +56,8 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   //  control structures must be fixed
   private final GroupManager<AbstractGroupMessage> group;
   private final Map<NodeID, SyncState> filtering = new HashMap<>();
-  private static final TCLogger logger           = TCLogging.getLogger(ReplicationSender.class);
-  private static final TCLogger PLOGGER = TCLogging.getLogger(MessagePayload.class);
+  private static final Logger logger = LoggerFactory.getLogger(ReplicationSender.class);
+  private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
   private final Map<NodeID, GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity>> batchContexts = new ConcurrentHashMap<>();

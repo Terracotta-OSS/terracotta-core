@@ -18,13 +18,14 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+
 import com.tc.util.concurrent.ThreadUtil;
 
 public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeErrorHandler {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
 
   @Override
   public void handleHandshakeError(TransportHandshakeErrorContext e) {
@@ -40,7 +41,7 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     } else if (e.getErrorType() == TransportHandshakeError.ERROR_NO_ACTIVE) {
       //  don't log these, not real errors
     } else {
-      consoleLogger.error(e);
+      consoleLogger.error("Exception: ", e);
     }
 
     /**

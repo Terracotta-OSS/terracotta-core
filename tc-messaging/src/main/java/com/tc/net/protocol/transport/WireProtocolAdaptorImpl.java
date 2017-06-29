@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.AbstractTCProtocolAdaptor;
@@ -37,7 +38,7 @@ import java.util.Iterator;
  * @author teck
  */
 public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implements WireProtocolAdaptor {
-  private static final TCLogger         logger = TCLogging.getLogger(WireProtocolAdaptorImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(WireProtocolAdaptorImpl.class);
   private final WireProtocolMessageSink sink;
 
   protected WireProtocolAdaptorImpl(WireProtocolMessageSink sink) {

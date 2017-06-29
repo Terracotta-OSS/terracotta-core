@@ -18,14 +18,15 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.QueueFactory;
 
 import junit.framework.TestCase;
@@ -34,7 +35,7 @@ import junit.framework.TestCase;
  * @author steve
  */
 public class StageManagerImplTest extends TestCase {
-  private static final TCLogger logging = TCLogging.getLogger(StageManagerImplTest.class);
+  private static final Logger logging = LoggerFactory.getLogger(StageManagerImplTest.class);
   static {
     logging.info("I have to load this class for breaking circular dependency");
   }
@@ -63,9 +64,9 @@ public class StageManagerImplTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-      stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(StageManagerImpl.class))), new QueueFactory<TestEventContext>());
+      stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory<TestEventContext>());
       testEventHandler = new TestEventHandler<TestEventContext>();
-      multiThreadedStageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(StageManagerImpl.class))), new QueueFactory<TestMultiThreadedEventContext>());
+      multiThreadedStageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory<TestMultiThreadedEventContext>());
       multiThreadedTestEventHandler = new TestEventHandler<TestMultiThreadedEventContext>();
   }
 

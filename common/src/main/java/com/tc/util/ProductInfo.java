@@ -79,10 +79,6 @@ public final class ProductInfo {
   private String                            copyright;
   private final String                      license                    = DEFAULT_LICENSE;
 
-  // XXX: Can't have a logger in this class...
-  // private static final TCLogger logger = TCLogging.getLogger(ProductInfo.class);
-  // private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
-
   /**
    * Construct a ProductInfo by reading properties from streams (most commonly by loading properties files as resources
    * from the classpath). If an IOException occurs while loading the build or patch streams, the System will exit. These

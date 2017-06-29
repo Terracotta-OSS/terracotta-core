@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -54,13 +55,13 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   private final ProductID                     productId;
   private final TCMessageRouter               router;
   private final TCMessageParser               parser;
-  private final TCLogger                      logger;
+  private final Logger logger;
   private final NodeID                        remoteNodeID;
   private volatile NodeID                     localNodeID;
 
   protected volatile NetworkLayer             sendLayer;
 
-  AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory, NodeID remoteNodeID,
+  AbstractMessageChannel(TCMessageRouter router, Logger logger, TCMessageFactory msgFactory, NodeID remoteNodeID,
                          ProductID productId) {
     this.router = router;
     this.logger = logger;
@@ -202,7 +203,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
             try {
               existingCallback.run();
             } catch (Exception e) {
-              logger.error(e);
+              logger.error("Exception: ", e);
             } finally {
               logMsg.run();
             }

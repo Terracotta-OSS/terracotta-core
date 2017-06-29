@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.Assert;
 
 import java.util.HashMap;
@@ -31,7 +32,7 @@ import java.util.HashSet;
 public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   private final HashMap<String, HashSet<ConnectionID>> clientsByJvm = new HashMap<String, HashSet<ConnectionID>>();
-  private final TCLogger                               logger       = TCLogging.getLogger(ConnectionPolicyImpl.class);
+  private final Logger logger = LoggerFactory.getLogger(ConnectionPolicyImpl.class);
   private final int                                    maxConnections;
   private int                                          maxReached;
 

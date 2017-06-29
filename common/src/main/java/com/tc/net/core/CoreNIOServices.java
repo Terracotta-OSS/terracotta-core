@@ -18,9 +18,10 @@
  */
 package com.tc.net.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCInternalError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -63,7 +64,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 
 class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListener {
-  private static final TCLogger                logger        = TCLogging.getLogger(CoreNIOServices.class);
+  private static final Logger logger = LoggerFactory.getLogger(CoreNIOServices.class);
   private final TCWorkerCommManager            workerCommMgr;
   private final String                         commThreadName;
   private final SocketParams                   socketParams;
@@ -405,7 +406,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             this.selectorTasks.put(task);
             break;
           } catch (InterruptedException e) {
-            logger.warn(e);
+            logger.warn("Exception: ", e);
             isInterrupted = true;
           }
         }
@@ -455,12 +456,12 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       try {
         cleanupChannel(ssc, null);
       } catch (Exception e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
       } finally {
         try {
           callback.run();
         } catch (Exception e) {
-          logger.error(e);
+          logger.error("Exception: ", e);
         }
       }
     }
@@ -812,7 +813,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         }
 
         if (logger.isDebugEnabled()) {
-          logger.debug(request);
+          logger.debug("{}", request);
         }
 
         if (request.add) {

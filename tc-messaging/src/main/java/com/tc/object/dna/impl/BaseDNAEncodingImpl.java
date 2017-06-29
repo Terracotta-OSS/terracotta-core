@@ -18,10 +18,11 @@
  */
 package com.tc.object.dna.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
 import com.tc.object.compression.CompressedData;
@@ -65,7 +66,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncodingInternal {
   static final byte                           PHYSICAL_ACTION_TYPE_REF_OBJECT      = 6;
   static final byte                           SUB_ARRAY_ACTION_TYPE                = 7;
 
-  private static final TCLogger               logger                               = TCLogging.getLogger(BaseDNAEncodingImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(BaseDNAEncodingImpl.class);
 
   protected static final byte                 TYPE_ID_REFERENCE                    = 1;
   protected static final byte                 TYPE_ID_BOOLEAN                      = 2;

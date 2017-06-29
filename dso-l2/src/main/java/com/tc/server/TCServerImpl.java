@@ -19,6 +19,9 @@
 package com.tc.server;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.SEDA;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.CommonL2Config;
@@ -33,8 +36,6 @@ import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
@@ -73,10 +74,8 @@ import javax.management.NotCompliantMBeanException;
 public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServer, StateChangeListener {
   public static final String                CONNECTOR_NAME_TERRACOTTA                    = "terracotta";
 
-  private static final TCLogger             logger                                       = TCLogging
-                                                                                             .getLogger(TCServer.class);
-  private static final TCLogger             consoleLogger                                = CustomerLogging
-                                                                                             .getConsoleLogger();
+  private static final Logger logger = LoggerFactory.getLogger(TCServer.class);
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
 
   private volatile long                     startTime                                    = -1;
   private volatile long                     activateTime                                 = -1;
@@ -94,7 +93,7 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
    * This should only be used for tests.
    */
   public TCServerImpl(L2ConfigurationSetupManager configurationSetupManager) {
-    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(TCServer.class))));
+    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(logger)));
   }
 
   public TCServerImpl(L2ConfigurationSetupManager configurationSetupManager, TCThreadGroup threadGroup) {

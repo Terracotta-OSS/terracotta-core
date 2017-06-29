@@ -20,14 +20,15 @@ package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
 import com.tc.classloader.ServiceLocator;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
@@ -39,7 +40,7 @@ import org.terracotta.entity.StateDumpCollector;
 
 
 public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceProviderRegistry {
-  private static final TCLogger logger = TCLogging.getLogger(TerracottaServiceProviderRegistryImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TerracottaServiceProviderRegistryImpl.class);
 
   // We need to hold on to the configuration when we are initialized so we can give it to services registered later as
   //  built-ins.

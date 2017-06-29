@@ -18,8 +18,9 @@
  */
 package com.tc.object;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.config.ConnectionInfoConfig;
@@ -30,7 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClientShutdownManager {
-  private static final TCLogger                    logger         = TCLogging.getLogger(ClientShutdownManager.class);
+  private static final Logger logger = LoggerFactory.getLogger(ClientShutdownManager.class);
 
   private final ClientMessageChannel               channel;
 

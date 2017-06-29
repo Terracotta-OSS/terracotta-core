@@ -18,10 +18,11 @@
  */
 package com.tc.object.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -30,14 +31,14 @@ import com.tc.object.msg.ClientHandshakeRefusedMessage;
 
 public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
 
-  private static final TCLogger  consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientCoordinationHandler.class);
   private ClientHandshakeManager clientHandshakeManager;
 
   @Override
   public void handleEvent(EC context) {
     if (context instanceof ClientHandshakeRefusedMessage) {
-      consoleLogger.error(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
-      consoleLogger.info("L1 Exiting...");
+      LOGGER.error(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
+      LOGGER.info("L1 Exiting...");
       throw new RuntimeException(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
     } else if (context instanceof ClientHandshakeAckMessage) {
       handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);

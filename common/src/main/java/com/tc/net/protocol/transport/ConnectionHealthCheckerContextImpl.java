@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -57,7 +58,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Basic Ping probes
   private State                                  currentState;
-  private final TCLogger                         logger;
+  private final Logger logger;
   private final MessageTransportBase             transport;
   private final HealthCheckerProbeMessageFactory messageFactory;
   private final TCConnectionManager              connectionManager;
@@ -90,8 +91,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.config = config;
     this.connectionManager = connMgr;
     this.timeDiffThreshold = config.getTimeDiffThreshold();
-    this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
-                                      + config.getHealthCheckerName());
+    this.logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
+                                          + config.getHealthCheckerName());
     this.remoteNodeDesc = mtb.getRemoteAddress().getCanonicalStringForm();
     logger.info("Health monitoring agent started for " + remoteNodeDesc);
     currentState = INIT;
@@ -166,7 +167,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection,
                                                                        MessageTransportBase transportBase,
-                                                                       TCLogger loger, HealthCheckerConfig cnfg) {
+                                                                       Logger loger, HealthCheckerConfig cnfg) {
     if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) {
       logger.info("No HealthCheckCallbackPort handshaked for node " + remoteNodeDesc);
       return new NullHealthCheckerSocketConnectImpl();
@@ -380,7 +381,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
   }
 
-  TCLogger getLogger() {
+  Logger getLogger() {
     return this.logger;
   }
 

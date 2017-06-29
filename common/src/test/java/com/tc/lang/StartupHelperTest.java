@@ -19,11 +19,13 @@
 package com.tc.lang;
 
 
-import com.tc.logging.NullTCLogger;
+import org.slf4j.Logger;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
+
+import static org.mockito.Mockito.mock;
 
 public class StartupHelperTest extends TestCase {
 
@@ -61,7 +63,7 @@ public class StartupHelperTest extends TestCase {
   }
 
   public void testGroup() throws Throwable {
-    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandlerImpl(new NullTCLogger()));
+    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandlerImpl(mock(Logger.class)));
 
     StartupHelper helper = new StartupHelper(group, new StartupHelper.StartupAction() {
       @Override

@@ -18,6 +18,9 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockInfoByThreadIDImpl;
@@ -26,7 +29,7 @@ import com.tc.util.runtime.ThreadIDMap;
 
 public class ThreadDumpHandler implements CallbackOnExitHandler {
 
-  private static final TCLogger     logger = TCLogging.getLogger(ThreadDumpHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(ThreadDumpHandler.class);
   private final LockInfoDumpHandler lockInfoDumpHandler;
 
   public ThreadDumpHandler(LockInfoDumpHandler lockInfoDumpHandler) {

@@ -18,12 +18,13 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
@@ -40,7 +41,7 @@ import java.io.IOException;
  */
 public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
 
-  private static final TCLogger LOGGER = TCLogging.getLogger(TCMessageImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TCMessageImpl.class);
   private final MessageMonitor          monitor;
   private final SetOnceFlag             processed         = new SetOnceFlag();
   private final SetOnceFlag             isSent            = new SetOnceFlag();

@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol;
 
+import org.slf4j.Logger;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.logging.TCLogger;
 import com.tc.net.core.TCConnection;
 import com.tc.util.Assert;
 
@@ -33,14 +34,14 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
   protected static final int      MODE_HEADER       = 1;
   protected static final int      MODE_DATA         = 2;
 
-  private final TCLogger          logger;
+  private final Logger logger;
   private int                     dataBytesNeeded;
   private AbstractTCNetworkHeader header;
   private TCByteBuffer[]          dataBuffers;
   private int                     bufferIndex       = -1;
   private int                     mode;
 
-  public AbstractTCProtocolAdaptor(TCLogger logger) {
+  public AbstractTCProtocolAdaptor(Logger logger) {
     this.logger = logger;
     init();
   }
@@ -103,7 +104,7 @@ public abstract class AbstractTCProtocolAdaptor implements TCProtocolAdaptor {
     return processPayloadData(source, data);
   }
 
-  protected final TCLogger getLogger() {
+  protected final Logger getLogger() {
     return logger;
   }
 

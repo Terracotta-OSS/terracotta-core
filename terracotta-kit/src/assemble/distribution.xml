@@ -102,7 +102,13 @@ The Initial Developer of the Covered Software is
     <dependencySet>
       <outputDirectory>client/logging/impl</outputDirectory>
       <includes>
-        <include>org.slf4j:slf4j-log4j12</include>
+        <include>ch.qos.logback:logback-core</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>client/logging/impl</outputDirectory>
+      <includes>
+        <include>ch.qos.logback:logback-classic</include>
       </includes>
     </dependencySet>
   </dependencySets>

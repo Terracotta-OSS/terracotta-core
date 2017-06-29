@@ -19,9 +19,10 @@
 package com.tc.objectserver.entity;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -34,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   private final Map<ClientDescriptorImpl, EntityID> clientStates = new ConcurrentHashMap<>();
-  private static final TCLogger logger    = TCLogging.getLogger(ClientEntityStateManagerImpl.class);
+  private static final Logger logger    = LoggerFactory.getLogger(ClientEntityStateManagerImpl.class);
 
   public ClientEntityStateManagerImpl() {
   }

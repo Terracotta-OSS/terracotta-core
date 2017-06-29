@@ -18,7 +18,8 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
@@ -40,12 +41,12 @@ public class ThreadPreferenceExecutor implements Executor {
   private final ThreadFactory           threadFactory;
   private final BlockingQueue<Runnable> queue;
   private final String                  name;
-  private final TCLogger                logger;
+  private final Logger logger;
 
   private int                           numberOfActiveThreads = 0;
   private int                           newThreadCreateCount  = 0;
 
-  public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit, TCLogger logger) {
+  public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit, Logger logger) {
     this(name, maxThreads, idleTime, unit, defaultThreadFactory(name), logger);
   }
 
@@ -54,7 +55,7 @@ public class ThreadPreferenceExecutor implements Executor {
   }
 
   public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit,
-                                  ThreadFactory threadFactory, TCLogger logger) {
+                                  ThreadFactory threadFactory, Logger logger) {
     this.name = name;
     this.maxThreads = maxThreads;
     this.idleTime = idleTime;

@@ -18,8 +18,9 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -52,7 +53,7 @@ import java.util.Set;
 public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final TCConnection[] EMPTY_CONNECTION_ARRAY = new TCConnection[] {};
   protected static final TCListener[]   EMPTY_LISTENER_ARRAY   = new TCListener[] {};
-  protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManager.class);
+  protected static final Logger logger                 = LoggerFactory.getLogger(TCConnectionManager.class);
 
   private final TCCommImpl              comm;
   private final HealthCheckerConfig     healthCheckerConfig;
@@ -294,7 +295,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
               logger.debug("error event on connection " + event.getSource() + ": " + err.getMessage(), err);
             }
           } else {
-            logger.error(err);
+            logger.error("Exception: ", err);
           }
         }
       } finally {

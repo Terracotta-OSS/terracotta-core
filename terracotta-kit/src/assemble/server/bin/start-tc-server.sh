@@ -78,6 +78,8 @@ function setPluginClasspath {
 
 setPluginClasspath;
 
+PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib
+
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
 start=true

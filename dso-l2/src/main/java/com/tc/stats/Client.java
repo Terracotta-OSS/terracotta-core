@@ -19,8 +19,9 @@
 package com.tc.stats;
 
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
@@ -51,7 +52,7 @@ import javax.management.ObjectName;
 
 public class Client extends AbstractTerracottaMBean implements ClientMBean, NotificationListener {
 
-  private static final TCLogger                logger                  = TCLogging.getLogger(Client.class);
+  private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
   private final MBeanServer                    mbeanServer;
   private ObjectName                           l1InfoBeanName;

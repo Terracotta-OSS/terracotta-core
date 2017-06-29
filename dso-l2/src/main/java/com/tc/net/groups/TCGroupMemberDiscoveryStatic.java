@@ -18,10 +18,11 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -40,8 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
-  private static final TCLogger                    logger                  = TCLogging
-                                                                               .getLogger(TCGroupMemberDiscoveryStatic.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCGroupMemberDiscoveryStatic.class);
   private final static long                        DISCOVERY_INTERVAL_MS;
   static {
     DISCOVERY_INTERVAL_MS = TCPropertiesImpl.getProperties()

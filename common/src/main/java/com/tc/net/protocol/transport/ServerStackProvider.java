@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.security.TCSecurityManager;
@@ -51,7 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Provides network stacks on the server side
  */
 public class ServerStackProvider implements NetworkStackProvider, MessageTransportListener, ProtocolAdaptorFactory {
-  private static final TCLogger logger = TCLogging.getLogger(ServerStackProvider.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerStackProvider.class);
 
   private final Map<ConnectionID, NetworkStackHarness> harnesses          = new ConcurrentHashMap<ConnectionID, NetworkStackHarness>();
   private final NetworkStackHarnessFactory       harnessFactory;
@@ -380,12 +381,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       Principal principal = null;
       if (connectionId.isSecured()) {
         if (securityManager == null) {
-          logger.fatal("Security is enabled here on the server, but we didn't get credentials on the handshake!");
+          logger.error("Security is enabled here on the server, but we didn't get credentials on the handshake!");
           this.isHandshakeError = true;
           return;
         } else {
           if ((principal = securityManager.authenticate(connectionId.getUsername(), connectionId.getPassword())) == null) {
-            logger.fatal("Authentication failed for user " + connectionId.getUsername()
+            logger.error("Authentication failed for user " + connectionId.getUsername()
                          + " with pw (" + connectionId.getPassword().length + "): " + new String(connectionId.getPassword()));
             this.isHandshakeError = true;
             return;

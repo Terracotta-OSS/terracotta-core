@@ -18,9 +18,10 @@
  */
 package com.tc.util.concurrent;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCInternalError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.TCTimeoutException;
 
 /**
@@ -30,7 +31,7 @@ import com.tc.util.TCTimeoutException;
  * @author teck
  */
 public class TCFuture {
-  private static final TCLogger logger = TCLogging.getLogger(TCFuture.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCFuture.class);
   private volatile boolean      set;
   private volatile boolean      cancel;
   private volatile boolean      timedOut;

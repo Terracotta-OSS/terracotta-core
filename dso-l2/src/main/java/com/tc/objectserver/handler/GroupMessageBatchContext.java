@@ -18,9 +18,10 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.msg.IBatchableGroupMessage;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -28,7 +29,7 @@ import com.tc.net.groups.GroupManager;
 
 
 public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
-  private static final TCLogger LOGGER = TCLogging.getLogger(GroupMessageBatchContext.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(GroupMessageBatchContext.class);
   
   private final IBatchableMessageFactory<M, E> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;

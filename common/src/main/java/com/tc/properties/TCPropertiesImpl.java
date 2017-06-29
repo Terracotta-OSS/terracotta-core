@@ -19,8 +19,9 @@
 package com.tc.properties;
 
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.io.IOUtils;
 import com.tc.util.properties.TCPropertyStore;
 
@@ -47,7 +48,7 @@ import java.util.Properties;
  */
 public class TCPropertiesImpl implements TCProperties {
 
-  private static final TCLogger         logger                     = newLoggingProxy();
+  private static final Logger logger = newLoggingProxy();
 
   public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
@@ -333,11 +334,11 @@ public class TCPropertiesImpl implements TCProperties {
     return Float.valueOf(val).floatValue();
   }
 
-  private static TCLogger newLoggingProxy() {
+  private static Logger newLoggingProxy() {
     LoggingInvocationHandler handler = new LoggingInvocationHandler();
-    Class<?>[] interfaces = new Class[] { TCLogger.class };
+    Class<?>[] interfaces = new Class[] { Logger.class };
     ClassLoader loader = TCPropertiesImpl.class.getClassLoader();
-    return (TCLogger) Proxy.newProxyInstance(loader, interfaces, handler);
+    return (Logger) Proxy.newProxyInstance(loader, interfaces, handler);
   }
 
   /**
@@ -347,7 +348,7 @@ public class TCPropertiesImpl implements TCProperties {
   private static class LoggingInvocationHandler implements InvocationHandler {
     private final ArrayList<Call> calls    = new ArrayList<Call>();
     private boolean    switched = false;
-    private TCLogger   realLogger;
+    private Logger realLogger;
 
     @Override
     public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -365,7 +366,7 @@ public class TCPropertiesImpl implements TCProperties {
     synchronized void switchToRealLogger() throws Exception {
       if (switched) { throw new IllegalStateException("Already switched"); }
 
-      realLogger = TCLogging.getLogger(TCProperties.class);
+      realLogger = LoggerFactory.getLogger(TCProperties.class);
 
       for (Call call : calls) {
         call.execute(realLogger);
@@ -385,7 +386,7 @@ public class TCPropertiesImpl implements TCProperties {
         this.args = args;
       }
 
-      void execute(TCLogger target) throws Exception {
+      void execute(Logger target) throws Exception {
         method.invoke(target, args);
       }
     }

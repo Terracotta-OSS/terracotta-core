@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
@@ -41,7 +42,7 @@ import java.util.LinkedList;
  * @author steve
  */
 public class RequestLockUnLockHandler extends AbstractEventHandler<LockRequestMessage> {
-  private static final TCLogger logger = TCLogging.getLogger(RequestLockUnLockHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(RequestLockUnLockHandler.class);
   
   private LockManager lockManager;
 

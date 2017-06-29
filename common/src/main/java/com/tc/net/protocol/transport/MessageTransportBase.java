@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.slf4j.Logger;
+
 import com.tc.bytes.TCByteBuffer;
-import com.tc.logging.TCLogger;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
@@ -57,7 +58,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
-                                 TransportHandshakeMessageFactory messageFactory, boolean isOpen, TCLogger logger) {
+                                 TransportHandshakeMessageFactory messageFactory, boolean isOpen, Logger logger) {
 
     super(logger);
     this.handshakeErrorHandler = handshakeErrorHandler;
@@ -228,9 +229,9 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private static final class DefaultConnectionAttacher implements ConnectionAttacher {
 
     private final MessageTransportBase transport;
-    private final TCLogger             logger;
+    private final Logger logger;
 
-    private DefaultConnectionAttacher(MessageTransportBase transport, TCLogger logger) {
+    private DefaultConnectionAttacher(MessageTransportBase transport, Logger logger) {
       this.transport = transport;
       this.logger = logger;
     }

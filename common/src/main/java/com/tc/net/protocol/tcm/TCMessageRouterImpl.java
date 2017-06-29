@@ -18,9 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author orion
  */
 public class TCMessageRouterImpl implements TCMessageRouter {
-  private static final TCLogger logger       = TCLogging.getLogger(TCMessageRouter.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCMessageRouter.class);
   private final Map<TCMessageType, TCMessageSink> routesByType = new ConcurrentHashMap<TCMessageType, TCMessageSink>();
   private final TCMessageSink   defaultRoute;
 

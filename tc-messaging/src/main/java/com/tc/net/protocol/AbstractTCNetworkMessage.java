@@ -18,10 +18,11 @@
  */
 package com.tc.net.protocol;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCInternalError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
 import com.tc.util.StringUtil;
@@ -33,7 +34,7 @@ import com.tc.util.concurrent.SetOnceFlag;
  * @author teck
  */
 public class AbstractTCNetworkMessage implements TCNetworkMessage {
-  protected static final TCLogger logger                = TCLogging.getLogger(TCNetworkMessage.class);
+  protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
   protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {

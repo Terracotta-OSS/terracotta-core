@@ -18,10 +18,11 @@
  */
 package com.tc.net.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
@@ -74,7 +75,7 @@ import javax.net.ssl.SSLHandshakeException;
 final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannelWriter {
 
   private static final long                     NO_CONNECT_TIME             = -1L;
-  private static final TCLogger                 logger                      = TCLogging.getLogger(TCConnection.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCConnection.class);
   private static final long                     WARN_THRESHOLD              = 0x400000L;                                                    // 4MB
 
   private volatile CoreNIOServices              commWorker;

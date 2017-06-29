@@ -19,11 +19,12 @@
 package com.tc.object.config;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
 import com.tc.properties.ReconnectConfig;
@@ -41,8 +42,8 @@ import java.net.MalformedURLException;
 
 public class ClientConfigImpl implements ClientConfig {
 
-  private static final TCLogger                                  logger                      = CustomerLogging
-                                                                                                 .getDSOGenericLogger();
+  private static final Logger logger = LoggerFactory.getLogger(ClientConfigImpl.class);
+
   private final L1ConfigurationSetupManager                      configSetupManager;
   private final ReconnectConfig                                        l1ReconnectConfig           = null;
   private static final long                                      CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl

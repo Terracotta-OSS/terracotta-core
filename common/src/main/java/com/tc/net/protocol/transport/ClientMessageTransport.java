@@ -18,9 +18,11 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.slf4j.LoggerFactory;
+
+import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ConnectionIdLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
@@ -75,9 +77,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   /**
    * Constructor for when you want a transport that isn't connected yet (e.g., in a client). This constructor will
    * create an unopened MessageTransport.
-   * 
-   * @param securityManager
-   * @param addressProvider
    */
   public ClientMessageTransport(TCConnectionManager connectionManager,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -86,7 +85,7 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 ReconnectionRejectedHandler reconnectionRejectedHandler,
                                 TCSecurityManager securityManager) {
 
-    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, TCLogging.getLogger(ClientMessageTransport.class));
+    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, LoggerFactory.getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;

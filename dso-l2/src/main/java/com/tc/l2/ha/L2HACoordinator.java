@@ -18,14 +18,15 @@
  */
 package com.tc.l2.ha;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -41,9 +42,9 @@ import com.tc.util.Assert;
 
 
 public class L2HACoordinator implements L2Coordinator {
-  private static final TCLogger logger = TCLogging.getLogger(L2HACoordinator.class);
+  private static final Logger logger = LoggerFactory.getLogger(L2HACoordinator.class);
 
-  private final TCLogger                                    consoleLogger;
+  private final Logger consoleLogger;
   private final DistributedObjectServer                     server;
   private final GroupManager<AbstractGroupMessage> groupManager;
 
@@ -52,7 +53,7 @@ public class L2HACoordinator implements L2Coordinator {
 
   private final L2ConfigurationSetupManager                 configSetupManager;
 
-  public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
+  public L2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
                          StageManager stageManager, StateManager stateManager, 
                          GroupManager<AbstractGroupMessage> groupCommsManager,
                          Persistor persistor,

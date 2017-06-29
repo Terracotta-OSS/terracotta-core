@@ -18,9 +18,10 @@
  */
 package com.tc.object.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ClusterInternalEventsHandler<EC> extends AbstractEventHandler<EC> {
 
-  private static final TCLogger          logger = TCLogging.getLogger(ClusterInternalEventsHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(ClusterInternalEventsHandler.class);
   private static final int               EXECUTOR_MAX_THREADS = TCPropertiesImpl
                                                                   .getProperties()
                                                                   .getInt(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS,

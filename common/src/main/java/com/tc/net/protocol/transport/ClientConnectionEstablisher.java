@@ -18,10 +18,11 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.CustomerLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -51,8 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ClientConnectionEstablisher {
 
-  private static final TCLogger             LOGGER                = TCLogging
-                                                                      .getLogger(ClientConnectionEstablisher.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionEstablisher.class);
 
   private static final long                 CONNECT_RETRY_INTERVAL;
   private static final long                 MIN_RETRY_INTERVAL    = 10;
@@ -66,7 +66,7 @@ public class ClientConnectionEstablisher {
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
 
   static {
-    TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
+    Logger logger = LoggerFactory.getLogger(ClientConnectionEstablisher.class);
     long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
     if (value < MIN_RETRY_INTERVAL) {
       logger.warn("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
@@ -152,7 +152,7 @@ public class ClientConnectionEstablisher {
         }
       } catch (NoActiveException noactive) {
         info = null;
-        LOGGER.debug(noactive);
+        LOGGER.debug("Connection attempt failed: ", noactive);
         // if there is no active, throw an IOException and let upper layers of 
         // the network stack handle the issue
         throw new IOException(noactive);
@@ -347,7 +347,7 @@ public class ClientConnectionEstablisher {
     }
   }
 
-  private void handleConnectException(Exception e, boolean logFullException, TCLogger logger) {
+  private void handleConnectException(Exception e, boolean logFullException, Logger logger) {
     if (logger.isDebugEnabled() || logFullException) {
       logger.error("Connect Exception", e);
     }
@@ -400,7 +400,7 @@ public class ClientConnectionEstablisher {
   }
 
   static class AsyncReconnect implements Runnable {
-    private static final TCLogger             logger             = TCLogging.getLogger(AsyncReconnect.class);
+    private static final Logger logger = LoggerFactory.getLogger(AsyncReconnect.class);
     private final ClientConnectionEstablisher cce;
     private boolean                  stopped            = false;
     private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<ConnectionRequest>();
@@ -518,7 +518,7 @@ public class ClientConnectionEstablisher {
             }
           } catch (MaxConnectionsExceededException e) {
             String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-            CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
+            cmt.getLogger().error(connInfo + e.getMessage());
             if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
             return;
           } catch (Throwable t) {

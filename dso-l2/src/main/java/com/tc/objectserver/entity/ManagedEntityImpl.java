@@ -25,8 +25,8 @@ import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.exception.VoltronWrapperException;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -83,7 +83,7 @@ import org.terracotta.exception.EntityServerException;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
-  private static final TCLogger logger   = TCLogging.getLogger(ManagedEntityImpl.class);
+  private static final Logger logger   = LoggerFactory.getLogger(ManagedEntityImpl.class);
 
   private final RequestProcessor executor;
   private final RetirementManager retirementManager;
@@ -295,7 +295,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       next.start();
     } else if (Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE)) {
       for (SchedulingRunnable sr : runnables.queue) {
-        logger.fatal(runnables + " " + this.id + " " + sr);
+        logger.error(runnables + " " + this.id + " " + sr);
       }
       Assert.fail();
     }

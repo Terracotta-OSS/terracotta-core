@@ -19,7 +19,8 @@
 
 package com.tc.lang;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 
 /**
 * @author tim
@@ -32,7 +33,7 @@ public class TestThrowableHandler extends ThrowableHandlerImpl {
    *
    * @param logger Logger
    */
-  public TestThrowableHandler(TCLogger logger) {
+  public TestThrowableHandler(Logger logger) {
     super(logger);
   }
 

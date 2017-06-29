@@ -18,16 +18,17 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.groups.L1RemovedGroupMessage;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 public class CloseChannelHandler extends AbstractEventHandler<L1RemovedGroupMessage> {
-  private static final TCLogger logger = TCLogging.getLogger(CloseChannelHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(CloseChannelHandler.class);
   private final ChannelManager  channelManager;
 
   public CloseChannelHandler(ChannelManager channelManager) {

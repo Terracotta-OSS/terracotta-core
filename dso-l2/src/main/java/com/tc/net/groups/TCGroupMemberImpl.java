@@ -18,10 +18,11 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -35,7 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Each TCGroupMember sits on top of a channel.
  */
 public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
-  private static final TCLogger logger       = TCLogging.getLogger(TCGroupMemberImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCGroupMemberImpl.class);
+
   private TCGroupManagerImpl    manager;
   private final MessageChannel  channel;
   private final ServerID        localNodeID;

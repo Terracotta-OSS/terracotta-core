@@ -18,9 +18,10 @@
  */
 package com.tc.lang;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogging;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,7 +33,7 @@ public class ThrowableHandlerTest extends TestCase {
   private boolean invokedCallback;
 
   public void testThrowableHandlerTest() {
-    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(ThrowableHandlerTest.class)) {
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(ThrowableHandlerTest.class)) {
 
       @Override
       protected synchronized void exit(int status) {
@@ -51,7 +52,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   public void testImmediatelyExitOnOOME() {
     final AtomicInteger exitCode = new AtomicInteger(-1);
-    final ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(ThrowableHandlerTest.class)) {
+    final ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(ThrowableHandlerTest.class)) {
       @Override
       protected synchronized void exit(int status) {
         exitCode.set(status);
@@ -70,7 +71,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   public void testHandleJMXThreadServiceTermination() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
-    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(getClass())) {
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {
       @Override
       protected synchronized void exit(int status) {
         exited.set(true);
@@ -83,7 +84,7 @@ public class ThrowableHandlerTest extends TestCase {
 
   public void testIsThreadGroupDestroyed() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
-    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(TCLogging.getLogger(getClass())) {
+    ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {
       @Override
       protected synchronized void exit(int status) {
         exited.set(true);

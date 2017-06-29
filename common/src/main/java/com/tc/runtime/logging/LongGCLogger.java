@@ -18,8 +18,9 @@
  */
 package com.tc.runtime.logging;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.runtime.MemoryEventsListener;
@@ -27,7 +28,7 @@ import com.tc.runtime.MemoryUsage;
 
 public class LongGCLogger implements MemoryEventsListener {
 
-  private static final TCLogger logger = TCLogging.getLogger(LongGCLogger.class);
+  private static final Logger logger = LoggerFactory.getLogger(LongGCLogger.class);
   private final long            gcTimeout;
   private MemoryUsage           lastMemoryUsage;
 

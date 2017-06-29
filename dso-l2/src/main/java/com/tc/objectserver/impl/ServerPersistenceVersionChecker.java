@@ -19,8 +19,9 @@
 
 package com.tc.objectserver.impl;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
@@ -30,7 +31,7 @@ import com.tc.util.version.VersionCompatibility;
  * @author tim
  */
 public class ServerPersistenceVersionChecker {
-  private static final TCLogger LOGGER = TCLogging.getLogger(ServerPersistenceVersionChecker.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ServerPersistenceVersionChecker.class);
   private final ClusterStatePersistor clusterStatePersistor;
   private final ProductInfo productInfo;
   private final VersionCompatibility versionCompatibility;

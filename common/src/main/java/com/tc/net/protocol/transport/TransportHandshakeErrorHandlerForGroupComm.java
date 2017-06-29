@@ -18,18 +18,19 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
+import com.tc.logging.TCLogging;
 
 public class TransportHandshakeErrorHandlerForGroupComm implements TransportHandshakeErrorHandler {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
 
   @Override
   public void handleHandshakeError(TransportHandshakeErrorContext e) {
     // print error message on console
     if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) consoleLogger.error(e.getMessage());
-    else consoleLogger.error(e);
+    else consoleLogger.error("Exception: ", e);
     // top layer at TCGroupMemberDiscoveryStatic to terminate connection
   }
 

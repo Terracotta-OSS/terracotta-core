@@ -18,11 +18,12 @@
  */
 package com.tc.cluster;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -41,8 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClusterImpl implements ClusterInternal {
 
-  private static final TCLogger                          LOGGER               = TCLogging
-                                                                                  .getLogger(ClusterImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterImpl.class);
 
   private volatile ClientID                              currentClientID;
   private volatile NodeInternal                          currentNode;

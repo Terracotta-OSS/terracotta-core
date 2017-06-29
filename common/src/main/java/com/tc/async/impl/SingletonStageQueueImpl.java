@@ -18,6 +18,8 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
@@ -27,7 +29,6 @@ import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
@@ -49,7 +50,7 @@ import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorI
 public class SingletonStageQueueImpl<EC> implements StageQueue<EC> {
 
   private final String stageName;
-  private final TCLogger logger;
+  private final Logger logger;
   private final SourceQueueImpl<ContextWrapper<EC>> sourceQueue;
   private volatile boolean closed = false;
 

@@ -18,8 +18,9 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Implementation for TCComm. Manages communication threads for new connection and listeners at a high level.
@@ -32,7 +33,7 @@ class TCCommImpl implements TCComm {
   private final TCWorkerCommManager workerCommMgr;
   private final CoreNIOServices     commThread;
   private final String              commThreadName = "TCComm Main Selector Thread";
-  private static final TCLogger     logger         = TCLogging.getLogger(TCCommImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCCommImpl.class);
 
   private volatile boolean          started        = false;
 

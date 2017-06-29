@@ -28,8 +28,6 @@ import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.exception.VoltronEntityUserExceptionWrapper;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ReconnectionRejectedException;
@@ -67,6 +65,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.MessageCodecException;
@@ -76,7 +77,7 @@ import org.terracotta.exception.EntityNotFoundException;
 
 
 public class ProcessTransactionHandler implements ReconnectListener {
-  private static final TCLogger LOGGER = TCLogging.getLogger(ProcessTransactionHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTransactionHandler.class);
   
   private final Persistor persistor;
   private final Runnable stateManagerCleanup;

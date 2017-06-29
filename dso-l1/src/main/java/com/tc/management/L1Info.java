@@ -18,9 +18,10 @@
  */
 package com.tc.management;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.handler.LockInfoDumpHandler;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
@@ -45,7 +46,7 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 
 public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
-  private static final TCLogger                logger = TCLogging.getLogger(L1Info.class);
+  private static final Logger logger = LoggerFactory.getLogger(L1Info.class);
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
   static {

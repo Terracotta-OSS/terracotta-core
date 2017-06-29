@@ -18,6 +18,8 @@
  */
 package com.tc.config.schema.setup;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.config.TcConfig;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -30,8 +32,6 @@ import com.tc.config.schema.setup.sources.FileConfigurationSource;
 import com.tc.config.schema.setup.sources.ResourceConfigurationSource;
 import com.tc.config.schema.setup.sources.ServerConfigurationSource;
 import com.tc.config.schema.setup.sources.URLConfigurationSource;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.properties.TCPropertiesConsts;
@@ -59,7 +59,7 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
   private static final long GET_CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl.getProperties()
       .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
 
@@ -74,7 +74,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private final ConfigurationSpec configurationSpec;
   private final ConfigBeanFactory beanFactory;
-  private final TCLogger logger;
+  private final Logger logger;
 
   private boolean baseConfigLoadedFromTrustedSource;
   private String serverOverrideConfigDescription;
@@ -88,15 +88,15 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private ClassLoader loader;
 
   public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory) {
-    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, null);
+    this(LoggerFactory.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, null);
   }
 
   public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory,
                                              PwProvider pwProvider) {
-    this(TCLogging.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, pwProvider);
+    this(LoggerFactory.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, pwProvider);
   }
 
-  public StandardXMLFileConfigurationCreator(TCLogger logger, ConfigurationSpec configurationSpec,
+  public StandardXMLFileConfigurationCreator(Logger logger, ConfigurationSpec configurationSpec,
                                              ConfigBeanFactory beanFactory, PwProvider pwProvider) {
     Assert.assertNotNull(beanFactory);
     this.logger = logger;
@@ -340,7 +340,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
     text.append("\n\nTo correct this problem specify a valid configuration location using the -f/--config command-line options.");
 
-    consoleLogger.error(text);
+    consoleLogger.error(text.toString());
     throw new ConfigurationSetupException(text.toString());
   }
 

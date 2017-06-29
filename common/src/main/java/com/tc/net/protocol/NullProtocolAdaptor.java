@@ -18,14 +18,15 @@
  */
 package com.tc.net.protocol;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.core.TCConnection;
 
 public class NullProtocolAdaptor implements TCProtocolAdaptor {
-  private final TCLogger logger = TCLogging.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   public NullProtocolAdaptor() {
     super();
@@ -33,7 +34,7 @@ public class NullProtocolAdaptor implements TCProtocolAdaptor {
 
   @Override
   public void addReadData(TCConnection source, TCByteBuffer[] data, int length) {
-    logger.warn("Null Protocol Adaptor isn't suppose to receive any data from the network.");
+    logger.warn("Null Protocol Adaptor isn't supposed to receive any data from the network.");
     return;
   }
 

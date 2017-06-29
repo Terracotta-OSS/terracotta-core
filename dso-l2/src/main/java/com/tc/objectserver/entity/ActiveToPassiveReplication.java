@@ -18,13 +18,14 @@
  */
 package com.tc.objectserver.entity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
@@ -57,7 +58,7 @@ import java.util.function.Consumer;
  */
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
-  private static final TCLogger logger           = TCLogging.getLogger(PassiveReplicationBroker.class);
+  private static final Logger logger = LoggerFactory.getLogger(PassiveReplicationBroker.class);
   private final Iterable<NodeID> passives;
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
@@ -138,8 +139,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
   /**
    * Using an executor service here to sync multiple passives at once
-   * @param groups
-   * @param newNode 
+   * @param newNode
    */
   private void executePassiveSync(final NodeID newNode) {
     passiveSyncPool.execute(new Runnable() {

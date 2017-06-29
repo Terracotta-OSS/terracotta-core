@@ -18,39 +18,30 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ServiceLoader;
+
 /**
- * Common TC logger interface (mostly a copy of the log4j logger interface)
+ * Factory class for obtaining Logger instances.
  * 
  * @author teck
  */
-public interface TCLogger {
-  void debug(Object message);
+public class TCLogging {
 
-  void debug(Object message, Throwable t);
+  public static final String CONSOLE_LOGGER_NAME = "org.terracotta.console";
+  public static final String DUMP_LOGGER_NAME = "org.terracotta.dump";
 
-  void error(Object message);
+  private static final Logger CONSOLE_LOGGER = LoggerFactory.getLogger(CONSOLE_LOGGER_NAME);
+  private static final Logger DUMP_LOGGER = new DumpLogger(LoggerFactory.getLogger(DUMP_LOGGER_NAME));
 
-  void error(Object message, Throwable t);
+  public static Logger getConsoleLogger() {
+    return CONSOLE_LOGGER;
+  }
 
-  void fatal(Object message);
-
-  void fatal(Object message, Throwable t);
-
-  void info(Object message);
-
-  void info(Object message, Throwable t);
-
-  void warn(Object message);
-
-  void warn(Object message, Throwable t);
-
-  boolean isDebugEnabled();
-
-  boolean isInfoEnabled();
-
-  void setLevel(LogLevel level);
-
-  LogLevel getLevel();
-
-  String getName();
+  public static Logger getDumpLogger() {
+    return DUMP_LOGGER;
+  }
+  
 }

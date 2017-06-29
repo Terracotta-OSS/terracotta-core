@@ -18,6 +18,9 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
@@ -26,8 +29,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +47,7 @@ public class TCNotRunningTest extends TestCase {
     super.setUp();
     debug("In setup");
     try {
-      ThrowableHandler throwableHandler = new NonExitingThrowableHandler(TCLogging.getLogger(StageManagerImpl.class));
+      ThrowableHandler throwableHandler = new NonExitingThrowableHandler(LoggerFactory.getLogger(StageManagerImpl.class));
       stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory<TestEventContext>());
       callbackOnExitHandler = new TestCallbackOnExitHandler();
       throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
@@ -174,7 +175,7 @@ public class TCNotRunningTest extends TestCase {
 
   private static class NonExitingThrowableHandler extends ThrowableHandlerImpl {
 
-    public NonExitingThrowableHandler(TCLogger logger) {
+    public NonExitingThrowableHandler(Logger logger) {
       super(logger);
     }
 
