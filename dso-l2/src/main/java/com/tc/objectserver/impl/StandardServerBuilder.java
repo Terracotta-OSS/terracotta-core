@@ -65,7 +65,6 @@ public class StandardServerBuilder implements ServerBuilder {
 
   public StandardServerBuilder(HaConfig haConfig, Logger logger) {
     this.logger = logger;
-    this.logger.info("Standard TSA Server created");
     this.haConfig = haConfig;
   }
 

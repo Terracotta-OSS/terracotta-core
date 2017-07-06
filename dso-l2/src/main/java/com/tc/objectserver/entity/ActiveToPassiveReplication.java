@@ -119,7 +119,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  */
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
-      logger.info("Starting message sequence on " + node);
+      logger.debug("Starting message sequence on " + node);
       this.replicationSender.addPassive(node, SyncReplicationActivity.createStartMessage());
       return true;
     } else {

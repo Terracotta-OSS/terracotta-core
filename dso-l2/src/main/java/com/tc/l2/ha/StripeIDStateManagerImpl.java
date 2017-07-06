@@ -58,7 +58,7 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
   }
 
   private void putToStore(StripeID stripeID) {
-    logger.info("putToStore " + stripeID);
+    logger.info("Persisting StripeID - " + stripeID);
     clusterStatePersistor.setStripeID(stripeID);
   }
 
@@ -87,7 +87,6 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
   }
 
   private void notifyLocalStripeIDReady(StripeID stripeID) {
-    logger.info("Notify local StripeID ready");
     for (StripeIDEventListener listener : listeners) {
       listener.notifyStripeIDCreated(stripeID);
     }

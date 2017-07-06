@@ -885,7 +885,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       Assert.assertEquals(this.clientReferenceCount, ManagedEntityImpl.UNDELETABLE_ENTITY);
     }
     if (!this.isDestroyed) {
-      logger.info("promoteEntity: " + getID());
+      logger.info("Promoting " + getID() + " to active entity");
       if (null != this.passiveServerEntity) {
         this.activeServerEntity = factory.createActiveEntity(this.registry, this.constructorInfo);
         this.concurrencyStrategy = factory.getConcurrencyStrategy(this.constructorInfo);
