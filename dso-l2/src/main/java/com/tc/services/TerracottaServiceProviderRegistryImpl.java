@@ -78,12 +78,13 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {
           logger.warn("service:" + clazz.getName() + " is registered as a builtin but is not properly annotated with @BuiltinService.  This builtin will not be loaded");
         } else {
-      // only add a builtin if one has not already been configured into the system via xml
+          // only add a builtin if one has not already been configured into the system via xml
           if (serviceProviders.stream().noneMatch(sp->sp.getClass().getName().equals(clazz.getName()))) {
             ServiceProvider service = clazz.newInstance();
-      //  there is no config for builtins
-            service.initialize(null, platformConfiguration);
-            registerNewServiceProvider(service);
+            //  there is no config for builtins
+            if (service.initialize(null, platformConfiguration)) {
+              registerNewServiceProvider(service);
+            }
           }
         }
       } catch (IllegalAccessException | InstantiationException i) {
