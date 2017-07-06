@@ -1021,10 +1021,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
 
-  public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
-    registerServiceProvider(serviceProvider, providerConfiguration);
-  }
-
   public synchronized void addDownstreamPassiveServerProcess(PassthroughServerProcess serverProcess) {
     // Make sure that we are active and they are passive.
     Assert.assertTrue(null != this.activeEntities);
