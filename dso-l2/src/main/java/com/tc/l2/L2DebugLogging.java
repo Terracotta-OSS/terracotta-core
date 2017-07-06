@@ -32,7 +32,6 @@ public abstract class L2DebugLogging {
 
   static {
     Logger logger = LoggerFactory.getLogger(L2DebugLogging.class);
-    logger.info("L2 debug logging: " + (ENABLED ? "ENABLED" : "DISABLED"));
   }
 
   public static enum LogLevel {

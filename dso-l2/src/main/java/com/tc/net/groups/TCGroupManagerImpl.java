@@ -222,7 +222,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.version = getVersion();
     this.weightGeneratorFactory = weightGenerator;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
-    logger.info("Creating server nodeID: " + thisNodeID);
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
 

@@ -190,7 +190,6 @@ public class ServerClientHandshakeManager {
 
   // Should be called from within the sync block
   private void start() {
-    this.logger.info("Starting TSA services...");
     final Set<NodeID> cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
     // It is important to start all the managers before sending the ack to the clients
     for (NodeID nid : cids) {

@@ -393,7 +393,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           }
         }
       }
-      logger.info("User " + principal + " successfully authenticated");
       // todo store principal ?
       sendSynAck(connectionId, syn.getSource(), isMaxConnectionReached);
     }
