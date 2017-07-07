@@ -252,11 +252,11 @@ public class PassthroughServer implements PassthroughDumper {
 
   /**
    *
-   * @deprecated Use registerServiceProvider instead. There are no overrides.
+   * NOTE: this needs to be deprecated, it provides distinctly different semantics from the clustered version 
+   * of the same
    */
-  @Deprecated
   public void registerOverrideServiceProvider(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
-    registerServiceProvider(serviceProvider, providerConfiguration);
+    internalRegisterServiceProviderAsOverride(serviceProvider, providerConfiguration);
   }
 
   public void registerExtendedConfiguration(Object extendedConfigObject) {
@@ -308,6 +308,10 @@ public class PassthroughServer implements PassthroughDumper {
     this.savedServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration));
   }
 
+  private void internalRegisterServiceProviderAsOverride(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
+    this.savedServiceProviderData.add(new ServiceProviderAndConfiguration(serviceProvider, providerConfiguration, true));
+  }
+  
   @Override
   public void dump() {
     System.out.println("Connected passthrough clients:");
@@ -338,10 +342,18 @@ public class PassthroughServer implements PassthroughDumper {
   private static class ServiceProviderAndConfiguration {
     public final ServiceProvider serviceProvider;
     public final ServiceProviderConfiguration providerConfiguration;
+    public final boolean override;
     
     public ServiceProviderAndConfiguration(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration) {
       this.serviceProvider = serviceProvider;
       this.providerConfiguration = providerConfiguration;
+      this.override = false;
+    }
+    
+    public ServiceProviderAndConfiguration(ServiceProvider serviceProvider, ServiceProviderConfiguration providerConfiguration, boolean override) {
+      this.serviceProvider = serviceProvider;
+      this.providerConfiguration = providerConfiguration;
+      this.override = override;
     }
   }
 
@@ -357,17 +369,32 @@ public class PassthroughServer implements PassthroughDumper {
   }
   
   private void findClasspathBuiltinServices() {
-      java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
-      for (ServiceProvider provider : loader) {
-        if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
-          System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
-        } else {
-          // We want to initialize built-in providers with a null configuration.
-          if (!hasConfigurationForServiceProvider(provider)) {
-            this.serverProcess.registerServiceProvider(provider, null);
-          }
+    java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+    for (ServiceProvider provider : loader) {
+      if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
+        System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
+      } else {
+        // We want to initialize built-in providers with a null configuration only if the test 
+        // has not preinstalled an override provider with the existing types
+        if (!hasConfigurationForServiceProvider(provider) && !hasOverrideProviderForTypes(provider)) {
+          this.serverProcess.registerServiceProvider(provider, null);
         }
       }
+    }
+  }
+  
+  private boolean hasOverrideProviderForTypes(ServiceProvider provider) {
+    Collection<Class<?>> types = provider.getProvidedServiceTypes();
+    for (ServiceProviderAndConfiguration configuredServiceProvider : savedServiceProviderData) {
+      if (configuredServiceProvider.override) {
+        Collection<Class<?>> existingTypes = configuredServiceProvider.serviceProvider.getProvidedServiceTypes();
+        if (existingTypes.containsAll(types)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private boolean hasConfigurationForServiceProvider(ServiceProvider provider) {
