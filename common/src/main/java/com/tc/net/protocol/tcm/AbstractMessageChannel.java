@@ -333,7 +333,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
     synchronized boolean getAndSetIsClosed() {
       if (ChannelState.INIT.equals(state)) {
         // Treating an unopened channel as effectively equivalent to closed.
-        logger.warn("Switching channel state from " + ChannelState.INIT + " to " + ChannelState.CLOSED + ".");
+        logger.debug("Switching channel state from " + ChannelState.INIT + " to " + ChannelState.CLOSED + ".");
         state = ChannelState.CLOSED;
         return true;
       }
