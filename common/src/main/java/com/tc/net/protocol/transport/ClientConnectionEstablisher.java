@@ -230,8 +230,8 @@ public class ClientConnectionEstablisher {
             }
           }
           try {
-            if (i % 20 == 0) {
-              cmt.getLogger().warn("Reconnect attempt " + i + " to " + target);
+            if (i % 20 == 0 && i > 0) {
+              cmt.getLogger().info("Reconnect attempt " + i + " to " + target);
             }
             cmt.reopen(target);
             connected = cmt.getConnectionId().isValid();        

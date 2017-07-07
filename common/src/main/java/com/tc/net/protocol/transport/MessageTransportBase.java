@@ -151,7 +151,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     synchronized (isOpen) {
       if (!isOpen.get()) {
         // see DEV-659: we used to throw an assertion error here if already closed
-        getLogger().warn("Can only close an open connection");
+        getLogger().debug("Can only close an open connection");
         return;
       }
       if (disconnect) {

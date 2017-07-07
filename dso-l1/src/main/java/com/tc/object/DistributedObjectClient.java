@@ -468,7 +468,7 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
           clientStopped.wait(5000);
         } catch (final ConnectException e) {
-          DSO_LOGGER.warn("Connection refused from server: " + e);
+          DSO_LOGGER.warn("Connection refused from server: " + e.getMessage());
           clientStopped.wait(5000);
         } catch (final MaxConnectionsExceededException e) {
           DSO_LOGGER.error(e.getMessage());
