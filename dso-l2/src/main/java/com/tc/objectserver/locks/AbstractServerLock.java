@@ -21,6 +21,14 @@ package com.tc.objectserver.locks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
@@ -35,7 +43,6 @@ import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.objectserver.locks.context.SingleServerLockContext;
 import com.tc.objectserver.locks.context.WaitServerLockContext;
 import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.SinglyLinkedList;
@@ -51,7 +58,7 @@ import java.util.TimerTask;
  * greedy holders, pending requests, try lock requests and then waiters.
  */
 public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockContext> implements ServerLock,
-    PrettyPrintable {
+    StateDumpable {
   private final static EnumSet<Type> SET_OF_TRY_PENDING_OR_WAITERS = EnumSet.of(Type.TRY_PENDING, Type.WAITER);
   private final static EnumSet<Type> SET_OF_WAITERS                = EnumSet.of(Type.WAITER);
   private final static EnumSet<Type> SET_OF_HOLDERS                = EnumSet.of(Type.HOLDER, Type.GREEDY_HOLDER);
@@ -920,21 +927,23 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Lock Info").flush();
-    out.print(lockID).flush();
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode componentState = mapper.createObjectNode();
+      componentState.put("Lock Info", String.valueOf(lockID));
 
-    out.print("Contexts [ ");
-    SinglyLinkedListIterator<ServerLockContext> iter = iterator();
-    while (iter.hasNext()) {
-      out.print(iter.next().toString());
-      if (iter.hasNext()) {
-        out.print(" , ");
+      ArrayNode contextNodes = mapper.createArrayNode();
+      SinglyLinkedListIterator<ServerLockContext> iter = iterator();
+      while (iter.hasNext()) {
+        contextNodes.add(iter.next().toString());
       }
+      componentState.set("Contexts", contextNodes);
+      stateDumpCollector.addState(StateDumpCollector.JSON_STATE_KEY, mapper.writerWithDefaultPrettyPrinter()
+          .writeValueAsString(componentState));
+    } catch (Exception e) {
+      stateDumpCollector.addState("exception", e.getLocalizedMessage());
     }
-    out.print(" ]").flush();
-
-    return out;
   }
 
   @Override

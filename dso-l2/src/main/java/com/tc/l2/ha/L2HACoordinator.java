@@ -21,6 +21,8 @@ package com.tc.l2.ha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
@@ -34,9 +36,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 
@@ -152,8 +152,7 @@ public class L2HACoordinator implements L2Coordinator {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().visit(this.rClusterStateMgr).flush();
-    return out;
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    this.rClusterStateMgr.addStateTo(stateDumpCollector);
   }
 }

@@ -18,6 +18,8 @@
  */
 package com.tc.net.groups;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateChangeListener;
@@ -108,4 +110,8 @@ public class TestStateManager implements StateManager {
     return false;
   }
 
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+
+  }
 }

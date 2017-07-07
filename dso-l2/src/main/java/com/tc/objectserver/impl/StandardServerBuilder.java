@@ -32,7 +32,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
@@ -49,7 +48,6 @@ import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
@@ -85,8 +83,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                      GlobalServerStats serverStats,
                                                                      ConnectionIDFactory connectionIdFactory,
                                                                      int maxStageSize,
-                                                                     ChannelManager genericChannelManager,
-                                                                     DumpHandlerStore dumpHandlerStore) {
+                                                                     ChannelManager genericChannelManager) {
     return new ServerConfigurationContextImpl(stageManager,
         lockMgr, channelManager,
         clientHandshakeManager, channelStats, coordinator

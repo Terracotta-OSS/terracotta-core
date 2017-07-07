@@ -21,6 +21,8 @@ package com.tc.l2.ha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -172,4 +174,11 @@ public class ClusterStateImpl implements ClusterState {
     return strBuilder.toString();
   }
 
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("Connections", this.connections.toString());
+    stateDumpCollector.addState("nextAvailChannelID", String.valueOf(this.nextAvailChannelID));
+    stateDumpCollector.addState("currentState", String.valueOf(this.currentState));
+    stateDumpCollector.addState("stripeID", String.valueOf(this.stripeID));
+  }
 }

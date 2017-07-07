@@ -18,12 +18,16 @@
  */
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.persistence.IPlatformPersistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
+import com.tc.stats.Client;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 
@@ -47,7 +51,7 @@ import java.util.concurrent.Future;
  * This is persisted because reconnect on restart needs to ensure that the transactions being replayed are done so in
  * the same order as their original order.
  */
-public class TransactionOrderPersistor implements PrettyPrintable {
+public class TransactionOrderPersistor implements StateDumpable {
   private final IPlatformPersistence storageManager;
   private Long receivedTransactionCount = new Long(0L);
     
@@ -255,42 +259,34 @@ public class TransactionOrderPersistor implements PrettyPrintable {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().println(this.getClass().getName());
-    out.indent().indent().println("Received transaction count = " + getReceivedTransactionCount());
-    if(globalList != null) {
-      out.indent().indent().println("Existing Global List: ");
-      for (ClientTransaction clientTransaction : globalList) {
-        out.indent().indent().indent().print(clientTransaction);
-      }
-    }
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode componentState = mapper.createObjectNode();
+      componentState.put("Received transactions", getReceivedTransactionCount());
 
-    if(this.permNodeIDs != null && storageManager != null) {
+      if(globalList != null) {
+        ArrayNode globalListNodes = mapper.createArrayNode();
+        for (ClientTransaction clientTransaction : globalList) {
+          globalListNodes.add(clientTransaction.toString());
+        }
+        componentState.set("Global List", globalListNodes);
+      }
+
+      ObjectNode clients = mapper.createObjectNode();
       for (ClientID clientNodeID : permNodeIDs) {
-        List<IPlatformPersistence.SequenceTuple> transactions = null;
-        try {
-          transactions = this.storageManager.loadSequence(clientNodeID.toLong());
-        } catch (IOException e) {
-          Assert.fail(e.getLocalizedMessage());
+        List<IPlatformPersistence.SequenceTuple> transactions = this.storageManager.loadSequence(clientNodeID.toLong());
+        ArrayNode transactionNodes = mapper.createArrayNode();
+        for (IPlatformPersistence.SequenceTuple transaction : transactions) {
+          transactionNodes.add("GlobalId = " + transaction.globalSequenceID + ", LocalId = " + transaction.localSequenceID);
         }
-        out.indent().indent().println("Persisted transaction order for client " + clientNodeID);
-        if (transactions != null) {
-          for (IPlatformPersistence.SequenceTuple transaction : transactions) {
-            out.indent().indent().indent()
-                .println("Global seq Id = " + transaction.localSequenceID + ", local seq id = " + transaction.localSequenceID);
-          }
-        }
+        clients.set(String.valueOf(clientNodeID), transactionNodes);
       }
-      for (Map.Entry<ClientID, List<ClientTransaction>> entry : fastSequenceCache.entrySet()) {
-        out.indent().indent().println("Persisted transaction order for client " + entry.getKey());
-        if (entry.getValue() != null) {
-          for (ClientTransaction transaction : entry.getValue()) {
-            out.indent().indent().indent()
-                .println("Global seq Id = " + transaction.localTransactionID + ", local seq id = " + transaction.globalTransactionID);
-          }
-        }
-      }
+      componentState.set("Transaction order", clients);
+
+      stateDumpCollector.addState(StateDumpCollector.JSON_STATE_KEY, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(componentState));
+    } catch (Exception e) {
+      stateDumpCollector.addState("exception", e.getLocalizedMessage());
     }
-    return out;
   }
 }

@@ -18,13 +18,15 @@
  */
 package com.tc.l2.ha;
 
+import org.terracotta.entity.StateDumpable;
+
 import com.tc.net.StripeID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.State;
 
 import java.util.Set;
 
-public interface ClusterState {
+public interface ClusterState extends StateDumpable {
 
   void setNextAvailableChannelID(long next);
 

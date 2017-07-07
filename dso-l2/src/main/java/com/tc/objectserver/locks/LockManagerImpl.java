@@ -21,6 +21,12 @@ package com.tc.objectserver.locks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -36,7 +42,6 @@ import com.tc.objectserver.locks.ServerLock.NotifyAction;
 import com.tc.objectserver.locks.factory.ServerLockFactoryImpl;
 import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
 import com.tc.objectserver.locks.timer.TimerCallback;
-import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
@@ -50,7 +55,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * LockManager is responsible for holding locks (in a LockStore) and delegating requests from the handler to the
  * concerned lock. Each lock is checked out, worked upon and then finally checked in.
  */
-public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, TimerCallback, DSOChannelManagerEventListener {
+public class LockManagerImpl implements LockManager, StateDumpable, LockManagerMBean, TimerCallback, DSOChannelManagerEventListener {
   private enum RequestType {
     LOCK, TRY_LOCK, WAIT, UNLOCK
   }
@@ -374,6 +379,28 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
   }
 
   @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode componentState = mapper.createObjectNode();
+      ArrayNode lockNodes = mapper.createArrayNode();
+      int size = 0;
+      LockIterator iter = lockStore.iterator();
+      ServerLock lock = iter.getNextLock(null);
+      while (lock != null) {
+        lockNodes.add(String.valueOf(lock));
+        size++;
+        lock = iter.getNextLock(lock);
+      }
+      componentState.put("Number of locks", size);
+      componentState.set("Locks", lockNodes);
+      stateDumpCollector.addState(StateDumpCollector.JSON_STATE_KEY, mapper.writerWithDefaultPrettyPrinter()
+          .writeValueAsString(componentState));
+    } catch (Exception e) {
+      stateDumpCollector.addState("exception", e.getLocalizedMessage());
+    }
+  }
+
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     int size = 0;

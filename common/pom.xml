@@ -56,6 +56,12 @@ Apache Ivy version: 2.2.0 20100923230623
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-common-api</artifactId>
+      <version>${terracotta-apis.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <!-- tests dependencies -->
     <dependency>
       <groupId>junit</groupId>
@@ -76,13 +82,6 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <!-- XXX should we even do this -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

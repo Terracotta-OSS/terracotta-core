@@ -21,6 +21,8 @@ package com.tc.l2.state;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.exception.TCServerRestartException;
@@ -547,6 +549,14 @@ public class StateManagerImpl implements StateManager {
   @Override
   public String toString() {
     return StateManagerImpl.class.getSimpleName() + ":" + this.state.toString();
+  }
+
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("Active Node", String.valueOf(this.activeNode));
+    stateDumpCollector.addState("Synced To", String.valueOf(this.syncdTo));
+    stateDumpCollector.addState("Current State", String.valueOf(state));
+    stateDumpCollector.addState("Start State", String.valueOf(startState));
   }
 
   private void fireStateChangedOperatorEvent() {

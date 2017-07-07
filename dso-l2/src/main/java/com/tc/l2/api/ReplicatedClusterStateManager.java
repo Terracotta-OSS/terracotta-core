@@ -18,11 +18,13 @@
  */
 package com.tc.l2.api;
 
+import org.terracotta.entity.StateDumpable;
+
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
 
-public interface ReplicatedClusterStateManager {
+public interface ReplicatedClusterStateManager extends StateDumpable {
 
   public void goActiveAndSyncState();
 

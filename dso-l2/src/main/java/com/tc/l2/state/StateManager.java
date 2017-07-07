@@ -18,6 +18,8 @@
  */
 package com.tc.l2.state;
 
+import org.terracotta.entity.StateDumpable;
+
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.net.NodeID;
@@ -28,7 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public interface StateManager {
+public interface StateManager extends StateDumpable {
 
   public static final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
   public static final State       RECOVERING           = new State("RECOVERING");

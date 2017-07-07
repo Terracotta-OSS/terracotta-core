@@ -20,6 +20,8 @@ package com.tc.async.impl;
 
 import org.slf4j.Logger;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -30,7 +32,6 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -158,6 +159,11 @@ public class StageImpl<EC> implements Stage<EC> {
     return "StageImpl(" + name + ")";
   }
 
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("queue.length", String.valueOf(getSink().size()));
+  }
+
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
     private final EventHandler<EC> handler;
@@ -231,11 +237,4 @@ public class StageImpl<EC> implements Stage<EC> {
     }
     return rootCause instanceof TCNotRunningException;
   }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Queue depth: " + getSink().size() + " " + this.name);
-    return out;
-  }
-
 }

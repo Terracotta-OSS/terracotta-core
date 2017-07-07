@@ -20,6 +20,8 @@ package com.tc.async.impl;
 
 import org.slf4j.Logger;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.PostInit;
@@ -189,5 +191,12 @@ public class StageManagerImpl implements StageManager {
       out.indent().visit(stage).flush();
     }
     return out;
+  }
+
+  @Override
+  public void addStateTo(final StateDumpCollector stateDumpCollector) {
+    for (Stage<?> stage : stages.values()) {
+      stage.addStateTo(stateDumpCollector.subStateDumpCollector(stage.getName()));
+    }
   }
 }

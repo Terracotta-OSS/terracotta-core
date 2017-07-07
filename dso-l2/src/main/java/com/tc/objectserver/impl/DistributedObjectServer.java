@@ -18,12 +18,13 @@
  */
 package com.tc.objectserver.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
-import com.tc.services.LogBasedStateDumpCollector;
+import com.tc.services.JsonStateDumpCollector;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
 import com.tc.services.SingleThreadedTimer;
@@ -66,8 +67,6 @@ import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
-import com.tc.handler.CallbackDumpAdapter;
-import com.tc.handler.CallbackDumpHandler;
 import com.tc.handler.CallbackGroupExceptionHandler;
 import com.tc.handler.CallbackZapDirtyDbExceptionAdapter;
 import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
@@ -101,7 +100,6 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.RemoteManagement;
 import com.tc.management.RemoteManagementImpl;
@@ -243,13 +241,7 @@ import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.util.ProductCapabilities;
-import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ProductID;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.nio.charset.Charset;
@@ -263,8 +255,7 @@ import org.terracotta.entity.BasicServiceConfiguration;
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, ServerConnectionValidator,
-    DumpHandlerStore {
+public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, ServerConnectionValidator {
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
@@ -299,8 +290,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private GroupManager<AbstractGroupMessage> groupCommManager;
   private Stage<HydrateContext>                                  hydrateStage;
   private StripeIDStateManagerImpl               stripeIDStateManager;
-
-  private final CallbackDumpHandler              dumpHandler      = new CallbackDumpHandler();
 
   private final SingleThreadedTimer timer;
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
@@ -344,45 +333,40 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.serverBuilder;
   }
   
-  public byte[] getClusterState(Charset set) {
-    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    Writer writer = new OutputStreamWriter(bytes, set);
-    PrintWriter gather = new PrintWriter(writer);
-    PrettyPrinter pp = new PrettyPrinterImpl(gather) {
-      @Override
-      public void flush() {
-        println();
-      }
-    };
-    this.seda.getStageManager().prettyPrint(pp);
-    pp.println();
-    this.persistor.prettyPrint(pp);
-    pp.println();
-    this.groupCommManager.prettyPrint(pp);
-    pp.println();
-    this.l2Coordinator.prettyPrint(pp);
-    pp.println();
-    this.entityManager.prettyPrint(pp);
-    pp.println();
-    this.serviceRegistry.prettyPrint(pp);
-    pp.println();
-    return bytes.toByteArray();
+  public byte[] getClusterState(Charset charset) {
+    String clusterState = getClusterStateInternal();
+    TCLogging.getDumpLogger().info(clusterState);
+    return clusterState.getBytes(charset);
   }
 
   @Override
   public void dump() {
-    this.dumpHandler.dump();
-    this.serverBuilder.dump();
-    LogBasedStateDumpCollector stateDumpCollector = new LogBasedStateDumpCollector("platform");
-    this.entityManager.addStateTo(stateDumpCollector.subStateDumpCollector("entities"));
-    this.serviceRegistry.addStateTo(stateDumpCollector.subStateDumpCollector("services"));
-    stateDumpCollector.logState();
+    TCLogging.getDumpLogger().info(getClusterStateInternal());
+  }
+
+  private String getClusterStateInternal() {
+    try {
+      JsonStateDumpCollector stateDumpCollector = new JsonStateDumpCollector("Platform");
+      this.seda.getStageManager().addStateTo(stateDumpCollector.subStateDumpCollector(this.seda.getStageManager().getClass().getName()));
+      this.persistor.addStateTo(stateDumpCollector.subStateDumpCollector(this.persistor.getClass().getName()));
+      this.groupCommManager.addStateTo(stateDumpCollector.subStateDumpCollector(this.groupCommManager.getClass().getName()));
+      this.l2Coordinator.addStateTo(stateDumpCollector.subStateDumpCollector(this.l2Coordinator.getClass().getName()));
+      this.entityManager.addStateTo(stateDumpCollector.subStateDumpCollector(this.entityManager.getClass().getName()));
+      this.serviceRegistry.addStateTo(stateDumpCollector.subStateDumpCollector(this.serviceRegistry.getClass().getName()));
+      this.lockManager.addStateTo(stateDumpCollector.subStateDumpCollector(this.lockManager.getClass().getName()));
+      this.stripeIDStateManager.addStateTo(stateDumpCollector.subStateDumpCollector(this.stripeIDStateManager.getClass().getName()));
+      return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(stateDumpCollector.getState());
+    } catch (Exception e) {
+      String errMsg = "unable to collect cluster state: " + e.getMessage();
+      logger.error(errMsg, e);
+      return errMsg;
+    }
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
 
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
-    threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
+    threadGroup.addCallbackOnExitDefaultHandler(state -> DistributedObjectServer.this.dump());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, new CallbackOnExitHandler() {
       @Override
       public void callbackOnExit(CallbackOnExitState state) {
@@ -446,8 +430,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final StageManager stageManager = this.seda.getStageManager();
-
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
 
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
@@ -515,7 +497,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       persistor = serverBuilder.createPersistor(platformServiceRegistry);
     }
 
-    dumpHandler.registerForDump(new CallbackDumpAdapter(persistor));
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
 
     // register the terracotta operator event logger
@@ -584,8 +565,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
-
     final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(),
                                                                        this.communicationsManager
                                                                            .getConnectionManager(), pInfo.version());
@@ -627,8 +606,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage<LockResponseContext> respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, LockResponseContext.class, new RespondToRequestLockHandler(), 1, maxStageSize);
     this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
 
-    final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
-    this.dumpHandler.registerForDump(lockDumpAdapter);
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
@@ -726,8 +703,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, mgr, this.globalWeightGeneratorFactory);
 
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
-
     L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService), eventCollector);
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
@@ -804,8 +779,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
     dispatchHandler.addListener(connectPassiveOperatorEvents(info, haConfig.getNodesStore(), monitoringShimService));
-    
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
 
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
                                                                               globalTxnCounter,
@@ -825,7 +798,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         clientHandshakeManager,
                                                                        serverStats, this.connectionIdFactory,
                                                                        maxStageSize,
-                                                                       this.l1Listener.getChannelManager(), this
+                                                                       this.l1Listener.getChannelManager()
     );
     toInit.add(this.serverBuilder);
 
@@ -1204,10 +1177,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.groupCommManager;
   }
 
-  @Override
-  public void registerForDump(CallbackDumpAdapter dumpAdapter) {
-    this.dumpHandler.registerForDump(dumpAdapter);
-  }
 
   @Override
   public boolean isAlive(String name) {

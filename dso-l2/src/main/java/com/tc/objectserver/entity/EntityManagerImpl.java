@@ -35,8 +35,6 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.services.ToStringStateDumpCollector;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -318,7 +316,7 @@ public class EntityManagerImpl implements EntityManager {
   public void addStateTo(StateDumpCollector stateDumpCollector) {
     // We want to dump a size, minimally acting as a heading for the section (in case there is nothing).
     Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
-    stateDumpCollector.addState("EntityManagerImpl size", Integer.toString(entries.size()));
+    stateDumpCollector.addState("Number of entities", Integer.toString(entries.size()));
     for (Map.Entry<EntityID, FetchID> entry : entries) {
       EntityID entityID = entry.getKey();
       try {
@@ -327,13 +325,6 @@ public class EntityManagerImpl implements EntityManager {
         stateDumpCollector.subStateDumpCollector(entityID.getClassName() + ":" + entityID.getEntityName()).addState("exception", t.getMessage());
       }
     }
-  }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    ToStringStateDumpCollector dump = new ToStringStateDumpCollector("entities");
-    addStateTo(dump);
-    return out.println(dump);
   }
 }
 
