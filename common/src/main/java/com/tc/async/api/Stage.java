@@ -23,7 +23,7 @@ import com.tc.text.PrettyPrintable;
 /**
  * @author steve
  */
-public interface Stage<EC> extends PrettyPrintable {
+public interface Stage<EC> {
 
   public void destroy();
 

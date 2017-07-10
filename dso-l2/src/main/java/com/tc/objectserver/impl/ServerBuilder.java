@@ -27,8 +27,6 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.DumpHandlerStore;
-import com.tc.management.beans.TCDumper;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -48,7 +46,7 @@ import com.tc.runtime.logging.LongGCLogger;
 import java.io.IOException;
 
 
-public interface ServerBuilder extends TCDumper, PostInit {
+public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID,
                                       StripeIDStateManager stripeStateManager, TCSecurityManager mgr, WeightGeneratorFactory weightGeneratorFactory);
@@ -60,8 +58,7 @@ public interface ServerBuilder extends TCDumper, PostInit {
                                                               ServerClientHandshakeManager clientHandshakeManager,
                                                               GlobalServerStats serverStats,
                                                               ConnectionIDFactory connectionIdFactory,
-                                                              int maxStageSize, ChannelManager genericChannelManager,
-                                                              DumpHandlerStore dumpHandlerStore);
+                                                              int maxStageSize, ChannelManager genericChannelManager);
 
   L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, StateManager stateMgr,

@@ -21,6 +21,7 @@ package com.tc.l2.ha;
 import com.tc.net.StripeID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.State;
+import java.util.Map;
 
 import java.util.Set;
 
@@ -47,5 +48,7 @@ public interface ClusterState {
   void syncSequenceState();
 
   void setCurrentState(State currentState);
+  
+  void reportStateToMap(Map<String, Object> state);
 
 }

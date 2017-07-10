@@ -36,7 +36,7 @@ import java.util.Set;
  * 
  * @author Saravanan Subbiah
  */
-public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
+public class TCConcurrentMultiMap<K, V> {
 
   private final AddCallBack<K, V>            addCallback    = new AddCallBack<K, V>();
   private final AddAllCallBack<K, V>         addAllCallback = new AddAllCallBack<K, V>();
@@ -250,13 +250,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
       return removed;
     }
   }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.visit(this.store).flush();
-    return out;
-  }
-
+  
   private static <T> Set<T> singleton(T t) {
     return new SingletonSet<T>(t);
   }

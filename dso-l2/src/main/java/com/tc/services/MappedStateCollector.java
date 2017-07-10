@@ -16,60 +16,42 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.async.impl;
+package com.tc.services;
 
-import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
-import com.tc.text.PrettyPrinter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+import org.terracotta.entity.StateDumpCollector;
 /**
- * @author orion
+ *
  */
-public class MockStage implements Stage {
+public class MappedStateCollector implements StateDumpCollector {
 
-  private final String  name;
-  public final MockSink sink;
+  private final Map<String, Object> dumpState = new LinkedHashMap<>();
+  private final String name;
 
-  public MockStage(String name) {
+  public MappedStateCollector(String name) {
     this.name = name;
-    this.sink = new MockSink();
+    dumpState.put("name", name);
   }
 
   @Override
-  public void destroy() {
-    //
+  public StateDumpCollector subStateDumpCollector(String name) {
+    MappedStateCollector sub = new MappedStateCollector(name);
+    dumpState.put(name, sub.getMap());
+    return sub;
   }
 
   @Override
-  public synchronized Sink getSink() {
-    return sink;
+  public void addState(String key, String value) {
+    dumpState.put(key, value);
   }
 
-  @Override
-  public void start(ConfigurationContext context) {
-    //
-  }
-
-  @Override
-  public int pause() {
-//
-    return 0;
-  }
-
-  @Override
-  public void unpause() {
-//
-  }
-
-  @Override
-  public String toString() {
-    return "MockStage(" + name + ")";
-  }
-
-  @Override
   public String getName() {
     return name;
   }
-
+  
+  public Map<String, Object> getMap() {
+    return dumpState;
+  }
 }

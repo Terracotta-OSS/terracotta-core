@@ -48,12 +48,10 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     this.policies = initPolicies();
   }
 
-  @Override
   public synchronized void autoflush(boolean b) {
     this.autoflush = b;
   }
 
-  @Override
   public synchronized boolean autoflush() {
     return this.autoflush;
   }
@@ -74,7 +72,6 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     }
   }
 
-  @Override
   public PrettyPrinter print(Object o) {
     this.out.print(o);
     if (autoflush()) this.out.flush();
@@ -88,19 +85,16 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     return this;
   }
 
-  @Override
   public PrettyPrinter println() {
     this.out.println();
     if (autoflush()) this.out.flush();
     return this;
   }
 
-  @Override
   public PrettyPrinter indent() {
     return print(prefix);
   }
 
-  @Override
   public PrettyPrinter duplicateAndIndent() {
     PrettyPrinterImpl rv = duplicate();
     rv.indentPrefix();
@@ -118,7 +112,6 @@ public class PrettyPrinterImpl implements PrettyPrinter {
     return prettyPrinterImpl;
   }
 
-  @Override
   public PrettyPrinter visit(Object o) {
     if (accountFor(o)) {
       print("ALREADY VISITED: " + o);
@@ -177,7 +170,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o.getClass().getName()).print(".size()=").print(((Map<?, ?>) o).size() + "");
+      return pp.println(o.getClass().getName()).println(".size()=").println(((Map<?, ?>) o).size() + "");
     }
 
     @Override
@@ -191,7 +184,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o.getClass().getName()).print(".size()=").print(((Collection<?>) o).size() + "");
+      return pp.println(o.getClass().getName()).println(".size()=").println(((Collection<?>) o).size() + "");
     }
 
     @Override
@@ -205,7 +198,7 @@ public class PrettyPrinterImpl implements PrettyPrinter {
 
     @Override
     public PrettyPrinter visit(PrettyPrinter pp, Object o) {
-      return pp.print(o);
+      return pp.println(o);
     }
 
     @Override

@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,7 @@ import java.util.concurrent.Future;
  * This is persisted because reconnect on restart needs to ensure that the transactions being replayed are done so in
  * the same order as their original order.
  */
-public class TransactionOrderPersistor implements PrettyPrintable {
+public class TransactionOrderPersistor {
   private final IPlatformPersistence storageManager;
   private Long receivedTransactionCount = new Long(0L);
     
@@ -253,19 +254,13 @@ public class TransactionOrderPersistor implements PrettyPrintable {
   public long getReceivedTransactionCount() {
     return this.receivedTransactionCount;
   }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().println(this.getClass().getName());
-    out.indent().indent().println("Received transaction count = " + getReceivedTransactionCount());
-    if(globalList != null) {
-      out.indent().indent().println("Existing Global List: ");
-      for (ClientTransaction clientTransaction : globalList) {
-        out.indent().indent().indent().print(clientTransaction);
-      }
-    }
-
+  
+  public Map<String, Object> reportStateToMap(Map<String, Object> map) {
+    map.put("className", this.getClass().getName());
+    map.put("receivedTransactions", getReceivedTransactionCount());
     if(this.permNodeIDs != null && storageManager != null) {
+      Map<String, Object> clientMap = new LinkedHashMap<>();
+      map.put("permanentClients", clientMap);
       for (ClientID clientNodeID : permNodeIDs) {
         List<IPlatformPersistence.SequenceTuple> transactions = null;
         try {
@@ -273,24 +268,27 @@ public class TransactionOrderPersistor implements PrettyPrintable {
         } catch (IOException e) {
           Assert.fail(e.getLocalizedMessage());
         }
-        out.indent().indent().println("Persisted transaction order for client " + clientNodeID);
+        List<String> trans = new ArrayList<>();
         if (transactions != null) {
           for (IPlatformPersistence.SequenceTuple transaction : transactions) {
-            out.indent().indent().indent()
-                .println("Global seq Id = " + transaction.localSequenceID + ", local seq id = " + transaction.localSequenceID);
+            trans.add("Global seq Id = " + transaction.globalSequenceID + ", local seq id = " + transaction.localSequenceID);
           }
-        }
-      }
-      for (Map.Entry<ClientID, List<ClientTransaction>> entry : fastSequenceCache.entrySet()) {
-        out.indent().indent().println("Persisted transaction order for client " + entry.getKey());
-        if (entry.getValue() != null) {
-          for (ClientTransaction transaction : entry.getValue()) {
-            out.indent().indent().indent()
-                .println("Global seq Id = " + transaction.localTransactionID + ", local seq id = " + transaction.globalTransactionID);
-          }
+          clientMap.put(clientNodeID.toString(), trans);
         }
       }
     }
-    return out;
+
+    Map<String, Object> clientMap = new LinkedHashMap<>();
+    map.put("regularClients", clientMap);
+    for (Map.Entry<ClientID, List<ClientTransaction>> entry : fastSequenceCache.entrySet()) {
+      List<String> trans = new ArrayList<>();
+      if (entry.getValue() != null) {
+        clientMap.put(entry.getKey().toString(), trans);
+        for (ClientTransaction transaction : entry.getValue()) {
+          trans.add("Global seq Id = " + transaction.globalTransactionID + ", local seq id = " + transaction.localTransactionID);
+        }
+      }
+    }
+    return map;
   }
 }

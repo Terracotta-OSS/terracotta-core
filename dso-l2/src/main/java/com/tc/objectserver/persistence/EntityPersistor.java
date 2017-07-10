@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +48,7 @@ import org.terracotta.persistence.IPlatformPersistence;
 /**
  * Stores the information relating to the entities currently alive on the platform into persistent storage.
  */
-public class EntityPersistor implements PrettyPrintable {
+public class EntityPersistor {
   private static final Logger LOGGER = LoggerFactory.getLogger(EntityPersistor.class);
 
   private static final String ENTITIES_ALIVE_FILE_NAME = "entities_alive.map";
@@ -273,34 +274,31 @@ public class EntityPersistor implements PrettyPrintable {
     storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
   }
 
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().println(this.getClass().getName());
+  public void reportStateToMap(Map<String, Object> map) {
+    map.put("className", this.getClass().getName());
+    List<String> entityList = new ArrayList<>();
+    map.put("existingEntities", entityList);
     if(entities != null) {
-      out.indent().indent().println("Existing entities: ");
       for (Key key : entities.keySet()) {
-        out.indent().indent().indent().println(key.className + ":" + key.entityName);
+        entityList.add(key.className +"-" + key.entityName);
       }
     }
 
     if(entityLifeJournal != null) {
-      out.indent().indent().println("Client Journals: ");
+      Map<String, Object> journals = new LinkedHashMap<>();
+      map.put("journals", journals);
       for (Map.Entry<ClientID, List<EntityData.JournalEntry>> entry : entityLifeJournal.entrySet()) {
-        out.indent().indent().indent().println("Journal operations for client " + entry.getKey());
+        List<String> items = new ArrayList<>();
+        journals.put(entry.getKey().toString(), items);
         for (JournalEntry journalEntry : entry.getValue()) {
-          out.indent().indent().indent().indent().println(journalEntry);
+          items.add(journalEntry.toString());
         }
-
       }
     }
 
-    if(counters != null) {
-      out.indent().indent().println("Next consumer ID = " + this.counters.get(COUNTERS_CONSUMER_ID));
-    }
-    return out;
+    map.put("nextConsumerID", this.counters.get(COUNTERS_CONSUMER_ID));
   }
-
-
+  
   private List<JournalEntry> filterJournal(List<JournalEntry> list, long oldestTransactionOnClient) {
     Assert.assertNotNull(list);
     List<JournalEntry> newList = new Vector<>();

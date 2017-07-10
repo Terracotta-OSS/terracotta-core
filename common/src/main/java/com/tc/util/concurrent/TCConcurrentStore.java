@@ -66,7 +66,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  * @author Saravanan Subbiah
  */
-public class TCConcurrentStore<K, V> implements PrettyPrintable {
+public class TCConcurrentStore<K, V> {
 
   static final int              MAX_SEGMENTS             = 1 << 16;
   static final int              MAXIMUM_CAPACITY         = 1 << 30;
@@ -320,15 +320,6 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
     }
   }
 
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    for (int i = 0; i < segments.length; i++) {
-      out.duplicateAndIndent().indent().print("segment " + i + ":").flush();
-      out.visit(this.segments[i]).flush();
-    }
-    return out;
-  }
-
   /**
    * The callback interface that needs to be implemented so <code>executeUnderWriteLock</code> and
    * <code>executeUnderReadLock</code> can be called
@@ -338,7 +329,7 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
     public Object callback(K key, Object param, Map<K, V> segment);
   }
 
-  private static final class Segment<K, V> extends ReentrantReadWriteLock implements PrettyPrintable {
+  private static final class Segment<K, V> extends ReentrantReadWriteLock {
 
     private final HashMap<K, V> map;
 
@@ -416,21 +407,6 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
       } finally {
         this.writeLock().unlock();
       }
-    }
-
-    @Override
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      this.readLock().lock();
-      try {
-        Iterator<Map.Entry<K, V>> entries = this.map.entrySet().iterator();
-        while (entries.hasNext()) {
-          Map.Entry<K, V> e = entries.next();
-          out.duplicateAndIndent().duplicateAndIndent().indent().print(e.getKey() + " => " + e.getValue()).flush();
-        }
-      } finally {
-        this.readLock().unlock();
-      }
-      return out;
     }
   }
 }

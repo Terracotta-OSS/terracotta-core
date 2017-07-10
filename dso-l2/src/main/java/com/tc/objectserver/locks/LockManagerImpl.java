@@ -50,7 +50,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * LockManager is responsible for holding locks (in a LockStore) and delegating requests from the handler to the
  * concerned lock. Each lock is checked out, worked upon and then finally checked in.
  */
-public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, TimerCallback, DSOChannelManagerEventListener {
+public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCallback, DSOChannelManagerEventListener {
   private enum RequestType {
     LOCK, TRY_LOCK, WAIT, UNLOCK
   }
@@ -371,21 +371,6 @@ public class LockManagerImpl implements LockManager, PrettyPrintable, LockManage
     } finally {
       statusLock.readLock().unlock();
     }
-  }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(this.getClass().getName()).flush();
-    int size = 0;
-    LockIterator iter = lockStore.iterator();
-    ServerLock lock = iter.getNextLock(null);
-    while (lock != null) {
-      out.visit(lock);
-      size++;
-      lock = iter.getNextLock(lock);
-    }
-    out.indent().print("locks: " + size).println().flush();
-    return out;
   }
 
   private void assertStateIsStarting(String errMessage) {

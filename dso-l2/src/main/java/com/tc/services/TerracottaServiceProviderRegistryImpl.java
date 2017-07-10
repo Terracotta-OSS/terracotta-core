@@ -178,10 +178,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    ToStringStateDumpCollector dump = new ToStringStateDumpCollector("services");
+    MappedStateCollector dump = new MappedStateCollector("services");
     addStateTo(dump);
-    out.println(dump);
-    return out;
+    return out.println(dump.getMap());
   }
 
 }

@@ -21,15 +21,12 @@ package com.tc.management;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.handler.LockInfoDumpHandler;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
-import com.tc.util.runtime.LockInfoByThreadID;
-import com.tc.util.runtime.LockInfoByThreadIDImpl;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.lang.management.ManagementFactory;
@@ -85,7 +82,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   // for tests
-  public L1Info(LockInfoDumpHandler lockInfoDumpHandler) throws NotCompliantMBeanException {
+  public L1Info() throws NotCompliantMBeanException {
     super(L1InfoMBean.class, true);
     this.productInfo = ProductInfo.getInstance();
     this.buildID = productInfo.buildID();

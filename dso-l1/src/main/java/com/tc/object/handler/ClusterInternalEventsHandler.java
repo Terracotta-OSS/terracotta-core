@@ -71,7 +71,7 @@ public class ClusterInternalEventsHandler<EC> extends AbstractEventHandler<EC> {
 
     @Override
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      out.print("clusterEventExecutor active: " + eventExecutor.getActiveCount() + " queue: "
+      out.println("clusterEventExecutor active: " + eventExecutor.getActiveCount() + " queue: "
                     + eventExecutor.getQueue().size()).flush();
       return out;
     }

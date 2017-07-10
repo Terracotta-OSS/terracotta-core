@@ -35,7 +35,6 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.services.ToStringStateDumpCollector;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
@@ -55,6 +54,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.services.MappedStateCollector;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -331,9 +331,9 @@ public class EntityManagerImpl implements EntityManager {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    ToStringStateDumpCollector dump = new ToStringStateDumpCollector("entities");
+    MappedStateCollector dump = new MappedStateCollector("entities");
     addStateTo(dump);
-    return out.println(dump);
+    return out.println(dump.getMap());
   }
 }
 
