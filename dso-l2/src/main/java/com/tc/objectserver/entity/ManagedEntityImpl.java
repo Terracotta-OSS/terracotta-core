@@ -746,7 +746,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
           if (loc.runOnActive()) {
             EntityResponse resp = this.activeServerEntity.invokeActive(
-              new InvokeContextImpl(clientDescriptor, currentId, oldestId),
+              new InvokeContextImpl(clientDescriptor, oldestId, currentId),
               em);
             byte[] er = runWithHelper(()->codec.encodeResponse(resp));
             response.complete(er);
@@ -764,7 +764,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
-          this.passiveServerEntity.invokePassive(new InvokeContextImpl(clientDescriptor, currentId, oldestId), em);
+          this.passiveServerEntity.invokePassive(new InvokeContextImpl(clientDescriptor, oldestId, currentId), em);
         } catch (EntityUserException e) {
           //on passives, just log the exception - don't crash server
           logger.error("Caught EntityUserException during invoke", e);
