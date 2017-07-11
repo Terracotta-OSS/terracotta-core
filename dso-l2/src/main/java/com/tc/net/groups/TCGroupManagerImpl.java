@@ -104,6 +104,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -829,25 +830,29 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    StringBuilder strBuffer = new StringBuilder();
-    strBuffer.append(TCGroupManagerImpl.class.getSimpleName()).append(" [ ");
-    strBuffer.append("Channel to NodeId Map: {");
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("className", this.getClass().getName());
+    Map<String, Object> channels = new LinkedHashMap<>();
+    map.put("channelMap", channels);
     for (Entry<MessageChannel, ServerID> entry : this.channelToNodeID.entrySet()) {
-      strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
+      channels.put(entry.getKey().toString(), entry.getValue().toString());
     }
-    strBuffer.append("}\n\t");
 
-    strBuffer.append("members: {");
+    Map<String, Object> memberReport = new LinkedHashMap<>();
+    map.put("members", memberReport);
     for (Entry<ServerID, TCGroupMember> entry : this.members.entrySet()) {
-      strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
+      memberReport.put(entry.getKey().toString(), entry.getValue().toString());
     }
-    strBuffer.append("}\n\t");
 
-    strBuffer.append("zappedSet: {").append(this.zappedSet).append(" ").append("} ]");
-    out.indent().print(strBuffer.toString()).flush();
+    List<String> zapped = new ArrayList<>(this.zappedSet.size());
+    map.put("zapped", zapped);
+    this.zappedSet.forEach(node->zapped.add(node.toString()));
+    
+    out.println(map);
+    
     return out;
   }
-
+  
   private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {
 
     private final Set<ServerID>      waitFor   = new HashSet<>();

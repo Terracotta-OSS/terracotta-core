@@ -36,17 +36,17 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
-    ConnectionIDFactoryListener, PrettyPrintable {
+    ConnectionIDFactoryListener {
 
   private static final Logger logger = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
 
@@ -221,12 +221,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   @Override
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(ReplicatedClusterStateManagerImpl.class.getSimpleName() + " [ ");
-    strBuilder.append(this.state).append(" ").append(this.stateManager);
-    strBuilder.append(" ]");
-    out.print(strBuilder.toString());
-    return out;
+  public void reportStateToMap(Map<String, Object> state) {
+    state.put("className", this.getClass().getName());
+    Map<String, Object> cstate = new LinkedHashMap<>();
+    state.put("state", cstate);
+    this.state.reportStateToMap(cstate);
+    state.put("stateManager", this.stateManager.toString());
   }
 }

@@ -18,7 +18,6 @@
  */
 package com.tc.l2.api;
 
-import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;

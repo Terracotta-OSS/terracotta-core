@@ -25,12 +25,10 @@ import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDEventListener;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPrintable {
+public class StripeIDStateManagerImpl implements StripeIDStateManager {
   private static final Logger logger = LoggerFactory.getLogger(StripeIDStateManagerImpl.class);
 
   private final CopyOnWriteArrayList<StripeIDEventListener> listeners            = new CopyOnWriteArrayList<>();
@@ -107,11 +105,4 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPri
     }
   }
   
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(this.getClass().getName()).flush();
-    out.print("stripeID: ").print(getStripeID()).flush();
-    return out;
-  }
-
 }

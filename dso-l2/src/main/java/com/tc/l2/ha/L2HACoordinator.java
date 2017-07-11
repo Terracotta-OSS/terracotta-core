@@ -34,10 +34,11 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 
@@ -153,7 +154,9 @@ public class L2HACoordinator implements L2Coordinator {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().visit(this.rClusterStateMgr).flush();
+    Map<String, Object> state = new LinkedHashMap<>();
+    this.rClusterStateMgr.reportStateToMap(state);
+    out.println(state);
     return out;
   }
 }

@@ -20,20 +20,21 @@ package com.tc.objectserver.persistence;
 
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
-public class ClientStatePersistor implements PrettyPrintable {
+public class ClientStatePersistor {
   private static final String CLIENTS_MAP_FILE_NAME =  "clients_map.map";
   private static final String NEXT_CLIENT_ID_FILE_NAME =  "next_client_id.dat";
   
@@ -93,19 +94,18 @@ public class ClientStatePersistor implements PrettyPrintable {
     safeStoreClients();
   }
 
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.indent().println(this.getClass().getName());
-
-    out.indent().indent().println("Connected clients: ");
+  Map<String, Object> reportStateToMap(Map<String, Object> map) {
+    map.put("className", this.getClass().getName());
+    List<String> cs = new ArrayList<>();
+    map.put("clients", cs);
     for (ClientID clientID : clients.keySet()) {
-      out.indent().indent().indent().println(clientID);
+      cs.add(clientID.toString());
     }
-    out.indent().indent().println("Next client id: " + clientIDSequence.current());
+    map.put("next", clientIDSequence.current());
 
-    return out;
+    return map;
   }
-
+  
   private void safeStoreClients() {
     try {
       this.storageManager.storeDataElement(CLIENTS_MAP_FILE_NAME, this.clients);

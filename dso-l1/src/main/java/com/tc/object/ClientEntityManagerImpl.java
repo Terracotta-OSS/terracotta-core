@@ -302,11 +302,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   @Override
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(this.getClass().getName()).flush();
-    out.duplicateAndIndent().indent().print(this.stateManager.getCurrentState()).flush();
-    out.duplicateAndIndent().indent().print("inFlightMessages size: ").print(Integer.valueOf(this.inFlightMessages.size())).flush();
-    out.duplicateAndIndent().indent().print("outbound size: ").print(Integer.valueOf(outbound.size())).flush();
-    out.duplicateAndIndent().indent().print("objectStoreMap size: ").print(Integer.valueOf(this.objectStoreMap.size())).flush();
+  //  TODO: implement something sane
     return out;
   }
 

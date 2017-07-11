@@ -23,6 +23,8 @@ import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductID;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.terracotta.persistence.IPlatformPersistence;
 
@@ -106,15 +108,32 @@ public class Persistor implements PrettyPrintable {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Persistor State: " + getClass().getName()).flush();
-    if (!started) {
-      out.indent().print("PersistorImpl not started.").flush();
-    } else {
-      if(clusterStatePersistor != null) clusterStatePersistor.prettyPrint(out);
-      if(entityPersistor != null) entityPersistor.prettyPrint(out);
-      if(clientStatePersistor != null) clientStatePersistor.prettyPrint(out);
-      if(transactionOrderPersistor != null) transactionOrderPersistor.prettyPrint(out);
+    Map<String,Object> map = new LinkedHashMap<>();
+    map.put("className", this.getClass().getName());
+    map.put("started", started);
+
+    if(clusterStatePersistor != null) {
+      Map<String,Object> substate = new LinkedHashMap<>();
+      map.put("clusterState", substate);
+      clusterStatePersistor.reportStateToMap(substate);
     }
+    if(entityPersistor != null) {
+      Map<String,Object> substate = new LinkedHashMap<>();
+      map.put("entityPersistor", substate);
+      entityPersistor.reportStateToMap(substate);
+    }
+    if(clientStatePersistor != null) {
+      Map<String,Object> substate = new LinkedHashMap<>();
+      map.put("clientPersistor", substate);
+      clientStatePersistor.reportStateToMap(substate);
+    }
+    if(transactionOrderPersistor != null) {
+      Map<String,Object> substate = new LinkedHashMap<>();
+      map.put("orderPersistor", substate);
+      transactionOrderPersistor.reportStateToMap(substate);
+    }
+
+    out.println(map);
     return out;
   }
 }

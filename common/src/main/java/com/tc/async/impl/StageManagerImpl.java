@@ -37,7 +37,9 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -184,10 +186,14 @@ public class StageManagerImpl implements StageManager {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print(this.getClass().getName()).flush();
+    Map<String,Object> map = new LinkedHashMap<String,Object>();
+    map.put("className", this.getClass().getName());
+    map.put("monitor", MONITOR);
+    Map<String,Object> stageMap = new LinkedHashMap<String,Object>();
     for (Stage<?> stage : stages.values()) {
-      out.indent().visit(stage).flush();
+      stageMap.put(stage.getName(), stage.getSink().size());
     }
-    return out;
+    map.put("stages", stageMap);
+    return out.println(map);
   }
 }

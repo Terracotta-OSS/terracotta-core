@@ -30,7 +30,6 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -231,11 +230,4 @@ public class StageImpl<EC> implements Stage<EC> {
     }
     return rootCause instanceof TCNotRunningException;
   }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Queue depth: " + getSink().size() + " " + this.name);
-    return out;
-  }
-
 }

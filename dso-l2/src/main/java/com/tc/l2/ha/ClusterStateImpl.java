@@ -29,9 +29,12 @@ import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.State;
 import com.tc.util.UUID;
+import java.util.ArrayList;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ClusterStateImpl implements ClusterState {
@@ -172,4 +175,13 @@ public class ClusterStateImpl implements ClusterState {
     return strBuilder.toString();
   }
 
+  @Override
+  public void reportStateToMap(Map<String, Object> state) {
+    List<String> connects = new ArrayList<>(this.connections.size());
+    this.connections.forEach((c)->connects.add(c.toString()));
+    state.put("connections", connects);
+    state.put("nextChannelID", this.nextAvailChannelID);
+    state.put("currentState", this.currentState.toString());
+    state.put("stripeID", this.stripeID.toString());
+  }
 }

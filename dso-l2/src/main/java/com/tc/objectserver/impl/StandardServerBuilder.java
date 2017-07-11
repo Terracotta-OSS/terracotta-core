@@ -32,8 +32,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -49,11 +47,9 @@ import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.locks.LockManager;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
-import com.tc.util.runtime.ThreadDumpUtil;
 
 import org.terracotta.persistence.IPlatformPersistence;
 
@@ -85,19 +81,13 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                      GlobalServerStats serverStats,
                                                                      ConnectionIDFactory connectionIdFactory,
                                                                      int maxStageSize,
-                                                                     ChannelManager genericChannelManager,
-                                                                     DumpHandlerStore dumpHandlerStore) {
+                                                                     ChannelManager genericChannelManager) {
     return new ServerConfigurationContextImpl(stageManager,
         lockMgr, channelManager,
         clientHandshakeManager, channelStats, coordinator
     );
   }
-
-  @Override
-  public void dump() {
-    TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
-  }
-
+  
   @Override
   public void initializeContext(ConfigurationContext context) {
     // Nothing to initialize here

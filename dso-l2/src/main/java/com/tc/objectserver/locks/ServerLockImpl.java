@@ -28,7 +28,6 @@ import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.locks.ThreadID;
 import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.objectserver.locks.context.SingleServerLockContext;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
@@ -421,13 +420,6 @@ public final class ServerLockImpl extends AbstractServerLock {
           throw new AssertionError(type);
       }
     }
-  }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out = super.prettyPrint(out);
-    out.print("isRecalled=" + isRecalled).flush();
-    return out;
   }
 
   @Override

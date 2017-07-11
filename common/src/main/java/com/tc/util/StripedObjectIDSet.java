@@ -19,8 +19,6 @@
 package com.tc.util;
 
 import com.tc.object.ObjectID;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.BitSetObjectIDSet.BitSet;
 
 import java.util.Collection;
@@ -30,7 +28,7 @@ import java.util.SortedSet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable {
+public class StripedObjectIDSet implements SortedSet<ObjectID> {
   private final static int               DEFAULT_CONCURRENCY = 64;
 
   private final ObjectIDSet[]            objectIdSets;
@@ -249,22 +247,6 @@ public class StripedObjectIDSet implements SortedSet<ObjectID>, PrettyPrintable 
   @SuppressWarnings("unchecked")
   private static <T> T[] makeArray(T[] a, int size) {
     return (T[]) java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
-  }
-
-  @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.print("Striped ObjectIDSet: concurreny = " + concurrency).flush();
-    lockAll();
-    try {
-      for (int index = 0; index < concurrency; index++) {
-        out.print("ObjectIDSet Index: " + index).flush();
-        out.print(objectIdSets[index]).flush();
-      }
-    } finally {
-      unlockAll();
-    }
-
-    return out;
   }
 
   private int getIndex(ObjectID oid) {

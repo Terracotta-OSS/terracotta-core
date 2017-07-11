@@ -39,15 +39,12 @@ import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.exception.TCRuntimeException;
-import com.tc.handler.CallbackDumpAdapter;
-import com.tc.handler.CallbackDumpHandler;
 import com.tc.lang.TCThreadGroup;
 import com.tc.util.ProductID;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
-import com.tc.logging.TCLogging;
 import com.tc.management.TCClient;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -60,7 +57,6 @@ import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
-import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -71,7 +67,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -108,6 +103,8 @@ import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
+import com.tc.text.MapListPrettyPrint;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
@@ -153,7 +150,6 @@ public class DistributedObjectClient implements TCClient {
   private ClientHandshakeManager                     clientHandshakeManager;
 
   private CounterManager                             counterManager;
-  private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
 
   private Stage<ClusterInternalEventsContext> clusterEventsStage;
 
@@ -270,9 +266,10 @@ public class DistributedObjectClient implements TCClient {
       @Override
       public void callbackOnExit(CallbackOnExitState state) {
         cluster.fireNodeError();
+        DSO_LOGGER.info(getClientState());
+        Thread.dumpStack();
       }
     });
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.communicationStageManager));
 
     final ReconnectConfig l1ReconnectConfig = getReconnectPropertiesFromServer();
 
@@ -342,9 +339,6 @@ public class DistributedObjectClient implements TCClient {
     // for SRA L1 Tx count
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     this.counterManager.createCounter(sampledCounterConfig);
-
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.clientEntityManager));
-    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.clientEntityManager));
 
     final Stage<HydrateContext> hydrateStage = this.communicationStageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), 1, maxSize);
 
@@ -554,10 +548,17 @@ public class DistributedObjectClient implements TCClient {
   public ClientHandshakeManager getClientHandshakeManager() {
     return this.clientHandshakeManager;
   }
+  
+  private String getClientState() {
+    PrettyPrinter printer = new MapListPrettyPrint();
+    this.communicationStageManager.prettyPrint(printer);
+    this.clientEntityManager.prettyPrint(printer);
+    return printer.toString();
+  }
 
   @Override
   public void dump() {
-    this.dumpHandler.dump();
+    DSO_LOGGER.info(getClientState());
   }
 
   protected ClientConfig getClientConfigHelper() {
