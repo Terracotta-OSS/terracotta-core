@@ -49,7 +49,7 @@ public class Persistor implements PrettyPrintable {
 
   public boolean start(boolean trackClients) {
     clientStatePersistor = new ClientStatePersistor(persistentStorage);
-    this.transactionOrderPersistor = new TransactionOrderPersistor(persistentStorage, this.clientStatePersistor.loadClientIDs());
+    this.transactionOrderPersistor = new TransactionOrderPersistor(persistentStorage, this.clientStatePersistor.loadPermanentClientIDs());
     for (ClientID orphan : clientStatePersistor.loadOrphanClientIDs()) {
       try {
         removeClientState(orphan);

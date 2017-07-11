@@ -70,8 +70,12 @@ public class ClientStatePersistor {
     return clients.entrySet().stream().filter(entry->!entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
   }
   
-  public Set<ClientID> loadClientIDs() {
+  public Set<ClientID> loadPermanentClientIDs() {
     return clients.entrySet().stream().filter(entry->entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
+  }
+  
+  public Set<ClientID> loadAllClientIDs() {
+    return clients.entrySet().stream().map(entry->entry.getKey()).collect(Collectors.toSet());
   }
 
   public boolean containsClient(ClientID id) {
