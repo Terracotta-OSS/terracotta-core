@@ -51,4 +51,8 @@ public interface ServerEntityRequest {
  * @return the passives that this request needs to be replicated to
  */  
   Set<NodeID> replicateTo(Set<NodeID> passives);
+
+  default String getTraceID() {
+    return getNodeID().toLong() + ":" + getTransaction().toLong();
+  }
 }

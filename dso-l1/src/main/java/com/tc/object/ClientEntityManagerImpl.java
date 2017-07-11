@@ -25,6 +25,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.tracing.Trace;
 import com.tc.util.Throwables;
 
 import org.slf4j.Logger;
@@ -254,7 +255,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     final NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY, lifecycleAcks());
     // Only invoke calls can wait for retire so don't wait in this path.
     final boolean shouldBlockGetOnRetire = false;
-    return sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire);
+    return sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire, "ClientEntityManagerImpl.createEntity");
   }
 
   @Override
@@ -264,7 +265,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requiresReplication, config, VoltronEntityMessage.Type.RECONFIGURE_ENTITY, lifecycleAcks());
     // Only invoke calls can wait for retire so don't wait in this path.
     boolean shouldBlockGetOnRetire = false;
-    return sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire);
+    return sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire, "ClientEntityManagerImpl.reconfigureEntity");
   }
   
   private Set<VoltronEntityMessage.Acks> lifecycleAcks() {
@@ -282,7 +283,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     boolean shouldBlockGetOnRetire = false;
     try {
       //  don't care about the return
-      sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire);
+      sendMessageWhileBusy(message, lifecycleAcks(), shouldBlockGetOnRetire, "ClientEntityManagerImpl.destroyEntity");
     } catch (EntityReferencedException r) {
       return false;
     }
@@ -292,7 +293,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks);
-    return createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
+    Trace trace = Trace.newTrace(message, "ClientEntityManagerImpl.invokeAction");
+    trace.start();
+    InFlightMessage inFlightMessageAfterAcks = createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
+    trace.end();
+    return inFlightMessageAfterAcks;
   }
 
   @Override
@@ -499,7 +504,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       boolean requiresReplication = true;
       byte[] payload = new byte[0];
       NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.RELEASE_ENTITY, requestedAcks);
-      sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire);
+      sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire, "ClientEntityManagerImpl.internalRelease");
     }
     
     // Note that we remove the entity from the local object store only after this release call returns in order to avoid
@@ -517,7 +522,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   }
   
-  private byte[] sendMessageWhileBusy(NetworkVoltronEntityMessage msg, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) throws EntityException {
+  private byte[] sendMessageWhileBusy(NetworkVoltronEntityMessage msg, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire, final String traceComponentName) throws EntityException {
+    Trace trace = Trace.newTrace(msg, traceComponentName);
+    trace.start();
     EntityID eid = msg.getEntityDescriptor().getEntityID();
     while (true) {
       try {
@@ -534,6 +541,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         msg = createMessageWithDescriptor(msg.getEntityDescriptor(), msg.doesRequireReplication(), msg.getExtendedData(), msg.getVoltronType(), requestedAcks);
       } catch (InterruptedException ie) {
         throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
+      } finally {
+        trace.end();
       }
     }
   }
@@ -548,7 +557,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     boolean requiresReplication = true;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.FETCH_ENTITY, requestedAcks);
-    return sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire);
+    return sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire, "ClientEntityManagerImpl.internalRetrieve");
   }
 
   private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) {

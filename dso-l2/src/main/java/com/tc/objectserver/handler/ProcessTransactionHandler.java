@@ -24,6 +24,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.entity.ResendVoltronEntityMessage;
+import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
@@ -239,7 +240,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, boolean requiresReceived) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
-    
+
     // This is active-side processing so this is never a replicated message.
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
@@ -256,6 +257,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
       transactionOrderPersistenceFuture = this.persistor.getTransactionOrderPersistor().updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
       serverEntityRequest.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
     }
+
+    Trace trace = new Trace(serverEntityRequest.getTraceID(), "ProcessTransactionHandler.AddMessage");
+    trace.start();
+    trace.log("Handling " + action);
+
     if (ServerEntityAction.CREATE_ENTITY == action) {
       // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
       long consumerID = this.persistor.getEntityPersistor().getNextConsumerID();
@@ -305,7 +311,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
             }
             EntityMessage message = entityMessage.decodeMessage(raw->locked.getCodec().decodeMessage(raw));
-            
+
             locked.addRequestMessage(serverEntityRequest, entityMessage, ()->addSequentially(sourceNodeID, addto->addto.addReceived(transactionID)), (result)-> {
               addSequentially(sourceNodeID, addTo->addTo.addResult(transactionID, result));
               RetirementManager retirementManager = locked.getRetirementManager();
@@ -395,6 +401,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         serverEntityRequest.failure(ee);
         serverEntityRequest.retired();
       }
+      trace.end();
     }
   }
 

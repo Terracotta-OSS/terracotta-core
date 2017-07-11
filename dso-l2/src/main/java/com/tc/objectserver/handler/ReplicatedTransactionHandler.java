@@ -52,6 +52,7 @@ import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -276,6 +277,8 @@ public class ReplicatedTransactionHandler {
 
 //  don't need to worry about resends here for lifecycle messages.  active will filer them  
   private void replicatedActivityReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
+    Trace trace = new Trace(activity.getActivityID().toString(), "Replication");
+    trace.start();
     ClientID sourceNodeID = activity.getSource();
     TransactionID transactionID = activity.getTransactionID();
     TransactionID oldestTransactionOnClient = activity.getOldestTransactionOnClient();
@@ -381,6 +384,7 @@ public class ReplicatedTransactionHandler {
         acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
       }
     }
+    trace.end();
   }
   
   private void establishNewPassive() {
@@ -400,6 +404,8 @@ public class ReplicatedTransactionHandler {
   }  
   
   private void syncActivityReceived(ServerID activeSender, SyncReplicationActivity activity) {
+    Trace trace = new Trace(activity.getActivityID().toString(), "Sync");
+    trace.start();
     SyncReplicationActivity.ActivityType thisActivityType = activity.getActivityType();
     FetchID fetch = activity.getFetchID();
     EntityDescriptor descriptor = EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID);
@@ -464,6 +470,7 @@ public class ReplicatedTransactionHandler {
     } catch (EntityException ee) {
       throw new RuntimeException(ee);
     }
+    trace.end();
   }
   
   private void start() {
