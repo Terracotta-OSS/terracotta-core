@@ -26,11 +26,12 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.exception.EntityException;
 
 
@@ -116,10 +117,12 @@ public class PlatformEntity implements ManagedEntity {
   public void resetReferences(int count) {
 
   }
- 
+
   @Override
-  public void addStateTo(StateDumpCollector stateDumpCollector) {
-    stateDumpCollector.addState(getID().toString(), "platform entity");
+  public Map<String, Object> getState() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("id", this.PLATFORM_ID);
+    return map;
   }
 
   @Override

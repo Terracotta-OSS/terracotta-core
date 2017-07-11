@@ -22,16 +22,16 @@ import com.tc.objectserver.api.Retiree;
 import com.tc.util.Assert;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * The ability to defer retirement introduces a complex dependency graph (tree) between the messages in the system.
@@ -166,7 +166,14 @@ public class RetirementManager {
     //  recent LogicalSequence, per-key (just so they aren't explicitly life-cycled from outside).
     Assert.assertTrue(this.waitingForDeferredRegistration.isEmpty());
   }
-
+  
+  public Map<String, Object> getState() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("running", this.currentlyRunning.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
+    map.put("waitingForDeferredRegistration", this.waitingForDeferredRegistration.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
+    map.put("mostRecentRegisteredToKey", this.mostRecentRegisteredToKey.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
+    return map;
+  }
 
   private static class LogicalSequence {
     // The thing to be retired
@@ -211,6 +218,11 @@ public class RetirementManager {
 
     public boolean isWaitingForExplicitDeferOf(EntityMessage entityMessage) {
       return entityMessagesDeferringRetirement.contains(entityMessage);
+    }
+
+    @Override
+    public String toString() {
+      return "LogicalSequence{" + "response=" + response + ", entityMessage=" + entityMessage + ", nextInKey=" + nextInKey + ", deferNotify=" + deferNotify + ", isWaitingForPreviousInKey=" + isWaitingForPreviousInKey + ", isCompleted=" + isCompleted + ", isRetired=" + isRetired + ", entityMessagesDeferringRetirement=" + entityMessagesDeferringRetirement + '}';
     }
   }
 }

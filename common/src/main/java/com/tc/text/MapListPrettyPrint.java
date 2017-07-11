@@ -77,7 +77,7 @@ public class MapListPrettyPrint implements PrettyPrinter {
   
   private void tabOver(int num) {
       for (int x=0;x<num;x++) {
-        printer.print('\t');
+        printer.print("  ");
       }
   }
 

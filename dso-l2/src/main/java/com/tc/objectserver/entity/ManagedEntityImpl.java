@@ -45,6 +45,7 @@ import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
+import com.tc.services.MappedStateCollector;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 import org.terracotta.entity.ActiveServerEntity;
@@ -60,7 +61,6 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
-import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
@@ -72,13 +72,16 @@ import org.terracotta.exception.PermanentEntityException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.exception.EntityServerException;
 
@@ -373,18 +376,27 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void addStateTo(StateDumpCollector stateDumpCollector) {
+  public Map<String, Object> getState() {
+    Map<String, Object> props = new LinkedHashMap<>();
+    props.put("fetchID", this.fetchID.toString());
+    props.put("entityID", this.id.toString());
+    props.put("consumerID", this.consumerID);
+    props.put("waitForExclusive", this.runnables.getState());
+    props.put("retirement", this.retirementManager.getState());
+    MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
     try {
       if(activeServerEntity != null) {
-        activeServerEntity.addStateTo(stateDumpCollector);
+        activeServerEntity.addStateTo(mapped);
       }
 
       if(passiveServerEntity != null) {
-        passiveServerEntity.addStateTo(stateDumpCollector);
+        passiveServerEntity.addStateTo(mapped);
       }
     } catch (Throwable t) {
       logger.warn("unable to collect state for " + getID(), t);
     }
+    props.put("entityState", mapped.getMap());
+    return props;
   }
 
   private static interface CodecHelper<R> {
@@ -1136,6 +1148,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new RuntimeException(e);
       }
     }
+
+    @Override
+    public String toString() {
+      return "SchedulingRunnable{" + "request=" + request + ", payload=" + payload.getDebugId() + ", concurrency=" + concurrency + ", waitFor=" + waitFor + '}';
+    }
   };
   
   private static class DefermentQueue<T> implements Iterable<T> {
@@ -1217,6 +1234,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (interrupted) {
         Thread.currentThread().interrupt();
       }
+    }
+    
+    private Map<String, Object> getState() {
+      Map<String, Object> map = new LinkedHashMap<>();
+      map.put("deferring", !this.deferCleared);
+      map.put("queue", queue.stream().map(String::valueOf).collect(Collectors.toList()));
+      return map;
     }
   }
   

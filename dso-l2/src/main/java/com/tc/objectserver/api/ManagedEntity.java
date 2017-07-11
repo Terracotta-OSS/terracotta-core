@@ -26,12 +26,12 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
-import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
 
 
@@ -40,7 +40,7 @@ import org.terracotta.exception.EntityException;
  * The ProcessTransactionHandler passes requests into this to be applied to the underlying entity.
  * Additionally, client-entity connections are rebuilt, after reconnect, using this interface.
  */
-public interface ManagedEntity extends StateDumpable {
+public interface ManagedEntity {
   public final static int UNDELETABLE_ENTITY = -1;
   
   public EntityID getID();
@@ -107,6 +107,8 @@ public interface ManagedEntity extends StateDumpable {
    * @return The unique ID associated with the receiver.
    */
   public long getConsumerID();
+  
+  public Map<String, Object> getState();
 
   /**
    * Sets the listener to be notified once this instance finishes being created from new or loaded from existing.

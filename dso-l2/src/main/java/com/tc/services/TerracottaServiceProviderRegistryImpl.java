@@ -31,12 +31,14 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.terracotta.entity.StateDumpCollector;
 
 
 public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceProviderRegistry {
@@ -143,25 +145,6 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     serviceProviders.add(service);
   }
 
-  @Override
-  public void addStateTo(StateDumpCollector stateDumpCollector) {
-    for (ServiceProvider serviceProvider : serviceProviders) {
-      try {
-        serviceProvider.addStateTo(stateDumpCollector.subStateDumpCollector(serviceProvider.getClass().getName()));
-      } catch (Throwable t) {
-        stateDumpCollector.subStateDumpCollector(serviceProvider.getClass().getName()).addState("exception", t.getMessage());
-      }
-    }
-
-    for (ImplementationProvidedServiceProvider implementationProvidedServiceProvider : implementationProvidedServiceProviders) {
-      try {
-        implementationProvidedServiceProvider.addStateTo(stateDumpCollector.subStateDumpCollector(implementationProvidedServiceProvider.getClass().getName()));
-      } catch (Throwable t) {
-        stateDumpCollector.subStateDumpCollector(implementationProvidedServiceProvider.getClass().getName()).addState("exception", t.getMessage());
-      }
-    }
-  }
-
   /**
    * @return True if there is a user-provided service for the given class registered.
    */
@@ -178,9 +161,29 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    MappedStateCollector dump = new MappedStateCollector("services");
-    addStateTo(dump);
-    return out.println(dump.getMap());
+    Map<String, Object> map = new LinkedHashMap<>();
+    List<Object> services = new ArrayList<>(serviceProviders.size());
+    map.put("services", services);
+    for (ServiceProvider serviceProvider : serviceProviders) {
+      try {
+        MappedStateCollector dump = new MappedStateCollector(serviceProvider.getClass().getName());
+        serviceProvider.addStateTo(dump.subStateDumpCollector(serviceProvider.getClass().getName()));
+        services.add(dump.getMap());
+      } catch (Throwable t) {
+        services.add(serviceProvider.getClass().getName() + ":" +  t.getMessage());
+      }
+    }
+
+    for (ImplementationProvidedServiceProvider implementationProvidedServiceProvider : implementationProvidedServiceProviders) {
+      try {
+        MappedStateCollector dump = new MappedStateCollector(implementationProvidedServiceProvider.getClass().getName());
+        implementationProvidedServiceProvider.addStateTo(dump);
+        services.add(dump.getMap());
+      } catch (Throwable t) {
+        services.add(implementationProvidedServiceProvider.getClass().getName() + ":" +  t.getMessage());
+      }
+    }
+    return out.println(map);
   }
 
 }

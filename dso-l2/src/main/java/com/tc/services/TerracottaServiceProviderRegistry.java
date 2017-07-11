@@ -30,7 +30,7 @@ import org.terracotta.entity.StateDumpable;
  *
  * @author twu
  */
-public interface TerracottaServiceProviderRegistry extends StateDumpable, PrettyPrintable {
+public interface TerracottaServiceProviderRegistry extends PrettyPrintable {
 
   /**
    * Initialize each of the service provider with platform configuration

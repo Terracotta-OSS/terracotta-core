@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
 
-public interface EntityManager extends StateDumpable, MessageCodecSupplier, PrettyPrintable {
+public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
 
   /**
    * The entity manager normally starts in a "passive" state but will be notified that it should become active when the server becomes active.
