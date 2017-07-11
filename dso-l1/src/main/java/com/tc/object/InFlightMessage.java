@@ -18,11 +18,10 @@
  */
 package com.tc.object;
 
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 
-import com.tc.entity.NetworkVoltronEntityMessage;
+import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
@@ -60,6 +59,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private boolean canSetResult;
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
+  private final Trace trace;
 
   public InFlightMessage(VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
     this.message = message;
@@ -70,6 +70,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     
     // We always assume that we can set the result, the first time.
     this.canSetResult = true;
+    this.trace = Trace.newTrace(message, "InFlightMessage");
   }
 
   /**
@@ -84,12 +85,14 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public boolean send() {
+    Trace.activeTrace().log("InFlightMessage.send()");
     Assert.assertFalse(this.isSent);
     this.isSent = true;
     return ((TCMessage)this.message).send();
   }
   
   public synchronized void waitForAcks() {
+    Trace.activeTrace().log("InFlightMessage.waitForAcks");
     boolean interrupted = false;
     while (!this.pendingAcks.isEmpty()) {
       try {
@@ -104,6 +107,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public synchronized void sent() {
+    trace.log("Received ACK: " + VoltronEntityMessage.Acks.SENT);
     if (this.pendingAcks.remove(VoltronEntityMessage.Acks.SENT)) {
       if (this.pendingAcks.isEmpty()) {
         notifyAll();
@@ -112,6 +116,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public synchronized void received() {
+    trace.log("Received ACK: " + VoltronEntityMessage.Acks.RECEIVED);
     if (this.pendingAcks.remove(VoltronEntityMessage.Acks.RECEIVED)) {
       if (this.pendingAcks.isEmpty()) {
         notifyAll();
@@ -133,6 +138,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
 
   @Override
   public synchronized byte[] get() throws InterruptedException, EntityException {
+    trace.log("get()");
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
@@ -146,7 +152,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
       // We will hit this path on interrupt, for example.
       this.waitingThreads.remove(callingThread);
     }
-    
+
     // If we didn't throw due to interruption, we fall through here.
     if (exception != null) {
       throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
@@ -157,6 +163,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
 
   @Override
   public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+    trace.log("getWithTimeout()");
     Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
@@ -183,6 +190,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public synchronized void setResult(byte[] value, EntityException error) {
+    trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
     this.pendingAcks.remove(VoltronEntityMessage.Acks.COMPLETED);
     if (this.canSetResult) {
       this.exception = error;
@@ -197,6 +205,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public synchronized void retired() {
+    trace.log("Received ACK: " + VoltronEntityMessage.Acks.RETIRED);
     this.pendingAcks.remove(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
       this.getCanComplete = true;

@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.tracing.Trace;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
@@ -177,6 +178,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception) {
+    Trace.activeTrace().log("ManagedEntityImpl.addRequestMessage");
     ResultCapture resp;
     switch (request.getAction()) {
       case LOCAL_FLUSH:
@@ -227,6 +229,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void processLifecycleEntity(ServerEntityRequest create, MessagePayload data, ResultCapture resp) {
+    Trace.activeTrace().log("ManagedEntityImpl.processLifecycleEntity");
     boolean schedule = true;
     if (this.isInActiveState) {
 //  this is the process transaction handler thread adding a lifecycle to the message flow of this entity.  
@@ -270,6 +273,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 //  synchronized here because this method must be mutually exclusive with clearQueue
   private synchronized SchedulingRunnable scheduleInOrder(ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {
+    Trace.activeTrace().log("ManagedEntityImpl.scheduleInOrder");
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
     if (isInActiveState) {
@@ -299,7 +303,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
       Assert.fail();
     }
-    
+
     return next;
   }
 //  synchronized here because this method must be mutually exclusive with scheduleInOrder
@@ -316,6 +320,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void processInvokeRequest(final ServerEntityRequest request, ResultCapture response, MessagePayload message, int key) {
+    Trace.activeTrace().log("ManagedEntityImpl.processInvokeRequest");
     if (isInActiveState) {
       key = this.concurrencyStrategy.concurrencyKey(message.decodeRawMessage(raw->this.codec.decodeMessage(raw)));
     }
@@ -396,6 +401,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
+    Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invokeLifecycleOperation");
+    trace.start();
     Lock read = reconnectAccessLock.readLock();
     logger.info("Client:" + request.getNodeID() + " Invoking lifecycle " + request.getAction() + " on " + getID());
     read.lock();
@@ -455,6 +462,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         interop.finishLifecycle();
       }
     }
+    trace.end();
   }
 
   /**
@@ -466,6 +474,8 @@ public class ManagedEntityImpl implements ManagedEntity {
    * @param message 
    */
   private void invoke(ServerEntityRequest request, ResultCapture response, MessagePayload message, int concurrencyKey) {
+    Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invoke");
+    trace.start();
     if (request.requiresReceived()) {
       response.waitForReceived(); // waits for received on passives
     }  
@@ -507,6 +517,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       } finally {
         read.unlock();
       }
+      trace.end();
   }
   
   private void receiveSyncCreateEntity(ResultCapture response, byte[] constructor) {
@@ -657,6 +668,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private ManagedEntity createParent;
   
   private void createEntity(ResultCapture response, byte[] constructorInfo) throws ConfigurationException {
+    Trace.activeTrace().log("ManagedEntityImpl.createEntity");
     if (createParent != null && !createParent.isDestroyed()) {
       response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
       return;
@@ -730,6 +742,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void performAction(ServerEntityRequest wrappedRequest, ResultCapture response, MessagePayload message) {
+    Trace.activeTrace().log("ManagedEntityImpl.performAction");
     Assert.assertNotNull(message);
     ClientDescriptorImpl clientDescriptor = new ClientDescriptorImpl(wrappedRequest.getNodeID(),
                                                                      wrappedRequest.getClientInstance());
@@ -745,11 +758,14 @@ public class ManagedEntityImpl implements ManagedEntity {
           this.retirementManager.registerWithMessage(em, concurrencyKey);
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
           if (loc.runOnActive()) {
+            Trace trace = Trace.activeTrace().subTrace("invokeActive");
+            trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new InvokeContextImpl(clientDescriptor, oldestId, currentId),
               em);
             byte[] er = runWithHelper(()->codec.encodeResponse(resp));
             response.complete(er);
+            trace.end();
           } else {
             response.complete(new byte[0]);
           }
@@ -764,7 +780,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
+          Trace trace = Trace.activeTrace().subTrace("invokePassive");
+          trace.start();
           this.passiveServerEntity.invokePassive(new InvokeContextImpl(clientDescriptor, oldestId, currentId), em);
+          trace.end();
         } catch (EntityUserException e) {
           //on passives, just log the exception - don't crash server
           logger.error("Caught EntityUserException during invoke", e);
