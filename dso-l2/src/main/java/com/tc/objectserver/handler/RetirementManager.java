@@ -78,6 +78,7 @@ public class RetirementManager {
         lastInKey.nextInKey = newWrapper;
         newWrapper.isWaitingForPreviousInKey = true;
       }
+      newWrapper.concurrencyKey = concurrencyKey;
       this.mostRecentRegisteredToKey.put(concurrencyKey, newWrapper);
     }
 
@@ -126,7 +127,7 @@ public class RetirementManager {
           // We can retire.
           toRetire.add(currentRequest.response);
           currentRequest.isRetired = true;
-
+          this.mostRecentRegisteredToKey.remove(currentRequest.concurrencyKey, currentRequest);
           // since current request is retired, we can unblock next request on same concurrency key if any
           if (currentRequest.nextInKey != null) {
             currentRequest.nextInKey.isWaitingForPreviousInKey = false;
@@ -147,8 +148,12 @@ public class RetirementManager {
 
   public synchronized void deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
     LogicalSequence myRequest = this.currentlyRunning.get(invokeMessageToDefer);
-    // We can only defer by currently running messages.
-    Assert.assertNotNull(myRequest);
+    
+    if (myRequest == null) {
+      myRequest = this.waitingForDeferredRegistration.get(invokeMessageToDefer);
+      // We can only defer by currently running messages.
+      Assert.assertNotNull(myRequest);
+    }
 
     myRequest.retirementDeferredBy(laterMessage);
 
@@ -176,6 +181,7 @@ public class RetirementManager {
   }
 
   private static class LogicalSequence {
+    public int concurrencyKey;
     // The thing to be retired
     public Retiree response;
     // Corresponding entity message
