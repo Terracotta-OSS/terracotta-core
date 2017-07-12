@@ -38,7 +38,6 @@ public class StatsImpl implements Stats {
   private final GlobalServerStats serverStats;
   private final SampledCounter       faultRate;
   private final SampledCounter       txnRate;
-  private final SampledCounter       globalLockRecallRate;
   private final SampledRateCounter   transactionSizeRate;
   private final SampledCounter       broadcastRate;
 
@@ -46,7 +45,6 @@ public class StatsImpl implements Stats {
     this.serverStats = context.getServerStats();
     this.faultRate = serverStats.getReadOperationRateCounter();
     this.txnRate = serverStats.getTransactionCounter();
-    this.globalLockRecallRate = serverStats.getGlobalLockRecallCounter();
     this.transactionSizeRate = serverStats.getTransactionSizeCounter();
     this.broadcastRate = serverStats.getBroadcastCounter();
   }
@@ -59,11 +57,6 @@ public class StatsImpl implements Stats {
   @Override
   public long getTransactionRate() {
     return txnRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getGlobalLockRecallRate() {
-    return globalLockRecallRate.getMostRecentSample().getCounterValue();
   }
 
   @Override

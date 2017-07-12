@@ -589,15 +589,11 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     final SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    final SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     final SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
     final SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
-    final SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
     final SampledCumulativeCounter globalServerMapGetSizeRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
     final SampledCumulativeCounter globalServerMapGetValueRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
@@ -749,9 +745,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
                                                                               globalTxnCounter,
                                                                               broadcastCounter,
-                                                                              globalLockRecallCounter,
                                                                               changesPerBroadcast,
-                                                                              transactionSizeCounter, globalLockCount,
+                                                                              transactionSizeCounter,
         globalOperationCounter);
 
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)

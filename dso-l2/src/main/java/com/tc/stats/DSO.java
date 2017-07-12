@@ -120,12 +120,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getReadOperationRate() {
     return getStats().getReadOperationRate();
   }
-
-  @Override
-  public long getGlobalLockRecallRate() {
-    return getStats().getGlobalLockRecallRate();
-  }
-
+  
   @Override
   public long getTransactionSizeRate() {
     return getStats().getTransactionSizeRate();
