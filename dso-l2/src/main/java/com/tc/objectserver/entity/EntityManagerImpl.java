@@ -55,6 +55,7 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.services.MappedStateCollector;
+import java.util.LinkedHashMap;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -315,25 +316,15 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void addStateTo(StateDumpCollector stateDumpCollector) {
-    // We want to dump a size, minimally acting as a heading for the section (in case there is nothing).
-    Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
-    stateDumpCollector.addState("EntityManagerImpl size", Integer.toString(entries.size()));
-    for (Map.Entry<EntityID, FetchID> entry : entries) {
-      EntityID entityID = entry.getKey();
-      try {
-        entityIndex.get(entry.getValue()).addStateTo(stateDumpCollector.subStateDumpCollector(entityID.getClassName() + ":" + entityID.getEntityName()));
-      } catch (Throwable t) {
-        stateDumpCollector.subStateDumpCollector(entityID.getClassName() + ":" + entityID.getEntityName()).addState("exception", t.getMessage());
-      }
-    }
-  }
-
-  @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    MappedStateCollector dump = new MappedStateCollector("entities");
-    addStateTo(dump);
-    return out.println(dump.getMap());
+    Map<String, Object> entityMap = new LinkedHashMap<>();
+    Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
+    entityMap.put("className", this.getClass().getName());
+    entityMap.put("size", entries.size());
+    List<Map<String, Object>> entities  = new ArrayList<>(entityIndex.size());
+    entityMap.put("entities", entities);
+    entityIndex.values().forEach(entity->entities.add(entity.getState()));
+    return out.println(entityMap);
   }
 }
 
