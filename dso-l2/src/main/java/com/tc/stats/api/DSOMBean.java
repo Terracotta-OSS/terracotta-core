@@ -20,9 +20,6 @@ package com.tc.stats.api;
 
 import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaMBean;
-import com.tc.objectserver.locks.LockMBean;
-import com.tc.objectserver.storage.api.OffheapStats;
-import com.tc.objectserver.storage.api.StorageDataStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 
 import java.util.List;

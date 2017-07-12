@@ -85,7 +85,7 @@ public class StateManagerImplTest {
 
       L2Coordinator l2CoordinatorMock = mock(L2Coordinator.class);
       when(l2CoordinatorMock.getStateManager()).thenReturn(stateManagers[i]);
-      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl(stageManagers[i], null, null, null, null, l2CoordinatorMock);
+      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl(stageManagers[i], null, null, null, l2CoordinatorMock);
       stageManagers[i].startAll(serverConfigurationContextMock, new ArrayList<>());
     }
   }

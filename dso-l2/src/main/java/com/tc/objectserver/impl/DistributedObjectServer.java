@@ -155,7 +155,6 @@ import com.tc.object.msg.InvokeRegisteredServiceMessage;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
-import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -168,11 +167,7 @@ import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.RequestLockUnLockHandler;
-import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManagerImpl;
-import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
@@ -206,9 +201,6 @@ import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.runtime.LockInfoByThreadID;
-import com.tc.util.runtime.NullThreadIDMapImpl;
-import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
@@ -271,7 +263,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private CommunicationsManager                  communicationsManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
-  private LockManagerImpl                        lockManager;
   private ServerManagementContext                managementContext;
   private Persistor                              persistor;
 
@@ -597,10 +588,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     communicatorService.setChannelManager(channelManager);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
 
-    // Creating a stage here so that the sink can be passed
-    final Stage<LockResponseContext> respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, LockResponseContext.class, new RespondToRequestLockHandler(), 1, maxStageSize);
-    this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
-
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
@@ -679,13 +666,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
 
-    final Stage<LockRequestMessage> requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE, LockRequestMessage.class, new RequestLockUnLockHandler(), 1, maxStageSize);
-
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
-    messageRouter.routeMessageType(TCMessageType.NOOP_MESSAGE, requestLock.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
@@ -787,8 +771,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
         .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
 
-    this.context = this.serverBuilder.createServerConfigurationContext(stageManager,
-        this.lockManager, channelManager,
+    this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
         clientHandshakeManager,
                                                                        serverStats, this.connectionIdFactory,

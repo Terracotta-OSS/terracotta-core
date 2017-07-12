@@ -25,7 +25,6 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManager;
 
 /**
  * App specific configuration context
@@ -34,19 +33,16 @@ import com.tc.objectserver.locks.LockManager;
  */
 public class ServerConfigurationContextImpl extends ConfigurationContextImpl implements ServerConfigurationContext {
 
-  private final LockManager                    lockManager;
   private final DSOChannelManager              channelManager;
   private final ServerClientHandshakeManager   clientHandshakeManager;
   private final ChannelStats                   channelStats;
   private final L2Coordinator                  l2Coordinator;
 
   public ServerConfigurationContextImpl(StageManager stageManager,
-                                        LockManager lockManager,
                                         DSOChannelManager channelManager,
                                         ServerClientHandshakeManager clientHandshakeManager,
                                         ChannelStats channelStats, L2Coordinator l2Coordinator) {
     super(stageManager);
-    this.lockManager = lockManager;
     this.channelManager = channelManager;
     this.clientHandshakeManager = clientHandshakeManager;
     this.channelStats = channelStats;
@@ -57,12 +53,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   public L2Coordinator getL2Coordinator() {
     return l2Coordinator;
   }
-
-  @Override
-  public LockManager getLockManager() {
-    return lockManager;
-  }
-
+  
   @Override
   public DSOChannelManager getChannelManager() {
     return channelManager;
