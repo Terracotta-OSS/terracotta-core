@@ -55,6 +55,9 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     if (this.serverIsActive) {
       // TODO: consider making this configurable.  if false, the active will not wait for received on passive before invoke.
       boolean waitForReceived = true;
+      if (configuration instanceof EntityMessengerConfiguration) {
+        waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
+      }
       service = configuration.getServiceType().cast(new EntityMessengerService(this.timer, this.messageSink, owningEntity, waitForReceived));
     }
     return service;
