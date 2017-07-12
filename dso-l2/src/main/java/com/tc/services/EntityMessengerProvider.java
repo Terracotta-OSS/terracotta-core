@@ -53,7 +53,9 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     Assert.assertNotNull(owningEntity);
     T service = null;
     if (this.serverIsActive) {
-      service = configuration.getServiceType().cast(new EntityMessengerService(this.timer, this.messageSink, owningEntity));
+      // TODO: consider making this configurable.  if false, the active will not wait for received on passive before invoke.
+      boolean waitForReceived = true;
+      service = configuration.getServiceType().cast(new EntityMessengerService(this.timer, this.messageSink, owningEntity, waitForReceived));
     }
     return service;
   }

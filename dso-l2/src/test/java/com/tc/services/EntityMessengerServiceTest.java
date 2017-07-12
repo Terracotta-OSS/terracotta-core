@@ -57,7 +57,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(timer, sink, entity);
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
 
     // Verify that the service was registered to be told when the entity activates.
     verify(entity).setSuccessfulCreateListener(service);
@@ -98,7 +98,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(timer, sink, entity);
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
     when(entity.isDestroyed()).thenReturn(false);
     service.entityCreationSucceeded(entity);
 

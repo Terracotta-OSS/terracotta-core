@@ -46,6 +46,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   private final ISimpleTimer timer;
   private final Sink<VoltronEntityMessage> messageSink;
   private final ManagedEntity owningEntity;
+  private final boolean waitForReceived;
   private final RetirementManager retirementManager;
   private final MessageCodec<EntityMessage, ?> codec;
   private final EntityDescriptor fakeDescriptor;
@@ -55,7 +56,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(ISimpleTimer timer,
                                 Sink<VoltronEntityMessage> messageSink,
-                                ManagedEntity owningEntity) {
+                                ManagedEntity owningEntity, boolean waitForReceived) {
     Assert.assertNotNull(timer);
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
@@ -63,6 +64,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     this.timer = timer;
     this.messageSink = messageSink;
     this.owningEntity = owningEntity;
+    this.waitForReceived = waitForReceived;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
     this.retirementManager = owningEntity.getRetirementManager();
     // If this service is being created, we expect that the entity has a retirement mananger.
@@ -222,7 +224,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
 
   private FakeEntityMessage encodeAsFake(EntityMessage message) throws MessageCodecException {
     byte[] serializedMessage = this.codec.encodeMessage(message);
-    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, serializedMessage);
+    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, serializedMessage, waitForReceived);
     return interEntityMessage;
   }
 
@@ -239,11 +241,13 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
     private final EntityDescriptor descriptor;
     private final EntityMessage identityMessage;
     private final byte[] message;
+    private final boolean waitForReceived;
 
-    public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, byte[] message) {
+    public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, byte[] message, boolean waitForReceived) {
       this.descriptor = descriptor;
       this.identityMessage = identityMessage;
       this.message = message;
+      this.waitForReceived = waitForReceived;
     }
 
     @Override
@@ -268,7 +272,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
 
     @Override
     public boolean doesRequestReceived() {
-      return false;
+      return waitForReceived;
     }
 
     @Override
