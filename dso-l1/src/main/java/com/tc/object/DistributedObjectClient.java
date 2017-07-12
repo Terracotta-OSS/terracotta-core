@@ -93,7 +93,6 @@ import com.tc.object.request.RequestReceiveHandler;
 import com.tc.object.servermessage.ServerMessageReceiveHandler;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionManagerImpl;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.platform.rejoin.ClientChannelEventController;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
@@ -329,8 +328,6 @@ public class DistributedObjectClient implements TCClient {
     Stage<VoltronEntityResponse> entityResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class, receivingHandler, 1, maxSize);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
     Stage<Void> serverMessageStage = this.communicationStageManager.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_STAGE, Void.class, new ServerMessageReceiveHandler<Void>(channel), 1, maxSize);
-
-    TerracottaOperatorEventLogging.setNodeNameProvider(new ClientNameProvider(this.cluster));
 
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     this.counterManager.createCounter(sampledRateCounterConfig);

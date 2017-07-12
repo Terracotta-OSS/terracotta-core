@@ -47,7 +47,6 @@ import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
 
 import org.terracotta.persistence.IPlatformPersistence;
@@ -102,11 +101,6 @@ public class StandardServerBuilder implements ServerBuilder {
     return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
         groupCommsManager, persistor,
         weightGeneratorFactory, configurationSetupManager, stripeStateManager, clm);
-  }
-
-  @Override
-  public LongGCLogger createLongGCLogger(long gcTimeOut) {
-    return new LongGCLogger(gcTimeOut);
   }
 
   @Override

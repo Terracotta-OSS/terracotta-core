@@ -19,7 +19,6 @@
 package com.tc.stats.api;
 
 import com.tc.management.TerracottaMBean;
-import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.net.protocol.tcm.ChannelID;
 
@@ -37,11 +36,7 @@ public interface ClientMBean extends TerracottaMBean {
 
   ObjectName getL1DumperBeanName();
 
-  ObjectName getL1OperatorEventsBeanName();
-
   ObjectName getEnterpriseTCClientBeanName();
-
-  TerracottaOperatorEventsMBean getL1OperatorEventsBean();
 
   ChannelID getChannelID();
 

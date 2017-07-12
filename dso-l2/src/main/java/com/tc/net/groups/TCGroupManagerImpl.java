@@ -35,7 +35,6 @@ import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -196,7 +195,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     setDiscover(new TCGroupMemberDiscoveryStatic(this, thisNode));
 
     nodesStore.registerForTopologyChange(this);
-    registerForGroupEvents(new OperatorEventsNodeConnectionListener(nodesStore));
   }
 
   protected String getVersion() {

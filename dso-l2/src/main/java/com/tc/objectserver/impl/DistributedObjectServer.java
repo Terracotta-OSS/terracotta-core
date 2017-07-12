@@ -90,7 +90,6 @@ import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerImpl;
@@ -172,9 +171,6 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
-import com.tc.operatorevent.OperatorEventHistoryProviderImpl;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
@@ -227,8 +223,6 @@ import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -259,7 +253,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
   protected NetworkListener                      l1Diagnostics;
-  private TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private CommunicationsManager                  communicationsManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
@@ -373,9 +366,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
     ThisServerNodeId.setThisServerNodeId(thisServerNodeID);
 
-    TerracottaOperatorEventLogging.setNodeNameProvider(new ServerNameProvider(this.configSetupManager.dsoL2Config()
-        .serverName()));
-
 
     final List<PostInit> toInit = new ArrayList<>();
 
@@ -484,9 +474,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
 
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
-
-    // register the terracotta operator event logger
-    this.operatorEventHistoryProvider = new OperatorEventHistoryProviderImpl();
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
@@ -757,7 +744,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
-    dispatchHandler.addListener(connectPassiveOperatorEvents(info, haConfig.getNodesStore(), monitoringShimService));
+    dispatchHandler.addListener(connectPassiveEvents(info, haConfig.getNodesStore(), monitoringShimService));
     
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
                                                                               globalTxnCounter,
@@ -786,22 +773,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
-    TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
-      @Override
-      public void logOperatorEvent(TerracottaOperatorEvent event) {
-        TSAManagementEventPayload payload = new TSAManagementEventPayload("TSA.OPERATOR_EVENT." + event.getEventTypeAsString());
-
-        payload.getAttributes().put("OperatorEvent.CollapseString", event.getCollapseString());
-        payload.getAttributes().put("OperatorEvent.EventLevel", event.getEventLevelAsString());
-        payload.getAttributes().put("OperatorEvent.EventMessage", event.getEventMessage());
-        payload.getAttributes().put("OperatorEvent.EventSubsystem", event.getEventSubsystemAsString());
-        payload.getAttributes().put("OperatorEvent.EventType", event.getEventTypeAsString());
-        payload.getAttributes().put("OperatorEvent.EventTime", event.getEventTime().getTime());
-        payload.getAttributes().put("OperatorEvent.NodeName", event.getNodeName());
-
-        remoteManagement.sendEvent(payload.toManagementEvent());
-      }
-    });
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
@@ -901,15 +872,12 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     return control;
   }
   
-  private GroupEventsListener connectPassiveOperatorEvents(Sink<PlatformInfoRequest> infoHandler, NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
-    OperatorEventsPassiveServerConnectionListener delegate = new OperatorEventsPassiveServerConnectionListener(nodesStore);
+  private GroupEventsListener connectPassiveEvents(Sink<PlatformInfoRequest> infoHandler, NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
     return new GroupEventsListener() {
 
       @Override
       public void nodeJoined(NodeID nodeID) {
-        if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          delegate.passiveServerJoined((ServerID)nodeID);
-          
+        if (l2Coordinator.getStateManager().isActiveCoordinator()) {          
           // Note that this passive may have joined in the time between when we decided to enter the active state and
           // when we ran the event to initialize LocalMonitoringProducer to receive events, as an active.
           // In those cases, we should avoid sending the request to this passive as we will send it to all of them, when
@@ -932,7 +900,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       @Override
       public void nodeLeft(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          delegate.passiveServerLeft((ServerID)nodeID);
           PlatformInfoRequest fake = PlatformInfoRequest.createServerInfoRemoveMessage((ServerID)nodeID);
           fake.setMessageOrginator(nodeID);
           infoHandler.addSingleThreaded(fake);
@@ -1135,10 +1102,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
   public ServerManagementContext getManagementContext() {
     return this.managementContext;
-  }
-  
-  public TerracottaOperatorEventHistoryProvider getOperatorEventsHistoryProvider() {
-    return this.operatorEventHistoryProvider;
   }
 
   protected GroupManager<AbstractGroupMessage> getGroupManager() {

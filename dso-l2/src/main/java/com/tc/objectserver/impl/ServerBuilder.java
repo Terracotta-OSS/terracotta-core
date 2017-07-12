@@ -40,7 +40,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.runtime.logging.LongGCLogger;
 
 import java.io.IOException;
 
@@ -67,7 +66,4 @@ public interface ServerBuilder extends PostInit {
                                       StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
-
-  LongGCLogger createLongGCLogger(long gcTimeOut);
-
 }

@@ -47,7 +47,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 
@@ -122,8 +121,7 @@ public class MBeanRegTest {
     }))).thenReturn(SampledCounter.NULL_SAMPLED_COUNTER);
     when(smCtxt.getChannelStats()).thenReturn(stats);
     mbeanSvr = mock(MBeanServer.class);
-    dso = new DSO(smCtxt, mock(ServerConfigurationContext.class), mbeanSvr,
-        mock(TerracottaOperatorEventHistoryProvider.class));
+    dso = new DSO(smCtxt, mock(ServerConfigurationContext.class), mbeanSvr);
 
   }
 

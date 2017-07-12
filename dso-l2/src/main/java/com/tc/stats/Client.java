@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
@@ -57,8 +56,6 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   private final MBeanServer                    mbeanServer;
   private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
-  private ObjectName                           l1OperatorEventsBeanName;
-  private TerracottaOperatorEventsMBean        l1OperatorEventsBean;
   private final MessageChannel                 channel;
   private final SampledCounter                 txnRate;
   private final SampledCounter                 writeRate;
@@ -124,16 +121,6 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   @Override
   public ObjectName getL1DumperBeanName() {
     return ObjectName.WILDCARD;
-  }
-
-  @Override
-  public ObjectName getL1OperatorEventsBeanName() {
-    return l1OperatorEventsBeanName;
-  }
-
-  @Override
-  public TerracottaOperatorEventsMBean getL1OperatorEventsBean() {
-    return l1OperatorEventsBean;
   }
 
   @Override
