@@ -18,17 +18,18 @@
  */
 package com.tc.config.schema.setup;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
+import com.tc.config.Directories;
 import com.tc.security.PwProvider;
 import com.tc.text.StringUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.ConfigurationSetupManagerFactory} &mdash; uses system properties and
@@ -45,10 +46,6 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
 
   private static final String L2_NAME_PROPERTY_NAME = "tc.server.name";
   public static final String DEFAULT_CONFIG_SPEC = "tc-config.xml";
-  public static final String DEFAULT_CONFIG_PATH = "default-config.xml";
-  public static final String DEFAULT_CONFIG_URI = "resource:///"
-                                                  + StandardConfigurationSetupManagerFactory.class.getPackage().getName().replace('.', '/')
-                                                  + "/" + DEFAULT_CONFIG_PATH;
 
   private final String[] args;
   private final String defaultL2Identifier;
@@ -127,15 +124,27 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       if (localConfig.exists()) {
         effectiveConfigSpec = localConfig.getAbsolutePath();
       } else if (configMode == ConfigMode.L2) {
-        effectiveConfigSpec = DEFAULT_CONFIG_URI;
+        try {
+          File defaultConfigFile = Directories.getDefaultConfigFile();
+          if (defaultConfigFile.exists()) {
+            effectiveConfigSpec = defaultConfigFile.getAbsolutePath();
+          }
+        } catch (FileNotFoundException e) {
+          // Ignore
+        }
       }
     }
 
     if (StringUtils.isBlank(effectiveConfigSpec)) {
       // formatting
       throw new ConfigurationSetupException("You must specify the location of the Terracotta "
-                                            + "configuration file for this process, using the " + "'" + CONFIG_FILE_PROPERTY_NAME
-                                            + "' system property.");
+                                            + "configuration file for this process.\n" +
+                                            "You can do this by:\n" +
+                                            "\t* using the '-f <file>' flag on the command line\n" +
+                                            "\t* using the " + "'" + CONFIG_FILE_PROPERTY_NAME + "' system property\n" +
+                                            "\t* placing the file in '${user.dir}/tc-config.xml'\n" +
+                                            "\t* placing the file in '<install_root>/conf/tc-config.xml\n" +
+                                            "The above options are in order of precedence.");
     }
 
     return effectiveConfigSpec;

@@ -63,8 +63,8 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/legal</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>src/assemble/server/bin</directory>
-      <outputDirectory>/server/bin</outputDirectory>
+      <directory>src/assemble/server</directory>
+      <outputDirectory>/server</outputDirectory>
     </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>

@@ -59,6 +59,11 @@ public class Directories {
   public static final String SERVER_PLUGIN_LIB_DIR                           = "plugins/lib";
 
   /**
+   * Relative location for default configuration file under Terracotta installation directory
+   */
+  public static final String DEFAULT_CONFIG_FILE_LOCATION                    = "conf/tc-config.xml";
+
+  /**
    * Get installation root directory.
    * 
    * @return Installation root directory or {@code user.dir} if TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME is set and
@@ -87,6 +92,10 @@ public class Directories {
       }
       return rootPath;
     }
+  }
+
+  public static File getDefaultConfigFile() throws FileNotFoundException {
+    return new File(getInstallationRoot(), DEFAULT_CONFIG_FILE_LOCATION);
   }
 
   public static File getServerLibFolder() throws FileNotFoundException {
