@@ -25,6 +25,9 @@ import org.terracotta.testing.logging.ContextualLogger;
 
 
 public class ConfigBuilder {
+
+  public static final int DEFAULT_CLIENT_RECONNECT_WINDOW_TIME = 120;
+
   public static ConfigBuilder buildStartPort(ContextualLogger logger, int startPort) {
     return new ConfigBuilder(logger, startPort);
   }
@@ -37,6 +40,7 @@ public class ConfigBuilder {
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
   private String entityXMLSnippet;
+  private int clientReconnectWindowTime; // in secs
   
   private ConfigBuilder(ContextualLogger logger, int startPort) {
     this.logger = logger;
@@ -65,6 +69,11 @@ public class ConfigBuilder {
 
   public ConfigBuilder setEntitySnippet(String entityFragment) {
     this.entityXMLSnippet = entityFragment;
+    return this;
+  }
+
+  public ConfigBuilder setClientReconnectWindowTime(final int clientReconnectWindowTime) {
+    this.clientReconnectWindowTime = clientReconnectWindowTime;
     return this;
   }
 
@@ -101,8 +110,8 @@ public class ConfigBuilder {
           + "    </server>\n";
       servers += oneServer;
     }
-    String post = 
-          "    <client-reconnect-window>120</client-reconnect-window>\n"
+    String post =
+        "    <client-reconnect-window>" + this.clientReconnectWindowTime + "</client-reconnect-window>\n"
         + "  </servers>\n"
         + "</tc-config>\n";
     return pre + services + postservices + entities + postentities + servers + post;

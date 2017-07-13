@@ -52,7 +52,7 @@ public class ReadyStripe {
    * @throws IOException Thrown in case something went wrong during server installation.
    * @throws GalvanFailureException Thrown in case starting the servers in the stripe experienced a failure.
    */
-  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String kitOriginDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException, GalvanFailureException {
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String kitOriginDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, int clientReconnectWindowTime) throws IOException, GalvanFailureException {
     ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -60,6 +60,7 @@ public class ReadyStripe {
     configBuilder.setNamespaceSnippet(namespaceFragment);
     configBuilder.setServiceSnippet(serviceFragment);
     configBuilder.setEntitySnippet(entityFragment);
+    configBuilder.setClientReconnectWindowTime(clientReconnectWindowTime);
     // Create the stripe installer.
     StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, kitOriginDirectory, serverInstallDirectory, extraJarPaths);
     // Configure and install each server in the stripe.
@@ -98,8 +99,11 @@ public class ReadyStripe {
     ClusterInfo clusterInfo = configBuilder.getClusterInfo();
     return new ReadyStripe(processControl, connectUri, clusterInfo, configText);
   }
-  
-  
+
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String kitOriginDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment) throws IOException, GalvanFailureException {
+    return configureAndStartStripe(interlock, stateManager, stripeVerboseManager, serverInstallDirectory, kitOriginDirectory, serversToCreate, heapInM, serverStartPort, serverDebugPortStart, serverStartNumber, extraJarPaths, namespaceFragment, serviceFragment, entityFragment, ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME);
+  }
+
   public final IMultiProcessControl stripeControl;
   public final String stripeUri;
   public final ClusterInfo clusterInfo;

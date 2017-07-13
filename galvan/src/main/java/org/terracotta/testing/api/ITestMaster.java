@@ -15,6 +15,8 @@
  */
 package org.terracotta.testing.api;
 
+import org.terracotta.testing.master.ConfigBuilder;
+
 import java.util.List;
 
 
@@ -24,6 +26,13 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
   public String getServiceConfigXMLSnippet();
 
   public String getEntityConfigXMLSnippet();
+
+  /**
+   * @return client reconnect window time in seconds
+   */
+  default int getClientReconnectWindowTime() {
+    return ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
+  }
 
   /**
    * @return A list of paths to JARs which must be copied to the server kit being used in the test.
