@@ -44,7 +44,6 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.runtime.logging.LongGCLogger;
 import com.tcclient.cluster.ClusterInternalEventsGun;
 
 import java.util.Map;
@@ -81,11 +80,6 @@ public class DiagnosticClientBuilder implements ClientBuilder {
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
     return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity, true);
-  }
-
-  @Override
-  public LongGCLogger createLongGCLogger(long gcTimeOut) {
-    return new LongGCLogger(gcTimeOut);
   }
 
   @Override

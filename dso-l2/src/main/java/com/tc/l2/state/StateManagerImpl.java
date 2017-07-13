@@ -37,9 +37,6 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
-import com.tc.operatorevent.TerracottaOperatorEventLogger;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -69,7 +66,6 @@ public class StateManagerImpl implements StateManager {
   private volatile State               state               = START_STATE;
   private State               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
-  TerracottaOperatorEventLogger        operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
   // Known servers from previous election
   Set<NodeID> prevKnownServers = new HashSet<>();
@@ -237,7 +233,6 @@ public class StateManagerImpl implements StateManager {
         throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB"); 
       }
       info("Moved to " + state, true);
-      fireStateChangedOperatorEvent();
       stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state));
     } else if (state.equals(PASSIVE_UNINITIALIZED)) {
 // double election
@@ -269,7 +264,6 @@ public class StateManagerImpl implements StateManager {
       stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_SYNCING));
       state = PASSIVE_SYNCING;
       info("Moved to " + state, true);
-      fireStateChangedOperatorEvent();
     } 
   }
 
@@ -283,7 +277,6 @@ public class StateManagerImpl implements StateManager {
       stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_STANDBY));
       state = PASSIVE_STANDBY;
       info("Moved to " + state, true);
-      fireStateChangedOperatorEvent();
     } else {
       info("Already in " + state);
     }
@@ -298,7 +291,6 @@ public class StateManagerImpl implements StateManager {
       stateChangeSink.addSingleThreaded(event);
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
-      fireStateChangedOperatorEvent();
       // we are moving from passive standby to active state with a new election but we need to use previous election
       // known servers list as they are in sync in with previous active
       currKnownServers.clear();
@@ -547,14 +539,6 @@ public class StateManagerImpl implements StateManager {
   @Override
   public String toString() {
     return StateManagerImpl.class.getSimpleName() + ":" + this.state.toString();
-  }
-
-  private void fireStateChangedOperatorEvent() {
-    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.L2.STATE_CHANGE");
-    tsaManagementEventPayload.getAttributes().put("State", state.getName());
-    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createClusterNodeStateChangedEvent(state
-        .getName()));
   }
 
   private void info(String message) {

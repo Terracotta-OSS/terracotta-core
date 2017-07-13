@@ -32,8 +32,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.handshakemanager.ServerClientModeInCompatibleException;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -70,7 +68,6 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
       } else if (stateManager.isActiveCoordinator()) {
         NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
         checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
-        checkTimeDifference(remoteNodeID, clientMsg.getLocalTimeMills());
         this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
       } else {
         this.handshakeManager.notifyClientRefused(clientMsg, "do not handshake with passive");
@@ -90,46 +87,8 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   protected void checkCompatibility(boolean isEnterpriseClient, NodeID remoteNodeID)
       throws ServerClientModeInCompatibleException {
     if (isEnterpriseClient) {
-      TerracottaOperatorEvent handshakeRefusedEvent = TerracottaOperatorEventFactory
-          .createHandShakeRejectedEvent(ENTERPRISE, remoteNodeID, OPEN_SOURCE);
-      logEvent(handshakeRefusedEvent);
       throw new ServerClientModeInCompatibleException("An " + ENTERPRISE + " client can not connect to an "
                                                       + OPEN_SOURCE + " Server, Connection refused.");
-    }
-  }
-
-  protected void logEvent(TerracottaOperatorEvent event) {
-    switch (event.getEventLevel()) {
-      case INFO:
-        LOGGER.info(event.getEventMessage());
-        break;
-      case WARN:
-        LOGGER.warn(event.getEventMessage());
-        break;
-      case ERROR:
-        LOGGER.error(event.getEventMessage());
-        break;
-      case DEBUG:
-        LOGGER.debug(event.getEventMessage());
-        break;
-      case CRITICAL:
-        LOGGER.error(event.getEventMessage());
-        break;
-      default:
-        break;
-    }
-  }
-
-  private void checkTimeDifference(NodeID remoteNodeID, long localTimeMills) {
-    long timeDiff = System.currentTimeMillis() - localTimeMills;
-    if (Math.abs(timeDiff) > SYSTEM_TIME_DIFF_THRESHOLD) {
-      if (timeDiff > 0) {
-        logEvent(TerracottaOperatorEventFactory.createSystemTimeDifferentEvent(remoteNodeID, LAGS, this.serverName,
-                                                                               (Math.abs(timeDiff)) / 1000));
-      } else {
-        logEvent(TerracottaOperatorEventFactory.createSystemTimeDifferentEvent(remoteNodeID, LEADS, this.serverName,
-                                                                               (Math.abs(timeDiff)) / 1000));
-      }
     }
   }
 

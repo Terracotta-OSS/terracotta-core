@@ -23,21 +23,14 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaManagement;
-import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
-import com.tc.objectserver.locks.LockMBean;
-import com.tc.objectserver.locks.LockManagerMBean;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.stats.api.ClassInfo;
 import com.tc.stats.api.DSOMBean;
 import com.tc.stats.api.Stats;
@@ -83,13 +76,11 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final DSOChannelManagerMBean                 channelMgr;
   private final ChannelStats                           channelStats;
   private final ObjectInstanceMonitorMBean             instanceMonitor;
-  private final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private final ConnectionPolicy                       connectionPolicy;
   private final RemoteManagement                       remoteManagement;
 
   public DSO(ServerManagementContext managementContext, ServerConfigurationContext configContext,
-             MBeanServer mbeanServer,
-             TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider)
+             MBeanServer mbeanServer)
       throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
@@ -101,7 +92,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
     this.instanceMonitor = managementContext.getInstanceMonitor();
-    this.operatorEventHistoryProvider = operatorEventHistoryProvider;
     this.connectionPolicy = managementContext.getConnectionPolicy();
     this.remoteManagement = managementContext.getRemoteManagement();
 
@@ -130,12 +120,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getReadOperationRate() {
     return getStats().getReadOperationRate();
   }
-
-  @Override
-  public long getGlobalLockRecallRate() {
-    return getStats().getGlobalLockRecallRate();
-  }
-
+  
   @Override
   public long getTransactionSizeRate() {
     return getStats().getTransactionSizeRate();
@@ -149,26 +134,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public Number[] getStatistics(String[] names) {
     return getStats().getStatistics(names);
-  }
-
-  @Override
-  public List<TerracottaOperatorEvent> getOperatorEvents() {
-    return this.operatorEventHistoryProvider.getOperatorEvents();
-  }
-
-  @Override
-  public List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp) {
-    return this.operatorEventHistoryProvider.getOperatorEvents(sinceTimestamp);
-  }
-
-  @Override
-  public boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
-    return operatorEventHistoryProvider.markOperatorEvent(operatorEvent, read);
-  }
-
-  @Override
-  public Map<String, Integer> getUnreadOperatorEventCount() {
-    return operatorEventHistoryProvider.getUnreadCounts();
   }
 
   @Override

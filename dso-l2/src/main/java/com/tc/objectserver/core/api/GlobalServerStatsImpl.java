@@ -28,8 +28,6 @@ public class GlobalServerStatsImpl implements GlobalServerStats {
   private final SampledCounter           txnCounter;
 
   private final SampledCounter           broadcastCounter;
-  private final SampledCounter           globalLockCounter;
-  private final SampledCounter           globalLockRecallCounter;
   private final SampledRateCounter       changesPerBroadcast;
   private final SampledRateCounter       transactionSizeCounter;
   private SampledCounter                 operationCounter;
@@ -40,26 +38,20 @@ public class GlobalServerStatsImpl implements GlobalServerStats {
 
   public GlobalServerStatsImpl(SampledCounter readCounter, SampledCounter txnCounter,
                                SampledCounter broadcastCounter,
-                               SampledCounter globalLockRecallCounter,
-                               SampledRateCounter changesPerBroadcast, SampledRateCounter transactionSizeCounter,
-                               SampledCounter globalLockCounter) {
+                               SampledRateCounter changesPerBroadcast, SampledRateCounter transactionSizeCounter) {
     this.readCounter = readCounter;
     this.txnCounter = txnCounter;
     this.broadcastCounter = broadcastCounter;
-    this.globalLockRecallCounter = globalLockRecallCounter;
     this.changesPerBroadcast = changesPerBroadcast;
     this.transactionSizeCounter = transactionSizeCounter;
-    this.globalLockCounter = globalLockCounter;
   }
   
   public GlobalServerStatsImpl(SampledCounter readCounter, SampledCounter txnCounter,
                                SampledCounter broadcastCounter,
-                               SampledCounter globalLockRecallCounter,
                                SampledRateCounter changesPerBroadcast, SampledRateCounter transactionSizeCounter,
-                               SampledCounter globalLockCounter,
                                SampledCounter operationCounter) {
-    this(readCounter, txnCounter, broadcastCounter, globalLockRecallCounter, changesPerBroadcast,
-        transactionSizeCounter, globalLockCounter);
+    this(readCounter, txnCounter, broadcastCounter, changesPerBroadcast,
+        transactionSizeCounter);
     this.operationCounter = operationCounter;
   }
 
@@ -93,11 +85,6 @@ public class GlobalServerStatsImpl implements GlobalServerStats {
   }
 
   @Override
-  public SampledCounter getGlobalLockRecallCounter() {
-    return globalLockRecallCounter;
-  }
-
-  @Override
   public SampledRateCounter getChangesPerBroadcastCounter() {
     return changesPerBroadcast;
   }
@@ -105,11 +92,6 @@ public class GlobalServerStatsImpl implements GlobalServerStats {
   @Override
   public SampledRateCounter getTransactionSizeCounter() {
     return transactionSizeCounter;
-  }
-
-  @Override
-  public SampledCounter getGlobalLockCounter() {
-    return this.globalLockCounter;
   }
 
   @Override

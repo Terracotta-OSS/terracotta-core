@@ -46,9 +46,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
 
 import org.terracotta.persistence.IPlatformPersistence;
@@ -73,7 +71,6 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
-                                                                     LockManager lockMgr,
                                                                      DSOChannelManager channelManager,
                                                                      ChannelStatsImpl channelStats,
                                                                      L2Coordinator coordinator,
@@ -83,7 +80,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                      int maxStageSize,
                                                                      ChannelManager genericChannelManager) {
     return new ServerConfigurationContextImpl(stageManager,
-        lockMgr, channelManager,
+        channelManager,
         clientHandshakeManager, channelStats, coordinator
     );
   }
@@ -104,11 +101,6 @@ public class StandardServerBuilder implements ServerBuilder {
     return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
         groupCommsManager, persistor,
         weightGeneratorFactory, configurationSetupManager, stripeStateManager, clm);
-  }
-
-  @Override
-  public LongGCLogger createLongGCLogger(long gcTimeOut) {
-    return new LongGCLogger(gcTimeOut);
   }
 
   @Override

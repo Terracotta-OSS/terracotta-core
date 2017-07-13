@@ -23,7 +23,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManager;
 
 public interface ServerConfigurationContext extends ConfigurationContext {
 
@@ -91,8 +90,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String BACKUP_STAGE                                       = "backup_stage";
 
   public L2Coordinator getL2Coordinator();
-
-  public LockManager getLockManager();
 
   public DSOChannelManager getChannelManager();
 

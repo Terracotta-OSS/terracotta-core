@@ -39,9 +39,7 @@ import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.runtime.logging.LongGCLogger;
 
 import java.io.IOException;
 
@@ -51,8 +49,7 @@ public interface ServerBuilder extends PostInit {
                                       StageManager stageManager, ServerID serverNodeID,
                                       StripeIDStateManager stripeStateManager, TCSecurityManager mgr, WeightGeneratorFactory weightGeneratorFactory);
 
-  ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
-                                                              LockManager lockMgr, DSOChannelManager channelManager,
+  ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,
                                                               L2Coordinator l2HACoordinator,
                                                               ServerClientHandshakeManager clientHandshakeManager,
@@ -69,7 +66,4 @@ public interface ServerBuilder extends PostInit {
                                       StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
-
-  LongGCLogger createLongGCLogger(long gcTimeOut);
-
 }

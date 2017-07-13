@@ -25,13 +25,10 @@ import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.CommonL2ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.config.schema.L2ConfigObject;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
-import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
@@ -126,11 +123,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   @Override
-  public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
-                                                  TerracottaOperatorEventLogger opEventLogger) throws ConfigurationSetupException {
+  public TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator) throws ConfigurationSetupException {
     String reloadSource = configurationCreator().reloadServersConfiguration(false, false);
     Servers changedL2sBeanRepository = configurationCreator().getParsedConfiguration().getPlatformConfiguration().getServers();
-    opEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createConfigReloadedEvent(reloadSource));
 
     TopologyVerifier topologyVerifier = new TopologyVerifier(serversBeanRepository(), changedL2sBeanRepository,
                                                              this.activeServerGroupConfig, serverConnectionValidator);

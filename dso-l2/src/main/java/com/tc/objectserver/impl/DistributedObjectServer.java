@@ -90,7 +90,6 @@ import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.l2.operatorevent.OperatorEventsPassiveServerConnectionListener;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerImpl;
@@ -155,7 +154,6 @@ import com.tc.object.msg.InvokeRegisteredServiceMessage;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
-import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -168,18 +166,11 @@ import com.tc.objectserver.entity.ActiveToPassiveReplication;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.RequestLockUnLockHandler;
-import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManagerImpl;
-import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
-import com.tc.operatorevent.OperatorEventHistoryProviderImpl;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.operatorevent.TerracottaOperatorEventLogging;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
@@ -206,9 +197,6 @@ import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.runtime.LockInfoByThreadID;
-import com.tc.util.runtime.NullThreadIDMapImpl;
-import com.tc.util.runtime.ThreadIDMap;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
@@ -235,8 +223,6 @@ import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.handler.ServerManagementHandler;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -267,11 +253,9 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
   protected NetworkListener                      l1Diagnostics;
-  private TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private CommunicationsManager                  communicationsManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
-  private LockManagerImpl                        lockManager;
   private ServerManagementContext                managementContext;
   private Persistor                              persistor;
 
@@ -382,9 +366,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
     ThisServerNodeId.setThisServerNodeId(thisServerNodeID);
 
-    TerracottaOperatorEventLogging.setNodeNameProvider(new ServerNameProvider(this.configSetupManager.dsoL2Config()
-        .serverName()));
-
 
     final List<PostInit> toInit = new ArrayList<>();
 
@@ -494,9 +475,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
 
-    // register the terracotta operator event logger
-    this.operatorEventHistoryProvider = new OperatorEventHistoryProviderImpl();
-
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
                                            new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger, this.persistor
@@ -597,10 +575,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     communicatorService.setChannelManager(channelManager);
     final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
 
-    // Creating a stage here so that the sink can be passed
-    final Stage<LockResponseContext> respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE, LockResponseContext.class, new RespondToRequestLockHandler(), 1, maxStageSize);
-    this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
-
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
@@ -615,15 +589,11 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     final SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    final SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     final SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
     final SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
-    final SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
     final SampledCumulativeCounter globalServerMapGetSizeRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
     final SampledCumulativeCounter globalServerMapGetValueRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
@@ -679,13 +649,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
 
-    final Stage<LockRequestMessage> requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE, LockRequestMessage.class, new RequestLockUnLockHandler(), 1, maxStageSize);
-
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
     
     final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
-    messageRouter.routeMessageType(TCMessageType.NOOP_MESSAGE, requestLock.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
     messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
@@ -773,22 +740,20 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
-    dispatchHandler.addListener(connectPassiveOperatorEvents(info, haConfig.getNodesStore(), monitoringShimService));
+    dispatchHandler.addListener(connectPassiveEvents(info, haConfig.getNodesStore(), monitoringShimService));
     
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
                                                                               globalTxnCounter,
                                                                               broadcastCounter,
-                                                                              globalLockRecallCounter,
                                                                               changesPerBroadcast,
-                                                                              transactionSizeCounter, globalLockCount,
+                                                                              transactionSizeCounter,
         globalOperationCounter);
 
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
         .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
         .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
 
-    this.context = this.serverBuilder.createServerConfigurationContext(stageManager,
-        this.lockManager, channelManager,
+    this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
         clientHandshakeManager,
                                                                        serverStats, this.connectionIdFactory,
@@ -803,22 +768,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
     TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
-    TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
-      @Override
-      public void logOperatorEvent(TerracottaOperatorEvent event) {
-        TSAManagementEventPayload payload = new TSAManagementEventPayload("TSA.OPERATOR_EVENT." + event.getEventTypeAsString());
-
-        payload.getAttributes().put("OperatorEvent.CollapseString", event.getCollapseString());
-        payload.getAttributes().put("OperatorEvent.EventLevel", event.getEventLevelAsString());
-        payload.getAttributes().put("OperatorEvent.EventMessage", event.getEventMessage());
-        payload.getAttributes().put("OperatorEvent.EventSubsystem", event.getEventSubsystemAsString());
-        payload.getAttributes().put("OperatorEvent.EventType", event.getEventTypeAsString());
-        payload.getAttributes().put("OperatorEvent.EventTime", event.getEventTime().getTime());
-        payload.getAttributes().put("OperatorEvent.NodeName", event.getNodeName());
-
-        remoteManagement.sendEvent(payload.toManagementEvent());
-      }
-    });
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
@@ -918,15 +867,12 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     return control;
   }
   
-  private GroupEventsListener connectPassiveOperatorEvents(Sink<PlatformInfoRequest> infoHandler, NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
-    OperatorEventsPassiveServerConnectionListener delegate = new OperatorEventsPassiveServerConnectionListener(nodesStore);
+  private GroupEventsListener connectPassiveEvents(Sink<PlatformInfoRequest> infoHandler, NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
     return new GroupEventsListener() {
 
       @Override
       public void nodeJoined(NodeID nodeID) {
-        if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          delegate.passiveServerJoined((ServerID)nodeID);
-          
+        if (l2Coordinator.getStateManager().isActiveCoordinator()) {          
           // Note that this passive may have joined in the time between when we decided to enter the active state and
           // when we ran the event to initialize LocalMonitoringProducer to receive events, as an active.
           // In those cases, we should avoid sending the request to this passive as we will send it to all of them, when
@@ -949,7 +895,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       @Override
       public void nodeLeft(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
-          delegate.passiveServerLeft((ServerID)nodeID);
           PlatformInfoRequest fake = PlatformInfoRequest.createServerInfoRemoveMessage((ServerID)nodeID);
           fake.setMessageOrginator(nodeID);
           infoHandler.addSingleThreaded(fake);
@@ -1152,10 +1097,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
   public ServerManagementContext getManagementContext() {
     return this.managementContext;
-  }
-  
-  public TerracottaOperatorEventHistoryProvider getOperatorEventsHistoryProvider() {
-    return this.operatorEventHistoryProvider;
   }
 
   protected GroupManager<AbstractGroupMessage> getGroupManager() {

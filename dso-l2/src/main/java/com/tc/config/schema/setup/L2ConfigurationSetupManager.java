@@ -19,11 +19,8 @@
 package com.tc.config.schema.setup;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.config.schema.L2Config;
-import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.server.ServerConnectionValidator;
 
 import java.io.InputStream;
@@ -54,8 +51,7 @@ public interface L2ConfigurationSetupManager {
 
   L2Config dsoL2ConfigFor(String name) throws ConfigurationSetupException;
 
-  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator,
-                                           TerracottaOperatorEventLogger opeventlogger)
+  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator)
       throws ConfigurationSetupException;
 
   boolean isSecure();

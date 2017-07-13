@@ -30,13 +30,9 @@ public interface GlobalServerStats {
 
   SampledCounter getBroadcastCounter();
 
-  SampledCounter getGlobalLockRecallCounter();
-
   SampledRateCounter getChangesPerBroadcastCounter();
 
   SampledRateCounter getTransactionSizeCounter();
-
-  SampledCounter getGlobalLockCounter();
   
   SampledCumulativeCounter getServerMapGetSizeRequestsCounter();
 

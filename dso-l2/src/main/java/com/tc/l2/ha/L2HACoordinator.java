@@ -25,7 +25,6 @@ import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
-import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -83,7 +82,6 @@ public class L2HACoordinator implements L2Coordinator {
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
                                                                                      persistor.getClusterStatePersistor());
-    zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(

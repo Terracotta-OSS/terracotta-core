@@ -26,8 +26,6 @@ public interface Stats {
 
   long getReadOperationRate();
 
-  long getGlobalLockRecallRate();
-
   long getTransactionSizeRate();
 
   long getBroadcastRate();
