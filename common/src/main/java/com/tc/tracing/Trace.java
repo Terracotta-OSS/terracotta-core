@@ -37,12 +37,12 @@ public class Trace {
 
   public void start() {
     this.startTime = System.nanoTime();
-    LOGGER.info("[trace - {}] start trace for componentName - {}", id, this.componentName);
+    LOGGER.trace("[trace - {}] start trace for componentName - {}", id, this.componentName);
     ACTIVE_TRACE.set(this);
   }
 
   public void end() {
-    LOGGER.info("[trace - {}] end trace for componentName - {}, elapsed {} ns", id, componentName, System.nanoTime() - startTime);
+    LOGGER.trace("[trace - {}] end trace for componentName - {}, elapsed {} ns", id, componentName, System.nanoTime() - startTime);
     if(parent != null) {
       ACTIVE_TRACE.set(parent);
     } else {
