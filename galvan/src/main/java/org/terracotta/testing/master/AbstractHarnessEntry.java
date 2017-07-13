@@ -76,6 +76,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     String namespaceFragment = master.getConfigNamespaceSnippet();
     String serviceFragment = master.getServiceConfigXMLSnippet();
     String entityFragment = master.getEntityConfigXMLSnippet();
+    int clientReconnectWindowTime = master.getClientReconnectWindowTime();
     List<C> runConfigurations = master.getRunConfigurations();
     int clientsToCreate = master.getClientsToStart();
     for (C runConfiguration : runConfigurations) {
@@ -95,6 +96,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.namespaceFragment = namespaceFragment;
       harnessOptions.serviceFragment = serviceFragment;
       harnessOptions.entityFragment = entityFragment;
+      harnessOptions.clientReconnectWindowTime = clientReconnectWindowTime;
       
       // NOTE:  runOneConfiguration() throws GalvanFailureException on failure.
       runOneConfiguration(verboseManager, debugOptions, harnessOptions, runConfiguration);
@@ -139,6 +141,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String errorClassName;
     public int serverHeapInM;
     public List<String> extraJarPaths;
+    public int clientReconnectWindowTime;
     public String namespaceFragment;
     public String serviceFragment;
     public String entityFragment;
