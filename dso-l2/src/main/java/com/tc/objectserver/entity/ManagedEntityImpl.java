@@ -761,6 +761,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     long currentId = wrappedRequest.getTransaction().toLong();
     long oldestId = wrappedRequest.getOldestTransactionOnClient().toLong();
     EntityMessage em = message.decodeRawMessage(raw->this.codec.decodeMessage(raw));
+    Trace.activeTrace().log("invoking " + em);
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity.");
@@ -776,8 +777,8 @@ public class ManagedEntityImpl implements ManagedEntity {
               new InvokeContextImpl(clientDescriptor, oldestId, currentId),
               em);
             byte[] er = runWithHelper(()->codec.encodeResponse(resp));
-            response.complete(er);
             trace.end();
+            response.complete(er);
           } else {
             response.complete(new byte[0]);
           }
@@ -1299,6 +1300,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     public void received() {
+      Trace.activeTrace().log("received ");
       this.receivedSent.set();
       if (received != null) {
         received.run();
@@ -1306,6 +1308,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     public void complete() {
+      Trace.activeTrace().log("Completed without result ");
       if (!this.receivedSent.isSet()) {
         received();
       }
@@ -1325,6 +1328,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }  
     
     public void complete(byte[] value) {
+      Trace.activeTrace().log("Completed with result: " + value);
       if (!this.receivedSent.isSet()) {
         received();
       }
@@ -1344,6 +1348,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     public void failure(EntityException ee) {
+      Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
       if (!this.receivedSent.isSet()) {
         received();
       }

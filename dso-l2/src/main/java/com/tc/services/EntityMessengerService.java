@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implements the IEntityMessenger interface by maintaining a "fake" EntityDescriptor (as there is no actual reference from
@@ -238,6 +239,8 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
    * We fake up a Voltron entity message to enqueue for the entity to process in the future.
    */
   private static class FakeEntityMessage implements VoltronEntityMessage {
+    private static final AtomicLong NEXT_FAKE_TXN_ID = new AtomicLong(0);
+
     private final EntityDescriptor descriptor;
     private final EntityMessage identityMessage;
     private final byte[] message;
@@ -257,7 +260,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
 
     @Override
     public TransactionID getTransactionID() {
-      return TransactionID.NULL_ID;
+      return new TransactionID(NEXT_FAKE_TXN_ID.getAndIncrement());
     }
 
     @Override

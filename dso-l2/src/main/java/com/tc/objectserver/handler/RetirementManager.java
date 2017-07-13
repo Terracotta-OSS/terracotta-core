@@ -19,6 +19,7 @@
 package com.tc.objectserver.handler;
 
 import com.tc.objectserver.api.Retiree;
+import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
@@ -147,6 +148,7 @@ public class RetirementManager {
   }
 
   public synchronized void deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
+    Trace.activeTrace().log("Deferring retirement for " + invokeMessageToDefer + " until " + laterMessage + " is finished");
     LogicalSequence myRequest = this.currentlyRunning.get(invokeMessageToDefer);
     
     if (myRequest == null) {

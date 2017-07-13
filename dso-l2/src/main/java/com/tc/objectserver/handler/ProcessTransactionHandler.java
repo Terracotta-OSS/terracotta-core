@@ -231,6 +231,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
     for (Retiree toRetire : readyToRetire) {
       if (null != toRetire) {
+        Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
         toRetire.retired();
       }
     }
@@ -325,6 +326,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
                 public TransactionID getTransaction() {
                   return serverEntityRequest.getTransaction();
                 }
+
+                @Override
+                public String getTraceID() {
+                  return serverEntityRequest.getTraceID();
+                }
               });
               
               retireMessagesForEntity(locked, message);
@@ -345,6 +351,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
                 @Override
                 public TransactionID getTransaction() {
                   return serverEntityRequest.getTransaction();
+                }
+
+                @Override
+                public String getTraceID() {
+                  return serverEntityRequest.getTraceID();
                 }
               });
               
