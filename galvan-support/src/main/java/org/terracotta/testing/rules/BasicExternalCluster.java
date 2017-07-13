@@ -30,6 +30,7 @@ import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.testing.master.ConfigBuilder;
 import org.terracotta.testing.master.GalvanFailureException;
 import org.terracotta.testing.master.GalvanStateInterlock;
 import org.terracotta.testing.master.ReadyStripe;
@@ -49,6 +50,7 @@ public class BasicExternalCluster extends Cluster {
   private final String namespaceFragment;
   private final String serviceFragment;
   private final String entityFragment;
+  private final int clientReconnectWindowTime;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -66,7 +68,15 @@ public class BasicExternalCluster extends Cluster {
     this(clusterDirectory, stripeSize, emptyList(), "", "", "");
   }
 
+  public BasicExternalCluster(File clusterDirectory, int stripeSize, int clientReconnectWindowTime) {
+    this(clusterDirectory, stripeSize, emptyList(), "", "", "", clientReconnectWindowTime);
+  }
+
   public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment) {
+    this(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment, ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME);
+  }
+
+  public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment, int clientReconnectWindowTime) {
     if (clusterDirectory == null) {
       throw new NullPointerException("Cluster directory must be non-null");
     }
@@ -102,6 +112,7 @@ public class BasicExternalCluster extends Cluster {
     this.serviceFragment = serviceFragment;
     this.entityFragment = entityFragment;
     this.serverJars = serverJars;
+    this.clientReconnectWindowTime = clientReconnectWindowTime;
     
     this.clientThread = Thread.currentThread();
   }
@@ -159,11 +170,12 @@ public class BasicExternalCluster extends Cluster {
     // By default, we will use 128M heap size.
     int heapInM = 128;
     interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+
     cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(),
         testParentDirectory.getAbsolutePath(),
         stripeSize, heapInM, serverPort, serverDebugStartPort, 0,
-        serverJarPaths, namespaceFragment, serviceFragment, entityFragment);
+        serverJarPaths, namespaceFragment, serviceFragment, entityFragment, clientReconnectWindowTime);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
     // than the framework, and the framework waits for the finish so that it can terminate the clients/servers if any of

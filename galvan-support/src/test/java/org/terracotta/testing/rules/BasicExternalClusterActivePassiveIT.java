@@ -29,7 +29,7 @@ import org.terracotta.connection.ConnectionException;
 public class BasicExternalClusterActivePassiveIT {
 
   @ClassRule
-  public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 3);
+  public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 3, 30);
 
   @Test
   public void testFailover() throws IOException, ConnectionException, Exception {
