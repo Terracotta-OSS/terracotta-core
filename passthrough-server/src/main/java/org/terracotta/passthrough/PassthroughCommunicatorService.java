@@ -55,6 +55,7 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
     prepareAndSendMessage(clientDescriptor, message);
   }
 
+  @Deprecated
   @Override
   public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
     return prepareAndSendMessage(clientDescriptor, message);

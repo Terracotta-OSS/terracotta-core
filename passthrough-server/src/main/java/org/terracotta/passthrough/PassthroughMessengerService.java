@@ -72,7 +72,6 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
                                                   EntityMessage originalMessageToDefer,
                                                   final EntityMessage futureMessage) {
     try {
-      PassthroughMessage passthroughMessage = makePassthroughMessage(futureMessage);
       final PassthroughMessage futurePassThroughMessage = makePassthroughMessage(futureMessage);
       retirementManager.deferCurrentMessage(futureMessage);
       return new ExplicitRetirementHandle() {

@@ -172,7 +172,8 @@ public class PassthroughServer implements PassthroughDumper {
       this.monitoringProducer.didBecomeActive(this.serverProcess.getServerInfo());
     }
   }
-  
+
+  @SuppressWarnings("unchecked")
   public void addPermanentEntities() {
     // Populate the server with its services.
     for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {

@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,10 +47,7 @@ public class PassthroughRetirementManager {
   // The messages which are still blocking _some_ tuple in the blockedTuples list.
   private final Set<EntityMessage> blockingMessages;
 
-  // Uses the assumption that only 1 message is running at a time to not need to store the dependency relationship, but just
-  // the message the currently executing message must block on, for retirement.  When the message comes to retire, if this
-  // is non-null, then it implies that the message should be blocked.
-  private EntityMessage blockCurrentMessageOn;
+  private final List<EntityMessage> blockCurrentMessageOn = new ArrayList<>();
 
 
   public PassthroughRetirementManager() {
@@ -77,8 +75,7 @@ public class PassthroughRetirementManager {
    */
   public void deferCurrentMessage(EntityMessage blockedOn) {
     Assert.assertTrue(Thread.currentThread() == this.currentServerThread);
-    Assert.assertTrue(null == this.blockCurrentMessageOn);
-    this.blockCurrentMessageOn = blockedOn;
+    this.blockCurrentMessageOn.add(blockedOn);
   }
 
   /**
@@ -97,26 +94,28 @@ public class PassthroughRetirementManager {
     if (null != completedInternalOrNull) {
       boolean didRemove = this.blockingMessages.remove(completedInternalOrNull);
       Assert.assertTrue(didRemove);
+      for (RetirementTuple blockedTuple : blockedTuples) {
+        blockedTuple.blockedOn.remove(completedInternalOrNull);
+      }
     }
     boolean didBlockTuple = false;
-    if (null != this.blockCurrentMessageOn) {
+    if (this.blockCurrentMessageOn.size() != 0) {
       // We want to block tuple.
       // We assume that the completed was null, in this case.
       // (NOTE:  This might not be true if this is a "skip-stone" but we currently have no such use-case so this is useful
       // debugging).
       Assert.assertTrue(null == completedInternalOrNull);
-      boolean didAdd = this.blockingMessages.add(this.blockCurrentMessageOn);
+      boolean didAdd = this.blockingMessages.addAll(this.blockCurrentMessageOn);
       Assert.assertTrue(didAdd);
-      tuple.blockedOn = this.blockCurrentMessageOn;
+      tuple.blockedOn.addAll(this.blockCurrentMessageOn);
       this.blockedTuples.add(tuple);
       didBlockTuple = true;
-      this.blockCurrentMessageOn = null;
+      this.blockCurrentMessageOn.clear();
     }
-    
+
     // Now, determine if anything is good to be retired.
     List<RetirementTuple> readyToRetire = new Vector<RetirementTuple>();
-    while ((this.blockedTuples.size() > 0)
-        && ((null == this.blockedTuples.get(0).blockedOn) || !this.blockingMessages.contains(this.blockedTuples.get(0).blockedOn))) {
+    while (this.blockedTuples.size() > 0 && this.blockedTuples.get(0).blockedOn.size() == 0) {
       RetirementTuple readyTuple = this.blockedTuples.remove(0);
       readyToRetire.add(readyTuple);
     }
@@ -138,7 +137,7 @@ public class PassthroughRetirementManager {
    */
   public static class RetirementTuple {
     // This blockedOn field is only set if we are put into the blocked list.
-    public EntityMessage blockedOn;
+    public Set<EntityMessage> blockedOn = new HashSet<>();
     public final PassthroughConnection sender;
     public final byte[] response;
     

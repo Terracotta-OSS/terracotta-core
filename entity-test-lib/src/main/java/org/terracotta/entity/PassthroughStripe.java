@@ -113,6 +113,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
   }
 
+  @Deprecated
   @Override
   public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
     FakeEndpoint endpoint = endpoints.get(clientDescriptor);
