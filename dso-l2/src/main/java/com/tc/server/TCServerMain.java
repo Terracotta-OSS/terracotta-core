@@ -66,9 +66,7 @@ public class TCServerMain {
 
       setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, systemLoader)));
 
-      String logDir = setup.commonl2Config().logsPath().getCanonicalPath() + "/" +
-                      setup.dsoL2Config().host() + "-" + setup.dsoL2Config().tsaPort().getValue();
-      TCLogbackLogging.redirectLogging(logDir);
+      TCLogbackLogging.redirectLogging(setup.commonl2Config().logsPath().getCanonicalPath());
 
       writeSystemProperties();
 
