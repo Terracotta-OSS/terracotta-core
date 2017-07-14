@@ -252,8 +252,9 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 //        .getPath(), tcConfiguration.getPlatformConfiguration().getServers().getServer().get(0).getDataBackup());
 
     //Changing default behaviour of the locations
-    Assert.assertEquals(new File(this.tcConfig.getParent() + File.separator + "logs").getAbsolutePath(),
-            server.getLogs());
+    String defaultPath = new File(this.tcConfig.getParent() + File.separator + "logs" + File.separator +
+                                InetAddress.getLocalHost().getHostName() + "-" + TCConfigDefaults.TSA_PORT).getAbsolutePath();
+    Assert.assertEquals(defaultPath, server.getLogs());
   }
 
   public void testServerDirectoryPaths() throws IOException, ConfigurationSetupException {
