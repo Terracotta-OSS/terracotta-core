@@ -20,6 +20,10 @@ package org.terracotta.passthrough;
 
 import org.terracotta.entity.ClientDescriptor;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 
 /**
  * The ClientDescriptor implementation used is very simple since it can carry the reference to the sender, directly.
@@ -28,8 +32,8 @@ import org.terracotta.entity.ClientDescriptor;
  */
 public class PassthroughClientDescriptor implements ClientDescriptor {
   public final PassthroughServerProcess server;
-  public final PassthroughConnection sender;
-  public final long clientInstanceID;
+  public PassthroughConnection sender;
+  public long clientInstanceID;
 
   public PassthroughClientDescriptor(PassthroughServerProcess server, PassthroughConnection sender, long clientInstanceID) {
     this.server = server;
@@ -39,8 +43,8 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
 
   @Override
   public int hashCode() {
-    int result = sender != null ? sender.hashCode() : 0;
-    result = 31 * result + (int) (clientInstanceID ^ (clientInstanceID >>> 32));
+    int result = sender != null ? Long.hashCode(sender.getUniqueConnectionID()) : 0;
+    result = 31 * result + Long.hashCode(clientInstanceID);
     return result;
   }
 
@@ -50,7 +54,7 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
     if (!isEqual && (obj instanceof PassthroughClientDescriptor)) { 
       PassthroughClientDescriptor other = (PassthroughClientDescriptor) obj;
       // We can use instance compare, here, on the sender.
-      isEqual = (other.sender == this.sender)
+      isEqual = (other.sender.getUniqueConnectionID() == this.sender.getUniqueConnectionID())
           && (other.clientInstanceID == this.clientInstanceID);
     }
     return isEqual;
@@ -63,5 +67,15 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
     ret = ret + "," + (sender != null ? sender.toString() : "<no sender>");
     ret = ret + ",clientInstanceID=" + clientInstanceID + '}';
     return ret;
+  }
+
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.writeLong(sender.getUniqueConnectionID());
+    out.writeLong(clientInstanceID);
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException {
+    this.sender = new PassthroughConnection(null, "", null, null, null, in.readLong());
+    this.clientInstanceID = in.readLong();
   }
 }
