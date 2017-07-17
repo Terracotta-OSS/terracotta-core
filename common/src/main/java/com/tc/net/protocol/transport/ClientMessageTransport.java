@@ -249,7 +249,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
 
       if (!this.status.isEstablished()) {
-        this.getLogger().warn("Ignoring the message received for an Un-Established Connection; " + message.getSource()
+        this.getLogger().debug("Ignoring the message received for an Un-Established Connection; " + message.getSource()
                          + "; " + message);
         message.recycle();
         return;
