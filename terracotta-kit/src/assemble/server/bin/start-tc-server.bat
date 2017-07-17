@@ -89,10 +89,8 @@ REM $ENV{NULLGLOB} = 0;
 
 set CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%;%TC_SERVER_DIR%\lib
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
-set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 rem rmi.dgc.server.gcInterval is set as year to avoid system gc in case authentication is enabled
 rem users may change it accordingly
-set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000000
 set OPTS=%OPTS% -Dtc.install-root=%TC_SERVER_DIR%
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
