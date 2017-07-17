@@ -27,7 +27,6 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -42,6 +41,7 @@ import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
+import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
@@ -251,6 +251,9 @@ try {
     } catch (TransportHandshakeException e) {
       // expected;
       System.err.println("Expected: got handshake exception for first open() : " + e);
+    } catch (TCTimeoutException to) {
+      System.out.println(ThreadDumpUtil.getThreadDump());
+      throw to;
     }
 
     try {
