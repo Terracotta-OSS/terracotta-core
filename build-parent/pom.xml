@@ -75,11 +75,9 @@
       -XX:MaxDirectMemorySize=1024m
       -XX:+HeapDumpOnOutOfMemoryError
       -Dtc.base-dir=${tc.base-dir} ${tc.config}
-      -Dtc.dso.globalmode=false
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
       -Dcom.tc.l1.modules.repositories=${localMavenRepository}
       -Dtc.install-root.ignore-checks=true
-      -Dcom.sun.management.jmxremote
       ${surefire.additional-jvm-args}</surefire.argLine>
   </properties>
 

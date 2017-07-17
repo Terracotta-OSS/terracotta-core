@@ -20,7 +20,6 @@ package com.tc.net.protocol.transport;
 
 import org.slf4j.LoggerFactory;
 
-import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.net.CommStackMismatchException;
@@ -227,16 +226,11 @@ public class ClientMessageTransport extends MessageTransportBase {
     return !this.isOpening.get() && !this.isOpen.get();
   }
 
-  // TODO :: come back
   @Override
   public void closeEvent(TCConnectionEvent event) {
     if (isNotOpen()) { return; }
     super.closeEvent(event);
-    synchronized (status) {
-      if (this.waitForSynAckResult != null) {
-        this.waitForSynAckResult.setException(new IOException("connection closed"));
-      }
-    }
+    setSynAckResult(new IOException("connection closed"));
   }
 
   @Override
@@ -249,7 +243,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
 
       if (!this.status.isEstablished()) {
-        this.getLogger().warn("Ignoring the message received for an Un-Established Connection; " + message.getSource()
+        this.getLogger().debug("Ignoring the message received for an Un-Established Connection; " + message.getSource()
                          + "; " + message);
         message.recycle();
         return;
@@ -289,11 +283,21 @@ public class ClientMessageTransport extends MessageTransportBase {
         Assert.assertNotNull(this.waitForSynAckResult);
       }
       getConnection().setTransportEstablished();
-      synchronized (status) {
-        this.waitForSynAckResult.set(synAck);
-        this.waitForSynAckResult = null; /* synack received, clear this result waiter */
-      }
+      setSynAckResult(synAck);
       setRemoteCallbackPort(synAck.getCallbackPort());
+    }
+  }
+  
+  private void setSynAckResult(Object msg) {
+    synchronized (status) {
+      if (this.waitForSynAckResult != null) {
+        if (msg instanceof Exception) {
+          this.waitForSynAckResult.setException((Exception)msg);
+        } else {
+          this.waitForSynAckResult.set(msg);
+        }
+        this.waitForSynAckResult = null;
+      }
     }
   }
 

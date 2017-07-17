@@ -81,7 +81,7 @@ public class ServerMessageTransport extends MessageTransportBase {
          * reached the server, but worker thread might not have processed it yet and the OOOReconnectTimeout thread
          * pushed the Server Tx to closed state).
          */
-        logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
+        logger.debug("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
                     + message);
         recycleAndReturn = true;
       }

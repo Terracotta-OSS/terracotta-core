@@ -401,9 +401,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public synchronized void shutdown(boolean fromShutdownHook) {
-    isShutdown = true;
-    stateManager.stop();
+  public void shutdown(boolean fromShutdownHook) {
+    synchronized (this) {
+      isShutdown = true;
+      stateManager.stop();
+    }
     for (InFlightMessage msg : inFlightMessages.values()) {
       throwClosedExceptionOnMessage(msg, "Connection closed under in-flight message");
     }
@@ -418,7 +420,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     // And then drop them.
     this.objectStoreMap.clear();
-    notifyAll();
   }
   
   private void throwClosedExceptionOnMessage(InFlightMessage msg, String description) {
