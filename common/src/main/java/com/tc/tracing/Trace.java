@@ -61,7 +61,7 @@ public class Trace {
 
   public static Trace newTrace(VoltronEntityMessage message, String componentName) {
     try {
-      return new Trace(message.getSource() + ":" + message.getTransactionID().toLong(), componentName);
+      return new Trace(message.getSource().toLong() + ":" + message.getTransactionID().toLong(), componentName);
     } catch (Exception e) {
       return DUMMY;
     }

@@ -87,6 +87,11 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   }
 
   @Override
+  public String getTraceID() {
+    return src.toLong() + ":" + transaction.toLong();
+  }
+
+  @Override
   public ClientID getNodeID() {
     return src;
   }

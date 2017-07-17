@@ -30,4 +30,5 @@ import com.tc.object.tx.TransactionID;
 public interface Retiree {
   void retired(); 
   TransactionID getTransaction();
+  String getTraceID();
 }

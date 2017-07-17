@@ -277,7 +277,7 @@ public class ReplicatedTransactionHandler {
 
 //  don't need to worry about resends here for lifecycle messages.  active will filer them  
   private void replicatedActivityReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
-    Trace trace = new Trace(activity.getActivityID().toString(), "Replication");
+    Trace trace = new Trace(String.valueOf(activity.getActivityID().id), "Replication");
     trace.start();
     ClientID sourceNodeID = activity.getSource();
     TransactionID transactionID = activity.getTransactionID();
@@ -404,7 +404,7 @@ public class ReplicatedTransactionHandler {
   }  
   
   private void syncActivityReceived(ServerID activeSender, SyncReplicationActivity activity) {
-    Trace trace = new Trace(activity.getActivityID().toString(), "Sync");
+    Trace trace = new Trace(String.valueOf(activity.getActivityID().id), "Sync");
     trace.start();
     SyncReplicationActivity.ActivityType thisActivityType = activity.getActivityType();
     FetchID fetch = activity.getFetchID();
