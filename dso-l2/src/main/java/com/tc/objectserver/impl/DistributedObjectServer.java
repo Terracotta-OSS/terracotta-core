@@ -23,6 +23,7 @@ import com.tc.async.api.EventHandlerException;
 
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.services.MappedStateCollector;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
 import com.tc.services.SingleThreadedTimer;
@@ -332,12 +333,21 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.l2Coordinator.prettyPrint(pp);
     this.entityManager.prettyPrint(pp);
     this.serviceRegistry.prettyPrint(pp);
+    addExtendedConfigState(pp);
     return pp.toString().getBytes(set);
   }
 
   @Override
   public void dump() {
     TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
+  }
+
+  private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
+    MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
+    this.configSetupManager.commonl2Config().getBean().addStateTo(mappedStateCollector);
+    Map<String, Object> state = new HashMap<>();
+    state.put("ExtendedConfigs", mappedStateCollector.getMap());
+    prettyPrinter.println(state);
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
