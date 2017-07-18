@@ -563,7 +563,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       // Invoke on passive.
       CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
       if (null != data) {
-        PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(this, null, clientInstanceID);
+        //TODO: Passthrough server process is not correct for this descriptor but this is not a problem as it is
+        //TODO: passed to passive entity only - no client communicator service is available on passive
+        PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
 
         // There is no return type in the passive case.
         sendPassiveInvocation(entityClassName,
