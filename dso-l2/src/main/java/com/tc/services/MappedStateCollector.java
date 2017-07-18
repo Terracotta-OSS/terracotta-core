@@ -32,7 +32,6 @@ public class MappedStateCollector implements StateDumpCollector {
 
   public MappedStateCollector(String name) {
     this.name = name;
-    dumpState.put("name", name);
   }
 
   @Override
