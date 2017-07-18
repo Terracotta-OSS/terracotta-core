@@ -18,11 +18,9 @@ package org.terracotta.testing.master;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Vector;
 
@@ -67,7 +65,7 @@ public class StripeInstaller {
 
     //Copy a cutom logback configuration
     Path serverPath = FileSystems.getDefault().getPath(installPath, "server", "lib", "logback-test.xml");
-    Files.copy(this.getClass().getResourceAsStream("/logback-test.xml"), serverPath);
+    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverPath);
 
     // Create the object representing this single installation and add it to the list for this stripe.
     ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), heapInM, debugPort);
