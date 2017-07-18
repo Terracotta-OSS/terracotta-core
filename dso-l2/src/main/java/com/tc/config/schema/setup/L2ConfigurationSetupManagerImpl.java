@@ -71,7 +71,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private final TcConfiguration configuration;
 
   private volatile ActiveServerGroupConfig activeServerGroupConfig;
-  private volatile boolean secure;
 
   private Servers serversBean;
 
@@ -97,7 +96,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
 
     serversBean = serversBeanRepository();
-    this.secure = serversBean != null && serversBean.isSecure();
     Server[] servers = serversBean != null ? L2ConfigObject.getServers(serversBean) : null;
     Server server = null;
     if (thisL2Identifier != null) {
@@ -146,7 +144,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
   @Override
   public boolean isSecure() {
-    return secure;
+    return false;
   }
 
   @Override
@@ -180,7 +178,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     public L2ConfigData(String name, Servers serversBean) throws ConfigurationSetupException {
       this.name = name;
       Server s = findMyL2Bean(); // To get the exception in case things are screwed up
-      this.commonL2Config = new CommonL2ConfigObject(s, configuration, secure);
+      this.commonL2Config = new CommonL2ConfigObject(s, configuration, false);
       this.dsoL2Config = new L2ConfigObject(s, serversBean.getClientReconnectWindow());
     }
 
