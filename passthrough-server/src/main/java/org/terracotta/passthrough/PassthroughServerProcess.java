@@ -733,25 +733,33 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   @Override
   public void release(IMessageSenderWrapper sender, long clientInstanceID, String entityClassName, String entityName) throws EntityException {
     final PassthroughEntityTuple entityTuple = new PassthroughEntityTuple(entityClassName, entityName);
-    // Release should never be replicated and only handled on the active.
-    Assert.assertTrue(null != this.activeEntities);
-    CreationData<?, ?> data = this.activeEntities.get(entityTuple);
-    if (null != data) {
-      ActiveServerEntity<?, ?> entity = data.getActive();
-      PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-      entity.disconnected(clientDescriptor);
-      data.release(clientDescriptor);
-      
-      if (null != PassthroughServerProcess.this.serviceInterface) {
-        // Record that this entity has been released by this client.
-        String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
-        String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
-        String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
-        PassthroughServerProcess.this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
-      }
+    if(this.activeEntities != null) {
+      CreationData<?, ?> data = this.activeEntities.get(entityTuple);
+      if (null != data) {
+        ActiveServerEntity<?, ?> entity = data.getActive();
+        PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
+        entity.disconnected(clientDescriptor);
+        data.release(clientDescriptor);
 
+        if (null != PassthroughServerProcess.this.serviceInterface) {
+          // Record that this entity has been released by this client.
+          String clientIdentifier = clientIdentifierForService(sender.getClientOriginID());
+          String entityIdentifier = entityIdentifierForService(entityClassName, entityName);
+          String fetchIdentifier = fetchIdentifierForService(clientIdentifier, entityIdentifier);
+          PassthroughServerProcess.this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
+        }
+
+      } else {
+        throw new EntityNotFoundException(entityClassName, entityName);
+      }
     } else {
-      throw new EntityNotFoundException(entityClassName, entityName);
+      CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
+      if (null != data) {
+        PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(this, null, clientInstanceID);
+        data.getPassive().notifyClientDisconnectedFromActive(clientDescriptor);
+      } else {
+        throw new EntityNotFoundException(entityClassName, entityName);
+      }
     }
   }
 

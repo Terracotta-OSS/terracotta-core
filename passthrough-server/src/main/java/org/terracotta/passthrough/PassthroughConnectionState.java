@@ -54,9 +54,9 @@ public class PassthroughConnectionState {
         throw new RuntimeException(e);
       }
     }
-    long oldestTransactionID = 0;
+    long oldestTransactionID = this.nextTransactionID;
     for (long oneID : this.inFlightMessages.keySet()) {
-      if ((0 == oldestTransactionID) || (oneID < oldestTransactionID)) {
+      if (oneID < oldestTransactionID) {
         oldestTransactionID = oneID;
       }
     }
