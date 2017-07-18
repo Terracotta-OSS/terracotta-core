@@ -22,16 +22,69 @@ import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
+import com.tc.exception.VoltronWrapperException;
+import com.tc.util.Assert;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 import static org.mockito.Mockito.mock;
+import org.terracotta.exception.ConnectionClosedException;
 
 
 public class InFlightMessageTest extends TestCase {
+  
+  public void testExceptionClose() throws Exception {
+    Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
+    VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
+    final InFlightMessage inf = new InFlightMessage(msg, acks, true);
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          TimeUnit.SECONDS.sleep(1);
+          inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException("test")));
+        } catch (InterruptedException ie) {
+          
+        }
+      }
+    }).start();
+    
+    try {
+      byte[] result = inf.getWithTimeout(5, TimeUnit.SECONDS);
+    } catch (TimeoutException to) {
+      fail();
+    } catch (Exception closed) {
+      System.out.println("expected " + closed.toString());
+    }
+  }
+   
+  public void testExceptionWaitForAcks() throws Exception {
+    Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
+    VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
+    final InFlightMessage inf = new InFlightMessage(msg, acks, true);
+    Thread t = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        inf.waitForAcks();
+      }
+    });
+    
+    t.start();
+    
+    TimeUnit.SECONDS.sleep(1);
+    inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException("test")));
+
+    t.join(3000);
+    Assert.assertFalse(t.isAlive());
+  }
+   
   public void testInterruptedGet() {
     // Create the message we will use in the test.
     NetworkVoltronEntityMessage mockedEntityMessage = mock(NetworkVoltronEntityMessage.class);
