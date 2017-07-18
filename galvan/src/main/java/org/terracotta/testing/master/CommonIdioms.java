@@ -65,7 +65,7 @@ public class CommonIdioms {
     public int serverStartPort;
     public int serverDebugPortStart;
     public int serverStartNumber;
-    public int clientReconnectWindowTime;
+    public int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
     public List<String> extraJarPaths;
     public String namespaceFragment;
     public String serviceFragment;
