@@ -237,7 +237,7 @@ try {
     Thread t = new Thread() {
       @Override
       public void run() {
-        ThreadUtil.reallySleep(WAIT / 2);
+        ThreadUtil.reallySleep(WAIT / 10);
         serverComms.getConnectionManager().shutdown();
         System.err.println("closed connections on server side");
       }
@@ -245,15 +245,18 @@ try {
 
     t.start();
 
-    try {
-      clientChannel.open(connectTo);
-      fail();
-    } catch (TransportHandshakeException e) {
-      // expected;
-      System.err.println("Expected: got handshake exception for first open() : " + e);
-    } catch (TCTimeoutException to) {
-      System.out.println(ThreadDumpUtil.getThreadDump());
-      throw to;
+    boolean justTimeout = true;
+    while (justTimeout) {
+      try {
+        clientChannel.open(connectTo);
+        fail();
+      } catch (TransportHandshakeException e) {
+        // expected;
+        System.err.println("Expected: got handshake exception for first open() : " + e);
+        justTimeout = false;
+      } catch (TCTimeoutException to) {
+        System.out.println(ThreadDumpUtil.getThreadDump());
+      }
     }
 
     try {
