@@ -50,7 +50,7 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createReleaseMessage(final String entityClassName, final String entityName, final long clientInstanceID) {
-    boolean shouldReplicateToPassives = false;
+    boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.RELEASE_ENTITY, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
@@ -61,7 +61,7 @@ public class PassthroughMessageCodec {
   }
 
   public static PassthroughMessage createUnexpectedReleaseMessage(final String entityClassName, final String entityName, final long clientInstanceID) {
-    boolean shouldReplicateToPassives = false;
+    boolean shouldReplicateToPassives = true;
     return new PassthroughMessage(Type.UNEXPECTED_RELEASE, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
