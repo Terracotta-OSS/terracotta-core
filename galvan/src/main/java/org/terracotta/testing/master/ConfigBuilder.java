@@ -93,7 +93,7 @@ public class ConfigBuilder {
     
     String postentities = "  </entities>\n" + 
                           "  <tc-properties/>\n"
-        + "  <servers secure=\"false\">\n";
+        + "  <servers>\n";
     int nextPort = this.startPort;
     String servers = "";
     for (String serverName : this.serverNames) {
