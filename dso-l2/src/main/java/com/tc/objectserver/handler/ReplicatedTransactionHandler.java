@@ -337,7 +337,8 @@ public class ReplicatedTransactionHandler {
           case RECONFIGURE_ENTITY:  
             entity.get().addRequestMessage(request, payload, ()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
               (result)->{
-                this.persistor.getEntityPersistor().entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID(), entityInstance.getVersion(), result);
+                //  store the new configuration in the persistor
+                this.persistor.getEntityPersistor().entityReconfigureSucceeded(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), entityInstance.getID(), entityInstance.getVersion(), payload.getRawPayload());
                 acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
               } , (exception) -> {
                 this.persistor.getEntityPersistor().entityReconfigureFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
