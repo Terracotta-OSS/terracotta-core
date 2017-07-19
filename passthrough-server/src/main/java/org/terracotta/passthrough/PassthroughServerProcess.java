@@ -66,6 +66,7 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -189,13 +190,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     // Note that we may want to persist the version, as well, but we currently have no way of exposing that difference,
     // within the passthrough system, and it would require the creation of an almost completely-redundant container class.
     try {
-      this.persistedEntitiesByConsumerIDMap = (HashMap<Long, EntityData>) (shouldLoadStorage ? platformPersistence.loadDataElement(ENTITIES_FILE_NAME) : null);
+      this.persistedEntitiesByConsumerIDMap = (LinkedHashMap<Long, EntityData>) (shouldLoadStorage ? platformPersistence.loadDataElement(ENTITIES_FILE_NAME) : null);
     } catch (IOException e1) {
       Assert.unexpected(e1);
     }
     // This could be null if there was no file or we shouldn't load.
     if (null == this.persistedEntitiesByConsumerIDMap) {
-      this.persistedEntitiesByConsumerIDMap = new HashMap<Long, EntityData>();
+      this.persistedEntitiesByConsumerIDMap = new LinkedHashMap<>();
     }
     
     // Load the transaction order.
@@ -843,7 +844,16 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     
     try {
-      return entityData.reconfigure(serializedConfiguration);
+      byte[] reconfigured = entityData.reconfigure(serializedConfiguration);
+      EntityData data = this.persistedEntitiesByConsumerIDMap.get(entityData.consumerID);
+      Assert.assertTrue(data != null);
+      data.configuration = serializedConfiguration;
+      try {
+        this.platformPersistence.storeDataElement(ENTITIES_FILE_NAME, this.persistedEntitiesByConsumerIDMap);
+      } catch (IOException e) {
+        Assert.unexpected(e);
+      }
+      return reconfigured;
     } catch (ConfigurationException e) {
       // Wrap this and re-throw.
       throw new EntityConfigurationException(entityClassName, entityName, e);
