@@ -192,15 +192,23 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   public synchronized void setResult(byte[] value, EntityException error) {
     trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
     this.pendingAcks.remove(VoltronEntityMessage.Acks.COMPLETED);
-    if (this.canSetResult) {
+    if (error != null) {
+      Assert.assertNull(value);
+      this.pendingAcks.clear();
       this.exception = error;
-      this.value = value;
-      if (!this.blockGetOnRetired) {
-        this.getCanComplete = true;
-        notifyAll();
+      this.getCanComplete = true;
+      notifyAll();
+    } else {
+      Assert.assertNull(error);
+      if (this.canSetResult) {
+        this.value = value;
+        if (!this.blockGetOnRetired) {
+          this.getCanComplete = true;
+          notifyAll();
+        }
+        // Determine if this can be over-written - only if we are waiting for the retired.
+        this.canSetResult = this.blockGetOnRetired;
       }
-      // Determine if this can be over-written - only if we are waiting for the retired.
-      this.canSetResult = this.blockGetOnRetired;
     }
   }
 

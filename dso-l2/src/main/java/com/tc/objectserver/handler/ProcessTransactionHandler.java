@@ -372,7 +372,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               EntityExistenceHelpers.recordReconfigureEntity(this.persistor.getEntityPersistor(), entityManager, serverEntityRequest.getNodeID(), serverEntityRequest.getTransaction(), serverEntityRequest.getOldestTransactionOnClient(), descriptor.getEntityID(), descriptor.getClientSideVersion(), entityMessage.getRawPayload(), null);
               serverEntityRequest.complete(result);
             }, (exception) -> {  
-              EntityExistenceHelpers.recordReconfigureEntity(this.persistor.getEntityPersistor(), entityManager, serverEntityRequest.getNodeID(), serverEntityRequest.getTransaction(), serverEntityRequest.getOldestTransactionOnClient(), descriptor.getEntityID(), descriptor.getClientSideVersion(), entityMessage.getRawPayload(), exception);
+              EntityExistenceHelpers.recordReconfigureEntity(this.persistor.getEntityPersistor(), entityManager, serverEntityRequest.getNodeID(), serverEntityRequest.getTransaction(), serverEntityRequest.getOldestTransactionOnClient(), descriptor.getEntityID(), descriptor.getClientSideVersion(), null, exception);
               serverEntityRequest.failure(exception);
             });
         }  else if (ServerEntityAction.DESTROY_ENTITY == action) {
