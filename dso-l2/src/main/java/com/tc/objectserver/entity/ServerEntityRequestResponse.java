@@ -106,6 +106,6 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
 
   @Override
   public String toString() {
-    return "ServerEntityRequestResponse{action=" +getAction() + ", descriptor=" + descriptor.getEntityID() + '}';
+    return "ServerEntityRequestResponse{action=" +getAction() + ", descriptor=" + descriptor + '}';
   }
 }

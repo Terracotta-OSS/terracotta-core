@@ -23,6 +23,7 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -117,12 +118,12 @@ public class SyncReplicationActivity implements OrderedEventContext {
   // Factory methods.
   public static SyncReplicationActivity createFlushLocalPipelineMessage(FetchID fetch, boolean forDestroy) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, forDestroy ? ActivityType.LOCAL_ENTITY_GC : ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, forDestroy ? ActivityType.LOCAL_ENTITY_GC : ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, null);
   }
 
-  public static SyncReplicationActivity createOrderingPlaceholder(FetchID fetch, ClientID src, TransactionID tid, TransactionID oldest, String debugId) {
+  public static SyncReplicationActivity createOrderingPlaceholder(FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, String debugId) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, src, tid, oldest, ActivityType.ORDERING_PLACEHOLDER, null, 0, referenceCount, debugId);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, src, instance, tid, oldest, ActivityType.ORDERING_PLACEHOLDER, null, 0, referenceCount, debugId);
   }
   
   private static EnumSet<ActivityType> lifecycle = EnumSet.of(
@@ -133,61 +134,61 @@ public class SyncReplicationActivity implements OrderedEventContext {
       ActivityType.RECONFIGURE_ENTITY);
       
   
-  public static SyncReplicationActivity createLifecycleMessage(EntityID eid, long version, FetchID fetch, ClientID src, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload) {
+  public static SyncReplicationActivity createLifecycleMessage(EntityID eid, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload) {
     Assert.assertTrue(lifecycle.contains(action));
-    return new SyncReplicationActivity(ActivityID.getNextID(),null,eid,version,fetch,src,tid,oldest,action,payload,0,0,null);
+    return new SyncReplicationActivity(ActivityID.getNextID(),null,eid,version,fetch,src,instance,tid,oldest,action,payload,0,0,null);
   }
 
-  public static SyncReplicationActivity createInvokeMessage(FetchID fetchID, ClientID src, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, String debugId) {
+  public static SyncReplicationActivity createInvokeMessage(FetchID fetchID, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, String debugId) {
     // We shouldn't be using this helper for any of the specialized activity types.
     Assert.assertTrue(ActivityType.INVOKE_ACTION == action);
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetchID, src, tid, oldest, action, payload, concurrency, referenceCount, debugId);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetchID, src, instance, tid, oldest, action, payload, concurrency, referenceCount, debugId);
   }
 
   public static SyncReplicationActivity createStartSyncMessage(SyncReplicationActivity.EntityCreationTuple[] tuplesForCreation) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), tuplesForCreation, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_BEGIN, null, 0, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), tuplesForCreation, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_BEGIN, null, 0, referenceCount, null);
   }
 
   public static SyncReplicationActivity createEndSyncMessage(byte[] extras) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_END, extras, 0, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_END, extras, 0, referenceCount, null);
   }
 
   public static SyncReplicationActivity createStartEntityMessage(EntityID id, long version, FetchID fetchID, byte[] configPayload, int references) {
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_BEGIN, configPayload, 0, references, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_BEGIN, configPayload, 0, references, null);
   }
 
   public static SyncReplicationActivity createEndEntityMessage(EntityID id, long version, FetchID fetchID) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_END, null, 0, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID,  TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_END, null, 0, referenceCount, null);
   }
 
   public static SyncReplicationActivity createStartEntityKeyMessage(EntityID id, long version, FetchID fetchID, int concurrency) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN, null, concurrency, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN, null, concurrency, referenceCount, null);
   }
 
   public static SyncReplicationActivity createEndEntityKeyMessage(EntityID id, long version, FetchID fetchID, int concurrency) {
     // We can only synchronize positive-number keys.    
     Assert.assertTrue(concurrency > 0);
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_END, null, concurrency, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_END, null, concurrency, referenceCount, null);
   }
 
   public static SyncReplicationActivity createPayloadMessage(EntityID id, long version, FetchID fetchID, int concurrency, byte[] payload, String debugId) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency, referenceCount, debugId);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_PAYLOAD, payload, concurrency, referenceCount, debugId);
   }
 
   public static SyncReplicationActivity createStartMessage() {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_START, null, 0, referenceCount, null);
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_START, null, 0, referenceCount, null);
   }
 
   private final ActivityID id;
@@ -196,6 +197,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   final EntityID entityID;
   final long version;
   final ClientID src;
+  final ClientInstanceID instance;
   final TransactionID tid;
   final TransactionID oldest;
 
@@ -208,7 +210,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
   final String debugId;
 
-  private SyncReplicationActivity(ActivityID id, EntityCreationTuple[] entitiesForSyncStart, EntityID entity, long version, FetchID fetch, ClientID src, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, int referenceCount, String debugId) {
+  private SyncReplicationActivity(ActivityID id, EntityCreationTuple[] entitiesForSyncStart, EntityID entity, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, int referenceCount, String debugId) {
     Assert.assertNotNull(id);
     Assert.assertNotNull(action);
     if (ActivityType.SYNC_BEGIN == action) {
@@ -228,6 +230,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     this.version = version;
     this.fetchID = fetch;
     this.src = src;
+    this.instance = instance;
     this.tid = tid;
     this.oldest = oldest;
     this.payload = payload;
@@ -259,6 +262,11 @@ public class SyncReplicationActivity implements OrderedEventContext {
     Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return src;
   }
+  
+  public ClientInstanceID getClientInstanceID() {
+    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
+    return instance;
+  }  
   
   public TransactionID getTransactionID() {
     Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
@@ -339,6 +347,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
       Assert.assertTrue(NodeID.CLIENT_NODE_TYPE == sourceNodeType);
       out.write(sourceNodeType);
       this.src.serializeTo(out);
+      out.writeLong(instance.getID());
       out.writeLong(tid.toLong());
       out.writeLong(oldest.toLong());
       
@@ -374,6 +383,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     long version = 0L;
     FetchID fetchID = FetchID.NULL_ID;
     ClientID source = ClientID.NULL_ID;
+    ClientInstanceID instance = ClientInstanceID.NULL_ID;
     TransactionID tid = TransactionID.NULL_ID;
     TransactionID oldest = TransactionID.NULL_ID;
     byte[] payload = null;
@@ -395,6 +405,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
       int sourceNodeType = in.read();
       Assert.assertTrue(NodeID.CLIENT_NODE_TYPE == sourceNodeType);
       source =  new ClientID().deserializeFrom(in);
+      instance =  new ClientInstanceID(in.readLong());
       tid = new TransactionID(in.readLong());
       oldest = new TransactionID(in.readLong());
       
@@ -417,7 +428,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
         debug = new String(data);
       }
     }
-    return new SyncReplicationActivity(activityID, entitiesForSyncStart, entityID, version, fetchID, source, tid, oldest, action, payload, concurrency, referenceCount, debug);
+    return new SyncReplicationActivity(activityID, entitiesForSyncStart, entityID, version, fetchID, source, instance, tid, oldest, action, payload, concurrency, referenceCount, debug);
   }
 
   @Override

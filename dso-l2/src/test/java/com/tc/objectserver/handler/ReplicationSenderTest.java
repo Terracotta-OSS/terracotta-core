@@ -154,15 +154,16 @@ public class ReplicationSenderTest {
   
   private SyncReplicationActivity makeMessage(SyncReplicationActivity.ActivityType type) {
     ClientID source = new ClientID(1);
+    ClientInstanceID instance = new ClientInstanceID(1);
     switch (type) {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
       case RECONFIGURE_ENTITY:
-        return SyncReplicationActivity.createLifecycleMessage(entity, 1, fetch, source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0]);
+        return SyncReplicationActivity.createLifecycleMessage(entity, 1, fetch, source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0]);
       case INVOKE_ACTION:
-        return SyncReplicationActivity.createInvokeMessage(fetch, source, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+        return SyncReplicationActivity.createInvokeMessage(fetch, source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
       case ORDERING_PLACEHOLDER:
-        return SyncReplicationActivity.createOrderingPlaceholder(new FetchID(1L), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
+        return SyncReplicationActivity.createOrderingPlaceholder(new FetchID(1L), ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
       case LOCAL_ENTITY_GC:
         return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), true);
       case FLUSH_LOCAL_PIPELINE:

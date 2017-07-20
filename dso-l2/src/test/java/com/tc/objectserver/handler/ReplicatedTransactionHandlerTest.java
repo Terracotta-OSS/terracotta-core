@@ -37,6 +37,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -86,6 +87,7 @@ public class ReplicatedTransactionHandlerTest {
   private TransactionOrderPersistor transactionOrderPersistor;
   private ReplicatedTransactionHandler rth;
   private ClientID source;
+  private ClientInstanceID instance;
   private ForwardingSink<ReplicationMessage> loopbackSink;
   private StateManager stateManager;
   private EntityManager entityManager;
@@ -121,6 +123,7 @@ public class ReplicatedTransactionHandlerTest {
     this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
     this.source = new ClientID(1);
+    this.instance = new ClientInstanceID(1);
     
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
@@ -244,6 +247,7 @@ public class ReplicatedTransactionHandlerTest {
     EntityID eid = new EntityID("test","test");
     FetchID fetch = new FetchID(1L);
     ClientID cid = new ClientID(1L);
+    ClientInstanceID instance = new ClientInstanceID(1L);
     TransactionID tid = new TransactionID(1L);
     TransactionID old = new TransactionID(0L);
     ReplicationMessage start = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0]));
@@ -252,7 +256,7 @@ public class ReplicatedTransactionHandlerTest {
     out.writeInt(0);
     out.close();
     ReplicationMessage end = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(raw.toByteArray()));
-    ReplicationMessage create = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createLifecycleMessage(eid,1L,fetch,cid,tid,old,SyncReplicationActivity.ActivityType.CREATE_ENTITY,new byte[0]));
+    ReplicationMessage create = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createLifecycleMessage(eid,1L,fetch,cid,instance,tid,old,SyncReplicationActivity.ActivityType.CREATE_ENTITY,new byte[0]));
     ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.getConsumerID()).thenReturn(1L);
     when(entity.addRequestMessage(any(), any(), any(), any(), any())).then((in)->{
@@ -298,14 +302,14 @@ public class ReplicatedTransactionHandlerTest {
     out.writeInt(0);
     out.close();
     this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(bout.toByteArray())));
-    ReplicationMessage request = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.CREATE_ENTITY, new byte[0]));
+    ReplicationMessage request = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID,  ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.CREATE_ENTITY, new byte[0]));
     try {
       this.rth.getEventHandler().handleEvent(request);
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
-    ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, new byte[0]));
+    ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, new byte[0]));
     when(entity.isRemoveable()).thenReturn(Boolean.TRUE);
     this.rth.getEventHandler().handleEvent(destroy);
     verify(entityManager).removeDestroyed(eq(fetchID));
@@ -447,7 +451,7 @@ public class ReplicatedTransactionHandlerTest {
   
   private SyncReplicationActivity createMockReplicationMessage(FetchID fetchID, byte[] payload, int concurrency) {
     return SyncReplicationActivity.createInvokeMessage(fetchID,
-        source, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.INVOKE_ACTION, payload, concurrency, "");
+        source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.INVOKE_ACTION, payload, concurrency, "");
   }
 
   private static abstract class NoStatsSink<T> implements Sink<T> {
