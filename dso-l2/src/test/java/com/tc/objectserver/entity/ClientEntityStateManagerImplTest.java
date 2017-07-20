@@ -124,8 +124,7 @@ public class ClientEntityStateManagerImplTest {
     // This only fails by asserting.
     boolean didSucceed = false;
     try {
-      clientEntityStateManager.addReference(clientID, descriptor);
-      didSucceed = true;
+      didSucceed = clientEntityStateManager.addReference(clientID, descriptor);
     } catch (AssertionError e) {
       didSucceed = false;
     }

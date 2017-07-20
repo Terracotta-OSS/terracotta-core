@@ -92,7 +92,7 @@ public class RequestProcessor {
       }
     }
     ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
-        ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), requestAction, 
+        ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), request.getClientInstance(), requestAction, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(eid, call, concurrencyKey);
@@ -117,7 +117,7 @@ public class RequestProcessor {
     
   }
   
-  private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, FetchID fetchID, ClientID src,
+  private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, FetchID fetchID, ClientID src, ClientInstanceID instance, 
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
     SyncReplicationActivity.ActivityType actionCode = typeMap.get(type);
     Assert.assertNotNull(actionCode);
@@ -125,14 +125,14 @@ public class RequestProcessor {
     // Handle our replicated message creations as special-cases, if they aren't normal invokes.
     SyncReplicationActivity activity = null;
     if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == actionCode) {
-      activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, tid, oldest, payload.getDebugId());
+      activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, instance, tid, oldest, payload.getDebugId());
     } else if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN == actionCode) {
       activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, fetchID, concurrency);
     } else if (SyncReplicationActivity.ActivityType.INVOKE_ACTION == actionCode) {
-      activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+      activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
     } else {
       // Normal replication.
-      activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, tid, oldest, actionCode, payload.getRawPayload());
+      activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload());
     }
     return activity;
   }

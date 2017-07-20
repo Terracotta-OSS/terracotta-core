@@ -381,6 +381,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("fetchID", this.fetchID.toString());
     props.put("entityID", this.id.toString());
     props.put("consumerID", this.consumerID);
+    props.put("referenceCount", this.clientReferenceCount);
     props.put("waitForExclusive", this.runnables.getState());
     props.put("retirement", this.retirementManager.getState());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
@@ -672,19 +673,10 @@ public class ManagedEntityImpl implements ManagedEntity {
     // Fire the event that the entity was created.
     this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
   }
-  
-  void setCreateParent(ManagedEntity create) {
-    this.createParent = create;
-  }
-  
-  private ManagedEntity createParent;
-  
+    
   private void createEntity(ResultCapture response, byte[] constructorInfo) throws ConfigurationException {
     Trace.activeTrace().log("ManagedEntityImpl.createEntity");
-    if (createParent != null && !createParent.isDestroyed()) {
-      response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
-      return;
-    }
+
     if (!this.isDestroyed && (this.activeServerEntity != null || this.passiveServerEntity != null)) {
       response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
 //  failed to create, destroyed
@@ -854,6 +846,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             return;
           } catch (Exception e) {
 //  something happened during reconnection, force a disconnection, see ProcessTransactionHandler.disconnectClientDueToFailure for handling
+            logger.warn("unexpected exception.  rejecting reconnection of " + descriptor.getNodeID() + " to " + this.id, e);
             response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), e.getMessage(), new ReconnectRejectedException(e.getMessage(), e)));
             return;
           }

@@ -425,7 +425,7 @@ public class ReplicatedTransactionHandler {
         // NOTE:  We need to update the reference count at this point.
         int referenceCount = activity.getReferenceCount();
         MessagePayload payload = MessagePayload.syncPayloadCreation(activity.getExtendedData(), referenceCount);
-        BasicServerEntityRequest request = new BasicServerEntityRequest(ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY, activity.getSource(), activity.getTransactionID(), activity.getOldestTransactionOnClient());
+        BasicServerEntityRequest request = new BasicServerEntityRequest(ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY, activity.getSource(), activity.getClientInstanceID(), activity.getTransactionID(), activity.getOldestTransactionOnClient());
         this.entityManager.getEntity(descriptor).get().addRequestMessage(request, payload, null, (result)->{/* do nothing - this in-between state is temporary*/}, (exception)->{acknowledge(activeSender, activity, ReplicationResultCode.FAIL);});
       } catch (EntityException exception) {
 //  TODO: this needs to be controlled.  
@@ -526,10 +526,11 @@ public class ReplicatedTransactionHandler {
   private ServerEntityRequest activityToLocalRequest(SyncReplicationActivity activity) {
     ActivityType activityType = activity.getActivityType();
     ClientID source = activity.getSource();
+    ClientInstanceID instance = activity.getClientInstanceID();
     TransactionID transactionID = activity.getTransactionID();
     TransactionID oldestTransactionID = activity.getOldestTransactionOnClient();
     Assert.assertTrue(ActivityType.SYNC_BEGIN != activityType);
-    return new BasicServerEntityRequest(decodeReplicationType(activityType), source, transactionID, oldestTransactionID);
+    return new BasicServerEntityRequest(decodeReplicationType(activityType), source, instance, transactionID, oldestTransactionID);
   }
   
   private void beforeSyncAction(SyncReplicationActivity activity) {
@@ -777,12 +778,14 @@ public class ReplicatedTransactionHandler {
   public static class BasicServerEntityRequest implements ServerEntityRequest {
     private final ServerEntityAction action;
     private final ClientID source;
+    private final ClientInstanceID instance;
     private final TransactionID transaction;
     private final TransactionID oldest;
 
-    public BasicServerEntityRequest(ServerEntityAction action, ClientID source, TransactionID transaction, TransactionID oldest) {
+    public BasicServerEntityRequest(ServerEntityAction action, ClientID source, ClientInstanceID instance, TransactionID transaction, TransactionID oldest) {
       this.action = action;
       this.source = source;
+      this.instance = instance;
       this.transaction = transaction;
       this.oldest = oldest;
     }
@@ -809,7 +812,7 @@ public class ReplicatedTransactionHandler {
 
     @Override
     public ClientInstanceID getClientInstance() {
-      return ClientInstanceID.NULL_ID;
+      return instance;
     }
 
     @Override

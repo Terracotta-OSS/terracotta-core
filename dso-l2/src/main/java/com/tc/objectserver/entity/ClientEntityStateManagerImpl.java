@@ -30,6 +30,7 @@ import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -43,18 +44,13 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
   @Override
   public boolean addReference(ClientDescriptorImpl instance, EntityID eid) {
     EntityID check = clientStates.put(instance, eid);
-    Assert.assertNull(check);
-    logger.debug("Adding reference:" + instance + " " + eid);
-    // We currently assume that we are being used precisely:  all add/remove calls are expected to have a specific meaning.
-    return true;
+    return Objects.isNull(check);
   }
 
   @Override
   public boolean removeReference(ClientDescriptorImpl descriptor) {
     EntityID eid = clientStates.remove(descriptor);
-    Assert.assertNotNull(eid);
-    logger.debug("Removing reference:" + descriptor + " " + eid);
-    return true;
+    return Objects.nonNull(eid);
   }
 
   @Override
@@ -67,7 +63,7 @@ public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
     ArrayList<VoltronEntityMessage> msgs = new ArrayList<>();
 
     clientStates.entrySet().stream().filter(e->e.getKey().getNodeID().equals(client)).forEach(e->
-            //  don't care about version for reslease.  Is this OK?
+            //  don't care about version for release.  Is this OK?
       msgs.add(new ReferenceMessage(client, false, EntityDescriptor.createDescriptorForFetch(e.getValue(), EntityDescriptor.INVALID_VERSION, e.getKey().getClientInstanceID()), null))
     );
     return msgs;
