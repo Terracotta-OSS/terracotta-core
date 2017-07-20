@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
@@ -54,7 +53,6 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
-import com.tc.services.MappedStateCollector;
 import java.util.LinkedHashMap;
 
 
@@ -129,16 +127,17 @@ public class EntityManagerImpl implements EntityManager {
       this.shouldCreateActiveEntities = true;
       // We can promote directly because this method is only called from PTH initialize 
       //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
-      try {
-        // issue-439: We need to sort these entities, ascending by consumerID.
-        List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
-        Collections.sort(sortingList, this.consumerIdSorter);
-        for (ManagedEntity entity : sortingList) {
+      // issue-439: We need to sort these entities, ascending by consumerID.
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
+      Collections.sort(sortingList, this.consumerIdSorter);
+      for (ManagedEntity entity : sortingList) {
+        try {
           entity.promoteEntity();
+        } catch (ConfigurationException ce) {
+          String errMsg = "failure to promote entity: " + entity.getID();
+          LOGGER.error(errMsg, ce);
+          throw new TCShutdownServerException(errMsg, ce);
         }
-      } catch (ConfigurationException ce) {
-        LOGGER.warn("failure to promote all entities.  Server is crashing", ce);
-        throw new TCShutdownServerException("failure to promote all entities.  Server is crashing");
       }
   //  only enter active state after all the entities have promoted to active
       processorPipeline.enterActiveState();
@@ -184,8 +183,9 @@ public class EntityManagerImpl implements EntityManager {
     try {
       temp.loadEntity(configuration);
     } catch (ConfigurationException ce) {
-      LOGGER.warn("failure to load an existing entity.  Server is crashing", ce);
-      throw new TCShutdownServerException("failure to load an existing entity.  Server is crashing");
+      String errMsg = "failure to load an existing entity: " + entityID;
+      LOGGER.error(errMsg, ce);
+      throw new TCShutdownServerException(errMsg, ce);
     }
   }
 

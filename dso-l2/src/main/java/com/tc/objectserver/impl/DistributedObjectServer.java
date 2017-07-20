@@ -353,22 +353,16 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
 
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler());
-    threadGroup.addCallbackOnExitDefaultHandler((state) -> {
-      dump();
+    threadGroup.addCallbackOnExitDefaultHandler((state) -> dump());
+    threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
+      consoleLogger.error("Restarting server: " + state.getThrowable().getMessage());
+      state.setRestartNeeded();
     });
-    threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, new CallbackOnExitHandler() {
-      @Override
-      public void callbackOnExit(CallbackOnExitState state) {
-        state.setRestartNeeded();
-      }
-    });
-    threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, new CallbackOnExitHandler() {
-      @Override
-      public void callbackOnExit(CallbackOnExitState state) {
-        Throwable t = state.getThrowable();
-        while (t.getCause() != null) {
-          t = t.getCause();
-        }
+    threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, state -> {
+      Throwable t = state.getThrowable();
+      if(t.getCause() != null) {
+        consoleLogger.error("Server exiting: " + t.getMessage(), t.getCause());
+      } else {
         consoleLogger.error("Server exiting: " + t.getMessage());
       }
     });
