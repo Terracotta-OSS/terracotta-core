@@ -534,15 +534,14 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void receiveSyncCreateEntity(ResultCapture response, byte[] constructor) {
-    if (this.passiveServerEntity != null) {
-      throw new AssertionError("not null " + this.getID());
-    }
-    Assert.assertNull(this.passiveServerEntity);
+    Assert.assertNull("passiveServerEntity should be null for entity " + this.getID(), this.passiveServerEntity);
 //  going to start by building the passive instance
     try {
       createEntity(response, constructor);
     } catch (ConfigurationException ce) {
-      throw new TCShutdownServerException("unable to create entity on passive sync " + this.id);
+      String errMsg = "unable to create an entity " + this.getID() + " on passive sync ";
+      logger.error(errMsg, ce);
+      throw new TCShutdownServerException(errMsg, ce);
     }
   }
 
@@ -811,12 +810,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void loadEntity(byte[] configuration) {
-    try {
-      this.loadExisting(configuration);
-    } catch (ConfigurationException ce) {
-      throw new TCShutdownServerException("unable to create entity on passive sync " + this.id);
-    }
+  public void loadEntity(byte[] configuration) throws ConfigurationException {
+    this.loadExisting(configuration);
   }
 
   private void getEntity(ServerEntityRequest getEntityRequest, ResultCapture response, byte[] extendedData) {

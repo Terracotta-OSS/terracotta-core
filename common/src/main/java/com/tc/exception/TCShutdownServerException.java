@@ -26,4 +26,8 @@ public class TCShutdownServerException extends TCRuntimeException {
   public TCShutdownServerException(String message) {
     super(message);
   }
+
+  public TCShutdownServerException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
