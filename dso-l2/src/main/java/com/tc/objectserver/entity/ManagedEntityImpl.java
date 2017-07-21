@@ -70,11 +70,14 @@ import org.terracotta.exception.EntityServerUncaughtException;
 import org.terracotta.exception.PermanentEntityException;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -718,21 +721,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           throw new IllegalStateException("Actions on a non-existent entity.");
         } else {
           // Create the channel which will send the payloads over the wire.
-          PassiveSynchronizationChannel<EntityMessage> syncChannel = new PassiveSynchronizationChannel<EntityMessage>() {
-            @Override
-  //  TODO:  what should be done about exception handling?
-            public void synchronizeToPassive(EntityMessage payload) {
-              for (NodeID passive : passives) {
-                try {
-                  byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
-                  executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID, concurrencyKey, message, ""), passive).waitForReceived();
-                } catch (EntityUserException eu) {
-                // TODO: do something reasoned here
-                  throw new RuntimeException(eu);
-                }
-              }
-            }
-          };
+          PassiveSynchronizationChannel<EntityMessage> syncChannel = new EntityMessagePassiveSynchronizationChannelImpl(
+            passives,
+            concurrencyKey);
         //  start is handled by the sync request that triggered this action
           this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         }
@@ -1353,6 +1344,56 @@ public class ManagedEntityImpl implements ManagedEntity {
         error.accept(ee);
       }
       finish();
+    }
+  }
+
+  private class EntityMessagePassiveSynchronizationChannelImpl implements PassiveSynchronizationChannel<EntityMessage> {
+    private final List<NodeID> passives;
+    private final int concurrencyKey;
+
+    public EntityMessagePassiveSynchronizationChannelImpl(Collection<NodeID> passives, int concurrencyKey) {
+      this.passives = new ArrayList<>(passives);
+      Collections.sort(this.passives);
+      this.concurrencyKey = concurrencyKey;
+    }
+
+    @Override
+//  TODO:  what should be done about exception handling?
+    public void synchronizeToPassive(EntityMessage payload) {
+      for (NodeID passive : passives) {
+        try {
+          byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
+          executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
+                                                                             concurrencyKey, message, ""), passive).waitForReceived();
+        } catch (EntityUserException eu) {
+        // TODO: do something reasoned here
+          throw new RuntimeException(eu);
+        }
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      EntityMessagePassiveSynchronizationChannelImpl channel = (EntityMessagePassiveSynchronizationChannelImpl) o;
+
+      if (concurrencyKey != channel.concurrencyKey) {
+        return false;
+      }
+      return passives.equals(channel.passives);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = passives.hashCode();
+      result = 31 * result + concurrencyKey;
+      return result;
     }
   }
 }
