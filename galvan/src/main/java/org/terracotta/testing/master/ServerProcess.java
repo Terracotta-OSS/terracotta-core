@@ -129,9 +129,9 @@ public class ServerProcess {
     // Now, open the log files.
     // We want to create an output log file for both STDOUT and STDERR.
     // rawOut closed by stdout
-    FileOutputStream rawOut = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"));
+    FileOutputStream rawOut = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"), true);
     // rawErr closed by stderr
-    FileOutputStream rawErr = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"));
+    FileOutputStream rawErr = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"), true);
     // We also want to stream output going to these files to the server's logger.
     // stdout closed by outputStream
     VerboseOutputStream stdout = new VerboseOutputStream(rawOut, this.serverLogger, false);
