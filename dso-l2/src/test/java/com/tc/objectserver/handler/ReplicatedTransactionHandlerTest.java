@@ -249,7 +249,7 @@ public class ReplicatedTransactionHandlerTest {
     ClientID cid = new ClientID(1L);
     ClientInstanceID instance = new ClientInstanceID(1L);
     TransactionID tid = new TransactionID(1L);
-    TransactionID old = new TransactionID(0L);
+    TransactionID old = new TransactionID(1L);
     ReplicationMessage start = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0]));
     ByteArrayOutputStream raw = new ByteArrayOutputStream();
     ObjectOutputStream out = new ObjectOutputStream(raw);

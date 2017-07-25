@@ -239,7 +239,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
    * We fake up a Voltron entity message to enqueue for the entity to process in the future.
    */
   private static class FakeEntityMessage implements VoltronEntityMessage {
-    private static final AtomicLong NEXT_FAKE_TXN_ID = new AtomicLong(0);
+    private static final AtomicLong NEXT_FAKE_TXN_ID = new AtomicLong();
 
     private final EntityDescriptor descriptor;
     private final EntityMessage identityMessage;
@@ -260,7 +260,7 @@ public class EntityMessengerService implements IEntityMessenger, CreateListener 
 
     @Override
     public TransactionID getTransactionID() {
-      return new TransactionID(NEXT_FAKE_TXN_ID.getAndIncrement());
+      return new TransactionID(NEXT_FAKE_TXN_ID.incrementAndGet());
     }
 
     @Override

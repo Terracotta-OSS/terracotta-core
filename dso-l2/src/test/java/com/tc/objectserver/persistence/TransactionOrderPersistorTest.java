@@ -25,7 +25,11 @@ import com.tc.test.TCTestCase;
 import com.tc.util.ProductID;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 public class TransactionOrderPersistorTest extends TCTestCase {
@@ -48,7 +52,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that the trivial case of usage works.
    */
   public void testOneClientNoExpiry() {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
     
     for (int i = 1; i < 10; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -61,7 +65,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that multiple clients basically work.
    */
   public void testTwoClientsNoExpiry() {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
     
     for (int i = 1; i < 10; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -75,7 +79,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that multiple clients basically work.
    */
   public void testTwoClientsQuickExpiry() {
-    TransactionID previous = new TransactionID(0);
+    TransactionID previous = new TransactionID(1L);
     
     for (int i = 1; i < 10; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -128,7 +132,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that we throw an exception when one client provides the same transaction ID more than once.
    */
   public void testTwoClientsFailToReuse() {
-    TransactionID previous = new TransactionID(0);
+    TransactionID previous = new TransactionID(1L);
     
     for (int i = 1; i < 10; ++i) {
       TransactionID transaction = new TransactionID(i);
@@ -152,7 +156,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that multiple clients work and one can disconnect part-way.
    */
   public void testTwoClientsNoExpiryOneDisconnect() {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
     
     // Populate some initial data.
     for (int i = 1; i < 10; ++i) {
@@ -174,7 +178,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that multiple clients work and queries of where they exist in the global order show them correctly interleaved.
    */
   public void testTwoClientsInterleavedGlobally() {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
     
     // Populate some initial data.
     for (int i = 1; i < 10; ++i) {
@@ -200,7 +204,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that an unknown transaction reports its global order index as -1.
    */
   public void testUnknownTransactionNoOrder() {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
     
     // Populate some initial data.
     for (int i = 1; i < 10; ++i) {
@@ -215,7 +219,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
    * Test that the persistor can be cleared and we can continue.
    */
   public void testClearAndContinue() {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
     
     // Populate some initial data.
     for (int i = 1; i < 10; ++i) {
@@ -255,7 +259,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   public void testSaveReloadSimple() throws IOException {
     ClientID client1 = new ClientID(1);
     ClientID client2 = new ClientID(2);
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
 
     // Create the storage.
     NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
@@ -274,9 +278,68 @@ public class TransactionOrderPersistorTest extends TCTestCase {
       persistor.updateWithNewMessage(client2, transaction, oldest);
     }
   }
+  
+  public void testStoringAllPerClient() throws Exception {
+    ProductID[] products = new ProductID[] {ProductID.PERMANENT, ProductID.STRIPE, ProductID.SERVER, ProductID.DIAGNOSTIC};
+    ClientID[] clients = new ClientID[] {new ClientID(3), new ClientID(4), new ClientID(5), new ClientID(6)};
+    String[] tags = new String[] {"permanentClients", "regularClients", null, null};
+    for (int x=0;x<clients.length;x++) {
+      ClientID cid = clients[x];
+      ProductID product = products[x];
+      String tag = tags[x];
+      orderPersistor.addTrackingForClient(cid, product);
+      orderPersistor.updateWithNewMessage(cid, TransactionID.NULL_ID, TransactionID.NULL_ID);
+      //  make sure not stored
+      Map<String, Object> map = new HashMap<String, Object>();
+      orderPersistor.reportStateToMap(map);
+      if (tag == null) {
+    // if the tag is null, these clients should not be tracked.  
+        assertFalse(((Map)map.get("regularClients")).containsKey(cid.toString()));
+        assertFalse(((Map)map.get("permanentClients")).containsKey(cid.toString()));
+      } else {
+        assertTrue(((List)((Map)map.get(tag)).get(cid.toString())).isEmpty());
+      }
+
+      orderPersistor.updateWithNewMessage(cid, new TransactionID(1), new TransactionID(1));
+      map.clear();
+      orderPersistor.reportStateToMap(map);
+      if (tag == null) {
+    // if the tag is null, these clients should not be tracked.  
+        assertFalse(((Map)map.get("regularClients")).containsKey(cid.toString()));
+        assertFalse(((Map)map.get("permanentClients")).containsKey(cid.toString()));
+      } else {
+        assertTrue(((List)((Map)map.get(tag)).get(cid.toString())).size() == 1);
+      }
+      //  add more
+      for (int i=2;i<=10;i++) {
+        orderPersistor.updateWithNewMessage(cid, new TransactionID(i), new TransactionID(1));
+      }
+
+      map.clear();
+      orderPersistor.reportStateToMap(map);
+      if (tag == null) {
+    // if the tag is null, these clients should not be tracked.  
+        assertFalse(((Map)map.get("regularClients")).containsKey(cid.toString()));
+        assertFalse(((Map)map.get("permanentClients")).containsKey(cid.toString()));
+      } else {
+        assertTrue(((List)((Map)map.get(tag)).get(cid.toString())).size() == 10);
+      }
+      // gc
+      orderPersistor.updateWithNewMessage(cid, new TransactionID(11), new TransactionID(11));
+      map.clear();
+      orderPersistor.reportStateToMap(map);
+      if (tag == null) {
+    // if the tag is null, these clients should not be tracked.  
+        assertFalse(((Map)map.get("regularClients")).containsKey(cid.toString()));
+        assertFalse(((Map)map.get("permanentClients")).containsKey(cid.toString()));
+      } else {
+        assertTrue(((List)((Map)map.get(tag)).get(cid.toString())).size() == 1);
+      }
+    }
+  }
 
   public void testSaveReloadMultipleThreads() throws IOException, InterruptedException {
-    TransactionID oldest = new TransactionID(0);
+    TransactionID oldest = new TransactionID(1L);
 
     // Create the storage.
     NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();

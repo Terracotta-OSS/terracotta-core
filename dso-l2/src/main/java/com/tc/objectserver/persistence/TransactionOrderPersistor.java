@@ -22,8 +22,6 @@ import org.terracotta.persistence.IPlatformPersistence;
 
 import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 
@@ -58,7 +56,7 @@ public class TransactionOrderPersistor {
   
   public TransactionOrderPersistor(IPlatformPersistence storageManager, Set<ClientID> clients) {
     this.storageManager = storageManager;
-    
+    // these are permanent clients because we steart with them
     for (ClientID oneClient : clients) {
       this.permNodeIDs.add(oneClient);
     }
@@ -85,18 +83,24 @@ public class TransactionOrderPersistor {
     this.receivedTransactionCount += 1;
     
     // We now pass this straight into the underlying storage.
-    if (this.permNodeIDs.contains(source)) {
-      // Create the new pair.
-      IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
-      transaction.localSequenceID = transactionID.toLong();
-      transaction.globalSequenceID = this.receivedTransactionCount;
-    
-      return this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
+    // if the oldestTransactionID is not valid, this is an internal message generated on 
+    // the server and does not need to be kept.
+    if (!source.isNull() && oldestTransactionOnClient.isValid()) {
+      if (this.permNodeIDs.contains(source)) {
+        // Create the new pair.
+        IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
+        transaction.localSequenceID = transactionID.toLong();
+        transaction.globalSequenceID = this.receivedTransactionCount;
+
+        return this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
+      } else {
+        ClientTransaction transaction = new ClientTransaction();
+        transaction.localTransactionID = transactionID.toLong();
+        transaction.globalTransactionID = this.receivedTransactionCount;
+        return fastStoreSequence(source, transaction, oldestTransactionOnClient.toLong());
+      }
     } else {
-      ClientTransaction transaction = new ClientTransaction();
-      transaction.localTransactionID = transactionID.toLong();
-      transaction.globalTransactionID = this.receivedTransactionCount;
-      return fastStoreSequence(source, new ClientTransaction(), 0);
+      return CompletableFuture.completedFuture(null);
     }
   }
   
@@ -104,8 +108,10 @@ public class TransactionOrderPersistor {
     // Make sure we have tracking for this client.
     if (product.isPermanent()) {
       this.permNodeIDs.add(source);
-    } else {
+    } else if (product.isReconnectEnabled()) {
       this.fastSequenceCache.put(source, new LinkedList<>());
+    } else {
+      // do nothing, this type of client will never reconnect
     }
   }
 
@@ -273,8 +279,8 @@ public class TransactionOrderPersistor {
           for (IPlatformPersistence.SequenceTuple transaction : transactions) {
             trans.add("Global seq Id = " + transaction.globalSequenceID + ", local seq id = " + transaction.localSequenceID);
           }
-          clientMap.put(clientNodeID.toString(), trans);
         }
+        clientMap.put(clientNodeID.toString(), trans);
       }
     }
 
