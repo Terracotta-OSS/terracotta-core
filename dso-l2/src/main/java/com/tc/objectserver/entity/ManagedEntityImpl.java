@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.tracing.Trace;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.TCServerRestartException;
@@ -26,8 +25,6 @@ import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.exception.VoltronWrapperException;
 import com.tc.l2.msg.SyncReplicationActivity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -46,9 +43,13 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
+import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
@@ -61,11 +62,13 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
+import org.terracotta.exception.EntityServerException;
 import org.terracotta.exception.EntityServerUncaughtException;
 import org.terracotta.exception.PermanentEntityException;
 
@@ -76,8 +79,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -85,8 +88,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.terracotta.entity.ReconnectRejectedException;
-import org.terracotta.exception.EntityServerException;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -756,7 +757,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
-              new InvokeContextImpl(clientDescriptor, oldestId, currentId),
+              new ActiveInvokeContextImpl(clientDescriptor, oldestId, currentId),
               em);
             byte[] er = runWithHelper(()->codec.encodeResponse(resp));
             trace.end();
@@ -777,7 +778,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           Trace trace = Trace.activeTrace().subTrace("invokePassive");
           trace.start();
-          this.passiveServerEntity.invokePassive(new InvokeContextImpl(clientDescriptor, oldestId, currentId), em);
+          this.passiveServerEntity.invokePassive(
+            new InvokeContextImpl(new ClientSourceIdImpl(wrappedRequest.getNodeID().toLong()),
+                                  oldestId,
+                                  currentId),
+            em);
           trace.end();
         } catch (EntityUserException e) {
           //on passives, just log the exception - don't crash server
@@ -976,6 +981,22 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.createListener = listener;
   }
 
+  @Override
+  public void notifyDestroyed(ClientSourceId sourceid) {
+    if(!isDestroyed) {
+      if (isInActiveState) {
+        ActiveServerEntity<EntityMessage, EntityResponse> ase = this.activeServerEntity;
+        if (ase != null) {
+          ase.notifyDestroyed(sourceid);
+        }
+      } else {
+        PassiveServerEntity<EntityMessage, EntityResponse> pse = this.passiveServerEntity;
+        if (pse != null) {
+          pse.notifyDestroyed(sourceid);
+        }
+      }
+    }
+  }
 
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     logger.info("loadExisting entity: " + getID());

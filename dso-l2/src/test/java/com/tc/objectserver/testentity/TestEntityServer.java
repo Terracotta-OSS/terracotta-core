@@ -18,7 +18,9 @@
  */
 package com.tc.objectserver.testentity;
 
+import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
@@ -43,7 +45,7 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   }
 
   @Override
-  public EntityResponse invokeActive(InvokeContext context,
+  public EntityResponse invokeActive(ActiveInvokeContext context,
                                      EntityMessage message) throws EntityUserException {
     return null;
   }
@@ -58,6 +60,11 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
 
   @Override
   public void destroy() {
+  }
+
+  @Override
+  public void notifyDestroyed(ClientSourceId id) {
+
   }
 
   @Override

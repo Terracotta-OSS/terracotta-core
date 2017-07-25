@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.api;
 
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.MessageCodec;
 
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -118,6 +119,11 @@ public interface ManagedEntity {
    */
   public void setSuccessfulCreateListener(CreateListener listener);
 
+  /**
+   * Notify a client source id has been destroyed and will not be heard from again.
+   * @param sourceid
+   */
+  public void notifyDestroyed(ClientSourceId sourceid);
 
   /**
    * Interface used to describe the argument to setSuccessfulCreateListener.

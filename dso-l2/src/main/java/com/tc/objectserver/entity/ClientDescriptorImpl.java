@@ -22,6 +22,7 @@ import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.util.Assert;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 
 /**
  * An opaque token representing a specific entity instance on a specific client node.
@@ -83,5 +84,10 @@ public class ClientDescriptorImpl implements ClientDescriptor {
 
   public boolean isValid() {
     return nodeID.toLong() >= 0 && clientInstance.getID() >= 0;
+  }
+
+  @Override
+  public ClientSourceId getSourceId() {
+    return new ClientSourceIdImpl(nodeID.toLong());
   }
 }

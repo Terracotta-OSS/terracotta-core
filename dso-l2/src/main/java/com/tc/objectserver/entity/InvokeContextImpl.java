@@ -1,34 +1,34 @@
 package com.tc.objectserver.entity;
 
 import com.tc.object.tx.TransactionID;
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.InvokeContext;
 
 public class InvokeContextImpl implements InvokeContext {
 
   public static InvokeContext NULL_CONTEXT=new InvokeContextImpl();
 
-  private final ClientDescriptorImpl clientDescriptor;
   private final long oldestid;
   private final long currentId;
+  private final ClientSourceId sourceId;
 
   private InvokeContextImpl() {
-    this(ClientDescriptorImpl.NULL_ID, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
+    this(ClientSourceIdImpl.NULL_ID, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
   }
 
-  public InvokeContextImpl(ClientDescriptorImpl descriptor) {
-    this(descriptor, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
+  public InvokeContextImpl(ClientSourceId sourceid) {
+    this(sourceid, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
   }
 
-  public InvokeContextImpl(ClientDescriptorImpl descriptor, long oldestid, long currentId) {
-    clientDescriptor = descriptor;
+  public InvokeContextImpl(ClientSourceId sourceId, long oldestid, long currentId) {
+    this.sourceId = sourceId;
     this.oldestid = oldestid;
     this.currentId = currentId;
   }
 
   @Override
-  public ClientDescriptor getClientDescriptor() {
-    return clientDescriptor;
+  public ClientSourceId getClientSource() {
+    return sourceId;
   }
 
   @Override
@@ -43,12 +43,17 @@ public class InvokeContextImpl implements InvokeContext {
 
   @Override
   public boolean isValidClientInformation() {
-    return currentId >= 0 && clientDescriptor.isValid();
+    return currentId >= 0 && sourceId.toLong() >= 0;
+  }
+
+  @Override
+  public ClientSourceId makeClientSourceId(long l) {
+    return null;
   }
 
   @Override
   public String toString() {
-    return "InvokeContextImpl{" + "clientDescriptor=" + clientDescriptor + ", oldestid=" + oldestid + ", currentId=" + currentId + '}';
+    return "InvokeContextImpl{" + "oldestid=" + oldestid + ", currentId=" + currentId + ", sourceId=" + sourceId + '}';
   }
 
   @Override
@@ -68,14 +73,14 @@ public class InvokeContextImpl implements InvokeContext {
     if (currentId != context.currentId) {
       return false;
     }
-    return clientDescriptor != null ? clientDescriptor.equals(context.clientDescriptor) : context.clientDescriptor == null;
+    return sourceId != null ? sourceId.equals(context.sourceId) : context.sourceId == null;
   }
 
   @Override
   public int hashCode() {
-    int result = clientDescriptor != null ? clientDescriptor.hashCode() : 0;
-    result = 31 * result + (int) (oldestid ^ (oldestid >>> 32));
+    int result = (int) (oldestid ^ (oldestid >>> 32));
     result = 31 * result + (int) (currentId ^ (currentId >>> 32));
+    result = 31 * result + (sourceId != null ? sourceId.hashCode() : 0);
     return result;
   }
 }

@@ -7,12 +7,12 @@ import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
 
-public class InvokeContextImplTest {
+public class ActiveInvokeContextImplTest {
 
   @Test
   public void testValid() {
-    InvokeContextImpl ctx = new InvokeContextImpl(
-      new ClientSourceIdImpl(1),
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(
+      new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)),
       1,
       2);
     Assert.assertThat(ctx.isValidClientInformation(), is(true));
@@ -20,13 +20,13 @@ public class InvokeContextImplTest {
 
   @Test
   public void testInvalid() {
-    InvokeContextImpl ctx = new InvokeContextImpl(new ClientSourceIdImpl(), 1, 2);
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 2);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
-    ctx = new InvokeContextImpl(new ClientSourceIdImpl(), -1, -1);
+    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), -1, -1);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
-    ctx = new InvokeContextImpl(new ClientSourceIdImpl(1), -1, 2);
+    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), -1, 2);
     Assert.assertThat(ctx.isValidClientInformation(), is(true));
-    ctx = new InvokeContextImpl(new ClientSourceIdImpl(1), 1, -1);
+    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
   }
 

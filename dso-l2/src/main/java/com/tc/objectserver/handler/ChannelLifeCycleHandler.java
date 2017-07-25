@@ -18,9 +18,6 @@
  */
 package com.tc.objectserver.handler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
@@ -30,7 +27,6 @@ import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.state.StateManager;
-import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -40,10 +36,16 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.object.net.NoSuchChannelException;
+import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
+import com.tc.objectserver.entity.ClientSourceIdImpl;
+import com.tc.util.ProductID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.entity.ClientSourceId;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,10 +66,17 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private final Sink<VoltronEntityMessage> processTransactionSink;
   private final Sink<ReplicationMessage> replicatedTransactionSink;
   private final Sink<Runnable> requestProcessorSink;
+  private final EntityManager entityManager;
 
-  public ChannelLifeCycleHandler(CommunicationsManager commsManager, StageManager stageManager, 
-                                 DSOChannelManager channelManager, ClientEntityStateManager chain, StateManager coordinator, ManagementTopologyEventCollector collector) {
+  public ChannelLifeCycleHandler(CommunicationsManager commsManager,
+                                 StageManager stageManager,
+                                 DSOChannelManager channelManager,
+                                 EntityManager entityManager,
+                                 ClientEntityStateManager chain,
+                                 StateManager coordinator,
+                                 ManagementTopologyEventCollector collector) {
     this.commsManager = commsManager;
+    this.entityManager=entityManager;
     this.channelMgr = channelManager;
     this.coordinator = coordinator;
     this.clientEvents = chain;
@@ -139,7 +148,6 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
  * All the accounting for the client should all ready be there for failover created channels 
  * 
  * @param channel
- * @param newHandshake 
  */
   @Override
   public void channelCreated(MessageChannel channel) {
@@ -244,6 +252,11 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     @Override
     public void run() {
       nodeDisconnected(clientID, product, wasActive);
+      ClientSourceId sid = new ClientSourceIdImpl(clientID.toLong());
+      // notify entities.
+      entityManager.snapshot(null).stream().forEach((me) -> {
+        me.notifyDestroyed(sid);
+      });
     }
   }
 }

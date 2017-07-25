@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.exception.EntityException;
@@ -147,5 +148,10 @@ public class PlatformEntity implements ManagedEntity {
   public void setSuccessfulCreateListener(CreateListener listener) {
     // Not expected on this entity.
     Assert.assertFalse(true);
+  }
+
+  @Override
+  public void notifyDestroyed(ClientSourceId sourceid) {
+
   }
 }

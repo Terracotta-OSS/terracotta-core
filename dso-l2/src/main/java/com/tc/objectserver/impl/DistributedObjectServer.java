@@ -689,7 +689,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         replicatedTransactionHandler.getOutgoingResponseHandler(), 1, maxStageSize);
     replicatedTransactionHandler.setOutgoingResponseSink(replicationResponseStage.getSink());
     
-    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager, stageManager, channelManager, clientEntityStateManager, state, eventCollector);
+    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
+                                                                                        stageManager, channelManager,
+                                                                                        entityManager,
+                                                                                        clientEntityStateManager, state, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
