@@ -280,7 +280,7 @@ public class ProcessTransactionHandlerTest {
 
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
-    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(0));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     // Return an empty byte[], for now.
     when(request.getExtendedData()).thenReturn(new byte[0]);
     return request;

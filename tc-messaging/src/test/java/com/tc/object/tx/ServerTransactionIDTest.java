@@ -96,7 +96,7 @@ public class ServerTransactionIDTest {
     serializeAndCompare(id2);
 
     Random e = new Random();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 1; i <= 10; i++) {
       serializeAndCompare(getServerID(e.nextInt(1099), i));
     }
   }
