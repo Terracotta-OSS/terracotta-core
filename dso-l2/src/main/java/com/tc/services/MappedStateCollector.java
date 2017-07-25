@@ -18,10 +18,10 @@
  */
 package com.tc.services;
 
+import org.terracotta.entity.StateDumpCollector;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import org.terracotta.entity.StateDumpCollector;
 /**
  *
  */
@@ -41,8 +41,10 @@ public class MappedStateCollector implements StateDumpCollector {
     return sub;
   }
 
-  @Override
-  public void addState(String key, String value) {
+  public void addState(String key, Object value) {
+    if (key == null) {
+      throw new NullPointerException();
+    }
     dumpState.put(key, value);
   }
 

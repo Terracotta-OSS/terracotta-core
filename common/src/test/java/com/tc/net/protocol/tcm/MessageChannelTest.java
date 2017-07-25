@@ -56,6 +56,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 /*
@@ -250,12 +252,18 @@ try {
       try {
         clientChannel.open(connectTo);
         fail();
+      } catch(ConnectException ce) {
+        // missed it
+        System.err.println("Unexpected: missed race for first open() : " + ce);
+        justTimeout=false;
       } catch (TransportHandshakeException e) {
         // expected;
         System.err.println("Expected: got handshake exception for first open() : " + e);
         justTimeout = false;
       } catch (TCTimeoutException to) {
-        System.out.println(ThreadDumpUtil.getThreadDump());
+        System.err.println("Unexpected: timeout for first open() : " + to);
+        justTimeout=false;
+        //System.out.println(ThreadDumpUtil.getThreadDump());
       }
     }
 

@@ -105,7 +105,8 @@ public class ManagedEntityImplTest {
   private ClientDescriptorImpl clientDescriptor;
   private static ExecutorService exec;
   private static ExecutorService pth;
-  private InvokeContextImpl invokeContext;
+  private ActiveInvokeContextImpl activeInvokeContext;
+  private InvokeContextImpl passiveInvokeContext;
 
   @BeforeClass
   public static void setupClass() {
@@ -162,7 +163,8 @@ public class ManagedEntityImplTest {
     boolean isInActiveState = false;
     managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
     clientDescriptor = new ClientDescriptorImpl(nodeID, clientInstanceID);
-    invokeContext=new InvokeContextImpl(clientDescriptor, 1, 1);
+    activeInvokeContext=new ActiveInvokeContextImpl(clientDescriptor, 1, 1);
+    passiveInvokeContext=new InvokeContextImpl(new ClientSourceIdImpl(nodeID.toLong()), 1, 1);
     invokeOnTransactionHandler(()->Thread.currentThread().setName(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
   }
   
@@ -250,8 +252,35 @@ public class ManagedEntityImplTest {
     // We expected to see this as a result of the promotion.
     verify(serverEntityService).reconfigureEntity(Matchers.eq(serviceRegistry), eq(this.activeServerEntity), Matchers.eq(arg2.getRawPayload()));
   }
-  
-  
+
+
+  @Test
+  public void testNotifyDestroy() throws Exception {
+    // first create a passive entity and then promote
+    ServerEntityRequest request = mockCreateEntityRequest();
+    TestingResponse response = mockResponse();
+    String config = "foo";
+    MessagePayload arg = mockCreatePayload(config);
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    response.waitFor();
+    verify(response).complete(Mockito.any());
+    promote();
+
+    activeServerEntity.notifyDestroyed(new ClientSourceIdImpl(10));
+    verify(activeServerEntity).notifyDestroyed(new ClientSourceIdImpl(10));
+
+    // test on passive
+    ServerEntityRequest passiveInvoke = mockExecutionInvokeRequest(ExecutionStrategy.Location.PASSIVE);
+    MessagePayload loc = mockLocationPayload(ExecutionStrategy.Location.PASSIVE);
+    TestingResponse piResp = mockResponse();
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, null, piResp::complete, piResp::failure));
+    piResp.waitFor();
+
+    passiveServerEntity.notifyDestroyed(new ClientSourceIdImpl(10));
+    verify(passiveServerEntity).notifyDestroyed(new ClientSourceIdImpl(10));
+
+  }
+
   @Test 
   public void testPromotePermanentEntity() throws Exception {
     // first create a passive entity and then promote
@@ -289,7 +318,7 @@ public class ManagedEntityImplTest {
     TestingResponse piResp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, null, piResp::complete, piResp::failure));
     piResp.waitFor();
-    verify(passiveServerEntity).invokePassive(eq(invokeContext), any(EntityMessage.class));
+    verify(passiveServerEntity).invokePassive(eq(passiveInvokeContext), any(EntityMessage.class));
     
     promote();
 
@@ -299,14 +328,14 @@ public class ManagedEntityImplTest {
     TestingResponse anoResp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(activeNoop, anoLoc, null, anoResp::complete, anoResp::failure));
     anoResp.waitFor();
-    verify(activeServerEntity, Mockito.never()).invokeActive(eq(invokeContext), any(EntityMessage.class));
+    verify(activeServerEntity, Mockito.never()).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
     
     ServerEntityRequest active = mockExecutionInvokeRequest(ExecutionStrategy.Location.ACTIVE);
     MessagePayload activeLoc = mockLocationPayload(ExecutionStrategy.Location.ACTIVE);
     TestingResponse aResp = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(active, activeLoc, null, aResp::complete, aResp::failure));
     aResp.waitFor();
-    verify(activeServerEntity).invokeActive(eq(invokeContext), any(EntityMessage.class));
+    verify(activeServerEntity).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
   }  
 
   @Test
@@ -473,13 +502,13 @@ public class ManagedEntityImplTest {
     promote();
 
 
-    when(activeServerEntity.invokeActive(eq(invokeContext), any(EntityMessage.class))).thenReturn
+    when(activeServerEntity.invokeActive(eq(activeInvokeContext), any(EntityMessage.class))).thenReturn
       (new
                                                                                                       EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(invokeRequest, mockInvokePayload(), null, response::complete, response::failure));
     response.waitFor();
-    verify(activeServerEntity).invokeActive(eq(invokeContext), any(EntityMessage.class));
+    verify(activeServerEntity).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
     verify(response).complete(returnValue);
   }
   
@@ -541,7 +570,7 @@ public class ManagedEntityImplTest {
         
     CyclicBarrier barrier = new CyclicBarrier(2);
 
-    when(activeServerEntity.invokeActive(eq(invokeContext), any(EntityMessage.class))).then(
+    when(activeServerEntity.invokeActive(eq(activeInvokeContext), any(EntityMessage.class))).then(
       (InvocationOnMock
                                                                                              invocation) -> {
       barrier.await();
@@ -557,7 +586,7 @@ public class ManagedEntityImplTest {
     fin.waitFor();
     
     verify(loopback, times(1)).completed(Matchers.any(), Matchers.any(FetchID.class), Matchers.any());
-    verify(activeServerEntity, times(2)).invokeActive(eq(invokeContext), any(EntityMessage.class));
+    verify(activeServerEntity, times(2)).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
     verify(response, times(1)).complete(any());
     verify(fin, times(1)).complete(any());
   }

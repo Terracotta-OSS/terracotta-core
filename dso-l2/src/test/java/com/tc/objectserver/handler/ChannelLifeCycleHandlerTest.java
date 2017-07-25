@@ -24,6 +24,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.api.ManagedEntity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +59,12 @@ public class ChannelLifeCycleHandlerTest {
     this.eventCollector = mock(ITopologyEventCollector.class);
     ServerConfigurationContext context = mock(ServerConfigurationContext.class);
     Stage<HydrateContext> stage = mock(Stage.class);
-    when(stage.getSink()).thenReturn(mock(Sink.class));
+    EntityManager entityManager=mock(EntityManager.class);
+                                     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
-    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager, mock(ClientEntityStateManager.class), mock(StateManager.class), mock(ManagementTopologyEventCollector.class));
+    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager,
+                                               entityManager,
+                                               mock(ClientEntityStateManager.class), mock(StateManager.class), mock(ManagementTopologyEventCollector.class));
   }
 
   @After
