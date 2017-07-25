@@ -96,11 +96,9 @@ import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
-import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.RemoteManagement;
 import com.tc.management.RemoteManagementImpl;
-import com.tc.management.TSAManagementEventPayload;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
@@ -193,6 +191,7 @@ import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
@@ -327,14 +326,22 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     if (pp == null) {
       pp = new MapListPrettyPrint();
     }
-    this.seda.getStageManager().prettyPrint(pp);
-    this.persistor.prettyPrint(pp);
-    this.groupCommManager.prettyPrint(pp);
-    this.l2Coordinator.prettyPrint(pp);
-    this.entityManager.prettyPrint(pp);
-    this.serviceRegistry.prettyPrint(pp);
+    collectState(this.seda.getStageManager(), pp);
+    collectState(this.persistor, pp);
+    collectState(this.groupCommManager, pp);
+    collectState(this.l2Coordinator, pp);
+    collectState(this.entityManager, pp);
+    collectState(this.serviceRegistry, pp);
     addExtendedConfigState(pp);
     return pp.toString().getBytes(set);
+  }
+
+  private static void collectState(PrettyPrintable prettyPrintable, PrettyPrinter prettyPrinter) {
+    try {
+      prettyPrintable.prettyPrint(prettyPrinter);
+    } catch (Throwable t) {
+      prettyPrinter.println("unable to collect cluster state for " + prettyPrintable.getClass().getName() + " : " + t.getLocalizedMessage());
+    }
   }
 
   @Override
@@ -343,11 +350,15 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
-    MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
-    this.configSetupManager.commonl2Config().getBean().addStateTo(mappedStateCollector);
-    Map<String, Object> state = new HashMap<>();
-    state.put("ExtendedConfigs", mappedStateCollector.getMap());
-    prettyPrinter.println(state);
+    try {
+      MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
+      this.configSetupManager.commonl2Config().getBean().addStateTo(mappedStateCollector);
+      Map<String, Object> state = new HashMap<>();
+      state.put("ExtendedConfigs", mappedStateCollector.getMap());
+      prettyPrinter.println(state);
+    } catch (Throwable t) {
+      prettyPrinter.println("unable to collect cluster state for ExtendedConfigs" + " : " + t.getLocalizedMessage());
+    }
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {

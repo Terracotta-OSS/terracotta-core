@@ -170,7 +170,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         serviceProvider.addStateTo(dump.subStateDumpCollector(serviceProvider.getClass().getName()));
         services.add(dump.getMap());
       } catch (Throwable t) {
-        services.add(serviceProvider.getClass().getName() + ":" +  t.getMessage());
+        services.add("unable to collect state for " + serviceProvider.getClass().getName() + ":" +  t.getMessage());
       }
     }
 
@@ -180,7 +180,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         implementationProvidedServiceProvider.addStateTo(dump);
         services.add(dump.getMap());
       } catch (Throwable t) {
-        services.add(implementationProvidedServiceProvider.getClass().getName() + ":" +  t.getMessage());
+        services.add("unable to collect state for " + implementationProvidedServiceProvider.getClass().getName() + ":" +  t.getMessage());
       }
     }
     return out.println(map);

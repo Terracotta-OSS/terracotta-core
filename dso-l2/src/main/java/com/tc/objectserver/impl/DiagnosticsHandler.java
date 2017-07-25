@@ -36,6 +36,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  *
@@ -120,13 +121,13 @@ public class DiagnosticsHandler implements TCMessageSink {
       DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);
       resp.setResponse(msg.getTransactionID(), result);
       resp.send();
-    } catch (RuntimeException runtime) {
-      logger.warn("diagnostic", runtime);
+    } catch (Throwable t) {
+      logger.warn("caught exception while running diagnostic command: " + Arrays.toString(cmd), t);
       DiagnosticResponse resp = (DiagnosticResponse)channel.createMessage(TCMessageType.DIAGNOSTIC_RESPONSE);
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       Writer writer = new OutputStreamWriter(out, set);
       PrintWriter pw = new PrintWriter(writer);
-      runtime.printStackTrace(pw);
+      t.printStackTrace(pw);
       resp.setResponse(msg.getTransactionID(), out.toByteArray());
       resp.send();
     }

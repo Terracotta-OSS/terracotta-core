@@ -48,7 +48,7 @@ public class L2HACoordinator implements L2Coordinator {
   private final DistributedObjectServer                     server;
   private final GroupManager<AbstractGroupMessage> groupManager;
 
-  private StateManager                                      stateManager;
+  private final StateManager                                      stateManager;
   private ReplicatedClusterStateManager                     rClusterStateMgr;
 
   private final L2ConfigurationSetupManager                 configSetupManager;
@@ -152,9 +152,11 @@ public class L2HACoordinator implements L2Coordinator {
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    Map<String, Object> state = new LinkedHashMap<>();
-    this.rClusterStateMgr.reportStateToMap(state);
-    out.println(state);
+    if(rClusterStateMgr != null) {
+      Map<String, Object> state = new LinkedHashMap<>();
+      this.rClusterStateMgr.reportStateToMap(state);
+      out.println(state);
+    }
     return out;
   }
 }
