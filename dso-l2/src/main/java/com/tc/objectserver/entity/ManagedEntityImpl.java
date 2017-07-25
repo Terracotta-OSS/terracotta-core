@@ -870,8 +870,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
         this.eventCollector.clientDidReleaseEntity(clientID, this.id, request.getClientInstance());
-      } else {
-        this.passiveServerEntity.notifyClientDisconnectedFromActive(clientInstance);
       }
       response.complete();
     }
