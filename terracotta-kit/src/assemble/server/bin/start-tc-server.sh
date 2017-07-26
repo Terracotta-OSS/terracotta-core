@@ -27,12 +27,9 @@ case "$1" in
     ;;
 esac
 
-
-
-THIS_DIR=`dirname $0`
-TC_SERVER_DIR=`cd $THIS_DIR;pwd`/..
-PLUGIN_LIB_DIR="$TC_SERVER_DIR/plugins/lib"
-PLUGIN_API_DIR="$TC_SERVER_DIR/plugins/api"
+TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
+PLUGIN_LIB_DIR="${TC_SERVER_DIR}/plugins/lib"
+PLUGIN_API_DIR="${TC_SERVER_DIR}/plugins/api"
 
 if test \! -d "${JAVA_HOME}"; then
   echo "$0: the JAVA_HOME environment variable is not defined correctly"
@@ -41,13 +38,13 @@ fi
 
 
 for JAVA_COMMAND in \
-"${JAVA_HOME}/bin/java -d64 -server -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -server -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -client -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -XX:MaxDirectMemorySize=9223372036854775807"
+"${JAVA_HOME}/bin/java" -d64 -server -XX:MaxDirectMemorySize=9223372036854775807 \
+"${JAVA_HOME}/bin/java" -server -XX:MaxDirectMemorySize=9223372036854775807 \
+"${JAVA_HOME}/bin/java" -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807 \
+"${JAVA_HOME}/bin/java" -client -XX:MaxDirectMemorySize=9223372036854775807 \
+"${JAVA_HOME}/bin/java" -XX:MaxDirectMemorySize=9223372036854775807
 do
-  ${JAVA_COMMAND} -version > /dev/null 2>&1
+  "${JAVA_COMMAND}" -version > /dev/null 2>&1
   if test "$?" = "0" ; then break; fi
 done
 
@@ -87,7 +84,7 @@ while "$start"
 do
 # the solaris 64-bit JVM has a bug that makes it fail to allocate more than 2GB of offheap when
 # the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
-${JAVA_COMMAND} -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
+"${JAVA_COMMAND}" -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
    -Dtc.install-root="${TC_SERVER_DIR}" \
    ${JAVA_OPTS} \
    -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}" \
@@ -102,4 +99,3 @@ ${JAVA_COMMAND} -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
    exit $exitValue
  fi
 done
-
