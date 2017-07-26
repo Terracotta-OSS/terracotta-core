@@ -48,7 +48,7 @@ public class InvokeContextImpl implements InvokeContext {
 
   @Override
   public ClientSourceId makeClientSourceId(long l) {
-    return null;
+    return new ClientSourceIdImpl(l);
   }
 
   @Override
