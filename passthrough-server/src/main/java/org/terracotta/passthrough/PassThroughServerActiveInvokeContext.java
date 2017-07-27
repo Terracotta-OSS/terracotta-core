@@ -8,7 +8,7 @@ public class PassThroughServerActiveInvokeContext extends PassThroughServerInvok
   private final ClientDescriptor descriptor;
 
   public PassThroughServerActiveInvokeContext(ClientDescriptor descriptor, long current, long oldest) {
-    super(descriptor.getSourceId(), current, oldest);
+    super(descriptor == null ? null : descriptor.getSourceId(), current, oldest);
     this.descriptor = descriptor;
   }
 
