@@ -730,14 +730,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       } else {
         throw new EntityNotFoundException(entityClassName, entityName);
       }
-    } else {
-      CreationData<?, ?> data = this.passiveEntities.get(entityTuple);
-      if (null != data) {
-        PassthroughClientDescriptor clientDescriptor = new PassthroughClientDescriptor(this, null, clientInstanceID);
-        data.getPassive().notifyClientDisconnectedFromActive(clientDescriptor);
-      } else {
-        throw new EntityNotFoundException(entityClassName, entityName);
-      }
     }
   }
 
