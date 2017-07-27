@@ -17,6 +17,7 @@ package org.terracotta.testing.master;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 
 import org.terracotta.testing.logging.VerboseManager;
@@ -31,7 +32,7 @@ public class CommonIdioms {
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfiguration.stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(stripeConfiguration.testParentDirectory, stripeConfiguration.stripeName);
-    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime);
+    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime, stripeConfiguration.tcProperties);
   }
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
@@ -66,6 +67,7 @@ public class CommonIdioms {
     public int serverDebugPortStart;
     public int serverStartNumber;
     public int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
+    public Properties tcProperties;
     public List<String> extraJarPaths;
     public String namespaceFragment;
     public String serviceFragment;
