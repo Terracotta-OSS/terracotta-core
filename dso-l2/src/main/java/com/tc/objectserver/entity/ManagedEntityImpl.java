@@ -399,6 +399,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     } catch (Throwable t) {
       logger.warn("unable to collect state for " + getID(), t);
+      props.put("unable to collect state for " + getID(), t.getLocalizedMessage());
     }
     props.put("entityState", mapped.getMap());
     return props;
