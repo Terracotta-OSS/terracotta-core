@@ -19,12 +19,21 @@ import org.junit.Assert;
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.IClusterControl;
 
+import java.util.Properties;
+
 
 /**
  * A trivial test which just starts 2 clients which verify client counts, and exit.  No exceptions are expected.
  */
 public class SimpleClientStartUpIT extends MultiProcessGalvanTest {
   private static final int CLIENT_COUNT = 2;
+
+  @Override
+  public Properties getTcProperties() {
+    Properties tcProperties = new Properties();
+    tcProperties.put("server.entity.processor.threads", "16");
+    return tcProperties;
+  }
 
   @Override
   public int getClientsToStart() {

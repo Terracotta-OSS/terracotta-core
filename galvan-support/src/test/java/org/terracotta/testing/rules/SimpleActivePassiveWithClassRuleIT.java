@@ -34,7 +34,7 @@ import org.terracotta.passthrough.IClusterControl;
 @Ignore
 public class SimpleActivePassiveWithClassRuleIT {
   @ClassRule
-  public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 2, Collections.<File>emptyList(), "", "", "");
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2).build();
 
   /**
    * This will ensure that a fail-over correctly happens.
