@@ -1,22 +1,22 @@
 package org.terracotta.passthrough;
 
-import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.InvokeContext;
 
 public class PassThroughServerInvokeContext implements InvokeContext {
-  private final ClientDescriptor descriptor;
   private final long current;
   private final long oldest;
+  private final ClientSourceId sourceId;
 
-  public PassThroughServerInvokeContext(ClientDescriptor descriptor, long current, long oldest) {
-    this.descriptor = descriptor;
+  public PassThroughServerInvokeContext(ClientSourceId sourceId, long current, long oldest) {
+    this.sourceId = sourceId;
     this.current = current;
     this.oldest = oldest;
   }
 
   @Override
-  public ClientDescriptor getClientDescriptor() {
-    return descriptor;
+  public ClientSourceId getClientSource() {
+    return sourceId;
   }
 
   @Override
@@ -33,6 +33,10 @@ public class PassThroughServerInvokeContext implements InvokeContext {
   public boolean isValidClientInformation() {
     return current >= 0;
   }
-  
-  
+
+  @Override
+  public ClientSourceId makeClientSourceId(long l) {
+    return new PassthroughClientSourceId(l);
+  }
+
 }

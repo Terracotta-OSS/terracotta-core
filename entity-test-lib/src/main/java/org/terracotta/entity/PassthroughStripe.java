@@ -300,6 +300,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     public boolean equals(Object obj) {
       return ((FakeClientDescriptor)obj).id == this.id;
     }
+
+    @Override
+    public ClientSourceId getSourceId() {
+      // todo
+      return null;
+    }
   }
 
   private class StripeInvocationBuilder implements InvocationBuilder<M, R> {
@@ -385,7 +391,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       codec) throws EntityException {
       byte[] result = null;
       try {
-        R response = entity.invokeActive(new PassThroughEntityInvokeContext(clientDescriptor, currentId, eldestId),
+        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor, currentId, eldestId),
                                          request);
         result = codec.encodeResponse(response);
       } catch (Exception e) {

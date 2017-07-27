@@ -77,6 +77,10 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   }
 
   private class FakeClientDescriptor implements ClientDescriptor {
+    @Override
+    public ClientSourceId getSourceId() {
+      return null;
+    }
   }
 
   private class InvocationBuilderImpl implements InvocationBuilder<M, R> {
@@ -147,7 +151,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       byte[] result = null;
       try {
         M message = codec.decodeMessage(payload);
-        R response = entity.invokeActive(new PassThroughEntityInvokeContext(clientDescriptor,
+        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor,
                                                                             idGenerator.incrementAndGet(),
                                                                             eldest), message);
         result = codec.encodeResponse(response);
