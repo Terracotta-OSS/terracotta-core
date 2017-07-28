@@ -18,6 +18,7 @@ package org.terracotta.testing.api;
 import org.terracotta.testing.master.ConfigBuilder;
 
 import java.util.List;
+import java.util.Properties;
 
 
 public interface ITestMaster<C extends ITestClusterConfiguration> {
@@ -27,6 +28,12 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
 
   public String getEntityConfigXMLSnippet();
 
+  /**
+   * @return tc properties to be used with server
+   */
+  default Properties getTcProperties() {
+    return new Properties();
+  }
   /**
    * @return client reconnect window time in seconds
    */

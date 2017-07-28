@@ -18,6 +18,7 @@ package org.terracotta.testing.master;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
@@ -41,6 +42,7 @@ public class ConfigBuilder {
   private String serviceXMLSnippet;
   private String entityXMLSnippet;
   private int clientReconnectWindowTime; // in secs
+  private Properties tcProperties = new Properties();
   
   private ConfigBuilder(ContextualLogger logger, int startPort) {
     this.logger = logger;
@@ -77,6 +79,11 @@ public class ConfigBuilder {
     return this;
   }
 
+  public ConfigBuilder addTcProperties(Properties properties) {
+    tcProperties.putAll(properties);
+    return this;
+  }
+
   public String buildConfig() {
     // Now, on to the common case of the config builder.
     String namespaces = ((null != this.xmlNamespaceFragment) ? this.xmlNamespaceFragment : "");
@@ -91,9 +98,14 @@ public class ConfigBuilder {
     
     String entities = (null != this.entityXMLSnippet) ? this.entityXMLSnippet : "";
     
-    String postentities = "  </entities>\n" + 
-                          "  <tc-properties/>\n"
-        + "  <servers>\n";
+    String postentities = "  </entities>\n" +
+                          "  <tc-properties>\n";
+    String properties = "";
+    for (Map.Entry<Object, Object> entry : tcProperties.entrySet()) {
+      properties += "    <property name=\"" + entry.getKey() + "\" value=\"" + entry.getValue() + "\"/>\n";
+    }
+    String postProperties =   "  </tc-properties>\n"
+                            + "  <servers>\n";
     int nextPort = this.startPort;
     String servers = "";
     for (String serverName : this.serverNames) {
@@ -114,7 +126,7 @@ public class ConfigBuilder {
         "    <client-reconnect-window>" + this.clientReconnectWindowTime + "</client-reconnect-window>\n"
         + "  </servers>\n"
         + "</tc-config>\n";
-    return pre + services + postservices + entities + postentities + servers + post;
+    return pre + services + postservices + entities + postentities + properties  + postProperties + servers + post;
   }
 
   public String buildUri() {

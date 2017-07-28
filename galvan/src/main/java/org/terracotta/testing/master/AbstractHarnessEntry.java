@@ -18,6 +18,7 @@ package org.terracotta.testing.master;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
+import java.util.Properties;
 
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
@@ -77,6 +78,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     String serviceFragment = master.getServiceConfigXMLSnippet();
     String entityFragment = master.getEntityConfigXMLSnippet();
     int clientReconnectWindowTime = master.getClientReconnectWindowTime();
+    Properties tcProperties = master.getTcProperties();
     List<C> runConfigurations = master.getRunConfigurations();
     int clientsToCreate = master.getClientsToStart();
     for (C runConfiguration : runConfigurations) {
@@ -97,6 +99,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.serviceFragment = serviceFragment;
       harnessOptions.entityFragment = entityFragment;
       harnessOptions.clientReconnectWindowTime = clientReconnectWindowTime;
+      harnessOptions.tcProperties = tcProperties;
       
       // NOTE:  runOneConfiguration() throws GalvanFailureException on failure.
       runOneConfiguration(verboseManager, debugOptions, harnessOptions, runConfiguration);
@@ -145,6 +148,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String namespaceFragment;
     public String serviceFragment;
     public String entityFragment;
+    public Properties tcProperties;
     
     /**
      * This constructor only exists to set convenient defaults.
