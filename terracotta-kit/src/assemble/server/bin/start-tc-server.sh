@@ -31,7 +31,7 @@ TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
 PLUGIN_LIB_DIR="${TC_SERVER_DIR}/plugins/lib"
 PLUGIN_API_DIR="${TC_SERVER_DIR}/plugins/api"
 
-if test \! -d "${JAVA_HOME}"; then
+if ! [ -d "${JAVA_HOME}" ]; then
   echo "$0: the JAVA_HOME environment variable is not defined correctly"
   exit 2
 fi
@@ -44,8 +44,8 @@ for JAVA_COMMAND_ARGS in \
     "-client -XX:MaxDirectMemorySize=9223372036854775807" \
     "-XX:MaxDirectMemorySize=9223372036854775807"
 do
-  "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1
-  if test "$?" = "0" ; then break; fi
+    # accept the first one that works
+    "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1 && break
 done
 
 function setPluginClasspath {
@@ -54,19 +54,20 @@ function setPluginClasspath {
 
     for pluginDir in "${PLUGIN_LIB_DIR}" "${PLUGIN_API_DIR}"
     do
-        if [ -e "${pluginDir}" ]
+        if [ -d "${pluginDir}" ]
         then
             for jarFile in "${pluginDir}"/*.jar
             do
-                PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${jarFile}
+                PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${jarFile}"
             done
-#  Adding SLF4j libraries to the classpath of the server to 
-#  support services that may use SLF4j for logging
-            for jarFile in "${TC_SERVER_DIR}"/lib/slf4j*.jar
-            do
-                PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${jarFile}
-            done
+
         fi
+    done
+    #  Adding SLF4j libraries to the classpath of the server to
+    #  support services that may use SLF4j for logging
+    for jarFile in "${TC_SERVER_DIR}"/lib/slf4j*.jar
+    do
+        PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${jarFile}"
     done
 
     shopt -u nullglob
@@ -75,27 +76,24 @@ function setPluginClasspath {
 
 setPluginClasspath;
 
-PLUGIN_CLASSPATH=${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib
+PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib"
 
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
-start=true
-while "$start"
-do
+while [ 1 ] ; do
 # the solaris 64-bit JVM has a bug that makes it fail to allocate more than 2GB of offheap when
 # the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
-"${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
-   -Dtc.install-root="${TC_SERVER_DIR}" \
-   ${JAVA_OPTS} \
-   -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}" \
-   com.tc.server.TCServerMain "$@"
- exitValue=$?
- start=false;
+    "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
+        -Dtc.install-root="${TC_SERVER_DIR}" \
+        ${JAVA_OPTS} \
+        -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}" \
+        com.tc.server.TCServerMain "$@"
+    exitValue=$?
 
- if test "$exitValue" = "11"; then
-   start=true;
-   echo "start-tc-server: Restarting the server..."
- else
-   exit $exitValue
- fi
+    if [ $exitValue -eq 11 ] ; then
+        echo "$0: Restarting server"
+        sleep 1
+    else
+        exit $exitValue
+    fi
 done
