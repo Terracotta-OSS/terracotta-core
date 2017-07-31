@@ -62,7 +62,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
     Assert.assertEquals(Diagnostics.class.getName(), entity.getClassName());
     Assert.assertEquals("root", entity.getEntityName());
-    return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook);
+    return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook, null);
   }
 
   @Override

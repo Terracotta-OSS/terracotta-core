@@ -73,6 +73,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -97,6 +99,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private boolean isShutdown = false;
   private final boolean reconnectable;
 
+  private final ExecutorService endpointCloser = Executors.newCachedThreadPool();
 //  for testing
   private boolean wasBusy = false;
   
@@ -403,8 +406,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public void shutdown(boolean fromShutdownHook) {
     synchronized (this) {
-      isShutdown = true;
-      stateManager.stop();
+      if (isShutdown) {
+        return;
+      } else {
+        isShutdown = true;
+        stateManager.stop();
+      }
     }
     for (InFlightMessage msg : inFlightMessages.values()) {
       throwClosedExceptionOnMessage(msg, "Connection closed under in-flight message");
@@ -418,6 +425,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         logger.error("error in shutdown", t);
       }
     }
+    this.endpointCloser.shutdownNow(); // ignore the return.  nothing we can do
     // And then drop them.
     this.objectStoreMap.clear();
   }
@@ -456,7 +464,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
           }
         }
       };
-      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, compoundRunnable);
+      resolvedEndpoint = new EntityClientEndpointImpl<M, R>(entity, version, EntityDescriptor.createDescriptorForInvoke(fetch, instance), this, config, codec, compoundRunnable, this.endpointCloser);
       
       if (null != this.objectStoreMap.get(instance)) {
         throw Assert.failure("Attempt to add an object that already exists: Object of class " + resolvedEndpoint.getClass()

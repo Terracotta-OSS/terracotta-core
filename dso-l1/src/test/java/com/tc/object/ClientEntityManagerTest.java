@@ -57,6 +57,8 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -237,12 +239,88 @@ public class ClientEntityManagerTest extends TestCase {
       fetcher.close();
       didRelease = true;
     } catch (RuntimeException e) {
-      // Expected.
       didRelease = false;
     }
     assertFalse(didRelease);
   }
 
+  public void testFetchandAsyncRelease() throws Exception {
+    // We will create a runnable which will attempt to fetch the entity.
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    
+    // Set the target for success.
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });   
+    // Now we can start the lookup thread.
+    fetcher.start();
+    // Join on the thread.
+    fetcher.join();
+    
+    try {
+      EntityClientEndpoint endpoint = fetcher.getResult();
+    } catch (EntityNotFoundException not) {
+      Assert.fail();
+    }
+    
+    // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
+    boolean didRelease = false;
+    try {
+      Future<Void> released = fetcher.release();
+      released.get();
+      didRelease = true;
+    } catch (Exception e) {
+      didRelease = false;
+    }
+    assertTrue(didRelease);
+  }
+  
+  
+  public void testShutdownCausesReleaseException() throws Exception {
+    // We will create a runnable which will attempt to fetch the entity.
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    
+    // Set the target for success.
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });   
+    // Now we can start the lookup thread.
+    fetcher.start();
+    // Join on the thread.
+    fetcher.join();
+    
+    try {
+      EntityClientEndpoint endpoint = fetcher.getResult();
+    } catch (EntityNotFoundException not) {
+      Assert.fail();
+    }
+    
+    // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
+    boolean didRelease = false;
+    this.manager.shutdown(false);
+    try {
+      Future<Void> released = fetcher.release();
+      released.get();
+      didRelease = true;
+    } catch (ExecutionException e) {
+      // Expected.
+      didRelease = false;
+    }
+    assertFalse(didRelease);
+  }
+  
   // That that we can shut down while in a paused state without locking up.
   public void testShutdownWhilePaused() throws Exception {
     // We will create a runnable which will attempt to fetch the entity (and we will get this stuck in "WAITING" on pause).
@@ -442,6 +520,10 @@ public class ClientEntityManagerTest extends TestCase {
     
     public void close() {
       result.close();
+    }
+    
+    public Future<Void> release() {
+      return result.release();
     }
   }
   
