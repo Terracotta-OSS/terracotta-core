@@ -80,7 +80,9 @@ public class ConfigBuilder {
   }
 
   public ConfigBuilder addTcProperties(Properties properties) {
+    if (properties != null) {
     tcProperties.putAll(properties);
+  }
     return this;
   }
 
