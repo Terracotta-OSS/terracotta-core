@@ -37,6 +37,8 @@ import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductID;
 import com.tcclient.cluster.ClusterInternal;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 import org.mockito.Matchers;
@@ -84,6 +86,11 @@ public class DistributedObjectClientTest extends TestCase {
         SecurityInfo si = Mockito.mock(SecurityInfo.class);
         Mockito.when(si.isSecure()).thenReturn(Boolean.FALSE);
         return si;
+      }
+      
+      @Override
+      public Map<String, String> getOverrideTCProperties() {
+        return Collections.<String, String>emptyMap();
       }
     };
     PreparedComponentsFromL2Connection l2connection = Mockito.mock(PreparedComponentsFromL2Connection.class);
@@ -150,6 +157,11 @@ public class DistributedObjectClientTest extends TestCase {
         SecurityInfo si = Mockito.mock(SecurityInfo.class);
         Mockito.when(si.isSecure()).thenReturn(Boolean.FALSE);
         return si;
+      }
+      
+      @Override
+      public Map<String, String> getOverrideTCProperties() {
+        return Collections.<String, String>emptyMap();
       }
     };
     PreparedComponentsFromL2Connection l2connection = Mockito.mock(PreparedComponentsFromL2Connection.class);

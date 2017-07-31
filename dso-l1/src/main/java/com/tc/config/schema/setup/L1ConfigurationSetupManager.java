@@ -21,6 +21,7 @@ package com.tc.config.schema.setup;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.net.core.SecurityInfo;
+import java.util.Map;
 
 /**
  * Knows how to set up configuration for L1.
@@ -39,4 +40,6 @@ public interface L1ConfigurationSetupManager {
   L2ConfigForL1 l2Config();
 
   SecurityInfo getSecurityInfo();
+  
+  Map<String, String> getOverrideTCProperties();
 }

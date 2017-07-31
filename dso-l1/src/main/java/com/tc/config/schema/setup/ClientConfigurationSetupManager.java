@@ -24,7 +24,9 @@ import com.tc.config.schema.L2ConfigForL1;
 import com.tc.net.core.SecurityInfo;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -101,4 +103,11 @@ public class ClientConfigurationSetupManager implements L1ConfigurationSetupMana
   public SecurityInfo getSecurityInfo() {
     return securityInfo;
   }
+
+  @Override
+  public Map<String, String> getOverrideTCProperties() {
+    return Collections.<String, String>emptyMap();
+  }
+  
+  
 }
