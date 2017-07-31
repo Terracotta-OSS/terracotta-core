@@ -367,11 +367,9 @@ public class DistributedObjectClient implements TCClient {
     new String[] {
       ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
       ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,
-      ClientConfigurationContext.LOCK_RESPONSE_STAGE,
       ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE,
       ClientConfigurationContext.SERVER_ENTITY_MESSAGE_STAGE} : 
     new String[] {
-      ClientConfigurationContext.LOCK_RESPONSE_STAGE,
     };
 
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);

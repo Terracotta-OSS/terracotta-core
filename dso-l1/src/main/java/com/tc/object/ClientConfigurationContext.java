@@ -26,7 +26,6 @@ import com.tc.properties.TCPropertiesImpl;
 
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {
-  public final static String             LOCK_RESPONSE_STAGE                         = "lock_response_stage";
   public final static String             HYDRATE_MESSAGE_STAGE                       = "hydrate_message_stage";
   public static final String             CLIENT_COORDINATION_STAGE                   = "client_coordination_stage";
   public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";

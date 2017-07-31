@@ -132,13 +132,17 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
 
   private void broadcastClientClusterMembershipMessage(int eventType, ClientID clientID, ProductID productId) {
     // Only broadcast when the current server is the active coordinator.
-    MessageChannel[] channels = channelMgr.getActiveChannels();
-    for (MessageChannel channel : channels) {
-      if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(clientID)) {
-        ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
-            .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-        cmm.initialize(eventType, clientID, productId);
-        cmm.send();
+    // Do not broadcast for internal clients
+    if (!productId.isInternal()) {
+      MessageChannel[] channels = channelMgr.getActiveChannels();
+      for (MessageChannel channel : channels) {
+        // only broadcast to clients that are not internal
+        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(clientID) && !channel.getProductId().isInternal()) {
+          ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
+              .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
+          cmm.initialize(eventType, clientID, productId);
+          cmm.send();
+        }
       }
     }
   }

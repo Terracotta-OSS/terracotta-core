@@ -341,9 +341,6 @@ public class ClusterImpl implements ClusterInternal {
         case OPERATIONS_DISABLED:
           listener.operationsDisabled(event);
           return;
-        case NODE_REJOINED:
-          listener.nodeRejoined(event);
-          return;
         case NODE_ERROR:
           listener.nodeError(event);
           return;
