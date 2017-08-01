@@ -48,7 +48,7 @@ import java.util.Properties;
  */
 public class TCPropertiesImpl implements TCProperties {
 
-  private static final Logger logger = newLoggingProxy();
+  private static final Logger logger = LoggerFactory.getLogger(TCPropertiesImpl.class);
 
   public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
@@ -139,21 +139,12 @@ public class TCPropertiesImpl implements TCProperties {
       return;
     }
 
-    // flip the logger proxy to the real deal
-    try {
-      ((LoggingInvocationHandler) Proxy.getInvocationHandler(logger)).switchToRealLogger();
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
-
-    logger.info("Loaded TCProperties : " + toString());
+    logger.debug("Loaded TCProperties : " + toString());
   }
 
   private void applyConfigOverrides(Map<String, String> overwriteProps) {
-    int noOfProperties = overwriteProps.size();
-
-    if (noOfProperties == 0) {
-      logger.info("tc-config doesn't have any tc-property. No tc-property will be overridden");
+    if (overwriteProps.isEmpty()) {
+      logger.debug("tc-config doesn't have any tc-property. No tc-property will be overridden");
       return;
     }
 
@@ -333,64 +324,4 @@ public class TCPropertiesImpl implements TCProperties {
     String val = getProperty(key);
     return Float.valueOf(val).floatValue();
   }
-
-  private static Logger newLoggingProxy() {
-    LoggingInvocationHandler handler = new LoggingInvocationHandler();
-    Class<?>[] interfaces = new Class[] { Logger.class };
-    ClassLoader loader = TCPropertiesImpl.class.getClassLoader();
-    return (Logger) Proxy.newProxyInstance(loader, interfaces, handler);
-  }
-
-  /**
-   * The whole point of this class is to delay initializing logging until TCProperties have been initialized. This proxy
-   * will buffer calls to logger until the switch method is called
-   */
-  private static class LoggingInvocationHandler implements InvocationHandler {
-    private final ArrayList<Call> calls    = new ArrayList<Call>();
-    private boolean    switched = false;
-    private Logger realLogger;
-
-    @Override
-    public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if (switched) { return method.invoke(realLogger, args); }
-
-      if ((method.getReturnType() != Void.TYPE) && !switched) {
-        // if we haven't switched, it isn't clear what the return values should be
-        throw new UnsupportedOperationException("only void return type methods can be called before the switch");
-      }
-
-      calls.add(new Call(method, args));
-      return null;
-    }
-
-    synchronized void switchToRealLogger() throws Exception {
-      if (switched) { throw new IllegalStateException("Already switched"); }
-
-      realLogger = LoggerFactory.getLogger(TCProperties.class);
-
-      for (Call call : calls) {
-        call.execute(realLogger);
-      }
-
-      calls.clear();
-      switched = true;
-    }
-
-    private static class Call {
-
-      private final Method   method;
-      private final Object[] args;
-
-      Call(Method method, Object[] args) {
-        this.method = method;
-        this.args = args;
-      }
-
-      void execute(Logger target) throws Exception {
-        method.invoke(target, args);
-      }
-    }
-
-  }
-
 }

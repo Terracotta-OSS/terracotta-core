@@ -21,7 +21,6 @@ package com.tc.object;
 
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
@@ -35,6 +34,11 @@ import org.terracotta.exception.EntityException;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -47,8 +51,10 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   private final long version;
   private final MessageCodec<M, R> codec;
   private final Runnable closeHook;
+  private final ExecutorService closer;
   private EndpointDelegate delegate;
   private boolean isOpen;
+  private Future<Void> releaseFuture;
 
   /**
    * @param eid The type name name of the target entity
@@ -58,7 +64,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
    * @param entityConfiguration Opaque byte[] describing how to configure the entity to be built on top of this end-point.
    * @param closeHook A Runnable which will be run last when the end-point is closed.
    */
-  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Runnable closeHook) {
+  public EntityClientEndpointImpl(EntityID eid, long version, EntityDescriptor instance, InvocationHandler invocationHandler, byte[] entityConfiguration, MessageCodec<M, R> codec, Runnable closeHook, ExecutorService closer) {
     this.entityID = eid;
     this.version = version;
     this.invokeDescriptor = instance;
@@ -66,6 +72,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     this.configuration = entityConfiguration;
     this.codec = codec;
     this.closeHook = closeHook;
+    this.closer = closer;
     // We start in the open state.
     this.isOpen = true;
   }
@@ -235,6 +242,31 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     this.isOpen = false;
   }
 
+  @Override
+  public synchronized Future<Void> release() {
+    if (releaseFuture == null) {
+      Callable<Void> call = new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          close();
+          return null;
+        }
+      };
+      if (this.closer == null) {
+        close();
+        releaseFuture = new CompletedFuture();
+      } else {
+        try {
+          releaseFuture = this.closer.submit(call);
+        } catch (RejectedExecutionException re) {
+          // connection already shutdown
+          releaseFuture = new CompletedFuture(new IllegalStateException("connection has already been shutdown"));
+        }
+      }
+    }
+    return releaseFuture;
+  }
+
   public void didCloseUnexpectedly() {
     // TODO:  Determine if we need to limit anything here on closed.  The call can come from another thread so it may not
     // yet know that we are closed when the call originated.
@@ -250,4 +282,45 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       throw new IllegalStateException("Endpoint closed");
     }
   }
+  
+  private static class CompletedFuture implements Future<Void> {
+    public final Exception failure;
+
+    public CompletedFuture() {
+      this.failure = null;
+    }
+
+    public CompletedFuture(Exception failure) {
+      this.failure = failure;
+    }
+    
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      return false;
+    }
+
+    @Override
+    public boolean isCancelled() {
+      return false;
+    }
+
+    @Override
+    public boolean isDone() {
+      return true;
+    }
+
+    @Override
+    public Void get() throws InterruptedException, ExecutionException {
+      if (failure != null) {
+        throw new ExecutionException(failure);
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      return get();
+    }
+  };
 }

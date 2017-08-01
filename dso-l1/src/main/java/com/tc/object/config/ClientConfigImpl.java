@@ -46,16 +46,18 @@ public class ClientConfigImpl implements ClientConfig {
 
   private final L1ConfigurationSetupManager                      configSetupManager;
   private final ReconnectConfig                                        l1ReconnectConfig           = null;
-  private static final long                                      CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
-                                                                                                 .getProperties()
-                                                                                                 .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
-
+  private final long                                      CONFIGURATION_TOTAL_TIMEOUT;
+  
   public ClientConfigImpl(boolean initializedModulesOnlyOnce, L1ConfigurationSetupManager configSetupManager) {
     this(configSetupManager);
   }
 
   public ClientConfigImpl(L1ConfigurationSetupManager configSetupManager) {
     this.configSetupManager = configSetupManager;
+    TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(configSetupManager.getOverrideTCProperties());
+    CONFIGURATION_TOTAL_TIMEOUT = TCPropertiesImpl
+                                         .getProperties()
+                                         .getLong(TCPropertiesConsts.TC_CONFIG_TOTAL_TIMEOUT);
   }
 
   @Override
@@ -173,8 +175,7 @@ public class ClientConfigImpl implements ClientConfig {
   private Version getClientVersion() {
     return new Version(ProductInfo.getInstance().version());
   }
-
-
+  
   private void setupL1ReconnectProperties(PwProvider pwProvider) throws ConfigurationSetupException {
 
   }
