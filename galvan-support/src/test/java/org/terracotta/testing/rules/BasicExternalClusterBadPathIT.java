@@ -34,7 +34,7 @@ import org.terracotta.connection.ConnectionException;
  */
 public class BasicExternalClusterBadPathIT {
   @ClassRule
-  public static final Cluster cluster = new BasicExternalCluster(new File("target/(build)/cluster"), 1);
+  public static final Cluster cluster = BasicExternalClusterBuilder.newCluster().build();
 
   @Test
   public void parenthesisInPathTest() throws IOException, ConnectionException

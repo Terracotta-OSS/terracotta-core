@@ -31,10 +31,7 @@ public class InvalidPathTestIT {
     File clusterDirectory = new File("target/cluster");
     int stripeSize = 1;
     List<File> serverJars = Arrays.asList(new File[]{new File("INVALID_PATH"), new File("/bogus/OTHER_INVALID_PATH")});
-    String namespaceFragment = "";
-    String serviceFragment = "";
-    String entityFragment = "";
-    BasicExternalCluster testCluster = new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment);
+    BasicExternalCluster testCluster = BasicExternalClusterBuilder.newCluster().withServerJars(serverJars).build();
     // Exception here.
     testCluster.manualStart("InvalidPathTestIT");
     testCluster.manualStop();
@@ -50,6 +47,6 @@ public class InvalidPathTestIT {
     String serviceFragment = "";
     String entityFragment = "";
     // Exception here.
-    new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment);
+    BasicExternalClusterBuilder.newCluster().in(clusterDirectory).build();
   }
 }

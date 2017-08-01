@@ -29,7 +29,9 @@ import org.terracotta.connection.ConnectionException;
 public class BasicExternalClusterActivePassiveIT {
 
   @ClassRule
-  public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 3, 30);
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(3).withClientReconnectWindowTime(30)
+      .withTcProperty("server.entity.processor.threads", "16")
+      .build();
 
   @Test
   public void testFailover() throws IOException, ConnectionException, Exception {

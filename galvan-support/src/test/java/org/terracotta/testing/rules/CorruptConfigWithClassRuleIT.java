@@ -34,7 +34,7 @@ import org.terracotta.testing.master.GalvanFailureException;
  */
 public class CorruptConfigWithClassRuleIT {
   @ClassRule
-  public static final Cluster CLUSTER = new BasicExternalCluster(new File("target/cluster"), 1, Collections.<File>emptyList(), "", "", "BOGUS<ENTITY<FRAGMENT");
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster().withEntityFragment("BOGUS<ENTITY<FRAGMENT").build();
 
   @Test(expected=ConnectionException.class)
   public void testDirectConnection() throws Exception {

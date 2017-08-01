@@ -42,7 +42,7 @@ import static java.util.Collections.emptyList;
  *
  * @author cdennis
  */
-public class BasicExternalCluster extends Cluster {
+class BasicExternalCluster extends Cluster {
 
   private final File clusterDirectory;
   private final int stripeSize;
@@ -51,6 +51,7 @@ public class BasicExternalCluster extends Cluster {
   private final String serviceFragment;
   private final String entityFragment;
   private final int clientReconnectWindowTime;
+  private final Properties tcProperties = new Properties();
 
   private String displayName;
   private ReadyStripe cluster;
@@ -64,38 +65,7 @@ public class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  public BasicExternalCluster(File clusterDirectory, int stripeSize) {
-    this(clusterDirectory, stripeSize, emptyList(), "", "", "");
-  }
-
-  public BasicExternalCluster(File clusterDirectory, int stripeSize, int clientReconnectWindowTime) {
-    this(clusterDirectory, stripeSize, emptyList(), "", "", "", clientReconnectWindowTime);
-  }
-
-  public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment) {
-    this(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment, ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME);
-  }
-
-  public BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment, int clientReconnectWindowTime) {
-    if (clusterDirectory == null) {
-      throw new NullPointerException("Cluster directory must be non-null");
-    }
-    if (stripeSize < 1) {
-      throw new IllegalArgumentException("Must be at least one server in the cluster");
-    }
-    if (serverJars == null) {
-      throw new NullPointerException("Server JARs list must be non-null");
-    }
-    if (namespaceFragment == null) {
-      throw new NullPointerException("Namespace fragment must be non-null");
-    }
-    if (serviceFragment == null) {
-      throw new NullPointerException("Service fragment must be non-null");
-    }
-    if (entityFragment == null) {
-      throw new NullPointerException("Entity fragment must be non-null");
-    }
-    
+  BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment, int clientReconnectWindowTime, Properties tcProperties) {
     if (clusterDirectory.exists()) {
       if (clusterDirectory.isFile()) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
@@ -113,6 +83,7 @@ public class BasicExternalCluster extends Cluster {
     this.entityFragment = entityFragment;
     this.serverJars = serverJars;
     this.clientReconnectWindowTime = clientReconnectWindowTime;
+    this.tcProperties.putAll(tcProperties);
     
     this.clientThread = Thread.currentThread();
   }
@@ -175,7 +146,7 @@ public class BasicExternalCluster extends Cluster {
         serverInstallDirectory.getAbsolutePath(),
         testParentDirectory.getAbsolutePath(),
         stripeSize, heapInM, serverPort, serverDebugStartPort, 0,
-        serverJarPaths, namespaceFragment, serviceFragment, entityFragment, clientReconnectWindowTime);
+        serverJarPaths, namespaceFragment, serviceFragment, entityFragment, clientReconnectWindowTime, tcProperties);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
     // than the framework, and the framework waits for the finish so that it can terminate the clients/servers if any of

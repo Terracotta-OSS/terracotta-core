@@ -31,7 +31,7 @@ import org.terracotta.connection.ConnectionFactory;
 public class BasicExternalClusterMethodRuleIT {
 
   @Rule
-  public final Cluster cluster = new BasicExternalCluster(new File("target/cluster"), 1);
+  public final Cluster cluster = BasicExternalClusterBuilder.newCluster().build();
 
   @Test
   public void testDirectConnection() throws IOException, ConnectionException {

@@ -48,6 +48,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stripeConfiguration.serviceFragment = harnessOptions.serviceFragment;
     stripeConfiguration.entityFragment = harnessOptions.entityFragment;
     stripeConfiguration.clientReconnectWindowTime = harnessOptions.clientReconnectWindowTime;
+    stripeConfiguration.tcProperties = harnessOptions.tcProperties;
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
     stripeConfiguration.stripeName = "stripe" + 0;
     

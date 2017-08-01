@@ -31,7 +31,7 @@ public class BasicExternalClusterImmediateControlIT {
   private static final int SERVER_COUNT = 2;
 
   @Rule
-  public final Cluster cluster = new BasicExternalCluster(new File("target/cluster"), SERVER_COUNT);
+  public final Cluster cluster = BasicExternalClusterBuilder.newCluster(SERVER_COUNT).build();
 
   @Test
   public void waitForActive() throws IOException, ConnectionException {
