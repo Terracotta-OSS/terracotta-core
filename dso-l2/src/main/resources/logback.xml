@@ -27,5 +27,7 @@
     <appender-ref ref="TC_BASE" />
   </logger>
 
+  <include optional="true" resource="logback-ext.xml"/>
+
 </configuration>
 
