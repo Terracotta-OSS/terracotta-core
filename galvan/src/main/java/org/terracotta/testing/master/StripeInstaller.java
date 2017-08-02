@@ -18,9 +18,11 @@ package org.terracotta.testing.master;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Vector;
 
@@ -53,7 +55,7 @@ public class StripeInstaller {
     this.installedServers = new Vector<ServerInstallation>();
   }
   
-  public void installNewServer(String serverName, int heapInM, int debugPort) throws IOException {
+  public void installNewServer(String serverName, int heapInM, int debugPort, String logConfigExt) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // Create the logger for the intallation.
@@ -64,8 +66,13 @@ public class StripeInstaller {
     FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
 
     //Copy a cutom logback configuration
-    Path serverPath = FileSystems.getDefault().getPath(installPath, "server", "lib", "logback-test.xml");
-    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverPath);
+    Path serverPath = FileSystems.getDefault().getPath(installPath, "server", "lib");
+    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverPath.resolve("logback-test.xml"));
+
+    InputStream logExt = this.getClass().getResourceAsStream("/" + logConfigExt);
+    if (logExt != null) {
+      Files.copy(logExt, serverPath.resolve("logback-ext.xml"), StandardCopyOption.REPLACE_EXISTING);
+    }
 
     // Create the object representing this single installation and add it to the list for this stripe.
     ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), heapInM, debugPort);

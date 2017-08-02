@@ -32,7 +32,7 @@ public class CommonIdioms {
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfiguration.stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(stripeConfiguration.testParentDirectory, stripeConfiguration.stripeName);
-    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime, stripeConfiguration.tcProperties);
+    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime, stripeConfiguration.tcProperties, stripeConfiguration.logConfigExtension);
   }
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
@@ -73,6 +73,7 @@ public class CommonIdioms {
     public String serviceFragment;
     public String entityFragment;
     public String stripeName;
+    public String logConfigExtension;
   }
 
 
