@@ -32,7 +32,7 @@ import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
-import com.tcclient.cluster.ClusterInternalEventsGun;
+import com.tc.cluster.ClusterInternalEventsGun;
 
 /**
  * This class has been changed to be heavily synchronized. This is in attempt to 

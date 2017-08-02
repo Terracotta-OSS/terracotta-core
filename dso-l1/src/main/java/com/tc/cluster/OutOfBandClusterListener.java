@@ -16,25 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tcclient.cluster;
+package com.tc.cluster;
 
-import com.tc.net.ClientID;
+import com.tc.cluster.ClusterEvent;
+import com.tc.cluster.ClusterListener;
+import com.tc.cluster.ClusterInternal.ClusterEventType;
 
-public interface ClusterInternalEventsGun {
+public interface OutOfBandClusterListener extends ClusterListener {
 
-  void fireThisNodeJoined(ClientID nodeId, ClientID[] clusterMembers);
-
-  void fireThisNodeLeft();
-
-  void fireNodeJoined(ClientID nodeId);
-
-  void fireNodeLeft(ClientID nodeId);
-
-  void fireOperationsEnabled();
-
-  void fireOperationsDisabled();
-
-  void fireNodeError();
-
+  boolean useOutOfBandNotification(ClusterEventType type, ClusterEvent event);
 
 }

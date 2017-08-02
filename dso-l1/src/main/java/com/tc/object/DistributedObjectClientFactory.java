@@ -33,7 +33,7 @@ import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.UUID;
-import com.tcclient.cluster.ClusterInternal;
+import com.tc.cluster.ClusterInternal;
 
 import java.util.List;
 import java.util.Properties;

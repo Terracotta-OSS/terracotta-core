@@ -22,9 +22,9 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.net.ClientID;
 import com.tc.object.msg.ClusterMembershipMessage;
-import com.tcclient.cluster.ClusterInternalEventsGun;
+import com.tc.cluster.ClusterInternalEventsGun;
 
-public class ClusterMembershipEventsHandler<EC> extends AbstractEventHandler<EC> {
+public class ClusterMembershipEventsHandler extends AbstractEventHandler<ClusterMembershipMessage> {
 
   private final ClusterInternalEventsGun clusterEventsGun;
 
@@ -33,12 +33,8 @@ public class ClusterMembershipEventsHandler<EC> extends AbstractEventHandler<EC>
   }
 
   @Override
-  public void handleEvent(EC context) throws EventHandlerException {
-    if (context instanceof ClusterMembershipMessage) {
-      handleClusterMembershipMessage((ClusterMembershipMessage) context);
-    } else {
-      throw new AssertionError("unknown event type: " + context.getClass().getName());
-    }
+  public void handleEvent(ClusterMembershipMessage context) throws EventHandlerException {
+    handleClusterMembershipMessage(context);
   }
 
   private void handleClusterMembershipMessage(ClusterMembershipMessage cmm) throws EventHandlerException {

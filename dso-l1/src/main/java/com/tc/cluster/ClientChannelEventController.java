@@ -16,12 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.platform.rejoin;
+package com.tc.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;

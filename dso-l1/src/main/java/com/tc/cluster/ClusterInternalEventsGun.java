@@ -16,10 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tcclient.cluster;
+package com.tc.cluster;
 
-public interface NodeInternal extends Node {
+import com.tc.net.ClientID;
 
-  public long getChannelId();
+public interface ClusterInternalEventsGun {
+
+  void fireThisNodeJoined(ClientID nodeId, ClientID[] clusterMembers);
+
+  void fireThisNodeLeft();
+
+  void fireNodeJoined(ClientID nodeId);
+
+  void fireNodeLeft(ClientID nodeId);
+
+  void fireOperationsEnabled();
+
+  void fireOperationsDisabled();
+
+  void fireNodeError();
+
 
 }

@@ -41,7 +41,7 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tcclient.cluster.ClusterInternalEventsGun;
+import com.tc.cluster.ClusterInternalEventsGun;
 
 import java.util.Map;
 

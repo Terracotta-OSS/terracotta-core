@@ -28,13 +28,7 @@ import com.tc.net.ClientID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Util;
-import com.tcclient.cluster.ClusterInternal;
-import com.tcclient.cluster.ClusterInternalEventsContext;
-import com.tcclient.cluster.ClusterNodeStatus;
-import com.tcclient.cluster.ClusterNodeStatus.ClusterNodeStateType;
-import com.tcclient.cluster.Node;
-import com.tcclient.cluster.NodeInternal;
-import com.tcclient.cluster.OutOfBandClusterListener;
+import com.tc.cluster.ClusterNodeStatus.ClusterNodeStateType;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;

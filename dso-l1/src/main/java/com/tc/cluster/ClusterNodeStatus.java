@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tcclient.cluster;
+package com.tc.cluster;
 
 public class ClusterNodeStatus {
 

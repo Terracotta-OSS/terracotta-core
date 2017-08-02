@@ -26,8 +26,8 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tcclient.cluster.ClusterEventsNotifier;
-import com.tcclient.cluster.ClusterInternalEventsContext;
+import com.tc.cluster.ClusterEventsNotifier;
+import com.tc.cluster.ClusterInternalEventsContext;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;

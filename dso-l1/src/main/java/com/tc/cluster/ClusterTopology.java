@@ -18,7 +18,6 @@
  */
 package com.tc.cluster;
 
-import com.tcclient.cluster.Node;
 
 import java.util.Collection;
 

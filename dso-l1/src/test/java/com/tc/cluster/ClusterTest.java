@@ -28,10 +28,7 @@ import com.tc.async.api.Stage;
 import com.tc.net.ClientID;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tcclient.cluster.ClusterInternal.ClusterEventType;
-import com.tcclient.cluster.ClusterInternalEventsContext;
-import com.tcclient.cluster.Node;
-import com.tcclient.cluster.OutOfBandClusterListener;
+import com.tc.cluster.ClusterInternal.ClusterEventType;
 
 import java.util.Collection;
 import java.util.Iterator;

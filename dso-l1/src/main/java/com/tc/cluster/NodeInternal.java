@@ -16,18 +16,10 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.context;
+package com.tc.cluster;
 
-public class PauseContext {
+public interface NodeInternal extends Node {
 
-  private final boolean isPause;
-
-  public PauseContext(boolean isPause) {
-    this.isPause = isPause;
-  }
-
-  public boolean getIsPause() {
-    return this.isPause;
-  }
+  public long getChannelId();
 
 }

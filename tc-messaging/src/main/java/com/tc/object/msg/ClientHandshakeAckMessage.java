@@ -24,7 +24,7 @@ import com.tc.net.protocol.tcm.TCMessage;
 
 import java.util.Set;
 
-public interface ClientHandshakeAckMessage extends TCMessage {
+public interface ClientHandshakeAckMessage extends ClientHandshakeResponse {
 
   public void initialize(Set<? extends NodeID> allNodes, ClientID thisNodeID, String serverVersion);
 

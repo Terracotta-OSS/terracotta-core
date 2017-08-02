@@ -18,8 +18,6 @@
  */
 package com.tc.cluster;
 
-import com.tcclient.cluster.Node;
-
 public class ClusterEventImpl implements ClusterEvent {
 
   private final Node node;

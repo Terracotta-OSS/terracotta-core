@@ -17,7 +17,7 @@
  *
  */
 
-package com.tc.object.servermessage;
+package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
@@ -29,11 +29,10 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.util.Assert;
 
 
-public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
+public class ServerMessageReceiveHandler extends AbstractEventHandler<ServerEntityMessage> {
   private ClientEntityManager clientEntityManager;
   private final ClientMessageChannel clientMessageChannel;
 
@@ -42,8 +41,8 @@ public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
   }
 
   @Override
-  public void handleEvent(EC context) throws EventHandlerException {
-    ServerEntityMessage message = (ServerEntityMessage) context;
+  public void handleEvent(ServerEntityMessage context) throws EventHandlerException {
+    ServerEntityMessage message = context;
     ClientInstanceID clientInstance = message.getClientInstanceID();
     clientEntityManager.handleMessage(clientInstance, message.getMessage());
     Long responseId = message.getResponseId();
@@ -51,7 +50,7 @@ public class ServerMessageReceiveHandler<EC> extends AbstractEventHandler<EC> {
       ServerEntityResponseMessage response = (ServerEntityResponseMessage) clientMessageChannel.createMessage(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE);
       response.setResponseId(responseId);
       Assert.assertTrue(response.send());
-    };
+    }
   }
 
   @Override

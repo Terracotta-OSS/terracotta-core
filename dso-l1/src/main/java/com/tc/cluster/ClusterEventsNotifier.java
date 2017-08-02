@@ -16,8 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.operatorevent;
+package com.tc.cluster;
 
-public interface LockEventListener {
-  void fireLockGCEvent(int gcCount);
+import com.tc.cluster.ClusterEvent;
+import com.tc.cluster.ClusterListener;
+import com.tc.cluster.ClusterInternal.ClusterEventType;
+
+public interface ClusterEventsNotifier {
+
+  public void notifyClusterListener(ClusterEventType eventType, ClusterEvent event, ClusterListener listener);
 }

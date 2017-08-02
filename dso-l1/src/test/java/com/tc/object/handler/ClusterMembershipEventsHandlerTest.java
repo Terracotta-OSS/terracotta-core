@@ -26,7 +26,7 @@ import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClusterMembershipMessage;
-import com.tcclient.cluster.ClusterInternalEventsGun;
+import com.tc.cluster.ClusterInternalEventsGun;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;

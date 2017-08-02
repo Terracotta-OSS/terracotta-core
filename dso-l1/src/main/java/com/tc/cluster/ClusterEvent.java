@@ -18,8 +18,6 @@
  */
 package com.tc.cluster;
 
-import com.tcclient.cluster.Node;
-
 /**
  * Indicates that the state of a node in the cluster has changed.
  * <p>

@@ -16,14 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tcclient.cluster;
+package com.tc.cluster;
 
-import com.tc.cluster.ClusterEvent;
-import com.tc.cluster.ClusterListener;
-import com.tcclient.cluster.ClusterInternal.ClusterEventType;
+import java.io.Serializable;
 
-public interface OutOfBandClusterListener extends ClusterListener {
+/**
+ * Describes a node in the Terracotta cluster.
+ *
+ * @since 3.0.0
+ */
+public interface Node extends Serializable {
 
-  boolean useOutOfBandNotification(ClusterEventType type, ClusterEvent event);
+  /**
+   * Returns the unique string identifier that corresponds to the node.
+   * <p>
+   * This identifier is unique for the life-time of the cluster. However, if the cluster is completely shut down and
+   * brought back up again, these identifiers might be recycled.
+   *
+   * @return string identifier for the node
+   */
+  public String getId();
 
 }

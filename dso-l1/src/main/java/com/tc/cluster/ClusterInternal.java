@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tcclient.cluster;
+package com.tc.cluster;
 
 import com.tc.async.api.Stage;
 import com.tc.cluster.Cluster;

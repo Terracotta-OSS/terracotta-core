@@ -16,11 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tcclient.cluster;
+package com.tc.cluster;
 
 import com.tc.cluster.ClusterEvent;
 import com.tc.cluster.ClusterListener;
-import com.tcclient.cluster.ClusterInternal.ClusterEventType;
+import com.tc.cluster.ClusterInternal.ClusterEventType;
 
 /**
  * Cluster Events Contexts to be put in ClusterInternalEventsHandler.
