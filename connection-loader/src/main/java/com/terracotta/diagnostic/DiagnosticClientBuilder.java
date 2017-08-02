@@ -21,6 +21,7 @@ package com.terracotta.diagnostic;
 import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
+import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.util.ProductID;
 import com.tc.management.TCClient;
 import com.tc.net.core.security.TCSecurityManager;
@@ -44,7 +45,6 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tcclient.cluster.ClusterInternalEventsGun;
 
 import java.util.Map;
 

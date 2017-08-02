@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.core.impl;
 
-import com.tc.management.RemoteManagement;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -32,19 +31,16 @@ public class ServerManagementContext {
   private final ChannelStats                  channelStats;
   private final ObjectInstanceMonitorMBean    instanceMonitor;
   private final ConnectionPolicy              connectionPolicy;
-  private final RemoteManagement              remoteManagement;
 
   public ServerManagementContext(DSOChannelManagerMBean channelMgr,
                                  GlobalServerStats serverStats, ChannelStats channelStats,
                                  ObjectInstanceMonitorMBean instanceMonitor,
-                                 ConnectionPolicy connectionPolicy,
-                                 RemoteManagement remoteManagement) {
+                                 ConnectionPolicy connectionPolicy) {
     this.channelMgr = channelMgr;
     this.serverStats = serverStats;
     this.channelStats = channelStats;
     this.instanceMonitor = instanceMonitor;
     this.connectionPolicy = connectionPolicy;
-    this.remoteManagement = remoteManagement;
   }
 
   public DSOChannelManagerMBean getChannelManager() {
@@ -66,9 +62,4 @@ public class ServerManagementContext {
   public ConnectionPolicy getConnectionPolicy() {
     return this.connectionPolicy;
   }
-
-  public RemoteManagement getRemoteManagement() {
-    return remoteManagement;
-  }
-
 }

@@ -28,8 +28,6 @@ import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
-import com.tc.util.BitSetObjectIDSet;
-import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -41,8 +39,6 @@ import java.util.Set;
 
 
 public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
-  public ObjectIDSet            clientObjectIds                = new BitSetObjectIDSet();
-  public ObjectIDSet            validateObjectIds              = new BitSetObjectIDSet();
   public NoExceptionLinkedQueue<Object> sendCalls              = new NoExceptionLinkedQueue<Object>();
   public ClientID               clientID;
   public boolean                isChangeListener;

@@ -21,7 +21,6 @@ package com.tc.util.runtime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.object.locks.ThreadID;
 import com.tc.util.Conversion;
 
 import java.io.ByteArrayOutputStream;
@@ -76,23 +75,6 @@ public class ThreadDumpUtil {
     }
 
     return bOutStream.toByteArray();
-  }
-
-  public static String getLockList(LockInfoByThreadID lockInfo, ThreadID tcThreadID) {
-    String lockList = "";
-    List<String> heldLocks = lockInfo.getHeldLocks(tcThreadID);
-    List<String> waitOnLocks = lockInfo.getWaitOnLocks(tcThreadID);
-    List<String> pendingLocks = lockInfo.getPendingLocks(tcThreadID);
-    if (heldLocks.size() != 0) {
-      lockList += "LOCKED : " + heldLocks.toString() + "\n";
-    }
-    if (waitOnLocks.size() != 0) {
-      lockList += "WAITING ON LOCK: " + waitOnLocks.toString() + "\n";
-    }
-    if (pendingLocks.size() != 0) {
-      lockList += "WAITING TO LOCK: " + pendingLocks.toString() + "\n";
-    }
-    return lockList;
   }
 
   /**

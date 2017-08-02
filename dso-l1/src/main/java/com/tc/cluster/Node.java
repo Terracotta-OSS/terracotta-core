@@ -16,11 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
+package com.tc.cluster;
 
-public interface ClientHandshakeRefusedMessage extends ClientHandshakeResponse {
-  String getRefusalsCause();
+import java.io.Serializable;
 
-  void initialize(String message);
+/**
+ * Describes a node in the Terracotta cluster.
+ *
+ * @since 3.0.0
+ */
+public interface Node extends Serializable {
+
+  /**
+   * Returns the unique string identifier that corresponds to the node.
+   * <p>
+   * This identifier is unique for the life-time of the cluster. However, if the cluster is completely shut down and
+   * brought back up again, these identifiers might be recycled.
+   *
+   * @return string identifier for the node
+   */
+  public String getId();
 
 }

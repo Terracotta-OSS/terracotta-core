@@ -30,6 +30,7 @@ import com.tc.cluster.Cluster;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
+import com.tc.entity.ServerEntityMessage;
 import com.tc.entity.ServerEntityMessageImpl;
 import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
@@ -74,7 +75,6 @@ import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.context.PauseContext;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMembershipEventsHandler;
@@ -83,17 +83,14 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
+import com.tc.object.msg.ClientHandshakeResponse;
 import com.tc.object.msg.ClusterMembershipMessage;
-import com.tc.object.msg.InvokeRegisteredServiceMessage;
-import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
-import com.tc.object.msg.ListRegisteredServicesMessage;
-import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.request.MultiRequestReceiveHandler;
 import com.tc.object.request.RequestReceiveHandler;
-import com.tc.object.servermessage.ServerMessageReceiveHandler;
+import com.tc.object.handler.ServerMessageReceiveHandler;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionManagerImpl;
-import com.tc.platform.rejoin.ClientChannelEventController;
+import com.tc.cluster.ClientChannelEventController;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -113,8 +110,8 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.SetOnceRef;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
-import com.tcclient.cluster.ClusterInternal;
-import com.tcclient.cluster.ClusterInternalEventsContext;
+import com.tc.cluster.ClusterInternal;
+import com.tc.cluster.ClusterInternalEventsContext;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -327,7 +324,7 @@ public class DistributedObjectClient implements TCClient {
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityResponse> entityResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class, receivingHandler, 1, maxSize);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
-    Stage<Void> serverMessageStage = this.communicationStageManager.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_STAGE, Void.class, new ServerMessageReceiveHandler<Void>(channel), 1, maxSize);
+    Stage<ServerEntityMessage> serverMessageStage = this.communicationStageManager.createStage(ClientConfigurationContext.SERVER_ENTITY_MESSAGE_STAGE, ServerEntityMessage.class, new ServerMessageReceiveHandler(channel), 1, maxSize);
 
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     this.counterManager.createCounter(sampledRateCounterConfig);
@@ -342,10 +339,8 @@ public class DistributedObjectClient implements TCClient {
     // By design this stage needs to be single threaded. If it wasn't then cluster membership messages could get
     // processed before the client handshake ack, and this client would get a faulty view of the cluster at best, or
     // more likely an AssertionError
-    final Stage<PauseContext> pauseStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE, PauseContext.class, new ClientCoordinationHandler<PauseContext>(), 1, maxSize);
-    final Sink<PauseContext> pauseSink = pauseStage.getSink();
-
-    final Stage<Void> clusterMembershipEventStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE, Void.class, new ClusterMembershipEventsHandler<Void>(cluster), 1, maxSize);
+    final Stage<ClientHandshakeResponse> pauseStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE, ClientHandshakeResponse.class, new ClientCoordinationHandler(), 1, maxSize);
+    final Stage<ClusterMembershipMessage> clusterMembershipEventStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE, ClusterMembershipMessage.class, new ClusterMembershipEventsHandler(cluster), 1, maxSize);
 
     final ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = this.clientBuilder
@@ -374,7 +369,7 @@ public class DistributedObjectClient implements TCClient {
 
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
-    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseSink, clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), multiResponseStage.getSink(), serverMessageStage.getSink());
+    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseStage.getSink(), clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), multiResponseStage.getSink(), serverMessageStage.getSink());
     new Thread(threadGroup, new Runnable() {
         public void run() {
           while (!clientStopped.isSet()) {
@@ -494,12 +489,6 @@ public class DistributedObjectClient implements TCClient {
     messageTypeClassMapping
         .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE,
-                                ListRegisteredServicesResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE, InvokeRegisteredServiceMessage.class);
-    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE,
-                                InvokeRegisteredServiceResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MESSAGE, NetworkVoltronEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
@@ -513,8 +502,8 @@ public class DistributedObjectClient implements TCClient {
   }
 
   private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<HydrateContext> hydrateSink,
-                                        Sink<PauseContext> pauseSink,
-                                        Sink<Void> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<VoltronEntityMultiResponse> multiSink, Sink<Void> serverEntityMessageSink) {
+                                        Sink<ClientHandshakeResponse> pauseSink,
+                                        Sink<ClusterMembershipMessage> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<VoltronEntityMultiResponse> multiSink, Sink<ServerEntityMessage> serverEntityMessageSink) {
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseSink, hydrateSink);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE, pauseSink, hydrateSink);

@@ -25,8 +25,6 @@ import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.CommonL2ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
-import com.tc.management.TSAManagementEventPayload;
-import com.tc.management.TerracottaRemoteManagement;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.config.schema.L2ConfigObject;
 import com.tc.properties.TCProperties;
@@ -135,9 +133,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
 
     this.serversBean = configurationCreator().getParsedConfiguration().getPlatformConfiguration().getServers();
     this.activeServerGroupConfig = new ActiveServerGroupConfigObject(serversBean, this);
-
-    TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.CONFIG_RELOADED");
-    TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
 
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }

@@ -24,7 +24,7 @@ import com.tc.object.ClientBuilder;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tcclient.cluster.ClusterInternal;
+import com.tc.cluster.ClusterInternal;
 
 
 public class ClientFactory {

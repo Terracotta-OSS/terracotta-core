@@ -36,7 +36,7 @@ import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductID;
-import com.tcclient.cluster.ClusterInternal;
+import com.tc.cluster.ClusterInternal;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;

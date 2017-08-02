@@ -16,11 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
+package com.tc.cluster;
 
-public interface ClientHandshakeRefusedMessage extends ClientHandshakeResponse {
-  String getRefusalsCause();
+import com.tc.net.ClientID;
 
-  void initialize(String message);
+public interface ClusterInternalEventsGun {
+
+  void fireThisNodeJoined(ClientID nodeId, ClientID[] clusterMembers);
+
+  void fireThisNodeLeft();
+
+  void fireNodeJoined(ClientID nodeId);
+
+  void fireNodeLeft(ClientID nodeId);
+
+  void fireOperationsEnabled();
+
+  void fireOperationsDisabled();
+
+  void fireNodeError();
+
 
 }

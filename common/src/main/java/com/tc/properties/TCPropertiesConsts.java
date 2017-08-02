@@ -189,9 +189,6 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String TC_STAGE_MONITOR_ENABLED                                       = "tc.stage.monitor.enabled";
   public static final String TC_STAGE_MONITOR_DELAY                                         = "tc.stage.monitor.delay";
-  public static final String TC_BYTEBUFFER_POOLING_ENABLED                                  = "tc.bytebuffer.pooling.enabled";
-  public static final String TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT                             = "tc.bytebuffer.common.pool.maxcount";
-  public static final String TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT                        = "tc.bytebuffer.threadlocal.pool.maxcount";
   public static final String TC_MESSAGE_GROUPING_ENABLED                                    = "tc.messages.grouping.enabled";
   public static final String TC_MESSAGE_GROUPING_MAXSIZE_KB                                 = "tc.messages.grouping.maxSizeKiloBytes";
   public static final String TC_MESSAGE_PACKUP_ENABLED                                      = "tc.messages.packup.enabled";

@@ -24,36 +24,26 @@ import org.slf4j.LoggerFactory;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.object.ClientConfigurationContext;
-import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
+import com.tc.object.msg.ClientHandshakeResponse;
 
-public class ClientCoordinationHandler<EC> extends AbstractEventHandler<EC> {
+public class ClientCoordinationHandler extends AbstractEventHandler<ClientHandshakeResponse> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientCoordinationHandler.class);
   private ClientHandshakeManager clientHandshakeManager;
 
   @Override
-  public void handleEvent(EC context) {
+  public void handleEvent(ClientHandshakeResponse context) {
     if (context instanceof ClientHandshakeRefusedMessage) {
       LOGGER.error(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
       LOGGER.info("L1 Exiting...");
       throw new RuntimeException(((ClientHandshakeRefusedMessage) context).getRefusalsCause());
     } else if (context instanceof ClientHandshakeAckMessage) {
-      handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);
-    } else if (context instanceof PauseContext) {
-      handlePauseContext((PauseContext) context);
+      handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);      
     } else {
       throw new AssertionError("unknown event type: " + context.getClass().getName());
-    }
-  }
-
-  private void handlePauseContext(PauseContext ctxt) {
-    if (ctxt.getIsPause()) {
-      clientHandshakeManager.disconnected();
-    } else {
-      clientHandshakeManager.connected();
     }
   }
 

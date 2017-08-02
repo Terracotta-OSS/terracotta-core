@@ -20,9 +20,6 @@ package com.tc.cluster;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tcclient.cluster.Node;
-import com.tcclient.cluster.NodeImpl;
-import com.tcclient.cluster.NodeInternal;
 
 import java.util.ArrayList;
 import java.util.Collection;

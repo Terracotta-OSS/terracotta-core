@@ -18,18 +18,30 @@
  */
 package com.tc.cluster;
 
-/**
- * Indicates that the state of a node in the cluster has changed.
- * <p>
- * Instances of the {@code ClusterEvent} are provided as arguments of the {@link ClusterListener} methods.
- *
- * @since 3.0.0
- */
-public interface ClusterEvent {
-  /**
-   * Retrieves the node that this event talks about.
-   *
-   * @return the instance of the related node
-   */
-  public Node getNode();
+import com.tc.async.api.Stage;
+import com.tc.cluster.Cluster;
+
+
+public interface ClusterInternal extends Cluster, ClusterInternalEventsGun, ClusterEventsNotifier {
+  public static enum ClusterEventType {
+    NODE_JOIN("Node Joined"), NODE_LEFT("Node Left"), OPERATIONS_ENABLED("Operations Enabled"), OPERATIONS_DISABLED(
+        "Operations Disabled"), NODE_ERROR("NODE ERROR");
+
+    private final String name;
+
+    private ClusterEventType(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  }
+
+  public void init(Stage<ClusterInternalEventsContext> clusterEventsStage);
+
+  public void shutdown();
+
+  public void cleanup();
 }

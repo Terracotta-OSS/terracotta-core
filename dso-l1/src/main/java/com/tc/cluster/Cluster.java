@@ -18,8 +18,6 @@
  */
 package com.tc.cluster;
 
-import com.tcclient.cluster.Node;
-
 /**
  * The {@code Cluster} interface provides access to Terracotta cluster events and meta data.
  * <p>

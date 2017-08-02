@@ -18,7 +18,6 @@
  */
 package com.tc.stats.api;
 
-import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaMBean;
 
 import java.util.Map;
@@ -72,7 +71,5 @@ public interface DSOMBean extends Stats, TerracottaMBean {
   int getActiveLicensedClientCount();
 
   int getLicensedClientHighCount();
-
-  RemoteManagement getRemoteManagement();
 
 }

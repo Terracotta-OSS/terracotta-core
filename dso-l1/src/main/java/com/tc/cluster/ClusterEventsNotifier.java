@@ -16,11 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.msg;
+package com.tc.cluster;
 
-public interface ClientHandshakeRefusedMessage extends ClientHandshakeResponse {
-  String getRefusalsCause();
+import com.tc.cluster.ClusterEvent;
+import com.tc.cluster.ClusterListener;
+import com.tc.cluster.ClusterInternal.ClusterEventType;
 
-  void initialize(String message);
+public interface ClusterEventsNotifier {
 
+  public void notifyClusterListener(ClusterEventType eventType, ClusterEvent event, ClusterListener listener);
 }

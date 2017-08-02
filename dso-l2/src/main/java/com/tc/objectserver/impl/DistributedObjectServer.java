@@ -97,10 +97,7 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.ThreadDumpHandler;
-import com.tc.management.RemoteManagement;
-import com.tc.management.RemoteManagementImpl;
 import com.tc.management.TerracottaManagement;
-import com.tc.management.TerracottaRemoteManagement;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
@@ -149,10 +146,6 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
-import com.tc.object.msg.InvokeRegisteredServiceMessage;
-import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
-import com.tc.object.msg.ListRegisteredServicesMessage;
-import com.tc.object.msg.ListRegisteredServicesResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -222,7 +215,6 @@ import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.ReplicationSender;
-import com.tc.objectserver.handler.ServerManagementHandler;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -780,18 +772,12 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     );
     toInit.add(this.serverBuilder);
 
-    startStages(stageManager, toInit);
-    
-    ServerManagementHandler serverManagementHandler = new ServerManagementHandler();
-
-    final RemoteManagement remoteManagement = new RemoteManagementImpl(channelManager, serverManagementHandler, haConfig.getNodesStore().getServerNameFromNodeName(thisServerNodeID.getName()));
-    TerracottaRemoteManagement.setRemoteManagementInstance(remoteManagement);
+    startStages(stageManager, toInit);    
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats, instanceMonitor,
-                                                         connectionPolicy,
-                                                         remoteManagement);
+                                                         connectionPolicy);
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -964,10 +950,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
 
-    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_MESSAGE, ListRegisteredServicesMessage.class);
-    messageTypeClassMapping.put(TCMessageType.LIST_REGISTERED_SERVICES_RESPONSE_MESSAGE, ListRegisteredServicesResponseMessage.class);
-    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_MESSAGE, InvokeRegisteredServiceMessage.class);
-    messageTypeClassMapping.put(TCMessageType.INVOKE_REGISTERED_SERVICE_RESPONSE_MESSAGE, InvokeRegisteredServiceResponseMessage.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MESSAGE, NetworkVoltronEntityMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
