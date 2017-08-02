@@ -20,7 +20,6 @@ package com.tc.object.msg;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 
 import java.util.Collection;
 

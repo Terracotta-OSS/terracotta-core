@@ -21,15 +21,9 @@ package com.tc.bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.util.Assert;
-import com.tc.util.ServiceUtil;
-import com.tc.util.VicariousThreadLocal;
-
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * TCByteBuffer source that hides JDK dependencies and that can pool instances. Instance pooling is likely to be a good

@@ -21,7 +21,6 @@ package com.tc.stats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaManagement;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -77,7 +76,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ChannelStats                           channelStats;
   private final ObjectInstanceMonitorMBean             instanceMonitor;
   private final ConnectionPolicy                       connectionPolicy;
-  private final RemoteManagement                       remoteManagement;
 
   public DSO(ServerManagementContext managementContext, ServerConfigurationContext configContext,
              MBeanServer mbeanServer)
@@ -93,7 +91,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.channelStats = managementContext.getChannelStats();
     this.instanceMonitor = managementContext.getInstanceMonitor();
     this.connectionPolicy = managementContext.getConnectionPolicy();
-    this.remoteManagement = managementContext.getRemoteManagement();
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
@@ -581,10 +578,5 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public int getLicensedClientHighCount() {
     return connectionPolicy.getConnectionHighWatermark();
-  }
-
-  @Override
-  public RemoteManagement getRemoteManagement() {
-    return remoteManagement;
   }
 }
