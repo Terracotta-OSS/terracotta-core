@@ -59,9 +59,10 @@ public class PassthroughConnection implements Connection {
   private final Runnable onClose;
   private final long uniqueConnectionID;
   private final PassthroughEndpointConnector endpointConnector;
+  private final String readerThreadName;
   
   // ivars related to message passing and client thread.
-  private boolean isRunning;
+  private volatile State state = State.INIT;
   private Thread clientThread;
   private final List<ServerToClientMessageRecord> messageQueue;
   // NOTE:  this queue exists to carry any Futures pushed in when the server-side injects a message to the client.
@@ -89,21 +90,17 @@ public class PassthroughConnection implements Connection {
     this.onClose = onClose;
     this.uniqueConnectionID = uniqueConnectionID;
     this.endpointConnector = endpointConnector;
-    
-    this.isRunning = true;
-    this.clientThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        runClientThread();
-      }
-    });
-    this.clientThread.setName(readerThreadName);
-    this.clientThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
+    this.readerThreadName = readerThreadName;
     this.messageQueue = new Vector<ServerToClientMessageRecord>();
     this.clientResponseWaitQueue = new Vector<Waiter>();
-    
-    // Note:  This should probably not be in the constructor.
+  }
+
+  public void startProcessingRequests() {
+    this.clientThread = new Thread(() -> runClientThread());
+    this.clientThread.setName(readerThreadName);
+    this.clientThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
     this.clientThread.start();
+    this.state = State.RUNNING;
   }
 
   /**
@@ -154,7 +151,10 @@ public class PassthroughConnection implements Connection {
 
   private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
     // If we have already disconnected, fail with IllegalStateException (this is consistent with the double-close case).
-    if (!this.isRunning) {
+    if(state == State.INIT) {
+      throw new IllegalStateException("Connection is not in " + State.RUNNING + " state");
+    }
+    if (state == State.CLOSED) {
       throw new ConnectionClosedException("Connection already closed");
     }
     PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
@@ -220,7 +220,7 @@ public class PassthroughConnection implements Connection {
   }
   
   private synchronized ServerToClientMessageRecord getNextClientMessage() {
-    while (this.isRunning) {
+    while (state == State.RUNNING) {
       if (!this.messageQueue.isEmpty()) {
         return this.messageQueue.remove(0);
       } else {
@@ -335,8 +335,9 @@ public class PassthroughConnection implements Connection {
 
   @Override
   public void close() {
-    // We expect a double-close to throw IllegalStateException so check if we are running.
-    if (this.isRunning) {
+    if(state == State.INIT) {
+      throw new IllegalStateException("Connection is not in " + State.RUNNING + " state");
+    } else if (state == State.RUNNING) {
       // It is possible that the server already shut down and will throw IllegalStateException so catch that, here.
       try {
         // Tell each our still-connected end-points to disconnect from the server.
@@ -356,7 +357,7 @@ public class PassthroughConnection implements Connection {
       
       // We are going to stop processing messages so set us not running and stop our thread.
       synchronized (this) {
-        this.isRunning = false;
+        this.state = State.CLOSED;
         this.notifyAll();
       }
       try {
@@ -376,6 +377,7 @@ public class PassthroughConnection implements Connection {
       // We might as well drop the references from our tracking, also, since they can't reasonably be used.
       this.localEndpoints.clear();
     } else {
+      //double-close throws IllegalStateException
       throw new IllegalStateException("Connection already closed");
     }
   }
@@ -531,5 +533,9 @@ public class PassthroughConnection implements Connection {
       this.sender = sender;
       this.payload = payload;
     }
+  }
+
+  private enum State {
+    INIT, RUNNING, CLOSED
   }
 }
