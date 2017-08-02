@@ -1,0 +1,5 @@
+<included>
+  <root level="DEBUG">
+    <appender-ref ref="TC_BASE" />
+  </root>
+</included>
