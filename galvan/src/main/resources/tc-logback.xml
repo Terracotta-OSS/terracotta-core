@@ -20,4 +20,6 @@
     <appender-ref ref="SYSOUT" />
   </root>
 
+  <include optional="true" resource="logback-ext.xml"/>
+
 </configuration>
