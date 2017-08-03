@@ -332,15 +332,6 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String STATS_PRINTER_INTERVAL                                         = "stats.printer.intervalInMillis";
 
-  /*********************************************************************************************************************
-   * <code>
-   * Section :  EnterpriseLicenseResovler
-   * license.path                                - path to license key
-   * </code>
-   ********************************************************************************************************************/
-  public static final String PRODUCTKEY_RESOURCE_PATH                                       = "productkey.resource.path";
-  public static final String PRODUCTKEY_PATH                                                = "productkey.path";
-  public static final String LICENSE_PATH                                                   = "license.path";
 
   /*********************************************************************************************************************
    * <code>
@@ -373,17 +364,6 @@ public interface TCPropertiesConsts {
   public static final String L1_SHUTDOWN_THREADGROUP_GRACETIME                              = "l1.shutdown.threadgroup.gracetime";
   public static final String L1_SHUTDOWN_FORCE_FINALIZATION                                 = "l1.shutdown.force.finalization";
 
- /*********************************************************************************************************************
-   * <code>
-   * Section :  Server Event settings
-   * </code>
-   ********************************************************************************************************************/
-  String                     L2_SERVER_EVENT_BATCHER_INTERVAL_MS                            = "l2.serverEvent.batcher.intervalInMillis";
-  String                     L2_SERVER_EVENT_BATCHER_QUEUE_SIZE                             = "l2.serverEvent.batcher.queueSize";
-  String                     L1_SERVER_EVENT_DELIVERY_THREADS                               = "l1.serverEvent.delivery.threads";
-  String                     L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE                            = "l1.serverEvent.delivery.queueSize";
-  String                     L1_SERVER_EVENT_DELIVERY_TIMEOUT_INTERVAL                      = "l1.serverEvent.delivery.timeout.intervalInSec";
-
   /*********************************************************************************************************************
    * <code>
    * Section :  Version Settings
@@ -406,5 +386,16 @@ public interface TCPropertiesConsts {
   public static final String  L1_LOCK_MANAGER_CATEGORY                                      = "l1.lockmanager";
   public static final String  LOGGING_CATEGORY                                              = "logging";
   public static final String  NETCORE_CATEGORY                                              = "net.core";
+
+  String[] TC_PROPERTIES_WITH_NO_DEFAULTS = {
+      ENTITY_PROCESSOR_THREADS,
+      L2_TCCOM_WORKERTHREADS,
+      L2_SEDA_STAGE_WORKERTHREADS,
+      L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
+      CLIENT_MAX_PENDING_REQUESTS,
+      CLIENT_MAX_SENT_REQUESTS,
+      L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS,
+      L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS
+  };
 
 }

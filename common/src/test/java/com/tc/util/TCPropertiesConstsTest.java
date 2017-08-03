@@ -25,6 +25,7 @@ import com.tc.test.TCTestCase;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -40,26 +41,8 @@ public class TCPropertiesConstsTest extends TCTestCase {
   @Override
   protected void setUp() {
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE);
-    exemptedProperties.add(TCPropertiesConsts.LICENSE_PATH);
-    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
-    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
 
-    exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
-
-    exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_INTERVAL_MS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SERVER_EVENT_BATCHER_QUEUE_SIZE);
-    exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L1_SERVER_EVENT_DELIVERY_QUEUE_SIZE);
-    
-    exemptedProperties.add(TCPropertiesConsts.ENTITY_PROCESSOR_THREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_STAGE_WORKERTHREADS);
-    exemptedProperties.add(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS);
-  
-    exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS);
-    exemptedProperties.add(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS);
+    exemptedProperties.addAll(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
 
     // exempt all subcategories
     exemptedProperties.add(TCPropertiesConsts.L1_CATEGORY);
@@ -100,6 +83,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
       }
     }
     tcPropertiesConsts.remove(TCPropertiesConsts.OLD_PROPERTIES.toString());
+    tcPropertiesConsts.remove(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS.toString());
     
     Set<String> tcProperties = getKeys(props);
     for (String tcProperty : tcProperties) {
