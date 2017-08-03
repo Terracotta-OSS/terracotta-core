@@ -30,15 +30,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * This class is an easy way to read properties that will help tune DSO. It first loads properties from the
@@ -49,6 +47,8 @@ import java.util.Properties;
 public class TCPropertiesImpl implements TCProperties {
 
   private static final Logger logger = LoggerFactory.getLogger(TCPropertiesImpl.class);
+
+  private static final Set<String> TC_PROPERTIES_WITH_NO_DEFAULTS = new HashSet<String>(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
 
   public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
@@ -151,13 +151,17 @@ public class TCPropertiesImpl implements TCProperties {
     for (Entry<String, String> prop : overwriteProps.entrySet()) {
       String propertyName = prop.getKey();
       String propertyValue = prop.getValue();
-      if (!this.props.containsKey(propertyName)) {
+      if (!this.props.containsKey(propertyName) && !TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
         logger.warn("The property \"" + propertyName
                     + "\" is not present in set of defined tc properties. Probably this is misspelled");
       }
       if (!this.localTcProperties.containsKey(propertyName)) {
-        logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
-                    + props.getProperty(propertyName) + " by the tc-config file");
+        if(TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
+          logger.info("The property \"" + propertyName + "\" was set to " + propertyValue + " by the tc-config file");
+        } else {
+          logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
+                      + props.getProperty(propertyName) + " by the tc-config file");
+        }
         setProperty(propertyName, propertyValue);
       } else {
         logger.warn("The property \"" + propertyName + "\" was set by local settings to "
