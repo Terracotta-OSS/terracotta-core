@@ -28,6 +28,10 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 
+import java.util.concurrent.Future;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 
 /**
  * The object representing the connection end-point of a client-side entity.  Messages sent from the client entity are routed
@@ -95,6 +99,12 @@ public class PassthroughEntityClientEndpoint<M extends EntityMessage, R extends 
       Assert.unexpected(e);
     }
     onClose.run();
+  }
+
+  @Override
+  public Future<Void> release() {
+    close();
+    return completedFuture(null);
   }
 
   public void didCloseUnexpectedly() {

@@ -35,6 +35,8 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 
 /**
  * Similar to the PassthroughEndpoint although designed to handle the broader cases of active/passive distinction,
@@ -270,6 +272,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     @Override
     public void close() {
       PassthroughStripe.this.connectCountMap.put(this.entityName, PassthroughStripe.this.connectCountMap.get(this.entityName).intValue() - 1);
+    }
+
+    @Override
+    public Future<Void> release() {
+      close();
+      return completedFuture(null);
     }
 
     @Override
