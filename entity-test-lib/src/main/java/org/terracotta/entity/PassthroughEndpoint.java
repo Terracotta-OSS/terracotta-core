@@ -26,6 +26,8 @@ import org.terracotta.exception.EntityServerException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 
 /**
  * Used for basic testing (not part of the in-process testing framework) of an entity, to act like the client end-point.
@@ -204,6 +206,12 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     checkEndpointOpen();
     this.isOpen = false;
     // In a real implementation, this is where a call to the PlatformService, to clean up, would be.
+  }
+
+  @Override
+  public Future<Void> release() {
+    close();
+    return completedFuture(null);
   }
 
   private void checkEndpointOpen() {
