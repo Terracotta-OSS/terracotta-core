@@ -34,7 +34,7 @@ import org.terracotta.passthrough.IClusterControl;
 @Ignore
 public class SimpleActivePassiveWithClassRuleIT {
   @ClassRule
-  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2).build();
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2).logConfigExtensionResourceName("custom-logback-ext.xml").build();
 
   /**
    * This will ensure that a fail-over correctly happens.

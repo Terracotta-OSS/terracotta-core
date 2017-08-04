@@ -1,0 +1,27 @@
+<included>
+  <!--
+  This is an extension point for TC server logging configuration.
+  This extension is done using the file inclusion feature of logback.
+  Refer to https://logback.qos.ch/manual/configuration.html#fileInclusion for more details.
+
+  You are free to define and use your own appenders and loggers here.
+  You can also use predefined TC appenders.
+  Use the appender name "TC_BASE" to refer to the Terracotta base appender that logs to the terracotta-server.log file.
+  Use the appender name "STDOUT" to refer to the Terracotta console appender.
+  -->
+
+  <!--
+    You can change the Terracotta root log level by uncommenting the following block and changing the level.
+  -->
+  <!--<root level="DEBUG">
+    <appender-ref ref="TC_BASE" />
+  </root>-->
+
+  <!--
+    You can customize log levels for specific loggers by defining config blocks as follows:
+  -->
+  <!--<logger name="some.specific.logger.name" level="DEBUG">
+    <appender-ref ref="TC_BASE" />
+  </logger>-->
+
+</included>
