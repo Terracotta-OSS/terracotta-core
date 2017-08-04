@@ -1403,16 +1403,12 @@ public class ManagedEntityImpl implements ManagedEntity {
 
       EntityMessagePassiveSynchronizationChannelImpl channel = (EntityMessagePassiveSynchronizationChannelImpl) o;
 
-      if (concurrencyKey != channel.concurrencyKey) {
-        return false;
-      }
       return passives.equals(channel.passives);
     }
 
     @Override
     public int hashCode() {
       int result = passives.hashCode();
-      result = 31 * result + concurrencyKey;
       return result;
     }
   }
