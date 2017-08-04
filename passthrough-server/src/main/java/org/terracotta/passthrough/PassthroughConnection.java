@@ -99,8 +99,8 @@ public class PassthroughConnection implements Connection {
     this.clientThread = new Thread(() -> runClientThread());
     this.clientThread.setName(readerThreadName);
     this.clientThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
-    this.clientThread.start();
     this.state = State.RUNNING;
+    this.clientThread.start();
   }
 
   /**
