@@ -49,11 +49,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -317,7 +317,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   protected class CommThread extends Thread {
     private final Selector                      selector;
-    private final LinkedBlockingQueue<Runnable> selectorTasks;
+    private final Queue<Runnable> selectorTasks;
     private final String                        name;
     private final AtomicLong                    bytesRead    = new AtomicLong(0);
     private final AtomicLong                    bytesWritten = new AtomicLong(0);
@@ -329,7 +329,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       setName(name);
 
       this.selector = createSelector();
-      this.selectorTasks = new LinkedBlockingQueue<Runnable>();
+      this.selectorTasks = new ConcurrentLinkedQueue<Runnable>();
       this.mode = mode;
     }
 
@@ -402,13 +402,14 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       try {
         while (true) {
-          try {
-            this.selectorTasks.put(task);
-            break;
-          } catch (InterruptedException e) {
-            logger.warn("Exception: ", e);
-            isInterrupted = true;
+          while (!this.selectorTasks.offer(task)) {
+            try {
+              Thread.sleep(1);
+            } catch (InterruptedException ie) {
+              isInterrupted = true;
+            }
           }
+          break;
         }
       } finally {
         this.selector.wakeup();
@@ -560,7 +561,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
-    private void dispose(Selector localSelector, LinkedBlockingQueue<Runnable> localSelectorTasks) {
+    private void dispose(Selector localSelector, Queue<Runnable> localSelectorTasks) {
       Assert.eval(Thread.currentThread() == this);
 
       if (localSelector != null) {
@@ -591,7 +592,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       Assert.eval(Thread.currentThread() == this);
 
       Selector localSelector = this.selector;
-      LinkedBlockingQueue<Runnable> localSelectorTasks = this.selectorTasks;
+      Queue<Runnable> localSelectorTasks = this.selectorTasks;
 
       while (true) {
         final int numKeys;
@@ -624,16 +625,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         boolean isInterrupted = false;
         // run any pending selector tasks
         while (true) {
-          Runnable task;
-          while (true) {
-            try {
-              task = localSelectorTasks.poll(0, TimeUnit.MILLISECONDS);
-              break;
-            } catch (InterruptedException ie) {
-              logger.error("Error getting task from task queue", ie);
-              isInterrupted = true;
-            }
-          }
+          Runnable task = localSelectorTasks.poll();
 
           if (null == task) {
             break;
