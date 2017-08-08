@@ -34,6 +34,9 @@ import com.tc.stats.api.ClassInfo;
 import com.tc.stats.api.DSOMBean;
 import com.tc.stats.api.Stats;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,6 +59,9 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 
 /**
  * This is the top-level MBean for the DSO subsystem, off which to hang JSR-77 Stats and Config MBeans.
@@ -66,6 +72,9 @@ import javax.management.ObjectName;
 public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private final static Logger logger = LoggerFactory.getLogger(DSO.class);
+
+  static final int DEFAULT_JMX_REMOTE_PORT = 5000;
+
   private final StatsImpl                           dsoStats;
   private final MBeanServer                            mbeanServer;
   
@@ -76,6 +85,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ChannelStats                           channelStats;
   private final ObjectInstanceMonitorMBean             instanceMonitor;
   private final ConnectionPolicy                       connectionPolicy;
+
+  private volatile int jmxRemotePort = DEFAULT_JMX_REMOTE_PORT;
+  private volatile JMXConnectorServer jmxConnectorServer;
+  private Registry registry;
 
   public DSO(ServerManagementContext managementContext, ServerConfigurationContext configContext,
              MBeanServer mbeanServer)
@@ -578,5 +591,50 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public int getLicensedClientHighCount() {
     return connectionPolicy.getConnectionHighWatermark();
+  }
+
+  @Override
+  public String getJmxRemotePort() {
+    return String.valueOf(jmxRemotePort);
+  }
+
+  @Override
+  public void setJmxRemotePort(String port) {
+    if(jmxConnectorServer == null) {
+      jmxRemotePort = Integer.parseInt(port);
+    }
+  }
+
+  @Override
+  public String startJMXRemote() {
+    if(jmxConnectorServer != null) {
+      return "JMX remote already started at port: " + jmxRemotePort;
+    } else {
+      try {
+        registry = LocateRegistry.createRegistry(jmxRemotePort);
+        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:" + jmxRemotePort + "/jmxrmi");
+        jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbeanServer);
+        jmxConnectorServer.start();
+        return "Successfully started jmx remote at port " + jmxRemotePort;
+      } catch (Throwable t) {
+        return "Caught exception while starting jmx at port " + jmxRemotePort + ": " + t.getLocalizedMessage();
+      }
+    }
+  }
+
+  @Override
+  public String stopJMXRemote() {
+    try {
+      if(jmxConnectorServer != null) {
+        jmxConnectorServer.stop();
+        jmxConnectorServer = null;
+        UnicastRemoteObject.unexportObject(registry, true);
+        return "Successfully stopped jmx remote at port " + jmxRemotePort;
+      } else {
+        return "JmxConnectorServer is not running";
+      }
+    } catch (Throwable t) {
+      return "Caught exception while stopping jmx remote at port " + jmxRemotePort + ": " + t.getLocalizedMessage();
+    }
   }
 }

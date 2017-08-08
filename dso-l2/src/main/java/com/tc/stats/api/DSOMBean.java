@@ -72,4 +72,12 @@ public interface DSOMBean extends Stats, TerracottaMBean {
 
   int getLicensedClientHighCount();
 
+  String getJmxRemotePort();
+
+  void setJmxRemotePort(String port);
+
+  String startJMXRemote();
+
+  String stopJMXRemote();
+
 }
