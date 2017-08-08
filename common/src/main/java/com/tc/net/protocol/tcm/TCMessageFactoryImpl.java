@@ -24,11 +24,11 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 
 import java.lang.reflect.Constructor;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private final GeneratedMessageFactory[] fArray = new GeneratedMessageFactory[TCMessageType.TYPE_LAST_MESSAGE_DO_NOT_USE-1];
+  private final Map<TCMessageType, GeneratedMessageFactory> generators = new EnumMap<TCMessageType, GeneratedMessageFactory>(TCMessageType.class);
   private final MessageMonitor  monitor;
   private final SessionProvider sessionProvider;
 
@@ -60,10 +60,9 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   @Override
   public void addClassMapping(TCMessageType type, GeneratedMessageFactory messageFactory) {
     if ((type == null) || (messageFactory == null)) { throw new IllegalArgumentException(); }
-    if (fArray[type.getType()-1] != null)  { 
+    if (generators.put(type, messageFactory) != null)  { 
       throw new IllegalStateException("message already has class mapping: "+ type); 
     }
-    fArray[type.getType()-1] = messageFactory;
   }
 
   @Override
@@ -73,16 +72,14 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     // This strange synchronization is for things like system tests that will end up using the same
     // message class, but with different TCMessageFactoryImpl instances
     synchronized (msgClass.getName().intern()) {
-      if (fArray[type.getType()-1] == null) {
-        fArray[type.getType()-1] = new GeneratedMessageFactoryImpl(msgClass);
-      } else {
+      if (generators.put(type, new GeneratedMessageFactoryImpl(msgClass)) != null) {
         throw new IllegalStateException("message already has class mapping: " + type);
       }
     }
   }
 
   private GeneratedMessageFactory lookupFactory(TCMessageType type) {
-    final GeneratedMessageFactory factory = fArray[type.getType()-1];
+    final GeneratedMessageFactory factory = generators.get(type);
     if (factory == null) { throw new RuntimeException("No factory for type " + type); }
     return factory;
   }
