@@ -25,7 +25,7 @@ public class ClientHandshakeMessageImplTest {
     public void testGetResendMessages() throws Exception {
 
         ClientHandshakeMessageImpl chm = new ClientHandshakeMessageImpl(mock(SessionID.class), mock(MessageMonitor.class),
-                new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.getInstance(TCMessageType.TYPE_CLIENT_HANDSHAKE_MESSAGE));
+                new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         ResendVoltronEntityMessage msg1 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(1),
                 mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, new byte[0], mock(TransactionID.class));
         ResendVoltronEntityMessage msg2 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(10),

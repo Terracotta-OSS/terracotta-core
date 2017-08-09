@@ -22,16 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.async.api.Sink;
+import java.util.EnumMap;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author orion
  */
 public class TCMessageRouterImpl implements TCMessageRouter {
   private static final Logger logger = LoggerFactory.getLogger(TCMessageRouter.class);
-  private final Map<TCMessageType, TCMessageSink> routesByType = new ConcurrentHashMap<TCMessageType, TCMessageSink>();
+  private final Map<TCMessageType, TCMessageSink> routesByType = new EnumMap<TCMessageType, TCMessageSink>(TCMessageType.class);
   private final TCMessageSink   defaultRoute;
 
   public TCMessageRouterImpl() {
