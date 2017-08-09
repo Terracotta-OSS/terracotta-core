@@ -54,6 +54,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -404,7 +405,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         while (true) {
           while (!this.selectorTasks.offer(task)) {
             try {
-              Thread.sleep(1);
+              TimeUnit.SECONDS.sleep(5);  // this should actually never happen since the queue is unbounded.  
+              logger.warn("unable to add selector task");
             } catch (InterruptedException ie) {
               isInterrupted = true;
             }
