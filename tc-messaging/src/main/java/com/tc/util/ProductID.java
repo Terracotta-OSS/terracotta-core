@@ -23,7 +23,11 @@ package com.tc.util;
  * @author tim
  */
 public enum ProductID {
-  DIAGNOSTIC(true, false, false, false), STRIPE(false, true, true, false), SERVER(true, false, true, false), PERMANENT(false, true, true, true);
+  DIAGNOSTIC(true, false, false, false), 
+  INFORMATIONAL(true, false, true, false), 
+  STRIPE(false, true, true, false), 
+  SERVER(true, false, true, false), 
+  PERMANENT(false, true, true, true);
 
   private final boolean internal;
   private final boolean reconnect;
@@ -53,6 +57,7 @@ public enum ProductID {
     return permanent;
   }
   
+  @Override
   public String toString() {
     return name().charAt(0) + name().substring(1).toLowerCase();
   }

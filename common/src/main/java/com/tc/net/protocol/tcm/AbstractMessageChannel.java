@@ -301,8 +301,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   @Override
   public String toString() {
-    return ((isOpen() ? getChannelID() : "ChannelID[NULL_ID, " + getStatus() + "]") + ":" + getLocalAddress()
-            + " <--> " + getRemoteAddress());
+    return (getChannelID() + ":" + getLocalAddress() + " <--> " + getRemoteAddress());
   }
 
   @Override

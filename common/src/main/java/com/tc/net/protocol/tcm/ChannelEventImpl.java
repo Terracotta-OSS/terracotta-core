@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.net.NodeID;
 import java.util.Date;
 
 public class ChannelEventImpl implements ChannelEvent {
@@ -34,9 +35,13 @@ public class ChannelEventImpl implements ChannelEvent {
 
   @Override
   public String toString() {
-    return getClass().getName() + "@" + System.identityHashCode(this) + "[type = " + this.type + ", timestamp = "
-           + timestamp + ", channel  = " + channel + " remote node  : " + channel.getRemoteNodeID();
-
+    String msg = getClass().getName() + "@" + System.identityHashCode(this) + "[type = " + this.type + ", timestamp = "
+           + timestamp + ", channel  = " + channel + " product  : " + channel.getProductId();
+    NodeID remote = channel.getRemoteNodeID();
+    if (!remote.isNull()) {
+      msg += " remote node  : " + channel.getRemoteNodeID();
+    }
+    return msg;
   }
 
   @Override

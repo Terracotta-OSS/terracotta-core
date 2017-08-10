@@ -96,8 +96,10 @@ public class ClientChannelEventController {
 
     @Override
     public void notifyChannelEvent(ChannelEvent event) {
-      LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
+      if (!event.getChannel().getProductId().isInternal()) {
+        LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
                       + CallStackTrace.getCallStack());
+      }
       if (controller.clientHandshakeManager.isShutdown()) { return; }
       ChannelID eventChannelId = event.getChannelID();
       ClientMessageChannel currentChannel = controller.channel;
@@ -123,7 +125,7 @@ public class ClientChannelEventController {
           controller.channelReconnectionRejected();
           break;
         default:
-          LOGGER.warn("Ignoring unexpeceted channel event " + event.getType() + " for channel " + eventChannelId);
+          LOGGER.warn("Ignoring unexpected channel event " + event.getType() + " for channel " + eventChannelId);
           break;
       }
     }
