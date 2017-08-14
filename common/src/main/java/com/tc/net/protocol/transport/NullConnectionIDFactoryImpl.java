@@ -21,6 +21,7 @@ package com.tc.net.protocol.transport;
 import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
@@ -39,7 +40,14 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
 // only assign invalid IDs as these connections are not real
-    ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet(), null, null, connectionID.getProductId());
+    ProductID requested = connectionID.getProductId();
+    switch (requested) {
+      case DIAGNOSTIC:
+        break;
+      default:
+        requested = ProductID.INFORMATIONAL;
+    }
+    ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet(), null, null, requested);
     Assert.assertTrue(!connection.isValid());
     return connection;
   }

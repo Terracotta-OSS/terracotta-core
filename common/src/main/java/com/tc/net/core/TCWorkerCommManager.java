@@ -67,8 +67,6 @@ public class TCWorkerCommManager {
     String message = "Selecting " + leastWeightWorkerComm + "  from " + Arrays.asList(this.workerCommThreads);
     if (logger.isDebugEnabled()) {
       logger.debug(message);
-    } else {
-      lossyLogger.info(message);
     }
 
     return leastWeightWorkerComm;

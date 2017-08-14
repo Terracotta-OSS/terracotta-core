@@ -352,8 +352,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   protected boolean wireNewConnection(TCConnection conn) {
-    getLogger().info("Attaching new connection: " + conn);
-
     synchronized (status) {
       if (this.status.isClosed()) {
         getLogger().warn("Connection stack is already closed. " + this.status + "; Conn: " + conn);
@@ -404,6 +402,15 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   @Override
   public final void initConnectionID(ConnectionID cid) {
     connectionId = cid;
+  }
+  
+  void log(String msg) {
+    if (!getConnectionId().getProductId().isInternal()) {
+      getLogger().info(msg);
+    } else {
+      getLogger().debug(msg);
+    }
+
   }
 
 }

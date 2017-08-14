@@ -51,8 +51,16 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  // TODO: replace with ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT once API is released
+    boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  
+    String typeName = props.getProperty("connection.type");  
     ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
+    try {
+      if (typeName != null) {
+        product = ProductID.valueOf(typeName);
+      }
+    } catch (IllegalArgumentException arg) {
+      // do nothing, just stick with the default
+    }
 
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
          new StandardClientBuilder(product), 

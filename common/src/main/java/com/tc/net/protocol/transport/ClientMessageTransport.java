@@ -274,14 +274,6 @@ public class ClientMessageTransport extends MessageTransportBase {
         // This is a reconnect
         Assert.eval(!synAck.getConnectionId().isValid() || getConnectionId().equals(synAck.getConnectionId()));
       }
-      if (!synAck.isMaxConnectionsExceeded()) {
-        if (!getConnectionId().isValid()) {
-          initConnectionID(synAck.getConnectionId());
-        }
-        Assert.assertNotNull("Connection id from the server was null!", getConnectionId());
-        Assert.eval(!ConnectionID.NULL_ID.equals(getConnectionId()));
-        Assert.assertNotNull(this.waitForSynAckResult);
-      }
       getConnection().setTransportEstablished();
       setSynAckResult(synAck);
       setRemoteCallbackPort(synAck.getCallbackPort());
@@ -441,8 +433,10 @@ public class ClientMessageTransport extends MessageTransportBase {
       TransportHandshakeException, CommStackMismatchException, ReconnectionRejectedException {
     HandshakeResult result = handShake();
     handleHandshakeError(result);
+    initConnectionID(result.synAck.getConnectionId());
     sendAck();
     getConnectionId().authenticated();
+    log("Handshake is complete");
   }
 
   private String getMaxConnectionsExceededMessage(int maxConnections) {

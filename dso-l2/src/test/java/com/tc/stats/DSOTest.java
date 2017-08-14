@@ -16,6 +16,7 @@ import java.net.Socket;
 import javax.management.MBeanServer;
 
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,7 +34,7 @@ public class DSOTest {
     dso = new DSO(serverManagementContext, mock(ServerConfigurationContext.class), mock(MBeanServer.class));
   }
 
-  @Test
+  @Test @Ignore("some enviroments don't like the socket stuff going on here")
   public void testJMXRemote() throws Exception {
     PortChooser portChooser = new PortChooser();
     final int jmxRemotePort = portChooser.chooseRandomPort();

@@ -48,6 +48,7 @@ public class ServerMessageTransport extends MessageTransportBase {
     initConnectionID(connectionId);
     Assert.assertNotNull(conn);
     wireNewConnection(conn);
+    log("Attaching new connection to transport: " + conn);
   }
 
   @Override
@@ -135,6 +136,7 @@ public class ServerMessageTransport extends MessageTransportBase {
     public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
       Assert.assertNull(oldConnection);
       wireNewConnection(newConnection);
+      log("Attaching new connection to transport: " + newConnection);
     }
 
   }
