@@ -52,7 +52,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   private final MessageCodec<M, R> codec;
   private final Runnable closeHook;
   private final ExecutorService closer;
-  private EndpointDelegate delegate;
+  private EndpointDelegate<R> delegate;
   private boolean isOpen;
   private Future<Void> releaseFuture;
 
@@ -99,7 +99,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   }
 
   @Override
-  public void setDelegate(EndpointDelegate delegate) {
+  public void setDelegate(EndpointDelegate<R> delegate) {
     // This is harmless while closed but shouldn't be called so check open.
     checkEndpointOpen();
     Assert.assertNull(this.delegate);
