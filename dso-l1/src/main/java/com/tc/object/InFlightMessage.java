@@ -41,7 +41,7 @@ import java.util.concurrent.TimeoutException;
  * Note that this is only used from within ClietEntityManagerImpl, and was originally embedded there, but was extracted to
  * make unit testing more direct.
  */
-public class InFlightMessage implements InvokeFuture<byte[]> {
+public class InFlightMessage {
   private final VoltronEntityMessage message;
   private final EntityID eid;
   /**
@@ -141,19 +141,16 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     }
   }
 
-  @Override
   public synchronized void interrupt() {
     for (Thread waitingThread : this.waitingThreads) {
       waitingThread.interrupt();
     }
   }
 
-  @Override
   public synchronized boolean isDone() {
     return this.getCanComplete;
   }
 
-  @Override
   public synchronized byte[] get() throws InterruptedException, EntityException {
     try {
       return getWithTimeout(0, TimeUnit.MILLISECONDS);
@@ -190,7 +187,6 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     }
   }
 
-  @Override
   public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     trace.log("getWithTimeout()");
     timedWait(new Callable() {

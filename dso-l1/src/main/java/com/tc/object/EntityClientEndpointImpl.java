@@ -175,17 +175,17 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       return this;
     }
     
-    private InvokeFuture<R> returnTypedInvoke(final InvokeFuture<byte[]> invokeFuture) {
+    private InvokeFuture<R> returnTypedInvoke(final InFlightMessage result) {
     return new InvokeFuture<R>() {
         @Override
         public boolean isDone() {
-          return invokeFuture.isDone();
+          return result.isDone();
         }
 
         @Override
         public R get() throws InterruptedException, EntityException {
           try {
-            return codec.decodeResponse(invokeFuture.get());
+            return codec.decodeResponse(result.get());
           } catch (MessageCodecException e) {
             throw new RuntimeException(e);
           }
@@ -194,7 +194,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         @Override
         public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
           try {
-            return codec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
+            return codec.decodeResponse(result.getWithTimeout(timeout, unit));
           } catch (MessageCodecException e) {
             throw new RuntimeException(e);
           }
@@ -202,7 +202,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
 
         @Override
         public void interrupt() {
-          invokeFuture.interrupt();
+          result.interrupt();
         }
       };
     }
