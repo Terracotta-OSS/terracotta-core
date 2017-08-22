@@ -480,7 +480,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
-      logger.warn("Exception retrieving entity descriptor " + fetchDescriptor, t);
       // Clean up any client-side or server-side state regarding this failed connection.
       internalRelease(fetchDescriptor, null);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.

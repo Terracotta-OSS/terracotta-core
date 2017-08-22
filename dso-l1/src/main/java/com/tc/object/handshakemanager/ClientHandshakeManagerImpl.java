@@ -100,7 +100,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private boolean checkShutdown() {
     if (isShutdown) {
-      this.logger.warn("Drop handshaking due to client shutting down...");
+      this.logger.info("Drop handshaking due to client shutting down...");
     }
     return isShutdown;
   }

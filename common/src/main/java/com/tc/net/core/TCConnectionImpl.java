@@ -744,11 +744,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public final void putMessage(TCNetworkMessage message) {
     this.lastDataWriteTime.set(System.currentTimeMillis());
 
-    // if (!isConnected() || isClosed()) {
-    // logger.warn("Ignoring message sent to non-connected connection");
-    // return;
-    // }
-
     putMessageImpl(message);
   }
 

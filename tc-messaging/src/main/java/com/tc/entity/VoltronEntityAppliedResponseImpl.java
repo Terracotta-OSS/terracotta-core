@@ -114,7 +114,6 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
         try {
           objectOutput.writeObject(this.failureException);
         } catch (RuntimeException t) {
-          logger.warn("response failure", t);
           throw t;
         } finally {
           objectOutput.close();
