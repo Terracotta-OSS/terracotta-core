@@ -138,7 +138,6 @@ public class StageImpl<EC> implements Stage<EC> {
 
   private synchronized void stopThreads() {
     for (WorkerThread<EC> thread : threads) {
-      thread.interrupt();
       try {
         thread.join();
       } catch (InterruptedException ie) {

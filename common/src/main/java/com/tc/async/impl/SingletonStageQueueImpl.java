@@ -18,41 +18,36 @@
  */
 package com.tc.async.impl;
 
-import org.slf4j.Logger;
 
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
+import com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
 import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
 import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollector;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
+import com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
+import com.tc.stats.Stats;
 
 /**
  * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
  * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
  * across process boundaries.
  */
-public class SingletonStageQueueImpl<EC> implements StageQueue<EC> {
+public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
-  private final String stageName;
-  private final Logger logger;
   private final SourceQueueImpl<ContextWrapper<EC>> sourceQueue;
-  private volatile boolean closed = false;
 
   /**
    * The Constructor.
@@ -67,9 +62,7 @@ public class SingletonStageQueueImpl<EC> implements StageQueue<EC> {
                           TCLoggerProvider loggerProvider,
                           String stageName,
                           int queueSize) {
-
-    this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
-    this.stageName = stageName;
+    super(loggerProvider, stageName);
     this.sourceQueue = createWorkerQueue(queueFactory, queueSize, stageName);
   }
 
@@ -91,15 +84,15 @@ public class SingletonStageQueueImpl<EC> implements StageQueue<EC> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
-    this.closed = closed;
+  SourceQueue[] getSources() {
+    return new SourceQueue[] {this.sourceQueue};
   }
 
   @Override
   public void addSingleThreaded(EC context) {
     Assert.assertNotNull(context);
     Assert.assertFalse(context instanceof MultiThreadedEventContext);
-    if (closed) {
+    if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     if (this.logger.isDebugEnabled()) {
@@ -115,7 +108,7 @@ public class SingletonStageQueueImpl<EC> implements StageQueue<EC> {
   public void addMultiThreaded(EC context) {
     Assert.assertNotNull(context);
     Assert.assertTrue(context instanceof MultiThreadedEventContext);
-    if (closed) {
+    if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     if (this.logger.isDebugEnabled()) {
@@ -130,7 +123,7 @@ public class SingletonStageQueueImpl<EC> implements StageQueue<EC> {
 
   @Override
   public void addSpecialized(SpecializedEventContext specialized) {
-    if (closed) {
+    if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
