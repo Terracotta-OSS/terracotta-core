@@ -334,7 +334,7 @@ public class ClientEntityManagerTest extends TestCase {
     while (fetcher.getState() != Thread.State.WAITING) {
       ThreadUtil.reallySleep(1000);
     }
-
+    
     // Now, shut down the manager.
     this.manager.shutdown(false);
     // Join on the waiter thread since the shutdown should have released it to fail in the expected way.
@@ -349,6 +349,31 @@ public class ClientEntityManagerTest extends TestCase {
     } catch (Throwable t) {
       // Unexpected.
       fail();
+    }
+  }
+  
+  public void testThreadInterruptsDontCauseSendIssues() throws Exception {
+    // Set the target for success.
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });       
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    fetcher.interruptAtStart();
+    fetcher.start();
+    fetcher.join();
+    try {
+      EntityClientEndpoint endpoint = fetcher.getResult();
+      Assert.assertNotNull(endpoint);
+    } catch (Exception e) {
+      e.printStackTrace();
+      // not expected
+      throw e;
     }
   }
 
@@ -492,6 +517,7 @@ public class ClientEntityManagerTest extends TestCase {
     private final ClientEntityManager manager;
     private final EntityID entity;
     private final long version;
+    private boolean interrupt = false;
     private final ClientInstanceID instance;
     private EntityClientEndpoint<EntityMessage, EntityResponse> result;
     private Exception exception;
@@ -506,7 +532,13 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public void run() {
       try {
+        if (this.interrupt) {
+          this.interrupt();
+        }
         this.result = this.manager.fetchEntity(entity, version, instance, mock(MessageCodec.class), mock(Runnable.class));
+        if (this.interrupt) {
+          Assert.assertTrue(this.isInterrupted());
+        }
       } catch (Exception t) {
         this.exception = t;
       }
@@ -516,6 +548,10 @@ public class ClientEntityManagerTest extends TestCase {
         throw this.exception;
       }
       return this.result;
+    }
+    
+    public void interruptAtStart() {
+      interrupt = true;
     }
     
     public void close() {
