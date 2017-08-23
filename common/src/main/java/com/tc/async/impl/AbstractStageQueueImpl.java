@@ -9,6 +9,7 @@ import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageQueueStats;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.util.Assert;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  **/
 public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
-  private volatile boolean closed = false;
+  private volatile boolean closed = false;  // open at create
   final Logger logger;
   final String stageName;
   
@@ -36,15 +37,14 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
-    this.closed = closed;
-    if (closed) {
-      for (SourceQueue q : this.getSources()) {
-        try {
-          q.put(new CloseContext());
-        } catch (InterruptedException ie) {
-          logger.debug("closing stage", ie);
-        }
+  public void close() {
+    Assert.assertFalse(this.closed);
+    this.closed = true;
+    for (SourceQueue q : this.getSources()) {
+      try {
+        q.put(new CloseContext());
+      } catch (InterruptedException ie) {
+        logger.debug("closing stage", ie);
       }
     }
   }

@@ -270,7 +270,7 @@ public class MultiStageQueueImplTest {
 
     Thread.sleep(secondsToRun * 1000);
     die.set(true);
-    impl.setClosed(true);
+    impl.close();
     impl.clear();
 
     System.out.println(consumerCount[0] +" events, "+(consumerCount[0] /secondsToRun)+"/sec");

@@ -43,8 +43,8 @@ public class MockSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
-    this.closed = closed;
+  public void close() {
+    this.closed = true;
   }
 
   @Override

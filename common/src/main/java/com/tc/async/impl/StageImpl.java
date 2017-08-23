@@ -89,7 +89,7 @@ public class StageImpl<EC> implements Stage<EC> {
       }
       shutdown = true;
     }
-    stageQueue.setClosed(true);
+    stageQueue.close();
     stopThreads();
     handler.destroy();
   }
@@ -102,7 +102,6 @@ public class StageImpl<EC> implements Stage<EC> {
       }
       shutdown = false;
     }
-    stageQueue.setClosed(false);
     handler.initializeContext(context);
     startThreads();
   }

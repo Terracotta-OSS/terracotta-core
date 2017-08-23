@@ -52,7 +52,7 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
+  public void close() {
   }
 
   @Override

@@ -741,7 +741,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
 
     @Override
-    public void setClosed(boolean closed) {
+    public void close() {
 //  NOOP
     }
 

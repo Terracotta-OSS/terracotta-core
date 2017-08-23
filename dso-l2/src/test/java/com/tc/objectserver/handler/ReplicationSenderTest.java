@@ -111,7 +111,7 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
     }
     @Override
-    public void setClosed(boolean closed) {
+    public void close() {
       Assert.fail("Not in test");
     }};
   EntityID entity = EntityID.NULL_ID;

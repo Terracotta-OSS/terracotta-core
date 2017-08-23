@@ -88,8 +88,8 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
-    this.sink.setClosed(closed);
+  public void close() {
+    this.sink.close();
   }
 
   @Override

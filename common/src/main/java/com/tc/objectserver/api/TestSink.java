@@ -54,7 +54,7 @@ public class TestSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
+  public void close() {
 
   }
 
