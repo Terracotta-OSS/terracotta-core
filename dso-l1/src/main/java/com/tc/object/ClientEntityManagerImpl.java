@@ -127,38 +127,45 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       wasBusy = false;
     }
   }
+  
+  private synchronized boolean enqueueMessage(InFlightMessage msg) {
+    boolean enqueued = false;
+    boolean interrupted = false;
+    while (!isShutdown && !requestTickets.tryAcquire()) {
+      try {
+        this.wait();
+      } catch (InterruptedException ie) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+    if (!isShutdown) {
+      inFlightMessages.put(msg.getTransactionID(), msg);
+      msg.sent();
+      enqueued = true;
+    }
+    return enqueued;
+  }
 
   private Sink<InFlightMessage> createSendStage() {
     final EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
       @Override
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
-        try {
-          requestTickets.acquire();
-          boolean doSend = false;
-          synchronized (ClientEntityManagerImpl.this) {
-            if (!isShutdown) {
-              inFlightMessages.put(first.getTransactionID(), first);
-              first.sent();
-              doSend = true;
-            }
-          }
-          if (doSend) {
-              if (first.send()) {
+        if(enqueueMessage(first)) {
+          if (first.send()) {
 //  when encountering a send for anything other than an invoke, wait here before sending anything else
 //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
 //  make sure those complete before sending any new invokes or lifecycle messages
-                if (first.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
-                  first.waitForAcks();
-                }
-              } else {
-                logger.warn("message not sent.  Make sure resend happens " + first);
-              }
+            if (first.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
+              first.waitForAcks();
+            }
           } else {
-            requestTickets.release();
-            throwClosedExceptionOnMessage(first, "Connection closed before sending message");
+            logger.debug("message not sent.  Make sure resend happens " + first);
           }
-        } catch (InterruptedException ie) {
-          throw new EventHandlerException(ie);
+        } else {
+          throwClosedExceptionOnMessage(first, "Connection closed before sending message");
         }
       }
     };
@@ -197,7 +204,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       }
 
       @Override
-      public void setClosed(boolean closed) {
+      public void close() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
 
@@ -357,7 +364,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     } else {
    // resend result
     }
-    requestTickets.release();
+    synchronized (this) {
+      requestTickets.release();
+      notify();
+    }
   }
 
   @Override
@@ -410,6 +420,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         return;
       } else {
         isShutdown = true;
+        // not sending anymore, drain the permits
+        requestTickets.drainPermits();
+        notifyAll();
         stateManager.stop();
       }
     }
@@ -480,7 +493,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw e;
     } catch (Throwable t) {
       // This is the unexpected case so clean up and re-throw as a RuntimeException
-      logger.warn("Exception retrieving entity descriptor " + fetchDescriptor, t);
       // Clean up any client-side or server-side state regarding this failed connection.
       internalRelease(fetchDescriptor, null);
       // NOTE:  Since we are throwing, we are not responsible for calling the given closeHook.

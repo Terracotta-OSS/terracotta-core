@@ -134,7 +134,6 @@ public class TCFuture {
 
     synchronized (this.lock) {
       if (cancel) {
-        logger.warn("Exception result set in future after it was cancelled");
         return;
       }
 
@@ -157,7 +156,6 @@ public class TCFuture {
     synchronized (this.lock) {
 
       if (cancel) {
-        logger.warn("Value set in future after it was cancelled");
         return;
       }
 
@@ -176,10 +174,6 @@ public class TCFuture {
    */
   public void cancel() {
     synchronized (this.lock) {
-      if (set) {
-        logger.warn("Attempt to cancel an already set future value");
-      }
-
       cancel = true;
       this.lock.notifyAll();
     }

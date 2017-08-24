@@ -52,7 +52,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  
-    String typeName = props.getProperty("connection.type");  
+    String typeName = props.getProperty(ConnectionPropertyNames.CONNECTION_TYPE);  
     ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
     try {
       if (typeName != null) {

@@ -89,7 +89,7 @@ public class StageImpl<EC> implements Stage<EC> {
       }
       shutdown = true;
     }
-    stageQueue.setClosed(true);
+    stageQueue.close();
     stopThreads();
     handler.destroy();
   }
@@ -102,7 +102,6 @@ public class StageImpl<EC> implements Stage<EC> {
       }
       shutdown = false;
     }
-    stageQueue.setClosed(false);
     handler.initializeContext(context);
     startThreads();
   }
@@ -138,7 +137,6 @@ public class StageImpl<EC> implements Stage<EC> {
 
   private synchronized void stopThreads() {
     for (WorkerThread<EC> thread : threads) {
-      thread.interrupt();
       try {
         thread.join();
       } catch (InterruptedException ie) {

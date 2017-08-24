@@ -69,7 +69,7 @@ public class ClientConnectionEstablisher {
     Logger logger = LoggerFactory.getLogger(ClientConnectionEstablisher.class);
     long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
     if (value < MIN_RETRY_INTERVAL) {
-      logger.warn("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
+      logger.info("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
       value = MIN_RETRY_INTERVAL;
     }
 
@@ -180,7 +180,7 @@ public class ClientConnectionEstablisher {
 
       boolean connected = cmt.isConnected();
       if (!cmt.getConnectionId().getProductId().isReconnectEnabled() && !isReconnectBetweenL2s()) {
-        cmt.getLogger().warn("Got reconnect request for ClientMessageTransport that does not support it.  skipping");
+        cmt.getLogger().info("Got reconnect request for ClientMessageTransport that does not support it.  skipping");
         return;
       }
 
@@ -292,7 +292,7 @@ public class ClientConnectionEstablisher {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
     boolean connected = cmt.isConnected();
     if (connected) {
-      cmt.getLogger().warn("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
+      cmt.getLogger().info("Got restoreConnection request for ClientMessageTransport that is connected.  skipping");
       return;
     }
 
@@ -429,7 +429,7 @@ public class ClientConnectionEstablisher {
           oldThread.join();
         }
       } catch (InterruptedException e) {
-        LOGGER.warn("Got interrupted while waiting for connectionEstablisherThread to complete");
+        LOGGER.info("Got interrupted while waiting for connectionEstablisherThread to complete");
         isInterrupted = true;
       } finally {
         Util.selfInterruptIfNeeded(isInterrupted);
@@ -519,7 +519,6 @@ public class ClientConnectionEstablisher {
           } catch (MaxConnectionsExceededException e) {
             String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
             cmt.getLogger().error(connInfo + e.getMessage());
-            if (cmt != null) cmt.getLogger().warn("No longer trying to reconnect.");
             return;
           } catch (Throwable t) {
             if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);

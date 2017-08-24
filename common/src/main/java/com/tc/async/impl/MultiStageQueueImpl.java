@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
@@ -48,7 +47,7 @@ import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorI
  * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
  * across process boundaries.
  */
-public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
+public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
   static final String FINDSTRATEGY_PROPNAME = "tc.stagequeueimpl.findstrategy";
 
@@ -72,11 +71,7 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
   private final boolean moduloAnd;
   private final int moduleMask;
   private final int PARTITION_SHIFT;
-  private final String stageName;
-  private final ShortestFindStrategy myShortestFindStrategy;
-  private final Logger logger;
   private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
-  private volatile boolean closed = false;
   private volatile int fcheck = 0;  // used to start the shortest queue search
   private AtomicInteger partitionHand =new AtomicInteger(0);
 
@@ -95,9 +90,8 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
                       TCLoggerProvider loggerProvider,
                       String stageName,
                       int queueSize) {
+    super(loggerProvider, stageName);
     Assert.eval(queueCount > 0);
-
-    myShortestFindStrategy = SHORTEST_FIND_STRATEGY;
 
     if (queueCount >= 8) {
       PARTITION_SHIFT = 2;
@@ -105,8 +99,6 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
       PARTITION_SHIFT = 1;
     }
 
-    this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
-    this.stageName = stageName;
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
 
@@ -119,6 +111,11 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
       this.moduleMask = 0;
     }
   }
+
+  @Override
+  SourceQueue[] getSources() {
+    return this.sourceQueues;
+  }  
 
   private static ShortestFindStrategy chooseStrategy(ShortestFindStrategy defaultVal) {
     String stratName = System.getProperty(FINDSTRATEGY_PROPNAME, defaultVal.name());
@@ -160,15 +157,10 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
   }
 
   @Override
-  public void setClosed(boolean closed) {
-    this.closed = closed;
-  }
-
-  @Override
   public void addSingleThreaded(EC context) {
     Assert.assertNotNull(context);
     Assert.assertFalse(context instanceof MultiThreadedEventContext);
-    if (closed) {
+    if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     if (this.logger.isDebugEnabled()) {
@@ -198,7 +190,7 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
   public void addMultiThreaded(EC context) {
     Assert.assertNotNull(context);
     Assert.assertTrue(context instanceof MultiThreadedEventContext);
-    if (closed) {
+    if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     if (this.logger.isDebugEnabled()) {
@@ -230,7 +222,7 @@ public class MultiStageQueueImpl<EC> implements StageQueue<EC> {
 
   @Override
   public void addSpecialized(SpecializedEventContext specialized) {
-    if (closed) {
+    if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);

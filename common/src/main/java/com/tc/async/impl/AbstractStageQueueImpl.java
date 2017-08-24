@@ -4,24 +4,51 @@ import org.slf4j.Logger;
 
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageQueueStats;
-import com.tc.exception.TCRuntimeException;
-import com.tc.util.UpdatableFixedHeap;
-
-import java.util.concurrent.BlockingQueue;
+import com.tc.logging.TCLoggerProvider;
+import com.tc.util.Assert;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author cschanck
  **/
-public class AbstractStageQueueImpl<EC> {
+public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
-
-  public AbstractStageQueueImpl() {
+  private volatile boolean closed = false;  // open at create
+  final Logger logger;
+  final String stageName;
+  
+  public AbstractStageQueueImpl(TCLoggerProvider loggerProvider, String stageName) {
+    this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
+    this.stageName = stageName;
+  }
+  
+  abstract SourceQueue[] getSources();
+  
+  Logger getLogger() {
+    return logger;
+  }
+  
+  boolean isClosed() {
+    return closed;
   }
 
+  @Override
+  public void close() {
+    Assert.assertFalse(this.closed);
+    this.closed = true;
+    for (SourceQueue q : this.getSources()) {
+      try {
+        q.put(new CloseContext());
+      } catch (InterruptedException ie) {
+        logger.debug("closing stage", ie);
+      }
+    }
+  }
+  
   interface SourceQueue<W> extends Source<W> {
     AbstractStageQueueImpl.StageQueueStatsCollector getStatsCollector();
 
@@ -186,6 +213,17 @@ public class AbstractStageQueueImpl<EC> {
         return context.equals(obj);
       }
       return super.equals(obj);
+    }
+  }
+  
+  
+  static class CloseContext<C> implements ContextWrapper<C> {
+
+    public CloseContext() {
+    }
+
+    @Override
+    public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
     }
   }
 }

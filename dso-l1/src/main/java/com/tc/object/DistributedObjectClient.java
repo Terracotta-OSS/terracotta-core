@@ -449,10 +449,10 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
-          DSO_LOGGER.warn("Timeout connecting to server: " + tcte.getMessage());
+          DSO_LOGGER.info("Timeout connecting to server: " + tcte.getMessage());
           clientStopped.wait(5000);
         } catch (final ConnectException e) {
-          DSO_LOGGER.warn("Connection refused from server: " + e.getMessage());
+          DSO_LOGGER.info("Connection refused from server: " + e.getMessage());
           clientStopped.wait(5000);
         } catch (final MaxConnectionsExceededException e) {
           DSO_LOGGER.error(e.getMessage());
@@ -464,7 +464,7 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.error(handshake.getMessage());
           throw new IllegalStateException(handshake.getMessage(), handshake);
         } catch (final IOException ioe) {
-          DSO_LOGGER.warn("IOException connecting to server: " + hostname + ":" + port + ". "
+          DSO_LOGGER.info("IOException connecting to server: " + hostname + ":" + port + ". "
                               + ioe.getMessage());
           clientStopped.wait(5000);
         }

@@ -64,7 +64,7 @@ public class ConnectionInfoConfig {
           try {
             tsaPort = Integer.parseInt(serverDesc[1]);
           } catch (NumberFormatException nfe) {
-            LOGGER.warn("Cannot parse port for tc.server element '" + serverDescs[i]
+            LOGGER.info("Cannot parse port for tc.server element '" + serverDescs[i]
                         + "'; Using default of 9410.");
           }
         }

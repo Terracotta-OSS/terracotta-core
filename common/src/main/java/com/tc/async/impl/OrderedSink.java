@@ -81,15 +81,15 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
     } else {
       pending.add(oc);
       if (pending.size() % 10 == 0) {
-        logger.warn(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
+        logger.info(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
             + " is missing still");
       }
     }
   }
 
   @Override
-  public void setClosed(boolean closed) {
-    this.sink.setClosed(closed);
+  public void close() {
+    this.sink.close();
   }
 
   @Override

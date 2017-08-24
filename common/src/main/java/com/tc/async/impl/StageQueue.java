@@ -17,7 +17,7 @@ public interface StageQueue<EC> extends Sink<EC> {
   Source<ContextWrapper<EC>> getSource(int index);
 
   @Override
-  void setClosed(boolean closed);
+  void close();
 
   @Override
   void addSingleThreaded(EC context);

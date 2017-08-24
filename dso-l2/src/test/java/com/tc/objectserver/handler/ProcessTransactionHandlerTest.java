@@ -346,7 +346,7 @@ public class ProcessTransactionHandlerTest {
     }
 
     @Override
-    public void setClosed(boolean closed) {
+    public void close() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
@@ -374,7 +374,7 @@ public class ProcessTransactionHandlerTest {
     }
 
     @Override
-    public void setClosed(boolean closed) {
+    public void close() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
     
