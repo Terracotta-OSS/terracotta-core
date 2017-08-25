@@ -339,20 +339,6 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       this.logger.output("> forceShutdown");
       // Set the flag that we are shutting down.  That way, any servers which were concurrently coming online can be stopped when they check in.
       this.isShuttingDown = true;
-      // Force shut-down all clients, all passives, and the active.
-      // (note that we won't modify the collections here, just walk them - we are synchronized)
-      for (ClientRunner client : this.runningClients) {
-        client.forceTerminate();
-      }
-      for (ServerProcess server : this.unknownRunningServers) {
-        safeStop(server);
-      }
-      for (ServerProcess server : this.passiveServers) {
-        safeStop(server);
-      }
-      if (null != this.activeServer) {
-        safeStop(this.activeServer);
-      }
 //  trying to debug a Galvan hang where not all the servers are seen
       long timeExpired = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
       // We wait until there is no active, no passives, no unknown servers, and no running clients.
@@ -368,7 +354,24 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
             + " unknown: " + this.unknownRunningServers.size()
             + " clients: " + this.runningClients.size()
             );
-        safeWaitWithTimeout(1, TimeUnit.MINUTES);
+        // Force shut-down all clients, all passives, and the active.
+        // (note that we won't modify the collections here, just walk them - we are synchronized)
+        // this is inside the loop because servers can transition from terminated to active or passive 
+        // when the lock is released during the wait, if access is at all fair, should not cause double
+        // shutowns
+        for (ClientRunner client : this.runningClients) {
+          client.forceTerminate();
+        }
+        for (ServerProcess server : this.unknownRunningServers) {
+          safeStop(server);
+        }
+        for (ServerProcess server : this.passiveServers) {
+          safeStop(server);
+        }
+        if (null != this.activeServer) {
+          safeStop(this.activeServer);
+        }
+        safeWaitWithTimeout(10, TimeUnit.SECONDS);
       }
       if (System.currentTimeMillis() > timeExpired) {
         this.logger.output("* forceShutdown FAILED waiting on active: " + (null != this.activeServer)
@@ -384,6 +387,7 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
 
   private void safeStop(ServerProcess server) {
     try {
+      this.logger.output("Stopping " + server);
       server.stop();
     } catch (InterruptedException e) {
       // Not expected in this usage - we are shutting down.
