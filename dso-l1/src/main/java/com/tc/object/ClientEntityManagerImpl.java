@@ -129,7 +129,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
   
   private synchronized boolean enqueueMessage(InFlightMessage msg) {
-    boolean enqueued = false;
+    boolean enqueued = true;
     boolean interrupted = false;
     while (!isShutdown && !requestTickets.tryAcquire()) {
       try {
@@ -141,10 +141,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (interrupted) {
       Thread.currentThread().interrupt();
     }
-    if (!isShutdown) {
-      inFlightMessages.put(msg.getTransactionID(), msg);
-      msg.sent();
-      enqueued = true;
+    if (isShutdown) {
+      inFlightMessages.remove(msg.getTransactionID());
+      enqueued = false;
     }
     return enqueued;
   }
@@ -153,7 +152,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     final EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
       @Override
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
+        // put the message as inflight with the expectation that it will be sent
+        // will be removed under shutdown lock if shutdown before sending in enqueueMessage
+        inFlightMessages.put(first.getTransactionID(), first);
         if(enqueueMessage(first)) {
+          // false flag here, just telling the message that an attempt to send is going to be made
+          first.sent();
           if (first.send()) {
 //  when encountering a send for anything other than an invoke, wait here before sending anything else
 //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
