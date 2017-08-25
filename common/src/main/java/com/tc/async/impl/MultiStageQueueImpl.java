@@ -18,29 +18,21 @@
  */
 package com.tc.async.impl;
 
-import org.slf4j.Logger;
-
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
 import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
-import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
+import org.slf4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
-import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollector;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
 
 /**
  * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
@@ -52,7 +44,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   static final String FINDSTRATEGY_PROPNAME = "tc.stagequeueimpl.findstrategy";
 
 
-  private static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
+  static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
 
   static {
     ShortestFindStrategy strat = ShortestFindStrategy.PARTITION;
@@ -63,6 +55,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     SHORTEST_FIND_STRATEGY = strat;
   }
 
+
   static enum ShortestFindStrategy {
     BRUTE,
     PARTITION
@@ -71,9 +64,10 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private final boolean moduloAnd;
   private final int moduleMask;
   private final int PARTITION_SHIFT;
+  final int PARTITION_MAX_MASK;
   private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
   private volatile int fcheck = 0;  // used to start the shortest queue search
-  private AtomicInteger partitionHand =new AtomicInteger(0);
+  AtomicInteger partitionHand =new AtomicInteger(0);
 
   /**
    * The Constructor.
@@ -98,6 +92,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     } else {
       PARTITION_SHIFT = 1;
     }
+    PARTITION_MAX_MASK = (1 << (31 - PARTITION_SHIFT)) - 1;
 
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
@@ -249,7 +244,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private int findShortestQueueIndex() {
     switch (SHORTEST_FIND_STRATEGY) {
       case PARTITION: {
-        int offset = moduloQueueCount(partitionHand.getAndIncrement() << PARTITION_SHIFT);
+        int offset = moduloQueueCount(nextPartition() << PARTITION_SHIFT);
         int min = Integer.MAX_VALUE;
         int can = -1;
         for (int i = 0; i < (1 << PARTITION_SHIFT); i++) {
@@ -285,6 +280,15 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       }
     }
     throw new IllegalStateException();
+  }
+
+  private int nextPartition() {
+    int p = partitionHand.get();
+    int newP = (p + 1) & PARTITION_MAX_MASK;
+    while(!partitionHand.compareAndSet(p, newP)) {
+      p = partitionHand.get();
+      newP = (p + 1) & PARTITION_MAX_MASK;
+    } return newP;
   }
 
   private int getSourceQueueFor(MultiThreadedEventContext context) {
