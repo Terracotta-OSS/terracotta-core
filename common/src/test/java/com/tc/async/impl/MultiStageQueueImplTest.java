@@ -145,7 +145,10 @@ public class MultiStageQueueImplTest {
   }
 
   @Test
-  public void testShortestRollover() throws Exception {
+  public void testBruteShortestRollover() throws Exception {
+    if (!MultiStageQueueImpl.SHORTEST_FIND_STRATEGY.equals(MultiStageQueueImpl.ShortestFindStrategy.BRUTE)) {
+      return;
+    }
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
@@ -160,7 +163,6 @@ public class MultiStageQueueImplTest {
       }
 
     });
-    System.setProperty(MultiStageQueueImpl.FINDSTRATEGY_PROPNAME, MultiStageQueueImpl.ShortestFindStrategy.BRUTE.name());
     StageQueue impl = new MultiStageQueueImpl(6, context, logger, "mock", 16);
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.getSchedulingKey()).thenReturn(null);
@@ -197,6 +199,39 @@ public class MultiStageQueueImplTest {
   }
 
   @Test
+  public void testPartitionRollover() throws Exception {
+    if (!MultiStageQueueImpl.SHORTEST_FIND_STRATEGY.equals(MultiStageQueueImpl.ShortestFindStrategy.PARTITION)) {
+      return;
+    }
+    TCLoggerProvider logger = new DefaultLoggerProvider();
+    QueueFactory<ContextWrapper<MultiThreadedEventContext>> qFactory = new QueueFactory<ContextWrapper<MultiThreadedEventContext>>();
+    MultiStageQueueImpl<MultiThreadedEventContext> impl = new MultiStageQueueImpl<MultiThreadedEventContext>(8,
+                                                                                                             qFactory,
+                                                                                                             logger,
+                                                                                                             "perf",
+                                                                                                             100);
+    impl.partitionHand.set(impl.PARTITION_MAX_MASK - 4);
+
+    int prior = impl.partitionHand.get();
+    final MultiThreadedEventContext incoming = new MultiThreadedEventContext() {
+      @Override
+      public Object getSchedulingKey() {
+        return null;
+      }
+
+      @Override
+      public boolean flush() {
+        return false;
+      }
+    };
+    for (int i = 0; i < 100; i++) {
+      impl.addMultiThreaded(incoming);
+    }
+    assertTrue(impl.partitionHand.get() > 0);
+    assertTrue(impl.partitionHand.get() < prior);
+  }
+
+  @Test
   @Ignore
   public void testThroughput8() throws InterruptedException {
     syntheticThroughput(5 * 60, 8, Integer.MAX_VALUE);
@@ -207,10 +242,10 @@ public class MultiStageQueueImplTest {
     QueueFactory<ContextWrapper<MultiThreadedEventContext>> qFactory = new
       QueueFactory<ContextWrapper<MultiThreadedEventContext>>();
     final StageQueue<MultiThreadedEventContext> impl = new MultiStageQueueImpl<MultiThreadedEventContext>(qCount,
-                                                                                  qFactory,
-                                                                                  logger,
-                                                                                  "perf",
-                                                                                  qSize);
+                                                                                                          qFactory,
+                                                                                                          logger,
+                                                                                                          "perf",
+                                                                                                          qSize);
 
     AtomicBoolean die = new AtomicBoolean(false);
     final ArrayList<DelayingThread> suppliers = new ArrayList<DelayingThread>(4);
