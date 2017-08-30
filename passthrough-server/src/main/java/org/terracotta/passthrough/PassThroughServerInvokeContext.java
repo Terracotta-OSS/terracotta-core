@@ -31,7 +31,7 @@ public class PassThroughServerInvokeContext implements InvokeContext {
 
   @Override
   public boolean isValidClientInformation() {
-    return current >= 0;
+    return current > 0;
   }
 
   @Override
