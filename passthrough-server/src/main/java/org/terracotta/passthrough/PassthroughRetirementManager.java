@@ -39,7 +39,6 @@ public class PassthroughRetirementManager {
 
   // This implementation is VERY simple and makes a few corresponding assumptions about how it is being used:
   // -only one message is being run at any time
-  // -a message can only defer to a SINGLE other message
   // -it is acceptable to treat the logical ordering constraints as global, instead of just within a key
 
   // The list of blocked tuples.  These represent the "global logical ordering" of retirement.
@@ -73,8 +72,7 @@ public class PassthroughRetirementManager {
    * 
    * @param blockedOn The message on which the currently executing message must block its retirement
    */
-  public void deferCurrentMessage(EntityMessage blockedOn) {
-    Assert.assertTrue(Thread.currentThread() == this.currentServerThread);
+  public synchronized void deferCurrentMessage(EntityMessage blockedOn) {
     this.blockCurrentMessageOn.add(blockedOn);
   }
 
@@ -87,7 +85,7 @@ public class PassthroughRetirementManager {
    * @param tuple The tuple describing the retirement operation ready to run
    * @return A list of any unblocked retirement operations, in the order they must be run
    */
-  public List<RetirementTuple> retireableListAfterMessageDone(EntityMessage completedInternalOrNull, RetirementTuple tuple) {
+  public synchronized List<RetirementTuple> retireableListAfterMessageDone(EntityMessage completedInternalOrNull, RetirementTuple tuple) {
     Assert.assertTrue(Thread.currentThread() == this.currentServerThread);
     // Note that the message can be null if it isn't one which could unblock anything (only internally-created messages can
     // unblock).

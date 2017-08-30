@@ -303,6 +303,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
         } catch (EntityException e) {
           error = e;
         } catch (RuntimeException e) {
+          e.printStackTrace();
           // Just wrap this as a user exception since it was unexpected.
           error = new EntityServerException(entityClassName, entityName, e.getLocalizedMessage(), e);
         }
