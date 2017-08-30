@@ -645,7 +645,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
-    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline);
+    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
@@ -1003,7 +1003,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
       Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
 //  find annotated permanent entities
-      List<VoltronEntityMessage> annotated = ServerEntityFactory.getAnnotatedEntities(entityManager.getEntityLoader());
+      List<VoltronEntityMessage> annotated = entityManager.getEntityLoader().getAnnotatedEntities();
       for (VoltronEntityMessage vem : annotated) {
 //  map them to weed out duplicates
         checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);

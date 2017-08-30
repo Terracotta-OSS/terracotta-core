@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.TCShutdownServerException;
@@ -64,7 +65,7 @@ public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<FetchID, ManagedEntity> entityIndex = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
-  private final ClassLoader creationLoader;
+  private final ServerEntityFactory creationLoader;
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
   private final ManagementTopologyEventCollector eventCollector;
@@ -93,14 +94,14 @@ public class EntityManagerImpl implements EntityManager {
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
       ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector, 
-      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline) {
+      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
     this.processorPipeline = processor;
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
-    this.creationLoader = Thread.currentThread().getContextClassLoader();
+    this.creationLoader = new ServerEntityFactory(locator);
     this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), new FetchID(0L));
@@ -116,7 +117,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public ClassLoader getEntityLoader() {
+  public ServerEntityFactory getEntityLoader() {
     return this.creationLoader;
   }
 
@@ -281,7 +282,7 @@ public class EntityManagerImpl implements EntityManager {
     EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(typeName);
     if (service == null) {
       try {
-        service = ServerEntityFactory.getService(typeName, this.creationLoader);
+        service = (EntityServerService)this.creationLoader.getService(typeName);
       } catch (ClassNotFoundException notfound) {
         throw new EntityNotProvidedException(typeName, entityID.getEntityName());
       }

@@ -32,6 +32,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.classloader.ServiceLocator;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -124,7 +125,7 @@ public class ProcessTransactionHandlerTest {
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
+    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader()));
     entityManager.enterActiveState();
 
     this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager, mock(Runnable.class));

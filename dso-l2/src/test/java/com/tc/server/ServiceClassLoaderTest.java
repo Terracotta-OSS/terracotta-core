@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -79,7 +80,8 @@ public class ServiceClassLoaderTest {
      zip.putEntry("com/tc/server/TestServiceProviderConfiguration.class", resourceToBytes("com/tc/server/TestServiceProviderConfiguration.class"));
 //  put it in the zip so null parent loader can find it
      zip.finish();
-     List<Class<? extends ServiceConfigParser>> list = ServiceLocator.getImplementations(ServiceConfigParser.class, new URLClassLoader(new URL[] {test.toURI().toURL()}));
+     // copy to remove dynamic nature of class building in the loader
+     List<Class<? extends ServiceConfigParser>> list = new ArrayList(new ServiceLocator(new URLClassLoader(new URL[] {test.toURI().toURL()})).getImplementations(ServiceConfigParser.class));
      // XXX: depending on the other resources are on the classpath, it is possible that we will see other parsers.  We
      //  should figure out a better way to restrict this since the index otherwise needs to be manually updated when new
      //  resources change the order of the ServiceConfigParser instances in the list.
