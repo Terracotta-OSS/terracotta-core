@@ -366,7 +366,7 @@ public class ReplicatedTransactionHandlerTest {
       case RECEIVE_SYNC_ENTITY_KEY_START:
         Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         last = req;
-        Assert.assertEquals(0, concurrency);
+        Assert.assertEquals(c - 1, concurrency);
         concurrency = c;
         break;
       case RECEIVE_SYNC_PAYLOAD:
@@ -380,15 +380,15 @@ public class ReplicatedTransactionHandlerTest {
         Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
         last = req;
         Assert.assertEquals(concurrency, c);
-        concurrency = 0;
+        concurrency = c;
         break;
       case RECEIVE_SYNC_ENTITY_END:
-        Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END || last.getAction() == ServerEntityAction.INVOKE_ACTION);
         last = req;
         invoked = false;
         break;
       case INVOKE_ACTION:
-        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         int sid = ByteBuffer.wrap(payload).getInt();
         Assert.assertEquals(lastSid + 1, sid);
         Assert.assertEquals(concurrency, c);
