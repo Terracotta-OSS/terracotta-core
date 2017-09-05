@@ -163,8 +163,8 @@ public class ManagedEntityImplTest {
     boolean isInActiveState = false;
     managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
     clientDescriptor = new ClientDescriptorImpl(nodeID, clientInstanceID);
-    activeInvokeContext=new ActiveInvokeContextImpl(clientDescriptor, 1, 1);
-    passiveInvokeContext=new InvokeContextImpl(new ClientSourceIdImpl(nodeID.toLong()), 1, 1);
+    activeInvokeContext=new ActiveInvokeContextImpl(clientDescriptor, 1, 1, 1);
+    passiveInvokeContext=new InvokeContextImpl(new ClientSourceIdImpl(nodeID.toLong()), 1, 1, 1);
     invokeOnTransactionHandler(()->Thread.currentThread().setName(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
   }
   

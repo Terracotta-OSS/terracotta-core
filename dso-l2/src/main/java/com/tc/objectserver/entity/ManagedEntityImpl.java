@@ -507,7 +507,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         switch (request.getAction()) {
           case INVOKE_ACTION:
-            performAction(request, response, message);
+            performAction(request, response, message, concurrencyKey);
             break;
           case REQUEST_SYNC_ENTITY:
             performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
@@ -737,7 +737,10 @@ public class ManagedEntityImpl implements ManagedEntity {
     response.complete();
   }
   
-  private void performAction(ServerEntityRequest wrappedRequest, ResultCapture response, MessagePayload message) {
+  private void performAction(ServerEntityRequest wrappedRequest,
+                             ResultCapture response,
+                             MessagePayload message,
+                             int concurrencyKey) {
     Trace.activeTrace().log("ManagedEntityImpl.performAction");
     Assert.assertNotNull(message);
     ClientDescriptorImpl clientDescriptor = new ClientDescriptorImpl(wrappedRequest.getNodeID(),
@@ -751,14 +754,13 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Actions on a non-existent entity.");
       } else {
         try {
-          final int concurrencyKey = this.concurrencyStrategy.concurrencyKey(em);
           this.retirementManager.registerWithMessage(em, concurrencyKey);
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
           if (loc.runOnActive()) {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
-              new ActiveInvokeContextImpl(clientDescriptor, oldestId, currentId),
+              new ActiveInvokeContextImpl(clientDescriptor, concurrencyKey, oldestId, currentId),
               em);
             byte[] er = runWithHelper(()->codec.encodeResponse(resp));
             trace.end();
@@ -781,6 +783,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           trace.start();
           this.passiveServerEntity.invokePassive(
             new InvokeContextImpl(new ClientSourceIdImpl(wrappedRequest.getNodeID().toLong()),
+                                  concurrencyKey,
                                   oldestId,
                                   currentId),
             em);
