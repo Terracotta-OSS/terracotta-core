@@ -270,6 +270,7 @@ public class ReplicatedTransactionHandler {
         Assert.fail("this entity should not be here");
       }
     }
+    afterSyncAction(activity);
     // This is somewhat strange in that these entities won't actually contain any data or receive replicated messages
     //  until the SYNC_ENTITY_BEGIN for this specific entity is received.
     acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
@@ -470,6 +471,8 @@ public class ReplicatedTransactionHandler {
       }
     } catch (EntityException ee) {
       throw new RuntimeException(ee);
+    } finally {
+      afterSyncAction(activity);
     }
     trace.end();
   }
@@ -541,17 +544,24 @@ public class ReplicatedTransactionHandler {
       case SYNC_BEGIN:
         start();
         break;
-      case SYNC_END:
-        finish();
-        break;
       case SYNC_ENTITY_BEGIN:
         start(activity.getFetchID());
         break;
-      case SYNC_ENTITY_END:
-        finish(activity.getFetchID());
-        break;
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
         start(activity.getFetchID(), activity.getConcurrency());
+        break;
+      default:
+        break;
+    }
+  }
+
+  private void afterSyncAction(SyncReplicationActivity activity) {
+    switch (activity.getActivityType()) {
+      case SYNC_END:
+        finish();
+        break;
+      case SYNC_ENTITY_END:
+        finish(activity.getFetchID());
         break;
       case SYNC_ENTITY_CONCURRENCY_END:
         finish(activity.getFetchID(), activity.getConcurrency());// finish inline so messages are requeued from the proper sync
