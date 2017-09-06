@@ -46,7 +46,6 @@ import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
-import com.tc.exception.TCNotRunningException;
 import com.tc.exception.VoltronWrapperException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.net.ClientID;
@@ -77,6 +76,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityServerUncaughtException;
@@ -128,10 +128,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   }
   
-  private synchronized boolean enqueueMessage(InFlightMessage msg) {
-    boolean enqueued = false;
+  private synchronized boolean enqueueMessage(InFlightMessage msg, boolean waitUntilRunning) {
+    boolean enqueued = true;
     boolean interrupted = false;
-    while (!isShutdown && !requestTickets.tryAcquire()) {
+ //  shutdown drains the permits so even if asked to not waitUntilRunning, shutdown is still checked
+    while ((waitUntilRunning && !this.stateManager.isRunning()) || !requestTickets.tryAcquire()) {
       try {
         this.wait();
       } catch (InterruptedException ie) {
@@ -153,7 +154,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     final EventHandler<InFlightMessage> handler = new AbstractEventHandler<InFlightMessage>() {
       @Override
       public void handleEvent(InFlightMessage first) throws EventHandlerException {
-        if(enqueueMessage(first)) {
+        if(enqueueMessage(first, first.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
+          first.sent();
           if (first.send()) {
 //  when encountering a send for anything other than an invoke, wait here before sending anything else
 //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
@@ -301,13 +303,25 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
+  public InvokeFuture<byte[]> invokeActionWithTimeout(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+    NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, acks);
+    Trace trace = Trace.newTrace(message, "ClientEntityManagerImpl.invokeAction");
+    trace.start();
+    InFlightMessage inFlightMessage = queueInFlightMessage(message, acks, shouldBlockGetOnRetire);
+    inFlightMessage.waitForAcks(invokeTimeout, units);
+    trace.end();
+    return inFlightMessage;
+  }
+
+  @Override
   public InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks);
     Trace trace = Trace.newTrace(message, "ClientEntityManagerImpl.invokeAction");
     trace.start();
-    InFlightMessage inFlightMessageAfterAcks = createInFlightMessageAfterAcks(message, requestedAcks, shouldBlockGetOnRetire);
+    InFlightMessage inFlightMessage = queueInFlightMessage(message, requestedAcks, shouldBlockGetOnRetire);
+    inFlightMessage.waitForAcks();
     trace.end();
-    return inFlightMessageAfterAcks;
+    return inFlightMessage;
   }
 
   @Override
@@ -545,7 +559,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     EntityID eid = msg.getEntityDescriptor().getEntityID();
     while (true) {
       try {
-        return createInFlightMessageAfterAcks(msg, requestedAcks, shouldBlockGetOnRetire).get();
+        InFlightMessage inflight = queueInFlightMessage(msg, requestedAcks, shouldBlockGetOnRetire);
+        inflight.waitForAcks();
+        return inflight.get();
       } catch (EntityBusyException busy) {
   //  server was busy, try again in 2 seconds
         wasBusy = true;
@@ -577,12 +593,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     return sendMessageWhileBusy(message, requestedAcks, shouldBlockOnRetire, "ClientEntityManagerImpl.internalRetrieve");
   }
 
-  private InFlightMessage createInFlightMessageAfterAcks(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) {
+  private InFlightMessage queueInFlightMessage(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, boolean shouldBlockGetOnRetire) {
     InFlightMessage inFlight = new InFlightMessage(message, requestedAcks, shouldBlockGetOnRetire);
     
     // NOTE:  If we are already shutdown, the handler in outbound will fail this message for us.
     outbound.addSingleThreaded(inFlight);
-    inFlight.waitForAcks();
     return inFlight;
   }
 

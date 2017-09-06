@@ -573,6 +573,7 @@ public class ClientEntityManagerTest extends TestCase {
     private EntityDescriptor descriptor;
     private byte[] extendedData;
     private boolean requiresReplication;
+    private Type type;
     
     public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, EntityException resultException, boolean autoComplete) {
       this.clientEntityManager = clientEntityManager;
@@ -673,7 +674,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public Type getVoltronType() {
-      return Type.INVOKE_ACTION;
+      return type;
     }
     @Override
     public byte[] getExtendedData() {
@@ -690,6 +691,7 @@ public class ClientEntityManagerTest extends TestCase {
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;
       this.requiresReplication = requiresReplication;
+      this.type = type;
     }
 
     @Override

@@ -174,13 +174,9 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       this.shouldBlockGetOnRetire = shouldBlock;
       return this;
     }
-
-    @Override
-    public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
-      checkInvoked();
-      invoked = true;
-      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(invokeDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request));
-      return new InvokeFuture<R>() {
+    
+    private InvokeFuture<R> returnTypedInvoke(final InvokeFuture<byte[]> invokeFuture) {
+    return new InvokeFuture<R>() {
         @Override
         public boolean isDone() {
           return invokeFuture.isDone();
@@ -209,6 +205,18 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
           invokeFuture.interrupt();
         }
       };
+    }
+    
+    public synchronized InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws MessageCodecException, InterruptedException, TimeoutException {
+      return returnTypedInvoke(invocationHandler.invokeActionWithTimeout(invokeDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, time, units, codec.encodeMessage(request)));
+    }
+
+    @Override
+    public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
+      checkInvoked();
+      invoked = true;
+      return returnTypedInvoke(invocationHandler.invokeAction(invokeDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request)));
+      
     }
 
     private void checkInvoked() {
