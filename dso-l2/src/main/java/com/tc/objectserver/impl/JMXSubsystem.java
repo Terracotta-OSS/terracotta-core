@@ -73,7 +73,9 @@ public class JMXSubsystem {
     try {
       return processReturnType(server.getAttribute(getObjectName(target), attribute));
     } catch (Throwable t) {
-      return "Invalid JMX attribute:" + target + "." + attribute + " " + t.getMessage();
+      String error = "Invalid JMX attribute:" + target + "." + attribute + " " + t.getMessage();
+      warn(t, error, target);
+      return error;
     }
   }
   
@@ -82,7 +84,9 @@ public class JMXSubsystem {
       server.setAttribute(getObjectName(target), new Attribute(attribute, value));
       return "SUCCESS";
     } catch (Throwable t) {
-      return "Invalid JMX attribute:" + target + "." + attribute + " " + t.getMessage();
+      String error = "Invalid JMX attribute:" + target + "." + attribute + " " + t.getMessage();
+      warn(t, error, target);
+      return error;
     }
   }
   
@@ -90,7 +94,9 @@ public class JMXSubsystem {
     try {
       return callMBean(getObjectName(target), cmd);
     } catch (Throwable t) {
-      return "Invalid JMX call:" + cmd + " " + t.getMessage();
+      String error = "Invalid JMX call:" + cmd + " " + t.getMessage();
+      warn(t, error, target);
+      return error;
     }
   }
   
@@ -129,5 +135,12 @@ public class JMXSubsystem {
     }
 
     return (processReturnType(result));
+  }
+
+  private void warn(Throwable t, String error, String target) {
+    LOGGER.warn(error, t);
+    if (t instanceof InstanceNotFoundException) {
+      LOGGER.warn("Please check whether {} is configured", target);
+    }
   }
 }
