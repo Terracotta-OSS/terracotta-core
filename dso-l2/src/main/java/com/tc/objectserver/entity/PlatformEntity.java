@@ -149,9 +149,4 @@ public class PlatformEntity implements ManagedEntity {
     // Not expected on this entity.
     Assert.assertFalse(true);
   }
-
-  @Override
-  public void notifyDestroyed(ClientSourceId sourceid) {
-
-  }
 }

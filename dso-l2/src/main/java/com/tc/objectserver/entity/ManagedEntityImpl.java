@@ -1008,11 +1008,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.createListener = listener;
   }
 
-  @Override
-  public void notifyDestroyed(ClientSourceId sourceid) {
-
-  }
-
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     logger.info("loadExisting entity: " + getID());
     this.constructorInfo = constructorInfo;
