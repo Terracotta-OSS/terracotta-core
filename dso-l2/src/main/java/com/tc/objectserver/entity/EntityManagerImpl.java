@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.object.EntityDescriptor;
 
@@ -32,7 +34,6 @@ import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -53,6 +54,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import java.util.LinkedHashMap;
 
 
@@ -65,9 +67,10 @@ public class EntityManagerImpl implements EntityManager {
   private final ClassLoader creationLoader;
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
-  private final ITopologyEventCollector eventCollector;
+  private final ManagementTopologyEventCollector eventCollector;
   
   private final ManagementKeyCallback flushLocalPipeline;
+  private Sink<VoltronEntityMessage> messageSelf;
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
@@ -89,7 +92,7 @@ public class EntityManagerImpl implements EntityManager {
 
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
-      ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
+      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector, 
       RequestProcessor processor, ManagementKeyCallback flushLocalPipeline) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
@@ -102,6 +105,10 @@ public class EntityManagerImpl implements EntityManager {
     ManagedEntity platform = createPlatformEntity();
     entities.put(platform.getID(), new FetchID(0L));
     entityIndex.put(new FetchID(0L), platform);
+  }
+  
+  public void setMessageSink(Sink<VoltronEntityMessage> sink) {
+    this.messageSelf = sink;
   }
 
   private ManagedEntity createPlatformEntity() {
@@ -158,7 +165,7 @@ public class EntityManagerImpl implements EntityManager {
       
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, processorPipeline, service, shouldCreateActiveEntities, canDelete));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete));
 
       return temp;
     } finally {
@@ -175,7 +182,7 @@ public class EntityManagerImpl implements EntityManager {
     Object checkNull = entities.put(entityID, set);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
     ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, 
-          serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, 
+          serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
           processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
     
     checkNull = entityIndex.put(set, temp);
@@ -296,6 +303,7 @@ public class EntityManagerImpl implements EntityManager {
   
   @Override
   public void resetReferences() {
+    clientEntityStateManager.clearClientReferences();
     for (ManagedEntity me : entityIndex.values()) {
       me.resetReferences(0);
     }

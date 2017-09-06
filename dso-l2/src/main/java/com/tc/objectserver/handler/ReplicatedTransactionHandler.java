@@ -642,6 +642,8 @@ public class ReplicatedTransactionHandler {
         return ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END;
       case SYNC_ENTITY_END:
         return ServerEntityAction.RECEIVE_SYNC_ENTITY_END;
+      case DISCONNECT_CLIENT:
+        return ServerEntityAction.DISCONNECT_CLIENT;
       default:
         throw new AssertionError("bad replication type: " + networkType);
     }

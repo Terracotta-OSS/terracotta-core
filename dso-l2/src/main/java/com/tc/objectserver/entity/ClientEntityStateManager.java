@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
-import com.tc.object.EntityID;
+import com.tc.object.EntityDescriptor;
+import com.tc.object.FetchID;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -36,7 +37,7 @@ public interface ClientEntityStateManager {
    * @param clientID The client.
    * @param entityDescriptor The entity.
    */
-  public boolean addReference(ClientDescriptorImpl clientID, EntityID entityDescriptor);
+  public boolean addReference(ClientDescriptorImpl clientID, FetchID entityDescriptor);
 
   /**
    * Removes a reference from clientID to the entity described by entityDescriptor.
@@ -54,7 +55,20 @@ public interface ClientEntityStateManager {
    * @param entityDescriptor The entity.
    * @return true if there are no references
    */
-  public boolean verifyNoReferences(EntityID entityDescriptor);
+  public boolean verifyNoEntityReferences(FetchID entityDescriptor);
   
-  public List<VoltronEntityMessage> clientDisconnected(ClientID clientID);
+  /**
+   * Verifies that the client has no references in the system
+   * 
+   * 
+   * @param client The client.
+   * @return true if there are no references
+   */
+  public boolean verifyNoClientReferences(ClientID client);  
+  
+  public List<EntityDescriptor> clientDisconnectedFromEntity(ClientID client, FetchID entity);
+  
+  public List<FetchID> clientDisconnected(ClientID client);
+  
+  public Set<ClientID> clearClientReferences();
 }

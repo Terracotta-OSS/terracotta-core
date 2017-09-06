@@ -59,7 +59,11 @@ public interface VoltronEntityMessage {
     /**
      * GC a managed entity after destroy - do not pass on the wire.
      */
-    LOCAL_ENTITY_GC
+    LOCAL_ENTITY_GC,
+    /**
+     * GC a client after it disconnects.
+     */
+    DISCONNECT_CLIENT
   }
   
   enum Acks {

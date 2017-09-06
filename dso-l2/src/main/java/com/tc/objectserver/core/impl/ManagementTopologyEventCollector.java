@@ -38,12 +38,15 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Collectors;
 import org.terracotta.monitoring.ServerState;
 
 
@@ -57,7 +60,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
   private final Set<EntityID> entities;
-  private final Map<ClientID, Collection<EntityDescriptor>> incomingReleases;
+  private final Map<ClientID, Collection<FetchID>> incomingDisconnects;
+  private final Map<ClientID, Collection<ClientInstanceID>> incomingReleases;
   private final Map<ClientID, Collection<ResolvedDescriptors>> incomingFetches;
   private boolean isActiveState;
 
@@ -67,6 +71,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.entities = new HashSet<EntityID>();
     this.incomingReleases = new HashMap<>();
     this.incomingFetches = new HashMap<>();
+    this.incomingDisconnects = new HashMap<>();
     this.isActiveState = false;
     
     // Do our initial configuration of the service.
@@ -161,10 +166,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.connectedClients.remove(client);
     
     // Remove it from the monitoring interface.
-    if (null != this.serviceInterface && !incomingReleases.containsKey(client)) {
-      String nodeName = clientIdentifierForService(client);
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
-    }
+    removeClientIfPossible(client);
     LOGGER.debug("client did disconnect " + client);
   }
 
@@ -229,23 +231,56 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     }
     
     if (incomingReleases.containsKey(client)) {
-      Collection<EntityDescriptor> expected = incomingReleases.get(client);
-      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(entity)));
+      Collection<ClientInstanceID> expected = incomingReleases.get(client);
+      Assert.assertTrue(expected.removeIf(des->des.equals(instance)));
       if (expected.isEmpty()) {
         incomingReleases.remove(client);
-        // Remove it from the monitoring interface.
-        if (null != this.serviceInterface) {
-          String nodeName = clientIdentifierForService(client);
-          this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
-        }
+        removeClientIfPossible(client);
       }
     }
     LOGGER.debug("client " + client + " released " + entity);
   }
   
-  public synchronized void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
-    if (null != serviceInterface && !releases.isEmpty()) {
-      incomingReleases.put(cid, releases);
+  public synchronized void expectedDisconnects(ClientID cid, Collection<FetchID> releases) {
+    if (null != serviceInterface) {
+      if (!releases.isEmpty()) {
+        incomingDisconnects.put(cid, new ArrayList<>(releases));
+      }
+      removeClientIfPossible(cid);
+    }
+  }  
+  
+  public synchronized void clientDisconnectedFromEntity(ClientID cid, FetchID fetch, Collection<EntityDescriptor> fids) {
+    if (null != serviceInterface) {
+      Collection<FetchID> fetches = incomingDisconnects.get(cid);
+      expectedReleases(cid, fids);
+      Assert.assertTrue(fetches.remove(fetch));
+      if (fetches.isEmpty()) {
+        incomingDisconnects.remove(cid);
+        removeClientIfPossible(cid);
+      }
+    }
+  }
+  
+  private void removeClientIfPossible(ClientID client) {
+    if (!incomingReleases.containsKey(client) && !incomingDisconnects.containsKey(client)) {
+      // Remove it from the monitoring interface.
+      if (null != this.serviceInterface) {
+        String nodeName = clientIdentifierForService(client);
+        this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
+      }
+    }
+  }
+  
+  private void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
+    if (!releases.isEmpty()) {
+      incomingReleases.compute(cid, (ignore,ex)->{
+        if (ex == null) {
+          ex = new HashSet<>();
+        }
+        ex.addAll(releases.stream().map(EntityDescriptor::getClientInstanceID).collect(Collectors.toList()));
+        return ex;
+      });
     }
   }
 
