@@ -37,4 +37,5 @@ public interface Stage<EC> {
     
   public String getName();
 
+  public void clear();
 }

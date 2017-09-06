@@ -26,7 +26,6 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

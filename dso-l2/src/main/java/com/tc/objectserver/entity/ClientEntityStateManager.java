@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import java.util.List;
 
