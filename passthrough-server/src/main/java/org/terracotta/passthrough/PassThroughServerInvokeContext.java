@@ -7,11 +7,13 @@ public class PassThroughServerInvokeContext implements InvokeContext {
   private final long current;
   private final long oldest;
   private final ClientSourceId sourceId;
+  private final int concurrencyKey;
 
-  public PassThroughServerInvokeContext(ClientSourceId sourceId, long current, long oldest) {
+  public PassThroughServerInvokeContext(ClientSourceId sourceId, int concurrencyKey, long current, long oldest) {
     this.sourceId = sourceId;
     this.current = current;
     this.oldest = oldest;
+    this.concurrencyKey = concurrencyKey;
   }
 
   @Override
@@ -37,6 +39,11 @@ public class PassThroughServerInvokeContext implements InvokeContext {
   @Override
   public ClientSourceId makeClientSourceId(long l) {
     return new PassthroughClientSourceId(l);
+  }
+
+  @Override
+  public int getConcurrencyKey() {
+    return concurrencyKey;
   }
 
 }

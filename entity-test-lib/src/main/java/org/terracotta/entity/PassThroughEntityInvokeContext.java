@@ -4,11 +4,13 @@ public class PassThroughEntityInvokeContext implements InvokeContext {
   private final long current;
   private final long oldest;
   private final ClientSourceId sourceId;
+  private final int concurrencyKey;
 
-  public PassThroughEntityInvokeContext(ClientSourceId sourceId, long current, long oldest) {
+  public PassThroughEntityInvokeContext(ClientSourceId sourceId, int concurrencyKey, long current, long oldest) {
     this.sourceId=sourceId;
     this.current = current;
     this.oldest = oldest;
+    this.concurrencyKey = concurrencyKey;
   }
 
   @Override
@@ -20,6 +22,11 @@ public class PassThroughEntityInvokeContext implements InvokeContext {
   public ClientSourceId makeClientSourceId(long l) {
     // todo
     return null;
+  }
+
+  @Override
+  public int getConcurrencyKey() {
+    return concurrencyKey;
   }
 
   @Override
