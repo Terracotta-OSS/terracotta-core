@@ -93,8 +93,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     if (activeMap.containsKey(name)) {
       ClientDescriptor descriptor = new FakeClientDescriptor(nextClientID);
       MessageCodec<M, R> codec = codecs.get(name);
-      ConcurrencyStrategy<M> concurrencyStrategy = concurrencyMap.get(name);
-      endpoint = getEndpoint(name, descriptor, codec, concurrencyStrategy);
+      endpoint = getEndpoint(name, descriptor, codec);
       endpoints.put(descriptor, endpoint);
       nextClientID += 1;
       // Update the connect count.
@@ -103,9 +102,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     return endpoint;
   }
 
-  private FakeEndpoint getEndpoint(String name, ClientDescriptor descriptor, MessageCodec<M, R> codec,
-                                   ConcurrencyStrategy<M> concurrencyStrategy) {
-    return new FakeEndpoint(name, descriptor, codec, concurrencyStrategy);
+  private FakeEndpoint getEndpoint(String name, ClientDescriptor descriptor, MessageCodec<M, R> codec) {
+    return new FakeEndpoint(name, descriptor, codec);
   }
   
 
@@ -219,7 +217,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   }
   
   private class FakeEndpoint implements TxIdAwareClientEndpoint<M, R> {
-    private final ConcurrencyStrategy<M> concurrencyStrategy;
     private EndpointDelegate delegate;
     private final String entityName;
     private final ClientDescriptor clientDescriptor;
@@ -227,10 +224,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private AtomicLong currentId = new AtomicLong(0);
     private volatile long eldestid = -1;
 
-    public FakeEndpoint(String name, ClientDescriptor clientDescriptor, MessageCodec<M, R> codec,
-                        ConcurrencyStrategy<M> concurrencyStrategy) {
+    public FakeEndpoint(String name, ClientDescriptor clientDescriptor, MessageCodec<M, R> codec) {
       this.entityName = name;
-      this.concurrencyStrategy = concurrencyStrategy;
       this.clientDescriptor = clientDescriptor;
       this.codec = codec;
     }
@@ -275,7 +270,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
           PassthroughStripe.this.activeMap.get(this.entityName),
           PassthroughStripe.this.passiveMap.get(this.entityName),
           PassthroughStripe.this.codecs.get(this.entityName),
-          concurrencyStrategy
+          PassthroughStripe.this.concurrencyMap.get(this.entityName)
       );
     }
 
@@ -337,7 +332,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private final long currentId;
     private final ConcurrencyStrategy<M> concurrency;
     private M request = null;
-    private int requestConcurrencyKey;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
                                    long currentId,
@@ -388,7 +382,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     @Override
     public InvocationBuilder<M, R> message(M message) {
       this.request = message;
-      this.requestConcurrencyKey = concurrency.concurrencyKey(message);
       return this;
     }
 
@@ -413,6 +406,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private byte[] sendInvocation(long currentId, long eldestId, ActiveServerEntity<M, R> entity, MessageCodec<M, R>
       codec) throws EntityException {
       byte[] result = null;
+
+      int requestConcurrencyKey = concurrency.concurrencyKey(request);
       try {
         R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor,
                                                                                   requestConcurrencyKey,
