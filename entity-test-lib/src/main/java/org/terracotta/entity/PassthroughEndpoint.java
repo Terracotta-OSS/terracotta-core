@@ -43,14 +43,19 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   private boolean isOpen;
   private AtomicLong idGenerator = new AtomicLong(0);
   private volatile long eldest = -1L;
+  private ConcurrencyStrategy<M> concurrencyStrategy;
 
   public PassthroughEndpoint() {
     // We start in the open state.
     this.isOpen = true;
   }
 
-  public void attach(ActiveServerEntity<M, R> entity, MessageCodec<M, R> codec, byte[] config) {
+  public void attach(ActiveServerEntity<M, R> entity,
+                     MessageCodec<M, R> codec,
+                     ConcurrencyStrategy<M> concurrencyStrategy,
+                     byte[] config) {
     this.entity = entity;
+    this.concurrencyStrategy = concurrencyStrategy;
     this.codec = codec;
     this.configuration = config;
     entity.connected(clientDescriptor);
@@ -153,9 +158,11 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       byte[] result = null;
       try {
         M message = codec.decodeMessage(payload);
+        int key = concurrencyStrategy.concurrencyKey(message);
         R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor,
-                                                                            idGenerator.incrementAndGet(),
-                                                                            eldest), message);
+                                                                                  key,
+                                                                                  idGenerator.incrementAndGet(),
+                                                                                  eldest), message);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityServerException(null, null, null, e);

@@ -51,6 +51,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private final Map<String, MessageCodec<M, R>> codecs = new HashMap<String, MessageCodec<M, R>>();
   private final Map<String, byte[]> configMap = new HashMap<String, byte[]>();
   private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
+  private final Map<String, ConcurrencyStrategy<M>> concurrencyMap = new HashMap<>();
   private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
   
   private int nextClientID = 1;
@@ -70,12 +71,15 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       MessageCodec<M, R> codec = service.getMessageCodec();
       ActiveServerEntity<M, R> active = service.createActiveEntity(serviceRegistry.create(consumerID++), configuration);
       PassiveServerEntity<M, R> passive = service.createPassiveEntity(serviceRegistry.create(consumerID++), configuration);
+      ConcurrencyStrategy<M> concurrencyStrategy= service.getConcurrencyStrategy(configuration);
+
       // Set them as new instances.
       active.createNew();
       passive.createNew();
       // Store them for later lookup.
       activeMap.put(name, active);
       passiveMap.put(name, passive);
+      concurrencyMap.put(name, concurrencyStrategy);
       codecs.put(name, codec);
       configMap.put(name, configuration);
       connectCountMap.put(name, 0);
@@ -265,7 +269,8 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
           eldestid,
           PassthroughStripe.this.activeMap.get(this.entityName),
           PassthroughStripe.this.passiveMap.get(this.entityName),
-          PassthroughStripe.this.codecs.get(this.entityName)
+          PassthroughStripe.this.codecs.get(this.entityName),
+          PassthroughStripe.this.concurrencyMap.get(this.entityName)
       );
     }
 
@@ -325,6 +330,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private final PassiveServerEntity<M, R> passiveServerEntity;
     private final long eldestid;
     private final long currentId;
+    private final ConcurrencyStrategy<M> concurrency;
     private M request = null;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
@@ -332,10 +338,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
                                    long eldestid,
                                    ActiveServerEntity<M, R> activeServerEntity,
                                    PassiveServerEntity<M, R> passiveServerEntity,
-                                   MessageCodec<M, R> codec) {
+                                   MessageCodec<M, R> codec,
+                                   ConcurrencyStrategy<M> concurrency) {
       this.clientDescriptor = clientDescriptor;
       this.currentId=currentId;
       this.eldestid=eldestid;
+      this.concurrency = concurrency;
       this.activeServerEntity = activeServerEntity;
       this.passiveServerEntity = passiveServerEntity;
       this.codec = codec;
@@ -398,8 +406,13 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private byte[] sendInvocation(long currentId, long eldestId, ActiveServerEntity<M, R> entity, MessageCodec<M, R>
       codec) throws EntityException {
       byte[] result = null;
+
+      int requestConcurrencyKey = concurrency.concurrencyKey(request);
       try {
-        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor, currentId, eldestId),
+        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor,
+                                                                                  requestConcurrencyKey,
+                                                                                  currentId,
+                                                                                  eldestId),
                                          request);
         result = codec.encodeResponse(response);
       } catch (Exception e) {

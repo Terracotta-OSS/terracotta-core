@@ -584,8 +584,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     M msg = deserialize(className, entityName, codec, payload);
     if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
       try {
-        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext(clientDescriptor, transactionId,
-                                                                             eldestTransactionId), msg);
+        int cKey = data.concurrency.concurrencyKey(msg);
+        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext(clientDescriptor,
+                                                                                  cKey,
+                                                                                  transactionId,
+                                                                                  eldestTransactionId),
+                                         msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {
         throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
@@ -605,9 +609,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     PassiveServerEntity<M, R> entity = data.getPassive();
     MessageCodec<M, R> codec = data.messageCodec;
     M msg = deserialize(className, entityName, codec, payload);
+    int cKey = data.concurrency.concurrencyKey(msg);
     if (data.executionStrategy.getExecutionLocation(msg).runOnPassive()) {
       try {
-        entity.invokePassive(new PassThroughServerInvokeContext(clientDescriptor.getSourceId(), transactionId, eldestTransactionId),
+        entity.invokePassive(new PassThroughServerInvokeContext(clientDescriptor.getSourceId(), cKey,
+                                                                transactionId,
+                                                                eldestTransactionId),
                              msg);
       } catch (EntityUserException eu) {
         throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
@@ -621,7 +628,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     PassiveServerEntity<M, R> entity = data.getPassive();
     SyncMessageCodec<M> codec = data.syncMessageCodec;
     try {
-      entity.invokePassive(new PassThroughServerInvokeContext(clientDescriptor.getSourceId(), -1L, -1L),
+      entity.invokePassive(new PassThroughServerInvokeContext(clientDescriptor.getSourceId(), concurrencyKey, -1L, -1L),
                     deserializeForSync(className, entityName, codec, concurrencyKey, payload));
     } catch (EntityUserException eu) {
       throw new EntityServerException(className, entityName, eu.getLocalizedMessage(), eu);
