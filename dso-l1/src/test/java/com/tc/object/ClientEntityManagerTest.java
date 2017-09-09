@@ -98,6 +98,14 @@ public class ClientEntityManagerTest extends TestCase {
         return stage;
       }
     });
+    when(this.stageMgr.getStage(any(String.class), any(Class.class))).then(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        Stage stage = mock(Stage.class);
+        when(stage.getSink()).thenReturn(new FakeSink(null));
+        return stage;
+      }
+    });
     this.manager = new ClientEntityManagerImpl(this.channel, stageMgr);
     
     String entityClassName = "Class Name";
@@ -325,7 +333,15 @@ public class ClientEntityManagerTest extends TestCase {
   public void testShutdownWhilePaused() throws Exception {
     // We will create a runnable which will attempt to fetch the entity (and we will get this stuck in "WAITING" on pause).
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });
     // Pause the manager before we start anything.
     this.manager.pause();
     // Now we can start the lookup thread as we expect it to stall on the paused state.
@@ -573,6 +589,7 @@ public class ClientEntityManagerTest extends TestCase {
     private EntityDescriptor descriptor;
     private byte[] extendedData;
     private boolean requiresReplication;
+    private Type type;
     
     public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, EntityException resultException, boolean autoComplete) {
       this.clientEntityManager = clientEntityManager;
@@ -673,7 +690,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public Type getVoltronType() {
-      return Type.INVOKE_ACTION;
+      return type;
     }
     @Override
     public byte[] getExtendedData() {
@@ -690,6 +707,7 @@ public class ClientEntityManagerTest extends TestCase {
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;
       this.requiresReplication = requiresReplication;
+      this.type = type;
     }
 
     @Override

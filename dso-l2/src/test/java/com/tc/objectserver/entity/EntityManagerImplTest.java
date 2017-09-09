@@ -50,6 +50,8 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class EntityManagerImplTest {
@@ -72,7 +74,7 @@ public class EntityManagerImplTest {
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
-        mock(ITopologyEventCollector.class),
+        new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
         processor,
         mock(ManagementKeyCallback.class)
     );

@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
@@ -142,6 +144,11 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     waitingForAnswer.put(network.getTransactionID(), message);
     network.send();
     return message;
+  }
+
+  @Override
+  public InvokeFuture<byte[]> invokeActionWithTimeout(EntityDescriptor entityDescriptor, Set<Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+    return invokeAction(entityDescriptor, acks, requiresReplication, shouldBlockGetOnRetire, payload);
   }
 
   private DiagnosticMessage createMessage(byte[] config) {

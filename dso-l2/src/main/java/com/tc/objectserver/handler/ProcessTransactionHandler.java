@@ -619,6 +619,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
       case LOCAL_ENTITY_GC:
         action = ServerEntityAction.MANAGED_ENTITY_GC;
         break;
+      case DISCONNECT_CLIENT:
+        action = ServerEntityAction.DISCONNECT_CLIENT;
+        break;
       default:
         // Unknown request type.
         Assert.fail();

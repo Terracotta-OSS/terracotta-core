@@ -21,6 +21,8 @@ package com.tc.object;
 import com.tc.entity.VoltronEntityMessage;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.terracotta.entity.InvokeFuture;
 
@@ -30,4 +32,5 @@ import org.terracotta.entity.InvokeFuture;
  */
 public interface InvocationHandler {
   InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload);
+  InvokeFuture<byte[]> invokeActionWithTimeout(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException;
 }
