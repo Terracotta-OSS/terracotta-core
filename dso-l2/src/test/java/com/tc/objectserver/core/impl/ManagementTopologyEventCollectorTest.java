@@ -37,13 +37,16 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.UUID;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
@@ -381,6 +384,8 @@ public class ManagementTopologyEventCollectorTest {
   
   @Test
   public void testClientEventOrderingOnConnect() throws Exception {
+    try {
+    int instanceCount = 1;
     IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
     when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
     when(monitoringProducer.removeNode(any(), any())).thenReturn(true);
@@ -410,32 +415,41 @@ public class ManagementTopologyEventCollectorTest {
         this.collector.entityWasCreated(eid, 1, true);
       }
       for (EntityID eid : entities) {
-        ClientInstanceID instance =  new ClientInstanceID(1);
+        ClientInstanceID instance =  new ClientInstanceID(instanceCount++);
         this.collector.clientDidFetchEntity(cid, eid, instance);
       }
       verify(monitoringProducer, never()).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.anyString(), Matchers.any());
       this.collector.clientDidConnect(channel, cid);
       verify(monitoringProducer, times(count)).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.anyString(), Matchers.any());
   //  simulate ClientEntityStateManger detecting a client disconnect
-      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->EntityDescriptor.createDescriptorForFetch(eid, 1, new ClientInstanceID(1))).collect(Collectors.toList()));
+      List<EntityDescriptor> fetches = IntStream.range(0, count).mapToObj(i->EntityDescriptor.createDescriptorForFetch(entities[i], 1, new ClientInstanceID(i+1))).collect(Collectors.toList());
+      if (!fetches.isEmpty()) {
+        this.collector.expectedDisconnects(cid, Collections.singleton(new FetchID(1)));
+        this.collector.clientDisconnectedFromEntity(cid, new FetchID(1), fetches);
+      }
   //  now disconnect the client
       this.collector.clientDidDisconnect(cid);
+      instanceCount = 1;
       for (EntityID eid : entities) {
         verify(monitoringProducer, Mockito.never()).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
-        ClientInstanceID instance =  new ClientInstanceID(1);
+        ClientInstanceID instance =  new ClientInstanceID(instanceCount++);
         this.collector.clientDidReleaseEntity(cid, eid, instance);
-        verify(monitoringProducer).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() + "_1"));
+        verify(monitoringProducer).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() +  "_" + instance.getID()));
       }
       verify(monitoringProducer).removeNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));
       
       for (EntityID eid : entities) {
         this.collector.entityWasDestroyed(eid);
       }
+    }} catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     }
   }  
   
   @Test
   public void testClientEventOrdering() throws Exception {
+    int instanceCount = 1;
     IMonitoringProducer monitoringProducer = mock(IMonitoringProducer.class);
     when(monitoringProducer.addNode(any(), any(), any())).thenReturn(true);
     when(monitoringProducer.removeNode(any(), any())).thenReturn(true);
@@ -466,19 +480,23 @@ public class ManagementTopologyEventCollectorTest {
         this.collector.entityWasCreated(eid, 1, true);
       }
       for (EntityID eid : entities) {
-        ClientDescriptor descriptor = mock(ClientDescriptor.class);
-        ClientInstanceID instance = new ClientInstanceID(1);
+        ClientInstanceID instance = new ClientInstanceID(instanceCount++);
         this.collector.clientDidFetchEntity(cid, eid, instance);
       }
   //  simulate ClientEntityStateManger detecting a client disconnect
-      this.collector.expectedReleases(cid, Arrays.asList(entities).stream().map(eid->EntityDescriptor.createDescriptorForFetch(eid, 1, new ClientInstanceID(1))).collect(Collectors.toList()));
-  //  now disconnect the client
+      List<EntityDescriptor> fetches = IntStream.range(0, count).mapToObj(i->EntityDescriptor.createDescriptorForFetch(entities[i], 1, new ClientInstanceID(i+1))).collect(Collectors.toList());
+      if (!fetches.isEmpty()) {
+        this.collector.expectedDisconnects(cid, Collections.singleton(new FetchID(1)));
+        this.collector.clientDisconnectedFromEntity(cid, new FetchID(1), fetches);
+      }
+      //  now disconnect the client
       this.collector.clientDidDisconnect(cid);
+      instanceCount = 1;
       for (EntityID eid : entities) {
         verify(monitoringProducer, Mockito.never()).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));    
-        ClientInstanceID instance = new ClientInstanceID(1);
+        ClientInstanceID instance = new ClientInstanceID(instanceCount++);
         this.collector.clientDidReleaseEntity(cid, eid, instance);
-        verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() + "_1"));
+        verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.FETCHED_PATH), Matchers.eq("1_" + eid.getClassName() + eid.getEntityName() + "_" + instance.getID()));
       }
       verify(monitoringProducer).removeNode(Matchers.eq(PlatformMonitoringConstants.CLIENTS_PATH), Matchers.eq(Long.toString(1L)));
       

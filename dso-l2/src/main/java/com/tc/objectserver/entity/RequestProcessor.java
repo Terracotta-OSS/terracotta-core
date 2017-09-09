@@ -114,7 +114,7 @@ public class RequestProcessor {
     typeMap.put(ServerEntityAction.ORDER_PLACEHOLDER_ONLY, SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER);
     typeMap.put(ServerEntityAction.RELEASE_ENTITY, SyncReplicationActivity.ActivityType.RELEASE_ENTITY);
     typeMap.put(ServerEntityAction.REQUEST_SYNC_ENTITY, SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN);
-    
+    typeMap.put(ServerEntityAction.DISCONNECT_CLIENT, SyncReplicationActivity.ActivityType.DISCONNECT_CLIENT);
   }
   
   private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, FetchID fetchID, ClientID src, ClientInstanceID instance, 

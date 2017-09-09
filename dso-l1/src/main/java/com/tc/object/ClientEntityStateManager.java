@@ -19,9 +19,7 @@
 
 package com.tc.object;
 
-import com.tc.exception.TCNotRunningException;
 import com.tc.util.Assert;
-import com.tc.util.Util;
 
 /**
  * @author vmad
@@ -31,39 +29,29 @@ public class ClientEntityStateManager {
     public ClientEntityStateManager() {
         this.currentState = State.RUNNING;
     }
-
-    public synchronized void start() {
-        moveTo(State.STARTING);
+    
+    public boolean isRunning() {
+      return this.currentState == State.RUNNING;
+    }
+    
+    public boolean isShutdown() {
+      return this.currentState == State.STOPPED;
+    }
+    
+    public boolean isPaused() {
+      return this.currentState == State.PAUSED;
     }
 
-    public synchronized void stop() {
+    public void stop() {
         moveTo(State.STOPPED);
     }
 
-    public synchronized void running() {
+    public void running() {
         moveTo(State.RUNNING);
     }
 
-    public synchronized void pause() {
+    public void pause() {
         moveTo(State.PAUSED);
-    }
-
-    public synchronized void waitUntilRunning() {
-        boolean isInterrupted = false;
-        try {
-            while (State.RUNNING != this.currentState) {
-                if (State.STOPPED == this.currentState) {
-                    throw new TCNotRunningException();
-                }
-                try {
-                    wait();
-                } catch (final InterruptedException e) {
-                    isInterrupted = true;
-                }
-            }
-        } finally {
-            Util.selfInterruptIfNeeded(isInterrupted);
-        }
     }
 
     public String getCurrentState() {
@@ -80,12 +68,6 @@ public class ClientEntityStateManager {
             @Override
             void check(State newState) {
                 Assert.assertTrue("Attempt to unpause while RUNNING", newState != RUNNING);
-                Assert.assertTrue("Attempt to handshake while RUNNING", newState != STARTING);
-            }
-        }, STARTING {
-            @Override
-            void check(State newState) {
-                Assert.assertTrue("Attempt to handshake while STARTING", newState != STARTING);
             }
         }, STOPPED {
             @Override
@@ -102,7 +84,6 @@ public class ClientEntityStateManager {
     private void moveTo(State newState) {
         currentState.check(newState);
         currentState = newState;
-        notifyAll();
     }
 
 

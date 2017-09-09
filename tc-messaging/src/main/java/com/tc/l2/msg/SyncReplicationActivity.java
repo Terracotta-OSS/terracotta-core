@@ -84,7 +84,9 @@ public class SyncReplicationActivity implements OrderedEventContext {
     SYNC_ENTITY_END,
     SYNC_ENTITY_CONCURRENCY_BEGIN,
     SYNC_ENTITY_CONCURRENCY_PAYLOAD,
-    SYNC_ENTITY_CONCURRENCY_END;
+    SYNC_ENTITY_CONCURRENCY_END,
+    
+    DISCONNECT_CLIENT;
   }
 
 
@@ -131,7 +133,9 @@ public class SyncReplicationActivity implements OrderedEventContext {
       ActivityType.DESTROY_ENTITY,
       ActivityType.FETCH_ENTITY,
       ActivityType.RELEASE_ENTITY,
-      ActivityType.RECONFIGURE_ENTITY);
+      ActivityType.RECONFIGURE_ENTITY,
+      ActivityType.DISCONNECT_CLIENT
+    );
       
   
   public static SyncReplicationActivity createLifecycleMessage(EntityID eid, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload) {
@@ -317,7 +321,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   }
 
   public boolean isSyncActivity() {
-    return (this.action.ordinal() >= ActivityType.SYNC_START.ordinal());
+    return (this.action.ordinal() >= ActivityType.SYNC_START.ordinal() && this.action.ordinal() < ActivityType.DISCONNECT_CLIENT.ordinal());
   }
 
   protected void serializeTo(TCByteBufferOutput out) {

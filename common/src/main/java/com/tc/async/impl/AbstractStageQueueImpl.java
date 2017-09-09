@@ -45,6 +45,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
         q.put(new CloseContext());
       } catch (InterruptedException ie) {
         logger.debug("closing stage", ie);
+        Thread.currentThread().interrupt();
       }
     }
   }

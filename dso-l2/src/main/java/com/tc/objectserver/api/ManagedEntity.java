@@ -120,12 +120,6 @@ public interface ManagedEntity {
   public void setSuccessfulCreateListener(CreateListener listener);
 
   /**
-   * Notify a client source id has been destroyed and will not be heard from again.
-   * @param sourceid
-   */
-  public void notifyDestroyed(ClientSourceId sourceid);
-
-  /**
    * Interface used to describe the argument to setSuccessfulCreateListener.
    */
   public interface CreateListener {
