@@ -42,14 +42,6 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   int getClientPID();
 
-  void setDiagnosticClient(boolean isDiagnosticClient);
-
-  boolean diagnosticClient();
-  
-  void setEnterpriseClient(boolean isEnterpriseClient);
-
-  boolean enterpriseClient();
-
   long getLocalTimeMills();
 
   void addReconnectReference(ClientEntityReferenceContext context);
