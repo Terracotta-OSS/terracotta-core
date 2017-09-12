@@ -468,6 +468,10 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
   }
 
   private void sendCompleteResponse(IMessageSenderWrapper sender, long transactionID, byte[] response, EntityException error) {
+    if(error != null) {
+      System.err.println("ERROR: An error occured while processing message " + transactionID + " from " + sender.getClientOriginID());
+      error.printStackTrace();
+    }
     PassthroughMessage complete = PassthroughMessageCodec.createCompleteMessage(response, error);
     // The oldestTransactionID isn't relevant when sent back.
     long oldestTransactionID = -1;
