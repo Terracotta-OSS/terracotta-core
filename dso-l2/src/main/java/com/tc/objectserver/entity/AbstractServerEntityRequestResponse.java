@@ -134,6 +134,10 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
       switch (action) {
+        case DISCONNECT_CLIENT:
+          // do nothing, really shouldn't happen because this client is gone but maybe if there is 
+          // some large delay in cleanup, this can occur
+          break;
         case CREATE_ENTITY:
         case DESTROY_ENTITY:
         case RELEASE_ENTITY:

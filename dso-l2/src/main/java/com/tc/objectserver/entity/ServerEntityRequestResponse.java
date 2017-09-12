@@ -62,20 +62,20 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
     if (value == null) {
       super.complete();
     } else {
-      super.complete(value); //To change body of generated methods, choose Tools | Templates.
+      super.complete(value); 
     }
   }
 
   @Override
   public synchronized void complete() {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction());
-    super.complete(); //To change body of generated methods, choose Tools | Templates.
+    super.complete();
   }
 
   @Override
   public synchronized void failure(EntityException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
-    super.failure(e); //To change body of generated methods, choose Tools | Templates.
+    super.failure(e); 
   }
 
   public void setAutoRetire() {
