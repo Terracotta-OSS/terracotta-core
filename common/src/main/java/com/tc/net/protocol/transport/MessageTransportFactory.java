@@ -27,10 +27,10 @@ public interface MessageTransportFactory {
 
   ClientMessageTransport createNewTransport();
 
-  ServerMessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+  ServerMessageTransport createNewTransport(TransportHandshakeErrorHandler handler,
                                       TransportHandshakeMessageFactory handshakeMessageFactory, List<MessageTransportListener> transportListeners);
 
-  ServerMessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+  ServerMessageTransport createNewTransport(TCConnection connection,
                                       TransportHandshakeErrorHandler handler,
                                       TransportHandshakeMessageFactory handshakeMessageFactory, List<MessageTransportListener> transportListeners);
 

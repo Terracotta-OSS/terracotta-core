@@ -24,16 +24,15 @@ import org.slf4j.LoggerFactory;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.l2.state.StateManager;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.handshakemanager.ServerClientModeInCompatibleException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.ProductID;
 
 public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshakeMessage> {
   
@@ -63,11 +62,9 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     try {
-      if (clientMsg.diagnosticClient()) {
+      if (clientMsg.getChannel().getProductId() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
       } else if (stateManager.isActiveCoordinator()) {
-        NodeID remoteNodeID = clientMsg.getChannel().getRemoteNodeID();
-        checkCompatibility(clientMsg.enterpriseClient(), remoteNodeID);
         this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
       } else {
         this.handshakeManager.notifyClientRefused(clientMsg, "do not handshake with passive");
@@ -77,18 +74,6 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
       MessageChannel c = clientMsg.getChannel();
       getLogger().error("Closing channel " + c.getChannelID() + " because of previous errors");
       c.close();
-    } catch (ServerClientModeInCompatibleException e) {
-      getLogger().error("Handshake Error : ", e);
-      this.handshakeManager.notifyClientRefused(clientMsg, e.getMessage());
-      // client should go away after reading this message and the channel should get closed there by.
-    }
-  }
-
-  protected void checkCompatibility(boolean isEnterpriseClient, NodeID remoteNodeID)
-      throws ServerClientModeInCompatibleException {
-    if (isEnterpriseClient) {
-      throw new ServerClientModeInCompatibleException("An " + ENTERPRISE + " client can not connect to an "
-                                                      + OPEN_SOURCE + " Server, Connection refused.");
     }
   }
 

@@ -142,26 +142,6 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
-  public boolean enterpriseClient() {
-    return this.enterpriseClient;
-  }
-
-  @Override
-  public void setEnterpriseClient(boolean isEnterpriseClient) {
-    this.enterpriseClient = isEnterpriseClient;
-  }
-
-  @Override
-  public boolean diagnosticClient() {
-    return this.diagnosticClient;
-  }
-
-  @Override
-  public void setDiagnosticClient(boolean isDiagnosticClient) {
-    this.diagnosticClient = isDiagnosticClient;
-  }
-  
-  @Override
   public long getLocalTimeMills() {
     return System.currentTimeMillis();
   }

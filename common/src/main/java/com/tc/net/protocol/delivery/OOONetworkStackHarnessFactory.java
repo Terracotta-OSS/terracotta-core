@@ -44,7 +44,7 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
   }
 
   @Override
-  public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
+  public ClientNetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
     final OnceAndOnlyOnceProtocolNetworkLayer layer = factory.createNewClientInstance(reconnectConfig);
@@ -61,7 +61,7 @@ public class OOONetworkStackHarnessFactory implements NetworkStackHarnessFactory
   }
 
   @Override
-  public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
+  public ServerNetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
     transport.setAllowConnectionReplace(true);

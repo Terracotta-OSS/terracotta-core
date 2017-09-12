@@ -53,7 +53,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandshakeManagerImpl.class);
 
   private final ClientHandshakeCallback callBacks;
-  private final boolean diagnostic;
   private final ClientHandshakeMessageFactory chmf;
   private final Logger logger;
   private final SessionManager sessionManager;
@@ -71,7 +70,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
                                     SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
                                     String uuid, String name, String clientVersion,
-                                    ClientHandshakeCallback entities, boolean diagnostic) {
+                                    ClientHandshakeCallback entities) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
@@ -80,7 +79,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.name = name;
     this.clientVersion = clientVersion;
     this.callBacks = entities;
-    this.diagnostic = diagnostic;
     this.state = State.PAUSED;
     this.disconnected = true;
     pauseCallbacks();
@@ -110,7 +108,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     ClientHandshakeMessage handshakeMessage;
 
     changeToStarting();
-    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient(), diagnostic);
+    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion);
     notifyCallbackOnHandshake(handshakeMessage);
 
     this.logger.debug("Sending handshake message");
@@ -122,11 +120,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       }
     }
   }
-
-  protected boolean isEnterpriseClient() {
-    return false;
-  }
-
+  
   @Override
   public void fireNodeError() {
     final String msg = "Reconnection was rejected from server. This client will never be able to join the cluster again.";

@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.impl;
 
-import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -52,16 +51,30 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     if (!new ChannelID(connectionID.getChannelID()).isValid()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
     } else {
-      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
+      if (!stripe.getName().equals(connectionID.getServerID())) {
+        return ConnectionID.NULL_ID;
+      } else {
+        return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
+      }
     }
   }
 
   private ConnectionID nextConnectionId(String clientJvmID, ProductID productId) {
-    return buildConnectionId(clientJvmID, connectionIDSequence.next(), productId);
+    return formConnectionId(clientJvmID, connectionIDSequence.next(), productId);
   }
 
-  private ConnectionID buildConnectionId(String jvmID, long channelID, ProductID productId) {
+  private ConnectionID formConnectionId(String jvmID, long channelID, ProductID productId) {
     Assert.assertNotNull(stripe);
+    productId = checkCompatibility(productId);
+    if (productId == null) {
+      return ConnectionID.NULL_ID;
+    }
+    ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), null, null, productId);
+    fireCreationEvent(rv);
+    return rv;
+  }
+  
+  private ProductID checkCompatibility(ProductID productId) {
     // this is confusing but StripeID is being used as serverID.  When a passive transitions to 
     // active and allows reconnects, it expects the serverID to match which can only be the stripeID
     if (!supported.contains(productId)) {
@@ -80,22 +93,15 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
           //  fall through to next level if not supported
         case SERVER:
           //  nothing supported, return the null id
-          return ConnectionID.NULL_ID;
+          productId = null;
       }
     }
-    ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), null, null, productId);
-    fireCreationEvent(rv);
-    return rv;
+    return productId;
   }
 
   private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID productId) {
     Assert.assertTrue(channelID != ChannelID.NULL_ID.toLong());
-    return buildConnectionId(clientJvmID, channelID, productId);
-  }
-
-  @Override
-  public void restoreConnectionId(ConnectionID rv) {
-    fireCreationEvent(rv);
+    return formConnectionId(clientJvmID, channelID, productId);
   }
 
   private void fireCreationEvent(ConnectionID rv) {
@@ -139,11 +145,4 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   public long getCurrentConnectionID() {
     return connectionIDSequence.current();
   }
-//  using this to build the reconnect ConnectionIDs.  ServerID and ChannelID need to match
-  @Override
-  public ConnectionID buildConnectionID(ClientID client) {
-    Assert.assertNotNull(stripe);
-    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), stripe.getName());
-  }
-
 }

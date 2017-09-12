@@ -19,6 +19,7 @@
 
 package com.tc.objectserver.impl;
 
+import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -36,7 +37,6 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.internal.matchers.CapturesArguments;
 
 /**
  * @author tim
@@ -81,14 +81,29 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   
   public void testProductNegotiation() {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
-    factory.activate(StripeID.NULL_ID, 0);
-    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.PERMANENT));
+    StripeID sid = new StripeID("server1");
+    factory.activate(sid, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.PERMANENT));
     
     Assert.assertEquals(ProductID.SERVER, cid.getProductId());
-    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.STRIPE));
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.STRIPE));
     
     Assert.assertEquals(ProductID.SERVER, cid.getProductId());
   }
+  
+    
+  public void testMismatchServerRejection() {
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
+    StripeID sid = new StripeID("server1");
+    factory.activate(sid, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, new StripeID("server2").getName(), null, null, ProductID.PERMANENT));
+    
+    Assert.assertEquals(ConnectionID.NULL_ID, cid);
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.STRIPE));
+    
+    Assert.assertEquals(new ClientID(0), cid.getClientID());
+  }
+  
   public void testProductRefusal() {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.noneOf(ProductID.class));
     factory.activate(StripeID.NULL_ID, 0);
