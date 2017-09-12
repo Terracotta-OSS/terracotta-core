@@ -87,14 +87,14 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
   }
 
   @Override
-  public ServerMessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+  public ServerMessageTransport createNewTransport(TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List<MessageTransportListener> transportListeners) {
     throw new AssertionError();
   }
 
   @Override
-  public ServerMessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+  public ServerMessageTransport createNewTransport(TCConnection connection,
                                              TransportHandshakeErrorHandler handler,
                                              TransportHandshakeMessageFactory handshakeMessageFactory,
                                              List<MessageTransportListener> transportListeners) {
