@@ -89,7 +89,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.terracotta.entity.ClientDescriptor;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -395,6 +394,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("referenceCount", this.clientReferenceCount);
     props.put("waitForExclusive", this.runnables.getState());
     props.put("retirement", this.retirementManager.getState());
+    props.put("destroyed", this.isDestroyed);
+    props.put("active", this.isInActiveState);
+    props.put("removeable", this.isRemoveable());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
     try {
       if(activeServerEntity != null) {
@@ -773,7 +775,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace.activeTrace().log("invoking " + em);
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity.");
+        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
       } else {
         try {
           this.retirementManager.registerWithMessage(em, concurrencyKey);
@@ -798,7 +800,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     } else {
       if (null == this.passiveServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity.");
+        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
       } else {
         try {
           Trace trace = Trace.activeTrace().subTrace("invokePassive");
