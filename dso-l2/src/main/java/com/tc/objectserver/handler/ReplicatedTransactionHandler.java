@@ -836,6 +836,11 @@ public class ReplicatedTransactionHandler {
     public Set<NodeID> replicateTo(Set<NodeID> passives) {
       return Collections.emptySet();
     }
+
+    @Override
+    public String toString() {
+      return "BasicServerEntityRequest{" + "action=" + action + ", source=" + source + ", instance=" + instance + ", transaction=" + transaction + ", oldest=" + oldest + '}';
+    }
   }
 
 

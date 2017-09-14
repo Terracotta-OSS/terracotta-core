@@ -731,7 +731,7 @@ public class DistributedObjectClient implements TCClient {
         clientStopped.notifyAll();
       }
       if (this.channel != null && !this.channel.getProductId().isInternal()) {
-        DSO_LOGGER.info("shutting down Terracotta Client hook=" + fromShutdownHook + " force=" + forceImmediate);
+        DSO_LOGGER.info("closing down Terracotta Connection hook=" + fromShutdownHook + " force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
       }
       shutdownClient(fromShutdownHook, forceImmediate);
     }
