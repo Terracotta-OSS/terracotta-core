@@ -69,7 +69,7 @@ public class TerracottaConnection implements Connection {
     @SuppressWarnings("unchecked")
     EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U>) cachedEntityServices.get(entityClass);
     if (service == null) {
-      service = EntityClientServiceFactory.creationServiceForType(entityClass, TerracottaConnection.class.getClassLoader());
+      service = EntityClientServiceFactory.creationServiceForType(entityClass, entityClass.getClassLoader());
       if (null != service) {
         @SuppressWarnings("unchecked")
         EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U> tmp = (EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U>) cachedEntityServices.putIfAbsent(entityClass, service);
