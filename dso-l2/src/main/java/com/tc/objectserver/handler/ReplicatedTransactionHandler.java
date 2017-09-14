@@ -490,7 +490,7 @@ public class ReplicatedTransactionHandler {
   }
   
   private void finish() {
-    state.finish();
+    scheduleDeferred(state.finish());
   }
   
   private void finish(FetchID fetch) {
@@ -715,10 +715,11 @@ public class ReplicatedTransactionHandler {
       }
     }
     
-    private void finish() {
+    private Deque<DeferredContainer> finish() {
       assertStarted(null);
       syncdFetches.clear();
       finished = true;
+      return defer;
     }
     
     private boolean ignore(SyncReplicationActivity activity) {
@@ -761,6 +762,12 @@ public class ReplicatedTransactionHandler {
           Assert.fail("destroy received during a sync of an entity " + activity);
           return false;
         } else if (currentKey == concurrencyKey) {
+          defer.add(new DeferredContainer(activeSender, activity));
+          return true;
+        } else if (concurrencyKey == ConcurrencyStrategy.UNIVERSAL_KEY) {
+          // if a message comes on the universal key, make sure it lags at least one step by deferrign the 
+          // operation.  This prevents the invoke from possibly outracing the creation message at the start 
+          // of sync.  Consider deferring all universal key operations to the end of entity sync.
           defer.add(new DeferredContainer(activeSender, activity));
           return true;
         }
