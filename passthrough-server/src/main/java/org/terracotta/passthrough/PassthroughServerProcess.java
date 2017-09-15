@@ -68,6 +68,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
@@ -1250,6 +1251,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.syncMessageCodec = service.getSyncMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
       this.concurrency = service.getConcurrencyStrategy(configuration);
+      Objects.nonNull(this.concurrency);
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
       this.isActive = isActive;
       this.consumerID = consumerID;
@@ -1289,7 +1291,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     byte[] reconfigure(byte[] data) throws ConfigurationException {
       try {
         this.entityInstance = service.reconfigureEntity(registry, this.entityInstance, data);
-        this.concurrency = (isActive) ? service.getConcurrencyStrategy(data) : null;
+        this.concurrency = service.getConcurrencyStrategy(data);
         this.executionStrategy = service.getExecutionStrategy(data);
         return this.configuration;
       } finally {
