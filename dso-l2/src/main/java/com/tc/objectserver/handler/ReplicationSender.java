@@ -318,6 +318,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
           case RECONFIGURE_ENTITY:
           case FETCH_ENTITY:
           case RELEASE_ENTITY:
+          case DISCONNECT_CLIENT:
           case DESTROY_ENTITY:
             return begun;
           case INVOKE_ACTION:
