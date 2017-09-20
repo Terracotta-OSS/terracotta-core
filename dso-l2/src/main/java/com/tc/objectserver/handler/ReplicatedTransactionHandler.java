@@ -92,7 +92,9 @@ public class ReplicatedTransactionHandler {
   private final Runnable handleMessageSend = new Runnable() {
     @Override
     public void run() {
-      ReplicatedTransactionHandler.this.outgoingResponseSink.addSingleThreaded(ReplicatedTransactionHandler.this.selfMessageToken);
+      if (!stateManager.isActiveCoordinator()) {
+        ReplicatedTransactionHandler.this.outgoingResponseSink.addSingleThreaded(ReplicatedTransactionHandler.this.selfMessageToken);
+      }
     }
   };
   
@@ -612,7 +614,7 @@ public class ReplicatedTransactionHandler {
 
     // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
     //  available).
-    if (didCreate) {
+    if (didCreate && !stateManager.isActiveCoordinator()) {
       this.outgoingResponseSink.addSingleThreaded(this.selfMessageToken);
     }
   }
