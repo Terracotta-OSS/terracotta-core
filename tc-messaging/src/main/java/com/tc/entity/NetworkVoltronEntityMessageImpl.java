@@ -27,6 +27,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
@@ -45,6 +46,7 @@ import org.terracotta.entity.MessageCodecException;
 public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements NetworkVoltronEntityMessage {
   private ClientID clientID;
   private TransactionID transactionID;
+  private EntityID eid;  // only used locally for exception handling on invokes DO NOT PUT OVER THE NETWORK
   private EntityDescriptor entityDescriptor;
   private Type type;
   private boolean requiresReplication;
@@ -64,7 +66,12 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     Assert.assertNotNull(this.transactionID);
     return this.transactionID;
   }
-  
+
+  @Override
+  public EntityID getEntityID() {
+    return eid;  // only used locally for exception handling on invokes
+  }
+
   @Override
   public EntityDescriptor getEntityDescriptor() {
     Assert.assertNotNull(this.entityDescriptor);
@@ -104,12 +111,13 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
   
   @Override
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, 
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
           Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
     Assert.assertNotNull(clientID);
     Assert.assertNotNull(transactionID);
+    Assert.assertNotNull(eid);
     Assert.assertNotNull(entityDescriptor);
     Assert.assertNotNull(type);
     Assert.assertNotNull(extendedData);
