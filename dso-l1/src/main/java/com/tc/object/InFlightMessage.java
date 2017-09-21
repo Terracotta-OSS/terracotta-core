@@ -43,6 +43,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class InFlightMessage implements InvokeFuture<byte[]> {
   private final VoltronEntityMessage message;
+  private final EntityID eid;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -62,8 +63,9 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private final boolean blockGetOnRetired;
   private final Trace trace;
 
-  public InFlightMessage(VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
+  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
     this.message = message;
+    this.eid = extraInfo;
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
     this.waitingThreads = new HashSet<Thread>();
@@ -196,7 +198,7 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
       }
     }, timeout, unit);
     if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
+      throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
     } else {
       return value;
     }

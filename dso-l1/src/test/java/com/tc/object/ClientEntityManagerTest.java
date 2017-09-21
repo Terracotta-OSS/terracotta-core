@@ -441,7 +441,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(entityID, descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -454,7 +454,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
+    InvokeFuture<byte[]> result = this.manager.invokeAction(entityID, descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     long start = System.currentTimeMillis();
     try {
@@ -496,7 +496,7 @@ public class ClientEntityManagerTest extends TestCase {
 
       @Override
       public void run() {
-        mgr.invokeAction(descriptor, requestedAcks, false, true, new byte[0]);
+        mgr.invokeAction(entityID, descriptor, requestedAcks, false, true, new byte[0]);
       }
       
     });
@@ -587,6 +587,7 @@ public class ClientEntityManagerTest extends TestCase {
     private final boolean autoComplete;
     private TransactionID transactionID;
     private EntityDescriptor descriptor;
+    private EntityID entityID;
     private byte[] extendedData;
     private boolean requiresReplication;
     private Type type;
@@ -612,6 +613,11 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public TransactionID getTransactionID() {
       return this.transactionID;
+    }
+
+    @Override
+    public EntityID getEntityID() {
+      return this.entityID;
     }
 
     @Override
@@ -701,9 +707,10 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
     @Override
-    public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, 
+    public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
             Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
+      this.entityID = eid;
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;
       this.requiresReplication = requiresReplication;
