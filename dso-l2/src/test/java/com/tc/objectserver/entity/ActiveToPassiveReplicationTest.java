@@ -18,12 +18,19 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.async.api.SpecializedEventContext;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
+import com.tc.objectserver.handler.AddPassiveMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.RemovePassiveMessage;
 import com.tc.objectserver.handler.ReplicationSender;
+import com.tc.objectserver.handler.ReplicationSenderMessage;
+import com.tc.objectserver.handler.SyncActivityMessage;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +39,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +48,7 @@ import static org.mockito.Mockito.when;
 public class ActiveToPassiveReplicationTest {
   
   ServerID passive;
+  Sink<ReplicationSenderMessage> replicationSenderMessageSink;
   private ActiveToPassiveReplication replication;
   
   
@@ -56,8 +66,70 @@ public class ActiveToPassiveReplicationTest {
   @Before
   public void setUp() {
     passive = mock(ServerID.class);
+    replicationSenderMessageSink = new Sink<ReplicationSenderMessage>() {
+      @Override
+      public void addSingleThreaded(ReplicationSenderMessage context) {
+        if(context instanceof RemovePassiveMessage) {
+          ((RemovePassiveMessage)context).getCompletionHandler().run();
+        } else if(context instanceof AddPassiveMessage) {
+          ((AddPassiveMessage)context).getCompletionHandler().run();
+        } else if(context instanceof SyncActivityMessage) {
+          ((SyncActivityMessage)context).getCompletionHandler().accept(true);
+        }
+      }
+
+      @Override
+      public void addMultiThreaded(ReplicationSenderMessage context) {
+
+      }
+
+      @Override
+      public void addSpecialized(SpecializedEventContext specialized) {
+
+      }
+
+      @Override
+      public int size() {
+        return 0;
+      }
+
+      @Override
+      public void clear() {
+
+      }
+
+      @Override
+      public void close() {
+
+      }
+
+      @Override
+      public void enableStatsCollection(boolean enable) {
+
+      }
+
+      @Override
+      public boolean isStatsCollectionEnabled() {
+        return false;
+      }
+
+      @Override
+      public Stats getStats(long frequency) {
+        return null;
+      }
+
+      @Override
+      public Stats getStatsAndReset(long frequency) {
+        return null;
+      }
+
+      @Override
+      public void resetStats() {
+
+      }
+    };
     ReplicationSender replicate = mock(ReplicationSender.class);
-    replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
+    replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class), replicationSenderMessageSink);
   }
   
   @Test

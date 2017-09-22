@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class ReplicationSender extends AbstractEventHandler<NodeID> {
+public class ReplicationSender extends AbstractEventHandler<ReplicationSenderMessage> {
   private static final int DEFAULT_BATCH_LIMIT = 64;
   private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
   
@@ -62,7 +62,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
   private final Map<NodeID, GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity>> batchContexts = new ConcurrentHashMap<>();
   private final Collection<Consumer<NodeID>> failureListeners = new CopyOnWriteArrayList<>();
-  private Sink<NodeID> selfSink;
+  private Sink<ReplicationSenderMessage> selfSink;
 
   public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
     this.group = group;
@@ -76,11 +76,11 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     failureListeners.forEach(c->c.accept(node));
   }
 
-  public void setSelfSink(Sink<NodeID> sink) {
+  public void setSelfSink(Sink<ReplicationSenderMessage> sink) {
     this.selfSink = sink;
   }
 
-  public void removePassive(NodeID dest) {
+  void removePassive(NodeID dest) {
     // this is a flush of the replication channel.  shut it down and return;
     synchronized (this) {
       filtering.remove(dest);
@@ -88,7 +88,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     this.batchContexts.remove(dest);
   }
 
-  public void addPassive(NodeID dest, SyncReplicationActivity activity) {
+  void addPassive(NodeID dest, SyncReplicationActivity activity) {
     // Set up the sync state.
     synchronized (this) {
       createAndRegisterSyncState(dest);
@@ -96,11 +96,11 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     // Send the message.
     if (doSendActivity(dest, activity)) {
     // Try to flush the message.
-      this.selfSink.addSingleThreaded(dest);
+      this.selfSink.addSingleThreaded(new FlushPassiveMessageBatch(dest));
     }
   }
 
-  public boolean replicateMessage(NodeID dest, SyncReplicationActivity activity) {
+  void replicateMessage(NodeID dest, SyncReplicationActivity activity, Consumer<Boolean> completionHandler) {
     SyncState syncing = getSyncState(dest, activity);
     
     boolean didSend = false;
@@ -110,9 +110,9 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
       // We want to send this message.
       syncing.validateSending(activity);
 
-      if (doSendActivity(dest, activity)) {  
+      if (doSendActivity(dest, activity)) {
         // We were able to add the message to the batch so try to flush it.
-        this.selfSink.addSingleThreaded(dest);
+        this.selfSink.addSingleThreaded(new FlushPassiveMessageBatch(dest));
       }
       didSend = true;
     } else {
@@ -123,22 +123,35 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
         logger.debug("FILTERING:" + activity);
       }
     }
-    // If we didn't filter the message or trigger an exception, we sent/batched it so let the caller know.
-    return didSend;
+    completionHandler.accept(didSend);
   }
 
   @Override
-  public void handleEvent(NodeID nodeToFlush) throws EventHandlerException {
-    try {
-      GroupMessageBatchContext cxt = this.batchContexts.get(nodeToFlush);
-      if (cxt != null) {
-        cxt.flushBatch();
-      } else {
-        notifySendFailure(nodeToFlush);
+  public void handleEvent(ReplicationSenderMessage message) throws EventHandlerException {
+    if(message instanceof AddPassiveMessage) {
+      AddPassiveMessage addPassiveMessage = (AddPassiveMessage)message;
+      addPassive(addPassiveMessage.getNodeID(), SyncReplicationActivity.createStartMessage());
+      addPassiveMessage.getCompletionHandler().run();
+    } else if(message instanceof RemovePassiveMessage) {
+      RemovePassiveMessage removePassiveMessage = (RemovePassiveMessage)message;
+      removePassive(removePassiveMessage.getNodeID());
+      removePassiveMessage.getCompletionHandler().run();
+    } else if(message instanceof FlushPassiveMessageBatch) {
+      NodeID nodeID = message.getNodeID();
+      GroupMessageBatchContext cxt = this.batchContexts.get(nodeID);
+      try {
+        if (cxt != null) {
+          cxt.flushBatch();
+        } else {
+          notifySendFailure(nodeID);
+        }
+      } catch (GroupException e) {
+        logger.error("Exception flushing batch context", e);
+        notifySendFailure(nodeID);
       }
-    } catch (GroupException e) {
-      logger.error("Exception flushing batch context", e);
-      notifySendFailure(nodeToFlush);
+    } else if(message instanceof SyncActivityMessage) {
+      SyncActivityMessage syncActivityMessage = (SyncActivityMessage)message;
+      replicateMessage(syncActivityMessage.getNodeID(), syncActivityMessage.getSyncReplicationActivity(), syncActivityMessage.getCompletionHandler());
     }
   }
 
@@ -182,7 +195,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     Runnable networkDoneTarget = new Runnable() {
       @Override
       public void run() {
-        ReplicationSender.this.selfSink.addSingleThreaded(nodeid);
+        ReplicationSender.this.selfSink.addSingleThreaded(new FlushPassiveMessageBatch(nodeid));
       }
     };
     

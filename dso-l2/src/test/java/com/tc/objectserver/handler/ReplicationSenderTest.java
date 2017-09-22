@@ -45,6 +45,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -61,7 +63,7 @@ public class ReplicationSenderTest {
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
   ReplicationSender testSender = new ReplicationSender(groupMgr);
-  Sink<NodeID> sink = new Sink<NodeID>() {
+  Sink<ReplicationSenderMessage> sink = new Sink<ReplicationSenderMessage>() {
     @Override
     public void enableStatsCollection(boolean enable) {
       Assert.fail("Not in test");
@@ -86,7 +88,7 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
     }
     @Override
-    public void addSingleThreaded(NodeID context) {
+    public void addSingleThreaded(ReplicationSenderMessage context) {
       try {
         testSender.handleEvent(context);
       } catch (EventHandlerException e) {
@@ -94,7 +96,7 @@ public class ReplicationSenderTest {
       }
     }
     @Override
-    public void addMultiThreaded(NodeID context) {
+    public void addMultiThreaded(ReplicationSenderMessage context) {
       Assert.fail("Not in test");
     }
     @Override
@@ -216,7 +218,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      testSender.replicateMessage(node, activity);
+      testSender.replicateMessage(node, activity, (didSend) -> {});
       });
     System.err.println("filter SDSC");
     validateCollector(validation);
@@ -246,7 +248,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg);
+      testSender.replicateMessage(node, msg, (didSend) -> {});
       });
     
     System.err.println("filter CDC");
@@ -278,7 +280,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg);
+      testSender.replicateMessage(node, msg, (didSend) -> {});
       });
     
     validateCollector(validation);
@@ -325,12 +327,14 @@ public class ReplicationSenderTest {
             this.testSender.addPassive(node, activity);
             sent.set();
           } else {
-            boolean didSend = this.testSender.replicateMessage(node, activity);
-            if (didSend) {
-              sent.set();
-            } else {
-              notsent.set();
-            }
+            Consumer<Boolean> consumer = (didSend) -> {
+              if (didSend) {
+                sent.set();
+              } else {
+                notsent.set();
+              }
+            };
+            this.testSender.replicateMessage(node, activity, consumer);
           }
           Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
           if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
