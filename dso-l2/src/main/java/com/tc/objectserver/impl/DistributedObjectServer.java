@@ -23,6 +23,7 @@ import com.tc.async.api.EventHandlerException;
 
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.handler.ReplicationSenderMessage;
 import com.tc.services.MappedStateCollector;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
@@ -711,10 +712,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     connectServerStateToReplicatedState(state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
     ReplicationSender replicationSender = new ReplicationSender(groupCommManager);
-    final Stage<NodeID> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, NodeID.class, replicationSender, 1, maxStageSize);
+    final Stage<ReplicationSenderMessage> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationSenderMessage.class, replicationSender, 1, maxStageSize);
     replicationSender.setSelfSink(replicationSenderStage.getSink());
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager(), replicationSenderStage.getSink());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 

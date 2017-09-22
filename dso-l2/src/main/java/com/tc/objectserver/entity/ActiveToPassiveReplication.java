@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.tc.async.api.Sink;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessageAck;
@@ -30,8 +31,12 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.handler.AddPassiveMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.objectserver.handler.RemovePassiveMessage;
 import com.tc.objectserver.handler.ReplicationSender;
+import com.tc.objectserver.handler.ReplicationSenderMessage;
+import com.tc.objectserver.handler.SyncActivityMessage;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.io.ByteArrayOutputStream;
@@ -64,19 +69,20 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
-  private final ReplicationSender replicationSender;
+  private final Sink<ReplicationSenderMessage> replicationSenderMessageSink;
   private final Executor passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
 
-  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
-    this.replicationSender = replicationSender;
+  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch, Sink<ReplicationSenderMessage> replicationSenderMessageSink) {
     this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
-    this.replicationSender.addFailedToSendListener(this::removeWaiters);
+    replicationSender.addFailedToSendListener(this::removeWaiters);
+    this.replicationSenderMessageSink = replicationSenderMessageSink;
+
   }
 
   @Override
@@ -120,7 +126,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
       logger.debug("Starting message sequence on " + node);
-      this.replicationSender.addPassive(node, SyncReplicationActivity.createStartMessage());
+      BarrierCompletion barrierCompletion = new BarrierCompletion();
+      this.replicationSenderMessageSink.addSingleThreaded(new AddPassiveMessage(node, () -> barrierCompletion.complete()));
+      barrierCompletion.waitForCompletion();
       return true;
     } else {
       return false;
@@ -239,13 +247,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       //  command.
       boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
       for (NodeID node : copy) {
-        // This is a normal completion.
-        boolean didSend = false;
         if (!isLocalFlush) {
+          BarrierCompletion barrierCompletion = new BarrierCompletion();
+          Consumer<Boolean> consumer = (didSend) -> {
+            if(!didSend) {
+              boolean isNormalComplete = true;
+              internalAckCompleted(activityID, node, null, isNormalComplete);
+            }
+            barrierCompletion.complete();
+          };
           // This isn't local-only so try to replicate.
-          didSend = this.replicationSender.replicateMessage(node, activity);
-        }
-        if (!didSend) {
+          this.replicationSenderMessageSink.addSingleThreaded(new SyncActivityMessage(node, activity, consumer));
+          barrierCompletion.waitForCompletion();
+        } else {
           // We didn't send so just ack complete, internally.
           boolean isNormalComplete = true;
           internalAckCompleted(activityID, node, null, isNormalComplete);
@@ -263,7 +277,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
     if (activated) {
 //  remove the passive node from the sender first.  nothing else is going out
-      this.replicationSender.removePassive(nodeID);
+      BarrierCompletion barrierCompletion = new BarrierCompletion();
+      this.replicationSenderMessageSink.addSingleThreaded(new RemovePassiveMessage(nodeID, () -> barrierCompletion.complete()));
+      barrierCompletion.waitForCompletion();
       removeWaiters(nodeID);
     }
   }
