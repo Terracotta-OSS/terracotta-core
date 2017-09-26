@@ -209,12 +209,12 @@ import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
+import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
-import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.entity.VoltronMessageSink;
+import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
-import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -684,15 +684,14 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         this.persistor.getClusterStatePersistor());
     
     state.registerForStateChangeEvents(this.server);
+    // And the stage for handling their response batching/serialization.
+    Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 
+        new GenericHandler<>(), 1, maxStageSize);
 //  routing for passive to receive replication    
-    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, this.persistor, entityManager, groupCommManager);
+    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
     // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
-    // And the stage for handling their response batching/serialization.
-    Stage<ReplicatedTransactionHandler.SedaToken> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, ReplicatedTransactionHandler.SedaToken.class, 
-        replicatedTransactionHandler.getOutgoingResponseHandler(), 1, maxStageSize);
-    replicatedTransactionHandler.setOutgoingResponseSink(replicationResponseStage.getSink());
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
@@ -710,9 +709,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     connectServerStateToReplicatedState(state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    ReplicationSender replicationSender = new ReplicationSender(groupCommManager);
-    final Stage<NodeID> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, NodeID.class, replicationSender, 1, maxStageSize);
-    replicationSender.setSelfSink(replicationSenderStage.getSink());
+    final Stage<Runnable> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, Runnable.class, new GenericHandler<>(), 1, maxStageSize);
+    ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
     
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
     processor.setReplication(passives); 
@@ -819,7 +817,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       case FETCH_ENTITY:
       case RECONFIGURE_ENTITY:
       case RELEASE_ENTITY:
-        logger.info("completed lifecycle " + action + " on " + eid);
+        logger.info("completed lifecycle " + action + " on " + eid + ":" +fetch);
         break;
       default:
       //  not lifecycle, ignore

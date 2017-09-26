@@ -66,6 +66,8 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
     this.message = message;
     this.eid = extraInfo;
+    Assert.assertNotNull(eid);
+    Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
     this.waitingThreads = new HashSet<Thread>();

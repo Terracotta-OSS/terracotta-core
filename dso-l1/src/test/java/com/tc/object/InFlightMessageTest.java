@@ -18,7 +18,6 @@
  */
 package com.tc.object;
 
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -35,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 
 import junit.framework.TestCase;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import org.terracotta.exception.ConnectionClosedException;
 
 
@@ -88,6 +88,7 @@ public class InFlightMessageTest extends TestCase {
   public void testInterruptedGet() {
     // Create the message we will use in the test.
     NetworkVoltronEntityMessage mockedEntityMessage = mock(NetworkVoltronEntityMessage.class);
+    when(mockedEntityMessage.getEntityID()).thenReturn(new EntityID("test","test"));
     // We need to use the interlock message since we want to interrupt only after the get() has been called to ensure that
     // the message interrupt call actually knows which thread to interrupt.
     // While we could interrupt the thread before the blocking call, and it would still behave as if we interrupted it after

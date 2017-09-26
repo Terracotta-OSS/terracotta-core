@@ -37,6 +37,8 @@ public interface IBatchableGroupMessage<E> {
    * @return The current number of elements in the batch.
    */
   public int getBatchSize();
+  
+  public void setSequenceID(long rid);
 
   /**
    * Casts the message into an AbstractGroupMessage for serialization and transmission over the wire.

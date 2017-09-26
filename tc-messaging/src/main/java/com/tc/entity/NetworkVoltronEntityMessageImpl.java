@@ -131,6 +131,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
 
     this.clientID = clientID;
     this.transactionID = transactionID;
+    this.eid = eid;
     this.entityDescriptor = entityDescriptor;
     this.type = type;
     this.requiresReplication = requiresReplication;
