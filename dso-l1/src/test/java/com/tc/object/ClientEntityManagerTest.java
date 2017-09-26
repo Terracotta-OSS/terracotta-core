@@ -710,6 +710,7 @@ public class ClientEntityManagerTest extends TestCase {
     public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
             Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
+      Assert.assertNotNull(eid);
       this.entityID = eid;
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;
