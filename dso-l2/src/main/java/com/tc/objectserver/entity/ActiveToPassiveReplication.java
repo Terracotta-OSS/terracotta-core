@@ -31,7 +31,6 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.io.ByteArrayOutputStream;
@@ -243,13 +242,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         boolean didSend = false;
         if (!isLocalFlush) {
           // This isn't local-only so try to replicate.
-          didSend = this.replicationSender.replicateMessage(node, activity);
+          this.replicationSender.replicateMessage(node, activity, sent->{
+            if (!sent) {
+              // We didn't send so just ack complete, internally.
+              boolean isNormalComplete = true;
+              internalAckCompleted(activityID, node, null, isNormalComplete);
+            }
+          });
         }
-        if (!didSend) {
-          // We didn't send so just ack complete, internally.
-          boolean isNormalComplete = true;
-          internalAckCompleted(activityID, node, null, isNormalComplete);
-        }
+
       }
     }
     return waiter;

@@ -61,7 +61,7 @@ public class MessagePayload {
   private MessagePayload(byte[] raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
     this.raw = raw;
     this.message = message;
-    this.debugId = (message != null) ? message.toString() : "";
+    this.debugId = null;
     this.concurrency = concurrency;
     this.referenceCount = referenceCount;
     this.replicate = replicate;
@@ -77,6 +77,9 @@ public class MessagePayload {
   }
   
   public String getDebugId() {
+    if (debugId == null && this.message != null) {
+      debugId = message.toString();
+    }
     return debugId;
   }
   

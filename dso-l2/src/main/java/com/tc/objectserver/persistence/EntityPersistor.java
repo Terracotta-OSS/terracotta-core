@@ -58,6 +58,7 @@ public class EntityPersistor {
 
   private final IPlatformPersistence storageManager;
   private final HashMap<EntityData.Key, EntityData.Value> entities;
+  private final HashMap<EntityData.Key, EntityData.Value> deletes = new HashMap<>();
   private final HashMap<ClientID, List<EntityData.JournalEntry>> entityLifeJournal;
   private final HashMap<String, Long> counters;
 
@@ -192,8 +193,10 @@ public class EntityPersistor {
     EntityData.Key key = new EntityData.Key();
     key.className = id.getClassName();
     key.entityName = id.getEntityName();
-    Assert.assertTrue(this.entities.containsKey(key));
-    this.entities.remove(key);
+    Assert.assertTrue(this.entities.containsKey(key) || this.deletes.containsKey(key));
+    if (this.deletes.remove(key) == null) {
+      this.entities.remove(key);
+    }
     storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
     
     // Record this in the journal - null error on success.
@@ -356,7 +359,10 @@ public class EntityPersistor {
     value.canDelete = canDelete;
     value.entityName = entityName;
     value.configuration = configuration;
-    this.entities.put(key, value);
+    EntityData.Value previous = this.entities.put(key, value);
+    if (previous != null) {
+      deletes.put(key, value);
+    }
     storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
   }
   

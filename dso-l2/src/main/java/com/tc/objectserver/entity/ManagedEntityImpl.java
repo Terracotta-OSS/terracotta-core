@@ -89,7 +89,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.terracotta.entity.ClientDescriptor;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -190,6 +189,9 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("add " + request.getAction() + " " + this.id + " " + this.fetchID);
+    }
     Trace.activeTrace().log("ManagedEntityImpl.addRequestMessage");
     ResultCapture resp;
     switch (request.getAction()) {
@@ -276,6 +278,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         invokeLifecycleOperation(create, data, resp);
       }, ConcurrencyStrategy.MANAGEMENT_KEY);
     } else {
+      if (!isActive()) {
+        throw new AssertionError();
+      }
       resp.failure(new EntityBusyException(id.getClassName(), id.getEntityName(), "entity is busy in sync, retry"));
     }
   }
@@ -298,6 +303,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     SchedulingRunnable next = new SchedulingRunnable(request, payload, r, ckey);
+    logger.debug("Scheduling " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
     
     if (isActive()) {
 // only if this is active is waiting required.  This is set to wait for the 
@@ -306,16 +312,14 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     for (SchedulingRunnable msg : runnables) {
+      logger.debug("Starting " + msg.request.getAction() + " on " + getID() + ":" + getConsumerID());
       msg.start();
     }
 
     if (!runnables.offer(next)) {
+      logger.debug("Starting offered " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      Assert.assertTrue(next, runnables.isEmpty() && runnables.deferCleared);
       next.start();
-    } else if (Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE)) {
-      for (SchedulingRunnable sr : runnables.queue) {
-        logger.error(runnables + " " + this.id + " " + sr);
-      }
-      Assert.fail();
     }
 
     return next;
@@ -395,6 +399,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("referenceCount", this.clientReferenceCount);
     props.put("waitForExclusive", this.runnables.getState());
     props.put("retirement", this.retirementManager.getState());
+    props.put("destroyed", this.isDestroyed);
+    props.put("active", this.isInActiveState);
+    props.put("removeable", this.isRemoveable());
     MappedStateCollector mapped = new MappedStateCollector(this.id.getEntityName());
     try {
       if(activeServerEntity != null) {
@@ -429,7 +436,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invokeLifecycleOperation");
     trace.start();
     Lock read = reconnectAccessLock.readLock();
-    logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID());
+    logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
     read.lock();
     try {
       switch (request.getAction()) {
@@ -633,7 +640,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   @Override
-  public boolean isRemoveable() {
+  public synchronized boolean isRemoveable() {
     return this.isDestroyed && runnables.isEmpty() && runnables.deferCleared;
   }
 
@@ -660,7 +667,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           this.passiveServerEntity = null;
         }
         this.isDestroyed = true;
-        eventCollector.entityWasDestroyed(id);    
+        eventCollector.entityWasDestroyed(id, consumerID);    
         response.complete();
       } else {
         Assert.assertTrue(!isInActiveState || !clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
@@ -773,7 +780,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace.activeTrace().log("invoking " + em);
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity.");
+        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
       } else {
         try {
           this.retirementManager.registerWithMessage(em, concurrencyKey);
@@ -798,7 +805,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     } else {
       if (null == this.passiveServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity.");
+        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
       } else {
         try {
           Trace trace = Trace.activeTrace().subTrace("invokePassive");
@@ -851,7 +858,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (this.isInActiveState) {
         Assert.assertTrue(added);
         // Fire the event that the client fetched the entity.
-        this.eventCollector.clientDidFetchEntity(clientID, this.id, getEntityRequest.getClientInstance());
+        this.eventCollector.clientDidFetchEntity(clientID, this.id, this.consumerID, getEntityRequest.getClientInstance());
         // finally notify the entity that it was fetched
         this.activeServerEntity.connected(descriptor);
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
@@ -897,7 +904,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertTrue(removed);
         this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
-        this.eventCollector.clientDidReleaseEntity(clientID, this.id, request.getClientInstance());
+        this.eventCollector.clientDidReleaseEntity(clientID, this.id, this.consumerID, request.getClientInstance());
       } else {
 //  clientEntityStateManager is only tracking knowledge of clients on passives
 //  it is allowed to be unexact due to passive failover and reference counts 

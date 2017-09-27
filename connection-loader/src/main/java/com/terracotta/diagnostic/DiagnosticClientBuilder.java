@@ -18,73 +18,22 @@
  */
 package com.terracotta.diagnostic;
 
-import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
-import com.tc.cluster.ClusterInternalEventsGun;
-import com.tc.util.ProductID;
-import com.tc.management.TCClient;
-import com.tc.net.core.security.TCSecurityManager;
-import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
-import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.net.protocol.tcm.TCMessageRouter;
-import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
-import com.tc.net.protocol.transport.HealthCheckerConfig;
-import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
-import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
-import com.tc.object.ClientBuilder;
 import com.tc.object.ClientEntityManager;
-import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
-import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionProvider;
-
-import java.util.Map;
+import com.tc.object.StandardClientBuilder;
+import com.tc.util.ProductID;
 
 
-public class DiagnosticClientBuilder implements ClientBuilder {
-  @Override
-  public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         SessionProvider sessionProvider, 
-                                                         int socketConnectTimeout, TCClient client) {
-    return commMgr.createClientChannel(ProductID.DIAGNOSTIC, sessionProvider, socketConnectTimeout);
-  }
+public class DiagnosticClientBuilder extends StandardClientBuilder {
 
-  @Override
-  public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter,
-                                                           NetworkStackHarnessFactory stackHarnessFactory,
-                                                           ConnectionPolicy connectionPolicy, int commThread,
-                                                           HealthCheckerConfig aConfig,
-                                                           Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
-                                                           ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                                           TCSecurityManager securityManager) {
-    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
-                                         connectionPolicy, 0, new DisabledHealthCheckerConfigImpl() /* ignore health check settings */, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         reconnectionRejectedHandler, securityManager);
-  }
-
-  @Override
-  public ClientHandshakeManager createClientHandshakeManager(Logger logger,
-                                                             ClientHandshakeMessageFactory chmf, 
-                                                             SessionManager sessionManager,
-                                                             ClusterInternalEventsGun clusterEventsGun, 
-                                                             String uuid, 
-                                                             String name, 
-                                                             String clientVersion,
-                                                             ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
+  public DiagnosticClientBuilder() {
+    super(ProductID.DIAGNOSTIC);
   }
 
   @Override
   public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
     return new DiagnosticClientEntityManager(channel);
   }
-
 }

@@ -23,7 +23,6 @@ import com.tc.net.core.SecurityInfo;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
-import com.tc.util.ProductID;
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 

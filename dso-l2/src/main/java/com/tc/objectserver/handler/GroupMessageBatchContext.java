@@ -26,24 +26,26 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   private static final Logger LOGGER = LoggerFactory.getLogger(GroupMessageBatchContext.class);
   
-  private final IBatchableMessageFactory<M, E> messageFactory;
+  private final Function<E, M> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final NodeID target;
   private final int maximumBatchSize;
   private final int idealMessagesInFlight;
-  private final Runnable networkDoneTarget;
+  private final Consumer<NodeID> networkDoneTarget;
   
   private int messagesInFlight;
   private M cachedMessage;
   private long nextReplicationID;
 
 
-  public GroupMessageBatchContext(IBatchableMessageFactory<M, E> messageFactory, GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Runnable networkDoneTarget) {
+  public GroupMessageBatchContext(Function<E, M> messageFactory, GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Consumer<NodeID> networkDoneTarget) {
     this.messageFactory = messageFactory;
     this.groupManager = groupManager;
     this.target = target;
@@ -51,13 +53,6 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     this.idealMessagesInFlight = idealMessagesInFlight;
     this.networkDoneTarget = networkDoneTarget;
   }
-
-  private final Runnable handleMessageSend = new Runnable() {
-    @Override
-    public void run() {
-      handleNetworkDone();
-    }
-  };
 
   /**
    * Called to send a new activity.  This might be added to an existing batch or used to create a new one.  In either
@@ -75,7 +70,8 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
       this.cachedMessage.addToBatch(activity);
     } else {
       // Create a new batch.
-      this.cachedMessage = this.messageFactory.createNewBatch(activity, this.nextReplicationID++);
+      this.cachedMessage = this.messageFactory.apply(activity);
+      this.cachedMessage.setSequenceID(nextReplicationID++);
       didCreateNewBatch = true;
     }
     return didCreateNewBatch;
@@ -88,7 +84,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
    * @throws GroupException Something went wrong in the transmission (note that this same exception will be thrown on
    *  the next call to batchMessage).
    */
-  public void flushBatch() throws GroupException {
+  public long flushBatch() throws GroupException {
     IBatchableGroupMessage<E> messageToSend = null;
     synchronized (this) {
       // See if we have a batched message and are ready to send one.
@@ -108,16 +104,17 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     //  serialization, which is potentially slow and shouldn't block other attempts to batch.
     if (null != messageToSend) {
       try {
-        this.groupManager.sendToWithSentCallback(this.target, messageToSend.asAbstractGroupMessage(), this.handleMessageSend);
+        AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
+        this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
+        return msg.getMessageID().toLong();
       } catch (GroupException e) {
         LOGGER.warn("replication message failed", e);
         //  message failed but we still need to reset state
-        if (this.handleMessageSend != null) {
-          this.handleMessageSend.run();
-        }
+        this.handleNetworkDone();
         throw e;
       }
     }
+    return -1L;
   }
 
   public void handleNetworkDone() {
@@ -126,24 +123,8 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     }
     
     // Call the network done target so that our owner can decide how to enqueue the next flush.
-    this.networkDoneTarget.run();
-  }
-
-
-  /**
-   * The factory used by the GroupMessageBatchContext to start a new batch.
-   * 
-   * @param <N> The type of batch message
-   * @param <E> The batch element type
-   */
-  public interface IBatchableMessageFactory<N extends IBatchableGroupMessage<E>, E> {
-    /**
-     * Create a new batch message with the given id and containing an initial element.
-     * 
-     * @param initialElement The first message to add to the batch.
-     * @param id The ID of the batch message.
-     * @return The new batch, containing initialElement.
-     */
-    public N createNewBatch(E initialElement, long id);
+    if (this.networkDoneTarget != null) {
+      this.networkDoneTarget.accept(target);
+    }
   }
 }

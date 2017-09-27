@@ -22,6 +22,7 @@ package com.tc.entity;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
 import java.util.Set;
 
@@ -33,10 +34,12 @@ import java.util.Set;
 public interface NetworkVoltronEntityMessage extends VoltronEntityMessage, TCMessage {
 
   public Set<VoltronEntityMessage.Acks> getRequestedAcks();
+  
+  public EntityID getEntityID();
   /**
    * Initializes the contents of the message.
    */
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks);
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks);
 
   public void setMessageCodecSupplier(MessageCodecSupplier supplier);
 }
