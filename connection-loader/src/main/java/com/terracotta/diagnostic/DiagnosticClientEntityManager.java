@@ -138,17 +138,17 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public InvokeFuture<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
+  public InvokeFuture<byte[]> invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
-    InFlightMessage message = new InFlightMessage(network, Collections.<Acks>emptySet(), false);
+    InFlightMessage message = new InFlightMessage(eid, network, Collections.<Acks>emptySet(), false);
     waitingForAnswer.put(network.getTransactionID(), message);
     network.send();
     return message;
   }
 
   @Override
-  public InvokeFuture<byte[]> invokeActionWithTimeout(EntityDescriptor entityDescriptor, Set<Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
-    return invokeAction(entityDescriptor, acks, requiresReplication, shouldBlockGetOnRetire, payload);
+  public InvokeFuture<byte[]> invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+    return invokeAction(eid, entityDescriptor, acks, requiresReplication, shouldBlockGetOnRetire, payload);
   }
 
   private DiagnosticMessage createMessage(byte[] config) {

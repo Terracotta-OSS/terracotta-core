@@ -74,7 +74,12 @@ public class ReplicationMessageAck extends AbstractGroupMessage implements IBatc
   public List<ReplicationAckTuple> getBatch() {
     return this.batch;
   }
-
+  
+  @Override
+  public void setSequenceID(long rid) {
+    //  unused
+  }
+  
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     if (BATCH == this.getType()) {

@@ -123,7 +123,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      e = ExceptionUtils.addLocalStackTraceToEntityException(entityID, e);
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityAlreadyExistsException) {
@@ -148,7 +148,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
-      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      e = ExceptionUtils.addLocalStackTraceToEntityException(entityID, e);
       if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException)e;
       } else if (e instanceof EntityNotProvidedException) {
@@ -172,7 +172,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
       // NOTE: PermanentEntityException is thrown by this method.
-      e = ExceptionUtils.addLocalStackTraceToEntityException(e);
+      e = ExceptionUtils.addLocalStackTraceToEntityException(entityID, e);
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException)e;
       } else if (e instanceof EntityNotFoundException) {

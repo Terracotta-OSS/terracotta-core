@@ -16,13 +16,29 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.handler;
+package com.tc.object;
 
-import com.tc.l2.msg.ReplicationMessage;
+import org.terracotta.exception.ConnectionClosedException;
 
 /**
  *
  */
-public interface PassiveSyncFilter {
-  boolean filter(ReplicationMessage message);
+public class LocalConnectionClosedException extends ConnectionClosedException {
+  
+  private final EntityID entityID;
+
+  public LocalConnectionClosedException(EntityID eid, String description, Throwable cause) {
+    super(description, cause);
+    this.entityID = eid;
+  }
+
+  @Override
+  public String getEntityName() {
+    return entityID.getEntityName();
+  }
+
+  @Override
+  public String getClassName() {
+    return entityID.getClassName();
+  }
 }
