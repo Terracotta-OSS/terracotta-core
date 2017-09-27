@@ -16,11 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.handler;
+package com.tc.objectserver.entity;
 
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
+import com.tc.async.api.Stage;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
@@ -32,7 +32,6 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
@@ -53,6 +52,7 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class ReplicationSenderTest {
@@ -60,8 +60,7 @@ public class ReplicationSenderTest {
   @SuppressWarnings("unchecked")
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
-  ReplicationSender testSender = new ReplicationSender(groupMgr);
-  Sink<NodeID> sink = new Sink<NodeID>() {
+  Sink<Runnable> sink = new Sink<Runnable>() {
     @Override
     public void enableStatsCollection(boolean enable) {
       Assert.fail("Not in test");
@@ -86,15 +85,11 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
     }
     @Override
-    public void addSingleThreaded(NodeID context) {
-      try {
-        testSender.handleEvent(context);
-      } catch (EventHandlerException e) {
-        Assert.fail(e.getLocalizedMessage());
-      }
+    public void addSingleThreaded(Runnable context) {
+      context.run();
     }
     @Override
-    public void addMultiThreaded(NodeID context) {
+    public void addMultiThreaded(Runnable context) {
       Assert.fail("Not in test");
     }
     @Override
@@ -114,6 +109,10 @@ public class ReplicationSenderTest {
     public void close() {
       Assert.fail("Not in test");
     }};
+  Stage<Runnable> stage = mock(Stage.class);
+
+  ReplicationSender testSender;
+
   EntityID entity = EntityID.NULL_ID;
   FetchID fetch = new FetchID(1L);
   int concurrency = 1;
@@ -131,7 +130,8 @@ public class ReplicationSenderTest {
   
   @Before
   public void setUp() throws Exception {
-    this.testSender.setSelfSink(this.sink);
+    when(stage.getSink()).thenReturn(sink);
+    this.testSender = new ReplicationSender(stage, groupMgr);
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
       // We need to emulate having sent the message so run it through the serialization mechanism.
@@ -216,7 +216,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      testSender.replicateMessage(node, activity);
+      testSender.replicateMessage(node, activity, null);
       });
     System.err.println("filter SDSC");
     validateCollector(validation);
@@ -225,6 +225,7 @@ public class ReplicationSenderTest {
   @Test
   public void filterCDC() throws Exception {  // Create-Delete-Create
     entity = new EntityID("TEST", "test");
+    try {
  //  creates and sync can no longer intermix
     List<SyncReplicationActivity> origin = new LinkedList<>();
     List<SyncReplicationActivity> validation = new LinkedList<>();
@@ -246,11 +247,15 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg);
+      testSender.replicateMessage(node, msg, null);
       });
     
     System.err.println("filter CDC");
     validateCollector(validation);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      throw t;
+    }
   }  
 
   @Test
@@ -278,7 +283,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg);
+      testSender.replicateMessage(node, msg, null);
       });
     
     validateCollector(validation);
@@ -325,12 +330,14 @@ public class ReplicationSenderTest {
             this.testSender.addPassive(node, activity);
             sent.set();
           } else {
-            boolean didSend = this.testSender.replicateMessage(node, activity);
-            if (didSend) {
-              sent.set();
-            } else {
-              notsent.set();
-            }
+            this.testSender.replicateMessage(node, activity, (didSend)->{
+              if (didSend) {
+                sent.set();
+              } else {
+                notsent.set();
+              }
+            });
+   
           }
           Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
           if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {

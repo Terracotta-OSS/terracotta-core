@@ -63,6 +63,9 @@ public class Trace {
   }
 
   public static Trace activeTrace() {
+    if (!LOGGER.isTraceEnabled()) {
+      return DUMMY;
+    }
     Trace trace = ACTIVE_TRACE.get();
     return trace != null ? trace : DUMMY;
   }

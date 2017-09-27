@@ -16,24 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
-import java.util.concurrent.Callable;
-
 /**
- * @author tim
+ *
  */
-public class BackupHandler extends AbstractEventHandler<Callable<?>> {
+public class GenericHandler<T extends Runnable> extends AbstractEventHandler<T> {
+
   @Override
-  public void handleEvent(Callable<?> context) throws EventHandlerException {
-    try {
-      context.call();
-    } catch (Exception e) {
-      throw new EventHandlerException(e);
-    }
+  public void handleEvent(T context) throws EventHandlerException {
+    context.run();
   }
+  
 }
