@@ -30,12 +30,11 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.AbstractList;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -57,10 +56,10 @@ public class ManagedServiceLoader {
    * @param interfaceName service interface name to be queried
    * @return Map containing Implementation name and URL of resource to load it from
    */
-  protected Map<String, String> discoverImplementations(String interfaceName, ClassLoader loader) {
+  protected Collection<Class<?>> discoverImplementations(String interfaceName, ClassLoader loader) {
     try {
-      HashMap<String, String> urls = new HashMap<String, String>();
-      HashMap<String, String> overrides = new HashMap<String, String>();
+      HashMap<String, Class<?>> urls = new HashMap<>();
+      HashMap<String, String> overrides = new HashMap<>();
       Enumeration<URL> urlEnumeration = loader.getResources(
           METAINFCONST + interfaceName);
       StringBuilder sb = new StringBuilder();
@@ -78,36 +77,41 @@ public class ManagedServiceLoader {
           if(trim.length == 0 || trim[0].isEmpty()) {
             continue;
           }
-          if (trim.length > 1) {
-            String[] overridesClasses = checkForOverride(trim[1]);
-            for (String override : overridesClasses) {
-              LOG.debug("overriding class " + override + " with " + trim[0]);
-              urls.remove(override);
-              overrides.put(override, trim[0]);
+          String urlString = parseURLString(x);
+  //  make sure the class is loadable         
+          Class<?> type = loadClass(trim[0], urlString, loader);          
+          if (type != null) {
+            if (trim.length > 1) {
+              String[] overridesClasses = checkForOverride(trim[1]);
+              for (String override : overridesClasses) {
+                LOG.debug("overriding class " + override + " with " + trim[0]);
+                urls.remove(override);
+                overrides.put(override, trim[0]);
+              }
             }
-          }
-          String urlString = x.toExternalForm();
-          if (urlString.startsWith("jar:")) {
-      //  strip the jar file notation from the URL, start index of 4 is for 'jar:'
-            urlString = urlString.substring(4, urlString.indexOf("!"));
+            if (type.isAnnotationPresent(OverrideService.class)) {
+              for (OverrideService override : type.getAnnotationsByType(OverrideService.class)) {
+                LOG.debug("overriding class " + override.value() + " with annotation on " + trim[0]);
+                String value = override.value();
+                String[] types = override.types();
+                if (value != null && value.length() > 0) {
+                  urls.remove(value);
+                  overrides.put(value, trim[0]);
+                }
+                for (String typeName : types) {
+                  urls.remove(typeName);
+                  overrides.put(typeName, trim[0]);
+                }
+              }
+            }
+            if (!overrides.containsKey(trim[0])) {
+              Class<?> previous = urls.put(trim[0], type);
+              if (previous != null) {
+                LOG.info("MULTIPLE instances of " + trim[0] + " found, ignoring:" + urlString + " keeping:" + previous.getName());
+              }
+            }
           } else {
-      //  strip the meta file information from the path
-            urlString = urlString.substring(0, urlString.indexOf(METAINFCONST));
-          }
-          Class<?> type = loadClass(trim[0], urlString, loader);
-          if (type.isAnnotationPresent(OverrideService.class)) {
-            OverrideService os = type.getAnnotation(OverrideService.class);
-            for (String override : os.types()) {
-              LOG.debug("overriding class " + override + " with annotation on " + trim[0]);
-              urls.remove(override);
-              overrides.put(override, trim[0]);
-            }
-          }
-          if (!overrides.containsKey(trim[0])) {
-            String previous = urls.put(trim[0], urlString);
-            if (previous != null) {
-              LOG.info("MULTIPLE instances of " + trim[0] + " found, ignoring:" + urlString + " keeping:" + previous);
-            }
+            LOG.info(trim[0] + " is not loadable from " + urlString + " skipping");
           }
         }
         sb.setLength(0);
@@ -117,11 +121,24 @@ public class ManagedServiceLoader {
         LOG.debug("overrides:" + overrides.toString());
       }
 
-      return urls;
+      return urls.values();
     } catch (IOException e) {
       LOG.warn("unable to load", e);
     }
     return null;
+  }
+  
+  private static String parseURLString(URL src) {
+    String urlString = src.toExternalForm();
+    if (urlString.startsWith("jar:")) {
+//  strip the jar file notation from the URL, start index of 4 is for 'jar:'
+      urlString = urlString.substring(4, urlString.indexOf("!"));
+    } else {
+//  strip the meta file information from the path
+      int index = urlString.indexOf(METAINFCONST);
+      urlString = urlString.substring(0, index);
+    }
+    return urlString;
   }
   
   private static String[] checkForOverride(String value) {
@@ -138,11 +155,12 @@ public class ManagedServiceLoader {
     
   public <T> List<Class<? extends T>> getImplementations(final Class<T> interfaceClass, ClassLoader loader) {
     Assert.assertNotNull(loader);
-    final List<Class<?>> items = (List<Class<?>>)getImplementations(interfaceClass.getName(), loader);
+    Collection<Class<?>> items = getImplementations(interfaceClass.getName(), loader);
+    final Class<?> list[] = items.toArray(new Class<?>[items.size()]);
     return new AbstractList<Class<? extends T>>() {
       @Override
       public Class<? extends T> get(int index) {
-        Class<?> got = items.get(index);
+        Class<?> got = list[index];
         try {
           return got.asSubclass(interfaceClass);
         } catch (ClassCastException cast) {
@@ -155,7 +173,7 @@ public class ManagedServiceLoader {
 
       @Override
       public int size() {
-        return items.size();
+        return list.length;
       }
     };
   }
@@ -168,30 +186,18 @@ public class ManagedServiceLoader {
    * @param <T>           concrete type of service/entity
    * @return list of implementation
    */
-  private List<Class<?>> getImplementations(String interfaceName, final ClassLoader loader) {
+  private Collection<Class<?>> getImplementations(String interfaceName, final ClassLoader loader) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("Discovering " + interfaceName + " with parent classloader " + loader.getClass().getName());
     }
-    final Map<String, String> urls = discoverImplementations(interfaceName, loader);
+    final Collection<Class<?>> urls = discoverImplementations(interfaceName, loader);
     if (null == urls || urls.isEmpty()) {
       if(LOG.isDebugEnabled()) {
         LOG.debug("No implementations found for " + interfaceName);
       }
       return Collections.emptyList();
     }
-    final List<String> keys = new ArrayList(urls.keySet());
-    return new AbstractList<Class<?>>() {
-      @Override
-      public Class<?> get(int index) {
-        String className = keys.get(index);
-        return loadClass(className, urls.get(className), loader);
-      }
-
-      @Override
-      public int size() {
-        return keys.size();
-      }
-    };
+    return urls;
   }
   
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {

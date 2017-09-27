@@ -65,20 +65,28 @@ public class ZipBuilder implements ArchiveBuilder {
   @Override
   public final void putTraverseDirectory(File dir, String dirName) throws IOException {
     if (!dir.isDirectory()) throw new IOException("Unexpected Exception: " + dir + "\nis not a directory");
-    putDirEntry(dirName);
+    if (dirName != null && !dirName.isEmpty()) {
+      putDirEntry(dirName);
+      dirName = dirName + File.separator;
+    } else {
+      dirName = "";
+    }
     String[] files = dir.list();
     for (String file2 : files) {
-      File file = new File(dir + File.separator + file2);
+      File file = new File(dir.getAbsolutePath() + File.separator + file2);
       if (file.isDirectory()) {
-        putTraverseDirectory(file, dirName + File.separator + file.getName());
+        putTraverseDirectory(file, dirName + file.getName());
         continue;
       }
-      putEntry(dirName + File.separator + file2, readFile(file));
+      putEntry(dirName + file2, readFile(file));
     }
   }
 
   @Override
   public final void putDirEntry(String file) throws IOException {
+    if (file == null) {
+      return;
+    }
     if (dirSet.contains(file)) return;
     dirSet.add(file);
     String dirEntry = archivePath(file) + "/";

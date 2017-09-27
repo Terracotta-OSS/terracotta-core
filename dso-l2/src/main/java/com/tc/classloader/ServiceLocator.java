@@ -30,7 +30,11 @@ import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 
 /**
@@ -67,7 +71,7 @@ public class ServiceLocator extends ManagedServiceLoader {
   }
   
   
-  private final Map<ClassLoader, ApiClassLoader> API_LOADERS = new HashMap<ClassLoader, ApiClassLoader>();
+  private final Map<ClassLoader, ApiClassLoader> API_LOADERS = new WeakHashMap<>();
   
   private synchronized ApiClassLoader getApiClassLoader(ClassLoader parent) {
     ClassLoader chainCheck = parent;
@@ -109,7 +113,7 @@ public class ServiceLocator extends ManagedServiceLoader {
     }
   }
       
-  private static URL[] createURLS(File plugins) throws FileNotFoundException {
+  private static URL[] createURLS(File plugins) {
     if (plugins.exists()) {
       return Arrays.stream(plugins.listFiles())
         .filter(ServiceLocator::fileFilter)
@@ -120,7 +124,7 @@ public class ServiceLocator extends ManagedServiceLoader {
     return new URL[0];
   }
   
-  public static URL[] findPluginURLS() throws FileNotFoundException {
+  private static URL[] findPluginURLS() throws FileNotFoundException {
     return createURLS(Directories.getServerPluginsLibDir());
   }
   
@@ -143,12 +147,12 @@ public class ServiceLocator extends ManagedServiceLoader {
   private static ApiClassLoader createApiClassLoader(ClassLoader parent) {
     try {
       return new ApiClassLoader(createURLS(Directories.getServerPluginsApiDir()), parent);
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException(e);
+    } catch (FileNotFoundException notfound) {
+      return new ApiClassLoader(new URL[0], parent);
     }
   }
   
-  Map<String, String> testingCheckUrls(String interfaceName) {
+  Collection<Class<?>> testingCheckUrls(String interfaceName) {
     return discoverImplementations(interfaceName, defaultClassLoader);
   }
 

@@ -81,12 +81,18 @@ public class ServerEntityFactory {
     List<Class<? extends EntityServerService>> serviceLoader = this.locator.getImplementations(EntityServerService.class);
     for (Class<? extends EntityServerService> serverService : serviceLoader) {
         if (serverService.isAnnotationPresent(PermanentEntity.class)) {
-          PermanentEntity pe = serverService.getAnnotation(PermanentEntity.class);
-          String type = pe.type();
-          String[] names = pe.names();
-          int version = pe.version();
-          for (String name : names) {
-            msgs.add(PermanentEntityParser.createMessage(type, name, version, new byte[0]));
+          PermanentEntity[] pe = serverService.getAnnotationsByType(PermanentEntity.class);
+          for (PermanentEntity p : pe) {
+            String type = p.type();
+            String[] names = p.names();
+            String single = p.name();
+            int version = p.version();
+            if (single != null && single.length() > 0) {
+              msgs.add(PermanentEntityParser.createMessage(type, single, version, new byte[0]));
+            }
+            for (String name : names) {
+              msgs.add(PermanentEntityParser.createMessage(type, name, version, new byte[0]));
+            }
           }
         }
     }
