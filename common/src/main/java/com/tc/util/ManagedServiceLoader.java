@@ -19,6 +19,7 @@
 
 package com.tc.util;
 
+import com.tc.classloader.OverrideService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -93,6 +94,15 @@ public class ManagedServiceLoader {
       //  strip the meta file information from the path
             urlString = urlString.substring(0, urlString.indexOf(METAINFCONST));
           }
+          Class<?> type = loadClass(trim[0], urlString, loader);
+          if (type.isAnnotationPresent(OverrideService.class)) {
+            OverrideService os = type.getAnnotation(OverrideService.class);
+            for (String override : os.types()) {
+              LOG.debug("overriding class " + override + " with annotation on " + trim[0]);
+              urls.remove(override);
+              overrides.put(override, trim[0]);
+            }
+          }
           if (!overrides.containsKey(trim[0])) {
             String previous = urls.put(trim[0], urlString);
             if (previous != null) {
@@ -125,7 +135,7 @@ public class ManagedServiceLoader {
     }
     return new String[0];
   }
-  
+    
   public <T> List<Class<? extends T>> getImplementations(final Class<T> interfaceClass, ClassLoader loader) {
     Assert.assertNotNull(loader);
     final List<Class<?>> items = (List<Class<?>>)getImplementations(interfaceClass.getName(), loader);
