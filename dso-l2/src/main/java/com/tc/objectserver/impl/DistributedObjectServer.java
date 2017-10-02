@@ -536,7 +536,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final TransactionCountWeightGenerator transactionCountWeightGenerator = new TransactionCountWeightGenerator(this.persistor.getTransactionOrderPersistor());
     weightGeneratorFactory.add(transactionCountWeightGenerator);
     // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
-    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(channelManager);
+    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(()->l2Coordinator.getStateManager(), channelManager);
     weightGeneratorFactory.add(connectedClientCountWeightGenerator);
     // 3)  ServerUptimeWeightGenerator.
     final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator();
