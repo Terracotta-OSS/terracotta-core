@@ -103,8 +103,9 @@ public class TerracottaConnectionService implements ConnectionService {
       throw new ConnectionException(config);
     } catch (InterruptedException ie) {
       throw new ConnectionException(ie);
+    } catch (Throwable t) {
+      throw new ConnectionException(t);
     }
-
     return new TerracottaConnection(client.getClientEntityManager(), endpointConnector, new Runnable() {
         public void run() {
           client.shutdown();

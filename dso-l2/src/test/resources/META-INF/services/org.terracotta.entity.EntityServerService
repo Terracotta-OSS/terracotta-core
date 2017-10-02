@@ -17,4 +17,4 @@
 #
 #
 
-com.tc.objectserver.testentity.TestEntityServerService
+com.tc.objectserver.testentity.TestEntityServerService # overrides com.tc.objectserver.testentity.SomeFakeTestEntityServerService

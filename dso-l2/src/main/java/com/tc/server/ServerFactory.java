@@ -19,7 +19,6 @@
 
 package com.tc.server;
 
-import com.tc.config.HaConfigImpl;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.protocol.transport.ConnectionPolicy;

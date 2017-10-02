@@ -207,6 +207,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       };
     }
     
+    @Override
     public synchronized InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws MessageCodecException, InterruptedException, TimeoutException {
       return returnTypedInvoke(invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, time, units, codec.encodeMessage(request)));
     }
