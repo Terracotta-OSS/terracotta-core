@@ -559,7 +559,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final TransactionCountWeightGenerator transactionCountWeightGenerator = new TransactionCountWeightGenerator(this.persistor.getTransactionOrderPersistor());
     weightGeneratorFactory.add(transactionCountWeightGenerator);
     // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
-    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(channelManager);
+    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(()->l2Coordinator.getStateManager(), channelManager);
     weightGeneratorFactory.add(connectedClientCountWeightGenerator);
     // 3)  ConnectionIDWeightGenerator - How many connection ids have been created.  Greater wins
     final ConnectionIDWeightGenerator connectionsMade = new ConnectionIDWeightGenerator(connectionIdFactory);
