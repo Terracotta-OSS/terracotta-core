@@ -281,13 +281,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
               serverEntityRequest.complete();
             }
           }, (exception) -> {
-            this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+            this.persistor.getEntityPersistor().entityCreateFailed(entityID, sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             serverEntityRequest.failure(exception);
           });
       } catch (EntityException ee) {
-        if (!sourceNodeID.isNull()) {
-          this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
-        }
+        this.persistor.getEntityPersistor().entityCreateFailed(descriptor.getEntityID(), sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         serverEntityRequest.failure(ee);
       }
     } else {
