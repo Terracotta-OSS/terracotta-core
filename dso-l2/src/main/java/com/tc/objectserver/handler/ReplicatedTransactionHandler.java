@@ -303,15 +303,13 @@ public class ReplicatedTransactionHandler {
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }
           }, (exception) -> {
-            this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+            this.persistor.getEntityPersistor().entityCreateFailed(activity.getEntityID(), sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             LOGGER.debug("create fail:" + temp.getID());
             acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
           });
       } catch (EntityException ee) {
         acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
-        if (!sourceNodeID.isNull()) {
-          this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
-        }
+        this.persistor.getEntityPersistor().entityCreateFailed(activity.getEntityID(), sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
       }
     } else {
     // At this point, we can now look up the managed entity (used later).
