@@ -29,7 +29,7 @@ import org.terracotta.exception.EntityException;
  * 
  * @param <T> The underlying type wrapped by the instance
  */
-public class ImmediateInvokeFuture<T> implements InvokeFuture<T> {
+public class ImmediateInvokeFuture<T extends EntityResponse> implements InvokeFuture<T> {
   final T result;
   final EntityException error;
 
