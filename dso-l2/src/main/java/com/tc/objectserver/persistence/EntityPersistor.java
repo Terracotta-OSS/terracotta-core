@@ -23,8 +23,6 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
 import com.tc.objectserver.persistence.EntityData.Key;
 import com.tc.objectserver.persistence.EntityData.Value;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -37,7 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +59,7 @@ public class EntityPersistor {
   private final HashMap<EntityData.Key, EntityData.Value> deletes = new HashMap<>();
   private final HashMap<ClientID, List<EntityData.JournalEntry>> entityLifeJournal;
   private final HashMap<String, Long> counters;
+  private final Map<EntityID, PermanentEntityResult> result = new ConcurrentHashMap<>();
 
   @SuppressWarnings({ "unchecked" })
   public EntityPersistor(IPlatformPersistence storageManager) {
@@ -114,8 +113,8 @@ public class EntityPersistor {
     return this.entities.values();
   }
 
-  public synchronized boolean containsEntity(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id) {
-    LOGGER.debug("containsEntity " + clientID + " " + transactionID + " " + id);
+  public synchronized boolean containsEntity(EntityID id) {
+    LOGGER.debug("containsEntity " + id);
     // This is new so look up the answer and store it in the journal.
     EntityData.Key key = new EntityData.Key();
     key.className = id.getClassName();
@@ -145,13 +144,18 @@ public class EntityPersistor {
     return didSucceed;
   }
 
-  public synchronized void entityCreateFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityCreateFailed(EntityID eid, ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
     LOGGER.debug("createFailed " + clientID + " " + transactionID, error);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, error);
-  }
+    if (clientID.isNull()) {
+      permanentEntityCreated(eid, 0, error);
+    }
+  } 
 
   public synchronized void entityCreated(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreated " + clientID + " " + transactionID + " " + id + " " + version);
+    Assert.assertTrue(canDelete);
+    Assert.assertFalse(clientID.isNull());
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
     
     // Record this in the journal - null error on success.
@@ -161,6 +165,9 @@ public class EntityPersistor {
   public synchronized void entityCreatedNoJournal(EntityID id, long version, long consumerID, boolean canDelete, byte[] configuration) {
     LOGGER.debug("entityCreatedNoJournal " + id);
     addNewEntityToMap(id, version, consumerID, canDelete, configuration);
+    if (!canDelete) {
+      permanentEntityCreated(id, consumerID, null);
+    }
     // (Note that we don't store this into the journal - this is used for passive sync).
   }
 
@@ -304,7 +311,7 @@ public class EntityPersistor {
   
   private List<JournalEntry> filterJournal(List<JournalEntry> list, long oldestTransactionOnClient) {
     Assert.assertNotNull(list);
-    List<JournalEntry> newList = new Vector<>();
+    List<JournalEntry> newList = new ArrayList<>();
     for (JournalEntry entry : list) {
       if (entry.transactionID >= oldestTransactionOnClient) {
         newList.add(entry);
@@ -314,18 +321,20 @@ public class EntityPersistor {
   }
 
   private void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, EntityException error) {
-    List<EntityData.JournalEntry> rawJournal = this.entityLifeJournal.get(clientID);
-    // If the list is not here, the client has already left the custer, don't bother saving the result
-    if (rawJournal != null) {
-      List<EntityData.JournalEntry> clientJournal = filterJournal(rawJournal, oldestTransactionOnClient);
-      JournalEntry newEntry = new JournalEntry();
-      newEntry.operation = operation;
-      newEntry.transactionID = transactionID;
-      newEntry.failure = error;
-      newEntry.reconfigureResponse = reconfigureResult;
-      clientJournal.add(newEntry);
-      this.entityLifeJournal.put(clientID, clientJournal);
-      storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
+    if (!clientID.isNull()) {
+      List<EntityData.JournalEntry> rawJournal = this.entityLifeJournal.get(clientID);
+      // If the list is not here, the client has already left the custer, don't bother saving the result
+      if (rawJournal != null) {
+        List<EntityData.JournalEntry> clientJournal = filterJournal(rawJournal, oldestTransactionOnClient);
+        JournalEntry newEntry = new JournalEntry();
+        newEntry.operation = operation;
+        newEntry.transactionID = transactionID;
+        newEntry.failure = error;
+        newEntry.reconfigureResponse = reconfigureResult;
+        clientJournal.add(newEntry);
+        this.entityLifeJournal.put(clientID, clientJournal);
+        storeToDisk(JOURNAL_CONTAINER_FILE_NAME, this.entityLifeJournal);
+      }
     }
   }
 
@@ -364,6 +373,16 @@ public class EntityPersistor {
       deletes.put(key, value);
     }
     storeToDisk(ENTITIES_ALIVE_FILE_NAME, this.entities);
+  }
+  
+  private void permanentEntityCreated(EntityID id, long consumerid, Exception e) {
+    PermanentEntityResult perm = result.computeIfAbsent(id, (c)->new PermanentEntityResult());
+    perm.setResult(consumerid, e);
+  }
+  
+  public void waitForPermanentEntityCreation(EntityID id) throws Exception {
+    PermanentEntityResult perm = result.computeIfAbsent(id, (c)->new PermanentEntityResult());
+    perm.waitForResult();
   }
   
   public synchronized void removeOrphanedClientsFromJournal(Set<ClientID> connectedClients) {
@@ -423,6 +442,32 @@ public class EntityPersistor {
     } catch (IOException e) {
       // In general, we have no way of solving this problem so throw it.
       throw new RuntimeException("Failure storing EntityPersistor map file", e);
+    }
+  }
+  
+  private static class PermanentEntityResult {
+    boolean finished;
+    Exception failed;
+    long consumerid;
+    
+    private synchronized void waitForResult() throws Exception {
+      while (!finished) {
+        try {
+          this.wait();
+        } catch (InterruptedException ie) {
+          throw new RuntimeException(ie);
+        }
+      }
+      if (failed != null) {
+        throw failed;
+      }
+    }
+    
+    private synchronized void setResult(long consumerid, Exception error) {
+      finished = true;
+      this.consumerid = consumerid;
+      this.failed = error;
+      notifyAll();
     }
   }
 }

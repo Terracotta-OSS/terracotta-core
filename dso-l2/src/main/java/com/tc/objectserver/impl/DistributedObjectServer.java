@@ -212,10 +212,10 @@ import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
-import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
+import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -998,7 +998,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     });
   }
 
-  public void startActiveMode(boolean wasStandby) {
+  private void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
       Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
@@ -1016,6 +1016,16 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       }
       for (VoltronEntityMessage vem : checkdups.values()) {
         msgSink.addSingleThreaded(vem);
+      }
+      EntityPersistor ep = this.persistor.getEntityPersistor();
+      for (VoltronEntityMessage vem : checkdups.values()) {
+        try {
+          ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
+        } catch (RuntimeException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
