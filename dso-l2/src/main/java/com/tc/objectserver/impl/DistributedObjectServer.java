@@ -918,6 +918,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 //  to clients that were in the midst of cleaning up after disconnection.  
         existingConnections.addAll(clients.clearClientReferences());
         if (sce.movedToActive()) {
+          getContext().getClientHandshakeManager().setStarting(existingConnections);
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
@@ -1001,6 +1002,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
   private void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
+      
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
       Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
 //  find annotated permanent entities
@@ -1037,7 +1039,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     } catch (TCTimeoutException to) {
       throw Assert.failure("no timeout set!", to);
     }
-    this.context.getClientHandshakeManager().setStarting(existingConnections);
     boolean clientBound = false;
     while (!clientBound) {
       try {
