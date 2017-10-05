@@ -42,10 +42,10 @@ public class ClientInstaller {
     this.clientMainClassName = clientMainClassName;
   }
   
-  public ClientRunner installClient(String clientName, int debugPort, List<String> extraArguments) {
+  public ClientRunner installClient(String clientName, int debugPort, boolean failOnLog, List<String> extraArguments) {
     VerboseManager clientVerboseManager = this.clientsVerboseManager.createComponentManager("[" + clientName + "]");
     String clientWorkingDirectory = FileHelpers.createTempEmptyDirectory(this.testParentDirectory, clientName);
-    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, debugPort, this.clientMainClassName, extraArguments);
+    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, debugPort, failOnLog, this.clientMainClassName, extraArguments);
   }
   
   

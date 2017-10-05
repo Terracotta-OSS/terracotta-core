@@ -92,6 +92,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.configTestDirectory = configTestDirectory;
       harnessOptions.clientClassPath = environmentOptions.clientClassPath;
       harnessOptions.clientsToCreate = clientsToCreate;
+      harnessOptions.failOnLog = true;
       harnessOptions.testClassName = testClassName;
       harnessOptions.errorClassName = master.getClientErrorHandlerClassName();
       harnessOptions.extraJarPaths = extraJarPaths;
@@ -140,6 +141,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String configTestDirectory;
     public String clientClassPath;
     public int clientsToCreate;
+    public boolean failOnLog;
     public String testClassName;
     public String errorClassName;
     public int serverHeapInM;

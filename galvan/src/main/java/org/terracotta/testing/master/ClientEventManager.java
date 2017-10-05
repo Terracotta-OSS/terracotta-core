@@ -20,6 +20,7 @@ import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
@@ -31,7 +32,7 @@ import org.terracotta.testing.common.SimpleEventingStream;
 public class ClientEventManager {
   private final SimpleEventingStream eventingStream;
   
-  public ClientEventManager(final IMultiProcessControl control, PipedOutputStream inferiorProcessStdin, OutputStream dataSink) {
+  public ClientEventManager(final IMultiProcessControl control, PipedOutputStream inferiorProcessStdin, OutputStream dataSink, boolean failOnLogs) {
     final PrintStream processStdin = new PrintStream(inferiorProcessStdin);
     EventBus subBus = new EventBus.Builder().id("sub-bus").build();
     Map<String, String> eventMap = new HashMap<String, String>();
@@ -91,9 +92,31 @@ public class ClientEventManager {
         // We do nothing - just acknowledge this.
       }}, processStdin);
     
+    if (failOnLogs) {
+      eventMap.put("WARN", "WARN");
+      subBus.on("WARN", (event)->handleWarnMessage(event));
+      eventMap.put("ERROR", "ERROR");
+      subBus.on("ERROR", (event)->handleErrorMessage(event));
+    }
+    
     this.eventingStream = new SimpleEventingStream(subBus, eventMap, dataSink);
   }
   
+  private void handleWarnMessage(Event event) {
+    String src = event.getData(String.class);
+    Pattern rgx = Pattern.compile("WARN\\scom\\.tc\\.net");
+    if (!rgx.matcher(src).find()) {
+      throw new RuntimeException(event.getSource());
+    }
+  }
+  
+  private void handleErrorMessage(Event event) {
+    String src = event.getData(String.class);
+    Pattern rgx = Pattern.compile("ERROR\\scom\\.tc\\.net");
+    if (!rgx.matcher(src).find()) {
+      throw new RuntimeException(event.getSource());
+    }
+  }  
   /**
    * This is called to get the stream we want to use for the stdout of the inferior process so that it can hook into the event processing, here.
    */
