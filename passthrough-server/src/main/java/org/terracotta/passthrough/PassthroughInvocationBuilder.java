@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.EntityMessage;
@@ -108,9 +110,14 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   }
 
   @Override
+  public InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
+    return invoke();
+  }
+
+  @Override
   public InvokeFuture<R> invoke() throws MessageCodecException {
     final PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), this.shouldReplicate);
-    final InvokeFuture<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted, this.shouldWaitForRetired, this.shouldBlockGetUntilRetire);
+    final Future<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted, this.shouldWaitForRetired, this.shouldBlockGetUntilRetire);
     return new InvokeFuture<R>() {
       @Override
       public boolean isDone() {
@@ -123,21 +130,25 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
           return messageCodec.decodeResponse(invokeFuture.get());
         } catch (MessageCodecException e) {
           throw new EntityServerException(null, null, null, e);
+        } catch (ExecutionException e) {
+          throw (EntityException)e.getCause();
         }
       }
 
       @Override
       public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
         try {
-          return messageCodec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
+          return messageCodec.decodeResponse(invokeFuture.get(timeout, unit));
         } catch (MessageCodecException e) {
           throw new EntityServerException(null, null, null, e);
+        } catch (ExecutionException e) {
+          throw (EntityException)e.getCause();
         }
       }
 
       @Override
       public void interrupt() {
-        invokeFuture.interrupt();
+        invokeFuture.cancel(true);
       }
     };
   }

@@ -145,7 +145,7 @@ public class PassthroughConnection implements Connection {
   /**
    * This entry-point is specifically used for entity-defined action messages.
    */
-  public InvokeFuture<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
+  public Future<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire) {
     return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
   }
 
@@ -390,12 +390,12 @@ public class PassthroughConnection implements Connection {
     boolean shouldWaitForCompleted = false;
     boolean shouldWaitForRetired = false;
     boolean forceGetToBlockOnRetire = false;
-    InvokeFuture<byte[]> received = invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
+    Future<byte[]> received = invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire);
     try {
       received.get();
     } catch (InterruptedException e) {
       Assert.unexpected(e);
-    } catch (EntityException e) {
+    } catch (ExecutionException e) {
       Assert.unexpected(e);
     }
   }

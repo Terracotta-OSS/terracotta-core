@@ -27,6 +27,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 /**
@@ -152,6 +154,11 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         }
         return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
       }
+    }
+
+    @Override
+    public InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
+      return invoke();
     }
     
     private byte[] sendInvocation(byte[] payload) throws EntityException {
