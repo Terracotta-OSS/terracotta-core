@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.concurrent.ExecutionException;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
@@ -66,7 +67,8 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
     byte[] rawConfig = null;
     try {
       rawConfig = received.get();
-    } catch (EntityException e) {
+    } catch (ExecutionException b) {
+      EntityException e = (EntityException)b.getCause();
       // Check that this is the correct type.
       if (e instanceof EntityNotFoundException) {
         throw (EntityNotFoundException) e;
@@ -98,7 +100,8 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
       received.blockGetOnRetire();
       try {
         received.get();
-      } catch (EntityException e) {
+    } catch (ExecutionException b) {
+        EntityException e = (EntityException)b.getCause();
         // Check that this is the correct type.
         if (e instanceof EntityNotProvidedException) {
           throw (EntityNotProvidedException) e;
@@ -131,8 +134,8 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
       received.blockGetOnRetire();
       try {
         result = this.service.deserializeConfiguration(received.get());
-      } catch (EntityException e) {
-        // Check that this is the correct type.
+    } catch (ExecutionException b) {
+      EntityException e = (EntityException)b.getCause();        // Check that this is the correct type.
         if (e instanceof EntityNotFoundException) {
           throw (EntityNotFoundException) e;
         } else if (e instanceof EntityNotProvidedException) {
@@ -163,8 +166,8 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
     received.blockGetOnRetire();
     try {
       return received.get()[0] != 0;
-    } catch (EntityException e) {
-      // Check that this is the correct type.
+    } catch (ExecutionException b) {
+      EntityException e = (EntityException)b.getCause();      // Check that this is the correct type.
       if (e instanceof EntityNotProvidedException) {
         throw (EntityNotProvidedException) e;
       } else if (e instanceof EntityNotFoundException) {

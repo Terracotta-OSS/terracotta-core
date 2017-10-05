@@ -20,10 +20,11 @@ package org.terracotta.passthrough;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.RuntimeEntityException;
@@ -34,7 +35,7 @@ import org.terracotta.exception.RuntimeEntityException;
  * client code's thread to block on acks or completion, and be unblocked by the client-send message processing thread
  * processing the corresponding acks and completion messages.
  */
-public class PassthroughWait implements InvokeFuture<byte[]> {
+public class PassthroughWait implements Future<byte[]> {
   // Save the information used to reset this object on resend.
   private byte[] rawMessageForResend;
   private final boolean shouldWaitForReceived;
@@ -72,6 +73,17 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     this.canChangeResponse = true;
     this.response = null;
   }
+
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    this.interrupt();
+    return true;
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return false;
+  }
   
   public synchronized void waitForAck() {
     boolean interrupted = false;
@@ -88,7 +100,6 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     }
   }
 
-  @Override
   public synchronized void interrupt() {
     for (Thread waitingThread : this.waitingThreads) {
       waitingThread.interrupt();
@@ -101,12 +112,14 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
   }
 
   @Override
-  public byte[] get() throws InterruptedException, EntityException {
+  public byte[] get() throws InterruptedException, ExecutionException {
     try {
       return waitForCompletion(0, TimeUnit.MILLISECONDS);
     } catch (TimeoutException te) {
       Assert.unexpected(te);
       return null;
+    } catch (EntityException e) {
+      throw new ExecutionException(e);
     }
   }
   
@@ -136,9 +149,12 @@ public class PassthroughWait implements InvokeFuture<byte[]> {
     return this.response;
   }
 
-  @Override
-  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
-    return waitForCompletion(timeout, unit);
+  public byte[] get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    try {
+      return waitForCompletion(timeout, unit);
+    } catch (EntityException e) {
+      throw new ExecutionException(e);
+    }
   }
 
   public synchronized void sent() {
