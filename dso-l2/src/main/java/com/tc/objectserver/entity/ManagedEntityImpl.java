@@ -588,7 +588,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Assert.assertNotNull(this.passiveServerEntity);
     try {
 
-      this.passiveServerEntity.invokePassive(InvokeContextImpl.NULL_CONTEXT,
+      this.passiveServerEntity.invokePassive(new InvokeContextImpl(message.getConcurrency()),
                                              message.decodeRawMessage(raw -> syncCodec.decode(message.getConcurrency(),
                                                                                               raw)));
     } catch (EntityUserException e) {
