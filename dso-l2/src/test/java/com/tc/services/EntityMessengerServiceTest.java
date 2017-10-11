@@ -35,6 +35,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
+import org.terracotta.entity.ActiveServerEntity;
 
 
 public class EntityMessengerServiceTest {
@@ -58,9 +60,10 @@ public class EntityMessengerServiceTest {
 
     // Create the service.
     EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
-
+    // now adding listener in provider so do it manually
+    entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.
-    verify(entity).setSuccessfulCreateListener(service);
+    verify(entity).addLifecycleListener(service);
 
     // Register a few calls.
     EntityMessage delayMessage = mock(EntityMessage.class);
@@ -76,11 +79,18 @@ public class EntityMessengerServiceTest {
 
     // Activate the entity.
     when(entity.isDestroyed()).thenReturn(false);
-    service.entityCreationSucceeded(entity);
+    ActiveServerEntity ae = mock(ActiveServerEntity.class);
+    service.entityCreated(ae);
 
     // Verify that the timer did see them.
     verify(timer).addDelayed(any(), anyLong());
     verify(timer).addPeriodic(any(), anyLong(), anyLong());
+    
+    // destroy entity
+    service.entityDestroyed(ae);
+    when(entity.isDestroyed()).thenReturn(true);
+    // Verify everything cancelled
+    verify(timer, times(2)).cancel(anyLong());
   }
 
   @Test
@@ -100,7 +110,8 @@ public class EntityMessengerServiceTest {
     // Create the service.
     EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
     when(entity.isDestroyed()).thenReturn(false);
-    service.entityCreationSucceeded(entity);
+    ActiveServerEntity ae = mock(ActiveServerEntity.class);
+    service.entityCreated(ae);
 
     EntityMessage deferrableMessage = mock(EntityMessage.class);
     EntityMessage futureMessage = mock(EntityMessage.class);
@@ -111,6 +122,32 @@ public class EntityMessengerServiceTest {
     handle.release();
     // verify that got scheduled.
     verify(sink).addSingleThreaded(any());
+  }
+  
+  @Test
+  public void testEarlySend() throws Exception {
+    ISimpleTimer timer = mock(ISimpleTimer.class);
+    when(timer.addPeriodic(any(), anyLong(), anyLong())).thenReturn(1L);
+    when(timer.addDelayed(any(), anyLong())).thenReturn(1L);
+    Sink<VoltronEntityMessage> sink = mock(Sink.class);
+    ManagedEntity entity = mock(ManagedEntity.class);
+    when(entity.isDestroyed()).thenReturn(true);
+    when(entity.getRetirementManager()).thenReturn(mock(RetirementManager.class));
+    @SuppressWarnings("rawtypes")
+    MessageCodec codec = mock(MessageCodec.class);
+    when(entity.getCodec()).thenReturn(codec);
 
+    // Create the service.
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
+    // now adding listener in provider so do it manually
+    entity.addLifecycleListener(service);
+    // Verify that the service was registered to be told when the entity activates.
+    verify(entity).addLifecycleListener(service);
+
+    // messageSelf before create is finished
+    EntityMessage delayMessage = mock(EntityMessage.class);
+    service.messageSelf(delayMessage);
+
+    verify(sink).addSingleThreaded(any(VoltronEntityMessage.class));
   }
 }

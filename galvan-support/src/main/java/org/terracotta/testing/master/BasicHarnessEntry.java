@@ -77,6 +77,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
     clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
+    clientsConfiguration.failOnLog = harnessOptions.failOnLog;
     CommonIdioms.installAndRunClients(interlock, stateManager, verboseManager, clientsConfiguration, processControl);
     // NOTE:  waitForFinish() throws GalvanFailureException on failure.
     try {

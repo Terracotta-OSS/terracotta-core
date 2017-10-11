@@ -58,7 +58,9 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
       if (configuration instanceof EntityMessengerConfiguration) {
         waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
       }
-      service = configuration.getServiceType().cast(new EntityMessengerService(this.timer, this.messageSink, owningEntity, waitForReceived));
+      EntityMessengerService es = new EntityMessengerService(this.timer, this.messageSink, owningEntity, waitForReceived);
+      owningEntity.addLifecycleListener(es);
+      service = configuration.getServiceType().cast(es);
     }
     return service;
   }

@@ -83,6 +83,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -115,7 +116,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private final boolean canDelete;
   private volatile boolean isDestroyed;
   // We only track a single CreateListener since it is intended to be the EntityMessengerService attached to this.
-  private CreateListener createListener;
+  private final List<LifecycleListener> createListener = new CopyOnWriteArrayList<>();
   
   private final MessageCodec<EntityMessage, EntityResponse> codec;
   private final SyncMessageCodec<EntityMessage> syncCodec;
@@ -170,6 +171,17 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public long getVersion() {
     return version;
+  }
+  
+  private void notifyEntityCreated() {
+    CommonServerEntity entity = (this.isInActiveState) ? this.activeServerEntity : this.passiveServerEntity;
+    createListener.forEach((l)->l.entityCreated(entity));
+  }
+  
+  private void notifyEntityDestroyed() {
+    CommonServerEntity entity = (this.isInActiveState) ? this.activeServerEntity : this.passiveServerEntity;
+    createListener.forEach((l)->l.entityDestroyed(entity));
+    createListener.clear();
   }
     
   private ResultCapture createManagedEntityResponse(Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception, Object debug, boolean lifecycle) {
@@ -661,6 +673,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertFalse(this.isDestroyed);
         commonServerEntity.destroy();
         this.retirementManager.entityWasDestroyed();
+        notifyEntityDestroyed();
         if (this.isInActiveState) {
           this.activeServerEntity = null;
         } else {
@@ -684,6 +697,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     this.constructorInfo = constructorInfo;
     // Create the appropriate kind of entity, based on our active/passive state.
+    notifyEntityDestroyed();
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Active entity " + id + " does not exists.");
@@ -691,6 +705,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity = this.factory.reconfigureEntity(this.registry, this.activeServerEntity, constructorInfo);
         this.concurrencyStrategy = this.factory.getConcurrencyStrategy(constructorInfo);
         this.executionStrategy = this.factory.getExecutionStrategy(constructorInfo);
+        this.activeServerEntity.loadExisting();
       }
     } else {
       if (null == this.passiveServerEntity) {
@@ -702,6 +717,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         // TODO: Store the configuration in case we promote.
       }
     }
+    notifyEntityCreated();
+    
     reconfigureEntityRequest.complete(oldconfig);
     // Fire the event that the entity was created.
     this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
@@ -737,10 +754,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertNull(this.concurrencyStrategy);
       }
     }
+        
+    notifyEntityCreated();
     this.isDestroyed = false;
-    if (null != this.createListener) {
-      this.createListener.entityCreationSucceeded(this);
-    }
+
     eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
     response.complete();
   }
@@ -940,11 +957,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (!this.isDestroyed) {
       logger.info("Promoting " + getID() + " to active entity");
       if (null != this.passiveServerEntity) {
+        notifyEntityDestroyed();
+        this.passiveServerEntity = null;
         this.activeServerEntity = factory.createActiveEntity(this.registry, this.constructorInfo);
         this.concurrencyStrategy = factory.getConcurrencyStrategy(this.constructorInfo);
         this.executionStrategy = factory.getExecutionStrategy(this.constructorInfo);
         this.activeServerEntity.loadExisting();
-        this.passiveServerEntity = null;
+        notifyEntityCreated();
         // Fire the event that the entity was reloaded.
         this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
       } else {
@@ -1013,11 +1032,10 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void setSuccessfulCreateListener(CreateListener listener) {
-    Assert.assertNull(this.createListener);
-    this.createListener = listener;
+  public void addLifecycleListener(LifecycleListener listener) {
+    this.createListener.add(listener);
   }
-
+  
   private void loadExisting(byte[] constructorInfo) throws ConfigurationException {
     logger.info("loadExisting entity: " + getID());
     this.constructorInfo = constructorInfo;
@@ -1032,6 +1050,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  only active entities have load existing.  passive entities that have persistent state will either transition to active
 //  or be zapped
         this.activeServerEntity.loadExisting();
+        notifyEntityCreated();
 // Fire the event that the entity was reloaded.  This should only happen on active entities.  Passives with either transition to active soon or be destroyed
         this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
       }
@@ -1040,13 +1059,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new IllegalStateException("Passive entity " + id + " already exists.");
       } else {
         this.passiveServerEntity = factory.createPassiveEntity(registry, constructorInfo);
+        notifyEntityCreated();
         Assert.assertNull(this.concurrencyStrategy);
       }
     }
     this.isDestroyed = false;
-    if (null != this.createListener) {
-      this.createListener.entityCreationSucceeded(this);
-    }
   }
 
   private static class PassiveSyncServerEntityRequest implements ServerEntityRequest {
