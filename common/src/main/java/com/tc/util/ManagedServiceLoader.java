@@ -20,6 +20,7 @@
 package com.tc.util;
 
 import com.tc.classloader.OverrideService;
+import com.tc.classloader.OverrideServiceType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -81,6 +82,7 @@ public class ManagedServiceLoader {
   //  make sure the class is loadable         
           Class<?> type = loadClass(trim[0], urlString, loader);          
           if (type != null) {
+            //  overrides in the manifest
             if (trim.length > 1) {
               String[] overridesClasses = checkForOverride(trim[1]);
               for (String override : overridesClasses) {
@@ -89,6 +91,7 @@ public class ManagedServiceLoader {
                 overrides.put(override, trim[0]);
               }
             }
+            // overrides based on OverrideServices
             if (type.isAnnotationPresent(OverrideService.class)) {
               for (OverrideService override : type.getAnnotationsByType(OverrideService.class)) {
                 LOG.debug("overriding class " + override.value() + " with annotation on " + trim[0]);
@@ -104,6 +107,18 @@ public class ManagedServiceLoader {
                 }
               }
             }
+            // overrides based on OverrideServiceTypes
+            if (type.isAnnotationPresent(OverrideServiceType.class)) {
+              for (OverrideServiceType override : type.getAnnotationsByType(OverrideServiceType.class)) {
+                LOG.debug("overriding class " + override.value() + " with annotation on " + trim[0]);
+                Class<?> value = override.value();
+                if (value != null) {
+                  urls.remove(value.getName());
+                  overrides.put(value.getName(), trim[0]);
+                }
+              }
+            }
+            // only add the service if it is not part of the override graph
             if (!overrides.containsKey(trim[0])) {
               Class<?> previous = urls.put(trim[0], type);
               if (previous != null) {

@@ -808,11 +808,17 @@ public class ManagedEntityImplTest {
   public void testCreateListener() throws Exception {
     // We will set this flag from inside the listener.
     final boolean[] indirectFlag = new boolean[1];
-    managedEntity.setSuccessfulCreateListener(new ManagedEntity.CreateListener(){
+    managedEntity.addLifecycleListener(new ManagedEntity.LifecycleListener(){
       @Override
-      public void entityCreationSucceeded(ManagedEntity sender) {
+      public void entityCreated(CommonServerEntity sender) {
         indirectFlag[0] = true;
-      }});
+      }
+
+      @Override
+      public void entityDestroyed(CommonServerEntity sender) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      }
+    });
     TestingResponse response = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
     response.waitFor();
