@@ -19,6 +19,8 @@
 package org.terracotta.passthrough;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.classloader.OverrideService;
+import com.tc.classloader.OverrideServiceType;
 import com.tc.classloader.PermanentEntity;
 
 import java.util.Collection;
@@ -160,12 +162,7 @@ public class PassthroughServer implements PassthroughDumper {
 
   public void start(boolean isActive, boolean shouldLoadStorage, Set<Long> savedClientConnections) {
     this.isActive = isActive;
-    // See if there is a monitoring service.
-    // XXX: Currently, we do nothing to simulate reconnect after fail-over or restart, which should probably be addressed.
-    List<ServiceProvider> providers = new Vector<ServiceProvider>();
-    for (ServiceProviderAndConfiguration tuple : this.savedServiceProviderData) {
-      providers.add(tuple.serviceProvider);
-    }
+    
     this.hasStarted = true;
     bootstrapProcess(this.isActive);
     this.serverProcess.start(shouldLoadStorage, savedClientConnections);
@@ -373,6 +370,8 @@ public class PassthroughServer implements PassthroughDumper {
   }
   
   private void findClasspathBuiltinServices() {
+    Map<String, Class<? extends ServiceProvider>> overrides = new HashMap<>();
+    Map<String, ServiceProvider> providers = new HashMap<>();
     java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
     for (ServiceProvider provider : loader) {
       if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
@@ -381,10 +380,40 @@ public class PassthroughServer implements PassthroughDumper {
         // We want to initialize built-in providers with a null configuration only if the test 
         // has not preinstalled an override provider with the existing types
         if (!hasConfigurationForServiceProvider(provider) && !hasOverrideProviderForTypes(provider)) {
-          this.serverProcess.registerServiceProvider(provider, null);
+          Class<? extends ServiceProvider> type = provider.getClass();
+          if (type.isAnnotationPresent(OverrideService.class)) {
+            for (OverrideService override : type.getAnnotationsByType(OverrideService.class)) {
+              String value = override.value();
+              String[] types = override.types();
+              if (value != null && value.length() > 0) {
+                providers.remove(value);
+                overrides.put(value, type);
+              }
+              for (String typeName : types) {
+                providers.remove(typeName);
+                overrides.put(typeName, type);
+              }
+            }
+          }
+          if (type.isAnnotationPresent(OverrideServiceType.class)) {
+            for (OverrideServiceType override : type.getAnnotationsByType(OverrideServiceType.class)) {
+              Class<?> value = override.value();
+              if (value != null) {
+                providers.remove(value.getName());
+                overrides.put(value.getName(), type);
+              }
+            }
+          }
+          if (!overrides.containsKey(type.getName())) {
+            providers.put(type.getName(), provider);
+          }
         }
       }
     }
+    
+    providers.values().forEach((p) -> {
+      this.serverProcess.registerServiceProvider(p, null);
+    });
   }
   
   private boolean hasOverrideProviderForTypes(ServiceProvider provider) {
