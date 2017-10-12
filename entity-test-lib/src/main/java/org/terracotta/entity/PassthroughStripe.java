@@ -20,6 +20,8 @@ package org.terracotta.entity;
 
 import com.google.common.util.concurrent.Futures;
 import com.tc.classloader.BuiltinService;
+import com.tc.classloader.OverrideService;
+import com.tc.classloader.OverrideServiceType;
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
@@ -27,11 +29,9 @@ import org.terracotta.exception.EntityServerException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -141,21 +141,48 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   }
 
   private class FakeServiceRegistry {
-    private final Set<ServiceProvider> builtins = new HashSet<ServiceProvider>();
+    private final Map<String, ServiceProvider> builtins = new HashMap<>();
     
     FakeServiceRegistry() {
       java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
+      Map<String, Class<? extends ServiceProvider>> overrides = new HashMap<>();
       for (ServiceProvider provider : loader) {
+        Class<? extends ServiceProvider> type = provider.getClass();
+        if (type.isAnnotationPresent(OverrideService.class)) {
+          for (OverrideService override : type.getAnnotationsByType(OverrideService.class)) {
+            String value = override.value();
+            String[] types = override.types();
+            if (value != null && value.length() > 0) {
+              builtins.remove(value);
+              overrides.put(value, type);
+            }
+            for (String typeName : types) {
+              builtins.remove(typeName);
+              overrides.put(typeName, type);
+            }
+          }
+        }
+        if (type.isAnnotationPresent(OverrideServiceType.class)) {
+          for (OverrideServiceType override : type.getAnnotationsByType(OverrideServiceType.class)) {
+            Class<?> value = override.value();
+            if (value != null) {
+              builtins.remove(value.getName());
+              overrides.put(value.getName(), type);
+            }
+          }
+        }
         if (!provider.getClass().isAnnotationPresent(BuiltinService.class)) {
           System.err.println("service:" + provider.getClass().getName() + " not annotated with @BuiltinService.  The service will not be included");
         } else {
-          builtins.add(provider);
+          if (!overrides.containsKey(type.getName())) {
+            builtins.put(type.getName(), provider);
+          }
         }
       }
       final List<Class<?>> selfTypes = new ArrayList<Class<?>>(1);
       selfTypes.add(ClientCommunicator.class);
 //  add the ClientCommunicator builtin
-      builtins.add(new ServiceProvider() {
+      builtins.put(ClientCommunicator.class.getName(), new ServiceProvider() {
         @Override
         public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
           return true;
@@ -185,7 +212,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
         @Override
         public <T> T getService(ServiceConfiguration<T> configuration) throws ServiceException {
           T rService = null;
-          for (ServiceProvider provider : builtins) {
+          for (ServiceProvider provider : builtins.values()) {
             if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
               T service = provider.getService(cid, configuration);
               if (service != null) {
@@ -203,7 +230,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
         @Override
         public <T> Collection<T> getServices(ServiceConfiguration<T> configuration) {
           List<T> choices = new ArrayList<T>();
-          for (ServiceProvider provider : builtins) {
+          for (ServiceProvider provider : builtins.values()) {
             if (provider.getProvidedServiceTypes().contains(configuration.getServiceType())) {
               T service = provider.getService(cid, configuration);
               if (service != null) {
