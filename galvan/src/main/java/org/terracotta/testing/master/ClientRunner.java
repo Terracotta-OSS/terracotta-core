@@ -40,6 +40,7 @@ public class ClientRunner extends Thread {
   private final File clientWorkingDirectory;
   private final String clientClassPath;
   private final int debugPort;
+  private final boolean failOnLog;
   private final String clientClassName;
   private final List<String> extraArguments;
   
@@ -52,7 +53,7 @@ public class ClientRunner extends Thread {
   private Listener listener;
   private boolean initialized;
 
-  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, int debugPort, String clientClassName, List<String> extraArguments) {
+  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, int debugPort, boolean failOnLog, String clientClassName, List<String> extraArguments) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = clientVerboseManager.createHarnessLogger();
     this.clientProcessLogger = clientVerboseManager.createClientLogger();
@@ -61,6 +62,7 @@ public class ClientRunner extends Thread {
     this.clientWorkingDirectory = clientWorkingDirectory;
     this.clientClassPath = clientClassPath;
     this.debugPort = debugPort;
+    this.failOnLog = failOnLog;
     this.clientClassName = clientClassName;
     this.extraArguments = extraArguments;
   }
@@ -156,7 +158,7 @@ public class ClientRunner extends Thread {
       // An error here would mean an bug in the code.
       Assert.unexpected(e);
     }
-    ClientEventManager eventManager = new ClientEventManager(this.control, writingEnd, this.stdoutLog);
+    ClientEventManager eventManager = new ClientEventManager(this.control, writingEnd, this.stdoutLog, this.failOnLog);
     OutputStream outputStream = eventManager.getEventingStream();
     AnyProcessBuilder<?> processBuilder = AnyProcess.newBuilder();
     // Figure out if we want to enable debug.

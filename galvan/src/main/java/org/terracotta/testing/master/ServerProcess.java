@@ -248,11 +248,15 @@ public class ServerProcess {
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
     String zapEventName = "ZAP";
+    String warn = "WARN";
+    String err = "ERROR";
     Map<String, String> eventMap = new HashMap<String, String>();
     eventMap.put("PID is", pidEventName);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
     eventMap.put("Restarting the server", zapEventName);
+    eventMap.put("WARN", warn);
+    eventMap.put("ERROR", err);
     
     // We will attach the event stream to the stdout.
     SimpleEventingStream outputStream = new SimpleEventingStream(serverBus, eventMap, stdout);
@@ -288,9 +292,18 @@ public class ServerProcess {
       public void onEvent(Event event) throws Throwable {
         ServerProcess.this.instanceWasZapped();
       }});
+    serverBus.on(warn, (event)->handleWarnLog(event));
+    serverBus.on(warn, (event)->handleErrorLog(event));
     return outputStream;
   }
-
+  
+  private void handleWarnLog(Event e) {
+    
+  }
+  
+  private void handleErrorLog(Event e) {
+    
+  }
   /**
    * Called by the inline EventListener implementations when the server becomes either active or passive.
    * 
