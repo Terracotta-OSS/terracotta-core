@@ -2,11 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>terracotta-core-root</artifactId>
-        <groupId>org.terracotta.internal</groupId>
-        <version>5.4-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <groupId>org.terracotta.internal</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>5.4-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
+  </parent>
+ 
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>terracotta-kit</artifactId>
@@ -24,11 +26,6 @@
             <groupId>org.terracotta.internal</groupId>
             <artifactId>client-runtime</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
         </dependency>
     </dependencies>
 
