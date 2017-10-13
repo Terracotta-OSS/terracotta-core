@@ -16,12 +16,10 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.handler;
+package com.tc.objectserver.entity;
 
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
@@ -29,15 +27,14 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.FetchID;
-import com.tc.objectserver.entity.MessagePayload;
-import com.tc.objectserver.handler.GroupMessageBatchContext.IBatchableMessageFactory;
+import com.tc.objectserver.handler.GroupMessageBatchContext;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -48,26 +45,29 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 
-public class ReplicationSender extends AbstractEventHandler<NodeID> {
+public class ReplicationSender {
   private static final int DEFAULT_BATCH_LIMIT = 64;
   private static final int DEFAULT_INFLIGHT_MESSAGES = 1;
-  
+  // Find out how many messages we should keep in-flight and our maximum batch size.
+  private static int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("active-passive.batchsize", DEFAULT_BATCH_LIMIT);
+  private static int idealMessagesInFlight = TCPropertiesImpl.getProperties().getInt("active-passive.inflight", DEFAULT_INFLIGHT_MESSAGES);
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager<AbstractGroupMessage> group;
-  private final Map<NodeID, SyncState> filtering = new HashMap<>();
+  private final Map<NodeID, SyncState> filtering = new ConcurrentHashMap<>();
   private static final Logger logger = LoggerFactory.getLogger(ReplicationSender.class);
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
-  private final Map<NodeID, GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity>> batchContexts = new ConcurrentHashMap<>();
-  private final Collection<Consumer<NodeID>> failureListeners = new CopyOnWriteArrayList<>();
-  private Sink<NodeID> selfSink;
 
-  public ReplicationSender(GroupManager<AbstractGroupMessage> group) {
+  private final Collection<Consumer<NodeID>> failureListeners = new CopyOnWriteArrayList<>();
+  private final Sink<Runnable> outgoing;
+
+  public ReplicationSender(Stage<Runnable> outgoing, GroupManager<AbstractGroupMessage> group) {
     this.group = group;
+    this.outgoing = outgoing.getSink();
   }
-  
+
   public void addFailedToSendListener(Consumer<NodeID> failed) {
     failureListeners.add(failed);
   }
@@ -76,134 +76,48 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     failureListeners.forEach(c->c.accept(node));
   }
 
-  public void setSelfSink(Sink<NodeID> sink) {
-    this.selfSink = sink;
-  }
-
   public void removePassive(NodeID dest) {
-    // this is a flush of the replication channel.  shut it down and return;
-    synchronized (this) {
-      filtering.remove(dest);
-    }
-    this.batchContexts.remove(dest);
+    filtering.remove(dest);
   }
 
   public void addPassive(NodeID dest, SyncReplicationActivity activity) {
     // Set up the sync state.
-    synchronized (this) {
-      createAndRegisterSyncState(dest);
-    }
+    SyncState state = createAndRegisterSyncState(dest);
     // Send the message.
-    if (doSendActivity(dest, activity)) {
-    // Try to flush the message.
-      this.selfSink.addSingleThreaded(dest);
-    }
+    state.attemptToSend(activity);
   }
 
-  public boolean replicateMessage(NodeID dest, SyncReplicationActivity activity) {
-    SyncState syncing = getSyncState(dest, activity);
-    
-    boolean didSend = false;
-    // See if the message needs to be filtered out of the stream.
-    boolean shouldRemoveFromStream = shouldRemoveActivityFromReplicationStream(activity, syncing);
-    if (!shouldRemoveFromStream) {
-      // We want to send this message.
-      syncing.validateSending(activity);
-
-      if (doSendActivity(dest, activity)) {  
-        // We were able to add the message to the batch so try to flush it.
-        this.selfSink.addSingleThreaded(dest);
-      }
-      didSend = true;
-    } else {
-      // We are filtering this out so don't send it.
-      // TODO:  Does this message need to be converted to a NOOP to preserve passive-side ordering?
-      // Log that this is dropped due to filtering.
-      if (debugLogging) {
-        logger.debug("FILTERING:" + activity);
-      }
-    }
-    // If we didn't filter the message or trigger an exception, we sent/batched it so let the caller know.
-    return didSend;
-  }
-
-  @Override
-  public void handleEvent(NodeID nodeToFlush) throws EventHandlerException {
-    try {
-      GroupMessageBatchContext cxt = this.batchContexts.get(nodeToFlush);
-      if (cxt != null) {
-        cxt.flushBatch();
-      } else {
-        notifySendFailure(nodeToFlush);
-      }
-    } catch (GroupException e) {
-      logger.error("Exception flushing batch context", e);
-      notifySendFailure(nodeToFlush);
-    }
-  }
-
-  private boolean shouldRemoveActivityFromReplicationStream(SyncReplicationActivity activity, SyncState syncing) {
-    // By default, we want to filter out messages for which there is no syncing state.
-    boolean shouldRemoveFromStream = true;
-    if (syncing != null) {
-//  first check if the sync has finished, if it has replicate everything
-//  if it hasn't, check if the message should be replicated based on sync state.  Do this here in case the message is SYNC_BEGIN
-//  if still false, if sync hasn't yet started, replicate and the passive 
-//      will either NOOP ack or apply based on it's own state (STANDBY or UNINITIALIZED)
-      shouldRemoveFromStream = !(syncing.hasSyncFinished() 
-              || syncing.shouldMessageBeReplicated(activity)
-              || !syncing.hasSyncBegun());
-    }
-    return shouldRemoveFromStream;
-  }
-
-  private boolean doSendActivity(NodeID nodeid, SyncReplicationActivity activity) {
+  public void replicateMessage(NodeID dest, SyncReplicationActivity activity, Consumer<Boolean> sentCallback) {
     if (debugLogging) {
       logger.debug("WIRE:" + activity);
     }
     if (debugMessaging) {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
-    return this.batchContexts.get(nodeid).batchMessage(activity);
+    Optional<SyncState> syncing = getSyncState(dest, activity);
+    outgoing.addSingleThreaded(()->{
+      Optional<Boolean> didSend = syncing.map(state->state.attemptToSend(activity));
+      if (sentCallback != null) {
+        sentCallback.accept(didSend.orElse(false));
+      }
+    });
+
   }
   
-  private void createAndRegisterSyncState(NodeID nodeid) {
+  private SyncState createAndRegisterSyncState(NodeID nodeid) {
     // We can't already have a state for this passive.
     Assert.assertTrue(!filtering.containsKey(nodeid));
-    Assert.assertTrue(!batchContexts.containsKey(nodeid));
-    SyncState state = new SyncState();
-    filtering.put(nodeid, state);
-    // Find out how many messages we should keep in-flight and our maximum batch size.
-    int maximumBatchSize = TCPropertiesImpl.getProperties().getInt("active-passive.batchsize", DEFAULT_BATCH_LIMIT);
-    int idealMessagesInFlight = TCPropertiesImpl.getProperties().getInt("active-passive.inflight", DEFAULT_INFLIGHT_MESSAGES);
-    logger.info("Created batch context for passive " + nodeid + " with max batch size " + maximumBatchSize + " and ideal messages in flight " + idealMessagesInFlight);
-    // Create the runnable which will be called, on the network thread, to notify us when a message has been sent.  In
-    //  those cases, we want to incur a new flush operation into our internal thread.
-    Runnable networkDoneTarget = new Runnable() {
-      @Override
-      public void run() {
-        ReplicationSender.this.selfSink.addSingleThreaded(nodeid);
-      }
-    };
-    
-    IBatchableMessageFactory<ReplicationMessage, SyncReplicationActivity> factory = new IBatchableMessageFactory<ReplicationMessage, SyncReplicationActivity>() {
-      @Override
-      public ReplicationMessage createNewBatch(SyncReplicationActivity initialActivity, long id) {
-        ReplicationMessage message = ReplicationMessage.createActivityContainer(initialActivity);
-        message.setReplicationID(id);
-        return message;
-      }
-    };
-    this.batchContexts.put(nodeid, new GroupMessageBatchContext<>(factory, this.group, nodeid, maximumBatchSize, idealMessagesInFlight, networkDoneTarget));
+
+    return filtering.computeIfAbsent(nodeid, SyncState::new);
   }
 
-  private SyncState getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
+  private Optional<SyncState> getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
     SyncState state = filtering.get(nodeid);
     if (null == state) {
       // We don't know anything about this passive so drop the message.
       dropActivityForDisconnectedServer(nodeid, activity);
     }
-    return state;
+    return Optional.ofNullable(state);
   }
 
   private void dropActivityForDisconnectedServer(NodeID nodeid, SyncReplicationActivity activity) {
@@ -220,13 +134,8 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     }
     return false;
   }  
- 
-  @Override
-  protected void initialize(ConfigurationContext context) {
-    super.initialize(context);
-  }
   
-  private static class SyncState {
+  private class SyncState {
     // liveSet is the total set of entities which we believe have finished syncing and fully exist on the passive.
     private final Set<FetchID> liveFetch = new HashSet<>();
     // syncdID is the set of concurrency keys, of the entity syncingID, which we believe have finished syncing and fully
@@ -242,6 +151,14 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     boolean complete = false;
     private SyncReplicationActivity.ActivityType lastSeen;
     private SyncReplicationActivity.ActivityType lastSent;
+
+    private final GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity> batchContext;
+    private final NodeID  target;
+    
+    public SyncState(NodeID target) {  
+      this.target = target;
+      this.batchContext = new GroupMessageBatchContext<>(ReplicationMessage::createActivityContainer, group, target, maximumBatchSize, idealMessagesInFlight, (node)->flushBatch());  
+    }
     
     public boolean isSyncOccuring() {
       return (begun && !complete);
@@ -255,7 +172,30 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
       return complete;
     }
     
-    public boolean shouldMessageBeReplicated(SyncReplicationActivity activity) {
+    public boolean attemptToSend(SyncReplicationActivity activity) {
+      boolean shouldRemoveFromStream = !(hasSyncFinished() 
+              || shouldMessageBeReplicated(activity)
+              || !hasSyncBegun());
+      if (!shouldRemoveFromStream) {
+      // We want to send this message.
+        validateSending(activity);
+
+        if (debugLogging && activity.getActivityType() != SyncReplicationActivity.ActivityType.SYNC_BEGIN) {
+          logger.debug("SENDING:" + activity.getActivityType() +" " +  activity.getEntityID() + " " + activity.getFetchID() + " " + activity.getSource() + " " + activity.getClientInstanceID() + " " + activity.getActivityID().id);
+        }
+        
+        send(activity);
+        
+        return true;
+      } else {
+        if (debugLogging) {
+          logger.debug("FILTERING:" + activity);
+        }  
+        return false;
+      }
+    }
+    
+    private boolean shouldMessageBeReplicated(SyncReplicationActivity activity) {
         switch (validateInput(activity)) {
           case SYNC_BEGIN:
             begun = true;
@@ -318,6 +258,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
           case RECONFIGURE_ENTITY:
           case FETCH_ENTITY:
           case RELEASE_ENTITY:
+          case DISCONNECT_CLIENT:
           case DESTROY_ENTITY:
             return begun;
           case INVOKE_ACTION:
@@ -340,6 +281,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
             // TODO: Should we handle this placeholder a different way - excluding it at this level seems counter-intuitive.
             return false;
           case SYNC_START:
+            return true;
             // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
           default:
             throw new AssertionError("unknown replication activity:" + activity);
@@ -363,7 +305,7 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
     private SyncReplicationActivity.ActivityType validate(SyncReplicationActivity.ActivityType type, SyncReplicationActivity.ActivityType compare) {
       switch (type) {
         case SYNC_BEGIN:
-          Assert.assertNull(compare);
+          Assert.assertTrue(type + " " + compare, EnumSet.of(SyncReplicationActivity.ActivityType.SYNC_START).contains(compare));
           break;
         case SYNC_ENTITY_BEGIN:
           Assert.assertTrue(type + " " + compare, EnumSet.of(SyncReplicationActivity.ActivityType.SYNC_BEGIN, SyncReplicationActivity.ActivityType.SYNC_ENTITY_END).contains(compare));
@@ -384,11 +326,30 @@ public class ReplicationSender extends AbstractEventHandler<NodeID> {
           Assert.assertTrue(type + " " + compare, EnumSet.of(SyncReplicationActivity.ActivityType.SYNC_ENTITY_END, SyncReplicationActivity.ActivityType.SYNC_BEGIN).contains(compare));
           break;
         case SYNC_START:
+          break;
           // SYNC_START shouldn't go down this path - it is handled, explicitly, at a higher level.
         default:
           throw new AssertionError("unexpected message type");
       }
       return type;
+    }
+    
+    private boolean send(SyncReplicationActivity activity) {
+      if (this.batchContext.batchMessage(activity)) {
+        flushBatch();
+      }
+      return true;
+    }
+        
+    private void flushBatch() {
+      outgoing.addSingleThreaded(()->{
+        try {
+          long mid = this.batchContext.flushBatch();
+        } catch (GroupException group) {
+          logger.error("Exception flushing batch context", group);
+          notifySendFailure(target);
+        }
+      });
     }
   }
 }

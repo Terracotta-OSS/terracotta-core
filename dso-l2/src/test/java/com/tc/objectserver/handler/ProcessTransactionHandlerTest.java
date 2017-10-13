@@ -32,11 +32,13 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.classloader.ServiceLocator;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
+import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -50,6 +52,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
@@ -70,6 +73,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 import org.mockito.Matchers;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class ProcessTransactionHandlerTest {
@@ -83,7 +87,7 @@ public class ProcessTransactionHandlerTest {
   private ForwardingSink loopbackSink;
   private RunnableSink requestProcessorSink;
   private ClientEntityStateManager clientEntityStateManager;
-  private ITopologyEventCollector eventCollector;
+  private ManagementTopologyEventCollector eventCollector;
   private EntityManagerImpl entityManager;
   
   
@@ -115,12 +119,13 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink = new RunnableSink();
     
     this.clientEntityStateManager = new ClientEntityStateManagerImpl();
-    this.eventCollector = mock(ITopologyEventCollector.class);
+    this.eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
+    this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
     RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
+    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader()));
     entityManager.enterActiveState();
 
     this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager, mock(Runnable.class));
@@ -206,6 +211,7 @@ public class ProcessTransactionHandlerTest {
   @Test
   public void testChannelManagement() throws Exception {    
     // Set up the channel.
+    try {
     this.requestProcessorSink.runUntilEmpty();
     String entityName = "foo";
     EntityID entityID = createMockEntity(entityName);
@@ -217,6 +223,10 @@ public class ProcessTransactionHandlerTest {
     this.requestProcessorSink.runUntilEmpty();
     this.clientEntityStateManager.clientDisconnected((ClientID)this.source);
     this.requestProcessorSink.runUntilEmpty();
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   /**
@@ -273,10 +283,18 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
     when(request.getSource()).thenReturn(sender);
     when(request.getVoltronType()).thenReturn(type);
-    EntityDescriptor entityDescriptor = (type == VoltronEntityMessage.Type.INVOKE_ACTION) ?
-      EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), ClientInstanceID.NULL_ID)
-            :
-      EntityDescriptor.createDescriptorForLifecycle(entityID, 1);
+    EntityDescriptor entityDescriptor = null;
+    switch(type) {
+      case INVOKE_ACTION:
+        entityDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
+        break;
+      case FETCH_ENTITY:
+        entityDescriptor = EntityDescriptor.createDescriptorForFetch(entityID, 1, new ClientInstanceID(1));
+        break;
+      default:
+        entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(entityID, 1);
+        break;
+    }
 
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);

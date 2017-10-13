@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.junit.After;
@@ -87,7 +88,7 @@ public class ServiceLocatorTest {
      Assert.assertEquals(interi.getClassLoader(), component);
      
      Thread.currentThread().setContextClassLoader(apiLoader);
-     List<Class<? extends Runnable>> list = ServiceLocator.getImplementations(Runnable.class);
+     List<Class<? extends Runnable>> list = new ServiceLocator(apiLoader).getImplementations(Runnable.class, apiLoader);
      for (Class<? extends Runnable> r : list) {
        r.newInstance().run();
      }
@@ -103,18 +104,8 @@ public class ServiceLocatorTest {
 //  put it in the zip so null parent loader can find it
      zip.putEntry("com/tc/classloader/TestInterface.class", resourceToBytes("com/tc/classloader/TestInterface.class"));
      zip.finish();
-     Map<String, String> map = ServiceLocator.discoverImplementations(new URLClassLoader(new URL[] {test.toURI().toURL()}), "com.tc.classloader.TestInterface");
+     Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {test.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
      Assert.assertTrue(map.size() == 1);
-     try {
-       ClassLoader loader = new URLClassLoader(new URL[] {new URL(map.get("com.tc.classloader.TestInterfaceImpl").toString())}, null);
-       Class<?> c = loader.loadClass("com.tc.classloader.TestInterfaceImpl");
-       Assert.assertNotNull(c);
-     } catch (MalformedURLException m) {
-//  not expected
-       throw m;
-     } catch (ClassNotFoundException c) {
-       throw c;
-     } 
    }
    
    @Test
@@ -133,18 +124,13 @@ public class ServiceLocatorTest {
      impl.write(resourceToBytes("com/tc/classloader/TestInterface.class"));
      impl.close();
      
-     Map<String, String> map = ServiceLocator.discoverImplementations(new URLClassLoader(new URL[] {base.toURI().toURL()}), "com.tc.classloader.TestInterface");
-     Assert.assertTrue(map.size() == 1);
      try {
-       ClassLoader loader = new URLClassLoader(new URL[] {new URL(map.get("com.tc.classloader.TestInterfaceImpl").toString())}, null);
-       Class<?> c = loader.loadClass("com.tc.classloader.TestInterfaceImpl");
-       Assert.assertNotNull(c);
-     } catch (MalformedURLException m) {
-//  not expected
-       throw m;
-     } catch (ClassNotFoundException c) {
-       throw c;
-     } 
+       Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
+       Assert.assertTrue(map.size() == 1);
+     } catch (Throwable t) {
+       t.printStackTrace();
+       throw t;
+     }
    }
    
    private File writeZip(File api, String...classes) throws IOException {

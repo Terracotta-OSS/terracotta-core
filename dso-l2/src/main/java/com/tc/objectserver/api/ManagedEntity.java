@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.api;
 
-import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.MessageCodec;
 
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -29,6 +28,7 @@ import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.Map;
 import java.util.function.Consumer;
+import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -117,23 +117,18 @@ public interface ManagedEntity {
    * ultimately expected to be the EntityMessengerService associated with the managed entity.
    * @param listener The listener to notify when the receiver is finished being created or loaded.
    */
-  public void setSuccessfulCreateListener(CreateListener listener);
-
-  /**
-   * Notify a client source id has been destroyed and will not be heard from again.
-   * @param sourceid
-   */
-  public void notifyDestroyed(ClientSourceId sourceid);
-
+  public void addLifecycleListener(LifecycleListener listener);
+  
   /**
    * Interface used to describe the argument to setSuccessfulCreateListener.
    */
-  public interface CreateListener {
+  public interface LifecycleListener {
     /**
      * Called by sender when it is finished being created from new or loaded from existing.
      * 
      * @param sender The entity which is ready.
      */
-    public void entityCreationSucceeded(ManagedEntity sender);
+    public void entityCreated(CommonServerEntity sender);
+    public void entityDestroyed(CommonServerEntity sender);
   }
 }

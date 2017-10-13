@@ -185,7 +185,7 @@ public class TransactionOrderPersistor {
     }
   }
   
-  private List<ClientTransaction> buildGlobalListIfNecessary() {
+  private synchronized List<ClientTransaction> buildGlobalListIfNecessary() {
     if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
       for (ClientID clientID : this.permNodeIDs) {

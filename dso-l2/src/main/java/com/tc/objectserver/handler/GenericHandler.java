@@ -16,24 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util.runtime;
+package com.tc.objectserver.handler;
 
-import junit.framework.TestCase;
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandlerException;
 
 /**
- * Test to see if this class is valid for JRE 1-6 environment
+ *
  */
-public class VmJdk16Test extends TestCase {
+public class GenericHandler<T extends Runnable> extends AbstractEventHandler<T> {
 
-  public void testValidateJdk16() {
-    if (Vm.isJDK16()) {
-      assertFalse(Vm.isJDK14());
-      assertFalse(Vm.isJDK15());
-      assertTrue(Vm.isJDK15Compliant());
-      assertTrue(Vm.isJDK16());
-      assertTrue(Vm.isJDK16Compliant());
-      assertFalse(Vm.isJDK17());
-    }
+  @Override
+  public void handleEvent(T context) throws EventHandlerException {
+    context.run();
   }
-
+  
 }

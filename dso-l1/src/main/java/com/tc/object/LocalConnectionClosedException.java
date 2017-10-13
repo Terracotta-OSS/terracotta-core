@@ -16,24 +16,29 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.tc.object;
 
-package com.tc.objectserver.handler;
-
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventHandlerException;
-
-import java.util.concurrent.Callable;
+import org.terracotta.exception.ConnectionClosedException;
 
 /**
- * @author tim
+ *
  */
-public class BackupHandler extends AbstractEventHandler<Callable<?>> {
+public class LocalConnectionClosedException extends ConnectionClosedException {
+  
+  private final EntityID entityID;
+
+  public LocalConnectionClosedException(EntityID eid, String description, Throwable cause) {
+    super(description, cause);
+    this.entityID = eid;
+  }
+
   @Override
-  public void handleEvent(Callable<?> context) throws EventHandlerException {
-    try {
-      context.call();
-    } catch (Exception e) {
-      throw new EventHandlerException(e);
-    }
+  public String getEntityName() {
+    return entityID.getEntityName();
+  }
+
+  @Override
+  public String getClassName() {
+    return entityID.getClassName();
   }
 }

@@ -16,13 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.handler;
-
-import com.tc.l2.msg.ReplicationMessage;
+package com.tc.util;
 
 /**
  *
  */
-public interface PassiveSyncFilter {
-  boolean filter(ReplicationMessage message);
+public class TestServiceImpl implements TestService {
+  
 }

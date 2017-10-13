@@ -250,7 +250,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
     @Override
     public W poll(long timeout) throws InterruptedException {
-      W rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+      W rv = (timeout == 0) ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       return rv;
     }
 

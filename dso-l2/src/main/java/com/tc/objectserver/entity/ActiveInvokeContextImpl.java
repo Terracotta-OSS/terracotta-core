@@ -6,13 +6,8 @@ import org.terracotta.entity.ClientDescriptor;
 public class ActiveInvokeContextImpl extends InvokeContextImpl implements ActiveInvokeContext {
   private final ClientDescriptorImpl clientDescriptor;
 
-  public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor) {
-    super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()));
-    this.clientDescriptor = descriptor;
-  }
-
-  public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor, long oldestid, long currentId) {
-    super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), oldestid, currentId);
+  public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId) {
+    super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
     this.clientDescriptor = descriptor;
   }
 

@@ -30,6 +30,7 @@ import com.tc.util.Assert;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -40,8 +41,9 @@ import java.util.concurrent.TimeoutException;
  * Note that this is only used from within ClietEntityManagerImpl, and was originally embedded there, but was extracted to
  * make unit testing more direct.
  */
-public class InFlightMessage implements InvokeFuture<byte[]> {
+public class InFlightMessage {
   private final VoltronEntityMessage message;
+  private final EntityID eid;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -61,13 +63,15 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private final boolean blockGetOnRetired;
   private final Trace trace;
 
-  public InFlightMessage(VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
+  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
     this.message = message;
+    this.eid = extraInfo;
+    Assert.assertNotNull(eid);
+    Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
     this.waitingThreads = new HashSet<Thread>();
     this.blockGetOnRetired = shouldBlockGetOnRetire;
-    
     // We always assume that we can set the result, the first time.
     this.canSetResult = true;
     this.trace = Trace.newTrace(message, "InFlightMessage");
@@ -91,21 +95,34 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     return ((TCMessage)this.message).send();
   }
   
-  public synchronized void waitForAcks() {
-    Trace.activeTrace().log("InFlightMessage.waitForAcks");
+  public void waitForAcks() {
     boolean interrupted = false;
-    while (!this.pendingAcks.isEmpty()) {
+    boolean complete = false;
+    while (!complete) {
       try {
-        wait();
-      } catch (InterruptedException e) {
+        waitForAcks(0, TimeUnit.MILLISECONDS);
+        complete = true;
+      } catch (InterruptedException ie) {
         interrupted = true;
+      } catch (TimeoutException te) {
+        throw new AssertionError(te);
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
     }
-    if (interrupted) {
-      Thread.currentThread().interrupt();
-    }
   }
-
+  
+  public void waitForAcks(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    Trace.activeTrace().log("InFlightMessage.waitForAcks");
+    timedWait(new Callable() {
+      @Override
+      public Object call() throws Exception {
+        return pendingAcks.isEmpty();
+      }
+    }, timeout, unit);
+  }
+  
   public synchronized void sent() {
     trace.log("Received ACK: " + VoltronEntityMessage.Acks.SENT);
     if (this.pendingAcks.remove(VoltronEntityMessage.Acks.SENT)) {
@@ -124,66 +141,62 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
     }
   }
 
-  @Override
   public synchronized void interrupt() {
     for (Thread waitingThread : this.waitingThreads) {
       waitingThread.interrupt();
     }
   }
 
-  @Override
   public synchronized boolean isDone() {
     return this.getCanComplete;
   }
 
-  @Override
   public synchronized byte[] get() throws InterruptedException, EntityException {
-    trace.log("get()");
-    Thread callingThread = Thread.currentThread();
-    boolean didAdd = this.waitingThreads.add(callingThread);
-    // We can't have already been waiting.
-    Assert.assertTrue(didAdd);
-    
     try {
-      while (!this.getCanComplete) {
-        wait();
-      }
-    } finally {
-      // We will hit this path on interrupt, for example.
-      this.waitingThreads.remove(callingThread);
-    }
-
-    // If we didn't throw due to interruption, we fall through here.
-    if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
-    } else {
-      return value;
+      return getWithTimeout(0, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException to) {
+    // should not happpen with zero timeout
+      throw new AssertionError(to);
     }
   }
-
-  @Override
-  public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
-    trace.log("getWithTimeout()");
-    Thread callingThread = Thread.currentThread();
+  
+  private synchronized void timedWait(Callable<Boolean> predicate, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+   Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
     Assert.assertTrue(didAdd);
     
-    long end = System.nanoTime() + unit.toNanos(timeout);
+    long end = (timeout > 0) ? System.nanoTime() + unit.toNanos(timeout) : 0;
     try {
-      while (!this.getCanComplete) {
-        long timing = end - System.nanoTime();
-        if (timing <= 0) {
+      while (!predicate.call()) {
+        long timing = (end > 0) ? end - System.nanoTime() : 0;
+        if (timing < 0) {
           throw new TimeoutException();
         } else {
           wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
         }
       }
+    } catch (InterruptedException ie) {
+      throw ie;
+    } catch (TimeoutException to) {
+      throw to;
+    } catch (Exception exp) {
+      throw new AssertionError(exp);
     } finally {
       this.waitingThreads.remove(callingThread);
     }
+  }
+
+  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+    trace.log("getWithTimeout()");
+    timedWait(new Callable() {
+      @Override
+      public Object call() throws Exception {
+        return getCanComplete;
+      }
+    }, timeout, unit);
     if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
+      throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
     } else {
       return value;
     }

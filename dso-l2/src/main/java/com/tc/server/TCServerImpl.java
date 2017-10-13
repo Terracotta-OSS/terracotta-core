@@ -106,10 +106,6 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
-
-    if (configurationSetupManager.isSecure()) {
-// no security implemention
-    }
   }
   
   public synchronized void setState(State state) {

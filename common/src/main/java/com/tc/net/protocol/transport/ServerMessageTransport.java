@@ -31,24 +31,21 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private static final Logger smtLogger = LoggerFactory.getLogger(ServerMessageTransport.class);
 
-  public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
+  public ServerMessageTransport(TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
     super(MessageTransportState.STATE_RESTART, handshakeErrorHandler, messageFactory, true, smtLogger);
-    initConnectionID(connectionID);
   }
 
   /**
    * Constructor for when you want a transport that you can specify a connection (e.g., in a server). This constructor
    * will create an open MessageTransport ready for use.
    */
-  public ServerMessageTransport(ConnectionID connectionId, TCConnection conn,
+  public ServerMessageTransport(TCConnection conn,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, true, smtLogger);
-    initConnectionID(connectionId);
     Assert.assertNotNull(conn);
     wireNewConnection(conn);
-    log("Attaching new connection to transport: " + conn);
   }
 
   @Override

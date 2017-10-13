@@ -20,6 +20,8 @@ package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
 import com.tc.classloader.ServiceLocator;
+import com.tc.server.TCServerImpl;
+import com.tc.server.TCServerMain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +76,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
   
   private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
-    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, loader);
+    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class, loader);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {

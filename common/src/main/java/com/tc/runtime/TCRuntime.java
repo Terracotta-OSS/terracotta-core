@@ -40,14 +40,10 @@ public class TCRuntime {
   private static void init() {
     TCProperties props = TCPropertiesImpl.getProperties();
 
-    if (Vm.isJDK15Compliant()) {
-      if (props.getBoolean(TCPropertiesConsts.MEMORY_MONITOR_FORCEBASIC)) {
-        memoryManager = new TCMemoryManagerJdk15Basic();
-      } else {
-        memoryManager = new TCMemoryManagerJdk15PoolMonitor();
-      }
+    if (props.getBoolean(TCPropertiesConsts.MEMORY_MONITOR_FORCEBASIC)) {
+      memoryManager = new TCMemoryManagerJdk15Basic();
     } else {
-      throw new RuntimeException("JVMMemoryManager require JRE 1.5 or greater");
+      memoryManager = new TCMemoryManagerJdk15PoolMonitor();
     }
   }
 }

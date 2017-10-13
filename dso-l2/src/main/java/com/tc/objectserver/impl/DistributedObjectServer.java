@@ -209,12 +209,13 @@ import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
+import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
-import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.entity.VoltronMessageSink;
+import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
-import com.tc.objectserver.handler.ReplicationSender;
+import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -223,6 +224,7 @@ import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
@@ -269,7 +271,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private final SingleThreadedTimer timer;
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
-  private EntityManager entityManager;
+  private EntityManagerImpl entityManager;
 
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -557,7 +559,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final TransactionCountWeightGenerator transactionCountWeightGenerator = new TransactionCountWeightGenerator(this.persistor.getTransactionOrderPersistor());
     weightGeneratorFactory.add(transactionCountWeightGenerator);
     // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
-    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(channelManager);
+    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(()->l2Coordinator.getStateManager(), channelManager);
     weightGeneratorFactory.add(connectedClientCountWeightGenerator);
     // 3)  ConnectionIDWeightGenerator - How many connection ids have been created.  Greater wins
     final ConnectionIDWeightGenerator connectionsMade = new ConnectionIDWeightGenerator(connectionIdFactory);
@@ -643,7 +645,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
 
-    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline);
+    entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
@@ -652,6 +654,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
     messengerProvider.setMessageSink(voltronMessageSink);
+    entityManager.setMessageSink(voltronMessageSink);
     
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
@@ -682,19 +685,17 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         this.persistor.getClusterStatePersistor());
     
     state.registerForStateChangeEvents(this.server);
+    // And the stage for handling their response batching/serialization.
+    Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 
+        new GenericHandler<>(), 1, maxStageSize);
 //  routing for passive to receive replication    
-    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, this.persistor, entityManager, groupCommManager);
+    ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
     // This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
-    // And the stage for handling their response batching/serialization.
-    Stage<ReplicatedTransactionHandler.SedaToken> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, ReplicatedTransactionHandler.SedaToken.class, 
-        replicatedTransactionHandler.getOutgoingResponseHandler(), 1, maxStageSize);
-    replicatedTransactionHandler.setOutgoingResponseSink(replicationResponseStage.getSink());
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
-                                                                                        entityManager,
                                                                                         clientEntityStateManager, state, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
     
@@ -707,11 +708,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
                                                                   this.stripeIDStateManager,
                                                                   channelLifeCycleHandler);
 
-    connectServerStateToReplicatedState(state, l2Coordinator.getReplicatedClusterStateManager());
+    connectServerStateToReplicatedState(state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    ReplicationSender replicationSender = new ReplicationSender(groupCommManager);
-    final Stage<NodeID> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, NodeID.class, replicationSender, 1, maxStageSize);
-    replicationSender.setSelfSink(replicationSenderStage.getSink());
+    final Stage<Runnable> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, Runnable.class, new GenericHandler<>(), 1, maxStageSize);
+    ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
     
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
     processor.setReplication(passives); 
@@ -818,7 +818,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       case FETCH_ENTITY:
       case RECONFIGURE_ENTITY:
       case RELEASE_ENTITY:
-        logger.info("completed lifecycle " + action + " on " + eid);
+        logger.info("completed lifecycle " + action + " on " + eid + ":" +fetch);
         break;
       default:
       //  not lifecycle, ignore
@@ -907,13 +907,17 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     };
   }
   
-  private void connectServerStateToReplicatedState(StateManager mgr, ReplicatedClusterStateManager rcs) {
+  private void connectServerStateToReplicatedState(StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
     mgr.registerForStateChangeEvents(new StateChangeListener() {
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
-        final Set<ClientID> existingConnections = Collections.unmodifiableSet(persistor.getClientStatePersistor().loadAllClientIDs());
+        final Set<ClientID> existingConnections = new HashSet<>(persistor.getClientStatePersistor().loadAllClientIDs());
+//  must do this because the replicated state when it comes to clients, may not include all the references 
+//  to clients that were in the midst of cleaning up after disconnection.  
+        existingConnections.addAll(clients.clearClientReferences());
         if (sce.movedToActive()) {
+          getContext().getClientHandshakeManager().setStarting(existingConnections);
           startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
@@ -995,12 +999,13 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     });
   }
 
-  public void startActiveMode(boolean wasStandby) {
+  private void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
+      
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
       Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
 //  find annotated permanent entities
-      List<VoltronEntityMessage> annotated = ServerEntityFactory.getAnnotatedEntities(entityManager.getEntityLoader());
+      List<VoltronEntityMessage> annotated = entityManager.getEntityLoader().getAnnotatedEntities();
       for (VoltronEntityMessage vem : annotated) {
 //  map them to weed out duplicates
         checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
@@ -1014,6 +1019,16 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       for (VoltronEntityMessage vem : checkdups.values()) {
         msgSink.addSingleThreaded(vem);
       }
+      EntityPersistor ep = this.persistor.getEntityPersistor();
+      for (VoltronEntityMessage vem : checkdups.values()) {
+        try {
+          ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
+        } catch (RuntimeException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 
@@ -1023,7 +1038,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     } catch (TCTimeoutException to) {
       throw Assert.failure("no timeout set!", to);
     }
-    this.context.getClientHandshakeManager().setStarting(existingConnections);
     boolean clientBound = false;
     while (!clientBound) {
       try {

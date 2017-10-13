@@ -18,6 +18,7 @@
  */
 package com.tc.config.schema.setup;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.object.config.schema.L2Config;
@@ -53,6 +54,6 @@ public interface L2ConfigurationSetupManager {
 
   TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator)
       throws ConfigurationSetupException;
-
-  boolean isSecure();
+  
+  ServiceLocator getServiceLocator();
 }

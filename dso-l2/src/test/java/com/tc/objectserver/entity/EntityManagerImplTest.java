@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -50,6 +51,8 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class EntityManagerImplTest {
@@ -72,9 +75,10 @@ public class EntityManagerImplTest {
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
-        mock(ITopologyEventCollector.class),
+        new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
         processor,
-        mock(ManagementKeyCallback.class)
+        mock(ManagementKeyCallback.class),
+        new ServiceLocator(this.getClass().getClassLoader())
     );
     id = new EntityID(TestEntity.class.getName(), "foo");
     consumerID = 1L;
@@ -89,7 +93,12 @@ public class EntityManagerImplTest {
 
   @Test
   public void testCreateEntity() throws Exception {
-    entityManager.createEntity(id, version, consumerID, true);
+    try {
+      entityManager.createEntity(id, version, consumerID, true);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)).get().getID(), is(id));
   }
 

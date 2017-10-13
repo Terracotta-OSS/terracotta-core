@@ -256,7 +256,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 
   private IStripeMonitoring getIStripeMonitoringService(long consumerID) {
     try {
-      return this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+      IStripeMonitoring collector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<>(IStripeMonitoring.class));
+      if(collector != null) {
+        return new IStripeMonitoringWrapper(collector, LOGGER);
+      }
     } catch (ServiceException e) {
       Assert.fail("Multiple IStripeMonitoring implementations found!");
     }
@@ -370,4 +373,5 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   private static interface CacheWalker {
     public void didEnterNode(String[] parents, String name, Serializable value);
   }
+
 }

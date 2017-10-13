@@ -53,11 +53,6 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   }
 
   @Override
-  public void restoreConnectionId(ConnectionID rv) {
-
-  }
-
-  @Override
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener) {
 
   }
@@ -65,10 +60,5 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
   @Override
   public void activate(StripeID stripeID, long nextAvailChannelID) {
     
-  }
-
-  @Override
-  public ConnectionID buildConnectionID(ClientID client) {
-    throw new AssertionError();
   }
 }

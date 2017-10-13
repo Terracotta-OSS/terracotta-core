@@ -165,7 +165,7 @@ public class ClusterImpl implements ClusterInternal {
         }
       }
       nodeStatus.operationsEnabled();
-      LOGGER.info("NODE_JOINED " + currentClientID);
+      LOGGER.debug("NODE_JOINED " + currentClientID);
     } finally {
       stateWriteLock.unlock();
 
@@ -199,14 +199,14 @@ public class ClusterImpl implements ClusterInternal {
       // We may get a node left event without ever seeing a node joined event, just ignore
       // the node left event in that case
       if (!nodeStatus.getState().isNodeJoined()) {
-        LOGGER.info("ignoring NODE_LEFT " + currentClientID + " because nodeStatus " + nodeStatus.getState());
+        LOGGER.debug("ignoring NODE_LEFT " + currentClientID + " because nodeStatus " + nodeStatus.getState());
         return;
       }
       if (nodeStatus.getState().areOperationsEnabled()) {
         fireOperationsDisabled = true;
       }
       nodeStatus.nodeLeft();
-      LOGGER.info("NODE_LEFT " + currentClientID + " nodeStatus " + nodeStatus);
+      LOGGER.debug("NODE_LEFT " + currentClientID + " nodeStatus " + nodeStatus);
     } finally {
       stateWriteLock.unlock();
     }

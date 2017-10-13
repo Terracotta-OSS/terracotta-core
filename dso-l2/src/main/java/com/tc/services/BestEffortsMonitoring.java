@@ -22,6 +22,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.monitoring.IStripeMonitoring;
@@ -37,6 +39,9 @@ import com.tc.util.Assert;
  * Note that this interface is synchronized to ensure safe interaction with internal threads.
  */
 public class BestEffortsMonitoring {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(BestEffortsMonitoring.class);
+
   // We will flush 1 second after new data appears.
   // (this is marked public for tests)
   public static final long ASYNC_FLUSH_DELAY_MILLIS = 1000;
@@ -60,12 +65,14 @@ public class BestEffortsMonitoring {
     for (Map.Entry<Long, Map<String, Serializable>> perConsumerEntry : this.bestEffortsCache.entrySet()) {
       IStripeMonitoring collector = null;
       try {
-        collector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
+        IStripeMonitoring underlyingCollector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<>(IStripeMonitoring.class));
+        // NOTE:  We assert that there _is_ a registry for IStripeMonitoring if we received this call.
+        Assert.assertNotNull(underlyingCollector);
+        collector = new IStripeMonitoringWrapper(underlyingCollector, LOGGER);
       } catch (ServiceException e) {
         Assert.fail("Multiple IStripeMonitoring implementations found!");
       }
-      // NOTE:  We assert that there _is_ a registry for IStripeMonitoring if we received this call.
-      Assert.assertNotNull(collector);
+
       for (Map.Entry<String, Serializable> entry : perConsumerEntry.getValue().entrySet()) {
         collector.pushBestEffortsData(thisServer, entry.getKey(), entry.getValue());
       }

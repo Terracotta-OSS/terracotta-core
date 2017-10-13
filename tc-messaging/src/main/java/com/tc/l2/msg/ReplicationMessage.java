@@ -73,7 +73,8 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
     this.didCreateLocally = true;
   }
   
-  public void setReplicationID(long rid) {
+  @Override
+  public void setSequenceID(long rid) {
     this.rid = rid;
   }
 
