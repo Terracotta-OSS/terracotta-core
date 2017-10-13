@@ -19,11 +19,10 @@
 
 package com.terracotta.connection.api;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.ConnectionService;
 
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.terracotta.connection.TerracottaConnection;
 import com.terracotta.connection.URLConfigUtil;
 import com.terracotta.connection.client.TerracottaClientConfigParams;
@@ -31,7 +30,6 @@ import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 import com.terracotta.diagnostic.DiagnosticClientImpl;
 
 import java.net.URI;
-import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 
@@ -41,7 +39,7 @@ import java.util.concurrent.TimeoutException;
  * This is possible because the underlying connection knows how to probe the stripe for active nodes on start-up or
  * fail-over.
  */
-public class DiagnosticConnectionService implements ConnectionService {
+public class DiagnosticConnectionService extends AbstractConnectionService {
   private static final String SCHEME = "diagnostic";
 
   @Override
@@ -50,27 +48,15 @@ public class DiagnosticConnectionService implements ConnectionService {
   }
 
   @Override
-  public Connection connect(URI uri, Properties properties) throws ConnectionException {
-    if (!handlesURI(uri)) {
-      throw new IllegalArgumentException("Unknown URI " + uri);
-    }
-
-    // TODO: Make use of those properties
-    // TODO: hook in the connection listener
-
-    // We may be specifying a comma-delimited list of servers in the stripe so parse the URI with this possibility in mind.
-    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams();
-
-    clientConfig.addStripeMemberUri(uri.getHost() + ":" + uri.getPort());
-    clientConfig.addGenericProperties(properties);
+  public Connection internalConnect(TerracottaClientConfigParams clientConfig) throws ConnectionException {
     TerracottaClientStripeConnectionConfig stripeConnectionConfig = new TerracottaClientStripeConnectionConfig();
-    
+
     for (String memberUri : clientConfig.getStripeMemberUris()) {
       String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
       stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
     }
 
-    final DiagnosticClientImpl client = new DiagnosticClientImpl(stripeConnectionConfig, properties);
+    final DiagnosticClientImpl client = new DiagnosticClientImpl(stripeConnectionConfig, clientConfig.getGenericProperties());
     try {
       client.init();
     } catch (TimeoutException exp) {
