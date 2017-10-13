@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.util.FileSize;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public class TCLogbackLogging {
       fileAppender.setRollingPolicy(rollingPolicy);
 
       StartupAndSizeBasedTriggeringPolicy triggeringPolicy = new StartupAndSizeBasedTriggeringPolicy();
-      triggeringPolicy.setMaxFileSize("512MB");
+      triggeringPolicy.setMaxFileSize(FileSize.valueOf("512MB"));
       triggeringPolicy.setContext(loggerContext);
       triggeringPolicy.start();
       fileAppender.setTriggeringPolicy(triggeringPolicy);
