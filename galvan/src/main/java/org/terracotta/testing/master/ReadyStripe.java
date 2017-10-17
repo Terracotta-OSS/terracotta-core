@@ -49,11 +49,20 @@ public class ReadyStripe {
    * @param namespaceFragment The namespace declaration string which must be injected into each config.
    * @param serviceFragment The service definition string which must be injected into each config.
    * @param entityFragment The static/built-in entity definition string which must be injected into each config.
+   * @param serverProperties the Java system properties to apply to to each stripe server
    * @return The objects required to interact with and control the stripe.
    * @throws IOException Thrown in case something went wrong during server installation.
    * @throws GalvanFailureException Thrown in case starting the servers in the stripe experienced a failure.
    */
-  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String serverInstallDirectory, String kitOriginDirectory, int serversToCreate, int heapInM, int serverStartPort, int serverDebugPortStart, int serverStartNumber, List<String> extraJarPaths, String namespaceFragment, String serviceFragment, String entityFragment, int clientReconnectWindowTime, Properties tcProperties, String logConfigExt) throws IOException, GalvanFailureException {
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager,
+                                                    VerboseManager stripeVerboseManager, String serverInstallDirectory,
+                                                    String kitOriginDirectory, int serversToCreate, int heapInM,
+                                                    int serverStartPort, int serverDebugPortStart, int serverStartNumber,
+                                                    List<String> extraJarPaths, String namespaceFragment,
+                                                    String serviceFragment, String entityFragment,
+                                                    int clientReconnectWindowTime, Properties tcProperties,
+                                                    Properties serverProperties, String logConfigExt)
+      throws IOException, GalvanFailureException {
     ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
     // Create the config builder.
     ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
@@ -73,7 +82,7 @@ public class ReadyStripe {
           ? (serverDebugPortStart + i)
           : 0;
       configBuilder.addServer(serverName);
-      installer.installNewServer(serverName, heapInM, debugPort, logConfigExt);
+      installer.installNewServer(serverName, heapInM, debugPort, (serverProperties == null ? new Properties() : serverProperties), logConfigExt);
     }
     // The config is built and stripe has been installed so write the config to the stripe.
     String configText = configBuilder.buildConfig();

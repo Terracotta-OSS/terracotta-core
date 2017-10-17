@@ -31,7 +31,8 @@ import org.terracotta.testing.logging.VerboseManager;
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
   private final PortChooser chooser = new PortChooser();
   
-  public void runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, GalvanFailureException {
+  public void runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions,
+                             VerboseManager verboseManager) throws IOException, GalvanFailureException {
     // Before anything, set the default exception handler - since we create threads to manage the sub-processes.
     Thread.setDefaultUncaughtExceptionHandler(new GalvanExceptionHandler());
     
@@ -50,7 +51,8 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     return chooser.chooseRandomPorts(number);
   }
 
-  private void internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions, VerboseManager verboseManager) throws IOException, GalvanFailureException {
+  private void internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions,
+                                      VerboseManager verboseManager) throws IOException, GalvanFailureException {
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
     
@@ -79,6 +81,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     String entityFragment = master.getEntityConfigXMLSnippet();
     int clientReconnectWindowTime = master.getClientReconnectWindowTime();
     Properties tcProperties = master.getTcProperties();
+    Properties serverProperties = master.getServerProperties();
     List<C> runConfigurations = master.getRunConfigurations();
     int clientsToCreate = master.getClientsToStart();
     for (C runConfiguration : runConfigurations) {
@@ -101,6 +104,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.entityFragment = entityFragment;
       harnessOptions.clientReconnectWindowTime = clientReconnectWindowTime;
       harnessOptions.tcProperties = tcProperties;
+      harnessOptions.serverProperties = serverProperties;
       
       // NOTE:  runOneConfiguration() throws GalvanFailureException on failure.
       runOneConfiguration(verboseManager, debugOptions, harnessOptions, runConfiguration);
@@ -151,6 +155,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public String serviceFragment;
     public String entityFragment;
     public Properties tcProperties;
+    public Properties serverProperties;
     
     /**
      * This constructor only exists to set convenient defaults.
