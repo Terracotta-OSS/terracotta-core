@@ -33,7 +33,6 @@ import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
@@ -50,8 +49,10 @@ import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.util.function.Consumer;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 
@@ -68,10 +69,11 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
-        ((Runnable)invoke.getArguments()[5]).run();
+    ActivePassiveAckWaiter waiter = mock(ActivePassiveAckWaiter.class);
+    doAnswer((invoke)->{
+        ((Consumer)invoke.getArguments()[5]).accept(waiter);
         return null;
-      });
+    }).when(processor).scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),

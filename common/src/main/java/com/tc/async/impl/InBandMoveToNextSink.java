@@ -31,25 +31,26 @@ public class InBandMoveToNextSink<EC> implements SpecializedEventContext {
   private final NodeID       nodeID;
   private final boolean     flush;
 
-  public InBandMoveToNextSink(EC event, SpecializedEventContext specialized, Sink<EC> sink, NodeID nodeID, boolean flush) {
-    // We can only wrap one of the events.
-    int countOfEvents = 0;
+  public InBandMoveToNextSink(EC event, Sink<EC> sink, NodeID nodeID, boolean flush) {
     if (null != event) {
       Assert.assertTrue(event instanceof MultiThreadedEventContext);
-      countOfEvents += 1;
     }
-    if (null != specialized) {
-      countOfEvents += 1;
-    }
-    Assert.assertEquals(1, countOfEvents);
-    
+    Assert.assertTrue(event instanceof MultiThreadedEventContext);
     this.event = event;
-    this.specialized = specialized;
+    this.specialized = null;
     this.sink = sink;
     this.nodeID = nodeID;
     this.flush = flush;
   }
 
+  public InBandMoveToNextSink(SpecializedEventContext specialized, Sink<EC> sink, NodeID nodeID, boolean flush) {
+    this.event = null;
+    this.specialized = specialized;
+    this.sink = sink;
+    this.nodeID = nodeID;
+    this.flush = flush;
+  }
+  
   @Override
   public void execute() {
     if (null != this.specialized) {

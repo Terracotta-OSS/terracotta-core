@@ -57,11 +57,10 @@ import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelEvent;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessage;
@@ -334,8 +333,6 @@ public class DistributedObjectClient implements TCClient {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     this.counterManager.createCounter(sampledCounterConfig);
 
-    final Stage<HydrateContext> hydrateStage = this.communicationStageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), 1, maxSize);
-
     // By design this stage needs to be single threaded. If it wasn't then cluster membership messages could get
     // processed before the client handshake ack, and this client would get a faulty view of the cluster at best, or
     // more likely an AssertionError
@@ -369,7 +366,7 @@ public class DistributedObjectClient implements TCClient {
 
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
-    initChannelMessageRouter(messageRouter, hydrateStage.getSink(), pauseStage.getSink(), clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), multiResponseStage.getSink(), serverMessageStage.getSink());
+    initChannelMessageRouter(messageRouter, pauseStage.getSink(), clusterMembershipEventStage.getSink(), entityResponseStage.getSink(), multiResponseStage.getSink(), serverMessageStage.getSink());
     new Thread(threadGroup, new Runnable() {
         public void run() {
           while (!clientStopped.isSet()) {
@@ -503,19 +500,19 @@ public class DistributedObjectClient implements TCClient {
     return messageTypeClassMapping;
   }
 
-  private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<HydrateContext> hydrateSink,
+  private void initChannelMessageRouter(TCMessageRouter messageRouter,
                                         Sink<ClientHandshakeResponse> pauseSink,
                                         Sink<ClusterMembershipMessage> clusterMembershipEventSink, Sink<VoltronEntityResponse> responseSink, Sink<VoltronEntityMultiResponse> multiSink, Sink<ServerEntityMessage> serverEntityMessageSink) {
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE, pauseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, clusterMembershipEventSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, responseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, responseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, responseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, multiSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_RESPONSE, responseSink, hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_MESSAGE, serverEntityMessageSink, hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, new TCMessageHydrateSink<>(pauseSink));
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, new TCMessageHydrateSink<>(pauseSink));
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE, new TCMessageHydrateSink<>(pauseSink));
+    messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, new TCMessageHydrateSink<>(clusterMembershipEventSink));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, new TCMessageHydrateSink<>(responseSink));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, new TCMessageHydrateSink<>(responseSink));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, new TCMessageHydrateSink<>(responseSink));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, new TCMessageHydrateSink<>(multiSink));
+    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_RESPONSE, new TCMessageHydrateSink<>(responseSink));
+    messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_MESSAGE, new TCMessageHydrateSink<>(serverEntityMessageSink));
     DSO_LOGGER.debug("Added message routing types.");
   }
 
