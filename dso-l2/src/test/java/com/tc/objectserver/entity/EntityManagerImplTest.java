@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
 import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -29,7 +30,6 @@ import org.junit.Test;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -57,7 +57,7 @@ import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class EntityManagerImplTest {
-  private EntityManager entityManager;
+  private EntityManagerImpl entityManager;
   private EntityID id;
   private FetchID fetch;
   private long version;
@@ -82,6 +82,7 @@ public class EntityManagerImplTest {
         mock(ManagementKeyCallback.class),
         new ServiceLocator(this.getClass().getClassLoader())
     );
+    entityManager.setMessageSink(mock(Sink.class));
     id = new EntityID(TestEntity.class.getName(), "foo");
     consumerID = 1L;
     fetch = new FetchID(consumerID);

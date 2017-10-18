@@ -51,13 +51,14 @@ public class DirectSink<EC> implements Sink<EC> {
 
   @Override
   public void addSingleThreaded(EC context) {
+    // access here MUST be single threaded
     if (isSingleThreaded()) {
       try {
         Assert.assertTrue(isIdle.get());
         handler.handleEvent(context);
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
-
+        throw new RuntimeException(ee);
       }
     } else {
       this.ifNotDirect.addSingleThreaded(context);
@@ -66,13 +67,14 @@ public class DirectSink<EC> implements Sink<EC> {
 
   @Override
   public void addMultiThreaded(EC context) {
+    // access here MUST be single threaded
     if (isSingleThreaded()) {
       try {
         Assert.assertTrue(isIdle.get());
         handler.handleEvent(context);
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
-
+        throw new RuntimeException(ee);
       }
     } else {
       this.ifNotDirect.addMultiThreaded(context);
@@ -81,11 +83,12 @@ public class DirectSink<EC> implements Sink<EC> {
 
   @Override
   public void addSpecialized(SpecializedEventContext specialized) {
+    // access here MUST be single threaded
     if (isSingleThreaded()) {
       try {
         specialized.execute();
       } catch (EventHandlerException ee) {
-
+        throw new RuntimeException(ee);
       }
     } else {
       this.ifNotDirect.addSpecialized(specialized);
@@ -150,8 +153,7 @@ public class DirectSink<EC> implements Sink<EC> {
   }
   
   private boolean isSingleThreaded() {
-    Thread thread = ACTIVATED.get();
-    return thread != null && thread == Thread.currentThread()
+    return ACTIVATED.get() == Thread.currentThread()
       && this.isIdle.get();
   }
   

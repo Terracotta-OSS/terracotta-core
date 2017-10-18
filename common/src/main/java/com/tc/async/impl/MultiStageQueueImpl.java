@@ -28,7 +28,6 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
-import java.util.Arrays;
 import org.slf4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
@@ -320,6 +319,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
+    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
@@ -468,7 +468,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   }
 
   private class FlushingHandledContext<T extends EC> extends HandledContext<EC> {
-  //  private final EC context;
     private final int offset;
     private int executionCount = 0;
     public FlushingHandledContext(EC context, int offset) {

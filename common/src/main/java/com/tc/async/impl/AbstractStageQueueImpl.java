@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
-  private AtomicInteger inflight = new AtomicInteger();
+  private final AtomicInteger inflight = new AtomicInteger();
   final Logger logger;
   final String stageName;
   
@@ -31,6 +31,10 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   
   void addInflight() {
     inflight.incrementAndGet();
+  }
+  
+  public void clear() {
+    inflight.set(0);
   }
     
   Logger getLogger() {
@@ -243,7 +247,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   }
   
   
-  class CloseContext<C> implements ContextWrapper<C> {
+  static class CloseContext<C> implements ContextWrapper<C> {
 
     public CloseContext() {
     }

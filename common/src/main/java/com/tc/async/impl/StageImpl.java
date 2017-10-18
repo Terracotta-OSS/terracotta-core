@@ -175,6 +175,10 @@ public class StageImpl<EC> implements Stage<EC> {
   public String toString() {
     return "StageImpl(" + name + ")";
   }
+// for testing
+  void waitForIdle() {
+    Arrays.stream(threads).forEach(t->t.waitForIdleUninterruptibly());
+  }
 
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
@@ -257,6 +261,22 @@ public class StageImpl<EC> implements Stage<EC> {
             idleLock.notifyAll();
           }
         }
+      }
+    }
+    
+    private void waitForIdleUninterruptibly() {
+      boolean interrupted = false;
+      boolean localIdle = false;
+      while (!localIdle) {
+        try {
+          waitForIdle();
+          localIdle = true;
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
     }
     

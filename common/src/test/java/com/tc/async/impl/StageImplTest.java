@@ -151,8 +151,8 @@ public class StageImplTest {
     if (size > 1) {
       // if size is one, this will not be called.
       verify(cxt).getSchedulingKey();
+      verify(cxt).flush();
     }
-    verify(cxt).flush();
 
     barrier.await();
     for (BlockingQueue q : cxts) {

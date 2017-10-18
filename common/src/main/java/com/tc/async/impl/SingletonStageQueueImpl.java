@@ -158,6 +158,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   @Override
   public void clear() {
     int clearCount = sourceQueue.clear();
+    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
