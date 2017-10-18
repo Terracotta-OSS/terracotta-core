@@ -29,6 +29,7 @@ import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
@@ -149,5 +150,30 @@ public class EntityMessengerServiceTest {
     service.messageSelf(delayMessage);
 
     verify(sink).addSingleThreaded(any(VoltronEntityMessage.class));
+  }
+  
+  
+  @Test
+  public void testPeriodicSend() throws Exception {
+    ISimpleTimer timer = mock(ISimpleTimer.class);
+    when(timer.addPeriodic(any(), anyLong(), anyLong())).thenReturn(1L);
+    when(timer.addDelayed(any(), anyLong())).thenReturn(1L);
+    Sink<VoltronEntityMessage> sink = mock(Sink.class);
+    ManagedEntity entity = mock(ManagedEntity.class);
+    when(entity.isDestroyed()).thenReturn(false);
+    when(entity.getRetirementManager()).thenReturn(mock(RetirementManager.class));
+    @SuppressWarnings("rawtypes")
+    MessageCodec codec = mock(MessageCodec.class);
+    when(entity.getCodec()).thenReturn(codec);
+
+    // Create the service.
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
+
+    long period = 500;
+    // messageSelf before create is finished
+    EntityMessage delayMessage = mock(EntityMessage.class);
+    service.messageSelfPeriodically(delayMessage, period);
+
+    verify(timer).addPeriodic(any(), anyLong(), eq(period));
   }
 }
