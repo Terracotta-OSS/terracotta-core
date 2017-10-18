@@ -18,8 +18,6 @@
  */
 package com.tc.async.api;
 
-import com.tc.text.PrettyPrintable;
-
 /**
  * @author steve
  */

@@ -18,8 +18,6 @@
  */
 package com.tc.util.io;
 
-import sun.misc.BASE64Encoder;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,31 +135,6 @@ public class ServerURL {
     try {
       urlConnection = theURL.openConnection();
       String uri = null;
-
-      if (securityInfo.isSecure()) {
-        if (securityInfo.getUsername() != null) {
-          String encodedUsername = URLEncoder.encode(securityInfo.getUsername(), "UTF-8").replace("+", "%20");
-          uri = "tc://" + encodedUsername + "@" + theURL.getHost() + ":" + theURL.getPort();
-          final char[] passwordTo;
-          try {
-            final URI theURI = new URI(uri);
-            passwordTo = pwProvider.getPasswordFor(theURI);
-          } catch (URISyntaxException e) {
-            throw new TCRuntimeException("Couldn't create URI to connect to " + uri, e);
-          }
-          Assert.assertNotNull("No password for " + theURL + " found!", passwordTo);
-          urlConnection
-              .addRequestProperty("Authorization",
-                                  "Basic "
-                                      + new BASE64Encoder().encode((securityInfo.getUsername() + ":" + new String(
-                                                                                                                  passwordTo))
-                                          .getBytes()));
-        }
-
-        if (DISABLE_HOSTNAME_VERIFIER || TRUST_ALL_CERTS) {
-          tweakSecureConnectionSettings(urlConnection);
-        }
-      }
     } catch (IOException e1) {
       throw new IllegalStateException(e1);
     }
