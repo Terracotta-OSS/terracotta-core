@@ -334,6 +334,12 @@ public class ProcessTransactionHandlerTest {
     public int size() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean isEmpty() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
     @Override
     public void clear() {
       throw new UnsupportedOperationException();

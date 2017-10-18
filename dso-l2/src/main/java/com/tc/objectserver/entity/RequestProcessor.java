@@ -24,7 +24,6 @@ import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
@@ -34,6 +33,7 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,7 @@ public class RequestProcessor {
 
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
-  public synchronized ActivePassiveAckWaiter scheduleRequest(EntityID eid, long version, FetchID fetchID, ServerEntityRequest request, MessagePayload payload, Runnable call, boolean replicate, int concurrencyKey) {
+  public synchronized void scheduleRequest(EntityID eid, long version, FetchID fetchID, ServerEntityRequest request, MessagePayload payload, Consumer<ActivePassiveAckWaiter> call, boolean replicate, int concurrencyKey) {
     // Determine if this kind of action is one we want to replicate.
     ServerEntityAction requestAction = request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
@@ -95,12 +95,11 @@ public class RequestProcessor {
         ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), request.getClientInstance(), requestAction, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
-    EntityRequest entityRequest =  new EntityRequest(eid, call, concurrencyKey);
+    EntityRequest entityRequest =  new EntityRequest(eid, call, token, concurrencyKey);
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + eid + ":" + concurrencyKey);
     }
     requestExecution.addMultiThreaded(entityRequest);
-    return token;
   }
   
   private static final EnumMap<ServerEntityAction, SyncReplicationActivity.ActivityType> typeMap  = new EnumMap<>(ServerEntityAction.class);
@@ -139,13 +138,15 @@ public class RequestProcessor {
   
   public static class EntityRequest implements MultiThreadedEventContext, Runnable {
     private final EntityID entity;
-    private final Runnable invoke;
+    private final Consumer<ActivePassiveAckWaiter> invoke;
     private final int key;
+    private final ActivePassiveAckWaiter waiter;
 
-    public EntityRequest(EntityID entity, Runnable runnable, int key) {
+    public EntityRequest(EntityID entity, Consumer<ActivePassiveAckWaiter> runnable, ActivePassiveAckWaiter waiter, int key) {
       this.entity = entity;
       this.invoke = runnable;
       this.key = key;
+      this.waiter = waiter;
     }
 
     @Override
@@ -168,7 +169,7 @@ public class RequestProcessor {
 	// and EntityMessenger
 
         // We can now run the invoke.
-        invoke.run();
+        invoke.accept(waiter);
     }
 
     @Override

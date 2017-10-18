@@ -17,11 +17,12 @@
  *
  */
 
-package com.tc.services;
+package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.ServerEntityResponseMessage;
+import com.tc.services.CommunicatorService;
 
 /**
  * @author twu

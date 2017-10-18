@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.async.impl.DirectSink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
@@ -149,6 +150,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.flushLocalPipeline = flushLocalPipeline;
     this.registry = registry;
     this.messageSelf = msg;
+    Assert.assertNotNull(this.messageSelf);
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
     this.factory = factory;
@@ -307,11 +309,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace.activeTrace().log("ManagedEntityImpl.scheduleInOrder");
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
-    if (isInActiveState) {
-      Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE));
-    } else {
-      Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE) ||
-        Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE));
+    if (!DirectSink.isActivated()) {
+      if (isInActiveState) {
+        Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE));
+      } else {
+        Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE) ||
+          Thread.currentThread().getName().contains(ServerConfigurationContext.L2_STATE_CHANGE_STAGE));
+      }
     }
     
     SchedulingRunnable next = new SchedulingRunnable(request, payload, r, ckey);
@@ -978,13 +982,13 @@ public class ManagedEntityImpl implements ManagedEntity {
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
     BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false, Collections.emptySet()), MessagePayload.emptyPayload(), ()-> { 
+    this.executor.scheduleRequest(this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false, Collections.emptySet()), MessagePayload.emptyPayload(), (w)-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, fetchID, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
         }
         opComplete.complete();
-      }, true, ConcurrencyStrategy.MANAGEMENT_KEY).waitForCompleted();
+      }, true, ConcurrencyStrategy.MANAGEMENT_KEY);
     //  wait for completed above waits for acknowledgment from the passive
     //  waitForCompletion below waits for completion of the local request processor
     opComplete.waitForCompletion();
@@ -1000,7 +1004,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           //  don't care about the result
                                               
           BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  ()->invoke(req, new ResultCapture(null, result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency).waitForCompleted();
+          this.executor.scheduleRequest(this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  (w)->invoke(req, new ResultCapture(null, result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency);
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
@@ -1111,7 +1115,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
   }
   
-  private class SchedulingRunnable implements Runnable {
+  private class SchedulingRunnable implements Consumer<ActivePassiveAckWaiter> {
     private final ServerEntityRequest request;
     private final MessagePayload payload;
     private final Runnable original;
@@ -1125,7 +1129,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.concurrency = concurrency;
     }
         
-    private synchronized void start() {
+    private void start() {
       if (concurrency == ConcurrencyStrategy.MANAGEMENT_KEY) {
         runnables.activate();
       }
@@ -1150,12 +1154,17 @@ public class ManagedEntityImpl implements ManagedEntity {
           replicate = loc.runOnPassive();
         }
       } 
-      waitFor = executor.scheduleRequest(id, version, fetchID, request, payload, this, replicate, concurrency);
-      this.notifyAll();
+      executor.scheduleRequest(id, version, fetchID, request, payload, this, replicate, concurrency);
     }
     
-    public void run() {
+    private synchronized void setWaitFor(ActivePassiveAckWaiter waiter) {
+      this.waitFor = waiter;
+      notifyAll();
+    }
+    
+    public void accept(ActivePassiveAckWaiter waiter) {
       try {
+        setWaitFor(waiter);
         original.run();
       } finally {
         this.end();

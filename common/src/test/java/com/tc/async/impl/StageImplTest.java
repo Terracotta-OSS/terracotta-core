@@ -90,7 +90,7 @@ public class StageImplTest {
     when(context.createInstance(anyInt())).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, 1, null, context, 16);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, 1, null, context, 16, false);
     instance.destroy();
     verify(handler, never()).destroy();
     
@@ -140,7 +140,7 @@ public class StageImplTest {
       }
     
     });
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, size, null, context, 16);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, size, null, context, 16, false);
     assertEquals(cxts.size(), size);
     instance.start(null);
     

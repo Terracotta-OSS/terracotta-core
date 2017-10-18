@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
+  private AtomicInteger inflight = new AtomicInteger();
   final Logger logger;
   final String stageName;
   
@@ -28,12 +29,28 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   
   abstract SourceQueue[] getSources();
   
+  void addInflight() {
+    inflight.incrementAndGet();
+  }
+    
   Logger getLogger() {
     return logger;
   }
   
   boolean isClosed() {
     return closed;
+  }
+
+  @Override
+  public int size() {
+    return inflight.get();
+  }
+  
+  @Override
+  public boolean isEmpty() {
+    int val = inflight.get();
+    Assert.assertTrue(val >= 0);
+    return val == 0;
   }
 
   @Override
@@ -183,7 +200,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
   }
 
-  static class DirectExecuteContext<EC> implements ContextWrapper<EC> {
+  class DirectExecuteContext<EC> implements ContextWrapper<EC> {
     private final SpecializedEventContext context;
 
     public DirectExecuteContext(SpecializedEventContext context) {
@@ -192,11 +209,15 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
     @Override
     public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      this.context.execute();
+      try {
+        this.context.execute();
+      } finally {
+        Assert.assertTrue(inflight.decrementAndGet() >= 0);
+      }
     }
   }
 
-  static class HandledContext<C> implements ContextWrapper<C> {
+  class HandledContext<C> implements ContextWrapper<C> {
     private final C context;
 
     public HandledContext(C context) {
@@ -205,7 +226,11 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
     @Override
     public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
-      handler.handleEvent(this.context);
+      try {
+        handler.handleEvent(this.context);
+      } finally {
+        Assert.assertTrue(inflight.decrementAndGet() >= 0);
+      }
     }
 
     @Override
@@ -218,7 +243,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   }
   
   
-  static class CloseContext<C> implements ContextWrapper<C> {
+  class CloseContext<C> implements ContextWrapper<C> {
 
     public CloseContext() {
     }

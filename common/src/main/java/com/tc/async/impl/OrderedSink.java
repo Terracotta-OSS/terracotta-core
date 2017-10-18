@@ -128,6 +128,12 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   }
 
   @Override
+  public boolean isEmpty() {
+    return sink.isEmpty();
+  }
+
+  
+  @Override
   public int size() {
     return sink.size();
   }
