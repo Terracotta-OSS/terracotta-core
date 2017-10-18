@@ -164,7 +164,7 @@ public class EntityMessengerService implements IEntityMessenger, LifecycleListen
                                                                    this.owningEntity,
                                                                    interEntityMessage);
 
-    TokenID token = cacheEarlyInvoke(null, runnable, startTimeMillis, startTimeMillis);
+    TokenID token = cacheEarlyInvoke(null, runnable, startTimeMillis, millisBetweenSends);
     if (token == null) {
       long id = this.timer.addPeriodic(runnable, startTimeMillis, millisBetweenSends);
       Assert.assertTrue(id > 0L);
