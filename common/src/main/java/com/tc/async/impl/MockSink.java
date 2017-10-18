@@ -70,6 +70,11 @@ public class MockSink<EC> implements Sink<EC> {
   }
 
   @Override
+  public boolean isEmpty() {
+    return this.queue.isEmpty();
+  }
+
+  @Override
   public int size() {
     return this.queue.size();
   }

@@ -77,6 +77,11 @@ public class TestSink<EC> implements Sink<EC> {
   }
 
   @Override
+  public boolean isEmpty() {
+    return queue.isEmpty();
+  }
+
+  @Override
   public int size() {
     return queue.size();
   }

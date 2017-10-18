@@ -122,12 +122,11 @@ import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryIm
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
-import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -171,7 +170,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
-import com.tc.services.CommunicatorResponseHandler;
 import com.tc.services.CommunicatorService;
 import com.tc.services.EntityMessengerProvider;
 import com.tc.services.LocalMonitoringProducer;
@@ -213,8 +211,10 @@ import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.entity.VoltronMessageSink;
+import com.tc.objectserver.handler.CommunicatorResponseHandler;
 import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
+import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
@@ -265,7 +265,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private ReconnectConfig                        l1ReconnectConfig;
 
   private GroupManager<AbstractGroupMessage> groupCommManager;
-  private Stage<HydrateContext>                                  hydrateStage;
   private StripeIDStateManagerImpl               stripeIDStateManager;
 
   private final SingleThreadedTimer timer;
@@ -625,19 +624,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
-    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                                 LoggerFactory
-                                                                                                     .getLogger(ServerClientHandshakeManager.class),
-                                                                                                 channelManager,
-                                                                                                 stageManager,
-                                                                                                 new Timer(
-                                                                                                           "Reconnect timer",
-                                                                                                           true),
-                                                                                                 reconnectTimeout,
-                                                                                                 consoleLogger);
     
-    
-    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize);
+    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize, true);
     final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
 
     RequestProcessor processor = new RequestProcessor(requestProcessorSink);
@@ -648,24 +636,24 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
-    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize);
-    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize);
+    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, true);
+    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, true);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
-    
+
+    VoltronMessageHandler voltron = new VoltronMessageHandler(voltronMessageSink);
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
-    messengerProvider.setMessageSink(voltronMessageSink);
-    entityManager.setMessageSink(voltronMessageSink);
     
+    Stage<VoltronEntityMessage> fast = stageManager.createStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class, voltron, 1, maxStageSize);
+    messengerProvider.setMessageSink(fast.getSink());
+    entityManager.setMessageSink(fast.getSink());    
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
-
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
-    this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class, new HydrateHandler(), stageWorkerThreadCount, maxStageSize);
     
-    final Sink<HydrateContext> hydrateSink = this.hydrateStage.getSink();
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(voltronMessageSink, hydrateSink, entityManager));
-    messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, communicatorResponseStage.getSink(), hydrateSink);
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
+    
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
+    messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, new TCMessageHydrateSink<>(communicatorResponseStage.getSink()));
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
@@ -696,7 +684,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
-                                                                                        clientEntityStateManager, state, eventCollector);
+                                                                                        clientEntityStateManager, state, fast.getSink(), processTransactionStage_voltron.getSink(), eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
@@ -763,6 +751,17 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
         .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
 
+    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
+                                                                                                 LoggerFactory
+                                                                                                     .getLogger(ServerClientHandshakeManager.class),
+                                                                                                 channelManager,
+                                                                                                 new Timer(
+                                                                                                           "Reconnect timer",
+                                                                                                           true),
+                                                                                                 reconnectTimeout,
+                                                                                                 fast.getSink(),
+                                                                                                 consoleLogger);
+    
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
         clientHandshakeManager,
@@ -800,14 +799,14 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 //  exclude from startup specific stages that are controlled by the stage controller. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     stageManager.startAll(this.context, toInit, 
+        ServerConfigurationContext.SINGLE_THREADED_FAST_PATH,
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
-        ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
-        ServerConfigurationContext.REQUEST_LOCK_STAGE  
+        ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE
     );
   }
   
@@ -836,8 +835,9 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       }
     }
 //  must be active, noop the ProcessTransactionHandler
+
     this.seda.getStageManager()
-        .getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class)
+        .getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class)
         .getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
@@ -855,6 +855,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
@@ -1002,7 +1003,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private void startActiveMode(boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
       
-      Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+      Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
       Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
 //  find annotated permanent entities
       List<VoltronEntityMessage> annotated = entityManager.getEntityLoader().getAnnotatedEntities();

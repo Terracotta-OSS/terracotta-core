@@ -117,7 +117,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
     // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
     MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
-    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context) : new HandledContext<EC>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
     deliverToQueue("Multi", wrapper);
   }
 
@@ -132,6 +132,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
   private void deliverToQueue(String type, ContextWrapper<EC> wrapper) {
     boolean interrupted = Thread.interrupted();
+    addInflight();
     try {
       for (; ; ) {
         try {
@@ -149,12 +150,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
   }
 
-  // Used for testing
-  @Override
-  public int size() {
-    return sourceQueue.size();
-  }
-
   @Override
   public String toString() {
     return "StageQueue(" + this.stageName + ")";
@@ -163,6 +158,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   @Override
   public void clear() {
     int clearCount = sourceQueue.clear();
+    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
@@ -270,27 +266,5 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       return "Singleton";
     }
 
-  }
-
-  private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
-    private final EC context;
-    private int executionCount = 0;
-
-    public FlushingHandledContext(EC context) {
-      this.context = context;
-    }
-
-    @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      handler.handleEvent(this.context);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
-    }
   }
 }

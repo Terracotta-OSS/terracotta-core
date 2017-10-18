@@ -53,6 +53,8 @@ public interface Sink<EC> extends Monitorable {
    */
   public void addSpecialized(SpecializedEventContext specialized);
 
+  boolean isEmpty();
+
   /**
    * returns the current size of the queue
    * 

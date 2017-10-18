@@ -21,7 +21,6 @@ package com.tc.objectserver.entity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;

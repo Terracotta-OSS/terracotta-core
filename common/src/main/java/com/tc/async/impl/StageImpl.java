@@ -32,6 +32,7 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.Arrays;
 
 /**
  * The SEDA Stage
@@ -42,6 +43,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final String         name;
   private final EventHandler<EC> handler;
   private final StageQueue<EC> stageQueue;
+  private final Sink<EC> sink;
   private final WorkerThread<EC>[] threads;
   private final ThreadGroup    group;
   private final Logger logger;
@@ -64,12 +66,13 @@ public class StageImpl<EC> implements Stage<EC> {
    */
   @SuppressWarnings("unchecked")
   public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler<EC> handler, int queueCount,
-                   ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize) {
+                   ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
     this.threads = new WorkerThread[queueCount];
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, loggerProvider, name, queueSize);
+    this.sink = !canBeDirect ? this.stageQueue : new DirectSink<>(this.handler, stageQueue::isEmpty, this.stageQueue);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
@@ -108,7 +111,7 @@ public class StageImpl<EC> implements Stage<EC> {
 
   @Override
   public Sink<EC> getSink() {
-    return stageQueue;
+    return sink;
   }
 
   @Override
@@ -171,6 +174,10 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public String toString() {
     return "StageImpl(" + name + ")";
+  }
+// for testing
+  void waitForIdle() {
+    Arrays.stream(threads).forEach(t->t.waitForIdleUninterruptibly());
   }
 
   private class WorkerThread<EC> extends Thread {
@@ -254,6 +261,22 @@ public class StageImpl<EC> implements Stage<EC> {
             idleLock.notifyAll();
           }
         }
+      }
+    }
+    
+    private void waitForIdleUninterruptibly() {
+      boolean interrupted = false;
+      boolean localIdle = false;
+      while (!localIdle) {
+        try {
+          waitForIdle();
+          localIdle = true;
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
     }
     

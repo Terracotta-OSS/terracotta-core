@@ -44,9 +44,9 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   private final DataOutputStream dos;
 
   // The "buffers" list is accessed by index in the Mark class, thus it should not be a linked list
-  private List<TCByteBuffer>     buffers                    = new ArrayList<TCByteBuffer>();
+  private List<TCByteBuffer>     buffers                    = new ArrayList<TCByteBuffer>(16);
 
-  private final List<TCByteBuffer> localBuffers             = new ArrayList<TCByteBuffer>();
+  private final List<TCByteBuffer> localBuffers             = new ArrayList<TCByteBuffer>(16);
 
   private TCByteBuffer           current;
   private boolean                closed;

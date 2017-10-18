@@ -53,7 +53,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
     }
   }
 
-  void response(NodeID nodeID, long responseId) {
+  public void response(NodeID nodeID, long responseId) {
     ClientAccount clientAccount = clientAccounts.get(nodeID);
     if (clientAccount != null) {
       clientAccount.response(responseId);

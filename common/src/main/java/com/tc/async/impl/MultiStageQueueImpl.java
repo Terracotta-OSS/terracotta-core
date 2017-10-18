@@ -158,6 +158,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
+    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -188,6 +189,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
+    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -220,6 +222,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
+    addInflight();
     ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
     boolean interrupted = Thread.interrupted();
     int index = getSourceQueueFor(specialized);
@@ -304,17 +307,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private int hashCodeToArrayIndex(int hashcode, int arrayLength) {
     return Math.abs(hashcode % arrayLength);
   }
-
-  // Used for testing
-  @Override
-  public int size() {
-    int totalQueueSize = 0;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
-      totalQueueSize += sourceQueue.size();
-    }
-    return totalQueueSize;
-  }
-
+  
   @Override
   public String toString() {
     return "StageQueue(" + this.stageName + ")";
@@ -326,6 +319,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
+    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
@@ -473,12 +467,11 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
   }
 
-  private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
-    private final EC context;
+  private class FlushingHandledContext<T extends EC> extends HandledContext<EC> {
     private final int offset;
     private int executionCount = 0;
     public FlushingHandledContext(EC context, int offset) {
-      this.context = context;
+      super(context);
       this.offset = offset;
     }
 
@@ -486,7 +479,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
       if (++executionCount == sourceQueues.length) {
 //  been through all the queues.  execute now.
-        handler.handleEvent(this.context);
+        super.runWithHandler(handler);
       } else {
 //  move to next queue
         boolean interrupted = false;
@@ -506,14 +499,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
           }
         }
       }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
     }
   }
 }

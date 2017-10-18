@@ -71,7 +71,7 @@ public class ServerClientHandshakeManagerTest {
     voltronSink = mock(Sink.class);
     when(voltronStage.getSink()).thenReturn(voltronSink);
     when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, stageManager, timer, reconnectTimeout, consoleLogger);
+    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, timer, reconnectTimeout, voltronSink, consoleLogger);
   }
 
   @Test

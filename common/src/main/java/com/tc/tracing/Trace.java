@@ -47,14 +47,12 @@ public class Trace {
 
   public void end() {
     if (LOGGER.isTraceEnabled()) {
-    LOGGER.trace("[trace - {}] end trace for componentName - {}, elapsed {} ns", id, componentName, System.nanoTime() - startTime);
+      LOGGER.trace("[trace - {}] end trace for componentName - {}, elapsed {} ns", id, componentName, System.nanoTime() - startTime);
       if(parent != null) {
         ACTIVE_TRACE.set(parent);
       } else {
         ACTIVE_TRACE.remove();
       }
-    } else{
-      ACTIVE_TRACE.remove();
     }
   }
 

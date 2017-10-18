@@ -56,12 +56,11 @@ import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
-import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -148,7 +147,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private TCGroupMemberDiscovery                            discover;
   private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
                                                                                                                              logger);
-  private Stage<HydrateContext> hydrateStage;
   private Stage<TCGroupMessageWrapper> receiveGroupMessageStage;
   private Stage<TCGroupHandshakeMessage> handshakeMessageStage;
   private Stage<DiscoveryStateMachine> discoveryStage;
@@ -264,7 +262,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   private void createTCGroupManagerStages() {
     int maxStageSize = 5000;
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE, HydrateContext.class,new HydrateHandler(), 1, maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
     discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize);
@@ -277,10 +274,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private void initMessageRouter(TCMessageRouter messageRouter) {
-    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
-                                   hydrateStage.getSink());
-    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
-                                   hydrateStage.getSink());
+    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, new TCMessageHydrateSink<>(receiveGroupMessageStage.getSink()));
+    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(handshakeMessageStage.getSink()));
   }
 
   /*

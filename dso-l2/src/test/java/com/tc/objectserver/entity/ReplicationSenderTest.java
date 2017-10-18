@@ -101,6 +101,12 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
       return 0;
     }
+
+    @Override
+    public boolean isEmpty() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
     @Override
     public void clear() {
       Assert.fail("Not in test");

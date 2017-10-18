@@ -31,7 +31,6 @@ import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -525,7 +524,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         }
       }
     }
-
+    
     this.stateManagerCleanup.run();
 
     // Clear the transaction order persistor since we are starting fresh.

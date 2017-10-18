@@ -19,21 +19,31 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.async.api.Sink;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-class TCMessageSinkToSedaSink implements TCMessageSink {
-  private final Sink<TCMessage> destSink;
-  private final Sink<HydrateContext> hydrateSink;
-  
+public class TCMessageHydrateSink<T> implements TCMessageSink {
+  private final Sink<T> destSink;
+  private final static Logger LOGGER = LoggerFactory.getLogger(TCMessageHydrateSink.class);
 
-  public TCMessageSinkToSedaSink(Sink<TCMessage> destSink, Sink<HydrateContext> hydrateSink) {
+  public TCMessageHydrateSink(Sink<T> destSink) {
     this.destSink = destSink;
-    this.hydrateSink = hydrateSink;
   }
 
   @Override
   public void putMessage(TCMessage message) {    
-    HydrateContext context = new HydrateContext(message, destSink);
-    hydrateSink.addMultiThreaded(context);
+      try {
+        message.hydrate();
+        this.destSink.addSingleThreaded((T)message);
+      } catch (Throwable t) {
+        try {
+          LOGGER.error("Error hydrating message of type " + message.getMessageType(), t);
+        } catch (Throwable t2) {
+          // oh well
+        }
+        message.getChannel().close();
+        return;
+      }
   }
   
     

@@ -29,7 +29,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
@@ -61,8 +60,8 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private final Set<ClientID>  knownClients = new HashSet<>();
 
   private static final Logger logger = LoggerFactory.getLogger(ChannelLifeCycleHandler.class);
-  private final Sink<HydrateContext> hydrateSink;
-  private final Sink<VoltronEntityMessage> processTransactionSink;
+  private final Sink<VoltronEntityMessage> voltronSink;
+  private final Sink<VoltronEntityMessage> pth;
   private final Sink<Runnable> requestProcessorSink;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager,
@@ -70,14 +69,16 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
                                  DSOChannelManager channelManager,
                                  ClientEntityStateManager chain,
                                  StateManager coordinator,
+                                 Sink<VoltronEntityMessage>  voltron, 
+                                 Sink<VoltronEntityMessage>  pth, 
                                  ManagementTopologyEventCollector collector) {
     this.commsManager = commsManager;
     this.channelMgr = channelManager;
     this.coordinator = coordinator;
     this.clientEvents = chain;
     this.collector = collector;
-    hydrateSink = stageManager.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class).getSink();
-    processTransactionSink = stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
+    this.voltronSink = voltron;
+    this.pth = pth;
     requestProcessorSink = stageManager.getStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class).getSink();
   }
 
@@ -98,7 +99,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
         // are coming so the collector can present releases before final disconnect
         List<FetchID> msg = clientEvents.clientDisconnected(clientID);
         collector.expectedDisconnects(clientID, msg);
-        msg.forEach(m->processTransactionSink.addSingleThreaded(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID))));
+        msg.forEach(m->voltronSink.addSingleThreaded(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID))));
         if (wasActive) {
           notifyClientRemoved(clientID);
         }
@@ -198,8 +199,8 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
           return true;
         }
       };
-      InBandMoveToNextSink context3 = new InBandMoveToNextSink(null, sec, processTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
-      hydrateSink.addSpecialized(context3);
+      InBandMoveToNextSink context3 = new InBandMoveToNextSink(sec, pth, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
+      voltronSink.addSpecialized(context3);
     }
   }
 /**
