@@ -93,10 +93,6 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
     }
     @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
-      Assert.fail("Not in test");
-    }
-    @Override
     public int size() {
       Assert.fail("Not in test");
       return 0;

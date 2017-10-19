@@ -82,20 +82,6 @@ public class DirectSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // access here MUST be single threaded
-    if (isSingleThreaded()) {
-      try {
-        specialized.execute();
-      } catch (EventHandlerException ee) {
-        throw new RuntimeException(ee);
-      }
-    } else {
-      this.ifNotDirect.addSpecialized(specialized);
-    }
-  }
-
-  @Override
   public boolean isEmpty() {
     return this.ifNotDirect.isEmpty();
   }

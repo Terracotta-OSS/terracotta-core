@@ -65,11 +65,6 @@ public class MockSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isEmpty() {
     return this.queue.isEmpty();
   }

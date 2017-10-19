@@ -41,12 +41,6 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // Not expected in the null case.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isEmpty() {
     return true;
   }

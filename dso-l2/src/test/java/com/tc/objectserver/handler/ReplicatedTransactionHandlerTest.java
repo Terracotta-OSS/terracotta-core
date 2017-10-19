@@ -486,10 +486,6 @@ public class ReplicatedTransactionHandlerTest {
       throw new UnsupportedOperationException();
     }
     @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
     public int size() {
       throw new UnsupportedOperationException();
     }

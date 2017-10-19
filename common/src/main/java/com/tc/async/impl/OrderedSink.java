@@ -98,12 +98,6 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // Not used in the ordered case.
-    throw new UnsupportedOperationException();
-  }
-
   private void processPendingIfNecessary() {
     if (!pending.isEmpty()) {
       for (Iterator<T> i = pending.iterator(); i.hasNext();) {

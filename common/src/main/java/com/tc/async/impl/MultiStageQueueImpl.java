@@ -217,32 +217,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
   }
 
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    addInflight();
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    boolean interrupted = Thread.interrupted();
-    int index = getSourceQueueFor(specialized);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[index].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
   // TODO:  Way too busy. REALLY need a better way
   private int findShortestQueueIndex() {
     switch (SHORTEST_FIND_STRATEGY) {
