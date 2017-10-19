@@ -25,7 +25,6 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 
 

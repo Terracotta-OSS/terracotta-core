@@ -43,6 +43,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SERVER_ENTITY_MESSAGE_RESPONSE_STAGE               = "server_entity_response_message_stage";
   
   public static final String REQUEST_PROCESSOR_STAGE                            = "request_processor_stage";
+  public static final String REQUEST_PROCESSOR_DURING_SYNC_STAGE                            = "request_processor_during_sync_stage";
   
   public static final String ACTIVE_TO_PASSIVE_DRIVER_STAGE                       = "active_to_passive_driver_stage";
   public static final String PASSIVE_REPLICATION_STAGE                            = "passive_replication_stage";

@@ -624,11 +624,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
-    
-    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize, true);
-    final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
 
-    RequestProcessor processor = new RequestProcessor(requestProcessorSink);
+    RequestProcessor processor = new RequestProcessor(stageManager);
     
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();

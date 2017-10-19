@@ -62,7 +62,7 @@ public class PlatformEntity implements ManagedEntity {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
     BarrierCompletion c = new BarrierCompletion();
-    processor.scheduleRequest(PLATFORM_ID, VERSION, FetchID.NULL_ID, request, payload, (w)-> {complete.accept(payload.getRawPayload());c.complete();}, false, payload.getConcurrency());    
+    processor.scheduleRequest(false, PLATFORM_ID, VERSION, FetchID.NULL_ID, request, payload, (w)-> {complete.accept(payload.getRawPayload());c.complete();}, false, payload.getConcurrency());    
     return new SimpleCompletion() {
       @Override
       public void waitForCompletion() {
