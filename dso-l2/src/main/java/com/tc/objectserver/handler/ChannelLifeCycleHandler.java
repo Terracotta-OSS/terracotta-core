@@ -18,12 +18,8 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
@@ -178,29 +174,8 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   }
   
   public void clientDropped(ClientID clientID, ProductID product, boolean wasActive) {
-    // Note that the remote node ID always refers to a client, in this path.
-    // We want all the messages in the system from this client to reach its destinations before processing this request.
-    // esp. hydrate stage and process transaction stage. This goo is for that.
     if (coordinator.isActiveCoordinator()) {
-      NodeID inBandSchedulerKey = clientID;
-      SpecializedEventContext sec = new SpecializedEventContext() {
-        @Override
-        public void execute() throws EventHandlerException {
-          requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(clientID, product, wasActive));
-        }
-
-        @Override
-        public Object getSchedulingKey() {
-          return 0;
-        }
-
-        @Override
-        public boolean flush() {
-          return true;
-        }
-      };
-      InBandMoveToNextSink context3 = new InBandMoveToNextSink(sec, pth, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
-      voltronSink.addSpecialized(context3);
+      nodeDisconnected(clientID, product, wasActive);
     }
   }
 /**
@@ -224,32 +199,4 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     // before an attempt is made to remove references.
     clientDropped(clientID, product, wasActive);
   }  
-  
-  private class FlushThenDisconnect implements MultiThreadedEventContext, Runnable {
-    
-    private final ClientID clientID;
-    private final ProductID product;
-    private final boolean wasActive;
-
-    public FlushThenDisconnect(ClientID client, ProductID product, boolean wasActive) {
-      this.clientID = client;
-      this.product = product;
-      this.wasActive = wasActive;
-    }
-
-    @Override
-    public Object getSchedulingKey() {
-      return 0;
-    }
-
-    @Override
-    public boolean flush() {
-      return true;
-    }
-
-    @Override
-    public void run() {
-      nodeDisconnected(clientID, product, wasActive);
-    }
-  }
 }
