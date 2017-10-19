@@ -797,13 +797,13 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.SINGLE_THREADED_FAST_PATH,
+        ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE,
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
-        ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
     );
   }
   
@@ -853,6 +853,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);

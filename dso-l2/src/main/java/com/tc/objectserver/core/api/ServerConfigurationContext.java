@@ -28,10 +28,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String SINGLE_THREADED_FAST_PATH                          = "single_threaded_fastpath";
   public final static String RESPOND_TO_REQUEST_STAGE                           = "respond_to_request_stage";
   public final static String VOLTRON_MESSAGE_STAGE                              = "voltron_message_stage";
-  public final static String RESPOND_TO_LOCK_REQUEST_STAGE                      = "respond_to_lock_request_stage";
-  public final static String REQUEST_LOCK_STAGE                                 = "request_lock_stage";
   public final static String CLIENT_HANDSHAKE_STAGE                             = "client_handshake_stage";
-  public final static String HYDRATE_MESSAGE_SINK                               = "hydrate_message_stage";
   public static final String L2_STATE_CHANGE_STAGE                              = "l2_state_change_stage";
   public static final String GROUP_EVENTS_DISPATCH_STAGE                        = "group_events_dispatch_stage";
   public static final String L2_STATE_MESSAGE_HANDLER_STAGE                     = "l2_state_message_handler_stage";
@@ -39,7 +36,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String RECEIVE_GROUP_MESSAGE_STAGE                        = "receive_group_message_stage";
   public static final String GROUP_HANDSHAKE_MESSAGE_STAGE                      = "group_handshake_message_stage";
   public static final String GROUP_DISCOVERY_STAGE                              = "group_discovery_stage";
-  public final static String GROUP_HYDRATE_MESSAGE_STAGE                        = "group_hydrate_message_stage";
   public static final String SERVER_ENTITY_MESSAGE_RESPONSE_STAGE               = "server_entity_response_message_stage";
   
   public static final String REQUEST_PROCESSOR_STAGE                            = "request_processor_stage";
