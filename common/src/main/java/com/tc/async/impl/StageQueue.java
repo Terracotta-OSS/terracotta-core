@@ -25,9 +25,6 @@ public interface StageQueue<EC> extends Sink<EC> {
   @Override
   void addMultiThreaded(EC context);
 
-  @Override
-  void addSpecialized(SpecializedEventContext specialized);
-
   // Used for testing
   @Override
   int size();

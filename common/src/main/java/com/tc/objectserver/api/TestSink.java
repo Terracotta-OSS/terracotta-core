@@ -45,13 +45,6 @@ public class TestSink<EC> implements Sink<EC> {
     throw new UnsupportedOperationException();
     
   }
-  
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // Not handled in this test.
-    throw new UnsupportedOperationException();
-    
-  }
 
   @Override
   public void close() {

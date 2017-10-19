@@ -121,15 +121,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     deliverToQueue("Multi", wrapper);
   }
 
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    deliverToQueue("Specialized", wrapper);
-  }
-
   private void deliverToQueue(String type, ContextWrapper<EC> wrapper) {
     boolean interrupted = Thread.interrupted();
     addInflight();
