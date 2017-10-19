@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Properties;
 import java.util.Vector;
 
 import org.terracotta.testing.common.Assert;
@@ -44,7 +45,8 @@ public class StripeInstaller {
   private final List<ServerInstallation> installedServers;
   private boolean isBuilt;
   
-  public StripeInstaller(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
+  public StripeInstaller(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager,
+                         String stripeInstallDirectory, String kitOriginDirectory, List<String> extraJarPaths) {
     this.interlock = interlock;
     this.stateManager = stateManager;
     this.stripeVerboseManager = stripeVerboseManager;
@@ -55,7 +57,7 @@ public class StripeInstaller {
     this.installedServers = new Vector<ServerInstallation>();
   }
   
-  public void installNewServer(String serverName, int heapInM, int debugPort, String logConfigExt) throws IOException {
+  public void installNewServer(String serverName, int heapInM, int debugPort, Properties serverProperties, String logConfigExt) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // Create the logger for the intallation.
@@ -75,7 +77,8 @@ public class StripeInstaller {
     }
 
     // Create the object representing this single installation and add it to the list for this stripe.
-    ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager, serverName, new File(installPath), heapInM, debugPort);
+    ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager,
+        serverName, new File(installPath), heapInM, debugPort, serverProperties);
     this.installedServers.add(installation);
   }
   

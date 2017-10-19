@@ -34,6 +34,11 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
   default Properties getTcProperties() {
     return new Properties();
   }
+
+  default Properties getServerProperties() {
+    return new Properties();
+  }
+
   /**
    * @return client reconnect window time in seconds
    */

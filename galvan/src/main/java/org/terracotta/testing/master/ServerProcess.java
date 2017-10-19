@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,8 @@ import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.logging.VerboseOutputStream;
 
+import static java.util.stream.Collectors.joining;
+
 
 public class ServerProcess {
   private final GalvanStateInterlock stateInterlock;
@@ -50,6 +53,7 @@ public class ServerProcess {
   private final String serverName;
   private final int heapInM;
   private final int debugPort;
+  private final Properties serverProperties;
   private final File serverWorkingDirectory;
   private final String eyeCatcher;
 // make sure only one caller is messing around on the process
@@ -70,7 +74,9 @@ public class ServerProcess {
   private OutputStream outputStream;
   private OutputStream errorStream;
 
-  public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager, ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, int heapInM, int debugPort) {
+  public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
+                       ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, int heapInM,
+                       int debugPort, Properties serverProperties) {
     this.stateInterlock = stateInterlock; 
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -82,6 +88,7 @@ public class ServerProcess {
     Assert.assertTrue(heapInM > 0);
     this.heapInM = heapInM;
     this.debugPort = debugPort;
+    this.serverProperties = serverProperties;
     this.serverWorkingDirectory = serverWorkingDirectory;
     // Create our eye-catcher for looking up sub-processes.
     this.eyeCatcher = UUID.randomUUID().toString();
@@ -89,6 +96,7 @@ public class ServerProcess {
     // We start up in the shutdown state so notify the interlock.
     this.stateInterlock.registerNewServer(this);
   }
+
   /**
    * enter/exit is used by start and stop to make sure those methods are called one
    * at a time.  
@@ -224,6 +232,12 @@ public class ServerProcess {
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + debugPort;
       // Log that debug is enabled.
       this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + debugPort);
+    }
+    String propertiesAsOptions = serverProperties.entrySet().stream()
+        .map(e -> "\"-D" + e.getKey() + "=" + e.getValue() + "\"")
+        .collect(joining(" "));
+    if (!propertiesAsOptions.isEmpty()) {
+      javaOpts += " " + propertiesAsOptions;
     }
     return javaOpts;
   }

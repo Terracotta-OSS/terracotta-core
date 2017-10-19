@@ -28,11 +28,18 @@ import org.terracotta.testing.logging.VerboseManager;
  * It exists purely to avoid duplication.
  */
 public class CommonIdioms {
-  public static ReadyStripe setupConfigureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager, StripeConfiguration stripeConfiguration) throws IOException, GalvanFailureException {
+  public static ReadyStripe setupConfigureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager,
+                                                         VerboseManager verboseManager, StripeConfiguration stripeConfiguration)
+      throws IOException, GalvanFailureException {
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfiguration.stripeName + "]");
     // We want to create a sub-directory per-stripe.
     String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(stripeConfiguration.testParentDirectory, stripeConfiguration.stripeName);
-    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate, stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart, stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment, stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime, stripeConfiguration.tcProperties, stripeConfiguration.logConfigExtension);
+    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager,
+        stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate,
+        stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart,
+        stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment,
+        stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime,
+        stripeConfiguration.tcProperties, stripeConfiguration.serverProperties, stripeConfiguration.logConfigExtension);
   }
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
@@ -68,6 +75,7 @@ public class CommonIdioms {
     public int serverStartNumber;
     public int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
     public Properties tcProperties;
+    public Properties serverProperties;
     public List<String> extraJarPaths;
     public String namespaceFragment;
     public String serviceFragment;
