@@ -160,6 +160,10 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public synchronized void complete(byte[] value) {
     getReturnChannel().ifPresent(channel -> {
       switch (action) {
+        case DISCONNECT_CLIENT:
+          // do nothing, really shouldn't happen because this client is gone but maybe if there is 
+          // some large delay in cleanup, this can occur
+          break;
         case INVOKE_ACTION:
         case FETCH_ENTITY:
         case RECONFIGURE_ENTITY:

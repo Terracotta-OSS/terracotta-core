@@ -2,7 +2,6 @@ package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.concurrent.QueueFactory;

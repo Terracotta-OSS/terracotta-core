@@ -59,8 +59,8 @@ public class ChannelLifeCycleHandlerTest {
     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
     this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager,
-      mock(ClientEntityStateManager.class), mock(StateManager.class), mock(Sink.class), 
-      mock(Sink.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
+      mock(ClientEntityStateManager.class), mock(StateManager.class),
+      mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
   }
 
   @After

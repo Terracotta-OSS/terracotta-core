@@ -21,7 +21,6 @@ package com.tc.async.impl;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import java.util.function.Supplier;

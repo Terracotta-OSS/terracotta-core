@@ -681,7 +681,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
-                                                                                        clientEntityStateManager, state, fast.getSink(), processTransactionStage_voltron.getSink(), eventCollector);
+                                                                                        clientEntityStateManager, state, processTransactionHandler, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
