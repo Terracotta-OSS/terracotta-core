@@ -6,7 +6,6 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageQueueStats;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
@@ -201,23 +200,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     @Override
     public int getDepth() {
       return this.count.get();
-    }
-  }
-
-  class DirectExecuteContext<EC> implements ContextWrapper<EC> {
-    private final SpecializedEventContext context;
-
-    public DirectExecuteContext(SpecializedEventContext context) {
-      this.context = context;
-    }
-
-    @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      try {
-        this.context.execute();
-      } finally {
-        Assert.assertTrue(inflight.decrementAndGet() >= 0);
-      }
     }
   }
 

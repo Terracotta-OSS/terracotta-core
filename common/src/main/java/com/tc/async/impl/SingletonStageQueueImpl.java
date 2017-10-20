@@ -19,12 +19,8 @@
 package com.tc.async.impl;
 
 
-import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;

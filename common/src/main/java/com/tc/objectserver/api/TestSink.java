@@ -19,7 +19,6 @@
 package com.tc.objectserver.api;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 
 import java.util.LinkedList;

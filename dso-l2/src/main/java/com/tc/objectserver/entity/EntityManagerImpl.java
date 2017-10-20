@@ -18,8 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.classloader.ServiceLocator;
 import com.tc.async.api.Sink;
+import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.object.EntityDescriptor;
@@ -104,8 +104,8 @@ public class EntityManagerImpl implements EntityManager {
     this.creationLoader = new ServerEntityFactory(locator);
     this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
-    entities.put(platform.getID(), new FetchID(0L));
-    entityIndex.put(new FetchID(0L), platform);
+    entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
+    entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
   }
   
   public void setMessageSink(Sink<VoltronEntityMessage> sink) {
@@ -113,7 +113,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   private ManagedEntity createPlatformEntity() {
-    return new PlatformEntity(processorPipeline);
+    return new PlatformEntity(messageSelf, processorPipeline);
   }
 
   @Override

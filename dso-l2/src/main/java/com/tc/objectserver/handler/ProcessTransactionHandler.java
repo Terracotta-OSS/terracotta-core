@@ -45,6 +45,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
+import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
@@ -92,8 +93,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private boolean reconnecting = true;
   
   private Sink<TCMessage> multiSend;
-  private ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
-  private ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<ClientID, Integer> inflightFetch = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
   
   private void sendMultiResponse(VoltronEntityMultiResponse response) {
     multiSend.addSingleThreaded(response);
@@ -153,7 +155,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       boolean requestedReceived = message.doesRequestReceived();
       
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, requestedReceived);
+      Runnable completion = (message instanceof Runnable) ? (Runnable)message : null;
+      if (!sourceNodeID.isNull()) {
+        if (message.getVoltronType() == VoltronEntityMessage.Type.FETCH_ENTITY) {
+  // track fetch calls through the pipeline so disconnects work properly
+          inflightFetch.compute(sourceNodeID, (client, count)->count == null ? 1 : count+1);
+          Assert.assertNull(completion);
+          completion = ()->inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
+        }
+      }
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, completion, requestedReceived);
     }
 
     @Override
@@ -199,6 +210,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
     return entityManager.snapshot(runFirst);
   }
   
+  boolean removeClient(ClientID target) {
+    return !inflightFetch.containsKey(target);
+  }
+  
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
     boolean handled = false;
     while (!handled) {
@@ -237,14 +252,14 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
 
 // only the process transaction thread will add messages here except for on reconnect
-  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, boolean requiresReceived) {
+  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, Runnable completion, boolean requiresReceived) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
 
     // This is active-side processing so this is never a replicated message.
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, ()->safeGetChannel(sourceNodeID), requiresReceived, isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, ()->safeGetChannel(sourceNodeID), completion, requiresReceived, isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -487,7 +502,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           break;
       }
       if (cached) {
-        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), false, false);
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), null, false, false);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -501,7 +516,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         this.resendNewList.add(resentMessage);
       }
     } catch (EntityException ee) {
-      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), false, false);
+      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), null, false, false);
       response.received();
       response.failure(ee);
       response.retired();
@@ -585,7 +600,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     MessagePayload payload = MessagePayload.commonMessagePayloadNotBusy(extendedData, entityMessage, doesRequireReplication);
     payload.setDebugId(message.toString());
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, false);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, null, false);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {

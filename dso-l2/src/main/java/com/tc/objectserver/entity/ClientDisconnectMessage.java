@@ -28,13 +28,15 @@ import org.terracotta.entity.EntityMessage;
  *
  */
 
-public class ClientDisconnectMessage implements VoltronEntityMessage {
+public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   private final ClientID clientID;
   private final EntityDescriptor descriptor;
+  private final Runnable disconnectComplete;
 
-  public ClientDisconnectMessage(ClientID clientID, EntityDescriptor entityID) {
+  public ClientDisconnectMessage(ClientID clientID, EntityDescriptor entityID, Runnable completion) {
     this.clientID = clientID;
     this.descriptor = entityID;
+    this.disconnectComplete = completion;
   }
 
   @Override
@@ -87,6 +89,13 @@ public class ClientDisconnectMessage implements VoltronEntityMessage {
     return null;
   }
 
+  @Override
+  public void run() {
+    if (this.disconnectComplete != null) {
+      this.disconnectComplete.run();
+    }
+  }
+  
   @Override
   public String toString() {
     return "ClientDisconnectMessage{" + "clientID=" + clientID + ", entityDescriptor=" + descriptor + '}';
