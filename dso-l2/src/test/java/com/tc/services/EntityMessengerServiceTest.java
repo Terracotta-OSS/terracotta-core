@@ -60,7 +60,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true, false);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.
@@ -109,7 +109,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true, false);
     when(entity.isDestroyed()).thenReturn(false);
     ActiveServerEntity ae = mock(ActiveServerEntity.class);
     service.entityCreated(ae);
@@ -119,7 +119,7 @@ public class EntityMessengerServiceTest {
     ExplicitRetirementHandle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
 
     // verify it was deferred
-    verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);
+    verify(retirementManager).deferRetirement(deferrableMessage, futureMessage, false);
     handle.release();
     // verify that got scheduled.
     verify(sink).addSingleThreaded(any());
@@ -139,7 +139,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true, false);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.
@@ -167,7 +167,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true);
+    EntityMessengerService service = new EntityMessengerService(timer, sink, entity, true, false);
 
     long period = 500;
     // messageSelf before create is finished

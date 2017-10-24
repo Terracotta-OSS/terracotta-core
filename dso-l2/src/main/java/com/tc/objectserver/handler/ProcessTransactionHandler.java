@@ -45,14 +45,16 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
-import com.tc.objectserver.entity.PlatformEntity;
+import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.services.EntityMessengerService;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
+import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -96,10 +98,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private final ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<ClientID, Integer> inflightFetch = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
-  
-  private void sendMultiResponse(VoltronEntityMultiResponse response) {
-    multiSend.addSingleThreaded(response);
-  }
   
   @Override
   public synchronized void reconnectComplete() {
@@ -155,16 +153,35 @@ public class ProcessTransactionHandler implements ReconnectListener {
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       boolean requestedReceived = message.doesRequestReceived();
       
-      Runnable completion = (message instanceof Runnable) ? (Runnable)message : null;
+      Consumer<byte[]> completion = null;
+      Consumer<EntityException> exception = null;
       if (!sourceNodeID.isNull()) {
-        if (message.getVoltronType() == VoltronEntityMessage.Type.FETCH_ENTITY) {
+        switch(message.getVoltronType()) {
+          case DISCONNECT_CLIENT:
+            ClientDisconnectMessage disconnect = (ClientDisconnectMessage)message;
+            completion = (raw)->disconnect.run();
+            exception = (e)->disconnect.run();
+            break;
+          case FETCH_ENTITY:
   // track fetch calls through the pipeline so disconnects work properly
-          inflightFetch.compute(sourceNodeID, (client, count)->count == null ? 1 : count+1);
-          Assert.assertNull(completion);
-          completion = ()->inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
+            inflightFetch.compute(sourceNodeID, (client, count)->count == null ? 1 : count+1);
+            Assert.assertNull(completion);
+            Consumer<?> var = (raw)->{
+              inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
+            };
+            completion = (Consumer<byte[]>)var;
+            exception = (Consumer<EntityException>)var;
+            break;
+          case INVOKE_ACTION:
+            if (message instanceof EntityMessengerService.FakeEntityMessage) {
+              completion = ((EntityMessengerService.FakeEntityMessage) message).getCompletionHandler();
+              exception = ((EntityMessengerService.FakeEntityMessage) message).getExceptionHandler();
+            }
+            break;
+          default:
         }
       }
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, completion, requestedReceived);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
     }
 
     @Override
@@ -231,7 +248,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           } else {
             handled = adder.test(vmr);
             Assert.assertTrue(handled);
-            sendMultiResponse(vmr);
+            multiSend.addSingleThreaded(vmr);
           }
         } else {
           handled = true;
@@ -240,26 +257,18 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
     }
   }
-  
-  private static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message) {
-    List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
-    for (Retiree toRetire : readyToRetire) {
-      if (null != toRetire) {
-        Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
-        toRetire.retired();
-      }
-    }
-  }
 
 // only the process transaction thread will add messages here except for on reconnect
-  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, Runnable completion, boolean requiresReceived) {
+  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, Consumer<byte[]> chaincomplete, Consumer<EntityException> chainfail, boolean requiresReceived) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
 
     // This is active-side processing so this is never a replicated message.
     boolean isReplicatedMessage = false;
     // In the general case, however, we need to pass this as a real ServerEntityRequest, into the entityProcessor.
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, oldestTransactionOnClient, sourceNodeID, ()->safeGetChannel(sourceNodeID), completion, requiresReceived, isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(descriptor, action, transactionID, 
+        oldestTransactionOnClient, sourceNodeID, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail,
+        requiresReceived, isReplicatedMessage);
     // Before we pass this on to the entity or complete it, directly, we can send the received() ACK, since we now know the message order.
     // Note that we only want to persist the messages with a true sourceNodeID.  Synthetic invocations and sync messages
     // don't have one (although sync messages shouldn't come down this path).
@@ -324,55 +333,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
               transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
             }
             EntityMessage message = entityMessage.decodeMessage(raw->locked.getCodec().decodeMessage(raw));
-
-            locked.addRequestMessage(serverEntityRequest, entityMessage, ()->addSequentially(sourceNodeID, addto->addto.addReceived(transactionID)), (result)-> {
-              addSequentially(sourceNodeID, addTo->addTo.addResult(transactionID, result));
-              RetirementManager retirementManager = locked.getRetirementManager();
-              
-              retirementManager.updateWithRetiree(message, new Retiree() {
-                @Override
-                public void retired() {
-                  addSequentially(sourceNodeID, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
-                }
-                @Override
-                public TransactionID getTransaction() {
-                  return serverEntityRequest.getTransaction();
-                }
-
-                @Override
-                public String getTraceID() {
-                  return serverEntityRequest.getTraceID();
-                }
-              });
-              
-              retireMessagesForEntity(locked, message);
-            }, (fail)-> {
-              safeGetChannel(sourceNodeID).ifPresent(channel -> {
-                VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-                failMessage.setFailure(transactionID, fail, false);
-                invokeReturn.put(sourceNodeID, failMessage);
-                multiSend.addSingleThreaded(failMessage);
-              });
-              
-              locked.getRetirementManager().updateWithRetiree(message, new Retiree() {
-                @Override
-                public void retired() {
-                  addSequentially(sourceNodeID, addTo->addTo.addRetired(serverEntityRequest.getTransaction()));
-                }
-
-                @Override
-                public TransactionID getTransaction() {
-                  return serverEntityRequest.getTransaction();
-                }
-
-                @Override
-                public String getTraceID() {
-                  return serverEntityRequest.getTraceID();
-                }
-              });
-              
-              retireMessagesForEntity(locked, message);
-            });
+            InvokeHandler handler = new InvokeHandler(entity, message, sourceNodeID, transactionID);
+            
+            locked.addRequestMessage(serverEntityRequest, entityMessage, 
+                ()->addSequentially(sourceNodeID, addto->addto.addReceived(transactionID)), 
+                (result)->handler.sendResponse(result), 
+                (fail)->handler.sendFailure(fail)
+              );
           } catch (MessageCodecException codec) {
             serverEntityRequest.failure(new VoltronEntityUserExceptionWrapper(new EntityUserException("Caught MessageCodecException while decoding message", codec)));
             serverEntityRequest.retired();
@@ -502,7 +469,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           break;
       }
       if (cached) {
-        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), null, false, false);
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), null, null, false, false);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -516,7 +483,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         this.resendNewList.add(resentMessage);
       }
     } catch (EntityException ee) {
-      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), null, false, false);
+      ServerEntityRequestResponse response = new ServerEntityRequestResponse(EntityDescriptor.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), resentMessage.getSource(), ()->safeGetChannel(resentMessage.getSource()), null, null, false, false);
       response.received();
       response.failure(ee);
       response.retired();
@@ -600,7 +567,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     MessagePayload payload = MessagePayload.commonMessagePayloadNotBusy(extendedData, entityMessage, doesRequireReplication);
     payload.setDebugId(message.toString());
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, null, false);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, null, null, false);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
@@ -640,5 +607,79 @@ public class ProcessTransactionHandler implements ReconnectListener {
         break;
     }
     return action;
+  }
+  
+  private class InvokeHandler {
+    private final ManagedEntity entity;
+    private final EntityMessage rootMessage;
+    private final ClientID client;
+    private final TransactionID transaction;
+    private final SetOnceFlag sent = new SetOnceFlag();
+
+    InvokeHandler(ManagedEntity entity, EntityMessage rootMessage, ClientID client, TransactionID transaction) {
+      this.entity = entity;
+      this.rootMessage = rootMessage;
+      this.client = client;
+      this.transaction = transaction;
+    }
+ 
+    private void sendResponse(byte[] result) {
+      sendThenRetire(result);
+    } 
+
+    private void sendFailure(EntityException fail) {
+      safeGetChannel(client).ifPresent(channel -> {
+        VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+        failMessage.setFailure(transaction, fail, false);
+        invokeReturn.put(client, failMessage);
+        multiSend.addSingleThreaded(failMessage);
+      });
+      sendThenRetire(null);
+    }
+
+    private void sendThenRetire(byte[] response) {
+      boolean dontSend = entity.getRetirementManager().updateWithRetiree(rootMessage, new Retiree() {
+        @Override
+        public void response(byte[] result) {
+          if (result != null) {
+            if (!sent.isSet()) {
+              addSequentially(client, addTo->addTo.addResult(transaction,result));
+            }
+          }
+        }
+        
+        @Override
+        public void retired() {
+          addSequentially(client, addTo->addTo.addRetired(transaction));
+        }
+
+        @Override
+        public TransactionID getTransaction() {
+          return transaction;
+        }
+
+        @Override
+        public String getTraceID() {
+          return client + ":" + transaction;
+        }
+      });
+      if (!dontSend && response != null) {
+        sent.set();
+        addSequentially(client, addTo->addTo.addResult(transaction, response));
+      }
+      retireMessagesForEntity(entity, rootMessage, response);
+    }    
+  }
+  
+  
+  private static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message, byte[] result) {
+    List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
+    for (Retiree toRetire : readyToRetire) {
+      if (null != toRetire) {
+        Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
+        toRetire.response(result);
+        toRetire.retired();
+      }
+    }
   }
 }

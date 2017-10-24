@@ -221,7 +221,7 @@ public class RetirementManager {
 
     public boolean isWaitingForExplicitDefer() {
       // true if waiting set size is not zero
-      return entityMessagesDeferringRetirement.size() != 0;
+      return !entityMessagesDeferringRetirement.isEmpty();
     }
 
     public boolean isWaitingForExplicitDeferOf(EntityMessage entityMessage) {

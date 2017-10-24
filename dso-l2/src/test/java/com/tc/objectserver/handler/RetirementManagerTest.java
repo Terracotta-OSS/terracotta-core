@@ -80,7 +80,7 @@ public class RetirementManagerTest {
     
     Retiree newRequest = makeResponse();
     EntityMessage newMessage = mock(EntityMessage.class);
-    this.retirementManager.deferRetirement(invokeMessage, newMessage);
+    this.retirementManager.deferRetirement(invokeMessage, newMessage, false);
     
     List<Retiree> toRetire = this.retirementManager.retireForCompletion(invokeMessage);
     Assert.assertEquals(0, toRetire.size());
@@ -101,7 +101,7 @@ public class RetirementManagerTest {
     
     Retiree newRequest = makeResponse();
     EntityMessage newMessage = mock(EntityMessage.class);
-    this.retirementManager.deferRetirement(invokeMessage, newMessage);
+    this.retirementManager.deferRetirement(invokeMessage, newMessage, false);
     
     List<Retiree> toRetire = this.retirementManager.retireForCompletion(invokeMessage);
     Assert.assertEquals(0, toRetire.size());
@@ -123,7 +123,7 @@ public class RetirementManagerTest {
     
     Retiree deferRequest = makeResponse();
     EntityMessage deferMessage = mock(EntityMessage.class);
-    this.retirementManager.deferRetirement(invokeMessage, deferMessage);
+    this.retirementManager.deferRetirement(invokeMessage, deferMessage, false);
     
     List<Retiree> toRetire = this.retirementManager.retireForCompletion(invokeMessage);
     Assert.assertEquals(0, toRetire.size());
@@ -195,7 +195,7 @@ public class RetirementManagerTest {
     Retiree request3 = makeResponse();
     EntityMessage request3Message = mock(EntityMessage.class);
     // request1 retirement deferred until request3 completes now
-    this.retirementManager.deferRetirement(request1Message, request3Message);
+    this.retirementManager.deferRetirement(request1Message, request3Message, false);
     registerWithMessage(request3, request3Message, concurrencyKeyTwo);
 
     toRetire = this.retirementManager.retireForCompletion(request1Message);
@@ -212,7 +212,7 @@ public class RetirementManagerTest {
     Retiree request5 = makeResponse();
     EntityMessage request5Message = mock(EntityMessage.class);
     // request3 retirement deferred until request5 completes now
-    this.retirementManager.deferRetirement(request3Message, request5Message);
+    this.retirementManager.deferRetirement(request3Message, request5Message, false);
     registerWithMessage(request5, request5Message, concurrencyKeyThree);
 
     toRetire = this.retirementManager.retireForCompletion(request3Message);
@@ -229,7 +229,7 @@ public class RetirementManagerTest {
 
     Retiree request7 = makeResponse();
     EntityMessage request7Message = mock(EntityMessage.class);
-    this.retirementManager.deferRetirement(request5Message, request7Message);
+    this.retirementManager.deferRetirement(request5Message, request7Message, false);
     toRetire = this.retirementManager.retireForCompletion(request5Message);
     // Completing request5 should retire both request3 and request4 in order
     Assert.assertEquals(2, toRetire.size());
@@ -262,7 +262,7 @@ public class RetirementManagerTest {
     Retiree request3 = makeResponse();
     EntityMessage request3Message = mock(EntityMessage.class);
     // request1 retirement deferred until request3 completes
-    this.retirementManager.deferRetirement(request1Message, request3Message);
+    this.retirementManager.deferRetirement(request1Message, request3Message, false);
     registerWithMessage(request3, request3Message, concurrencyKeyTwo);
 
     toRetire = this.retirementManager.retireForCompletion(request1Message);
@@ -293,13 +293,13 @@ public class RetirementManagerTest {
     Retiree deferRequest1 = makeResponse();
     EntityMessage deferMessage1 = mock(EntityMessage.class);
     // invokeRequest retirement deferred until deferRequest1 completes
-    this.retirementManager.deferRetirement(invokeMessage, deferMessage1);
+    this.retirementManager.deferRetirement(invokeMessage, deferMessage1, false);
     registerWithMessage(deferRequest1, deferMessage1, concurrencyKeyOne);
 
     Retiree deferRequest2 = makeResponse();
     EntityMessage deferMessage2 = mock(EntityMessage.class);
     // invokeRequest retirement deferred until deferRequest2 completes
-    this.retirementManager.deferRetirement(invokeMessage, deferMessage2);
+    this.retirementManager.deferRetirement(invokeMessage, deferMessage2, false);
     registerWithMessage(deferRequest2, deferMessage2, concurrencyKeyTwo);
 
     toRetire = this.retirementManager.retireForCompletion(invokeMessage);
@@ -331,9 +331,9 @@ public class RetirementManagerTest {
     
     registerWithMessage(invokeRequest1, invokeMessage1, 1);
     
-    this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2);
+    this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2, false);
     
-    this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3);
+    this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3, false);
     
     registerWithMessage(invokeRequest2, invokeMessage2, 1);
 
@@ -367,9 +367,9 @@ public class RetirementManagerTest {
     
     registerWithMessage(invokeRequest1, invokeMessage1, 1);
     
-    this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2);
+    this.retirementManager.deferRetirement(invokeMessage1, invokeMessage2, false);
     
-    this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3);
+    this.retirementManager.deferRetirement(invokeMessage2, invokeMessage3, false);
     
     registerWithMessage(invokeRequest2, invokeMessage2, 2);
 
@@ -406,7 +406,7 @@ public class RetirementManagerTest {
     Retiree deferRequest = makeResponse();
     EntityMessage deferMessage = mock(EntityMessage.class);
     // invokeRequest2 retirement deferred until deferRequest completes
-    this.retirementManager.deferRetirement(invokeMessage2, deferMessage);
+    this.retirementManager.deferRetirement(invokeMessage2, deferMessage, false);
     registerWithMessage(deferRequest, deferMessage, concurrencyKeyOne);
 
     toRetire = this.retirementManager.retireForCompletion(invokeMessage2);

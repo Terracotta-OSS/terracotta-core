@@ -811,7 +811,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new ActiveInvokeContextImpl(clientDescriptor, concurrencyKey, oldestId, currentId),
               em);
-            byte[] er = runWithHelper(()->codec.encodeResponse(resp));
+            byte[] er = resp == null ? null : runWithHelper(()->codec.encodeResponse(resp));
             trace.end();
             response.complete(er);
           } else {

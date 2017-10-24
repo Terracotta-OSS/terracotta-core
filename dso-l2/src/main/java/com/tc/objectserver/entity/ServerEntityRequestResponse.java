@@ -27,6 +27,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.util.Assert;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.terracotta.exception.EntityException;
 
@@ -38,19 +39,22 @@ import org.terracotta.exception.EntityException;
 public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse {
   private final EntityDescriptor descriptor;
   protected final Supplier<Optional<MessageChannel>> returnChannel;
-  private final Runnable completion;
+  private final Consumer<byte[]> completion;
+  private final Consumer<EntityException> exception;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
   private final boolean requiresReceived;
 
   public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, Runnable completion, boolean requiresReceived, boolean isReplicatedMessage) {
+      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, 
+      Consumer<byte[]> completion, Consumer<EntityException> exception, boolean requiresReceived, boolean isReplicatedMessage) {
     super(action, transaction, oldest, src);
     this.descriptor = descriptor;
     this.returnChannel = returnChannel;
     this.requiresReceived = requiresReceived;
     this.isReplicatedMessage = isReplicatedMessage;
-    this.completion = completion != null ? completion : ()->{};
+    this.completion = completion != null ? completion : (raw)->{};
+    this.exception = exception != null ? exception : (raw)->{};
   }
 
   @Override
@@ -66,21 +70,21 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
     } else {
       super.complete(value); 
     }
-    this.completion.run();
+    this.completion.accept(value);
   }
 
   @Override
   public synchronized void complete() {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction());
     super.complete();
-    this.completion.run();
+    this.completion.accept(null);
   }
 
   @Override
   public synchronized void failure(EntityException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
     super.failure(e); 
-    this.completion.run();
+    this.exception.accept(e);
   }
 
   public void setAutoRetire() {
