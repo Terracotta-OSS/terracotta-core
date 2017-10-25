@@ -124,6 +124,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private volatile ConcurrencyStrategy<EntityMessage> concurrencyStrategy;
   private volatile ExecutionStrategy<EntityMessage> executionStrategy;
+  private volatile ActiveServerEntity.ReconnectHandler reconnect;
 
   private final DefermentQueue<SchedulingRunnable> runnables = new DefermentQueue<>(TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.ENTITY_DEFERMENT_QUEUE_SIZE, 1024));
@@ -811,7 +812,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new ActiveInvokeContextImpl(clientDescriptor, concurrencyKey, oldestId, currentId),
               em);
-            byte[] er = resp == null ? null : runWithHelper(()->codec.encodeResponse(resp));
+            byte[] er = resp == null ? new byte[0] : runWithHelper(()->codec.encodeResponse(resp));
             trace.end();
             response.complete(er);
           } else {
@@ -884,7 +885,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
 //   this is a reconnection, handle the extended reconnect data
           try {
-            this.activeServerEntity.handleReconnect(descriptor, extendedData);
+            if (this.reconnect == null) {
+              throw new ReconnectRejectedException("no reconnect handler registered");
+            } else {
+              this.reconnect.handleReconnect(descriptor, extendedData);
+            }
           } catch (ReconnectRejectedException rejected) {
             response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), rejected.getMessage(), rejected));
             return;
@@ -944,7 +949,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   @Override
-  public void promoteEntity() throws ConfigurationException {
+  public Runnable promoteEntity() throws ConfigurationException {
     // Can't enter active state twice.
     Assert.assertFalse(this.isInActiveState);
     Assert.assertNull(this.activeServerEntity);
@@ -969,10 +974,21 @@ public class ManagedEntityImpl implements ManagedEntity {
         notifyEntityCreated();
         // Fire the event that the entity was reloaded.
         this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
+        
+        reconnect = this.activeServerEntity.startReconnect();
+        if (reconnect != null) {
+          return ()->{
+            if (reconnect != null) {
+              reconnect.close();
+              reconnect = null;
+            }
+          };
+        }
       } else {
         throw new IllegalStateException("no entity to promote");
       }
     }
+    return null;
   }
 
   @Override

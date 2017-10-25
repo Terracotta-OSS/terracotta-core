@@ -74,7 +74,7 @@ public interface ManagedEntity {
   
   void loadEntity(byte[] configuration) throws ConfigurationException;
   
-  void promoteEntity() throws ConfigurationException;
+  Runnable promoteEntity() throws ConfigurationException;
     
   boolean isDestroyed();
   

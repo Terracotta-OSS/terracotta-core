@@ -114,9 +114,10 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void promoteEntity() {
+  public Runnable promoteEntity() {
     // Set us to active mode.
     this.isActive = true;
+    return  null;
   }
 
   @Override

@@ -35,9 +35,22 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   }
 
   @Override
-  public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
-    // Do nothing.
+  public ReconnectHandler startReconnect() {
+    return new ReconnectHandler() {
+      @Override
+      public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+        // Do nothing.
+      }
+
+      @Override
+      public void close() {
+
+      }
+    };
   }
+
+  
+
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {

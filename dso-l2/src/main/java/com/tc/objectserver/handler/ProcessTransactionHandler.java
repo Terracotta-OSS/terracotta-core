@@ -46,6 +46,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
@@ -90,6 +91,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   
   // Data required for handling transaction resends.
   private List<ReferenceMessage> references;
+  private List<VoltronEntityMessage> reconnectDone;
   private SparseList<ResendVoltronEntityMessage> resendReplayList;
   private List<ResendVoltronEntityMessage> resendNewList;
   private boolean reconnecting = true;
@@ -197,7 +199,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       multiSend = mss.getSink();
       
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
-      entityManager.enterActiveState();
+      reconnectDone = entityManager.enterActiveState();
       
       server.getClientHandshakeManager().addReconnectListener(ProcessTransactionHandler.this);
     }
@@ -525,6 +527,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
       executeResend(msg);
     }
     this.references = null;
+//  reconnect done for all entities
+    for (VoltronEntityMessage msg : this.reconnectDone) {
+      LOGGER.debug("RECONNECT DONE:" + msg);
+      executeResend(msg);
+    }
+    this.reconnectDone = null;
     
     // Replay all the already-ordered messages.
     for (ResendVoltronEntityMessage message : this.resendReplayList) {

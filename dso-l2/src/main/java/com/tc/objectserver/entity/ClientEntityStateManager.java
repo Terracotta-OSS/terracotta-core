@@ -30,21 +30,21 @@ import java.util.Set;
  * Note that the same client can refer to a specific entity multiple times, which each connection possessing a distinct
  * life cycle.
  */
-public interface ClientEntityStateManager {
+  public interface ClientEntityStateManager {
   /**
    * Adds a reference from clientID to the entity described by entityDescriptor.
    * 
    * @param clientID The client.
    * @param entityDescriptor The entity.
+   * @return 
    */
   public boolean addReference(ClientDescriptorImpl clientID, FetchID entityDescriptor);
 
   /**
-   * Removes a reference from clientID to the entity described by entityDescriptor.
-   * NOTE:  This will assert if an attempt is made to remove a reference which was never added.
+   * Removes a reference from clientID to the entity described by entityDescriptor.NOTE:  This will assert if an attempt is made to remove a reference which was never added.
    * 
    * @param clientID The client.
-   * @param entityDescriptor The entity.
+   * @return 
    */
   public boolean removeReference(ClientDescriptorImpl clientID);
 
