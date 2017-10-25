@@ -109,6 +109,22 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
     }
     return false;
   }
+
+  @Override
+  public synchronized boolean addResultAndRetire(TransactionID tid, byte[] result) {
+    if (!stopAdding) {
+      if (results == null) {
+        results = new HashMap<TransactionID, byte[]>();
+      }
+      results.put(tid, result);
+      if (retiredIDs == null) {
+        retiredIDs = new ArrayList<TransactionID>(128);
+      }
+      retiredIDs.add(tid);
+      return true;
+    }
+    return false;
+  }
   
   @Override
   public synchronized TransactionID[] getReceivedTransactions() {

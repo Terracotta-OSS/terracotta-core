@@ -702,6 +702,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
+    public boolean addResultAndRetire(TransactionID tid, byte[] result) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public void stopAdding() {
       throw new UnsupportedOperationException("Not supported yet.");
     }

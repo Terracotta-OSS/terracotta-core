@@ -166,9 +166,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   // track fetch calls through the pipeline so disconnects work properly
             inflightFetch.compute(sourceNodeID, (client, count)->count == null ? 1 : count+1);
             Assert.assertNull(completion);
-            Consumer<?> var = (raw)->{
-              inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
-            };
+            Consumer<?> var = (raw)->inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
             completion = (Consumer<byte[]>)var;
             exception = (Consumer<EntityException>)var;
             break;
@@ -179,6 +177,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
             }
             break;
           default:
+            if (message instanceof Runnable) {
+              completion = (raw)->((Runnable)message).run();
+            }
         }
       }
       ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
@@ -333,7 +334,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
               transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
             }
             EntityMessage message = entityMessage.decodeMessage(raw->locked.getCodec().decodeMessage(raw));
-            InvokeHandler handler = new InvokeHandler(entity, message, sourceNodeID, transactionID);
+            InvokeHandler handler = new InvokeHandler(entity, message, sourceNodeID, transactionID, chaincomplete, chainfail);
             
             locked.addRequestMessage(serverEntityRequest, entityMessage, 
                 ()->addSequentially(sourceNodeID, addto->addto.addReceived(transactionID)), 
@@ -614,43 +615,74 @@ public class ProcessTransactionHandler implements ReconnectListener {
     private final EntityMessage rootMessage;
     private final ClientID client;
     private final TransactionID transaction;
+    private final Consumer<byte[]> complete;
+    private final Consumer<EntityException> exception;
     private final SetOnceFlag sent = new SetOnceFlag();
 
-    InvokeHandler(ManagedEntity entity, EntityMessage rootMessage, ClientID client, TransactionID transaction) {
+    InvokeHandler(ManagedEntity entity, EntityMessage rootMessage, ClientID client, TransactionID transaction, Consumer<byte[]> complete, Consumer<EntityException> failure) {
       this.entity = entity;
       this.rootMessage = rootMessage;
       this.client = client;
       this.transaction = transaction;
+      this.complete = complete == null ? (r)->{} : complete;
+      this.exception = failure == null ? (e)->{} : failure;
     }
- 
+    
     private void sendResponse(byte[] result) {
-      sendThenRetire(result);
-    } 
-
-    private void sendFailure(EntityException fail) {
-      safeGetChannel(client).ifPresent(channel -> {
-        VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-        failMessage.setFailure(transaction, fail, false);
-        invokeReturn.put(client, failMessage);
-        multiSend.addSingleThreaded(failMessage);
-      });
-      sendThenRetire(null);
+      boolean chained = update();
+      if (!chained && sent.attemptSet()) {
+        if (client.isNull()) {
+          this.complete.accept(result);
+        } else {
+          addSequentially(client, addTo->addTo.addResult(transaction, result));
+        }
+      }
+      retireMessagesForEntity(entity, rootMessage, result, null);
+    }
+    
+    private void sendFailure(EntityException failure) {
+      boolean chained = update();
+      if (sent.attemptSet()) {
+        if (client.isNull()) {
+          this.exception.accept(failure);
+        } else {
+          safeGetChannel(client).ifPresent(channel -> {
+            VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+            failMessage.setFailure(transaction, failure, false);
+            invokeReturn.put(client, failMessage);
+            multiSend.addSingleThreaded(failMessage);
+          });
+        }
+      }
+      retireMessagesForEntity(entity, rootMessage, null, failure);
     }
 
-    private void sendThenRetire(byte[] response) {
-      boolean dontSend = entity.getRetirementManager().updateWithRetiree(rootMessage, new Retiree() {
+    private boolean update() {
+      return entity.getRetirementManager().updateWithRetiree(rootMessage, new Retiree() {
         @Override
-        public void response(byte[] result) {
-          if (result != null) {
-            if (!sent.isSet()) {
-              addSequentially(client, addTo->addTo.addResult(transaction,result));
+        public boolean response(byte[] result) {
+          if (result != null && sent.attemptSet()) {
+            if (client.isNull()) {
+              complete.accept(result);
+            } else {
+              addSequentially(client, addTo->addTo.addResultAndRetire(transaction, result));
             }
+            return true;
           }
+          return false;
+        }
+
+        @Override
+        public void failure(EntityException result) {
+          sendFailure(result);
         }
         
         @Override
         public void retired() {
-          addSequentially(client, addTo->addTo.addRetired(transaction));
+          if (!client.isNull()) {
+            Assert.assertTrue(sent.isSet());
+            addSequentially(client, addTo->addTo.addRetired(transaction));
+          }
         }
 
         @Override
@@ -663,22 +695,22 @@ public class ProcessTransactionHandler implements ReconnectListener {
           return client + ":" + transaction;
         }
       });
-      if (!dontSend && response != null) {
-        sent.set();
-        addSequentially(client, addTo->addTo.addResult(transaction, response));
-      }
-      retireMessagesForEntity(entity, rootMessage, response);
     }    
   }
   
   
-  private static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message, byte[] result) {
+  private static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message, byte[] result, EntityException fail) {
     List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
     for (Retiree toRetire : readyToRetire) {
       if (null != toRetire) {
         Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
-        toRetire.response(result);
-        toRetire.retired();
+      // try to respond to messages with chained responses, 
+        if (fail != null) {
+          toRetire.failure(fail);
+        } else if (!toRetire.response(result)) {
+          // if not, retire the message
+          toRetire.retired();
+        }
       }
     }
   }
