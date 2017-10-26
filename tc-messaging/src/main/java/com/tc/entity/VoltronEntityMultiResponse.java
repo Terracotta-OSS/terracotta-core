@@ -20,7 +20,9 @@
 package com.tc.entity;
 
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
+import java.util.List;
 import java.util.Map;
 
 
@@ -33,9 +35,11 @@ public interface VoltronEntityMultiResponse extends TCMessage {
   TransactionID[] getReceivedTransactions();
   TransactionID[] getRetiredTransactions();
   Map<TransactionID, byte[]> getResults();
+  Map<ClientInstanceID, List<byte[]>> getServerMessages();
   boolean addReceived(TransactionID tid);
   boolean addRetired(TransactionID tid);
   boolean addResult(TransactionID tid, byte[] result);
   boolean addResultAndRetire(TransactionID tid, byte[] result);
+  boolean addServerMessage(ClientInstanceID cid, byte[] message);
   void stopAdding();
 }

@@ -29,8 +29,6 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
-import java.util.HashMap;
-import java.util.Map;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
@@ -52,28 +50,21 @@ import org.terracotta.exception.EntityException;
 public class EntityMessengerService<M extends EntityMessage, R extends EntityResponse> implements IEntityMessenger<M, R>, LifecycleListener {
   private final AtomicLong NEXT_FAKE_TXN_ID = new AtomicLong();
 
-  private final ISimpleTimer timer;
   private final Sink<VoltronEntityMessage> messageSink;
-  private final ManagedEntity owningEntity;
   private final boolean waitForReceived;
   private final boolean chainResponse;
   private final RetirementManager retirementManager;
   private final MessageCodec<M, R> codec;
   private final EntityDescriptor fakeDescriptor;
-  private final Map<ScheduledToken, TokenWrapper> liveTokens = new HashMap<>();
   private final ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
 
   @SuppressWarnings("unchecked")
-  public EntityMessengerService(ISimpleTimer timer,
-                                Sink<VoltronEntityMessage> messageSink,
+  public EntityMessengerService(Sink<VoltronEntityMessage> messageSink,
                                 ManagedEntity owningEntity, boolean waitForReceived, boolean chainResponse) {
-    Assert.assertNotNull(timer);
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
 
-    this.timer = timer;
     this.messageSink = messageSink;
-    this.owningEntity = owningEntity;
     this.waitForReceived = waitForReceived;
     this.chainResponse = chainResponse;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
@@ -125,116 +116,13 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
   
   @Override
-  public ScheduledToken messageSelfAfterDelay(M message,
-                                              long millisBeforeSend) throws MessageCodecException {
-    return this.messageSelfAfterDelay(message, null, millisBeforeSend);
-  }  
-
-  @Override
-  public ScheduledToken messageSelfAfterDelay(M message, Consumer<MessageResponse<R>> response, 
-                                              long millisBeforeSend) throws MessageCodecException {
-    FakeEntityMessage interEntityMessage = encodeAsFake(message, response);
-    long startTimeMillis = this.timer.currentTimeMillis() + millisBeforeSend;
-    OneTimeRunnable delayedRunnable = new OneTimeRunnable(interEntityMessage);
-
-    ScheduledToken token = cacheEarlyInvoke(delayedRunnable, startTimeMillis, -1L);
-    if (token == null) {
-      long id = this.timer.addDelayed(delayedRunnable, startTimeMillis);
-      Assert.assertTrue(id > 0L);
-      TokenWrapper tid = new TokenWrapper(id);
-      addLiveToken(delayedRunnable, tid);
-      return delayedRunnable;
-    } else {
-      return token;
-    }
-  }
-  
-  private synchronized ScheduledToken cacheEarlyInvoke(Runnable r,
-                              long startTimeMillis,
-                              long repeatPeriodMillis) {
-    if (owningEntity.isDestroyed()) {
-      EarlyInvokeWrapper wrapper = new EarlyInvokeWrapper(r, startTimeMillis, repeatPeriodMillis);
-      TokenWrapper token = new TokenWrapper(-1L);
-      this.liveTokens.put(wrapper, token);
-      return wrapper;
-    } else {
-      return null;
-    }
-  }
-  
-  private synchronized void addLiveToken(ScheduledToken rb, TokenWrapper token) {
-    this.liveTokens.put(rb, token);
-  }
-  
-  private synchronized boolean removeLiveToken(ScheduledToken target) {
-    TokenWrapper token = this.liveTokens.remove(target);
-    if (token != null) {
-      timer.cancel(token.getToken());
-    }
-    return token != null;
-  }
-  
-  
-  @Override
-  public ScheduledToken messageSelfPeriodically(M message,
-                                                long millisBetweenSends) throws MessageCodecException {
-    return this.messageSelfPeriodically(message, null, millisBetweenSends);
-  }  
-  
-  @Override
-  public ScheduledToken messageSelfPeriodically(M message, Consumer<MessageResponse<R>> response, 
-                                                long millisBetweenSends) throws MessageCodecException {
-    if (millisBetweenSends <= 0) {
-      throw new IllegalArgumentException("Period of message send must be greater than 0 milliseconds");
-    }
-    FakeEntityMessage interEntityMessage = encodeAsFake(message, response);
-    long startTimeMillis = this.timer.currentTimeMillis() + millisBetweenSends;
-    SelfDestructiveRunnable runnable = new SelfDestructiveRunnable(interEntityMessage);
-
-    ScheduledToken token = cacheEarlyInvoke(runnable, startTimeMillis, millisBetweenSends);
-    if (token == null) {
-      long id = this.timer.addPeriodic(runnable, startTimeMillis, millisBetweenSends);
-      Assert.assertTrue(id > 0L);
-      TokenWrapper tid = new TokenWrapper(id);
-      addLiveToken(runnable, tid);
-      return runnable;
-    } else {
-      return token;
-    }
-  }
-
-  @Override
-  public void cancelTimedMessage(ScheduledToken token) {
-    removeLiveToken(token);
-  }
-
-  @Override
   public synchronized void entityCreated(CommonServerEntity sender) {
-    // Walk our cache, flush it to the timer, and null it out to switch our mode.
-    for (ScheduledToken t : this.liveTokens.keySet()) {
-      if (t instanceof EarlyInvokeWrapper) {
-        EarlyInvokeWrapper invoke = (EarlyInvokeWrapper)t;
-        // Note that this is the token we already handed back to the entity so we can just modify this instance.
-        if (invoke.repeatPeriodMillis < 0) {
-          // One-time call.
-          long id = this.timer.addDelayed(invoke.delayedRunnable, invoke.startTimeMillis);
-          Assert.assertTrue(id > 0L);
-          liveTokens.get(invoke).setToken(id);
-        } else {
-          Assert.assertTrue(invoke.repeatPeriodMillis > 0L);
-          // Periodic call.
-          long id = this.timer.addPeriodic(invoke.delayedRunnable, invoke.startTimeMillis, invoke.repeatPeriodMillis);
-          Assert.assertTrue(id > 0L);
-          liveTokens.get(invoke).setToken(id);
-        }
-      }
-    }
+
   }
 
   @Override
   public synchronized void entityDestroyed(CommonServerEntity sender) {
-    this.liveTokens.values().forEach((t)->timer.cancel(t.getToken()));
-    this.liveTokens.clear();
+
   }
 
   private void scheduleMessage(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {
@@ -353,70 +241,6 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
           return null;
         }
       });
-    }
-  }
-  
-  private class OneTimeRunnable implements Runnable, ScheduledToken {
-    private final FakeEntityMessage<R> message;
-
-    public OneTimeRunnable(FakeEntityMessage<R> message) {
-      this.message = message;
-    }
-
-    @Override
-    public void run() {
-      if (!owningEntity.isDestroyed()) {
-        messageSink.addSingleThreaded(this.message);
-      }
-      removeLiveToken(this);
-    }
-  }  
-
-  private class SelfDestructiveRunnable implements Runnable, ScheduledToken {
-    private final FakeEntityMessage<R> message;
-
-    public SelfDestructiveRunnable(FakeEntityMessage<R> message) {
-      this.message = message;
-    }
-
-    @Override
-    public void run() {
-      if (owningEntity.isDestroyed()) {
-        removeLiveToken(this);
-      } else {
-        messageSink.addSingleThreaded(this.message);
-      }
-    }
-  }
-
-  private static class TokenWrapper {
-    private long token;
-
-    public TokenWrapper(long token) {
-      this.token = token;
-    }
-
-    public long getToken() {
-      return this.token;
-    }
-    
-    public void setToken(long token) {
-      this.token = token;
-    }
-  }
-
-  private static class EarlyInvokeWrapper implements ScheduledToken {
-    public final Runnable delayedRunnable;
-    public final long startTimeMillis;
-    public final long repeatPeriodMillis;
-    public long token;
-
-    public EarlyInvokeWrapper(Runnable m,
-                              long startTimeMillis,
-                              long repeatPeriodMillis) {
-      this.delayedRunnable = m;
-      this.startTimeMillis = startTimeMillis;
-      this.repeatPeriodMillis = repeatPeriodMillis;
     }
   }
 

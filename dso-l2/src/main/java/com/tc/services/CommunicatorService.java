@@ -32,17 +32,28 @@ import java.util.concurrent.ConcurrentMap;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 
 
 public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
+  private final ClientMessageSender sender;
   private boolean serverIsActive;
   // We have late-bound logic so make sure that is called.
   private boolean wasInitialized;
 
+  public CommunicatorService(ClientMessageSender sender) {
+    this.sender = sender;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    ImplementationProvidedServiceProvider.super.addStateTo(stateDumpCollector); //To change body of generated methods, choose Tools | Templates.
+  }
+
   @Override
   public void channelCreated(MessageChannel channel) {
-    clientAccounts.put(channel.getRemoteNodeID(), new ClientAccount(channel));
+    clientAccounts.put(channel.getRemoteNodeID(), new ClientAccount(sender, channel));
   }
 
   @Override
@@ -96,8 +107,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
     this.serverIsActive = true;
   }
 
-  public void setChannelManager(DSOChannelManager dsoChannelManager) {
-    dsoChannelManager.addEventListener(this);
+  public void initialized() {
     this.wasInitialized = true;
   }
 }

@@ -66,6 +66,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -703,6 +704,16 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
     @Override
     public boolean addResultAndRetire(TransactionID tid, byte[] result) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Map<ClientInstanceID, List<byte[]>> getServerMessages() {
+      return Collections.emptyMap();
+    }
+
+    @Override
+    public boolean addServerMessage(ClientInstanceID cid, byte[] message) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

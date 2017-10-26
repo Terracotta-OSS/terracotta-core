@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import java.util.Map;
@@ -42,10 +44,12 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   private static final byte TRANSACTION_ID = 0;
   private static final byte RESULTS_ID = 1;
   private static final byte RECEIVED_ID = 2;
+  private static final byte SERVER_ID = 3;
   
   private List<TransactionID> receivedIDs;
   private List<TransactionID> retiredIDs;
   private Map<TransactionID, byte[]> results;
+  private Map<ClientInstanceID, List<byte[]>> server;
 
   private boolean stopAdding;
   
@@ -125,7 +129,19 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
     }
     return false;
   }
-  
+
+  @Override
+  public synchronized boolean addServerMessage(ClientInstanceID cid, byte[] message) {
+    if (!stopAdding) {
+      if (server == null) {
+        server = new HashMap<>();
+      }
+      server.computeIfAbsent(cid, c->new LinkedList<>()).add(message);
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public synchronized TransactionID[] getReceivedTransactions() {
     return (this.receivedIDs != null) ? receivedIDs.toArray(new TransactionID[receivedIDs.size()]) : new TransactionID[0];
@@ -140,7 +156,12 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   public synchronized Map<TransactionID, byte[]> getResults() {
     return (this.results == null) ? Collections.<TransactionID, byte[]>emptyMap() : Collections.unmodifiableMap(this.results);
   }
-
+  
+  @Override
+  public synchronized Map<ClientInstanceID, List<byte[]>> getServerMessages() {
+    return (this.server == null) ? Collections.<ClientInstanceID, List<byte[]>>emptyMap() : Collections.unmodifiableMap(this.server);
+  }
+  
   @Override
   public synchronized void stopAdding() {
     stopAdding = true;
@@ -163,9 +184,24 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
         retiredIDs.add(new TransactionID(input.readLong()));
       }
       return true;
+    } else if (name == SERVER_ID) {
+      int size = getIntValue();
+      server = new HashMap<>();
+      for (int x=0;x<size;x++) {
+        ClientInstanceID id = new ClientInstanceID(input.readLong());
+        int len = input.readInt();
+        List<byte[]> msgs = new ArrayList<>(len);
+        for (int y=0;y<len;y++) {
+          byte[] read = new byte[input.readInt()];
+          input.readFully(read);
+          msgs.add(read);
+        }
+        server.put(id, msgs);
+      }
+      return true;
     } else {
       int size = getIntValue();
-      results = new HashMap<TransactionID, byte[]>();
+      results = new HashMap<>();
       for (int x=0;x<size;x++) {
         TransactionID id = new TransactionID(input.readLong());
         byte[] read = new byte[input.readInt()];
@@ -198,6 +234,20 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
         outputStream.writeLong(entries.getKey().toLong());
         outputStream.writeInt(entries.getValue().length);
         outputStream.write(entries.getValue());
+      }
+    }
+    putNVPair(SERVER_ID, server != null ? server.size() : 0);
+    if (server != null) {
+      for (Map.Entry<ClientInstanceID, List<byte[]>> entries : server.entrySet()) {
+        outputStream.writeLong(entries.getKey().getID());
+        List<byte[]> msgs = entries.getValue();
+        int count = msgs.size();
+        outputStream.writeInt(count);
+        for (int x=0;x<count;x++) {
+          byte[] msg = msgs.get(x);
+          outputStream.write(msg.length);
+          outputStream.write(msg);
+        }
       }
     }
   }

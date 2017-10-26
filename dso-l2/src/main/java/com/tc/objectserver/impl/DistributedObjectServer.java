@@ -424,11 +424,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
-    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(this.timer);
+    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
     this.serviceRegistry.registerImplementationProvided(messengerProvider);
     
-    final CommunicatorService communicatorService = new CommunicatorService();
-    serviceRegistry.registerImplementationProvided(communicatorService);
+
     
     // See if we need to add an in-memory service for IPlatformPersistence.
     if (!this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class)) {
@@ -579,10 +578,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    // Attach the communicator service to the channel manager.
-    communicatorService.setChannelManager(channelManager);
-    final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
-
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
@@ -636,6 +631,12 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, true);
     final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, true);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
+//  add the server -> client communicator service
+    final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
+    channelManager.addEventListener(communicatorService);
+    communicatorService.initialized();
+    serviceRegistry.registerImplementationProvided(communicatorService);
+    final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
 
     VoltronMessageHandler voltron = new VoltronMessageHandler(voltronMessageSink);
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.

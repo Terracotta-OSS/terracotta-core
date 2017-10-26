@@ -22,7 +22,9 @@ package com.tc.object.request;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
+import java.util.List;
 import java.util.Map;
 
 
@@ -49,6 +51,14 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
     }
     for (TransactionID retires : response.getRetiredTransactions()) {
       handler.retired(retires);
+    }
+    Map<ClientInstanceID, List<byte[]>> server = response.getServerMessages();
+    for (Map.Entry<ClientInstanceID, List<byte[]>> entry : server.entrySet()) {
+      List<byte[]> msgs = entry.getValue();
+      ClientInstanceID cid = entry.getKey();
+      for (byte[] msg : msgs) {
+        handler.handleMessage(cid, msg);
+      }
     }
   }
 }

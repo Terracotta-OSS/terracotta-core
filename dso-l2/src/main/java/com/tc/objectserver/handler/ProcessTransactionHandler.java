@@ -46,12 +46,12 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
-import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestResponse;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.Persistor;
+import com.tc.services.ClientMessageSender;
 import com.tc.services.EntityMessengerService;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
@@ -206,6 +206,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
   };
   public AbstractEventHandler<VoltronEntityMessage> getVoltronMessageHandler() {
     return this.voltronHandler;
+  }
+  
+  public ClientMessageSender getClientMessageSender() {
+    return (clientID, clientInstance, payload) -> {
+      addSequentially(clientID, multi->multi.addServerMessage(clientInstance, payload));
+    };
   }
 
   public ProcessTransactionHandler(Persistor persistor, DSOChannelManager channelManager, EntityManager entityManager, Runnable stateManagerCleanup) {
@@ -576,7 +582,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
     MessagePayload payload = MessagePayload.commonMessagePayloadNotBusy(extendedData, entityMessage, doesRequireReplication);
     payload.setDebugId(message.toString());
     
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, null, null, false);
+    boolean requestedReceived = message.doesRequestReceived();
+    Consumer<byte[]> completion = null;
+    if (message instanceof Runnable) {
+      completion = (r)->((Runnable)message).run();
+    }
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
