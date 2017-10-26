@@ -73,6 +73,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
 
 
 /**
@@ -1231,6 +1232,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public final PassthroughServiceRegistry registry;
     public final EntityServerService<M, R> service;
     public CommonServerEntity<M, R> entityInstance;
+    public ReconnectHandler reconnect;
     public final MessageCodec<M, R> messageCodec;
     public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
@@ -1250,6 +1252,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.messageCodec = service.getMessageCodec();
       this.syncMessageCodec = service.getSyncMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
+      this.reconnect = (isActive) ? getActive().startReconnect() : null;
       this.concurrency = service.getConcurrencyStrategy(configuration);
       Objects.nonNull(this.concurrency);
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
@@ -1303,7 +1306,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       Assert.assertTrue(isActive);
       this.reference(clientDescriptor);
       getActive().connected(clientDescriptor);
-      getActive().handleReconnect(clientDescriptor, data);
+      if (reconnect != null) {
+        reconnect.handleReconnect(clientDescriptor, data);
+        reconnect.close();
+      } else {
+        throw new ReconnectRejectedException("no reconnect handler");
+      }
     }
 
     @SuppressWarnings("unchecked")
@@ -1321,6 +1329,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     
     public void synchronizeToPassive(final PassthroughServerProcess passive, final int key) {
+      getActive().prepareKeyForSynchronizeOnPassive(payload -> {
+        PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, key, serialize(key, payload));
+        PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
+        passive.sendMessageToServerFromActive(wrapper, payloadMessage.asSerializedBytes());
+        wrapper.waitForComplete();
+      }, key);
       getActive().synchronizeKeyToPassive(payload -> {
         PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, key, serialize(key, payload));
         PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);

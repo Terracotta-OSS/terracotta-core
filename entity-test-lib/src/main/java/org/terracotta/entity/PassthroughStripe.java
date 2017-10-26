@@ -121,20 +121,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
   }
 
-  @Deprecated
-  @Override
-  public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
-    FakeEndpoint endpoint = endpoints.get(clientDescriptor);
-    byte[] payload = endpoint.serializeResponse(message);
-    try {
-      endpoint.sendNoResponse(payload);
-    } catch (MessageCodecException e) {
-      // Not expected in the testing environment.
-      Assert.fail(e.getLocalizedMessage());
-    }
-    return Futures.immediateFuture(null);
-  }
-
   @Override
   public void closeClientConnection(ClientDescriptor clientDescriptor) {
     endpoints.get(clientDescriptor).close();

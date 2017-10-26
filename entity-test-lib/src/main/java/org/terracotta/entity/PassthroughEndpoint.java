@@ -201,13 +201,6 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       }
     }
 
-    @Deprecated
-    @Override
-    public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
-      sendNoResponse(clientDescriptor, message);
-      return Futures.immediateFuture(null);
-    }
-
     @Override
     public void closeClientConnection(ClientDescriptor clientDescriptor) {
       close();

@@ -26,8 +26,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.EntityContainerListener;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Consumer;
 
 
 public class PassthroughMessengerService implements IEntityMessenger, EntityContainerListener {
@@ -38,10 +37,8 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
   private final String entityName;
-  // If the entity isn't yet created, we track the invocations in this map.
-  private Map<TokenWrapper, DeferredInvocation> deferredInvocations;
   
-  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, String entityClassName, String entityName) {
+  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
     this.timerThread = timerThread;
     this.passthroughServerProcess = passthroughServerProcess;
     this.retirementManager = passthroughServerProcess.getRetirementManager();
@@ -55,7 +52,6 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
     // Since this service needs access to the entity, potentially before the entity constructor has returned, see if we
     // need to register for notifications that the entity has been created.
     if (null == this.entityContainer.getEntity()) {
-      this.deferredInvocations = new HashMap<TokenWrapper, DeferredInvocation>();
       this.entityContainer.notifyOnEntitySet(this);
     }
   }
@@ -81,6 +77,11 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
         }
 
         @Override
+        public void release(Consumer consumer) throws MessageCodecException {
+          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage);
+        }
+
+        @Override
         public void release() throws MessageCodecException {
           passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage);
         }
@@ -99,82 +100,18 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   }
 
   @Override
-  public ScheduledToken messageSelfAfterDelay(EntityMessage message, long millisBeforeSend) throws MessageCodecException {
-    final PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-    Runnable delayRunnable = new Runnable(){
-      @Override
-      public void run() {
-        // If the entity disappeared, we are implicitly cancelled.
-        if (null != PassthroughMessengerService.this.entityContainer.getEntity()) {
-          commonSendMessage(passthroughMessage);
-        } else {
-          System.err.println("WARNING:  Cancelled SINGLE delayed message to destroyed entity");
-        }
-      }};
-    
-    TokenWrapper tokenWrapper = null;
-    // Determine if we can run this, directly, or if we need to defer this until start-up completes.
-    if (null != this.deferredInvocations) {
-      // We are still in start-up so cache this and late-bind the invocation.
-      DeferredInvocation invocation = new DeferredInvocation(delayRunnable, null, millisBeforeSend);
-      tokenWrapper = new TokenWrapper(TokenWrapper.DEFERRED);
-      this.deferredInvocations.put(tokenWrapper, invocation);
-    } else {
-      long token = this.timerThread.scheduleAfterDelay(delayRunnable, millisBeforeSend);
-      tokenWrapper = new TokenWrapper(token);
-    }
-    return tokenWrapper;
+  public void messageSelf(EntityMessage message, Consumer response) throws MessageCodecException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
-  public ScheduledToken messageSelfPeriodically(EntityMessage message, long millisBetweenSends) throws MessageCodecException {
-    final PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-    SelfCancellingRunnable runnable = new SelfCancellingRunnable(passthroughMessage);
-    
-    TokenWrapper tokenWrapper = null;
-    // Determine if we can run this, directly, or if we need to defer this until start-up completes.
-    if (null != this.deferredInvocations) {
-      // We are still in start-up so cache this and late-bind the invocation.
-      DeferredInvocation invocation = new DeferredInvocation(null, runnable, millisBetweenSends);
-      tokenWrapper = new TokenWrapper(TokenWrapper.DEFERRED);
-      this.deferredInvocations.put(tokenWrapper, invocation);
-    } else {
-      long token = this.timerThread.schedulePeriodically(runnable, millisBetweenSends);
-      runnable.setToken(token);
-      tokenWrapper = new TokenWrapper(token);
-    }
-    return tokenWrapper;
-  }
-
-  @Override
-  public void cancelTimedMessage(ScheduledToken token) {
-    // If this is the wrong type, the ClassCastException is a reasonable error since it means we got something invalid.
-    TokenWrapper tokenWrapper = ((TokenWrapper)token);
-    if (null != this.deferredInvocations) {
-      this.deferredInvocations.remove(tokenWrapper);
-    } else {
-      this.timerThread.cancelMessage(tokenWrapper.getToken());
-    }
+  public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule, Consumer response) throws MessageCodecException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
   public void entitySetInContainer(DeferredEntityContainer container) {
-    for (Map.Entry<TokenWrapper, DeferredInvocation> entry : this.deferredInvocations.entrySet()) {
-      TokenWrapper wrapper = entry.getKey();
-      DeferredInvocation invocation = entry.getValue();
-      long token = -1;
-      if (null != invocation.delayRunnable) {
-        // Use the delay path.
-        token = this.timerThread.scheduleAfterDelay(invocation.delayRunnable, invocation.delayMillis);
-      } else {
-        Assert.assertTrue(null != invocation.periodicRunnable);
-        // Use the periodic path.
-        token = this.timerThread.schedulePeriodically(invocation.periodicRunnable, invocation.delayMillis);
-        invocation.periodicRunnable.setToken(token);
-      }
-      wrapper.setToken(token);
-    }
-    this.deferredInvocations = null;
+
   }
 
 
@@ -223,24 +160,6 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
       }
     }
   }
-
-
-  private static class TokenWrapper implements ScheduledToken {
-    public static final long DEFERRED = -1;
-    private long token;
-    
-    public TokenWrapper(long token) {
-      this.token = token;
-    }
-    public long getToken() {
-      return this.token;
-    }
-    public void setToken(long token) {
-      Assert.assertTrue(DEFERRED == this.token);
-      this.token = token;
-    }
-  }
-
 
   private static class DeferredInvocation {
     public final Runnable delayRunnable;

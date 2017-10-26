@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
@@ -44,7 +45,11 @@ public class PassthroughMessengerServiceProvider implements PassthroughImplement
 
   @Override
   public <T> T getService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container, ServiceConfiguration<T> configuration) {
-    return configuration.getServiceType().cast(new PassthroughMessengerService(this.timerThread, this.passthroughServerProcess, this.pseudoConnection, container, entityClassName, entityName));
+    boolean chain = false;
+    if (configuration instanceof Supplier) {
+      chain = ((Supplier<Boolean>)configuration).get();
+    }
+    return configuration.getServiceType().cast(new PassthroughMessengerService(this.timerThread, this.passthroughServerProcess, this.pseudoConnection, container, chain, entityClassName, entityName));
   }
 
   @Override
