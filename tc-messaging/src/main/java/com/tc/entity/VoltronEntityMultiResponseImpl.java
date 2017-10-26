@@ -245,7 +245,7 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
         outputStream.writeInt(count);
         for (int x=0;x<count;x++) {
           byte[] msg = msgs.get(x);
-          outputStream.write(msg.length);
+          outputStream.writeInt(msg.length);
           outputStream.write(msg);
         }
       }

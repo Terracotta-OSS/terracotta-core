@@ -248,16 +248,20 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   public void handleMessage(ClientInstanceID clientInstance, byte[] message) {
     EntityClientEndpoint<?, ?> endpoint = this.objectStoreMap.get(clientInstance);
     if (endpoint != null) {
-      EntityClientEndpointImpl<?, ?> endpointImpl = (EntityClientEndpointImpl<?, ?>) endpoint;
-      try {
-          endpointImpl.handleMessage(message);
-      } catch (MessageCodecException e) {
-        // For now (at least), we will fail on this codec exception since it indicates a serious bug in the entity
-        // implementation.
-        Assert.fail(e.getLocalizedMessage());
-      }
+      endpointCloser.submit(()->deliverInboundMessage(endpoint, message));
     } else {
       logger.info("Instance " + clientInstance + " not found. Ignoring message.");
+    }
+  }
+  
+  private final void deliverInboundMessage(EntityClientEndpoint endpoint, byte[] msg) {
+    EntityClientEndpointImpl<?, ?> endpointImpl = (EntityClientEndpointImpl<?, ?>) endpoint;
+    try {
+        endpointImpl.handleMessage(msg);
+    } catch (MessageCodecException e) {
+      // For now (at least), we will fail on this codec exception since it indicates a serious bug in the entity
+      // implementation.
+      Assert.fail(e.getLocalizedMessage());
     }
   }
 
