@@ -234,7 +234,7 @@ public class ServerProcess {
       this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + debugPort);
     }
     String propertiesAsOptions = serverProperties.entrySet().stream()
-        .map(e -> "\"-D" + e.getKey() + "=" + e.getValue() + "\"")
+        .map(e -> "-D" + e.getKey() + "=" + e.getValue())
         .collect(joining(" "));
     if (!propertiesAsOptions.isEmpty()) {
       javaOpts += " " + propertiesAsOptions;
