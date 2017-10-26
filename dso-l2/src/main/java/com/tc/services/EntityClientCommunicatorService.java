@@ -31,10 +31,6 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 
 public class EntityClientCommunicatorService implements ClientCommunicator {
@@ -59,45 +55,6 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
       ClientInstanceID clientInstance = rawDescriptor.getClientInstanceID();
       byte[] payload = serialize(this.owningEntity.getCodec(), message);
       clientAccount.sendNoResponse(clientInstance, payload);
-    }
-  }
-
-  @Override
-  public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
-    // We are in internal code so downcast the descriptor.
-    ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)clientDescriptor;
-    ClientAccount clientAccount = clientAccounts.get(rawDescriptor.getNodeID());
-    if (clientAccount != null) {
-      ClientInstanceID clientInstance = rawDescriptor.getClientInstanceID();
-      byte[] payload = serialize(this.owningEntity.getCodec(), message);
-      return clientAccount.send(clientInstance, payload);
-    } else {
-      return new Future<Void>() {
-        @Override
-        public boolean cancel(boolean mayInterruptIfRunning) {
-          return false;
-        }
-
-        @Override
-        public boolean isCancelled() {
-          return false;
-        }
-
-        @Override
-        public boolean isDone() {
-          return true;
-        }
-
-        @Override
-        public Void get() throws InterruptedException, ExecutionException {
-          return null;
-        }
-
-        @Override
-        public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-          return null;
-        }
-      };
     }
   }
   

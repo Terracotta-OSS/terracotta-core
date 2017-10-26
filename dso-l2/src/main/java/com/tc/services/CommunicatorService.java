@@ -20,7 +20,6 @@ package com.tc.services;
 
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
@@ -63,15 +62,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
       clientAccount.close();
     }
   }
-
-  public void response(NodeID nodeID, long responseId) {
-    ClientAccount clientAccount = clientAccounts.get(nodeID);
-    if (clientAccount != null) {
-      clientAccount.response(responseId);
-    }
-  }
-
-
+  
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
     Assert.assertTrue(this.wasInitialized);

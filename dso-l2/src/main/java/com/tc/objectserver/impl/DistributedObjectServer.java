@@ -53,9 +53,6 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
-import com.tc.entity.ServerEntityMessageImpl;
-import com.tc.entity.ServerEntityResponseMessage;
-import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponseImpl;
@@ -209,9 +206,7 @@ import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
-import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.entity.VoltronMessageSink;
-import com.tc.objectserver.handler.CommunicatorResponseHandler;
 import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.VoltronMessageHandler;
@@ -300,7 +295,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
   }
 
-  protected ServerBuilder createServerBuilder(HaConfig config, Logger tcLogger, TCServer server,
+  protected final ServerBuilder createServerBuilder(HaConfig config, Logger tcLogger, TCServer server,
                                                  L2Config l2dsoConfig) {
     return new StandardServerBuilder(config, tcLogger);
   }
@@ -636,7 +631,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     channelManager.addEventListener(communicatorService);
     communicatorService.initialized();
     serviceRegistry.registerImplementationProvided(communicatorService);
-    final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
 
     VoltronMessageHandler voltron = new VoltronMessageHandler(voltronMessageSink);
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
@@ -651,7 +645,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
-    messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, new TCMessageHydrateSink<>(communicatorResponseStage.getSink()));
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
@@ -959,8 +952,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_REQUEST, DiagnosticMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_RESPONSE, DiagnosticResponseImpl.class);
     return messageTypeClassMapping;

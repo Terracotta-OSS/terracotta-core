@@ -36,7 +36,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String RECEIVE_GROUP_MESSAGE_STAGE                        = "receive_group_message_stage";
   public static final String GROUP_HANDSHAKE_MESSAGE_STAGE                      = "group_handshake_message_stage";
   public static final String GROUP_DISCOVERY_STAGE                              = "group_discovery_stage";
-  public static final String SERVER_ENTITY_MESSAGE_RESPONSE_STAGE               = "server_entity_response_message_stage";
   
   public static final String REQUEST_PROCESSOR_STAGE                            = "request_processor_stage";
   public static final String REQUEST_PROCESSOR_DURING_SYNC_STAGE                            = "request_processor_during_sync_stage";

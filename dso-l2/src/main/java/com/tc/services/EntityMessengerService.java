@@ -268,6 +268,13 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
         EntityMessengerService.this.messageSelf(futureMessage);
       }
     }
+
+    @Override
+    public void release(Consumer consumer) throws MessageCodecException {
+      if (retirementHandles.remove(this) != null) {
+        EntityMessengerService.this.messageSelf(futureMessage, consumer);
+      }
+    }
     
     public boolean isActive() {
       return active;

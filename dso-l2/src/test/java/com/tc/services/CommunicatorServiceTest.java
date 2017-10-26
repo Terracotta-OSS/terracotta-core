@@ -75,7 +75,6 @@ public class CommunicatorServiceTest {
     messageChannel = mock(MessageChannel.class);
     when(messageChannel.getRemoteNodeID()).thenReturn(clientID);
     serverEntityMessage = mock(ServerEntityMessage.class);
-    when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage);
     dsoChannelManager = mock(DSOChannelManager.class);
     when(dsoChannelManager.getActiveChannel(clientID)).thenReturn(messageChannel);
     payload = new byte[1];
@@ -105,43 +104,6 @@ public class CommunicatorServiceTest {
     clientCommunicator.sendNoResponse(clientDescriptor, response);
 
     verify(clientMessageSender).send(clientID, clientInstanceID, payload);
-  }
-
-  @Test
-  public void testSendWaitForResponse() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
-    Future<Void> future = clientCommunicator.send(clientDescriptor, response);
-
-    verify(serverEntityMessage).setMessage(clientInstanceID, payload, 0L);
-    verify(serverEntityMessage).send();
-
-    try {
-      future.get(1, TimeUnit.SECONDS);
-      fail("Should have timed out");
-    } catch (TimeoutException e) {
-      // expected
-    }
-
-    communicatorService.response(clientID, 0L);
-    future.get();
-  }
-
-  @Test
-  public void testClientLeavesWhileResponseOutstanding() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
-    Future<Void> future = clientCommunicator.send(clientDescriptor, response);
-
-    communicatorService.channelRemoved(messageChannel, true);
-    future.get();
-  }
-
-  @Test
-  public void testSendToDisconnectedClient() throws Exception {
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
-    Future<Void> future = clientCommunicator.send(new ClientDescriptorImpl(new ClientID(2), clientInstanceID), response);
-    future.get();
-
-    verify(serverEntityMessage, never()).send();
   }
 
   @Test
@@ -178,39 +140,5 @@ public class CommunicatorServiceTest {
     clientCommunicator.sendNoResponse(client2, response2);
     verify(clientMessageSender).send(clientID, instance2, payload2);
     verify(clientMessageSender, never()).send(eq(clientID), eq(instance1), any(byte[].class));
-  }
-
-  @Test
-  public void testSendSpecificTargetWithResponse() throws Exception {
-    // We need to create explicit instances for this test since we are working with specific ones.
-    ClientInstanceID instance1 = new ClientInstanceID(1);
-    ClientInstanceID instance2 = new ClientInstanceID(2);
-    ClientDescriptor client1 = new ClientDescriptorImpl(clientID, instance1);
-    ClientDescriptor client2 = new ClientDescriptorImpl(clientID, instance2);
-    byte[] payload1 = new byte[1];
-    byte[] payload2 = new byte[2];
-    EntityResponse response1 = mock(EntityResponse.class);
-    EntityResponse response2 = mock(EntityResponse.class);
-    ServerEntityMessage serverEntityMessage1 = mock(ServerEntityMessage.class);
-    ServerEntityMessage serverEntityMessage2 = mock(ServerEntityMessage.class);
-    
-    when(codec.encodeResponse(response1)).thenReturn(payload1);
-    when(codec.encodeResponse(response2)).thenReturn(payload2);
-    
-    ClientCommunicator clientCommunicator = communicatorService.getService(consumerID, this.owningEntity, new CommunicatorServiceConfiguration());
-    
-    // Send the message to client one and ensure that the correct payload went through to the correct entity.
-    when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage1);
-    clientCommunicator.send(client1, response1);
-    verify(serverEntityMessage1).setMessage(eq(instance1), eq(payload1), anyLong());
-    verify(serverEntityMessage1, never()).setMessage(eq(instance2), any(byte[].class));
-    verify(serverEntityMessage1).send();
-    
-    // Now, the same with client two.
-    when(messageChannel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE)).thenReturn(serverEntityMessage2);
-    clientCommunicator.send(client2, response2);
-    verify(serverEntityMessage2).setMessage(eq(instance2), eq(payload2), anyLong());
-    verify(serverEntityMessage2, never()).setMessage(eq(instance1), any(byte[].class));
-    verify(serverEntityMessage2).send();
   }
 }
