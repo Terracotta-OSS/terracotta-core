@@ -45,11 +45,13 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   private static final byte RESULTS_ID = 1;
   private static final byte RECEIVED_ID = 2;
   private static final byte SERVER_ID = 3;
+  private static final byte INVOKE_ID = 4;
   
   private List<TransactionID> receivedIDs;
   private List<TransactionID> retiredIDs;
   private Map<TransactionID, byte[]> results;
   private Map<ClientInstanceID, List<byte[]>> server;
+  private Map<TransactionID, List<byte[]>> invoke;
 
   private boolean stopAdding;
   
@@ -143,6 +145,18 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   }
 
   @Override
+  public synchronized boolean addServerMessage(TransactionID cid, byte[] message) {
+    if (!stopAdding) {
+      if (invoke == null) {
+        invoke = new HashMap<>();
+      }
+      invoke.computeIfAbsent(cid, c->new LinkedList<>()).add(message);
+      return true;
+    }
+    return false;
+  }
+  
+  @Override
   public synchronized TransactionID[] getReceivedTransactions() {
     return (this.receivedIDs != null) ? receivedIDs.toArray(new TransactionID[receivedIDs.size()]) : new TransactionID[0];
   }
@@ -160,6 +174,11 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
   @Override
   public synchronized Map<ClientInstanceID, List<byte[]>> getServerMessages() {
     return (this.server == null) ? Collections.<ClientInstanceID, List<byte[]>>emptyMap() : Collections.unmodifiableMap(this.server);
+  }
+
+  @Override
+  public synchronized Map<TransactionID, List<byte[]>> getMonitorMessages() {
+    return (this.invoke == null) ? Collections.<TransactionID, List<byte[]>>emptyMap() : Collections.unmodifiableMap(this.invoke);
   }
   
   @Override
@@ -197,6 +216,21 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
           msgs.add(read);
         }
         server.put(id, msgs);
+      }
+      return true;
+    } else if (name == INVOKE_ID) {
+      int size = getIntValue();
+      invoke = new HashMap<>();
+      for (int x=0;x<size;x++) {
+        TransactionID id = new TransactionID(input.readLong());
+        int len = input.readInt();
+        List<byte[]> msgs = new ArrayList<>(len);
+        for (int y=0;y<len;y++) {
+          byte[] read = new byte[input.readInt()];
+          input.readFully(read);
+          msgs.add(read);
+        }
+        invoke.put(id, msgs);
       }
       return true;
     } else {
@@ -240,6 +274,20 @@ public class VoltronEntityMultiResponseImpl extends DSOMessageBase implements Vo
     if (server != null) {
       for (Map.Entry<ClientInstanceID, List<byte[]>> entries : server.entrySet()) {
         outputStream.writeLong(entries.getKey().getID());
+        List<byte[]> msgs = entries.getValue();
+        int count = msgs.size();
+        outputStream.writeInt(count);
+        for (int x=0;x<count;x++) {
+          byte[] msg = msgs.get(x);
+          outputStream.writeInt(msg.length);
+          outputStream.write(msg);
+        }
+      }
+    }
+    putNVPair(INVOKE_ID, invoke != null ? invoke.size() : 0);
+    if (invoke != null) {
+      for (Map.Entry<TransactionID, List<byte[]>> entries : invoke.entrySet()) {
+        outputStream.writeLong(entries.getKey().toLong());
         List<byte[]> msgs = entries.getValue();
         int count = msgs.size();
         outputStream.writeInt(count);

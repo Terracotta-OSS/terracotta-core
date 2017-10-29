@@ -52,7 +52,6 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
   private final Sink<VoltronEntityMessage> messageSink;
   private final boolean waitForReceived;
-  private final boolean chainResponse;
   private final RetirementManager retirementManager;
   private final MessageCodec<M, R> codec;
   private final EntityDescriptor fakeDescriptor;
@@ -60,13 +59,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
   @SuppressWarnings("unchecked")
   public EntityMessengerService(Sink<VoltronEntityMessage> messageSink,
-                                ManagedEntity owningEntity, boolean waitForReceived, boolean chainResponse) {
+                                ManagedEntity owningEntity, boolean waitForReceived) {
     Assert.assertNotNull(messageSink);
     Assert.assertNotNull(owningEntity);
 
     this.messageSink = messageSink;
     this.waitForReceived = waitForReceived;
-    this.chainResponse = chainResponse;
     // We need access to the retirement manager in order to build dependencies between messages on this entity.
     this.retirementManager = owningEntity.getRetirementManager();
     // If this service is being created, we expect that the entity has a retirement mananger.
@@ -95,7 +93,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
                                                   M originalMessageToDefer,
                                                   M futureMessage) {
     // defer, as normal
-    retirementManager.deferRetirement(originalMessageToDefer, futureMessage, chainResponse);
+    retirementManager.deferRetirement(originalMessageToDefer, futureMessage);
     // return handle
     return new Handle(tag, futureMessage);
   }
@@ -110,7 +108,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   public void messageSelfAndDeferRetirement(M originalMessageToDefer,
                                             M newMessageToSchedule, Consumer<MessageResponse<R>> response) throws MessageCodecException {
     // This requires that we access the RetirementManager to change the retirement of the current message.
-    this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule, chainResponse);
+    this.retirementManager.deferRetirement(originalMessageToDefer, newMessageToSchedule);
     // Schedule the message, as per normal.
     scheduleMessage(newMessageToSchedule, response);
   }

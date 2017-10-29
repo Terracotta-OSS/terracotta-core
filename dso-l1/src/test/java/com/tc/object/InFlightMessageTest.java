@@ -43,7 +43,7 @@ public class InFlightMessageTest extends TestCase {
   public void testExceptionClose() throws Exception {
     Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
     VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
-    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), msg, acks, true);
+    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), msg, acks, null, true);
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -68,7 +68,7 @@ public class InFlightMessageTest extends TestCase {
   public void testExceptionWaitForAcks() throws Exception {
     Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
     VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
-    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), msg, acks, true);
+    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), msg, acks, null, true);
     Thread t = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -147,7 +147,7 @@ public class InFlightMessageTest extends TestCase {
     private boolean didEnter;
     
     public InterlockMessage(NetworkVoltronEntityMessage message, Set<Acks> acks, boolean shouldBlockGetOnRetire) {
-      super(message.getEntityID(), message, acks, shouldBlockGetOnRetire);
+      super(message.getEntityID(), message, acks, null, shouldBlockGetOnRetire);
       this.didEnter = false;
     }
 

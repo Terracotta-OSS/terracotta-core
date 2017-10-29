@@ -22,21 +22,16 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
-import org.junit.Assert;
 import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.ExplicitRetirementHandle;
-import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.times;
 import org.terracotta.entity.ActiveServerEntity;
 
 
@@ -56,7 +51,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, true, false);
+    EntityMessengerService service = new EntityMessengerService(sink, entity, true);
     when(entity.isDestroyed()).thenReturn(false);
     ActiveServerEntity ae = mock(ActiveServerEntity.class);
     service.entityCreated(ae);
@@ -66,7 +61,7 @@ public class EntityMessengerServiceTest {
     ExplicitRetirementHandle handle = service.deferRetirement("test", deferrableMessage, futureMessage);
 
     // verify it was deferred
-    verify(retirementManager).deferRetirement(deferrableMessage, futureMessage, false);
+    verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);
     handle.release();
     // verify that got scheduled.
     verify(sink).addSingleThreaded(any());
@@ -86,7 +81,7 @@ public class EntityMessengerServiceTest {
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
-    EntityMessengerService service = new EntityMessengerService(sink, entity, true, false);
+    EntityMessengerService service = new EntityMessengerService(sink, entity, true);
     // now adding listener in provider so do it manually
     entity.addLifecycleListener(service);
     // Verify that the service was registered to be told when the entity activates.

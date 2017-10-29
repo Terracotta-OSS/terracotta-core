@@ -36,10 +36,12 @@ public interface VoltronEntityMultiResponse extends TCMessage {
   TransactionID[] getRetiredTransactions();
   Map<TransactionID, byte[]> getResults();
   Map<ClientInstanceID, List<byte[]>> getServerMessages();
+  Map<TransactionID, List<byte[]>> getMonitorMessages();
   boolean addReceived(TransactionID tid);
   boolean addRetired(TransactionID tid);
   boolean addResult(TransactionID tid, byte[] result);
   boolean addResultAndRetire(TransactionID tid, byte[] result);
   boolean addServerMessage(ClientInstanceID cid, byte[] message);
+  boolean addServerMessage(TransactionID cid, byte[] message);
   void stopAdding();
 }

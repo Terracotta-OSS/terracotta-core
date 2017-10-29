@@ -16,14 +16,16 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.tc.objectserver.api;
 
-package com.tc.services;
+import com.tc.objectserver.entity.ActivePassiveAckWaiter;
+import java.util.function.Supplier;
 
-import com.tc.net.ClientID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.tx.TransactionID;
-
-public interface ClientMessageSender {
-  void send(ClientID client, ClientInstanceID clientInstance, byte[] payload);
-  void send(ClientID client, TransactionID clientInstance, byte[] payload);
+/**
+ *
+ */
+public interface ResultCapture extends ServerEntityResponse {
+  void message(byte[] message);
+  void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
+  void waitForReceived();
 }

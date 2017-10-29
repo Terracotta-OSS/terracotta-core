@@ -22,8 +22,10 @@ import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.objectserver.api.ResultCapture;
+import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 
 import java.util.Optional;
@@ -36,22 +38,20 @@ import org.terracotta.exception.EntityException;
  * Translated from Request in the entity package.  Provides payload transport through execution
  * and controls return of acks and completion to client.
  */
-public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse {
-  private final EntityDescriptor descriptor;
+public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse implements ResultCapture {
   protected final Supplier<Optional<MessageChannel>> returnChannel;
   private final Consumer<byte[]> completion;
   private final Consumer<EntityException> exception;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
-  private final boolean requiresReceived;
+  
+  private Supplier<ActivePassiveAckWaiter> waiter;
 
-  public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, 
-      Consumer<byte[]> completion, Consumer<EntityException> exception, boolean requiresReceived, boolean isReplicatedMessage) {
-    super(action, transaction, oldest, src);
-    this.descriptor = descriptor;
+  public ServerEntityRequestResponse(ServerEntityRequest request,  
+      Supplier<Optional<MessageChannel>> returnChannel, 
+      Consumer<byte[]> completion, Consumer<EntityException> exception, boolean isReplicatedMessage) {
+    super(request);
     this.returnChannel = returnChannel;
-    this.requiresReceived = requiresReceived;
     this.isReplicatedMessage = isReplicatedMessage;
     this.completion = completion != null ? completion : (raw)->{};
     this.exception = exception != null ? exception : (raw)->{};
@@ -60,6 +60,21 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   @Override
   public Optional<MessageChannel> getReturnChannel() {
     return returnChannel.get();
+  }
+
+  @Override
+  public void message(byte[] message) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter) {
+    this.waiter = waiter;
+  }
+
+  @Override
+  public void waitForReceived() {
+    this.waiter.get().waitForReceived();
   }
 
   @Override
@@ -90,11 +105,6 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   public void setAutoRetire() {
     super.autoRetire(true);
   }
-
-  @Override
-  public boolean requiresReceived() {
-    return requiresReceived;
-  }
  
   @Override
   public synchronized void retired() {
@@ -105,16 +115,5 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
       throw new AssertionError("Double-sending retire " + this.getAction());
     }
     super.retired();
-  }
-
-  @Override
-  public ClientInstanceID getClientInstance() {
-    return this.descriptor.getClientInstanceID();
-  }
-
-
-  @Override
-  public String toString() {
-    return "ServerEntityRequestResponse{action=" +getAction() + ", descriptor=" + descriptor + '}';
   }
 }

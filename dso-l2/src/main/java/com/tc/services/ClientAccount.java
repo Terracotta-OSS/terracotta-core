@@ -22,6 +22,7 @@ package com.tc.services;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
 
 
 public class ClientAccount {
@@ -39,6 +40,12 @@ public class ClientAccount {
   synchronized void sendNoResponse(ClientInstanceID clientInstance, byte[] payload) {
     if (open) {
       this.sender.send(this.clientID, clientInstance, payload);
+    }
+  }
+
+  synchronized void sendInvokeMessage(TransactionID transaction, byte[] payload) {
+    if (open) {
+      this.sender.send(this.clientID, transaction, payload);
     }
   }
   /** 

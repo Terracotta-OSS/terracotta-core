@@ -47,7 +47,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
 
   @Override
   public void addStateTo(StateDumpCollector stateDumpCollector) {
-    ImplementationProvidedServiceProvider.super.addStateTo(stateDumpCollector); //To change body of generated methods, choose Tools | Templates.
+    ImplementationProvidedServiceProvider.super.addStateTo(stateDumpCollector); 
   }
 
   @Override

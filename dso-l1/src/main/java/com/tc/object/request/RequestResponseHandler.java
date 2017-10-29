@@ -63,8 +63,16 @@ public interface RequestResponseHandler {
    * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
    * otherwise it'll drop the message on the floor.
    *
-   * @param entityDescriptor the entity and instance to receive the message.
+   * @param clientID the instance to receive the message.
    * @param message opaque message
    */
-  void handleMessage(ClientInstanceID returnMessage, byte[] message);
+  void handleMessage(ClientInstanceID clientID, byte[] message);
+  /**
+   * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
+   * otherwise it'll drop the message on the floor.
+   *
+   * @param transaction the inflight message to receive the message.
+   * @param message opaque message
+   */
+  void handleMessage(TransactionID transaction, byte[] message);
 }

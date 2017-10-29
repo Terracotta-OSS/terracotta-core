@@ -20,6 +20,7 @@ package com.tc.services;
 
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.util.Assert;
@@ -55,6 +56,17 @@ public class EntityClientCommunicatorService implements ClientCommunicator {
       ClientInstanceID clientInstance = rawDescriptor.getClientInstanceID();
       byte[] payload = serialize(this.owningEntity.getCodec(), message);
       clientAccount.sendNoResponse(clientInstance, payload);
+    }
+  }
+
+  public void sendInvokeMessage(ClientDescriptor clientDescriptor, long invokeID, EntityResponse message) throws MessageCodecException {
+    // We are in internal code so downcast the descriptor.
+    ClientDescriptorImpl rawDescriptor = (ClientDescriptorImpl)clientDescriptor;
+    ClientAccount clientAccount = clientAccounts.get(rawDescriptor.getNodeID());
+    if (clientAccount != null) {
+      TransactionID tid = new TransactionID(invokeID);
+      byte[] payload = serialize(this.owningEntity.getCodec(), message);
+      clientAccount.sendInvokeMessage(tid, payload);
     }
   }
   

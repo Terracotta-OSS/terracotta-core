@@ -56,8 +56,10 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
       boolean waitForReceived = true;
       if (configuration instanceof EntityMessengerConfiguration) {
         waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
+      } else if (configuration instanceof Function) {
+        waitForReceived = (Boolean)((Function)configuration).apply("PASSIVE_CONFIRMATION");
       }
-      EntityMessengerService es = new EntityMessengerService(this.timer, this.messageSink, owningEntity, waitForReceived);
+      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, Optional.ofNullable(waitForReceived).orElse(false));
       owningEntity.addLifecycleListener(es);
       service = configuration.getServiceType().cast(es);
     }

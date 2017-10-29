@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.handler;
 
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.Retiree;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
@@ -57,7 +58,19 @@ public class RetirementManager {
     this.waitingForDeferredRegistration = new HashMap<EntityMessage, LogicalSequence>();
     this.mostRecentRegisteredToKey = new HashMap<Integer, LogicalSequence>();
   }
-
+  
+  public synchronized boolean isMessageRunning(EntityMessage invokeMessage) {
+    return this.currentlyRunning.containsKey(invokeMessage);
+  }
+  
+  public synchronized boolean holdMessage(EntityMessage invokeMessage) {
+    return this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.hold()) != null;
+  }
+  
+  public synchronized boolean releaseMessage(EntityMessage invokeMessage) {
+    return this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.release()) != null;
+  }
+  
   public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
     LogicalSequence seq = this.currentlyRunning.get(invokeMessage);
     if (seq == null) {
@@ -103,13 +116,17 @@ public class RetirementManager {
    */
   public synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
     List<Retiree> toRetire = new ArrayList<>();
-
-    LogicalSequence completedRequest = this.currentlyRunning.remove(completedMessage);
-    Assert.assertNotNull(completedRequest);
-
-    Assert.assertFalse(completedRequest.isCompleted);
-    completedRequest.isCompleted = true;
-    traverseDependencyGraph(toRetire, completedRequest);
+    this.currentlyRunning.compute(completedMessage, (m,ls)->{
+      if (ls.isBeingHeld) {
+        ls.isCompleted = true;
+        return ls;
+      } else {
+        Assert.assertNotNull(ls);
+        ls.isCompleted = true;
+        traverseDependencyGraph(toRetire, ls);
+        return null;
+      }
+    });
     return toRetire;
   }
 
@@ -158,7 +175,7 @@ public class RetirementManager {
     }
 
     myRequest.retirementDeferredBy(laterMessage);
-
+        
     LogicalSequence previous = this.waitingForDeferredRegistration.put(laterMessage, myRequest);
     Assert.assertNull(previous);
   }
@@ -181,7 +198,18 @@ public class RetirementManager {
     map.put("mostRecentRegisteredToKey", this.mostRecentRegisteredToKey.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
     return map;
   }
-
+  
+  public static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message) {
+    List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
+    for (Retiree toRetire : readyToRetire) {
+      if (null != toRetire) {
+        Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
+        // if not, retire the message
+        toRetire.retired();
+      }
+    }
+  }
+  
   private static class LogicalSequence {
     public int concurrencyKey;
     // The thing to be retired
@@ -198,8 +226,10 @@ public class RetirementManager {
     public boolean isCompleted;
     // True if retirement is complete (only used when stitching in the key).
     public boolean isRetired;
-
-    private Set<EntityMessage> entityMessagesDeferringRetirement = new HashSet<>();
+    
+    public boolean isBeingHeld;
+    
+    private final Set<EntityMessage> entityMessagesDeferringRetirement = new HashSet<>();
 
     public LogicalSequence(EntityMessage entityMessage) {
       this.entityMessage = entityMessage;
@@ -221,13 +251,23 @@ public class RetirementManager {
 
     public boolean isWaitingForExplicitDefer() {
       // true if waiting set size is not zero
-      return !entityMessagesDeferringRetirement.isEmpty();
+      return !entityMessagesDeferringRetirement.isEmpty() || this.isBeingHeld;
     }
 
     public boolean isWaitingForExplicitDeferOf(EntityMessage entityMessage) {
       return entityMessagesDeferringRetirement.contains(entityMessage);
     }
+    
+    public LogicalSequence hold() {
+      isBeingHeld = true;
+      return this;
+    }
 
+    public LogicalSequence release() {
+      isBeingHeld = false;
+      return this;
+    }
+    
     @Override
     public String toString() {
       return "LogicalSequence{" + "response=" + response + ", entityMessage=" + entityMessage + ", nextInKey=" + nextInKey + ", deferNotify=" + deferNotify + ", isWaitingForPreviousInKey=" + isWaitingForPreviousInKey + ", isCompleted=" + isCompleted + ", isRetired=" + isRetired + ", entityMessagesDeferringRetirement=" + entityMessagesDeferringRetirement + '}';

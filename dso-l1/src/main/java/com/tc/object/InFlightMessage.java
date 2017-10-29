@@ -18,7 +18,6 @@
  */
 package com.tc.object;
 
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 
 import com.tc.tracing.Trace;
@@ -33,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.entity.InvokeMonitor;
 
 
 /**
@@ -44,6 +44,7 @@ import java.util.concurrent.TimeoutException;
 public class InFlightMessage {
   private final VoltronEntityMessage message;
   private final EntityID eid;
+  private final InFlightMonitor monitor;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -63,9 +64,10 @@ public class InFlightMessage {
   private final boolean blockGetOnRetired;
   private final Trace trace;
 
-  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
+  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire) {
     this.message = message;
     this.eid = extraInfo;
+    this.monitor = monitor;
     Assert.assertNotNull(eid);
     Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
@@ -224,6 +226,12 @@ public class InFlightMessage {
       }
     }
   }
+  
+  public synchronized void handleMessage(byte[] raw) {
+    if (monitor != null) {
+      monitor.accept(raw);
+    }
+  }
 
   public synchronized void retired() {
     trace.log("Received ACK: " + VoltronEntityMessage.Acks.RETIRED);
@@ -232,5 +240,8 @@ public class InFlightMessage {
       this.getCanComplete = true;
     }
     notifyAll();
+    if (monitor != null) {
+      monitor.close();
+    }
   }
 }

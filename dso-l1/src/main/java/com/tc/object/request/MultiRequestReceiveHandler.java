@@ -40,6 +40,22 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
     for (TransactionID received : response.getReceivedTransactions()) {
       handler.received(received);
     }
+    Map<ClientInstanceID, List<byte[]>> server = response.getServerMessages();
+    for (Map.Entry<ClientInstanceID, List<byte[]>> entry : server.entrySet()) {
+      List<byte[]> msgs = entry.getValue();
+      ClientInstanceID cid = entry.getKey();
+      for (byte[] msg : msgs) {
+        handler.handleMessage(cid, msg);
+      }
+    }    
+    Map<TransactionID, List<byte[]>> monitor = response.getMonitorMessages();
+    for (Map.Entry<TransactionID, List<byte[]>> entry : monitor.entrySet()) {
+      List<byte[]> msgs = entry.getValue();
+      TransactionID cid = entry.getKey();
+      for (byte[] msg : msgs) {
+        handler.handleMessage(cid, msg);
+      }
+    }
     Map<TransactionID, byte[]> results = response.getResults();
     for (Map.Entry<TransactionID, byte[]> entry : results.entrySet()) {
       byte[] result = entry.getValue();
@@ -51,14 +67,6 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
     }
     for (TransactionID retires : response.getRetiredTransactions()) {
       handler.retired(retires);
-    }
-    Map<ClientInstanceID, List<byte[]>> server = response.getServerMessages();
-    for (Map.Entry<ClientInstanceID, List<byte[]>> entry : server.entrySet()) {
-      List<byte[]> msgs = entry.getValue();
-      ClientInstanceID cid = entry.getKey();
-      for (byte[] msg : msgs) {
-        handler.handleMessage(cid, msg);
-      }
     }
   }
 }

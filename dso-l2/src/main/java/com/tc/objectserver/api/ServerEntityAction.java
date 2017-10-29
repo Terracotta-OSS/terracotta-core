@@ -18,11 +18,11 @@
  */
 package com.tc.objectserver.api;
 
-
 /**
- * These "actions" represent the superset of "Request.Type" values.
- * That is, they are an internal representation of what was sent over the wire OR derived for some internal purpose.
- * This is to loosen the coupling between ServerEntityRequest and Request.
+ * These "actions" represent the superset of "Request.Type" values. That is,
+ * they are an internal representation of what was sent over the wire OR derived
+ * for some internal purpose. This is to loosen the coupling between
+ * ServerEntityRequest and Request.
  */
 public enum ServerEntityAction {
   /**
@@ -32,19 +32,39 @@ public enum ServerEntityAction {
   /**
    * Same as Request.Type.
    */
-  FETCH_ENTITY,
+  FETCH_ENTITY{
+    @Override
+    public boolean isLifecycle() {
+      return true;
+    }
+  },
   /**
    * Same as Request.Type.
    */
-  RELEASE_ENTITY,
+  RELEASE_ENTITY{
+    @Override
+    public boolean isLifecycle() {
+      return true;
+    }
+  },
   /**
    * Same as Request.Type.
    */
-  CREATE_ENTITY,
+  CREATE_ENTITY {
+    @Override
+    public boolean isLifecycle() {
+      return true;
+    }
+  },
   /**
    * Same as Request.Type.
    */
-  DESTROY_ENTITY,
+  DESTROY_ENTITY {
+    @Override
+    public boolean isLifecycle() {
+      return true;
+    }
+  },
   /**
    * Same as Request.Type.
    */
@@ -54,58 +74,73 @@ public enum ServerEntityAction {
    */
   REQUEST_SYNC_ENTITY,
   /**
-   * An internally-created action to communicate that an entity should be loaded from its existing disk state.
-   */
-  LOAD_EXISTING_ENTITY,
-  /**
    * Reload the active entity with the new supplied configuration.
    */
-  RECONFIGURE_ENTITY,  
+  RECONFIGURE_ENTITY,
   // ***** Messages specific to received passive synchronization data below this point *****
   /**
    * During sync, create an entity which will later by synced.
    */
   RECEIVE_SYNC_CREATE_ENTITY,
   /**
-   * Messages related to the synchronization of a specific entity instance follow.
+   * Messages related to the synchronization of a specific entity instance
+   * follow.
    */
   RECEIVE_SYNC_ENTITY_START_SYNCING,
   /**
-   * Messages related to the synchronization of a specific entity instance are now done.
+   * Messages related to the synchronization of a specific entity instance are
+   * now done.
    */
   RECEIVE_SYNC_ENTITY_END,
   /**
-   * Messages related to the synchronization of a specific entity concurrency key follow.
+   * Messages related to the synchronization of a specific entity concurrency
+   * key follow.
    */
   RECEIVE_SYNC_ENTITY_KEY_START,
   /**
-   * Messages related to the synchronization of a specific entity concurrency key are now done.
+   * Messages related to the synchronization of a specific entity concurrency
+   * key are now done.
    */
   RECEIVE_SYNC_ENTITY_KEY_END,
   /**
-   * A synchronized state message on a specific concurrency key within a specific entity instance.
+   * A synchronized state message on a specific concurrency key within a
+   * specific entity instance.
    */
   RECEIVE_SYNC_PAYLOAD,
   // ***** END: Messages specific to received passive synchronization data *****
   /**
-   * An action which should never be replicated, just used to synchronize on the flush of local executor queues.
+   * An action which should never be replicated, just used to synchronize on the
+   * flush of local executor queues.
    */
   LOCAL_FLUSH,
   /**
-   * An action which should never be replicated, just used to clean up a deleted entity, after a pipeline flush.
+   * An action which should never be replicated, just used to clean up a deleted
+   * entity, after a pipeline flush.
    */
-  MANAGED_ENTITY_GC,  
+  MANAGED_ENTITY_GC,
   /**
-   * Never replicated, used to clean up a client when it disconnects from the server and needs to cleanup releases.
+   * Never replicated, used to clean up a client when it disconnects from the
+   * server and needs to cleanup releases.
    */
-  DISCONNECT_CLIENT,
+  DISCONNECT_CLIENT {
+    @Override
+    public boolean isLifecycle() {
+      return true;
+    }
+  },
   /**
-   * An action which should never be replicated, just used to start a synchronization, after a pipeline flush.
+   * An action which should never be replicated, just used to start a
+   * synchronization, after a pipeline flush.
    */
   LOCAL_FLUSH_AND_SYNC,
   /**
-   * Used in message replication:  we often don't want to replicate the contents of the message or its intent, just
-   *  information which might be required to correctly order re-sends, after fail-over.
+   * Used in message replication: we often don't want to replicate the contents
+   * of the message or its intent, just information which might be required to
+   * correctly order re-sends, after fail-over.
    */
   ORDER_PLACEHOLDER_ONLY;
+
+  public boolean isLifecycle() {
+    return false;
+  }
 }

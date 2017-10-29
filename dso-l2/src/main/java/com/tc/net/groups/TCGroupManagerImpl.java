@@ -81,6 +81,7 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.TCServerMain;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
@@ -238,7 +239,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
                                                           new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory, this.connectionPolicy,
-                                                          L2Utils.getOptimalCommWorkerThreads(),
+                                                          TCServerMain.getSetupManager().allCurrentlyKnownServers().length - 1,
                                                           new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),

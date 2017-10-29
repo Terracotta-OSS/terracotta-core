@@ -45,6 +45,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.MessagePayload;
@@ -118,7 +119,7 @@ public class ReplicatedTransactionHandlerTest {
     Mockito.doAnswer((Answer<SimpleCompletion>) (InvocationOnMock invocation) -> {
       ((Consumer<byte[]>)invocation.getArguments()[3]).accept(null);
       return null;
-    }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(Runnable.class), any(Consumer.class), any(Consumer.class));
+    }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(ResultCapture.class));
     when(entityManager.getEntity(Matchers.any(EntityDescriptor.class))).thenReturn(Optional.empty());
     when(entityManager.getEntity(Matchers.eq(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, 1L)))).thenReturn(Optional.of(platform));
     Stage runner = mock(Stage.class);
@@ -186,7 +187,7 @@ public class ReplicatedTransactionHandlerTest {
       }
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
     SyncReplicationActivity.EntityCreationTuple[] entitiesToSync = {
         new SyncReplicationActivity.EntityCreationTuple(eid, 1, 10L, new byte[0], true)
     };
@@ -235,7 +236,7 @@ public class ReplicatedTransactionHandlerTest {
       }
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
     this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
     this.loopbackSink.addSingleThreaded(msg);
@@ -248,7 +249,7 @@ public class ReplicatedTransactionHandlerTest {
   @Test
   public void testDestroy() throws Exception {
     this.rth.getEventHandler().destroy();
-    verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any(), Matchers.any(), Matchers.any());
+    verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any());
   }
   
   @Test
@@ -268,10 +269,10 @@ public class ReplicatedTransactionHandlerTest {
     ReplicationMessage create = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createLifecycleMessage(eid,1L,fetch,cid,instance,tid,old,SyncReplicationActivity.ActivityType.CREATE_ENTITY,new byte[0]));
     ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.getConsumerID()).thenReturn(1L);
-    when(entity.addRequestMessage(any(), any(), any(), any(), any())).then((in)->{
+    doAnswer((in)->{
       ((Consumer)in.getArguments()[3]).accept(new byte[0]);
-      return mock(SimpleCompletion.class);
-    });
+      return null;
+    }).when(entity).addRequestMessage(any(), any(), any());
     when(entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).thenReturn(entity);
     when(entityManager.getEntity(EntityDescriptor.NULL_ID)).thenReturn(Optional.empty());
     this.rth.getEventHandler().handleEvent(start);
@@ -290,7 +291,7 @@ public class ReplicatedTransactionHandlerTest {
         sendNoop(entityID, fetchID, ((ServerEntityRequest)invoked.getArguments()[0]).getAction());
       }
       return null;
-    }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any());
     when(entity.getID()).thenReturn(entityID);
     when(entity.getConsumerID()).thenReturn(1L);
     when(this.entityManager.getEntity(Matchers.any())).then(invoke->{
@@ -342,7 +343,7 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       verifySequence(req, ((MessagePayload)invocation.getArguments()[1]).getRawPayload(), ((MessagePayload)invocation.getArguments()[1]).getConcurrency());
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       // NOTE:  We don't retire replicated messages.
@@ -351,7 +352,7 @@ public class ReplicatedTransactionHandlerTest {
       int concurrency = (null != payload) ? payload.getConcurrency() : ConcurrencyStrategy.MANAGEMENT_KEY;
       verifySequence(req, raw, concurrency);
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
     mockPassiveSync(rth);
   }
   
