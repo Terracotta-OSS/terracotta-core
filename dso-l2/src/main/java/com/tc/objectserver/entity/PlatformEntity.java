@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
@@ -37,12 +39,15 @@ import org.terracotta.exception.EntityException;
 
 public class PlatformEntity implements ManagedEntity {
   public static EntityID PLATFORM_ID = new EntityID("platform", "root");
+  public static FetchID PLATFORM_FETCH_ID = new FetchID(0L);
   public static long VERSION = 1L;
+  private final Sink<VoltronEntityMessage> messageSelf;
   public final RequestProcessor processor;
   private boolean isActive;
 
-  public PlatformEntity(RequestProcessor processor) {
+  public PlatformEntity(Sink<VoltronEntityMessage>messageSelf, RequestProcessor processor) {
     this.processor = processor;
+    this.messageSelf = messageSelf;
     // We always start in the passive state.
     this.isActive = false;
   }
@@ -62,7 +67,7 @@ public class PlatformEntity implements ManagedEntity {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
     BarrierCompletion c = new BarrierCompletion();
-    processor.scheduleRequest(PLATFORM_ID, VERSION, FetchID.NULL_ID, request, payload, (w)-> {complete.accept(payload.getRawPayload());c.complete();}, false, payload.getConcurrency());    
+    processor.scheduleRequest(false, PLATFORM_ID, VERSION, PLATFORM_FETCH_ID, request, payload, (w)-> {complete.accept(payload.getRawPayload());c.complete();}, false, payload.getConcurrency());    
     return new SimpleCompletion() {
       @Override
       public void waitForCompletion() {

@@ -26,14 +26,12 @@ import com.tc.properties.TCPropertiesImpl;
 
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {
-  public final static String             HYDRATE_MESSAGE_STAGE                       = "hydrate_message_stage";
   public static final String             CLIENT_COORDINATION_STAGE                   = "client_coordination_stage";
   public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
   public static final String             VOLTRON_ENTITY_RESPONSE_STAGE                      = "request_ack_stage";
   public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
   public static final String             SERVER_ENTITY_MESSAGE_STAGE                 = "server_entity_message_stage";
-  public static final String             SERVER_ENTITY_MESSAGE_SENDER_STAGE                 = "server_entity_message_sender_stage";
 
   public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
   public static final int                MAX_SENT_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS, 200);

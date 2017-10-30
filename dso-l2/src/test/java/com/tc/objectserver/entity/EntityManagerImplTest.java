@@ -47,6 +47,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
@@ -71,9 +72,9 @@ public class EntityManagerImplTest {
     RequestProcessor processor = mock(RequestProcessor.class);
     ActivePassiveAckWaiter waiter = mock(ActivePassiveAckWaiter.class);
     doAnswer((invoke)->{
-        ((Consumer)invoke.getArguments()[5]).accept(waiter);
+        ((Consumer)invoke.getArguments()[6]).accept(waiter);
         return null;
-    }).when(processor).scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
+    }).when(processor).scheduleRequest(anyBoolean(), any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),

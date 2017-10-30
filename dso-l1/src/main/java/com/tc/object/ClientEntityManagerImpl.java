@@ -22,7 +22,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.tracing.Trace;
@@ -31,7 +30,6 @@ import com.tc.util.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -41,7 +39,6 @@ import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.ResendVoltronEntityMessage;
-import com.tc.entity.ServerEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
@@ -190,11 +187,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
       @Override
       public void addMultiThreaded(T context) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void addSpecialized(SpecializedEventContext specialized) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
 

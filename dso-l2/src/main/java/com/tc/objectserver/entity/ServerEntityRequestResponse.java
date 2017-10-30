@@ -38,17 +38,19 @@ import org.terracotta.exception.EntityException;
 public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse {
   private final EntityDescriptor descriptor;
   protected final Supplier<Optional<MessageChannel>> returnChannel;
+  private final Runnable completion;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
   private final boolean requiresReceived;
 
   public ServerEntityRequestResponse(EntityDescriptor descriptor, ServerEntityAction action,  
-      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, boolean requiresReceived, boolean isReplicatedMessage) {
+      TransactionID transaction, TransactionID oldest, ClientID src, Supplier<Optional<MessageChannel>> returnChannel, Runnable completion, boolean requiresReceived, boolean isReplicatedMessage) {
     super(action, transaction, oldest, src);
     this.descriptor = descriptor;
     this.returnChannel = returnChannel;
     this.requiresReceived = requiresReceived;
     this.isReplicatedMessage = isReplicatedMessage;
+    this.completion = completion != null ? completion : ()->{};
   }
 
   @Override
@@ -64,18 +66,21 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
     } else {
       super.complete(value); 
     }
+    this.completion.run();
   }
 
   @Override
   public synchronized void complete() {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction());
     super.complete();
+    this.completion.run();
   }
 
   @Override
   public synchronized void failure(EntityException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
     super.failure(e); 
+    this.completion.run();
   }
 
   public void setAutoRetire() {

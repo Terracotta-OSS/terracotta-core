@@ -29,7 +29,6 @@ import org.junit.Test;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.classloader.ServiceLocator;
@@ -325,10 +324,6 @@ public class ProcessTransactionHandlerTest {
     }
     @Override
     public void resetStats() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
       throw new UnsupportedOperationException();
     }
     @Override

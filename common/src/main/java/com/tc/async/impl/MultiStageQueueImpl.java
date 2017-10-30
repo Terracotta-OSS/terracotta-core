@@ -22,7 +22,6 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
@@ -200,32 +199,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     int index = getSourceQueueFor(cxt);
     ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context, index) : new HandledContext<EC>(
       context);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[index].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    addInflight();
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    boolean interrupted = Thread.interrupted();
-    int index = getSourceQueueFor(specialized);
     try {
       while (true) {
         try {

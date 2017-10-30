@@ -19,12 +19,8 @@
 package com.tc.async.impl;
 
 
-import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
@@ -119,15 +115,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
     ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
     deliverToQueue("Multi", wrapper);
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    deliverToQueue("Specialized", wrapper);
   }
 
   private void deliverToQueue(String type, ContextWrapper<EC> wrapper) {

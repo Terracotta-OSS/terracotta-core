@@ -21,7 +21,6 @@ package com.tc.object;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.entity.MessageCodecSupplier;
@@ -30,7 +29,6 @@ import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
@@ -748,11 +746,6 @@ public class ClientEntityManagerTest extends TestCase {
 
     @Override
     public void addMultiThreaded(Object context) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
