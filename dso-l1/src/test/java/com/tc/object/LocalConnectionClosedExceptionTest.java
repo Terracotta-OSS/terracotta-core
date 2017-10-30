@@ -16,20 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
-package com.tc.entity;
-
-import org.terracotta.exception.EntityException;
-
-import com.tc.object.tx.TransactionID;
+package com.tc.object;
 
 
-public interface VoltronEntityAppliedResponse extends VoltronEntityResponse {
-  // Read-only interface for the receiver.
-  byte[] getSuccessValue();
-  EntityException getFailureException();
+import junit.framework.TestCase;
+import org.terracotta.exception.ConnectionClosedException;
+
+
+public class LocalConnectionClosedExceptionTest extends TestCase {
   
-  // Writable interface for the sender.
-  public void setSuccess(TransactionID transactionID, byte[] response);
-  public void setFailure(TransactionID transactionID, EntityException exception);  //  implied retire
+  public void testRewriteDescription() throws Exception {
+    String description = "this is a test description";
+    LocalConnectionClosedException exp = new LocalConnectionClosedException(new EntityID("class","name"), new ConnectionClosedException(description));
+    System.out.println(exp.getMessage());
+  }
 }

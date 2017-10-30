@@ -74,8 +74,7 @@ public class RetirementManager {
   public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
     LogicalSequence seq = this.currentlyRunning.get(invokeMessage);
     if (seq == null) {
-      // already gone.  retire directly
-      response.retired();
+      throw new AssertionError();
     } else {
       seq.updateWithRetiree(response);
     }
@@ -116,7 +115,7 @@ public class RetirementManager {
    */
   public synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
     List<Retiree> toRetire = new ArrayList<>();
-    this.currentlyRunning.compute(completedMessage, (m,ls)->{
+    this.currentlyRunning.computeIfPresent(completedMessage, (m,ls)->{
       if (ls.isBeingHeld) {
         ls.isCompleted = true;
         return ls;

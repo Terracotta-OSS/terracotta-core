@@ -109,7 +109,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
     if (!this.getNodeID().isNull()) {
       getReturnChannel().ifPresent(channel -> {
         VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-        message.setFailure(request.getTransaction(), e, alsoRetire);
+        message.setFailure(request.getTransaction(), e);
         message.send();
       });
       this.isComplete = true;
@@ -150,7 +150,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
           case RELEASE_ENTITY:
           case FETCH_ENTITY:
             // In these cases, we just return an empty success to acknowledge that they completed.
-            actionResponse.setSuccess(request.getTransaction(), new byte[0], alsoRetire);
+            actionResponse.setSuccess(request.getTransaction(), new byte[0]);
             actionResponse.send();
 
             break;
@@ -179,7 +179,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
           case FETCH_ENTITY:
           case RECONFIGURE_ENTITY:
             VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-            actionResponse.setSuccess(request.getTransaction(), value, alsoRetire);
+            actionResponse.setSuccess(request.getTransaction(), value);
             actionResponse.send();
             break;
           default:

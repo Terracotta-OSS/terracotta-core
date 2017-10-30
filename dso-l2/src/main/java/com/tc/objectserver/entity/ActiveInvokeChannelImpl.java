@@ -21,8 +21,6 @@ package com.tc.objectserver.entity;
 import java.util.function.Consumer;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.EntityUserException;
-import org.terracotta.exception.EntityException;
 
 /**
  *
@@ -48,7 +46,6 @@ public class ActiveInvokeChannelImpl<R extends EntityResponse> implements Active
   @Override
   public void sendException(Exception response) {
     exception.accept(response);
-    close();
   }
 
   @Override

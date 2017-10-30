@@ -71,7 +71,7 @@ public class ServerEntityRequestImplTest {
     serverEntityRequest.complete(value);
     serverEntityRequest.retired();
     
-    verify(responseMessage).setSuccess(transactionID, value, true);
+    verify(responseMessage).setSuccess(transactionID, value);
     verify(responseMessage).send();
   }
 
@@ -85,7 +85,7 @@ public class ServerEntityRequestImplTest {
     serverEntityRequest.complete();
     serverEntityRequest.retired();
     
-    verify(responseMessage).setSuccess(transactionID, new byte[0], true);
+    verify(responseMessage).setSuccess(transactionID, new byte[0]);
     verify(responseMessage).send();
   }
 

@@ -184,32 +184,31 @@ public class ProcessTransactionHandler implements ReconnectListener {
       
       Consumer<byte[]> completion = null;
       Consumer<EntityException> exception = null;
-      if (!sourceNodeID.isNull()) {
-        switch(message.getVoltronType()) {
-          case DISCONNECT_CLIENT:
-            ClientDisconnectMessage disconnect = (ClientDisconnectMessage)message;
-            completion = (raw)->disconnect.run();
-            exception = (e)->disconnect.run();
-            break;
-          case FETCH_ENTITY:
-  // track fetch calls through the pipeline so disconnects work properly
-            inflightFetch.compute(sourceNodeID, (client, count)->count == null ? 1 : count+1);
-            Assert.assertNull(completion);
-            Consumer<?> var = (raw)->inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
-            completion = (Consumer<byte[]>)var;
-            exception = (Consumer<EntityException>)var;
-            break;
-          case INVOKE_ACTION:
-            if (message instanceof EntityMessengerService.FakeEntityMessage) {
-              completion = ((EntityMessengerService.FakeEntityMessage) message).getCompletionHandler();
-              exception = ((EntityMessengerService.FakeEntityMessage) message).getExceptionHandler();
-            }
-            break;
-          default:
-            if (message instanceof Runnable) {
-              completion = (raw)->((Runnable)message).run();
-            }
-        }
+      switch(message.getVoltronType()) {
+        case DISCONNECT_CLIENT:
+          ClientDisconnectMessage disconnect = (ClientDisconnectMessage)message;
+          completion = (raw)->disconnect.run();
+          exception = (e)->disconnect.run();
+          break;
+        case FETCH_ENTITY:
+// track fetch calls through the pipeline so disconnects work properly
+          inflightFetch.compute(sourceNodeID, (client, count)->count == null ? 1 : count+1);
+          Assert.assertNull(completion);
+          Consumer<?> var = (raw)->inflightFetch.compute(sourceNodeID, (client, count)->count == 1 ? null : count - 1);
+          completion = (Consumer<byte[]>)var;
+          exception = (Consumer<EntityException>)var;
+          break;
+        case INVOKE_ACTION:
+          if (message instanceof EntityMessengerService.FakeEntityMessage) {
+            completion = ((EntityMessengerService.FakeEntityMessage) message).getCompletionHandler();
+            exception = ((EntityMessengerService.FakeEntityMessage) message).getExceptionHandler();
+          }
+          break;
+        default:
+          if (message instanceof Runnable) {
+            completion = (raw)->((Runnable)message).run();
+          }
+          break;
       }
       ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
     }
@@ -704,19 +703,18 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
     
     private void sendFailure(EntityException failure) {
-      update();
-      if (sent.attemptSet()) {
-        if (getNodeID().isNull()) {
-          super.failure(failure);
-        } else {
-          safeGetChannel(getNodeID()).ifPresent(channel -> {
-            VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-            failMessage.setFailure(getTransaction(), failure, false);
-            invokeReturn.put(getNodeID(), failMessage);
-            multiSend.addSingleThreaded(failMessage);
-          });
-        }
+      sent.attemptSet(); //  set the flag if it has not been set
+      if (getNodeID().isNull()) {
+        super.failure(failure);
+      } else {
+        safeGetChannel(getNodeID()).ifPresent(channel -> {
+          VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+          failMessage.setFailure(getTransaction(), failure);
+          invokeReturn.put(getNodeID(), failMessage);
+          multiSend.addSingleThreaded(failMessage);
+        });
       }
+      entity.getRetirementManager().releaseMessage(rootMessage);
       RetirementManager.retireMessagesForEntity(entity, rootMessage);
     }
 

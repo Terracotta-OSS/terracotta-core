@@ -311,9 +311,6 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (isActive()) {
 // only if this is active is waiting required.  This is set to wait for the 
 // passives to complete before presenting results back to the client
-      if (results == null) {
-        throw new NullPointerException();
-      }
       results.setWaitFor(next::waitForPassives);
     }
     

@@ -39,7 +39,7 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
       throw new UnsupportedOperationException("unable to create channel");
     } else {
       open.run();
-      return new ActiveInvokeChannelImpl<R>(messages, exception, retire);
+      return new ActiveInvokeChannelImpl<>(messages, exception, retire);
     }
   }
 }

@@ -21,15 +21,30 @@ package com.tc.object;
 import org.terracotta.exception.ConnectionClosedException;
 
 /**
- *
+ *  This is a temporary fix to connection exception naming problems
  */
 public class LocalConnectionClosedException extends ConnectionClosedException {
   
   private final EntityID entityID;
-
+  
   public LocalConnectionClosedException(EntityID eid, String description, Throwable cause) {
     super(description, cause);
     this.entityID = eid;
+  }
+  
+  public LocalConnectionClosedException(EntityID eid, ConnectionClosedException cause) {
+    super(cause.getDescription(), cause);
+    this.entityID = eid;
+  }
+  
+  private static String fixDescription(EntityID eid, String description) {
+    StringBuilder buffer = new StringBuilder();
+    buffer.append(eid.getClassName());
+    buffer.append(":");
+    buffer.append(eid.getEntityName());
+    buffer.append(" - ");
+    buffer.append(description);
+    return buffer.toString();
   }
 
   @Override
@@ -40,5 +55,15 @@ public class LocalConnectionClosedException extends ConnectionClosedException {
   @Override
   public String getClassName() {
     return entityID.getClassName();
+  }
+
+  @Override
+  public String getLocalizedMessage() {
+    return fixDescription(entityID, super.getDescription()); 
+  }
+
+  @Override
+  public String getMessage() {
+    return fixDescription(entityID, super.getDescription()); 
   }
 }
