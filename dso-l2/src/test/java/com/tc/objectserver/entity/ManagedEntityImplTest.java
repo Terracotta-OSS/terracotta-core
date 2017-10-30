@@ -239,7 +239,7 @@ public class ManagedEntityImplTest {
     MessagePayload arg = mockCreatePayload(config);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     promote();
 
     // first create a passive entity and then promote
@@ -265,7 +265,7 @@ public class ManagedEntityImplTest {
     MessagePayload arg = mockCreatePayload(config);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     promote();
 
     activeServerEntity.notifyDestroyed(new ClientSourceIdImpl(10));
@@ -293,7 +293,7 @@ public class ManagedEntityImplTest {
     MessagePayload arg = mockCreatePayload(config);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     promote();
 
     ServerEntityRequest request2 = mockDestroyEntityRequest();
@@ -313,7 +313,7 @@ public class ManagedEntityImplTest {
     MessagePayload arg = mockCreatePayload(config);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
 //  test passive execution
     ServerEntityRequest passiveInvoke = mockExecutionInvokeRequest(ExecutionStrategy.Location.PASSIVE);
     MessagePayload loc = mockLocationPayload(ExecutionStrategy.Location.PASSIVE);
@@ -349,7 +349,7 @@ public class ManagedEntityImplTest {
     MessagePayload arg = mockCreatePayload(config);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     invokeOnTransactionHandler(()->{try {managedEntity.promoteEntity();} catch (ConfigurationException ce) {throw new RuntimeException(ce);}});
     
     // We expected to see this as a result of the promotion.
@@ -361,7 +361,7 @@ public class ManagedEntityImplTest {
     TestingResponse response = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
-    verify(response).complete(Matchers.any());
+    verify(response).complete();
   }
 
   @Test
@@ -373,7 +373,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
     verify(serverEntityService).createPassiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg.getRawPayload()));
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
   }
 
   @Test
@@ -395,7 +395,7 @@ public class ManagedEntityImplTest {
     promote();
 // We want to pretend that we are the expected thread.
     ServerEntityRequest request = mockCreateEntityRequest();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), null));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), response));
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), response));
     response.waitFor();
     verify(response).failure(any(EntityAlreadyExistsException.class));
@@ -589,7 +589,7 @@ public class ManagedEntityImplTest {
     
     verify(loopback, times(1)).completed(Matchers.any(), Matchers.any(FetchID.class), Matchers.any());
     verify(activeServerEntity, times(2)).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
-    verify(response, times(1)).complete(any());
+    verify(response, times(1)).complete();
     verify(fin, times(1)).complete(any());
   }
   
@@ -676,15 +676,17 @@ public class ManagedEntityImplTest {
       }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
     
     invokeOnTransactionHandler(()->{EntityMessage cstring = mock(EntityMessage.class);
+      TestingResponse resp = mockResponse();
       when(cstring.toString()).thenReturn(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY));
-      managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring, true), null);
+      managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring, true), resp);
     });
     for (int x=1;x<=24;x++) {
       int key = (x == 12) ? ConcurrencyStrategy.MANAGEMENT_KEY : x;
       invokeOnTransactionHandler(()->{
+        TestingResponse resp = mockResponse();
         EntityMessage cstring = mock(EntityMessage.class);
         when(cstring.toString()).thenReturn(Integer.toString(key));
-        managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(key).getBytes(), cstring, true), null);
+        managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(key).getBytes(), cstring, true), resp);
       });
     }
 //  only thing in the queue should be the MGMT action    
@@ -724,7 +726,7 @@ public class ManagedEntityImplTest {
     TestingResponse response1 = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response1));
     response1.waitFor();
-    verify(response1).complete(Mockito.any());
+    verify(response1).complete();
     
     // Get and release are only relevant on the active.
     promote();
@@ -744,7 +746,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), response3));
     response3.waitFor();
     verify(activeServerEntity).disconnected(eq(requester));
-    verify(response3).complete(Mockito.any());
+    verify(response3).complete();
   }
 
   
@@ -756,7 +758,7 @@ public class ManagedEntityImplTest {
     ServerEntityRequest createRequest = mockCreateEntityRequest();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(createRequest, MessagePayload.emptyPayload(), response1));
     response1.waitFor();
-    verify(response1).complete(Mockito.any());
+    verify(response1).complete();
     // Verify that it was created as a passive.
     verify(passiveServerEntity).createNew();
     verify(activeServerEntity, never()).createNew();
@@ -788,7 +790,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), response4));
     response4.waitFor();
     verify(activeServerEntity).disconnected(eq(requester));
-    verify(response4).complete(Mockito.any());
+    verify(response4).complete();
   }
 
   @Test

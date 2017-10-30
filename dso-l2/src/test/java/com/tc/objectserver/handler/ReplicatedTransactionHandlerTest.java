@@ -117,7 +117,7 @@ public class ReplicatedTransactionHandlerTest {
     }).when(groupManager).sendToWithSentCallback(Mockito.any(), Mockito.any(), Mockito.any());
     this.platform = mock(ManagedEntity.class);
     Mockito.doAnswer((Answer<SimpleCompletion>) (InvocationOnMock invocation) -> {
-      ((Consumer<byte[]>)invocation.getArguments()[3]).accept(null);
+      ((ResultCapture)invocation.getArguments()[2]).complete();
       return null;
     }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(ResultCapture.class));
     when(entityManager.getEntity(Matchers.any(EntityDescriptor.class))).thenReturn(Optional.empty());
@@ -175,16 +175,9 @@ public class ReplicatedTransactionHandlerTest {
       return entity;
     });
     Mockito.doAnswer(invocation->{
-      Runnable received = (Runnable)invocation.getArguments()[2];
-      if (received != null) {
-        // received
-        received.run();
-      }
-      Consumer<byte[]> consumer = (Consumer)invocation.getArguments()[3];
-      if (consumer != null) {
-        // ack
-        consumer.accept(new byte[0]);
-      }
+      ResultCapture capture = (ResultCapture)invocation.getArguments()[2];
+      capture.received();
+      capture.complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
@@ -226,14 +219,9 @@ public class ReplicatedTransactionHandlerTest {
     when(entity.getCodec()).thenReturn(codec);
     when(this.entityManager.getMessageCodec(Matchers.any())).thenReturn(codec);
     Mockito.doAnswer(invocation->{
-      Runnable received = (Runnable)invocation.getArguments()[2];
-      if (received != null) {
-        received.run();
-      }
-      Consumer<byte[]> consumer = (Consumer)invocation.getArguments()[3];
-      if (consumer != null) {
-        consumer.accept(new byte[0]);
-      }
+      ResultCapture capture = (ResultCapture)invocation.getArguments()[2];
+      capture.received();
+      capture.complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
@@ -270,7 +258,7 @@ public class ReplicatedTransactionHandlerTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.getConsumerID()).thenReturn(1L);
     doAnswer((in)->{
-      ((Consumer)in.getArguments()[3]).accept(new byte[0]);
+      ((ResultCapture)in.getArguments()[2]).complete(new byte[0]);
       return null;
     }).when(entity).addRequestMessage(any(), any(), any());
     when(entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).thenReturn(entity);

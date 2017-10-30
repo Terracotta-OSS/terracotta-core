@@ -32,20 +32,19 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.api.ServerEntityResponse;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import org.terracotta.exception.EntityException;
 
 
 public abstract class AbstractServerEntityRequestResponse implements ServerEntityRequest, ServerEntityResponse, Retiree {
   private final ServerEntityRequest request;
   private final Consumer<byte[]> complete;
   private final Consumer<EntityException> fail;
-  private final SetOnceFlag receivedSent = new SetOnceFlag();
     
   private boolean isComplete = false;
   private boolean isRetired = false;

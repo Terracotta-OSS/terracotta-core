@@ -52,6 +52,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import java.util.function.Consumer;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -171,7 +172,7 @@ public class EntityManagerImplTest {
       }
     };
     //  set the destroyed flag in the entity
-    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null);
+    entity.addRequestMessage(req, MessagePayload.emptyPayload(), mock(ResultCapture.class));
     //  remove it from the manager
     entityManager.removeDestroyed(fetch);
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
