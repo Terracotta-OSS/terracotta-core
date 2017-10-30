@@ -31,12 +31,17 @@ import java.util.Map;
  * This means that the caller needs to down-cast to the specific sub-type, cased on getAckType.
  * In the future, it would be ideal to remove this in favor of a different SEDA implementation.
  */
-public interface VoltronEntityMultiResponse extends TCMessage {
-  TransactionID[] getReceivedTransactions();
-  TransactionID[] getRetiredTransactions();
-  Map<TransactionID, byte[]> getResults();
-  Map<ClientInstanceID, List<byte[]>> getServerMessages();
-  Map<TransactionID, List<byte[]>> getMonitorMessages();
+public interface VoltronEntityMultiResponse extends TCMessage {  
+  public interface ReplayReceiver {
+    void received(TransactionID tid);
+    void retired(TransactionID tid);
+    void result(TransactionID tid, byte[] result);
+    void message(ClientInstanceID cid, byte[] message);
+    void message(TransactionID tid, byte[] message);
+  }
+  
+  int replay(ReplayReceiver receiver);
+   
   boolean addReceived(TransactionID tid);
   boolean addRetired(TransactionID tid);
   boolean addResult(TransactionID tid, byte[] result);

@@ -143,17 +143,17 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
+  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean defer, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
-    InFlightMessage message = new InFlightMessage(eid, network, Collections.<Acks>emptySet(), null, false);
+    InFlightMessage message = new InFlightMessage(eid, network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     network.send();
     return message;
   }
 
   @Override
-  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
-    return invokeAction(eid, entityDescriptor, acks, monitor, requiresReplication, shouldBlockGetOnRetire, payload);
+  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean defer, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+    return invokeAction(eid, entityDescriptor, acks, monitor, false, false, false, payload);
   }
 
   private DiagnosticMessage createMessage(byte[] config) {

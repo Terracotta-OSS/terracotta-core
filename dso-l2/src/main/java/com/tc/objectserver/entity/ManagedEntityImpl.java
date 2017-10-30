@@ -796,10 +796,10 @@ public class ManagedEntityImpl implements ManagedEntity {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
-              new ActiveInvokeContextImpl(clientDescriptor, concurrencyKey, oldestId, currentId, 
+              new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId, 
                   ()->retirementManager.holdMessage(em), 
-                  response::complete, 
-                  response::failure,
+                  (r)->response.message(decodeResponse(r)), 
+                  (e)->response.failure(convertException(e)),
                   ()->{
                     retirementManager.releaseMessage(em);
                     RetirementManager.retireMessagesForEntity(this, em);
@@ -850,6 +850,22 @@ public class ManagedEntityImpl implements ManagedEntity {
   @Override
   public RetirementManager getRetirementManager() {
     return this.retirementManager;
+  }
+  
+  private EntityException convertException(Exception e) {
+    if (e instanceof EntityException) {
+      return (EntityException)e;
+    } else {
+      return new EntityServerException(id.getClassName(), id.getEntityName(), e.getMessage(), e);
+    }
+  }
+  
+  private byte[] decodeResponse(EntityResponse response) {
+    try {
+      return codec.encodeResponse(response);
+    } catch (MessageCodecException ce) {
+      throw new RuntimeException(ce);
+    }
   }
 
   @Override

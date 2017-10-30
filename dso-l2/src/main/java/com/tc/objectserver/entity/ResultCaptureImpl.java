@@ -102,7 +102,7 @@ public class ResultCaptureImpl implements ResultCapture {
   }
   
   @Override
-  public void message(byte[] message) {
-    
+  public void message(byte[] m) {
+    message.accept(m);
   }
 }

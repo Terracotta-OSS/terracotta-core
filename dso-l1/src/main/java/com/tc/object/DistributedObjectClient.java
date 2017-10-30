@@ -32,7 +32,6 @@ import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
 import com.tc.entity.VoltronEntityMultiResponse;
-import com.tc.entity.VoltronEntityMultiResponseImpl;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
@@ -107,6 +106,7 @@ import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
 import com.tc.cluster.ClusterInternal;
 import com.tc.cluster.ClusterInternalEventsContext;
+import com.tc.entity.LinearVoltronEntityMultiResponse;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -487,7 +487,7 @@ public class DistributedObjectClient implements TCClient {
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
-    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
+    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, LinearVoltronEntityMultiResponse.class);
     messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_REQUEST, DiagnosticMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_RESPONSE, DiagnosticResponseImpl.class);
     return messageTypeClassMapping;

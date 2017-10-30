@@ -4,12 +4,12 @@ import java.util.function.Consumer;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.exception.EntityException;
+import org.terracotta.entity.EntityResponse;
 
-public class ActiveInvokeContextImpl extends InvokeContextImpl implements ActiveInvokeContext {
+public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeContextImpl implements ActiveInvokeContext<R> {
   private final ClientDescriptorImpl clientDescriptor;
-  private final Consumer<byte[]> messages;
-  private final Consumer<EntityException> exception;
+  private final Consumer<R> messages;
+  private final Consumer<Exception> exception;
   private final Runnable open;
   private final Runnable retire;
   
@@ -18,7 +18,7 @@ public class ActiveInvokeContextImpl extends InvokeContextImpl implements Active
   }
   
   public ActiveInvokeContextImpl(ClientDescriptorImpl descriptor, int concurrencyKey, long oldestid, long currentId, 
-      Runnable open, Consumer<byte[]> messages, Consumer<EntityException> exception, Runnable retire
+      Runnable open, Consumer<R> messages, Consumer<Exception> exception, Runnable retire
   ) {
     super(new ClientSourceIdImpl(descriptor.getNodeID().toLong()), concurrencyKey, oldestid, currentId);
     this.clientDescriptor = descriptor;
@@ -34,12 +34,12 @@ public class ActiveInvokeContextImpl extends InvokeContextImpl implements Active
   }
 
   @Override
-  public ActiveInvokeChannel openInvokeChannel() {
+  public ActiveInvokeChannel<R> openInvokeChannel() {
     if (open == null) {
       throw new UnsupportedOperationException("unable to create channel");
     } else {
       open.run();
-      return new ActiveInvokeChannelImpl(messages, exception, retire);
+      return new ActiveInvokeChannelImpl<R>(messages, exception, retire);
     }
   }
 }

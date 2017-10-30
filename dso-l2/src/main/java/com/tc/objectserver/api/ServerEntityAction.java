@@ -76,7 +76,12 @@ public enum ServerEntityAction {
   /**
    * Reload the active entity with the new supplied configuration.
    */
-  RECONFIGURE_ENTITY,
+  RECONFIGURE_ENTITY{
+    @Override
+    public boolean isLifecycle() {
+      return true;
+    }
+  },
   // ***** Messages specific to received passive synchronization data below this point *****
   /**
    * During sync, create an entity which will later by synced.

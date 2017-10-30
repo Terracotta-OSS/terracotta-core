@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeMonitor;
@@ -29,10 +30,12 @@ import org.terracotta.entity.MessageCodecException;
 public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[]>, AutoCloseable {
   private final InvokeMonitor<R> monitor;
   private final MessageCodec<?, R> codec;
+  private final Executor executor;
 
-  public InFlightMonitor(MessageCodec<?, R> codec, InvokeMonitor<R> monitor) {
+  public InFlightMonitor(MessageCodec<?, R> codec, InvokeMonitor<R> monitor, Executor executor) {
     this.monitor = monitor;
     this.codec = codec;
+    this.executor = executor;
   }
 
   @Override
@@ -41,6 +44,14 @@ public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[
       monitor.accept(codec.decodeResponse(t));
     } catch (MessageCodecException ex) {
       throw new RuntimeException(ex);
+    }
+  }
+  
+  private void deliverMessage(R er) {
+    if (executor != null) {
+      executor.execute(()->monitor.accept(er));
+    } else {
+      monitor.accept(er);
     }
   }
 

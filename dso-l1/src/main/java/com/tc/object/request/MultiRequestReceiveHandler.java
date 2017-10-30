@@ -24,8 +24,6 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
-import java.util.List;
-import java.util.Map;
 
 
 public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEntityMultiResponse> {
@@ -37,36 +35,35 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
 
   @Override
   public void handleEvent(VoltronEntityMultiResponse response) throws EventHandlerException {
-    for (TransactionID received : response.getReceivedTransactions()) {
-      handler.received(received);
-    }
-    Map<ClientInstanceID, List<byte[]>> server = response.getServerMessages();
-    for (Map.Entry<ClientInstanceID, List<byte[]>> entry : server.entrySet()) {
-      List<byte[]> msgs = entry.getValue();
-      ClientInstanceID cid = entry.getKey();
-      for (byte[] msg : msgs) {
-        handler.handleMessage(cid, msg);
+    response.replay(new VoltronEntityMultiResponse.ReplayReceiver() {
+      @Override
+      public void received(TransactionID tid) {
+        handler.received(tid);
       }
-    }    
-    Map<TransactionID, List<byte[]>> monitor = response.getMonitorMessages();
-    for (Map.Entry<TransactionID, List<byte[]>> entry : monitor.entrySet()) {
-      List<byte[]> msgs = entry.getValue();
-      TransactionID cid = entry.getKey();
-      for (byte[] msg : msgs) {
-        handler.handleMessage(cid, msg);
+
+      @Override
+      public void retired(TransactionID tid) {
+        handler.retired(tid);
       }
-    }
-    Map<TransactionID, byte[]> results = response.getResults();
-    for (Map.Entry<TransactionID, byte[]> entry : results.entrySet()) {
-      byte[] result = entry.getValue();
-      if (result == null) {
-        handler.complete(entry.getKey());
-      } else {
-        handler.complete(entry.getKey(), result);
+
+      @Override
+      public void result(TransactionID tid, byte[] result) {
+        if (result != null) {
+          handler.complete(tid, result);
+        } else {
+          handler.complete(tid);
+        }
       }
-    }
-    for (TransactionID retires : response.getRetiredTransactions()) {
-      handler.retired(retires);
-    }
+
+      @Override
+      public void message(ClientInstanceID cid, byte[] message) {
+        handler.handleMessage(cid, message);
+      }
+
+      @Override
+      public void message(TransactionID tid, byte[] message) {
+        handler.handleMessage(tid, message);
+      }
+    });
   }
 }

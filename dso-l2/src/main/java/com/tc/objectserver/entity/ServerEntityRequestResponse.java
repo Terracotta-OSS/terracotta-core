@@ -18,12 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
@@ -40,8 +35,6 @@ import org.terracotta.exception.EntityException;
  */
 public class ServerEntityRequestResponse extends AbstractServerEntityRequestResponse implements ResultCapture {
   protected final Supplier<Optional<MessageChannel>> returnChannel;
-  private final Consumer<byte[]> completion;
-  private final Consumer<EntityException> exception;
   // We only track whether this is replicated to know that we should reject retire acks.
   private final boolean isReplicatedMessage;
   
@@ -50,11 +43,10 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   public ServerEntityRequestResponse(ServerEntityRequest request,  
       Supplier<Optional<MessageChannel>> returnChannel, 
       Consumer<byte[]> completion, Consumer<EntityException> exception, boolean isReplicatedMessage) {
-    super(request);
+    super(request, completion, exception);
     this.returnChannel = returnChannel;
     this.isReplicatedMessage = isReplicatedMessage;
-    this.completion = completion != null ? completion : (raw)->{};
-    this.exception = exception != null ? exception : (raw)->{};
+    this.autoRetire(true);
   }
 
   @Override
@@ -85,25 +77,18 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
     } else {
       super.complete(value); 
     }
-    this.completion.accept(value);
   }
 
   @Override
   public synchronized void complete() {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction());
     super.complete();
-    this.completion.accept(null);
   }
 
   @Override
   public synchronized void failure(EntityException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
     super.failure(e); 
-    this.exception.accept(e);
-  }
-
-  public void setAutoRetire() {
-    super.autoRetire(true);
   }
  
   @Override
