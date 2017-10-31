@@ -94,6 +94,10 @@ public final class ManagedEntitySyncInterop {
     notifyAll();
   }
   
+  public synchronized boolean isSyncing() {
+    return syncsStarted > 0;
+  }
+  
   public synchronized void syncFinished() {
     Assert.assertTrue(syncsStarted > 0);
     syncsStarted -= 1;

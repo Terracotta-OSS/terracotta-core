@@ -27,13 +27,11 @@ import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.Map;
-import java.util.function.Consumer;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
-import org.terracotta.exception.EntityException;
 
 
 /**
@@ -52,12 +50,11 @@ public interface ManagedEntity {
   * 
   * @param request translated request for execution on the server
    * @param data the payload data of the message
-   * @param received callback run once the message has been received by all the replicas.  NOTE: only happens when requested by the message
-   * @param completion complete callback called once completed locally and all the replicas
-   * @param exception exception callback called once execution is completed on all replicas.  NOTE: completion callback or exception will be called, not both
+   * @param results capture the results for upper layer to communicate to the clients or 
+   * the active server
    * @return a token which can be waited on
   */ 
-  SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception);
+  void addRequestMessage(ServerEntityRequest request, MessagePayload data, ResultCapture results);
 
   /**
    * Called to sync an entity.  Caller initiates sync of an entity through this method.  
@@ -74,7 +71,7 @@ public interface ManagedEntity {
   
   void loadEntity(byte[] configuration) throws ConfigurationException;
   
-  void promoteEntity() throws ConfigurationException;
+  Runnable promoteEntity() throws ConfigurationException;
     
   boolean isDestroyed();
   

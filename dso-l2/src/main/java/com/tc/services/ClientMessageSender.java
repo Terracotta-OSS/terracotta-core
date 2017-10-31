@@ -17,15 +17,13 @@
  *
  */
 
-package com.tc.entity;
+package com.tc.services;
 
-import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.ClientID;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
 
-/**
- * @author twu
- */
-public interface ServerEntityResponseMessage extends TCMessage {
-  void setResponseId(long responseId);
-
-  long getResponseId();
+public interface ClientMessageSender {
+  void send(ClientID client, ClientInstanceID clientInstance, byte[] payload);
+  void send(ClientID client, TransactionID clientInstance, byte[] payload);
 }

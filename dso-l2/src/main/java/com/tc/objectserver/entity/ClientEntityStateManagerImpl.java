@@ -27,7 +27,6 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.FetchID;
 import com.tc.util.Assert;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

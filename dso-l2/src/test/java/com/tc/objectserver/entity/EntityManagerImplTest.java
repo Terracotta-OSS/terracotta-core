@@ -47,10 +47,12 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doAnswer;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import java.util.function.Consumer;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -71,9 +73,9 @@ public class EntityManagerImplTest {
     RequestProcessor processor = mock(RequestProcessor.class);
     ActivePassiveAckWaiter waiter = mock(ActivePassiveAckWaiter.class);
     doAnswer((invoke)->{
-        ((Consumer)invoke.getArguments()[5]).accept(waiter);
+        ((Consumer)invoke.getArguments()[6]).accept(waiter);
         return null;
-    }).when(processor).scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
+    }).when(processor).scheduleRequest(anyBoolean(), any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
@@ -170,7 +172,7 @@ public class EntityManagerImplTest {
       }
     };
     //  set the destroyed flag in the entity
-    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null, null);
+    entity.addRequestMessage(req, MessagePayload.emptyPayload(), mock(ResultCapture.class));
     //  remove it from the manager
     entityManager.removeDestroyed(fetch);
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));

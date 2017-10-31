@@ -18,7 +18,6 @@
  */
 package com.tc.object;
 
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 
 import com.tc.tracing.Trace;
@@ -33,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.entity.InvokeMonitor;
 
 
 /**
@@ -44,6 +44,8 @@ import java.util.concurrent.TimeoutException;
 public class InFlightMessage {
   private final VoltronEntityMessage message;
   private final EntityID eid;
+  private final InFlightMonitor monitor;
+  private final boolean isDeferred;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -62,19 +64,21 @@ public class InFlightMessage {
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
   private final Trace trace;
-
-  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
+  
+  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean isDeferred) {
     this.message = message;
     this.eid = extraInfo;
+    this.monitor = monitor;
     Assert.assertNotNull(eid);
     Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
     this.waitingThreads = new HashSet<Thread>();
-    this.blockGetOnRetired = shouldBlockGetOnRetire;
+    this.blockGetOnRetired = shouldBlockGetOnRetire || isDeferred;
     // We always assume that we can set the result, the first time.
     this.canSetResult = true;
     this.trace = Trace.newTrace(message, "InFlightMessage");
+    this.isDeferred = isDeferred;
   }
 
   /**
@@ -189,12 +193,7 @@ public class InFlightMessage {
 
   public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     trace.log("getWithTimeout()");
-    timedWait(new Callable() {
-      @Override
-      public Object call() throws Exception {
-        return getCanComplete;
-      }
-    }, timeout, unit);
+    timedWait(() -> getCanComplete, timeout, unit);
     if (exception != null) {
       throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
     } else {
@@ -204,6 +203,7 @@ public class InFlightMessage {
 
   public synchronized void setResult(byte[] value, EntityException error) {
     trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
+    this.pendingAcks.remove(VoltronEntityMessage.Acks.RECEIVED);
     this.pendingAcks.remove(VoltronEntityMessage.Acks.COMPLETED);
     if (error != null) {
       Assert.assertNull(value);
@@ -213,7 +213,9 @@ public class InFlightMessage {
       notifyAll();
     } else {
       Assert.assertNull(error);
-      if (this.canSetResult) {
+      if (isDeferred) {
+        pushOneMessage(value);
+      } else if (this.canSetResult) {
         this.value = value;
         if (!this.blockGetOnRetired) {
           this.getCanComplete = true;
@@ -224,6 +226,21 @@ public class InFlightMessage {
       }
     }
   }
+  
+  
+  
+  private void pushOneMessage(byte[] raw) {
+    if (isDeferred) {
+      if (value != null && monitor != null) {
+        monitor.accept(value);
+      } 
+    }
+    value = raw;
+  }
+  
+  public synchronized void handleMessage(byte[] raw) {
+    pushOneMessage(raw);
+  }
 
   public synchronized void retired() {
     trace.log("Received ACK: " + VoltronEntityMessage.Acks.RETIRED);
@@ -232,5 +249,8 @@ public class InFlightMessage {
       this.getCanComplete = true;
     }
     notifyAll();
+    if (monitor != null) {
+      monitor.close();
+    }
   }
 }

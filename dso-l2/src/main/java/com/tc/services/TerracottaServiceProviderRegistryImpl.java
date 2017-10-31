@@ -112,7 +112,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public DelegatingServiceRegistry subRegistry(long consumerID) {
-    this.hasCreatedSubRegistries = true;
+    if (consumerID > 0) {
+      this.hasCreatedSubRegistries = true;
+    }
     return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), implementationProvidedServiceProviders.toArray(new ImplementationProvidedServiceProvider[implementationProvidedServiceProviders.size()]));
   }
 

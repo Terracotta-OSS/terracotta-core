@@ -29,6 +29,7 @@ import com.tc.object.EntityClientEndpointImpl;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.InFlightMessage;
+import com.tc.object.InFlightMonitor;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrinter;
@@ -43,7 +44,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityException;
 
@@ -71,7 +71,12 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   public void handleMessage(ClientInstanceID entityDescriptor, byte[] message) {
 
   }
+  
+  @Override
+  public void handleMessage(TransactionID entityDescriptor, byte[] message) {
 
+  }
+  
   @Override
   public byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException {
     throw new UnsupportedOperationException(); 
@@ -138,17 +143,17 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
+  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean defer, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
-    InFlightMessage message = new InFlightMessage(eid, network, Collections.<Acks>emptySet(), false);
+    InFlightMessage message = new InFlightMessage(eid, network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     network.send();
     return message;
   }
 
   @Override
-  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
-    return invokeAction(eid, entityDescriptor, acks, requiresReplication, shouldBlockGetOnRetire, payload);
+  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean defer, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+    return invokeAction(eid, entityDescriptor, acks, monitor, false, false, false, payload);
   }
 
   private DiagnosticMessage createMessage(byte[] config) {

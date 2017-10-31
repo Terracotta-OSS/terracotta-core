@@ -32,15 +32,29 @@ import com.tc.object.tx.TransactionID;
  *  It runs the entire pipeline but is never scheduled on the request processor by 
  *  ManagedEntityImpl.
  */
-public class LocalPipelineFlushMessage implements VoltronEntityMessage {
+public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable {
   private final EntityDescriptor  descriptor;
   private final boolean forDestroy;
+  private final Runnable action;
 
   public LocalPipelineFlushMessage(EntityDescriptor descriptor, boolean forDestroy) {
     this.descriptor = descriptor;
     this.forDestroy = forDestroy;
+    action = null;
   }
   
+  public LocalPipelineFlushMessage(EntityDescriptor descriptor, Runnable action) {
+    this.descriptor = descriptor;
+    this.forDestroy = false;
+    this.action = action;
+  }
+  
+  @Override
+  public void run() {
+    if (action != null) {
+      action.run();
+    }
+  }
 
   @Override
   public ClientID getSource() {

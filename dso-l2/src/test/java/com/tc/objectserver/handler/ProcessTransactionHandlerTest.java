@@ -29,7 +29,6 @@ import org.junit.Test;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.classloader.ServiceLocator;
@@ -38,6 +37,8 @@ import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
+import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -50,7 +51,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
@@ -59,6 +59,7 @@ import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.PassiveReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
+import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.Persistor;
@@ -68,11 +69,13 @@ import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
+import com.tc.util.State;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.anyString;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 
@@ -127,7 +130,6 @@ public class ProcessTransactionHandlerTest {
     processor.setReplication(broker);
     entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader()));
     entityManager.setMessageSink(mock(Sink.class));
-    entityManager.enterActiveState();
 
     this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager, mock(Runnable.class));
 
@@ -136,6 +138,19 @@ public class ProcessTransactionHandlerTest {
     when(mockStage.getSink()).thenReturn(this.loopbackSink);
     when(stageManager.getStage(any(), any())).thenReturn(mockStage);
 
+    ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
+    ReplicatedClusterStateManager rep = mock(ReplicatedClusterStateManager.class);
+    L2Coordinator l2 = mock(L2Coordinator.class);
+    when(l2.getReplicatedClusterStateManager()).thenReturn(rep);
+    when(cxt.getL2Coordinator()).thenReturn(l2);
+    StateManager state = mock(StateManager.class);
+    when(state.getCurrentState()).thenReturn(new State("ACTIVE"));
+    when(l2.getStateManager()).thenReturn(state);
+    Stage stage = mock(Stage.class);
+    when(stage.getSink()).thenReturn(mock(Sink.class));
+    when(cxt.getStage(anyString(), any(Class.class))).thenReturn(stage);
+    when(cxt.getClientHandshakeManager()).thenReturn(mock(ServerClientHandshakeManager.class));
+    this.processTransactionHandler.getVoltronMessageHandler().initializeContext(cxt);
     this.processTransactionHandler.reconnectComplete();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
@@ -325,10 +340,6 @@ public class ProcessTransactionHandlerTest {
     }
     @Override
     public void resetStats() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
       throw new UnsupportedOperationException();
     }
     @Override

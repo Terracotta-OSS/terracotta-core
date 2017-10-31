@@ -2,7 +2,6 @@ package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.concurrent.QueueFactory;
@@ -24,9 +23,6 @@ public interface StageQueue<EC> extends Sink<EC> {
 
   @Override
   void addMultiThreaded(EC context);
-
-  @Override
-  void addSpecialized(SpecializedEventContext specialized);
 
   // Used for testing
   @Override

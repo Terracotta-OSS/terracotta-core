@@ -21,7 +21,6 @@ package com.tc.async.impl;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import java.util.function.Supplier;
@@ -78,20 +77,6 @@ public class DirectSink<EC> implements Sink<EC> {
       }
     } else {
       this.ifNotDirect.addMultiThreaded(context);
-    }
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // access here MUST be single threaded
-    if (isSingleThreaded()) {
-      try {
-        specialized.execute();
-      } catch (EventHandlerException ee) {
-        throw new RuntimeException(ee);
-      }
-    } else {
-      this.ifNotDirect.addSpecialized(specialized);
     }
   }
 

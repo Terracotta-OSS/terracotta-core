@@ -36,17 +36,15 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   private final TransactionID transaction;
   private final TransactionID oldest;
   private final boolean requiresReceived;
-  private final Set<NodeID> replicates;
   private final ClientInstanceID cid;
 
-  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived, Set<NodeID> replicates) {
+  public ServerEntityRequestImpl(ClientInstanceID descriptor, ServerEntityAction action, ClientID node, TransactionID transaction, TransactionID oldest, boolean requiresReceived) {
     this.cid = descriptor;
     this.action = action;
     this.node = node;
     this.transaction = transaction;
     this.oldest = oldest;
     this.requiresReceived = requiresReceived;
-    this.replicates = replicates;
   }
 
   @Override
@@ -85,7 +83,7 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
     //  operations.
     Assert.assertFalse((ServerEntityAction.LOCAL_FLUSH == this.action)
         || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == this.action));
-    return this.replicates;
+    return passives;
   }
 
 }

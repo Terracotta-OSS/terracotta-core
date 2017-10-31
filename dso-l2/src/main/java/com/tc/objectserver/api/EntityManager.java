@@ -20,6 +20,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.entity.MessageCodecSupplier;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -37,7 +38,7 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
   /**
    * The entity manager normally starts in a "passive" state but will be notified that it should become active when the server becomes active.
    */
-  void enterActiveState();
+  List<VoltronEntityMessage> enterActiveState();
 
   /**
    * Creates an non-existent entity

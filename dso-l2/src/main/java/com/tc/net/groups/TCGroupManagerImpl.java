@@ -81,6 +81,7 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.TCServerMain;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
@@ -119,7 +120,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   private final ReconnectConfig                             l2ReconnectConfig;
-
+  
+  private final int                                         serverCount;
+  
   private final String                                      version;
   private final TCSecurityManager                           securityManager;
   private final ServerID                                    thisNodeID;
@@ -171,6 +174,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.version = getVersion();
 
     L2Config l2DSOConfig = configSetupManager.dsoL2Config();
+    serverCount = configSetupManager.allCurrentlyKnownServers().length - 2;  // minus 2 because we don't need to include local node and main selector can be used if only talking to one other server
 
     this.groupPort = l2DSOConfig.tsaGroupPort().getValue();
     this.weightGeneratorFactory = weightGenerator;
@@ -218,6 +222,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.groupPort = groupPort;
     this.version = getVersion();
     this.weightGeneratorFactory = weightGenerator;
+    this.serverCount = 0;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
@@ -237,8 +242,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
                                                           new NullMessageMonitor(), messageRouter,
-                                                          networkStackHarnessFactory, this.connectionPolicy,
-                                                          L2Utils.getOptimalCommWorkerThreads(),
+                                                          networkStackHarnessFactory, this.connectionPolicy, 
+                                                          serverCount,
                                                           new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),

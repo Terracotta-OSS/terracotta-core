@@ -37,6 +37,7 @@ import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -48,7 +49,6 @@ import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ActiveServerEntity;
@@ -85,7 +85,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -124,6 +123,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private volatile ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private volatile ConcurrencyStrategy<EntityMessage> concurrencyStrategy;
   private volatile ExecutionStrategy<EntityMessage> executionStrategy;
+  private volatile ActiveServerEntity.ReconnectHandler reconnect;
 
   private final DefermentQueue<SchedulingRunnable> runnables = new DefermentQueue<>(TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.ENTITY_DEFERMENT_QUEUE_SIZE, 1024));
@@ -185,34 +185,27 @@ public class ManagedEntityImpl implements ManagedEntity {
     createListener.forEach((l)->l.entityDestroyed(entity));
     createListener.clear();
   }
-    
-  private ResultCapture createManagedEntityResponse(Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception, Object debug, boolean lifecycle) {
-    return new ResultCapture(received, completion, exception, debug, lifecycle);
-  }
 /**
- * This is the main entry point for interaction with the managed entity.  A request consists of a defining action, a 
- * payload and 2 consumers to consume the result of the interaction.  Only one of the consumers will be called as a result 
- * of the action.  In the case of a successful interaction, the first consumer is passed the raw byte[] result of the interaction.
- * On failure, the EntityException is passed to the second consumer is passed the exception.  
+ * This is the main entry point for interaction with the managed entity.A request consists of a defining action, a 
+ payload and 2 consumers to consume the result of the interaction.  Only one of the consumers will be called as a result 
+ of the action.  In the case of a successful interaction, the first consumer is passed the raw byte[] result of the interaction.
+ On failure, the EntityException is passed to the second consumer is passed the exception.  
  * @param request - defines the type of action requested and who requested it
  * @param data - The entity defined data to accompany the request
- * @param completion - called on successful completion of an action
- * @param exception - called when an exception occurs
+ * @param capture
  * @return a completion object which can be invoked to wait for the requested action to complete
  */
 
   @Override
-  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload data, Runnable received, Consumer<byte[]> completion, Consumer<EntityException> exception) {
+  public void addRequestMessage(ServerEntityRequest request, MessagePayload data, ResultCapture resp) {
     if (logger.isDebugEnabled()) {
       logger.debug("add " + request.getAction() + " " + this.id + " " + this.fetchID);
     }
     Trace.activeTrace().log("ManagedEntityImpl.addRequestMessage");
-    ResultCapture resp;
     switch (request.getAction()) {
       case LOCAL_FLUSH:
       case ORDER_PLACEHOLDER_ONLY:
       case MANAGED_ENTITY_GC:
-        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processLegacyNoopMessage(request, resp);
         break;
       case LOCAL_FLUSH_AND_SYNC:
@@ -226,35 +219,29 @@ public class ManagedEntityImpl implements ManagedEntity {
       case RECONFIGURE_ENTITY:
       case RELEASE_ENTITY:
       case DISCONNECT_CLIENT:
-        resp = createManagedEntityResponse(received, completion, exception, request, true);
         processLifecycleEntity(request, data, resp);
         break;
       case INVOKE_ACTION:
-        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processInvokeRequest(request, resp, data, data.getConcurrency());
         break;
       case RECEIVE_SYNC_CREATE_ENTITY:
         Assert.assertTrue(!this.isInActiveState);
-        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processSyncCreateMessage(request, resp, data);
         break;
       case RECEIVE_SYNC_ENTITY_START_SYNCING:
       case RECEIVE_SYNC_ENTITY_END:
         Assert.assertTrue(!this.isInActiveState);
-        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processSyncStartEndMessage(request, resp, data);
         break;
       case RECEIVE_SYNC_ENTITY_KEY_START:
       case RECEIVE_SYNC_ENTITY_KEY_END:
       case RECEIVE_SYNC_PAYLOAD:
         Assert.assertTrue(!this.isInActiveState);
-        resp = createManagedEntityResponse(received, completion, exception, request, false);
         processSyncPayloadOtherMessage(request, resp, data, data.getConcurrency());
         break;
       default:
         throw new IllegalArgumentException("Unknown request " + request);
     }
-    return resp;
   }
   
   private void processLifecycleEntity(ServerEntityRequest create, MessagePayload data, ResultCapture resp) {
@@ -324,7 +311,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     if (isActive()) {
 // only if this is active is waiting required.  This is set to wait for the 
 // passives to complete before presenting results back to the client
-      results.setWaitFor(next);
+      results.setWaitFor(next::waitForPassives);
     }
     
     for (SchedulingRunnable msg : runnables) {
@@ -709,7 +696,6 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity = this.factory.reconfigureEntity(this.registry, this.activeServerEntity, constructorInfo);
         this.concurrencyStrategy = this.factory.getConcurrencyStrategy(constructorInfo);
         this.executionStrategy = this.factory.getExecutionStrategy(constructorInfo);
-        this.activeServerEntity.loadExisting();
       }
     } else {
       if (null == this.passiveServerEntity) {
@@ -810,9 +796,16 @@ public class ManagedEntityImpl implements ManagedEntity {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
-              new ActiveInvokeContextImpl(clientDescriptor, concurrencyKey, oldestId, currentId),
-              em);
-            byte[] er = runWithHelper(()->codec.encodeResponse(resp));
+              new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId, 
+                  ()->retirementManager.holdMessage(em), 
+                  (r)->response.message(decodeResponse(r)), 
+                  (e)->response.failure(convertException(e)),
+                  ()->{
+                    retirementManager.releaseMessage(em);
+                    RetirementManager.retireMessagesForEntity(this, em);
+                  }
+              ), em);
+            byte[] er = resp == null ? new byte[0] : runWithHelper(()->codec.encodeResponse(resp));
             trace.end();
             response.complete(er);
           } else {
@@ -858,6 +851,22 @@ public class ManagedEntityImpl implements ManagedEntity {
   public RetirementManager getRetirementManager() {
     return this.retirementManager;
   }
+  
+  private EntityException convertException(Exception e) {
+    if (e instanceof EntityException) {
+      return (EntityException)e;
+    } else {
+      return new EntityServerException(id.getClassName(), id.getEntityName(), e.getMessage(), e);
+    }
+  }
+  
+  private byte[] decodeResponse(EntityResponse response) {
+    try {
+      return codec.encodeResponse(response);
+    } catch (MessageCodecException ce) {
+      throw new RuntimeException(ce);
+    }
+  }
 
   @Override
   public void loadEntity(byte[] configuration) throws ConfigurationException {
@@ -885,7 +894,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
 //   this is a reconnection, handle the extended reconnect data
           try {
-            this.activeServerEntity.handleReconnect(descriptor, extendedData);
+            if (this.reconnect == null) {
+              throw new ReconnectRejectedException("no reconnect handler registered");
+            } else {
+              this.reconnect.handleReconnect(descriptor, extendedData);
+            }
           } catch (ReconnectRejectedException rejected) {
             response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), rejected.getMessage(), rejected));
             return;
@@ -894,7 +907,7 @@ public class ManagedEntityImpl implements ManagedEntity {
             logger.warn("unexpected exception.  rejecting reconnection of " + descriptor.getNodeID() + " to " + this.id, e);
             response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), e.getMessage(), new ReconnectRejectedException(e.getMessage(), e)));
             return;
-          }
+          } 
         }
       } else {
 //  clientEntityStateManager is only tracking knowledge of clients on passives
@@ -945,7 +958,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   @Override
-  public void promoteEntity() throws ConfigurationException {
+  public Runnable promoteEntity() throws ConfigurationException {
     // Can't enter active state twice.
     Assert.assertFalse(this.isInActiveState);
     Assert.assertNull(this.activeServerEntity);
@@ -970,10 +983,21 @@ public class ManagedEntityImpl implements ManagedEntity {
         notifyEntityCreated();
         // Fire the event that the entity was reloaded.
         this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, true);
+        
+        reconnect = this.activeServerEntity.startReconnect();
+        if (reconnect != null) {
+          return ()->{
+            if (reconnect != null) {
+              reconnect.close();
+              reconnect = null;
+            }
+          };
+        }
       } else {
         throw new IllegalStateException("no entity to promote");
       }
     }
+    return null;
   }
 
   @Override
@@ -981,18 +1005,18 @@ public class ManagedEntityImpl implements ManagedEntity {
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
-    BarrierCompletion opComplete = new BarrierCompletion();
-    this.executor.scheduleRequest(this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false, Collections.emptySet()), MessagePayload.emptyPayload(), (w)-> { 
+    BarrierCompletion syncStart = new BarrierCompletion();
+    this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false), MessagePayload.emptyPayload(), (w)-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
           executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, fetchID, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
         }
-        opComplete.complete();
+        interop.syncStarted();
+        syncStart.complete();
       }, true, ConcurrencyStrategy.MANAGEMENT_KEY);
     //  wait for completed above waits for acknowledgment from the passive
     //  waitForCompletion below waits for completion of the local request processor
-    opComplete.waitForCompletion();
-    interop.syncStarted();
+    syncStart.waitForCompletion();
 // wait for future is ok, occuring on sync executor thread
     try {
       if (!this.isDestroyed) {
@@ -1002,9 +1026,13 @@ public class ManagedEntityImpl implements ManagedEntity {
           Assert.assertTrue(concurrency > 0);  
           // We don't actually use the message in the direct strategy so this is safe.
           //  don't care about the result
-                                              
           BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  (w)->invoke(req, new ResultCapture(null, result->sectionComplete.complete(), null, null, false), MessagePayload.emptyPayload(), concurrency), true, concurrency);
+          this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  (w)->invoke(req, new ResultCaptureImpl(null, result->sectionComplete.complete(), null, null), MessagePayload.emptyPayload(), concurrency), true, concurrency);
+
+          ActiveServerEntity active = this.activeServerEntity;
+          if (active != null) {
+            active.prepareKeyForSynchronizeOnPassive(new EntityMessagePassiveSynchronizationChannelImpl(Collections.singleton(passive), concurrency), concurrency);
+          }
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
@@ -1015,7 +1043,18 @@ public class ManagedEntityImpl implements ManagedEntity {
         executor.scheduleSync(SyncReplicationActivity.createEndEntityMessage(id, version, fetchID), passive).waitForCompleted();
       }
     } finally {
-      interop.syncFinished();
+      BarrierCompletion syncComplete = new BarrierCompletion();
+      this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, 
+        new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false), 
+        MessagePayload.emptyPayload(), 
+        (w)-> { 
+          Assert.assertTrue(this.isInActiveState);
+          interop.syncFinished();
+          syncComplete.complete();
+        }, true, ConcurrencyStrategy.MANAGEMENT_KEY);
+      //  wait for completed above waits for acknowledgment from the passive
+      //  waitForCompletion below waits for completion of the local request processor
+      syncComplete.waitForCompletion();
     }
   }  
 
@@ -1154,7 +1193,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           replicate = loc.runOnPassive();
         }
       } 
-      executor.scheduleRequest(id, version, fetchID, request, payload, this, replicate, concurrency);
+      executor.scheduleRequest(interop.isSyncing(), id, version, fetchID, request, payload, this, replicate, concurrency);
     }
     
     private synchronized void setWaitFor(ActivePassiveAckWaiter waiter) {
@@ -1288,129 +1327,6 @@ public class ManagedEntityImpl implements ManagedEntity {
       map.put("deferring", !this.deferCleared);
       map.put("queue", queue.stream().map(String::valueOf).collect(Collectors.toList()));
       return map;
-    }
-  }
-  
-  private static class ResultCapture implements SimpleCompletion {
-    private final Runnable received;
-    private final Consumer<byte[]> result;
-    private final Consumer<EntityException> error;
-    private SchedulingRunnable setOnce;
-    private boolean done = false;
-    private final boolean lifecycle;
-    private final Object debugID;
-    private final SetOnceFlag receivedSent = new SetOnceFlag();
-
-    private ResultCapture(Runnable received, Consumer<byte[]> result, Consumer<EntityException> error, Object debugID, boolean lifecycle) {
-      this.received = received;
-      this.result = result;
-      this.error = error;
-      this.lifecycle = lifecycle;
-      this.debugID = debugID;
-    }
-    
-    public void setWaitFor(SchedulingRunnable waitFor) {
-      Assert.assertNull(setOnce);
-      setOnce = waitFor;
-    }
-    
-    public synchronized void finish() {
-      Assert.assertFalse(done);
-      done = true;
-      this.notify();
-    }
-       
-    public void waitForReceived() {
-      if (setOnce != null) {
-        ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
-        waiter.waitForReceived();
-      }
-    }
-       
-    public void waitForCompletion() {
-      this.waitForCompletion(0, TimeUnit.MILLISECONDS);
-    }
-    
-    public synchronized void waitForCompletion(long timeout, TimeUnit units) {
-      boolean interrupted = false;
-      while (!done) {
-        try {
-          this.wait(units.toMillis(timeout));
-        } catch (InterruptedException ie) {
-          interrupted = true;
-        }
-      }
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-    
-    public void received() {
-      Trace.activeTrace().log("received ");
-      this.receivedSent.set();
-      if (received != null) {
-        received.run();
-      }
-    }
-    
-    public void complete() {
-      Trace.activeTrace().log("Completed without result ");
-      if (!this.receivedSent.isSet()) {
-        received();
-      }
-      if (result != null) {
-        if (setOnce != null) {
-          ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
-          waiter.waitForCompleted();
-          if (lifecycle) {
-            if (waiter.verifyLifecycleResult(true)) {
-              logger.warn("ZAP occurred while processing " + debugID);
-            }
-          }
-        }
-        result.accept(null);
-      }
-      finish();
-    }  
-    
-    public void complete(byte[] value) {
-      Trace.activeTrace().log("Completed with result: " + value);
-      if (!this.receivedSent.isSet()) {
-        received();
-      }
-      if (result != null) {
-        if (setOnce != null) {
-          ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
-          waiter.waitForCompleted();
-          if (lifecycle) {
-            if (waiter.verifyLifecycleResult(true)) {
-              logger.warn("ZAP occurred while processing " + debugID);
-            }
-          }
-        }
-        result.accept(value);
-      }
-      finish();
-    }
-    
-    public void failure(EntityException ee) {
-      Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
-      if (!this.receivedSent.isSet()) {
-        received();
-      }
-      if (error != null) {
-        if (setOnce != null) {
-          ActivePassiveAckWaiter waiter = setOnce.waitForPassives();
-          waiter.waitForCompleted();
-          if (lifecycle) {
-            if (waiter.verifyLifecycleResult(false)) {
-              logger.warn("ZAP occurred while processing " + debugID);
-            }
-          }
-        }
-        error.accept(ee);
-      }
-      finish();
     }
   }
 

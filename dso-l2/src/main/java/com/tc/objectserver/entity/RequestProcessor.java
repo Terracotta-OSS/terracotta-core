@@ -20,15 +20,21 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -43,12 +49,23 @@ import org.terracotta.entity.ConcurrencyStrategy;
 public class RequestProcessor {
   private PassiveReplicationBroker passives;
   private final Sink<Runnable> requestExecution;
+  private final Sink<Runnable> syncExecution;
   private boolean isActive = false;
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
+  
+  public RequestProcessor(StageManager stageManager) {
+    int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
+    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize, true).getSink();
+    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, Runnable.class, new RequestProcessorHandler(), 4, maxStageSize, true).getSink();
+  }
 //  TODO: do some accounting for transaction de-dupping on failover
-
   public RequestProcessor(Sink<Runnable> requestExecution) {
+    this(requestExecution, requestExecution);
+  }
+  
+  public RequestProcessor(Sink<Runnable> requestExecution, Sink<Runnable> syncExecution) {
     this.requestExecution = requestExecution;
+    this.syncExecution = requestExecution;
   }
 
   public void enterActiveState() {
@@ -71,7 +88,7 @@ public class RequestProcessor {
 
 //  this is synchronized because both PTH and Request Processor thread has access to this method.  the replication and schduling on the executor needs
 //  to happen in the same order.  synchronizing this method enforces that
-  public synchronized void scheduleRequest(EntityID eid, long version, FetchID fetchID, ServerEntityRequest request, MessagePayload payload, Consumer<ActivePassiveAckWaiter> call, boolean replicate, int concurrencyKey) {
+  public synchronized void scheduleRequest(boolean inSync, EntityID eid, long version, FetchID fetchID, ServerEntityRequest request, MessagePayload payload, Consumer<ActivePassiveAckWaiter> call, boolean replicate, int concurrencyKey) {
     // Determine if this kind of action is one we want to replicate.
     ServerEntityAction requestAction = request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
@@ -99,7 +116,11 @@ public class RequestProcessor {
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + eid + ":" + concurrencyKey);
     }
-    requestExecution.addMultiThreaded(entityRequest);
+    if (inSync) {
+      syncExecution.addMultiThreaded(entityRequest);
+    } else {
+      requestExecution.addMultiThreaded(entityRequest);
+    }
   }
   
   private static final EnumMap<ServerEntityAction, SyncReplicationActivity.ActivityType> typeMap  = new EnumMap<>(ServerEntityAction.class);

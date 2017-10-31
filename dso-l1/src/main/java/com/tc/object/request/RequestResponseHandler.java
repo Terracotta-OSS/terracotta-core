@@ -19,6 +19,7 @@
 
 package com.tc.object.request;
 
+import com.tc.object.ClientInstanceID;
 import org.terracotta.exception.EntityException;
 import com.tc.object.tx.TransactionID;
 
@@ -57,4 +58,21 @@ public interface RequestResponseHandler {
    * This is the last message in the sequence, coming after either a "complete" or "failed".
    */
   void retired(TransactionID id);
+  
+  /**
+   * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
+   * otherwise it'll drop the message on the floor.
+   *
+   * @param clientID the instance to receive the message.
+   * @param message opaque message
+   */
+  void handleMessage(ClientInstanceID clientID, byte[] message);
+  /**
+   * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
+   * otherwise it'll drop the message on the floor.
+   *
+   * @param transaction the inflight message to receive the message.
+   * @param message opaque message
+   */
+  void handleMessage(TransactionID transaction, byte[] message);
 }

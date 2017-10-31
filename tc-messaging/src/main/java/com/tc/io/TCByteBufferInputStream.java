@@ -257,7 +257,9 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     checkClosed();
 
     if (b == null) { throw new NullPointerException(); }
-    if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) { throw new IndexOutOfBoundsException(); }
+    if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) { 
+      throw new IndexOutOfBoundsException(); 
+    }
     if (len == 0) { return 0; }
 
     if (available() == 0) { return EOF; }

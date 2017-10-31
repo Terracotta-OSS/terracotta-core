@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.classloader.ServiceLocator;
 import com.tc.async.api.Sink;
+import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.TCShutdownServerException;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 
 import org.slf4j.Logger;
@@ -104,8 +105,8 @@ public class EntityManagerImpl implements EntityManager {
     this.creationLoader = new ServerEntityFactory(locator);
     this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
-    entities.put(platform.getID(), new FetchID(0L));
-    entityIndex.put(new FetchID(0L), platform);
+    entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
+    entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
   }
   
   public void setMessageSink(Sink<VoltronEntityMessage> sink) {
@@ -113,7 +114,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   private ManagedEntity createPlatformEntity() {
-    return new PlatformEntity(processorPipeline);
+    return new PlatformEntity(messageSelf, processorPipeline);
   }
 
   @Override
@@ -122,7 +123,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void enterActiveState() {
+  public List<VoltronEntityMessage> enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
     //  locking the snapshotting until full active is achieved 
@@ -137,10 +138,13 @@ public class EntityManagerImpl implements EntityManager {
       //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
       // issue-439: We need to sort these entities, ascending by consumerID.
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
+      List<VoltronEntityMessage> reconnectDone = new ArrayList<>(this.entityIndex.size());
       Collections.sort(sortingList, this.consumerIdSorter);
       for (ManagedEntity entity : sortingList) {
         try {
-          entity.promoteEntity();
+            reconnectDone.add(new LocalPipelineFlushMessage(
+              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID), 
+              entity.promoteEntity()));
         } catch (ConfigurationException ce) {
           String errMsg = "failure to promote entity: " + entity.getID();
           LOGGER.error(errMsg, ce);
@@ -149,6 +153,7 @@ public class EntityManagerImpl implements EntityManager {
       }
   //  only enter active state after all the entities have promoted to active
       processorPipeline.enterActiveState();
+      return reconnectDone;
     } finally {
       snapshotLock.release();
     }

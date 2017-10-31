@@ -17,6 +17,7 @@ public class BasicExternalClusterBuilder {
   private String entityFragment = "";
   private int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
   private Properties tcProperties = new Properties();
+  private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
 
 
@@ -90,6 +91,16 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
+  public BasicExternalClusterBuilder withSystemProperties(Properties props) {
+    this.systemProperties.putAll(props);
+    return this;
+  }
+
+  public BasicExternalClusterBuilder withSystemProperty(String key, String value) {
+    this.systemProperties.put(key, value);
+    return this;
+  }
+  
   public BasicExternalClusterBuilder logConfigExtensionResourceName(String logConfigExt) {
     this.logConfigExt = logConfigExt;
     return this;
@@ -97,6 +108,6 @@ public class BasicExternalClusterBuilder {
 
   public BasicExternalCluster build() {
     return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment,
-        clientReconnectWindowTime, tcProperties, logConfigExt);
+        clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt);
   }
 }

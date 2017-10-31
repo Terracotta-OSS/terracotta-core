@@ -19,7 +19,6 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
@@ -90,10 +89,6 @@ public class ReplicationSenderTest {
     }
     @Override
     public void addMultiThreaded(Runnable context) {
-      Assert.fail("Not in test");
-    }
-    @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
       Assert.fail("Not in test");
     }
     @Override

@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 
 import java.util.Comparator;
@@ -94,12 +93,6 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
   @Override
   public void addMultiThreaded(OrderedEventContext specialized) {
-    // Not used in the ordered case.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
     // Not used in the ordered case.
     throw new UnsupportedOperationException();
   }

@@ -52,13 +52,10 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
+import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
-import com.tc.entity.ServerEntityMessageImpl;
-import com.tc.entity.ServerEntityResponseMessage;
-import com.tc.entity.ServerEntityResponseMessageImpl;
 import com.tc.entity.VoltronEntityAppliedResponseImpl;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.entity.VoltronEntityMultiResponseImpl;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.exception.TCRuntimeException;
@@ -209,9 +206,7 @@ import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
-import com.tc.objectserver.entity.RequestProcessorHandler;
 import com.tc.objectserver.entity.VoltronMessageSink;
-import com.tc.objectserver.handler.CommunicatorResponseHandler;
 import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.VoltronMessageHandler;
@@ -300,7 +295,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
   }
 
-  protected ServerBuilder createServerBuilder(HaConfig config, Logger tcLogger, TCServer server,
+  protected final ServerBuilder createServerBuilder(HaConfig config, Logger tcLogger, TCServer server,
                                                  L2Config l2dsoConfig) {
     return new StandardServerBuilder(config, tcLogger);
   }
@@ -424,11 +419,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
-    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider(this.timer);
+    final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
     this.serviceRegistry.registerImplementationProvided(messengerProvider);
     
-    final CommunicatorService communicatorService = new CommunicatorService();
-    serviceRegistry.registerImplementationProvided(communicatorService);
+
     
     // See if we need to add an in-memory service for IPlatformPersistence.
     if (!this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class)) {
@@ -579,10 +573,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    // Attach the communicator service to the channel manager.
-    communicatorService.setChannelManager(channelManager);
-    final Stage<ServerEntityResponseMessage> communicatorResponseStage = stageManager.createStage(ServerConfigurationContext.SERVER_ENTITY_MESSAGE_RESPONSE_STAGE, ServerEntityResponseMessage.class,  new CommunicatorResponseHandler(communicatorService), 1, maxStageSize);
-
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
@@ -624,11 +614,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
-    
-    final Stage<Runnable> requestProcessorStage = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize, true);
-    final Sink<Runnable> requestProcessorSink = requestProcessorStage.getSink();
 
-    RequestProcessor processor = new RequestProcessor(requestProcessorSink);
+    RequestProcessor processor = new RequestProcessor(stageManager);
     
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
@@ -639,6 +626,11 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, true);
     final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, true);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
+//  add the server -> client communicator service
+    final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
+    channelManager.addEventListener(communicatorService);
+    communicatorService.initialized();
+    serviceRegistry.registerImplementationProvided(communicatorService);
 
     VoltronMessageHandler voltron = new VoltronMessageHandler(voltronMessageSink);
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
@@ -653,7 +645,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
-    messageRouter.routeMessageType(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, new TCMessageHydrateSink<>(communicatorResponseStage.getSink()));
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
@@ -684,7 +675,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
-                                                                                        clientEntityStateManager, state, fast.getSink(), processTransactionStage_voltron.getSink(), eventCollector);
+                                                                                        clientEntityStateManager, state, processTransactionHandler, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
@@ -800,13 +791,13 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.SINGLE_THREADED_FAST_PATH,
+        ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE,
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
-        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE,
-        ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE
+        ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
     );
   }
   
@@ -856,6 +847,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
+    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
@@ -959,9 +951,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, VoltronEntityReceivedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, VoltronEntityAppliedResponseImpl.class);
     messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, VoltronEntityRetiredResponseImpl.class);
-    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, VoltronEntityMultiResponseImpl.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_MESSAGE, ServerEntityMessageImpl.class);
-    messageTypeClassMapping.put(TCMessageType.SERVER_ENTITY_RESPONSE_MESSAGE, ServerEntityResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE, LinearVoltronEntityMultiResponse.class);
     messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_REQUEST, DiagnosticMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.DIAGNOSTIC_RESPONSE, DiagnosticResponseImpl.class);
     return messageTypeClassMapping;
