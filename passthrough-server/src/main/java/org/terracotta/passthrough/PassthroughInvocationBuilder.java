@@ -19,6 +19,7 @@
 package org.terracotta.passthrough;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.InvokeFuture;
@@ -30,6 +31,7 @@ import org.terracotta.exception.EntityException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.entity.InvokeMonitor;
 import org.terracotta.exception.EntityServerException;
 
 
@@ -51,7 +53,10 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   private boolean shouldWaitForRetired;
   private boolean shouldReplicate;
   private boolean shouldBlockGetUntilRetire;
+  private boolean deferredResponse;
   private M request;
+  private InvokeMonitor monitor;
+  private Executor executor;
   
   public PassthroughInvocationBuilder(PassthroughConnection connection, String entityClassName, String entityName, long clientInstanceID, MessageCodec<M, R> messageCodec) {
     this.connection = connection;
@@ -104,6 +109,25 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   }
 
   @Override
+  public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
+    this.monitor = consumer;
+    return this;
+  }
+
+  @Override
+  public InvocationBuilder<M, R> withExecutor(Executor exctr) {
+    this.executor = exctr;
+    return this;
+  }
+
+  @Override
+  public InvocationBuilder<M, R> asDeferredResponse() {
+    this.deferredResponse = true;
+    this.shouldBlockGetUntilRetire = true;
+    return this;
+  }
+
+  @Override
   public InvocationBuilder<M, R> blockGetOnRetire(boolean shouldBlock) {
     this.shouldBlockGetUntilRetire = shouldBlock;
     return this;
@@ -117,7 +141,9 @@ public class PassthroughInvocationBuilder<M extends EntityMessage, R extends Ent
   @Override
   public InvokeFuture<R> invoke() throws MessageCodecException {
     final PassthroughMessage message = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, this.clientInstanceID, messageCodec.encodeMessage(this.request), this.shouldReplicate);
-    final Future<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted, this.shouldWaitForRetired, this.shouldBlockGetUntilRetire);
+    final Future<byte[]> invokeFuture = this.connection.invokeActionAndWaitForAcks(message, 
+        this.shouldWaitForSent, this.shouldWaitForReceived, this.shouldWaitForCompleted, 
+        this.shouldWaitForRetired, this.shouldBlockGetUntilRetire, this.deferredResponse, new PassthroughMonitor(messageCodec, monitor, executor));
     return new InvokeFuture<R>() {
       @Override
       public boolean isDone() {

@@ -55,12 +55,6 @@ public class PassthroughCommunicatorService implements ClientCommunicator {
     prepareAndSendMessage(clientDescriptor, message);
   }
 
-  @Deprecated
-  @Override
-  public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) throws MessageCodecException {
-    return prepareAndSendMessage(clientDescriptor, message);
-  }
-
   private Future<Void> prepareAndSendMessage(ClientDescriptor clientDescriptor, EntityResponse entityMessage) throws MessageCodecException {
     PassthroughClientDescriptor rawDescriptor = (PassthroughClientDescriptor) clientDescriptor;
     PassthroughConnection connection = rawDescriptor.sender;

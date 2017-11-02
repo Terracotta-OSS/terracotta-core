@@ -29,7 +29,7 @@ import org.terracotta.exception.EntityException;
  */
 public interface IMessageSenderWrapper {
   void sendAck(PassthroughMessage ack);
-  void sendComplete(PassthroughMessage complete, EntityException error);
+  void sendComplete(PassthroughMessage complete, EntityException error, boolean monitor);
   void sendRetire(PassthroughMessage retire);
   PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID);
   /**

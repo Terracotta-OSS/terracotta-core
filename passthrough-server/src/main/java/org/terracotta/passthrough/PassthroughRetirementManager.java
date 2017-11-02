@@ -47,6 +47,8 @@ public class PassthroughRetirementManager {
   private final Set<EntityMessage> blockingMessages;
 
   private final List<EntityMessage> blockCurrentMessageOn = new ArrayList<>();
+  
+  private boolean holdCurrentMessage = false;
 
 
   public PassthroughRetirementManager() {
@@ -65,6 +67,13 @@ public class PassthroughRetirementManager {
     this.currentServerThread = serverThread;
   }
 
+  public void holdCurrentMessage() {
+    this.holdCurrentMessage = true;
+  }
+  
+  public void releaseCurrentMessage() {
+    this.holdCurrentMessage = false;
+  }  
   /**
    * Called to flag the currently executing message as one which must defer its retirement until the completion of the given
    * blockedOn message.
@@ -86,7 +95,7 @@ public class PassthroughRetirementManager {
    * @return A list of any unblocked retirement operations, in the order they must be run
    */
   public synchronized List<RetirementTuple> retireableListAfterMessageDone(EntityMessage completedInternalOrNull, RetirementTuple tuple) {
-    Assert.assertTrue(Thread.currentThread() == this.currentServerThread);
+//    Assert.assertTrue(Thread.currentThread() == this.currentServerThread);
     // Note that the message can be null if it isn't one which could unblock anything (only internally-created messages can
     // unblock).
     if (null != completedInternalOrNull) {
@@ -124,7 +133,7 @@ public class PassthroughRetirementManager {
       didBlockTuple = true;
     }
     // (otherwise, it can be returned, as well).
-    if (!didBlockTuple) {
+    if (!didBlockTuple && !holdCurrentMessage) {
       readyToRetire.add(tuple);
     }
     return readyToRetire;

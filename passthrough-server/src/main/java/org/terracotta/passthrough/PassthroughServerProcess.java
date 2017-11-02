@@ -73,6 +73,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
 
 
 /**
@@ -395,7 +396,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         sender.sendMessageToClient(PassthroughServerProcess.this, ack.asSerializedBytes());
       }
       @Override
-      public void sendComplete(PassthroughMessage complete, EntityException error) {
+      public void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
         sender.sendMessageToClient(PassthroughServerProcess.this, complete.asSerializedBytes());
       }
       @Override
@@ -441,7 +442,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
           // Do nothing on ack.
         }
         @Override
-        public void sendComplete(PassthroughMessage complete, EntityException error) {
+        public void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
           // Do nothing on complete.
         }
         @Override
@@ -540,7 +541,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       CreationData<?, ?> data = this.activeEntities.get(entityTuple);
       if (null != data) {
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-        response = sendActiveInvocation(entityClassName,
+        response = sendActiveInvocation(sender, entityClassName,
                                         entityName,
                                         clientDescriptor,
                                         transactionId,
@@ -573,7 +574,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return response;
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(String className,
+  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(IMessageSenderWrapper sender, String className,
                                                                                           String entityName,
                                                                                           ClientDescriptor clientDescriptor,
                                                                                           long transactionId,
@@ -586,10 +587,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
       try {
         int cKey = data.concurrency.concurrencyKey(msg);
-        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext(clientDescriptor,
+        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext<>(msg, clientDescriptor,
                                                                                   cKey,
                                                                                   transactionId,
-                                                                                  eldestTransactionId),
+                                                                                  eldestTransactionId, sender, retirementManager, codec),
                                          msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {
@@ -1231,6 +1232,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public final PassthroughServiceRegistry registry;
     public final EntityServerService<M, R> service;
     public CommonServerEntity<M, R> entityInstance;
+    public ReconnectHandler reconnect;
     public final MessageCodec<M, R> messageCodec;
     public final SyncMessageCodec<M> syncMessageCodec;
     public ConcurrencyStrategy<M> concurrency; 
@@ -1250,6 +1252,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       this.messageCodec = service.getMessageCodec();
       this.syncMessageCodec = service.getSyncMessageCodec();
       this.entityInstance = (isActive) ? service.createActiveEntity(registry, configuration) : service.createPassiveEntity(registry, configuration);
+      this.reconnect = (isActive) ? getActive().startReconnect() : null;
       this.concurrency = service.getConcurrencyStrategy(configuration);
       Objects.nonNull(this.concurrency);
       this.executionStrategy = service.getExecutionStrategy(configuration); //  cheating here.  notmally onlt the active knows about execution but, passthrough is going to check on both active and passive
@@ -1303,7 +1306,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       Assert.assertTrue(isActive);
       this.reference(clientDescriptor);
       getActive().connected(clientDescriptor);
-      getActive().handleReconnect(clientDescriptor, data);
+      if (reconnect != null) {
+        reconnect.handleReconnect(clientDescriptor, data);
+        reconnect.close();
+      } else {
+        throw new ReconnectRejectedException("no reconnect handler");
+      }
     }
 
     @SuppressWarnings("unchecked")
@@ -1321,6 +1329,12 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
     
     public void synchronizeToPassive(final PassthroughServerProcess passive, final int key) {
+      getActive().prepareKeyForSynchronizeOnPassive(payload -> {
+        PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, key, serialize(key, payload));
+        PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);
+        passive.sendMessageToServerFromActive(wrapper, payloadMessage.asSerializedBytes());
+        wrapper.waitForComplete();
+      }, key);
       getActive().synchronizeKeyToPassive(payload -> {
         PassthroughMessage payloadMessage = PassthroughMessageCodec.createSyncPayloadMessage(entityClassName, entityName, key, serialize(key, payload));
         PassthroughInterserverInterlock wrapper = new PassthroughInterserverInterlock(null);

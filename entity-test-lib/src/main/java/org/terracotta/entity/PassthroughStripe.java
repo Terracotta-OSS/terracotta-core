@@ -36,6 +36,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -60,6 +61,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private int consumerID = 1;
   private AtomicLong txIdGenerator=new AtomicLong(0);
   private long eldestTxid=-1;
+  private InvokeMonitor<R> monitor;
 
   public PassthroughStripe(EntityServerService<M, R> service, Class<?> clazz) {
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
@@ -119,20 +121,6 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       // Not expected in the testing environment.
       Assert.fail(e.getLocalizedMessage());
     }
-  }
-
-  @Deprecated
-  @Override
-  public Future<Void> send(ClientDescriptor clientDescriptor, EntityResponse message) {
-    FakeEndpoint endpoint = endpoints.get(clientDescriptor);
-    byte[] payload = endpoint.serializeResponse(message);
-    try {
-      endpoint.sendNoResponse(payload);
-    } catch (MessageCodecException e) {
-      // Not expected in the testing environment.
-      Assert.fail(e.getLocalizedMessage());
-    }
-    return Futures.immediateFuture(null);
   }
 
   @Override
@@ -361,6 +349,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     private final long currentId;
     private final ConcurrencyStrategy<M> concurrency;
     private M request = null;
+    private InvokeMonitor<R> monitor;
 
     public StripeInvocationBuilder(ClientDescriptor clientDescriptor,
                                    long currentId,
@@ -421,6 +410,12 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
 
     @Override
+    public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
+      monitor = consumer;
+      return this;
+    }
+
+    @Override
     public InvokeFuture<R> invoke() throws MessageCodecException {
       byte[] result = null;
       EntityException error = null;
@@ -429,12 +424,23 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       } catch (EntityException e) {
         error = e;
       }
-      return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
+      monitor = null;
+      return new ImmediateInvokeFuture<>(codec.decodeResponse(result), error);
     }
 
     @Override
     public InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
       return invoke();
+    }
+
+    @Override
+    public InvocationBuilder<M, R> withExecutor(Executor exctr) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public InvocationBuilder<M, R> asDeferredResponse() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
     private byte[] sendInvocation(long currentId, long eldestId, ActiveServerEntity<M, R> entity, MessageCodec<M, R>
@@ -443,10 +449,10 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 
       int requestConcurrencyKey = concurrency.concurrencyKey(request);
       try {
-        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor,
+        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext<>(clientDescriptor,
                                                                                   requestConcurrencyKey,
                                                                                   currentId,
-                                                                                  eldestId),
+                                                                                  eldestId, monitor),
                                          request);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
