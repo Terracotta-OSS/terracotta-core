@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
@@ -27,10 +29,10 @@ import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvid
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.EntityContainerListener;
 
 import java.util.function.Consumer;
+import org.terracotta.entity.EntityResponse;
 
 
 public class PassthroughMessengerService implements IEntityMessenger, EntityContainerListener {
-  private final PassthroughTimerThread timerThread;
   private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughRetirementManager retirementManager;
   private final PassthroughConnection pseudoConnection;
@@ -39,7 +41,6 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   private final String entityName;
   
   public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
-    this.timerThread = timerThread;
     this.passthroughServerProcess = passthroughServerProcess;
     this.retirementManager = passthroughServerProcess.getRetirementManager();
     this.pseudoConnection = pseudoConnection;
@@ -101,12 +102,37 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
 
   @Override
   public void messageSelf(EntityMessage message, Consumer response) throws MessageCodecException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    // Serialize the message.
+    PassthroughMessage passthroughMessage = makePassthroughMessage(message);
+    Future<byte[]> answer = commonSendMessage(passthroughMessage);
+    if (response != null) {
+      try {
+        byte[] data = answer.get();
+        MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
+        EntityResponse serializedMessage = codec.decodeResponse(data);
+        response.accept(serializedMessage);
+      } catch (InterruptedException | ExecutionException ie) {
+        throw new RuntimeException(ie);
+      }
+    }
   }
 
   @Override
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule, Consumer response) throws MessageCodecException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    retirementManager.deferCurrentMessage(newMessageToSchedule);
+    PassthroughMessage passthroughMessage = makePassthroughMessage(newMessageToSchedule);
+    Future<byte[]> answer = commonSendMessage(passthroughMessage);
+
+    if (response != null) {
+      try {
+        byte[] data = answer.get();
+        MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
+        EntityResponse serializedMessage = codec.decodeResponse(data);
+        response.accept(serializedMessage);
+      } catch (InterruptedException | ExecutionException ie) {
+        throw new RuntimeException(ie);
+      }
+    }
   }
 
   @Override
@@ -126,50 +152,13 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
     return passthroughMessage;
   }
 
-  private void commonSendMessage(PassthroughMessage passthroughMessage) {
+  private Future<byte[]> commonSendMessage(PassthroughMessage passthroughMessage) {
     boolean shouldWaitForSent = false;
     boolean shouldWaitForReceived = false;
     boolean shouldWaitForCompleted = false;
     boolean shouldWaitForRetired = false;
     boolean shouldBlockGetUntilRetire = false;
-    this.pseudoConnection.invokeActionAndWaitForAcks(passthroughMessage, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, shouldBlockGetUntilRetire);
-  }
-
-
-  private class SelfCancellingRunnable implements Runnable {
-    private final PassthroughMessage message;
-    private Long token;
-    
-    public SelfCancellingRunnable(PassthroughMessage message) {
-      this.message = message;
-    }
-    
-    public void setToken(Long token) {
-      this.token = token;
-    }
-    
-    @Override
-    public void run() {
-      Assert.assertTrue(this.token > 0);
-      // If the entity disappeared, we are implicitly cancelled.
-      if (null != PassthroughMessengerService.this.entityContainer.getEntity()) {
-        commonSendMessage(this.message);
-      } else {
-        PassthroughMessengerService.this.timerThread.cancelMessage(this.token);
-        System.err.println("WARNING:  Cancelled PERIODIC delayed message to destroyed entity");
-      }
-    }
-  }
-
-  private static class DeferredInvocation {
-    public final Runnable delayRunnable;
-    public final SelfCancellingRunnable periodicRunnable;
-    public final long delayMillis;
-    
-    public DeferredInvocation(Runnable delayRunnable, SelfCancellingRunnable periodicRunnable, long delayMillis) {
-      this.delayRunnable = delayRunnable;
-      this.periodicRunnable = periodicRunnable;
-      this.delayMillis = delayMillis;
-    }
+    boolean deferred = false;
+    return this.pseudoConnection.invokeActionAndWaitForAcks(passthroughMessage, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, shouldBlockGetUntilRetire, deferred, null);
   }
 }

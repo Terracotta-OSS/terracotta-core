@@ -396,7 +396,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         sender.sendMessageToClient(PassthroughServerProcess.this, ack.asSerializedBytes());
       }
       @Override
-      public void sendComplete(PassthroughMessage complete, EntityException error) {
+      public void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
         sender.sendMessageToClient(PassthroughServerProcess.this, complete.asSerializedBytes());
       }
       @Override
@@ -442,7 +442,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
           // Do nothing on ack.
         }
         @Override
-        public void sendComplete(PassthroughMessage complete, EntityException error) {
+        public void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
           // Do nothing on complete.
         }
         @Override
@@ -541,7 +541,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       CreationData<?, ?> data = this.activeEntities.get(entityTuple);
       if (null != data) {
         PassthroughClientDescriptor clientDescriptor = sender.clientDescriptorForID(clientInstanceID);
-        response = sendActiveInvocation(entityClassName,
+        response = sendActiveInvocation(sender, entityClassName,
                                         entityName,
                                         clientDescriptor,
                                         transactionId,
@@ -574,7 +574,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     return response;
   }
 
-  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(String className,
+  private <M extends EntityMessage, R extends EntityResponse> byte[] sendActiveInvocation(IMessageSenderWrapper sender, String className,
                                                                                           String entityName,
                                                                                           ClientDescriptor clientDescriptor,
                                                                                           long transactionId,
@@ -587,10 +587,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     if (data.executionStrategy.getExecutionLocation(msg).runOnActive()) {
       try {
         int cKey = data.concurrency.concurrencyKey(msg);
-        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext(clientDescriptor,
+        R response = entity.invokeActive(new PassThroughServerActiveInvokeContext<>(msg, clientDescriptor,
                                                                                   cKey,
                                                                                   transactionId,
-                                                                                  eldestTransactionId),
+                                                                                  eldestTransactionId, sender, retirementManager, codec),
                                          msg);
         return serializeResponse(className, entityName, codec, response);
       } catch (EntityUserException eu) {

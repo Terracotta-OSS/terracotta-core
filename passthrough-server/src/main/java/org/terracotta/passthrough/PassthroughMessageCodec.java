@@ -140,6 +140,29 @@ public class PassthroughMessageCodec {
       }};
   }
 
+  public static PassthroughMessage createMonitorMessage(final byte[] response, final EntityException error) {
+    // Replication ignored in this context.
+    boolean shouldReplicateToPassives = false;
+    return new PassthroughMessage(Type.MONITOR_MESSAGE, shouldReplicateToPassives) {
+      @Override
+      protected void populateStream(DataOutputStream output) throws IOException {
+        boolean isSuccess = (null == error);
+        output.writeBoolean(isSuccess);
+        if (isSuccess) {
+          if (null != response) {
+            output.writeInt(response.length);
+            output.write(response);
+          } else {
+            output.writeInt(-1);
+          }
+        } else {
+          byte[] serializedException = PassthroughMessageCodec.serializeExceptionToArray(error);
+          output.writeInt(serializedException.length);
+          output.write(serializedException);
+        }
+      }};
+  }
+
   public static PassthroughMessage createCompleteMessage(final byte[] response, final EntityException error) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;

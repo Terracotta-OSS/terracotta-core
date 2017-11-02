@@ -61,8 +61,8 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   }
 
   @Override
-  public synchronized void sendComplete(PassthroughMessage complete, EntityException error) {
-    this.isComplete = true;
+  public synchronized void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
+    this.isComplete = last;
     this.didSucceed = (null == error);
     notifyAll();
   }

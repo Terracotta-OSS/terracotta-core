@@ -27,6 +27,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -46,6 +47,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
   private AtomicLong idGenerator = new AtomicLong(0);
   private volatile long eldest = -1L;
   private ConcurrencyStrategy<M> concurrencyStrategy;
+  private InvokeMonitor monitor;
 
   public PassthroughEndpoint() {
     // We start in the open state.
@@ -138,6 +140,22 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     }
 
     @Override
+    public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
+      monitor = consumer;
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<M, R> withExecutor(Executor exctr) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public InvocationBuilder<M, R> asDeferredResponse() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public InvokeFuture<R> invoke() throws MessageCodecException {
       // Note that the passthrough end-point wants to preserve the semantics of a single-threaded server, no matter how
       // complicated the caller is (since multiple threads often are used to simulate multiple clients or multiple threads
@@ -148,11 +166,12 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
         byte[] result = null;
         EntityException error = null;
         try {
-          result = sendInvocation(codec.encodeMessage(request));
+          result = sendInvocation(codec.encodeMessage(request), monitor);
         } catch (EntityException ee) {
           error = ee;
         }
-        return new ImmediateInvokeFuture<R>(codec.decodeResponse(result), error);
+        monitor = null;
+        return new ImmediateInvokeFuture<>(codec.decodeResponse(result), error);
       }
     }
 
@@ -161,15 +180,15 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       return invoke();
     }
     
-    private byte[] sendInvocation(byte[] payload) throws EntityException {
+    private byte[] sendInvocation(byte[] payload, InvokeMonitor<R> monitor) throws EntityException {
       byte[] result = null;
       try {
         M message = codec.decodeMessage(payload);
         int key = concurrencyStrategy.concurrencyKey(message);
-        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext(clientDescriptor,
+        R response = entity.invokeActive(new PassThroughEntityActiveInvokeContext<R>(clientDescriptor,
                                                                                   key,
                                                                                   idGenerator.incrementAndGet(),
-                                                                                  eldest), message);
+                                                                                  eldest, monitor), message);
         result = codec.encodeResponse(response);
       } catch (Exception e) {
         throw new EntityServerException(null, null, null, e);
