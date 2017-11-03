@@ -797,12 +797,12 @@ public class ManagedEntityImpl implements ManagedEntity {
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId, 
-                  ()->retirementManager.holdMessage(em), 
+                  ()->retirementManager.holdMessage(em),
                   (r)->response.message(decodeResponse(r)), 
                   (e)->response.failure(convertException(e)),
                   ()->{
                     retirementManager.releaseMessage(em);
-                    RetirementManager.retireMessagesForEntity(this, em);
+                    retirementManager.retireMessage(em);
                   }
               ), em);
             byte[] er = resp == null ? new byte[0] : runWithHelper(()->codec.encodeResponse(resp));

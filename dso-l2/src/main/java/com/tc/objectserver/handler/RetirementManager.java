@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.Retiree;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
@@ -27,11 +26,10 @@ import org.terracotta.entity.EntityMessage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
@@ -54,45 +52,42 @@ public class RetirementManager {
   private final Map<Integer, LogicalSequence> mostRecentRegisteredToKey;
 
   public RetirementManager() {
-    this.currentlyRunning = new HashMap<EntityMessage, LogicalSequence>();
-    this.waitingForDeferredRegistration = new HashMap<EntityMessage, LogicalSequence>();
-    this.mostRecentRegisteredToKey = new HashMap<Integer, LogicalSequence>();
+    this.currentlyRunning = new IdentityHashMap<>();
+    this.waitingForDeferredRegistration = new IdentityHashMap<>();
+    this.mostRecentRegisteredToKey = new HashMap<>();
   }
   
   public synchronized boolean isMessageRunning(EntityMessage invokeMessage) {
     return this.currentlyRunning.containsKey(invokeMessage);
   }
   
-  public synchronized boolean holdMessage(EntityMessage invokeMessage) {
-    return this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.hold()) != null;
+  public synchronized void holdMessage(EntityMessage invokeMessage) {
+    if (this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.hold()) == null) {
+      throw new IllegalStateException("message already retired");
+    }
   }
   
-  public synchronized boolean releaseMessage(EntityMessage invokeMessage) {
-    return this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.release()) != null;
+  public synchronized void releaseMessage(EntityMessage invokeMessage) {
+    this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.release());
   }
   
   public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
-    LogicalSequence seq = this.currentlyRunning.get(invokeMessage);
-    if (seq == null) {
+    if (this.currentlyRunning.computeIfPresent(invokeMessage, (i,l)->l.updateWithRetiree(response)) == null) {
       throw new AssertionError();
-    } else {
-      seq.updateWithRetiree(response);
     }
   }
 
   public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey) {
-    LogicalSequence newWrapper = new LogicalSequence(invokeMessage);
+    LogicalSequence newWrapper = new LogicalSequence(invokeMessage, concurrencyKey);
     // if concurrencyKey is UNIVERSAL_KEY, then current request doesn't need to wait for other requests running on
     // UNIVERSAL_KEY
     if(concurrencyKey != ConcurrencyStrategy.UNIVERSAL_KEY) {
       // See if there is anything for this key
-      LogicalSequence lastInKey = this.mostRecentRegisteredToKey.remove(concurrencyKey);
+      LogicalSequence lastInKey = this.mostRecentRegisteredToKey.put(concurrencyKey, newWrapper);
       if ((null != lastInKey) && (!lastInKey.isRetired)) {
         lastInKey.nextInKey = newWrapper;
         newWrapper.isWaitingForPreviousInKey = true;
       }
-      newWrapper.concurrencyKey = concurrencyKey;
-      this.mostRecentRegisteredToKey.put(concurrencyKey, newWrapper);
     }
 
     LogicalSequence toUpdateWithReference = waitingForDeferredRegistration.remove(invokeMessage);
@@ -120,7 +115,6 @@ public class RetirementManager {
         ls.isCompleted = true;
         return ls;
       } else {
-        Assert.assertNotNull(ls);
         ls.isCompleted = true;
         traverseDependencyGraph(toRetire, ls);
         return null;
@@ -165,6 +159,7 @@ public class RetirementManager {
 
   public synchronized void deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
     Trace.activeTrace().log("Deferring retirement for " + invokeMessageToDefer + " until " + laterMessage + " is finished");
+    
     LogicalSequence myRequest = this.currentlyRunning.get(invokeMessageToDefer);
     
     if (myRequest == null) {
@@ -190,7 +185,7 @@ public class RetirementManager {
     Assert.assertTrue(this.waitingForDeferredRegistration.isEmpty());
   }
   
-  public Map<String, Object> getState() {
+  public synchronized Map<String, Object> getState() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("running", this.currentlyRunning.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
     map.put("waitingForDeferredRegistration", this.waitingForDeferredRegistration.entrySet().stream().collect(Collectors.toMap(entry->entry.getKey().toString(), entry->entry.getKey().toString(), (one, two)->one, LinkedHashMap::new)));
@@ -198,8 +193,8 @@ public class RetirementManager {
     return map;
   }
   
-  public static void retireMessagesForEntity(ManagedEntity entity, EntityMessage message) {
-    List<Retiree> readyToRetire = entity.getRetirementManager().retireForCompletion(message);
+  public void retireMessage(EntityMessage message) {
+    List<Retiree> readyToRetire = retireForCompletion(message);
     for (Retiree toRetire : readyToRetire) {
       if (null != toRetire) {
         Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
@@ -210,13 +205,14 @@ public class RetirementManager {
   }
   
   private static class LogicalSequence {
-    public int concurrencyKey;
-    // The thing to be retired
-    public Retiree response;
     // Corresponding entity message
     public final EntityMessage entityMessage;
     // The next message in the same key, which we will notify to retire when we retire.
     public LogicalSequence nextInKey;
+    // concurrency key
+    public final int concurrencyKey;
+    // The thing to be retired
+    private Retiree response;
     // The message which is explicitly waiting for us to retire before it can.
     public LogicalSequence deferNotify;
     // True if we are still waiting for the previous in our key to retire.
@@ -228,19 +224,21 @@ public class RetirementManager {
     
     public boolean isBeingHeld;
     
-    private final Set<EntityMessage> entityMessagesDeferringRetirement = new HashSet<>();
+    private final Map<EntityMessage,EntityMessage> entityMessagesDeferringRetirement = new IdentityHashMap<>();
 
-    public LogicalSequence(EntityMessage entityMessage) {
+    public LogicalSequence(EntityMessage entityMessage, int concurrency) {
       this.entityMessage = entityMessage;
+      this.concurrencyKey = concurrency;
     }
 
-    public void updateWithRetiree(Retiree response) {
+    public LogicalSequence updateWithRetiree(Retiree response) {
       this.response = response;
+      return this;
     }
 
     public void retirementDeferredBy(EntityMessage entityMessage) {
       // just add this entityMessage to waiting set
-      entityMessagesDeferringRetirement.add(entityMessage);
+      entityMessagesDeferringRetirement.put(entityMessage,entityMessage);
     }
 
     public void entityMessageCompleted(EntityMessage entityMessage) {
@@ -254,7 +252,7 @@ public class RetirementManager {
     }
 
     public boolean isWaitingForExplicitDeferOf(EntityMessage entityMessage) {
-      return entityMessagesDeferringRetirement.contains(entityMessage);
+      return entityMessagesDeferringRetirement.containsKey(entityMessage);
     }
     
     public LogicalSequence hold() {

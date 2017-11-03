@@ -699,7 +699,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
         }
       }
-      RetirementManager.retireMessagesForEntity(entity, rootMessage);
+      entity.getRetirementManager().retireMessage(rootMessage);
     }
     
     private void sendFailure(EntityException failure) {
@@ -715,7 +715,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         });
       }
       entity.getRetirementManager().releaseMessage(rootMessage);
-      RetirementManager.retireMessagesForEntity(entity, rootMessage);
+      entity.getRetirementManager().retireMessage(rootMessage);
     }
 
     private void update() {
