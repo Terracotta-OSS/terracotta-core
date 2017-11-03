@@ -174,8 +174,8 @@ public class PassthroughWait implements Future<byte[]> {
   public synchronized void handleComplete(byte[] result, EntityException error) {
     this.waitingForComplete = false;
     if (deferred && error == null) {
-      if (monitor != null) {
-        monitor.sendResponse(result);
+      if (monitor != null && this.response != null) {
+        monitor.sendResponse(this.response);
       }
       this.response = result;
     } else if (this.canChangeResponse) {
