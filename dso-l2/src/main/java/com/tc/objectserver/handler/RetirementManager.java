@@ -111,7 +111,7 @@ public class RetirementManager {
   public synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
     List<Retiree> toRetire = new ArrayList<>();
     this.currentlyRunning.computeIfPresent(completedMessage, (m,ls)->{
-      if (ls.isBeingHeld) {
+      if (ls.heldCount > 0) {
         ls.isCompleted = true;
         return ls;
       } else {
@@ -222,7 +222,7 @@ public class RetirementManager {
     // True if retirement is complete (only used when stitching in the key).
     public boolean isRetired;
     
-    public boolean isBeingHeld;
+    public int heldCount = 0;
     
     private final Map<EntityMessage,EntityMessage> entityMessagesDeferringRetirement = new IdentityHashMap<>();
 
@@ -248,7 +248,7 @@ public class RetirementManager {
 
     public boolean isWaitingForExplicitDefer() {
       // true if waiting set size is not zero
-      return !entityMessagesDeferringRetirement.isEmpty() || this.isBeingHeld;
+      return !entityMessagesDeferringRetirement.isEmpty() || this.heldCount > 0;
     }
 
     public boolean isWaitingForExplicitDeferOf(EntityMessage entityMessage) {
@@ -256,18 +256,24 @@ public class RetirementManager {
     }
     
     public LogicalSequence hold() {
-      isBeingHeld = true;
+      heldCount += 1;
       return this;
     }
 
     public LogicalSequence release() {
-      isBeingHeld = false;
+      heldCount -= 1;
+      Assert.assertTrue(heldCount >= 0);
       return this;
     }
     
     @Override
     public String toString() {
-      return "LogicalSequence{" + "response=" + response + ", entityMessage=" + entityMessage + ", nextInKey=" + nextInKey + ", deferNotify=" + deferNotify + ", isWaitingForPreviousInKey=" + isWaitingForPreviousInKey + ", isCompleted=" + isCompleted + ", isRetired=" + isRetired + ", entityMessagesDeferringRetirement=" + entityMessagesDeferringRetirement + '}';
+      return "LogicalSequence{" + "response=" + response + ", entityMessage=" + 
+          entityMessage + ", nextInKey=" + nextInKey + ", deferNotify=" + deferNotify + 
+          ", isWaitingForPreviousInKey=" + isWaitingForPreviousInKey + ", isCompleted=" + 
+          isCompleted + ", isRetired=" + isRetired + ", entityMessagesDeferringRetirement=" + 
+          entityMessagesDeferringRetirement + ", heldCount=" + 
+          heldCount + '}';
     }
   }
 }
