@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.util.concurrent.SetOnceFlag;
 import java.util.function.Consumer;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.EntityResponse;
@@ -30,6 +31,7 @@ public class ActiveInvokeChannelImpl<R extends EntityResponse> implements Active
   private final Consumer<R> account;
   private final Consumer<Exception> exception;
   private final Runnable retirementTrigger;
+  private final SetOnceFlag closed = new SetOnceFlag();
 
   public ActiveInvokeChannelImpl(Consumer<R> account, Consumer<Exception> exception, Runnable retirementTrigger) {
     this.account = account;
@@ -40,17 +42,27 @@ public class ActiveInvokeChannelImpl<R extends EntityResponse> implements Active
 
   @Override
   public void sendResponse(R response) {
-    account.accept(response);
+    if (!closed.isSet()) {
+      account.accept(response);
+    } else {
+      throw new IllegalStateException("trying to send a response on a closed channel");
+    }
   }
 
   @Override
   public void sendException(Exception response) {
-    exception.accept(response);
+    if (closed.attemptSet()) {
+      exception.accept(response);
+    } else {
+      throw new IllegalStateException("trying to send an exception on a closed channel");
+    }
   }
 
   @Override
   public void close() {
-    retirementTrigger.run();
+    if (closed.attemptSet()) {
+      retirementTrigger.run();
+    }
   }
   
 }
