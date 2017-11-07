@@ -243,9 +243,12 @@ public class PassthroughConnection implements Connection {
           case ACK_FROM_SERVER:
             handleAck(sender, transactionID);
             break;
-          case COMPLETE_FROM_SERVER: {
+          case MONITOR_MESSAGE: 
+          case MONITOR_EXCEPTION:
+          case COMPLETE_FROM_SERVER:
+          case EXCEPTION_FROM_SERVER: {
             // Complete has a flag for success/failure, followed by return value and exception.
-            boolean isSuccess = input.readBoolean();
+            boolean isSuccess = type != Type.EXCEPTION_FROM_SERVER && type != Type.MONITOR_EXCEPTION;
             int length = input.readInt();
             byte[] bytes = null;
             if (-1 == length) {
@@ -262,27 +265,6 @@ public class PassthroughConnection implements Connection {
               error = PassthroughMessageCodec.deserializeExceptionFromArray(bytes);
             }
             handleComplete(sender, transactionID, result, error);
-            break;
-          }
-          case MONITOR_MESSAGE: {
-            // Complete has a flag for success/failure, followed by return value and exception.
-            boolean isSuccess = input.readBoolean();
-            int length = input.readInt();
-            byte[] bytes = null;
-            if (-1 == length) {
-              // This is the case of a null result.
-            } else {
-              bytes = new byte[length];
-              input.readFully(bytes);
-            }
-            byte[] result = null;
-            EntityException error = null;
-            if (isSuccess) {
-              result = bytes;
-            } else {
-              error = PassthroughMessageCodec.deserializeExceptionFromArray(bytes);
-            }
-            handleMonitor(sender, transactionID, result, error);
             break;
           }
           case RETIRE_FROM_SERVER:

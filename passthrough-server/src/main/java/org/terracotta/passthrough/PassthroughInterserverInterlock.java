@@ -18,8 +18,6 @@
  */
 package org.terracotta.passthrough;
 
-import org.terracotta.exception.EntityException;
-
 /**
  * In the case where we are an active sending a message to a downstream passive, we use this implementation to provide the
  * basic interlock across the 2 threads.
@@ -61,9 +59,9 @@ public class PassthroughInterserverInterlock implements IMessageSenderWrapper {
   }
 
   @Override
-  public synchronized void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
+  public synchronized void sendComplete(PassthroughMessage complete, boolean last) {
     this.isComplete = last;
-    this.didSucceed = (null == error);
+    this.didSucceed = (complete.type != PassthroughMessage.Type.MONITOR_EXCEPTION);
     notifyAll();
   }
 

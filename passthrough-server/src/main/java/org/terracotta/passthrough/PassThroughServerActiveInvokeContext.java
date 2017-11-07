@@ -35,7 +35,7 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
 
   @Override
   public ActiveInvokeChannel<R> openInvokeChannel() {
-    retirement.holdCurrentMessage();
+    monitor.open();
     return new ActiveInvokeChannel<R>() {
       @Override
       public void sendResponse(R response) {
@@ -43,7 +43,7 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
           byte[] r = codec.encodeResponse(response);
           PassthroughMessage msg = PassthroughMessageCodec.createMonitorMessage(r, null);
           msg.setTransactionTracking(PassThroughServerActiveInvokeContext.this.getCurrentTransactionId(),PassThroughServerActiveInvokeContext.this.getOldestTransactionId());
-          monitor.sendComplete(msg, null, false);
+          monitor.sendComplete(msg, false);
         } catch (MessageCodecException codec) {
           throw new RuntimeException(codec);
         }
@@ -54,15 +54,12 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
         EntityException exp = (excptn instanceof EntityException) ? (EntityException)excptn : new EntityServerException(null, null, null, excptn);
         PassthroughMessage msg = PassthroughMessageCodec.createMonitorMessage(null, exp);
         msg.setTransactionTracking(PassThroughServerActiveInvokeContext.this.getCurrentTransactionId(), PassThroughServerActiveInvokeContext.this.getOldestTransactionId());
-        monitor.sendComplete(msg, exp, false);
+        monitor.sendComplete(msg, false);
       }
 
       @Override
       public void close() {
-        retirement.releaseCurrentMessage();
-        PassthroughMessage retire = PassthroughMessageCodec.createRetireMessage();
-        retire.setTransactionTracking(PassThroughServerActiveInvokeContext.this.getCurrentTransactionId(), PassThroughServerActiveInvokeContext.this.getOldestTransactionId());
-        monitor.sendRetire(retire);
+        monitor.close();
       }
     };
   }

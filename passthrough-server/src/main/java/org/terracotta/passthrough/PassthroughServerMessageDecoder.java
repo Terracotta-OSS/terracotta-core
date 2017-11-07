@@ -312,6 +312,9 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
       }
       case ACK_FROM_SERVER:
       case COMPLETE_FROM_SERVER:
+      case EXCEPTION_FROM_SERVER:
+      case MONITOR_MESSAGE:
+      case MONITOR_EXCEPTION:
       case RETIRE_FROM_SERVER:
       case INVOKE_ON_CLIENT:
         // Not invoked on server.
@@ -476,7 +479,7 @@ public class PassthroughServerMessageDecoder implements PassthroughMessageCodec.
     // The oldestTransactionID isn't relevant when sent back.
     long oldestTransactionID = -1;
     complete.setTransactionTracking(transactionID, oldestTransactionID);
-    sender.sendComplete(complete, error, true);
+    sender.sendComplete(complete, true);
     
     // Note that we will create the retire message, as well, at this point.  At this level, we don't distinguish between
     // "complete" and "retire" since the operation is logically "done".

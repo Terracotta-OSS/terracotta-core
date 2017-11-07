@@ -18,7 +18,7 @@
  */
 package org.terracotta.passthrough;
 
-import org.terracotta.exception.EntityException;
+import org.terracotta.entity.EntityMessage;
 
 /**
  * An interface used to represent the party who sent a message to a server.
@@ -28,8 +28,11 @@ import org.terracotta.exception.EntityException;
  * use the message, only understand why it was sent.
  */
 public interface IMessageSenderWrapper {
+  default void open() {
+    
+  }
   void sendAck(PassthroughMessage ack);
-  void sendComplete(PassthroughMessage complete, EntityException error, boolean monitor);
+  void sendComplete(PassthroughMessage complete, boolean monitor);
   void sendRetire(PassthroughMessage retire);
   PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID);
   /**
@@ -38,4 +41,7 @@ public interface IMessageSenderWrapper {
    * @return The client origin unique ID.
    */
   long getClientOriginID();
+  default void close() {
+    
+  }
 }
