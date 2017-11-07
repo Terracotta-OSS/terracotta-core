@@ -18,8 +18,6 @@
  */
 package org.terracotta.passthrough;
 
-import org.terracotta.entity.EntityMessage;
-
 /**
  * An interface used to represent the party who sent a message to a server.
  * This exists so that the core message handling code can work the same way, whether the sender of the message was a client

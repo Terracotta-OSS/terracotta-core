@@ -32,12 +32,10 @@ import org.terracotta.entity.ServiceConfiguration;
 public class PassthroughMessengerServiceProvider implements PassthroughImplementationProvidedServiceProvider, Closeable {
   private final PassthroughTimerThread timerThread;
   private final PassthroughServerProcess passthroughServerProcess;
-  private final PassthroughConnection pseudoConnection;
   
-  public PassthroughMessengerServiceProvider(PassthroughServerProcess passthroughServerProcess, PassthroughConnection connection) {
+  public PassthroughMessengerServiceProvider(PassthroughServerProcess passthroughServerProcess) {
     this.timerThread = new PassthroughTimerThread();
     this.passthroughServerProcess = passthroughServerProcess;
-    this.pseudoConnection = connection;
     
     this.timerThread.setName("PassthroughTimerThread");
     this.timerThread.start();
@@ -49,7 +47,7 @@ public class PassthroughMessengerServiceProvider implements PassthroughImplement
     if (configuration instanceof Supplier) {
       chain = ((Supplier<Boolean>)configuration).get();
     }
-    return configuration.getServiceType().cast(new PassthroughMessengerService(this.timerThread, this.passthroughServerProcess, this.pseudoConnection, container, chain, entityClassName, entityName));
+    return configuration.getServiceType().cast(new PassthroughMessengerService(this.timerThread, this.passthroughServerProcess, container, chain, entityClassName, entityName));
   }
 
   @Override

@@ -208,7 +208,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.pseudoConnection = internalConnectNewPseudoConnection();
     
     // Register built-in services.
-    registerImplementationProvidedServices(pseudoConnection);
+    registerImplementationProvidedServices();
     
     findClasspathBuiltinServices();
 
@@ -358,10 +358,10 @@ public class PassthroughServer implements PassthroughDumper {
     }
   }
 
-  private void registerImplementationProvidedServices(PassthroughConnection pseudoConnection) {
+  private void registerImplementationProvidedServices() {
     PassthroughCommunicatorServiceProvider communicatorServiceProvider = new PassthroughCommunicatorServiceProvider();
     this.serverProcess.registerImplementationProvidedServiceProvider(communicatorServiceProvider, null);
-    PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess, pseudoConnection);
+    PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess);
     this.serverProcess.registerImplementationProvidedServiceProvider(messengerServiceProvider, null);
     PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
     this.serverProcess.registerImplementationProvidedServiceProvider(passthroughPlatformServiceProvider, null);

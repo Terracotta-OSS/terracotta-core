@@ -38,15 +38,13 @@ import org.terracotta.entity.EntityResponse;
 public class PassthroughMessengerService implements IEntityMessenger<EntityMessage, EntityResponse>, EntityContainerListener {
   private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughRetirementManager retirementManager;
-  private final PassthroughConnection pseudoConnection;
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
   private final String entityName;
     
-  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
+  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
     this.passthroughServerProcess = passthroughServerProcess;
     this.retirementManager = passthroughServerProcess.getRetirementManager();
-    this.pseudoConnection = pseudoConnection;
     // Note that we hold the entity container to get the codec but this container is deferred so we hold onto it, instead of
     // the codec (which probably isn't set yet).
     this.entityContainer = entityContainer;
