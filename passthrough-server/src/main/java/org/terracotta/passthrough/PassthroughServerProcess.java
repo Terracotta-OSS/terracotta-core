@@ -73,7 +73,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
+import org.terracotta.entity.IEntityMessenger.MessageResponse;
 
 
 /**
@@ -149,6 +151,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.retirementManager = new PassthroughRetirementManager();
     Assert.assertTrue(null != crasher);
     this.crasher = crasher;
+  }
+  
+  public boolean isServerThread() {
+    return serverThread == Thread.currentThread();
   }
 
   public PassthroughRetirementManager getRetirementManager() {
@@ -271,13 +277,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     Assert.assertTrue(!this.isRunning);
     this.serverThread = new Thread(this::runServerThread);
     this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
-    // We only use the retirement manager if we are the active.
-    if (null != this.activeEntities) {
-      this.retirementManager.setServerThread(this.serverThread);
-    } else {
-      // Null this out so that attempts to use it in passive mode will assert.
-      this.retirementManager.setServerThread(null);
-    }
+
     this.isRunning = true;
     // We want to now set the server info for this instance.
     this.serverInfo = new PlatformServer(
@@ -391,17 +391,27 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
     PassthroughMessageContainer container = new PassthroughMessageContainer();
     container.sender = new IMessageSenderWrapper() {
+      int openCount = 0;
+      PassthroughMessage retire;
+      @Override
+      public synchronized void open() {
+        openCount += 1;
+      }
       @Override
       public void sendAck(PassthroughMessage ack) {
         sender.sendMessageToClient(PassthroughServerProcess.this, ack.asSerializedBytes());
       }
       @Override
-      public void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
+      public void sendComplete(PassthroughMessage complete, boolean last) {
         sender.sendMessageToClient(PassthroughServerProcess.this, complete.asSerializedBytes());
       }
       @Override
-      public void sendRetire(PassthroughMessage retired) {
-        handleMessageRetirement(null, sender, retired);
+      public synchronized void sendRetire(PassthroughMessage retired) {
+        if (openCount == 0) {
+          handleMessageRetirement(sender, retired);
+        } else {
+          retire = retired;
+        }
       }
       @Override
       public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
@@ -410,6 +420,13 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       @Override
       public long getClientOriginID() {
         return sender.getUniqueConnectionID();
+      }
+      @Override
+      public synchronized void close() {
+        openCount -= 1;
+        if (openCount == 0 && retire != null) {
+          handleMessageRetirement(sender, retire);
+        }
       }
     };
     container.message = message;
@@ -423,7 +440,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     }
   }
 
-  public synchronized void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, PassthroughMessage passthroughMessage) {
+  public synchronized void sendMessageToActiveFromInsideActive(final EntityMessage newMessage, PassthroughMessage passthroughMessage, Consumer<PassthroughMessage> result) {
     // It is possible that this happens when we have already been told to shut down so we want to drop it, in that case.
     if (this.isRunning) {
       // This can only be called on the active server.
@@ -442,12 +459,15 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
           // Do nothing on ack.
         }
         @Override
-        public void sendComplete(PassthroughMessage complete, EntityException error, boolean last) {
-          // Do nothing on complete.
+        public void sendComplete(PassthroughMessage complete, boolean last) {
+          if (result != null) {
+            result.accept(complete);
+          }
         }
         @Override
         public void sendRetire(PassthroughMessage retired) {
-          handleMessageRetirement(newMessage, null, retired);
+          retireReadyItems(newMessage);
+          handleMessageRetirement(null, retired);
         }
         @Override
         public PassthroughClientDescriptor clientDescriptorForID(long clientInstanceID) {
@@ -467,16 +487,26 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       System.err.println("WARNING:  Dropping internally-generated message since server is shutting down");
     }
   }
+  
+  private void retireReadyItems(EntityMessage messageRun) {
+    if (null != this.activeEntities) {
+      List<PassthroughRetirementManager.RetirementTuple> messagesToRetire = retirementManager.retireableListAfterMessageDone(messageRun);
+      for (PassthroughRetirementManager.RetirementTuple oneTuple : messagesToRetire) {
+        if (null != oneTuple.sender) {
+          oneTuple.sender.sendMessageToClient(this, oneTuple.response);
+        }
+      }
+    }
+  }
 
-  private void handleMessageRetirement(EntityMessage messageRun, PassthroughConnection sender, PassthroughMessage retired) {
+  private void handleMessageRetirement(PassthroughConnection sender, PassthroughMessage retired) {
     // We only send retirement messages if we are the active.
     if (null != this.activeEntities) {
       // Ask the retirement manager what to do with this.
       PassthroughRetirementManager.RetirementTuple tuple = new PassthroughRetirementManager.RetirementTuple(sender, retired.asSerializedBytes());
-      List<PassthroughRetirementManager.RetirementTuple> messagesToRetire = PassthroughServerProcess.this.retirementManager.retireableListAfterMessageDone(messageRun, tuple);
-      for (PassthroughRetirementManager.RetirementTuple oneTuple : messagesToRetire) {
-        if (null != oneTuple.sender) {
-          oneTuple.sender.sendMessageToClient(this, oneTuple.response);
+      if (!retirementManager.addRetirementTuple(tuple)) {
+        if (null != sender) {
+          sender.sendMessageToClient(this, tuple.response);
         }
       }
     }

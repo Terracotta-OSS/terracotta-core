@@ -18,8 +18,11 @@
  */
 package org.terracotta.passthrough;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.ExplicitRetirementHandle;
 import org.terracotta.entity.IEntityMessenger;
@@ -32,18 +35,16 @@ import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
 
 
-public class PassthroughMessengerService implements IEntityMessenger, EntityContainerListener {
+public class PassthroughMessengerService implements IEntityMessenger<EntityMessage, EntityResponse>, EntityContainerListener {
   private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughRetirementManager retirementManager;
-  private final PassthroughConnection pseudoConnection;
   private final DeferredEntityContainer entityContainer;
   private final String entityClassName;
   private final String entityName;
-  
-  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, PassthroughConnection pseudoConnection, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
+    
+  public PassthroughMessengerService(PassthroughTimerThread timerThread, PassthroughServerProcess passthroughServerProcess, DeferredEntityContainer entityContainer, boolean chain, String entityClassName, String entityName) {
     this.passthroughServerProcess = passthroughServerProcess;
     this.retirementManager = passthroughServerProcess.getRetirementManager();
-    this.pseudoConnection = pseudoConnection;
     // Note that we hold the entity container to get the codec but this container is deferred so we hold onto it, instead of
     // the codec (which probably isn't set yet).
     this.entityContainer = entityContainer;
@@ -61,7 +62,7 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   public void messageSelf(EntityMessage message) throws MessageCodecException {
     // Serialize the message.
     PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-    commonSendMessage(passthroughMessage);
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, passthroughMessage, null);
   }
 
   @Override
@@ -79,12 +80,12 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
 
         @Override
         public void release(Consumer consumer) throws MessageCodecException {
-          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage);
+          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage, null);
         }
 
         @Override
         public void release() throws MessageCodecException {
-          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage);
+          passthroughServerProcess.sendMessageToActiveFromInsideActive(futureMessage, futurePassThroughMessage, null);
         }
       };
     } catch (MessageCodecException e) {
@@ -96,43 +97,68 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
   @Override
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule) throws MessageCodecException {
     retirementManager.deferCurrentMessage(newMessageToSchedule);
-    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule,
-        makePassthroughMessage(newMessageToSchedule));
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, makePassthroughMessage(newMessageToSchedule), null);
   }
 
   @Override
-  public void messageSelf(EntityMessage message, Consumer response) throws MessageCodecException {
+  public void messageSelf(EntityMessage message, Consumer<MessageResponse<EntityResponse>> response) throws MessageCodecException {
     // Serialize the message.
-    PassthroughMessage passthroughMessage = makePassthroughMessage(message);
-    Future<byte[]> answer = commonSendMessage(passthroughMessage);
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(message, makePassthroughMessage(message), queueForComplete(response));
+  }
+  
+  private Consumer<PassthroughMessage> queueForComplete(Consumer<MessageResponse<EntityResponse>> response) {
     if (response != null) {
-      try {
-        byte[] data = answer.get();
-        MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
-        EntityResponse serializedMessage = codec.decodeResponse(data);
-        response.accept(serializedMessage);
-      } catch (InterruptedException | ExecutionException ie) {
-        throw new RuntimeException(ie);
-      }
+      return (msg)->{
+        try {
+          ByteArrayOutputStream bos = new ByteArrayOutputStream();
+          DataOutputStream dos = new DataOutputStream(bos);
+          msg.populateStream(dos);
+          dos.close();
+          ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+          DataInputStream dis = new DataInputStream(bis);
+          switch (msg.type) {
+          case MONITOR_MESSAGE: 
+          case MONITOR_EXCEPTION:
+          case COMPLETE_FROM_SERVER:
+          case EXCEPTION_FROM_SERVER:
+            boolean success = msg.type != PassthroughMessage.Type.MONITOR_EXCEPTION && msg.type != PassthroughMessage.Type.EXCEPTION_FROM_SERVER;
+            int len = dis.readInt();
+            byte[] data = new byte[len];
+            dis.readFully(data);
+            response.accept(new MessageResponse<EntityResponse>() {
+              @Override
+              public boolean wasExceptionThrown() {
+                return success;
+              }
+
+              @Override
+              public Exception getException() {
+                return (!success) ? PassthroughMessageCodec.deserializeExceptionFromArray(data) : null;
+              }
+
+              @Override
+              public EntityResponse getResponse() {
+                try {
+                  return (success) ? entityContainer.codec.decodeResponse(data) : null;
+                } catch (MessageCodecException io) {
+                  throw new RuntimeException(io);
+                }
+            }
+            });
+          }
+        } catch (IOException io) {
+          throw new RuntimeException(io);
+        }
+      };
     }
+    return null;
   }
 
   @Override
   public void messageSelfAndDeferRetirement(EntityMessage originalMessageToDefer, EntityMessage newMessageToSchedule, Consumer response) throws MessageCodecException {
     retirementManager.deferCurrentMessage(newMessageToSchedule);
     PassthroughMessage passthroughMessage = makePassthroughMessage(newMessageToSchedule);
-    Future<byte[]> answer = commonSendMessage(passthroughMessage);
-
-    if (response != null) {
-      try {
-        byte[] data = answer.get();
-        MessageCodec<EntityMessage, ?> codec = (MessageCodec<EntityMessage, ?>) this.entityContainer.codec;
-        EntityResponse serializedMessage = codec.decodeResponse(data);
-        response.accept(serializedMessage);
-      } catch (InterruptedException | ExecutionException ie) {
-        throw new RuntimeException(ie);
-      }
-    }
+    this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, passthroughMessage, queueForComplete(response));
   }
 
   @Override
@@ -150,15 +176,5 @@ public class PassthroughMessengerService implements IEntityMessenger, EntityCont
     boolean shouldReplicateToPassives = true;
     PassthroughMessage passthroughMessage = PassthroughMessageCodec.createInvokeMessage(this.entityClassName, this.entityName, clientInstanceID, serializedMessage, shouldReplicateToPassives);
     return passthroughMessage;
-  }
-
-  private Future<byte[]> commonSendMessage(PassthroughMessage passthroughMessage) {
-    boolean shouldWaitForSent = false;
-    boolean shouldWaitForReceived = false;
-    boolean shouldWaitForCompleted = false;
-    boolean shouldWaitForRetired = false;
-    boolean shouldBlockGetUntilRetire = false;
-    boolean deferred = false;
-    return this.pseudoConnection.invokeActionAndWaitForAcks(passthroughMessage, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, shouldBlockGetUntilRetire, deferred, null);
   }
 }

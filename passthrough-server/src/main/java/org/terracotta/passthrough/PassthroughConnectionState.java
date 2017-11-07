@@ -43,6 +43,10 @@ public class PassthroughConnectionState {
     this.inFlightMessages = new HashMap<Long, PassthroughWait>();
     this.nextTransactionID = 1;
   }
+  
+  public boolean isServerThread() {
+    return serverProcess.isServerThread();
+  }
 
   public synchronized PassthroughWait sendNormal(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, boolean deferred, PassthroughMonitor monitor) {
     // This uses the normal server process so wait for it to become available.

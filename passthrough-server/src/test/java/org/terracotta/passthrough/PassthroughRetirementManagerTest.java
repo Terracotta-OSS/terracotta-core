@@ -19,19 +19,18 @@ public class PassthroughRetirementManagerTest {
     PassthroughConnection connection = mock(PassthroughConnection.class);
     EntityMessage blockingMessage = mock(EntityMessage.class);
 
-    manager.setServerThread(Thread.currentThread());
     manager.deferCurrentMessage(blockingMessage);
 
     //inform manager that current message (deferred one) is completed
+    manager.addRetirementTuple(new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
     List<PassthroughRetirementManager.RetirementTuple> retirementTuples =
-        manager.retireableListAfterMessageDone(null,
-            new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
+        manager.retireableListAfterMessageDone(null);
     assertThat(retirementTuples, is(empty()));
 
     //inform manager that blocking message is completed
+    manager.addRetirementTuple(new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
     retirementTuples =
-        manager.retireableListAfterMessageDone(blockingMessage,
-            new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
+        manager.retireableListAfterMessageDone(blockingMessage);
     assertThat(retirementTuples.size(), is(2));
   }
 
@@ -41,26 +40,25 @@ public class PassthroughRetirementManagerTest {
     EntityMessage blockingMessage2 = mock(EntityMessage.class);
     PassthroughConnection connection = mock(PassthroughConnection.class);
 
-    manager.setServerThread(Thread.currentThread());
     manager.deferCurrentMessage(blockingMessage1);
     manager.deferCurrentMessage(blockingMessage2);
 
     //inform manager that current message (deferred one) is completed
+    manager.addRetirementTuple(new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
     List<PassthroughRetirementManager.RetirementTuple> retirementTuples =
-        manager.retireableListAfterMessageDone(null,
-            new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
+        manager.retireableListAfterMessageDone(null);
     assertThat(retirementTuples, is(empty()));
 
     //inform manager that first blocking message is completed
+    manager.addRetirementTuple(new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
     retirementTuples =
-        manager.retireableListAfterMessageDone(blockingMessage1,
-            new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
+        manager.retireableListAfterMessageDone(blockingMessage1);
     assertThat(retirementTuples, is(empty()));
 
     //inform manager that second blocking message is completed
+    manager.addRetirementTuple(new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
     retirementTuples =
-        manager.retireableListAfterMessageDone(blockingMessage2,
-            new PassthroughRetirementManager.RetirementTuple(connection, new byte[0]));
+        manager.retireableListAfterMessageDone(blockingMessage2);
     assertThat(retirementTuples.size(), is(3));
   }
 }

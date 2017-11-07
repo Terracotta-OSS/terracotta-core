@@ -19,10 +19,13 @@
 package org.terracotta.passthrough;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 import org.terracotta.entity.EntityMessage;
 
@@ -34,46 +37,22 @@ import org.terracotta.entity.EntityMessage;
  * concurrency key.
  */
 public class PassthroughRetirementManager {
-  // NOTE:  This implementation assumes a single-threaded server so we check that the given thread matches.
-  private Thread currentServerThread;
 
   // This implementation is VERY simple and makes a few corresponding assumptions about how it is being used:
   // -only one message is being run at any time
   // -it is acceptable to treat the logical ordering constraints as global, instead of just within a key
 
   // The list of blocked tuples.  These represent the "global logical ordering" of retirement.
-  private final List<RetirementTuple> blockedTuples;
+  private final LinkedList<RetirementTuple> blockedTuples;
   // The messages which are still blocking _some_ tuple in the blockedTuples list.
   private final Set<EntityMessage> blockingMessages;
 
-  private final List<EntityMessage> blockCurrentMessageOn = new ArrayList<>();
-  
-  private boolean holdCurrentMessage = false;
-
+  private final List<EntityMessage> blockCurrentMessageOn = new LinkedList<>();
 
   public PassthroughRetirementManager() {
-    this.blockedTuples = new Vector<RetirementTuple>();
-    this.blockingMessages = new HashSet<EntityMessage>();
+    this.blockedTuples = new LinkedList<>();
+    this.blockingMessages = Collections.newSetFromMap(new IdentityHashMap<>());
   }
-
-  /**
-   * Sets the server thread the receiver can expect to see making all calls.  This is how the single-threaded assumption is
-   * enforced within the code.
-   * Any previous value is over-written as the receiver may be re-used, despite a server process starting and stopping.
-   * 
-   * @param serverThread The server thread which will now be operating the receiver
-   */
-  public void setServerThread(Thread serverThread) {
-    this.currentServerThread = serverThread;
-  }
-
-  public void holdCurrentMessage() {
-    this.holdCurrentMessage = true;
-  }
-  
-  public void releaseCurrentMessage() {
-    this.holdCurrentMessage = false;
-  }  
   /**
    * Called to flag the currently executing message as one which must defer its retirement until the completion of the given
    * blockedOn message.
@@ -84,6 +63,18 @@ public class PassthroughRetirementManager {
   public synchronized void deferCurrentMessage(EntityMessage blockedOn) {
     this.blockCurrentMessageOn.add(blockedOn);
   }
+  
+  public synchronized boolean addRetirementTuple(RetirementTuple tuple) {
+    boolean didBlockTuple = false;
+    if (!this.blockedTuples.isEmpty() || !this.blockCurrentMessageOn.isEmpty()) {
+      this.blockingMessages.addAll(this.blockCurrentMessageOn);
+      tuple.blockedOn.addAll(this.blockCurrentMessageOn);
+      this.blockedTuples.add(tuple);
+      didBlockTuple = true;
+      this.blockCurrentMessageOn.clear();
+    }
+    return didBlockTuple;
+  }
 
   /**
    * Called to state that a message has completed execution and would like to retire.  This usually just returns the tuple
@@ -91,51 +82,30 @@ public class PassthroughRetirementManager {
    * 
    * @param completedInternalOrNull The completed message or null, if the message wasn't visible (this is ONLY non-null in
    * the cases where it was a message which blocked someone).
-   * @param tuple The tuple describing the retirement operation ready to run
    * @return A list of any unblocked retirement operations, in the order they must be run
    */
-  public synchronized List<RetirementTuple> retireableListAfterMessageDone(EntityMessage completedInternalOrNull, RetirementTuple tuple) {
-//    Assert.assertTrue(Thread.currentThread() == this.currentServerThread);
-    // Note that the message can be null if it isn't one which could unblock anything (only internally-created messages can
-    // unblock).
+  public synchronized List<RetirementTuple> retireableListAfterMessageDone(EntityMessage completedInternalOrNull) {
+    
     if (null != completedInternalOrNull) {
-      boolean didRemove = this.blockingMessages.remove(completedInternalOrNull);
-      Assert.assertTrue(didRemove);
+      this.blockingMessages.remove(completedInternalOrNull);
       for (RetirementTuple blockedTuple : blockedTuples) {
         blockedTuple.blockedOn.remove(completedInternalOrNull);
       }
     }
-    boolean didBlockTuple = false;
-    if (this.blockCurrentMessageOn.size() != 0) {
-      // We want to block tuple.
-      // We assume that the completed was null, in this case.
-      // (NOTE:  This might not be true if this is a "skip-stone" but we currently have no such use-case so this is useful
-      // debugging).
-      Assert.assertTrue(null == completedInternalOrNull);
-      boolean didAdd = this.blockingMessages.addAll(this.blockCurrentMessageOn);
-      Assert.assertTrue(didAdd);
-      tuple.blockedOn.addAll(this.blockCurrentMessageOn);
-      this.blockedTuples.add(tuple);
-      didBlockTuple = true;
-      this.blockCurrentMessageOn.clear();
-    }
 
     // Now, determine if anything is good to be retired.
-    List<RetirementTuple> readyToRetire = new Vector<RetirementTuple>();
-    while (this.blockedTuples.size() > 0 && this.blockedTuples.get(0).blockedOn.size() == 0) {
-      RetirementTuple readyTuple = this.blockedTuples.remove(0);
-      readyToRetire.add(readyTuple);
+    List<RetirementTuple> readyToRetire = new ArrayList<>();
+    Iterator<RetirementTuple> blocked = this.blockedTuples.iterator();
+    while (blocked.hasNext()) {
+      RetirementTuple check = blocked.next();
+      if (check.blockedOn.isEmpty()) {
+        blocked.remove();
+        readyToRetire.add(check);
+      } else {
+        break;
+      }
     }
-    
-    // Now, if there is anything left on the list and we didn't already add this, block it.
-    if ((this.blockedTuples.size() > 0) && !didBlockTuple) {
-      this.blockedTuples.add(tuple);
-      didBlockTuple = true;
-    }
-    // (otherwise, it can be returned, as well).
-    if (!didBlockTuple && !holdCurrentMessage) {
-      readyToRetire.add(tuple);
-    }
+
     return readyToRetire;
   }
 
@@ -144,7 +114,7 @@ public class PassthroughRetirementManager {
    */
   public static class RetirementTuple {
     // This blockedOn field is only set if we are put into the blocked list.
-    public Set<EntityMessage> blockedOn = new HashSet<>();
+    public Set<EntityMessage> blockedOn = Collections.newSetFromMap(new IdentityHashMap<>());
     public final PassthroughConnection sender;
     public final byte[] response;
     

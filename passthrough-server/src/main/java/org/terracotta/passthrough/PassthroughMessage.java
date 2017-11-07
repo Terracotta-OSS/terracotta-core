@@ -38,6 +38,7 @@ public abstract class PassthroughMessage {
     INVOKE_ON_SERVER,
     ACK_FROM_SERVER,
     COMPLETE_FROM_SERVER,
+    EXCEPTION_FROM_SERVER,
     RETIRE_FROM_SERVER,
     INVOKE_ON_CLIENT,
     RECONNECT,
@@ -49,6 +50,7 @@ public abstract class PassthroughMessage {
     UNEXPECTED_RELEASE,
     DROP_LOCK,
     MONITOR_MESSAGE,
+    MONITOR_EXCEPTION,
   }
 
   public static Type getType(DataInputStream input) throws IOException {

@@ -143,11 +143,10 @@ public class PassthroughMessageCodec {
   public static PassthroughMessage createMonitorMessage(final byte[] response, final EntityException error) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;
-    return new PassthroughMessage(Type.MONITOR_MESSAGE, shouldReplicateToPassives) {
+    boolean isSuccess = (null == error);
+    return new PassthroughMessage(isSuccess ? Type.MONITOR_MESSAGE : Type.MONITOR_EXCEPTION, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        boolean isSuccess = (null == error);
-        output.writeBoolean(isSuccess);
         if (isSuccess) {
           if (null != response) {
             output.writeInt(response.length);
@@ -166,11 +165,10 @@ public class PassthroughMessageCodec {
   public static PassthroughMessage createCompleteMessage(final byte[] response, final EntityException error) {
     // Replication ignored in this context.
     boolean shouldReplicateToPassives = false;
-    return new PassthroughMessage(Type.COMPLETE_FROM_SERVER, shouldReplicateToPassives) {
+    boolean isSuccess = (null == error);
+    return new PassthroughMessage(isSuccess ? Type.COMPLETE_FROM_SERVER : Type.EXCEPTION_FROM_SERVER, shouldReplicateToPassives) {
       @Override
       protected void populateStream(DataOutputStream output) throws IOException {
-        boolean isSuccess = (null == error);
-        output.writeBoolean(isSuccess);
         if (isSuccess) {
           if (null != response) {
             output.writeInt(response.length);
