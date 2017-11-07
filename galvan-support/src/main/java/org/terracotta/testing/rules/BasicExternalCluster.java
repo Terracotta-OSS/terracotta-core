@@ -136,7 +136,7 @@ class BasicExternalCluster extends Cluster {
     testParentDirectory.mkdir();
     List<String> serverJarPaths = convertToStringPaths(serverJars);
     int serverPort = new PortChooser().chooseRandomPort();
-    String debugPortString = System.getProperty("serverDebugStartPort");
+    String debugPortString = System.getProperty("serverDebugPortStart");
     int serverDebugStartPort = (null != debugPortString)
         ? Integer.parseInt(debugPortString)
         : 0;

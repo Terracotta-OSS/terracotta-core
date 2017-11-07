@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;

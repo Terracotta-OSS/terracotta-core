@@ -54,6 +54,20 @@ public class RetirementManagerTest {
   }
 
   @Test
+  public void testMultiHold() throws Exception {
+    Retiree resp = makeResponse();
+    EntityMessage msg = mock(EntityMessage.class);
+    registerWithMessage(resp, msg, 9);
+    retirementManager.holdMessage(msg);
+    retirementManager.holdMessage(msg);
+    retirementManager.releaseMessage(msg);
+    Assert.assertEquals(0, retirementManager.retireForCompletion(msg).size());
+    retirementManager.releaseMessage(msg);
+    Assert.assertEquals(1, retirementManager.retireForCompletion(msg).size());    
+  }
+
+  
+  @Test
   public void testSequenceOfRetires() throws Exception {
     int concurrencyKey = 1;
     for (int i = 0; i < 10; ++i) {
