@@ -97,4 +97,11 @@ public class PassiveResultCapture implements ResultCapture {
   public void message(byte[] message) {
     
   }
+
+  @Override
+  public void retired() {
+
+  }
+  
+  
 }

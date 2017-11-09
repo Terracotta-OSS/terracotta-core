@@ -16,17 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.api;
+package com.tc.object;
 
-import com.tc.objectserver.entity.ActivePassiveAckWaiter;
-import java.util.function.Supplier;
+import com.tc.entity.VoltronEntityMessage;
 
 /**
  *
  */
-public interface ResultCapture extends ServerEntityResponse {
-  void message(byte[] message);
-  void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
-  void waitForReceived();
-  void retired();
+public interface AckMonitor {
+  void ackDelivered(VoltronEntityMessage.Acks ack);
 }

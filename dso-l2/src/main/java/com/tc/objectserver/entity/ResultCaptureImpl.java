@@ -105,4 +105,11 @@ public class ResultCaptureImpl implements ResultCapture {
   public void message(byte[] m) {
     message.accept(m);
   }
+
+  @Override
+  public void retired() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+  
+  
 }

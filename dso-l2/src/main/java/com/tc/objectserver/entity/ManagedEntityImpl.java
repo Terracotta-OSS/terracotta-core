@@ -38,6 +38,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.api.ResultCapture;
+import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -789,8 +790,23 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
       } else {
+        this.retirementManager.registerWithMessage(em, concurrencyKey, new Retiree() {
+          @Override
+          public void retired() {
+            response.retired();
+          }
+
+          @Override
+          public TransactionID getTransaction() {
+            return wrappedRequest.getTransaction();
+          }
+
+          @Override
+          public String getTraceID() {
+            return wrappedRequest.getTraceID();
+          }
+        });
         try {
-          this.retirementManager.registerWithMessage(em, concurrencyKey);
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
           if (loc.runOnActive()) {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
@@ -801,20 +817,26 @@ public class ManagedEntityImpl implements ManagedEntity {
                   (r)->response.message(decodeResponse(r)), 
                   (e)->response.failure(convertException(e)),
                   ()->{
-                    retirementManager.releaseMessage(em);
-                    retirementManager.retireMessage(em);
+                    // returns true of the message has been completed 
+                    // and held count is zero so the message should be retired
+                    if (retirementManager.releaseMessage(em)) {
+                      retirementManager.retireMessage(em);
+                    }
                   }
               ), em);
             byte[] er = resp == null ? new byte[0] : runWithHelper(()->codec.encodeResponse(resp));
             trace.end();
             response.complete(er);
+            retirementManager.retireMessage(em);
           } else {
             response.complete(new byte[0]);
+            retirementManager.retireMessage(em);
           }
         } catch (EntityUserException e) {
           //on Active, log error and send the exception to the client - don't crash server
           logger.error("Caught EntityUserException during invoke", e);
           response.failure(new VoltronEntityUserExceptionWrapper(e));
+          retirementManager.retireMessage(em);
         }
       }
     } else {

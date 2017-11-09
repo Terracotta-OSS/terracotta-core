@@ -368,6 +368,27 @@ public class RetirementManagerTest {
     retireList.forEach(r->r.retired());
   }
   
+  
+  @Test
+  public void testCloseBeforeRetire() throws Exception {
+    Retiree invokeRequest1 = makeResponse();
+    EntityMessage invokeMessage1 = mock(EntityMessage.class);    
+    
+    registerWithMessage(invokeRequest1, invokeMessage1, 1);
+    
+    this.retirementManager.holdMessage(invokeMessage1);
+    
+    boolean readyForRetire = this.retirementManager.releaseMessage(invokeMessage1);
+    
+    Assert.assertFalse(readyForRetire);
+
+    List<Retiree> retireList = this.retirementManager.retireForCompletion(invokeMessage1);
+    
+    Assert.assertEquals(1, retireList.size());
+
+    retireList.forEach(r->r.retired());
+  }
+  
   @Test
   public void testChainedRetirementOnMultipleKeys() throws Exception {
     Retiree invokeRequest1 = makeResponse();
@@ -445,7 +466,6 @@ public class RetirementManagerTest {
   
   
   private void registerWithMessage(Retiree resp, EntityMessage message, int concurrency) {
-    this.retirementManager.registerWithMessage(message, concurrency);
-    this.retirementManager.updateWithRetiree(message, resp);
+    this.retirementManager.registerWithMessage(message, concurrency, resp);
   }  
 }

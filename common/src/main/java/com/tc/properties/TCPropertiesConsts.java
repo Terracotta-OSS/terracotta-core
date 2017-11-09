@@ -49,6 +49,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String ENTITY_PROCESSOR_THREADS                                    = "server.entity.processor.threads";
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
+  public static final String L2_SEDA_STAGE_DISABLE_DIRECT_SINKS                                    = "l2.seda.stage.sink.disable.direct";
   String L2_TCCOM_WORKERTHREADS                                                          = "l2.tccom.workerthreads";
   String L2_SEDA_STAGE_WORKERTHREADS                                                     = "l2.seda.stage.workerthreads";
 
@@ -391,6 +392,7 @@ public interface TCPropertiesConsts {
       ENTITY_PROCESSOR_THREADS,
       L2_TCCOM_WORKERTHREADS,
       L2_SEDA_STAGE_WORKERTHREADS,
+      L2_SEDA_STAGE_DISABLE_DIRECT_SINKS,
       L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
       CLIENT_MAX_PENDING_REQUESTS,
       CLIENT_MAX_SENT_REQUESTS,

@@ -52,10 +52,10 @@ public class RequestProcessor {
   private boolean isActive = false;
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   
-  public RequestProcessor(StageManager stageManager) {
+  public RequestProcessor(StageManager stageManager, boolean use_direct) {
     int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
-    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize, true).getSink();
-    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, Runnable.class, new RequestProcessorHandler(), 4, maxStageSize, true).getSink();
+    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), L2Utils.getOptimalApplyStageWorkerThreads(true), maxStageSize, use_direct).getSink();
+    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, Runnable.class, new RequestProcessorHandler(), 4, maxStageSize, use_direct).getSink();
   }
 //  TODO: do some accounting for transaction de-dupping on failover
   public RequestProcessor(Sink<Runnable> requestExecution) {
