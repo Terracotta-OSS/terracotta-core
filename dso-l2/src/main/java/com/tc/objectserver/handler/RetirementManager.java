@@ -67,17 +67,13 @@ public class RetirementManager {
     }
   }
   
-  public synchronized void releaseMessage(EntityMessage invokeMessage) {
-    this.currentlyRunning.computeIfPresent(invokeMessage, (m, ls)->ls.release());
-  }
-  
-  public synchronized void updateWithRetiree(EntityMessage invokeMessage, Retiree response) {
-    if (this.currentlyRunning.computeIfPresent(invokeMessage, (i,l)->l.updateWithRetiree(response)) == null) {
-      throw new AssertionError();
-    }
+  public synchronized boolean releaseMessage(EntityMessage invokeMessage) {
+    // must be non-null so compute.  retireMessage
+    // outside the synchronized block if the message is complete and heldCount is zero
+    return this.currentlyRunning.compute(invokeMessage, (m, ls)->ls.release()).isRetireable();
   }
 
-  public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey) {
+  public synchronized void registerWithMessage(EntityMessage invokeMessage, int concurrencyKey, Retiree retiree) {
     LogicalSequence newWrapper = new LogicalSequence(invokeMessage, concurrencyKey);
     // if concurrencyKey is UNIVERSAL_KEY, then current request doesn't need to wait for other requests running on
     // UNIVERSAL_KEY
@@ -96,6 +92,7 @@ public class RetirementManager {
       newWrapper.deferNotify = toUpdateWithReference;
     }
 
+    newWrapper.updateWithRetiree(retiree);
     LogicalSequence previous = this.currentlyRunning.put(invokeMessage, newWrapper);
     // We can't find something else there.
     Assert.assertNull(previous);
@@ -108,9 +105,10 @@ public class RetirementManager {
    * @param completedMessage
    * @return
    */
-  public synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
+  synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
     List<Retiree> toRetire = new ArrayList<>();
-    this.currentlyRunning.computeIfPresent(completedMessage, (m,ls)->{
+    //  must be non-null if called
+    this.currentlyRunning.compute(completedMessage, (m,ls)->{
       if (ls.heldCount > 0) {
         ls.isCompleted = true;
         return ls;
@@ -264,6 +262,10 @@ public class RetirementManager {
       heldCount -= 1;
       Assert.assertTrue(heldCount >= 0);
       return this;
+    }
+    
+    public boolean isRetireable() {
+      return heldCount == 0 && isCompleted;
     }
     
     @Override

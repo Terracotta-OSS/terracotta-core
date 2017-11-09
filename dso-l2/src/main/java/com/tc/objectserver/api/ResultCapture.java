@@ -28,4 +28,5 @@ public interface ResultCapture extends ServerEntityResponse {
   void message(byte[] message);
   void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
   void waitForReceived();
+  void retired();
 }

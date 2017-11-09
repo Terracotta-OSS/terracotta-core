@@ -363,17 +363,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
       ManagedEntity entity = optionalEntity.get();
       // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
       if (ServerEntityAction.INVOKE_ACTION == action) {
-        InvokeHandler handler = new InvokeHandler(entity, request, chaincomplete, chainfail);
-        try {
-          if(transactionOrderPersistenceFuture != null) {
-            transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
-          }
-          handler.setEntityMessage(entityMessage.decodeMessage(raw->entity.getCodec().decodeMessage(raw)));
-          entity.addRequestMessage(handler, entityMessage, handler);
-        } catch (MessageCodecException codec) {
-          handler.failure(new VoltronEntityUserExceptionWrapper(new EntityUserException("Caught MessageCodecException while decoding message", codec)));
-          handler.retired();
+        InvokeHandler handler = new InvokeHandler(request, chaincomplete, chainfail);
+        if(transactionOrderPersistenceFuture != null) {
+          transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
         }
+        entity.addRequestMessage(handler, entityMessage, handler);
       } else if (action.isLifecycle()) {
         EntityID eid;
         long version;
@@ -633,19 +627,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
   
   private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture {
     private Supplier<ActivePassiveAckWaiter> waiter;
-    private final ManagedEntity entity;
-    private EntityMessage rootMessage;
     private final SetOnceFlag sent = new SetOnceFlag();
 
-    InvokeHandler(ManagedEntity entity, ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure) {
+    InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure) {
       super(request, complete, failure);
-      this.entity = entity;
     }
     
-    void setEntityMessage(EntityMessage message) {
-      this.rootMessage = message;
-    }
-
     @Override
     public Optional<MessageChannel> getReturnChannel() {
       return safeGetChannel(getNodeID());
@@ -691,7 +678,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
     
     private void sendResponse(byte[] result) {
-      update();
       if (sent.attemptSet()) {
         if (getNodeID().isNull()) {
           super.complete(result);
@@ -699,46 +685,32 @@ public class ProcessTransactionHandler implements ReconnectListener {
           addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
         }
       }
-      entity.getRetirementManager().retireMessage(rootMessage);
     }
     
     private void sendFailure(EntityException failure) {
-      sent.attemptSet(); //  set the flag if it has not been set
-      if (getNodeID().isNull()) {
-        super.failure(failure);
+      if (sent.attemptSet()) {
+        if (getNodeID().isNull()) {
+          super.failure(failure);
+        } else {
+          safeGetChannel(getNodeID()).ifPresent(channel -> {
+            VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+            failMessage.setFailure(getTransaction(), failure);
+            invokeReturn.put(getNodeID(), failMessage);
+            multiSend.addSingleThreaded(failMessage);
+          });
+        }
       } else {
-        safeGetChannel(getNodeID()).ifPresent(channel -> {
-          VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-          failMessage.setFailure(getTransaction(), failure);
-          invokeReturn.put(getNodeID(), failMessage);
-          multiSend.addSingleThreaded(failMessage);
-        });
+        throw new AssertionError();
       }
-      entity.getRetirementManager().releaseMessage(rootMessage);
-      entity.getRetirementManager().retireMessage(rootMessage);
     }
-
-    private void update() {
-      entity.getRetirementManager().updateWithRetiree(rootMessage, new Retiree() {        
-        @Override
-        public void retired() {
-          if (!getNodeID().isNull()) {
-            Assert.assertTrue(sent.isSet());
-            addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));
-          }
-        }
-
-        @Override
-        public TransactionID getTransaction() {
-          return InvokeHandler.this.getTransaction();
-        }
-
-        @Override
-        public String getTraceID() {
-          return InvokeHandler.this.getTraceID();
-        }
-      });
-    }    
+    
+    @Override
+    public void retired() {
+      if (!getNodeID().isNull()) {
+        Assert.assertTrue(sent.isSet());
+        addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));
+      }
+    }
   }
   
   private class LifecycleResultsCapture extends AbstractServerEntityRequestResponse implements ResultCapture {
@@ -767,6 +739,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
     @Override
     public boolean requiresReceived() {
       return true;
+    }
+
+    @Override
+    public void retired() {
+      Assert.fail("retired should never be called on a lifecycle operation");
     }
 
     @Override
