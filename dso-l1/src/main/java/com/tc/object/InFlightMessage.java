@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.entity.InvokeMonitor;
 
 
 /**
@@ -119,29 +118,20 @@ public class InFlightMessage {
   
   public void waitForAcks(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
     Trace.activeTrace().log("InFlightMessage.waitForAcks");
-    timedWait(new Callable() {
-      @Override
-      public Object call() throws Exception {
-        return pendingAcks.isEmpty();
-      }
-    }, timeout, unit);
+    timedWait(() -> pendingAcks.isEmpty(), timeout, unit);
   }
   
   public synchronized void sent() {
-    trace.log("Received ACK: " + VoltronEntityMessage.Acks.SENT);
-    if (this.pendingAcks.remove(VoltronEntityMessage.Acks.SENT)) {
-      if (this.pendingAcks.isEmpty()) {
-        notifyAll();
-      }
+    ackDelivered(VoltronEntityMessage.Acks.SENT);
+    if (this.pendingAcks.isEmpty()) {
+      notifyAll();
     }
   }
 
   public synchronized void received() {
-    trace.log("Received ACK: " + VoltronEntityMessage.Acks.RECEIVED);
-    if (this.pendingAcks.remove(VoltronEntityMessage.Acks.RECEIVED)) {
-      if (this.pendingAcks.isEmpty()) {
-        notifyAll();
-      }
+    ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
+    if (this.pendingAcks.isEmpty()) {
+      notifyAll();
     }
   }
 
@@ -203,8 +193,12 @@ public class InFlightMessage {
 
   public synchronized void setResult(byte[] value, EntityException error) {
     trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
-    this.pendingAcks.remove(VoltronEntityMessage.Acks.RECEIVED);
-    this.pendingAcks.remove(VoltronEntityMessage.Acks.COMPLETED);
+    ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
+    ackDelivered(VoltronEntityMessage.Acks.COMPLETED);
+    if (pendingAcks.isEmpty()) {
+      notifyAll();
+    }
+
     if (error != null) {
       Assert.assertNull(value);
       this.pendingAcks.clear();
@@ -241,10 +235,16 @@ public class InFlightMessage {
   public synchronized void handleMessage(byte[] raw) {
     pushOneMessage(raw);
   }
+  
+  private void ackDelivered(VoltronEntityMessage.Acks ack) {
+    trace.log("Received ACK: " + ack);
+    if (this.pendingAcks.remove(ack) && monitor != null) {
+      monitor.ackDelivered(ack);
+    }
+  }
 
   public synchronized void retired() {
-    trace.log("Received ACK: " + VoltronEntityMessage.Acks.RETIRED);
-    this.pendingAcks.remove(VoltronEntityMessage.Acks.RETIRED);
+    ackDelivered(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
       this.getCanComplete = true;
     }

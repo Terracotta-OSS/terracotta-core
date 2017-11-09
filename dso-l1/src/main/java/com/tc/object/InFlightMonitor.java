@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import com.tc.entity.VoltronEntityMessage.Acks;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
@@ -27,13 +28,13 @@ import org.terracotta.entity.MessageCodecException;
 
 
 
-public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[]>, AutoCloseable {
+public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[]>, AckMonitor, AutoCloseable {
   private final InvokeMonitor<R> monitor;
   private final MessageCodec<?, R> codec;
   private final Executor executor;
 
   public InFlightMonitor(MessageCodec<?, R> codec, InvokeMonitor<R> monitor, Executor executor) {
-    this.monitor = monitor;
+    this.monitor = monitor == null ? (r)->{} : monitor;
     this.codec = codec;
     this.executor = executor;
   }
@@ -41,7 +42,7 @@ public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[
   @Override
   public void accept(byte[] t) {
     try {
-      monitor.accept(codec.decodeResponse(t));
+      deliverMessage(codec.decodeResponse(t));
     } catch (MessageCodecException ex) {
       throw new RuntimeException(ex);
     }
@@ -52,6 +53,13 @@ public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[
       executor.execute(()->monitor.accept(er));
     } else {
       monitor.accept(er);
+    }
+  }
+
+  @Override
+  public void ackDelivered(Acks ack) {
+    if (monitor instanceof AckMonitor) {
+      ((AckMonitor)monitor).ackDelivered(ack);
     }
   }
 
