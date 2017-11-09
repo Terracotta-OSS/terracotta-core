@@ -29,11 +29,23 @@ public class PassthroughMonitor<R extends EntityResponse> {
       throw new RuntimeException(codec);
     }
     final R lock = response;
-    executor.execute(()->monitor.accept(lock));
+    if (monitor != null) {
+      if (executor != null) {
+        executor.execute(()->monitor.accept(lock));
+      } else {
+        monitor.accept(lock);
+      }
+    }
   }
   
   public void sendException(EntityException exp) {
-    executor.execute(()->monitor.exception(exp));
+    if (monitor != null) {
+      if (executor != null) {
+        executor.execute(()->monitor.exception(exp));
+      } else {
+        monitor.exception(exp);
+      }
+    }
   }
   
 }
