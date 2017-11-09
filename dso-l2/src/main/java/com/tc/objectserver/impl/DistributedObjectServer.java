@@ -407,7 +407,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     serverName = serverName.replace('.', '-');
     serverName = serverName.replace(':', '$');
 
-    final int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
+    final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final StageManager stageManager = this.seda.getStageManager();
 
     this.sampledCounterManager = new CounterManagerImpl();
@@ -501,7 +501,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
 
-    final MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     
@@ -615,7 +615,11 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
 
-    RequestProcessor processor = new RequestProcessor(stageManager);
+    boolean USE_DIRECT = !tcProperties.getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_DISABLE_DIRECT_SINKS, false);
+    if (!USE_DIRECT) {
+      logger.info("disabling the use for direct sinks");
+    }
+    RequestProcessor processor = new RequestProcessor(stageManager, USE_DIRECT);
     
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
@@ -623,8 +627,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
-    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, true);
-    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, true);
+    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, USE_DIRECT);
+    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, USE_DIRECT);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
@@ -647,7 +651,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
-    HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, TCPropertiesImpl.getProperties());
+    HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,

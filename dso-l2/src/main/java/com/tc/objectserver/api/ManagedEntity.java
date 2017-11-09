@@ -24,7 +24,6 @@ import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
-import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.Map;
 import org.terracotta.entity.CommonServerEntity;
