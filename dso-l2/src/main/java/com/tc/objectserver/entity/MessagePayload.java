@@ -51,6 +51,7 @@ public class MessagePayload {
 
   private final byte[] raw;
   private EntityMessage message;
+  private MessageCodecException exception;
   private final int concurrency;
   private final int referenceCount;
   private final boolean replicate;
@@ -86,21 +87,20 @@ public class MessagePayload {
   public boolean canBeBusy() {
     return canBeBusy;
   }
-  
-  public EntityMessage decodeRawMessage(MessageDecoder codec) {
-    try {
-      return decodeMessage(codec);
-    } catch (MessageCodecException mce) {
-      throw new RuntimeException(mce);
-    }
-  }
 
   public EntityMessage decodeMessage(MessageDecoder codec) throws MessageCodecException {
-    if (message == null) {
-      message = codec.decode(raw);
-      setDebugId(message.toString());
+    if (exception != null) {
+      throw exception;
     }
-    return message;
+    try {
+      if (message == null) {
+        message = codec.decode(raw);
+      }
+      return message;
+    } catch (MessageCodecException ce) {
+      exception = ce;
+      throw exception;
+    }
   }
   
   public int getConcurrency() {

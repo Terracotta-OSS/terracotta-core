@@ -84,6 +84,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
@@ -344,7 +345,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void processInvokeRequest(final ServerEntityRequest request, ResultCapture response, MessagePayload message, int key) {
     Trace.activeTrace().log("ManagedEntityImpl.processInvokeRequest");
     if (isInActiveState) {
-      key = this.concurrencyStrategy.concurrencyKey(message.decodeRawMessage(raw->this.codec.decodeMessage(raw)));
+      try {
+        key = this.concurrencyStrategy.concurrencyKey(message.decodeMessage(raw->this.codec.decodeMessage(raw)));
+      } catch (MessageCodecException codec) {
+        // use the universal key because this is going to result in error downstream
+        key = ConcurrencyStrategy.UNIVERSAL_KEY;
+      }
     }
     int locked = key;
     scheduleInOrder(request, response, message, ()->invoke(request, response, message, locked), locked);
@@ -422,18 +428,23 @@ public class ManagedEntityImpl implements ManagedEntity {
     props.put("entityState", mapped.getMap());
     return props;
   }
-
-  private static interface CodecHelper<R> {
-    public R run() throws MessageCodecException;
-  }
-  private <R> R runWithHelper(CodecHelper<R> helper) throws EntityUserException {
-    R message;
+  
+  private byte[] encodeResponse(EntityResponse payload, ResultCapture capture) {
     try {
-      message = helper.run();
-    } catch (MessageCodecException deserializationException) {
-      throw new EntityUserException("caught exception during invoke ", deserializationException);
+      return payload == null ? new byte[0] : codec.encodeResponse(payload);
+    } catch (MessageCodecException ce) {
+      capture.failure(new EntityServerException(id.getClassName(), id.getEntityName(), "error encoding response", ce));
     }
-    return message;
+    return null;
+  }
+  
+  private EntityMessage decodeMessage(MessagePayload payload, ResultCapture capture) {
+    try {
+      return payload.decodeMessage(r->codec.decodeMessage(r));
+    } catch (MessageCodecException ce) {
+      capture.failure(new EntityServerException(id.getClassName(), id.getEntityName(), "error parsing message", ce));
+    }
+    return null;
   }
   
   private void invokeLifecycleOperation(final ServerEntityRequest request, MessagePayload payload, ResultCapture resp) {
@@ -540,7 +551,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         switch (request.getAction()) {
           case INVOKE_ACTION:
-            performAction(request, response, message, concurrencyKey);
+            Optional.ofNullable(decodeMessage(message, response))
+                .ifPresent(em->performAction(request, em , response, concurrencyKey));
             break;
           case REQUEST_SYNC_ENTITY:
             performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
@@ -622,9 +634,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     try {
 
       this.passiveServerEntity.invokePassive(new InvokeContextImpl(message.getConcurrency()),
-                                             message.decodeRawMessage(raw -> syncCodec.decode(message.getConcurrency(),
+                                             message.decodeMessage(raw -> syncCodec.decode(message.getConcurrency(),
                                                                                               raw)));
-    } catch (EntityUserException e) {
+    } catch (EntityUserException | MessageCodecException e) {
       logger.error("Caught EntityUserException during sync invoke", e);
       throw new RuntimeException("Caught EntityUserException during sync invoke", e);
     }
@@ -775,8 +787,8 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
   
   private void performAction(ServerEntityRequest wrappedRequest,
+                             EntityMessage message,
                              ResultCapture response,
-                             MessagePayload message,
                              int concurrencyKey) {
     Trace.activeTrace().log("ManagedEntityImpl.performAction");
     Assert.assertNotNull(message);
@@ -784,13 +796,13 @@ public class ManagedEntityImpl implements ManagedEntity {
                                                                      wrappedRequest.getClientInstance());
     long currentId = wrappedRequest.getTransaction().toLong();
     long oldestId = wrappedRequest.getOldestTransactionOnClient().toLong();
-    EntityMessage em = message.decodeRawMessage(raw->this.codec.decodeMessage(raw));
-    Trace.activeTrace().log("invoking " + em);
+
+    Trace.activeTrace().log("invoking " + message);
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
+        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
       } else {
-        this.retirementManager.registerWithMessage(em, concurrencyKey, new Retiree() {
+        this.retirementManager.registerWithMessage(message, concurrencyKey, new Retiree() {
           @Override
           public void retired() {
             response.retired();
@@ -807,41 +819,43 @@ public class ManagedEntityImpl implements ManagedEntity {
           }
         });
         try {
-          ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(em);
+          ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(message);
           if (loc.runOnActive()) {
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
               new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId, 
-                  ()->retirementManager.holdMessage(em),
+                  ()->retirementManager.holdMessage(message),
                   (r)->response.message(decodeResponse(r)), 
                   (e)->response.failure(convertException(e)),
                   ()->{
                     // returns true of the message has been completed 
                     // and held count is zero so the message should be retired
-                    if (retirementManager.releaseMessage(em)) {
-                      retirementManager.retireMessage(em);
+                    if (retirementManager.releaseMessage(message)) {
+                      retirementManager.retireMessage(message);
                     }
                   }
-              ), em);
-            byte[] er = resp == null ? new byte[0] : runWithHelper(()->codec.encodeResponse(resp));
+              ), message);
+            byte[] er = encodeResponse(resp, response);
             trace.end();
-            response.complete(er);
-            retirementManager.retireMessage(em);
+            if (er != null) {
+              response.complete(er);
+            }
+            retirementManager.retireMessage(message);
           } else {
             response.complete(new byte[0]);
-            retirementManager.retireMessage(em);
+            retirementManager.retireMessage(message);
           }
         } catch (EntityUserException e) {
           //on Active, log error and send the exception to the client - don't crash server
           logger.error("Caught EntityUserException during invoke", e);
           response.failure(new VoltronEntityUserExceptionWrapper(e));
-          retirementManager.retireMessage(em);
+          retirementManager.retireMessage(message);
         }
       }
     } else {
       if (null == this.passiveServerEntity) {
-        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.getDebugId());
+        throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
       } else {
         try {
           Trace trace = Trace.activeTrace().subTrace("invokePassive");
@@ -851,7 +865,7 @@ public class ManagedEntityImpl implements ManagedEntity {
                                   concurrencyKey,
                                   oldestId,
                                   currentId),
-            em);
+            message);
           trace.end();
         } catch (EntityUserException e) {
           //on passives, just log the exception - don't crash server
@@ -1210,9 +1224,13 @@ public class ManagedEntityImpl implements ManagedEntity {
           break;
       }
       if (isActive() && request.getAction() == ServerEntityAction.INVOKE_ACTION) {
-        ExecutionStrategy.Location loc = executionStrategy.getExecutionLocation(payload.decodeRawMessage(raw->codec.decodeMessage(raw)));
-        if (loc != ExecutionStrategy.Location.IGNORE) {
-          replicate = loc.runOnPassive();
+        try {
+          ExecutionStrategy.Location loc = executionStrategy.getExecutionLocation(payload.decodeMessage(raw->codec.decodeMessage(raw)));
+          if (loc != ExecutionStrategy.Location.IGNORE) {
+            replicate = loc.runOnPassive();
+          }
+        } catch (MessageCodecException codec) {
+          replicate = false;
         }
       } 
       executor.scheduleRequest(interop.isSyncing(), id, version, fetchID, request, payload, this, replicate, concurrency);
@@ -1367,12 +1385,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     public void synchronizeToPassive(EntityMessage payload) {
       for (NodeID passive : passives) {
         try {
-          byte[] message = runWithHelper(()->syncCodec.encode(concurrencyKey, payload));
+          byte[] message = syncCodec.encode(concurrencyKey, payload);
           executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
                                                                              concurrencyKey, message, ""), passive).waitForReceived();
-        } catch (EntityUserException eu) {
-        // TODO: do something reasoned here
-          throw new RuntimeException(eu);
+        } catch (MessageCodecException ce) {
+          throw new RuntimeException(ce);
         }
       }
     }
