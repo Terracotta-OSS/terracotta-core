@@ -628,6 +628,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture {
     private Supplier<ActivePassiveAckWaiter> waiter;
     private final SetOnceFlag sent = new SetOnceFlag();
+    private final SetOnceFlag failure = new SetOnceFlag();
 
     InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure) {
       super(request, complete, failure);
@@ -678,23 +679,25 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
     
     private void sendResponse(byte[] result) {
-      if (sent.attemptSet()) {
+      if (!failure.isSet() && sent.attemptSet()) {
         if (getNodeID().isNull()) {
           super.complete(result);
         } else {
           addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
         }
+      } else {
+        throw new AssertionError();
       }
     }
     
-    private void sendFailure(EntityException failure) {
-      if (sent.attemptSet()) {
+    private void sendFailure(EntityException exception) {
+      if (failure.attemptSet()) {
         if (getNodeID().isNull()) {
-          super.failure(failure);
+          super.failure(exception);
         } else {
           safeGetChannel(getNodeID()).ifPresent(channel -> {
             VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-            failMessage.setFailure(getTransaction(), failure);
+            failMessage.setFailure(getTransaction(), exception);
             invokeReturn.put(getNodeID(), failMessage);
             multiSend.addSingleThreaded(failMessage);
           });
