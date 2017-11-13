@@ -28,7 +28,6 @@ import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
-import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -46,7 +45,6 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
-import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.AbstractServerEntityRequestResponse;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
@@ -80,8 +78,6 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -384,15 +380,17 @@ public class ProcessTransactionHandler implements ReconnectListener {
         LifecycleResultsCapture capture = new LifecycleResultsCapture(eid, version, consumerID, request, chaincomplete, chainfail, entityMessage.getRawPayload(), isReplicatedMessage);
         capture.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
         entity.addRequestMessage(capture, entityMessage, capture);        
-      } else {
-        if (action == ServerEntityAction.MANAGED_ENTITY_GC && entity.isRemoveable()) {
+      } else if (action == ServerEntityAction.MANAGED_ENTITY_GC && entity.isRemoveable()) {
+        // MANAGED_ENTITY_GC may not be removeable if the entity was immediately recreated 
+        // after destroy.  If this is the case, just schedule the action and it will act like a flush
           LOGGER.debug("removing " + entity.getID());
           entityManager.removeDestroyed(descriptor.getFetchID());
-        }
+          //  no need to schedule for an entity that is removed
+      } else {
         ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
         rr.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
         entity.addRequestMessage(rr, entityMessage, rr);
-      } 
+      }
       trace.end();
     }
   }

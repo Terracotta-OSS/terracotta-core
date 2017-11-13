@@ -20,76 +20,46 @@ package com.tc.objectserver.entity;
 
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
-import com.tc.util.concurrent.SetOnceFlag;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.exception.EntityException;
 
 /**
  *
  */
  
-public class PassiveResultCapture implements ResultCapture {
-  private final Runnable received;
-  private final Consumer<byte[]> result;
-  private final Consumer<EntityException> error;
-  private final SetOnceFlag receivedSent = new SetOnceFlag();
-  private static final Logger LOGGER = LoggerFactory.getLogger(PassiveResultCapture.class);
+public class NoopResultCapture implements ResultCapture {
   
-  public PassiveResultCapture(Runnable received, Consumer<byte[]> result, Consumer<EntityException> error) {
-    this.received = received;
-    this.result = result;
-    this.error = error;
+  public NoopResultCapture() {
   }
 
+  @Override
   public void setWaitFor(Supplier<ActivePassiveAckWaiter> waitFor) {
 
   }
 
+  @Override
   public void waitForReceived() {
 
   }
 
+  @Override
   public void received() {
-    Trace.activeTrace().log("received ");
-    this.receivedSent.set();
-    if (received != null) {
-      received.run();
-    }
+    Trace.activeTrace().log("Received");
   }
 
+  @Override
   public void complete() {
     Trace.activeTrace().log("Completed without result ");
-    if (!this.receivedSent.isSet()) {
-      received();
-    }
-    if (result != null) {
-      result.accept(null);
-    }
   }  
 
   @Override
   public void complete(byte[] value) {
-    Trace.activeTrace().log("Completed with result: " + value);
-    if (!this.receivedSent.isSet()) {
-      received();
-    }
-    if (result != null) {
-      result.accept(value);
-    }
+    Trace.activeTrace().log("Completed with result of length " + value.length);
   }
 
   @Override
   public void failure(EntityException ee) {
     Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
-    if (!this.receivedSent.isSet()) {
-      received();
-    }
-    if (error != null) {
-      error.accept(ee);
-    }
   }
   
   @Override
@@ -99,7 +69,7 @@ public class PassiveResultCapture implements ResultCapture {
 
   @Override
   public void retired() {
-
+    Trace.activeTrace().log("Retired");
   }
   
   

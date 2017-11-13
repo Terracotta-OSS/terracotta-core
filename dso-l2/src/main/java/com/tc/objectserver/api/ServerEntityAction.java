@@ -115,12 +115,13 @@ public enum ServerEntityAction {
   // ***** END: Messages specific to received passive synchronization data *****
   /**
    * An action which should never be replicated, just used to synchronize on the
-   * flush of local executor queues.
+   * flush of local executor queues. Scheduled on the UNIVERSAL_KEY
    */
   LOCAL_FLUSH,
   /**
    * An action which should never be replicated, just used to clean up a deleted
-   * entity, after a pipeline flush.
+   * entity, after a pipeline flush.  Also used by passives before failover to 
+   * flush the entities requests through the entire pipeline.  Scheduled on the MANAGEMENT_KEY
    */
   MANAGED_ENTITY_GC,
   /**

@@ -95,8 +95,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<>(context);
     deliverToQueue("Single", wrapper);
   }
 
@@ -111,9 +110,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
-    MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
-    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<>(context);
     deliverToQueue("Multi", wrapper);
   }
 

@@ -37,6 +37,7 @@ public class DirectSink<EC> implements Sink<EC> {
   private final EventHandler<EC> handler;
   private final Supplier<Boolean> isIdle;
   private final StageQueue<EC> ifNotDirect;
+  private volatile boolean directInflight = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(DirectSink.class);
   private static final ThreadLocal<Thread> ACTIVATED = new ThreadLocal<>();
 
@@ -54,13 +55,19 @@ public class DirectSink<EC> implements Sink<EC> {
     if (isSingleThreaded()) {
       try {
         Assert.assertTrue(isIdle.get());
+        directInflight = true;
         handler.handleEvent(context);
+        directInflight = false;
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
         throw new RuntimeException(ee);
       }
     } else {
-      this.ifNotDirect.addSingleThreaded(context);
+      if (directInflight) {
+        throw new AssertionError();
+      } else {
+        this.ifNotDirect.addSingleThreaded(context);
+      }
     }
   }
 
@@ -70,13 +77,19 @@ public class DirectSink<EC> implements Sink<EC> {
     if (isSingleThreaded()) {
       try {
         Assert.assertTrue(isIdle.get());
+        directInflight = true;
         handler.handleEvent(context);
+        directInflight = false;
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
         throw new RuntimeException(ee);
       }
     } else {
-      this.ifNotDirect.addMultiThreaded(context);
+      if (directInflight) {
+        throw new AssertionError();
+      } else {
+        this.ifNotDirect.addMultiThreaded(context);
+      }
     }
   }
 
@@ -138,8 +151,19 @@ public class DirectSink<EC> implements Sink<EC> {
   }
   
   private boolean isSingleThreaded() {
-    return ACTIVATED.get() == Thread.currentThread()
-      && this.isIdle.get();
+    if (LOGGER.isDebugEnabled()) {
+      if (isActivated()) {
+        if (!this.isIdle.get()) {
+          LOGGER.debug("checked but not idle:" + ifNotDirect.toString());
+          return false;
+        } else {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return isActivated() && this.isIdle.get();
+    }
   }
   
 }
