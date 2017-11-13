@@ -291,7 +291,9 @@ public class ManagedEntityImpl implements ManagedEntity {
   // TODO:  Make sure that this is actually required in the cases where it is called or if some of these sites are
   //  related to the scope expansion of the legacy "NOOP" request type.
   private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
-    scheduleInOrder(request, resp, MessagePayload.emptyPayload(), resp::complete, ConcurrencyStrategy.UNIVERSAL_KEY);
+ // local flush should use MGMT_KEY so the entire pipeline is flushed, everything else can use UNIVERSAL
+    int key = request.getAction() == ServerEntityAction.MANAGED_ENTITY_GC ? ConcurrencyStrategy.MANAGEMENT_KEY : ConcurrencyStrategy.UNIVERSAL_KEY;
+    scheduleInOrder(request, resp, MessagePayload.emptyPayload(), resp::complete, key);
   }
 //  synchronized here because this method must be mutually exclusive with clearQueue
   private synchronized SchedulingRunnable scheduleInOrder(ServerEntityRequest request, ResultCapture results, MessagePayload payload, Runnable r, int ckey) {

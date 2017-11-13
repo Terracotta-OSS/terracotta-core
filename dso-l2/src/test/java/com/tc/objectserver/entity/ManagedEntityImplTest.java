@@ -573,11 +573,10 @@ public class ManagedEntityImplTest {
     CyclicBarrier barrier = new CyclicBarrier(2);
 
     when(activeServerEntity.invokeActive(eq(activeInvokeContext), any(EntityMessage.class))).then(
-      (InvocationOnMock
-                                                                                             invocation) -> {
-      barrier.await();
-      return new EntityResponse() {};
-    });
+      (InvocationOnMock invocation) -> {
+        barrier.await();
+        return new EntityResponse() {};
+      });
 
     TestingResponse fin = mockResponse();
     TestingResponse helper = mockResponse();
