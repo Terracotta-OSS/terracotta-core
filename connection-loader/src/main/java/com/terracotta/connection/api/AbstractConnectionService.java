@@ -10,6 +10,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
+import static com.terracotta.connection.api.URIUtils.validateTerracottaURI;
+
 abstract class AbstractConnectionService implements ConnectionService {
 
   @Override
@@ -17,6 +19,8 @@ abstract class AbstractConnectionService implements ConnectionService {
     if (!handlesURI(uri)) {
       throw new IllegalArgumentException("Unknown URI " + uri);
     }
+
+    validateURI(uri);
 
     // TODO: hook in the connection listener
 
@@ -46,6 +50,14 @@ abstract class AbstractConnectionService implements ConnectionService {
     }
     clientConfig.addGenericProperties(properties);
     return internalConnect(clientConfig);
+  }
+
+  private void validateURI(URI uri) throws ConnectionException {
+    try {
+      validateTerracottaURI(uri);
+    } catch (URISyntaxException e) {
+      throw new ConnectionException(e);
+    }
   }
 
   abstract Connection internalConnect(TerracottaClientConfigParams configParams)
