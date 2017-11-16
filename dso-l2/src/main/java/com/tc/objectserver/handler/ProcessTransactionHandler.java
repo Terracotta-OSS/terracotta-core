@@ -353,7 +353,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           rr.failure(new EntityNotFoundException(descriptor.getEntityID().getClassName(), descriptor.getEntityID().getEntityName()));
           return;
         } else {
-          throw new AssertionError("fetched entity not found");
+          throw new AssertionError("fetched entity not found " + descriptor);
         }
       }
       ManagedEntity entity = optionalEntity.get();

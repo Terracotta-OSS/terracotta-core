@@ -208,11 +208,12 @@ public class ManagedEntityImpl implements ManagedEntity {
       case LOCAL_FLUSH:
       case ORDER_PLACEHOLDER_ONLY:
       case MANAGED_ENTITY_GC:
+      case FAILOVER_FLUSH:
         processLegacyNoopMessage(request, resp);
         break;
       case LOCAL_FLUSH_AND_SYNC:
         // We expect this to be filtered at a higher level.
-        Assert.fail("LOCAL_FLUSH_AND_SYNC should be filtered before reaching this point");
+        Assert.fail(request.getAction() + " should be filtered before reaching this point");
         resp = null;
         break;
       case CREATE_ENTITY:
@@ -292,7 +293,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  related to the scope expansion of the legacy "NOOP" request type.
   private void processLegacyNoopMessage(ServerEntityRequest request, ResultCapture resp) {
  // local flush should use MGMT_KEY so the entire pipeline is flushed, everything else can use UNIVERSAL
-    int key = request.getAction() == ServerEntityAction.MANAGED_ENTITY_GC ? ConcurrencyStrategy.MANAGEMENT_KEY : ConcurrencyStrategy.UNIVERSAL_KEY;
+    int key = request.getAction() == ServerEntityAction.FAILOVER_FLUSH ? ConcurrencyStrategy.MANAGEMENT_KEY : ConcurrencyStrategy.UNIVERSAL_KEY;
     scheduleInOrder(request, resp, MessagePayload.emptyPayload(), resp::complete, key);
   }
 //  synchronized here because this method must be mutually exclusive with clearQueue

@@ -814,6 +814,9 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       case RELEASE_ENTITY:
         logger.info("completed lifecycle " + action + " on " + eid + ":" +fetch);
         break;
+      case FAILOVER_FLUSH:
+        //  this is a failover flush, nothing more is needed
+        return;
       default:
       //  not lifecycle, ignore
         logger.debug("completed mgmt " + action + " on " + eid);
