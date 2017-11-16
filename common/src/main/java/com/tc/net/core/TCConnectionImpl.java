@@ -196,6 +196,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   protected void finishConnect() throws IOException {
     Assert.assertNotNull("channel", this.channel);
+    Assert.assertNotNull("commWorker", this.commWorker);
     installBufferManager();
     recordSocketAddress(this.channel.socket());
     setConnected(true);
@@ -210,6 +211,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         newSocket = createChannel();
         newSocket.configureBlocking(true);
         newSocket.socket().connect(inetAddr, timeout);
+        newSocket.configureBlocking(false);
         break;
       } catch (final SocketTimeoutException ste) {
         Assert.eval(this.commWorker != null);
@@ -224,11 +226,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         throw cse;
       }
     }
-
     this.channel = newSocket;
-    newSocket.configureBlocking(false);
-    Assert.eval(this.commWorker != null);
-    this.commWorker.requestReadInterest(this, newSocket);
   }
   
   private void installBufferManager() throws IOException {
@@ -723,6 +721,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                                                                                        "Connection closed or already connected"); }
     connectImpl(addr, timeout);
     finishConnect();
+    Assert.assertNotNull(this.commWorker);
+    Assert.assertNotNull(this.bufferManager);
+    this.commWorker.requestReadInterest(this, this.channel);
   }
 
   @Override

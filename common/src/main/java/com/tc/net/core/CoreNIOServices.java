@@ -740,8 +740,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       try {
         if (sc.finishConnect()) {
-          sc.register(selector, SelectionKey.OP_READ, conn);
           conn.finishConnect();
+          sc.register(selector, SelectionKey.OP_READ, conn);
         } else {
           String errMsg = "finishConnect() returned false, but no exception thrown";
 
