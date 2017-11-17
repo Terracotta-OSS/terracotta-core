@@ -19,6 +19,7 @@
 package com.tc.object;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
@@ -71,7 +72,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -85,7 +85,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final ClientMessageChannel channel;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
   private final Sink<InFlightMessage> outbound;
-  private final Semaphore requestTickets;
+  private final MessagePendingCount requestTickets = new MessagePendingCount();
   private final AtomicLong currentTransactionID;
 
   private final ClientEntityStateManager stateManager;
@@ -104,11 +104,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     
     this.channel = channel;
 
-    this.inFlightMessages = new ConcurrentHashMap<TransactionID, InFlightMessage>();
-    this.requestTickets = new Semaphore(ClientConfigurationContext.MAX_SENT_REQUESTS);
+    this.inFlightMessages = new ConcurrentHashMap<>();
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
-    this.objectStoreMap = new ConcurrentHashMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>>(10240, 0.75f, 128);
+    this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
     this.stages = mgr;
     
     this.outbound = createSendStage();
@@ -122,13 +121,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     } finally {
       wasBusy = false;
     }
-  }
+  } 
   
   private synchronized boolean enqueueMessage(InFlightMessage msg, boolean waitUntilRunning) {
     boolean enqueued = true;
     boolean interrupted = false;
- //  shutdown drains the permits so even if asked to not waitUntilRunning, shutdown is still checked
-    while ((waitUntilRunning && !this.stateManager.isRunning()) || !requestTickets.tryAcquire()) {
+ //  stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
+    while ((waitUntilRunning && !this.stateManager.isRunning()) || !requestTickets.messagePendingSlotAvailable()) {
       try {
         if (!this.stateManager.isShutdown()) {
           this.wait();
@@ -145,6 +144,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     if (enqueued) {
       inFlightMessages.put(msg.getTransactionID(), msg);
+      requestTickets.messagePending();
     }
     return enqueued;
   }
@@ -345,7 +345,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.received();
     } else {
-   // resend result
+   // resend result or stop
     }
   }
 
@@ -362,7 +362,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.setResult(value, null);
     } else {
-   // resend result
+   // resend result or stop
     }
   }
 
@@ -373,7 +373,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.setResult(null, error);
     } else {
-   // resend result
+   // resend result or stop
     }
   }
 
@@ -383,12 +383,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage inFlight = inFlightMessages.remove(id);
     if (inFlight != null) {
       inFlight.retired();
+      synchronized (this) {
+        requestTickets.messageRetired();
+        notify();
+      }
     } else {
-   // resend result
-    }
-    synchronized (this) {
-      requestTickets.release();
-      notify();
+   // resend result or stop
     }
   }
 
@@ -442,7 +442,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         return;
       } else {
         // not sending anymore, drain the permits
-        requestTickets.drainPermits();
+        requestTickets.stop();
         stateManager.stop();
         notifyAll();
       }
@@ -582,7 +582,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private InFlightMessage queueInFlightMessage(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean isDeferred) {
     InFlightMessage inFlight = new InFlightMessage(message.getEntityID(), message, requestedAcks, monitor, shouldBlockGetOnRetire, isDeferred);
     
-    // NOTE:  If we are already shutdown, the handler in outbound will fail this message for us.
+    // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
     outbound.addSingleThreaded(inFlight);
     return inFlight;
   }
@@ -730,6 +730,29 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         Thread.currentThread().interrupt();
       }
     }
+  }
+  
+  private static class MessagePendingCount {
+    private int messagesPending = ClientConfigurationContext.MAX_PENDING_REQUESTS;
+  
+    // synchronized by caller
+    private int messagePending() {
+      Assert.assertTrue(messagesPending > 0);
+      return --messagesPending;
+    }
+
+    // synchronized by caller
+    private int messageRetired() {
+      Assert.assertTrue(messagesPending < ClientConfigurationContext.MAX_PENDING_REQUESTS);
+      return ++messagesPending;
+    }
     
+    private boolean messagePendingSlotAvailable() {
+      return messagesPending > 0;
+    }
+    
+    private void stop() {
+      messagesPending = 0;
+    }
   }
 }

@@ -140,6 +140,10 @@ public enum ServerEntityAction {
    */
   LOCAL_FLUSH_AND_SYNC,
   /**
+   * Failover flush, flush the entity pipeline on failover
+   */
+  FAILOVER_FLUSH,
+  /**
    * Used in message replication: we often don't want to replicate the contents
    * of the message or its intent, just information which might be required to
    * correctly order re-sends, after fail-over.

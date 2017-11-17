@@ -64,7 +64,7 @@ public class StandardClientBuilder implements ClientBuilder {
   @Override
   public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter,
                                                            NetworkStackHarnessFactory stackHarnessFactory,
-                                                           ConnectionPolicy connectionPolicy, int commThread,
+                                                           ConnectionPolicy connectionPolicy, 
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler,

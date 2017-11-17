@@ -140,7 +140,7 @@ public class ReplicatedTransactionHandler {
       ServerEntityRequest req = new ServerEntityRequest() {
         @Override
         public ServerEntityAction getAction() {
-          return ServerEntityAction.MANAGED_ENTITY_GC;
+          return ServerEntityAction.FAILOVER_FLUSH;
         }
 
         @Override
@@ -363,12 +363,14 @@ public class ReplicatedTransactionHandler {
         // if the entity is removeable, remove it from the system and don't schedule anything
               LOGGER.debug("removing " + entityInstance.getID());
               entityManager.removeDestroyed(activity.getFetchID());
+              break;
             } else {
-              // this action also used to flush the entities request queue on failover, this 
-              // will cause a MGMT_KEY flush in the entity so any actions are through the system
-              // before failing over to the passive
-              entityInstance.addRequestMessage(request, payload, new NoopResultCapture());
+              //  fallthrough
             }
+          case FAILOVER_FLUSH:
+            // will cause a MGMT_KEY flush in the entity so any actions are through the system
+            // before failing over to the passive
+            entityInstance.addRequestMessage(request, payload, new NoopResultCapture());
             break;
           case ORDER_PLACEHOLDER_ONLY:
             // go ahead and ack right away and don't schedule, no need, work is done

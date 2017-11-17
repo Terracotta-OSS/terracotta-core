@@ -92,7 +92,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public boolean isShutdown() {
+  public synchronized boolean isShutdown() {
     return isShutdown;
   }
 
@@ -133,9 +133,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public synchronized void disconnected() {
     // We ignore the disconnected call if we are shutting down.
     if (!checkShutdown()) {
-      boolean isPaused = changeToPaused();
-
-      if (isPaused) {
+      boolean wasRunning = changeToPaused();
+        
+      if (wasRunning) {
       // A thread might be waiting for us to change whether or not we are disconnected.
         notifyAll();
         pauseCallbacks();
@@ -147,9 +147,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public synchronized void connected() {
-    this.logger.debug("Connected: Unpausing from " + getState());
-    if (getState() != State.PAUSED) {
-      this.logger.warn("Ignoring unpause while " + getState());
+    this.logger.debug("Connected: Unpausing from " + this.state);
+    if (this.state != State.PAUSED) {
+      this.logger.warn("Ignoring unpause while " + this.state);
     } else if (!checkShutdown()) {
       // drop handshaking if shutting down
       initiateHandshake();
@@ -164,8 +164,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   protected synchronized void acknowledgeHandshake(ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
     this.logger.debug("Received Handshake ack");
-    if (getState() != State.STARTING) {
-      this.logger.warn("Ignoring handshake acknowledgement while " + getState());
+    if (this.state != State.STARTING) {
+      this.logger.warn("Ignoring handshake acknowledgement while " + this.state);
     } else {
       checkClientServerVersionCompatibility(serverVersion);
 
@@ -210,7 +210,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public synchronized void waitForHandshake() {
     boolean isInterrupted = false;
     try {
-      while (this.disconnected && !this.isShutdown()) {
+      while (this.disconnected && !this.isShutdown) {
         try {
           wait();
         } catch (InterruptedException e) {
@@ -229,11 +229,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     boolean didChangeToPaused = false;
     if (old != State.PAUSED) {
       this.state = State.PAUSED;
-      didChangeToPaused = true;
 
       this.logger.debug("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
 
       if (old == State.RUNNING) {
+        didChangeToPaused = true;
         this.disconnected = true;
       }
 
@@ -252,9 +252,5 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     state = State.RUNNING;
 
     this.disconnected = false;
-  }
-
-  private State getState() {
-    return this.state;
   }
 }
