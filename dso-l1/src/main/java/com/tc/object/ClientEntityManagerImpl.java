@@ -104,11 +104,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     
     this.channel = channel;
 
-    this.inFlightMessages = new ConcurrentHashMap<TransactionID, InFlightMessage>();
+    this.inFlightMessages = new ConcurrentHashMap<>();
     this.requestTickets = new Semaphore(ClientConfigurationContext.MAX_SENT_REQUESTS);
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
-    this.objectStoreMap = new ConcurrentHashMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>>(10240, 0.75f, 128);
+    this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
     this.stages = mgr;
     
     this.outbound = createSendStage();
@@ -345,7 +345,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.received();
     } else {
-   // resend result
+   // resend result or shutdown
     }
   }
 
@@ -362,7 +362,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.setResult(value, null);
     } else {
-   // resend result
+   // resend result or shutdown
     }
   }
 
@@ -373,7 +373,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (inFlight != null) {
       inFlight.setResult(null, error);
     } else {
-   // resend result
+   // resend result or shutdown
     }
   }
 
@@ -383,12 +383,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage inFlight = inFlightMessages.remove(id);
     if (inFlight != null) {
       inFlight.retired();
+      synchronized (this) {
+        requestTickets.release();
+        Assert.assertTrue(requestTickets.availablePermits() <= ClientConfigurationContext.MAX_SENT_REQUESTS);
+        notify();
+      }
     } else {
-   // resend result
-    }
-    synchronized (this) {
-      requestTickets.release();
-      notify();
+   // resend result or shutdown
     }
   }
 

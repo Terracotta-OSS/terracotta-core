@@ -556,12 +556,6 @@ public class DistributedObjectClient implements TCClient {
       }
     }
 
-    try {
-      this.communicationStageManager.stopAll();
-    } catch (final Throwable t) {
-      logger.error("Error stopping stage manager", t);
-    }
-
     if (this.channel != null) {
       try {
         this.channel.close();
@@ -582,6 +576,12 @@ public class DistributedObjectClient implements TCClient {
       }
     }
 
+    try {
+      this.communicationStageManager.stopAll();
+    } catch (final Throwable t) {
+      logger.error("Error stopping stage manager", t);
+    }
+    
     CommonShutDownHook.shutdown();
     this.cluster.shutdown();
 

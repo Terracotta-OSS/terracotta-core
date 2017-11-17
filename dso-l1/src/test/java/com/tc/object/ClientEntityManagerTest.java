@@ -140,6 +140,17 @@ public class ClientEntityManagerTest extends TestCase {
     // We expect that we found the entity.
     assertTrue(didFindEndpoint(fetcher));
   }
+  
+  // Test to make sure we can still receive items without error after close, needed due to shutdown sequence
+  public void testReceiveAfterClose() throws Exception {
+    TransactionID tid = new TransactionID(1L);
+    manager.shutdown(false);
+    manager.complete(tid);
+    manager.failed(tid, new EntityException(this.entityID.getClassName(), this.entityID.getEntityName(), "", null) {});
+    manager.received(tid);
+    manager.retired(tid);
+    // nothing should throw exception
+  }  
 
   // Test that a simple lookup can fail.
   public void testSimpleLookupFailure() throws Exception {
