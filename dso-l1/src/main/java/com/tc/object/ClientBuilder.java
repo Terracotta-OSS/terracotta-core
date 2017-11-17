@@ -51,7 +51,6 @@ public interface ClientBuilder {
                                                     TCMessageRouter messageRouter,
                                                     NetworkStackHarnessFactory stackHarnessFactory,
                                                     ConnectionPolicy connectionPolicy,
-                                                    int workerCommThreads,
                                                     HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour,

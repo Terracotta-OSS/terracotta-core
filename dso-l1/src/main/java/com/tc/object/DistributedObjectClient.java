@@ -279,7 +279,6 @@ public class DistributedObjectClient implements TCClient {
                                      messageRouter,
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
-                                     1,
                                      hc,
                                      getMessageTypeClassMapping(),
             ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
