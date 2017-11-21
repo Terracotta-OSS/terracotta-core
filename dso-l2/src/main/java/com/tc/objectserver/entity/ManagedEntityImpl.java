@@ -1063,15 +1063,16 @@ public class ManagedEntityImpl implements ManagedEntity {
     // make sure that concurrency key is in the valid range
           //  MGMT_KEY and UNIVERSAL keys are not valid for sync
           Assert.assertTrue(concurrency > 0);  
-          // We don't actually use the message in the direct strategy so this is safe.
-          //  don't care about the result
-          BarrierCompletion sectionComplete = new BarrierCompletion();
-          this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  (w)->invoke(req, new ResultCaptureImpl(null, result->sectionComplete.complete(), null, null), MessagePayload.emptyPayload(), concurrency), true, concurrency);
 
           ActiveServerEntity active = this.activeServerEntity;
           if (active != null) {
             active.prepareKeyForSynchronizeOnPassive(new EntityMessagePassiveSynchronizationChannelImpl(Collections.singleton(passive), concurrency), concurrency);
           }
+          // We don't actually use the message in the direct strategy so this is safe.
+          //  don't care about the result
+          BarrierCompletion sectionComplete = new BarrierCompletion();
+          this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, req, MessagePayload.emptyPayload(),  (w)->invoke(req, new ResultCaptureImpl(null, result->sectionComplete.complete(), null, null), MessagePayload.emptyPayload(), concurrency), true, concurrency);
+
         //  wait for completed above waits for acknowledgment from the passive
         //  waitForCompletion below waits for completion of the local request processor
           sectionComplete.waitForCompletion();
