@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -203,7 +204,7 @@ public class ManagedEntityImplTest {
 
       @Override
       public Set<Integer> getKeysForSynchronization() {
-        return Collections.emptySet();
+        return Collections.singleton(1);
       }
     });
     when(entityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>() {
@@ -792,6 +793,18 @@ public class ManagedEntityImplTest {
     verify(response4).complete();
   }
 
+  @Test
+  public void testSyncOrder() throws Exception {
+    managedEntity.promoteEntity();
+    managedEntity.startSync();
+    verify(activeServerEntity, never()).prepareKeyForSynchronizeOnPassive(any(), eq(1));
+    Mockito.doAnswer((inv)->{
+      verify(activeServerEntity).prepareKeyForSynchronizeOnPassive(any(), eq(1));
+      return null;
+    }).when(activeServerEntity).synchronizeKeyToPassive(any(), eq(1));
+    managedEntity.sync(mock(NodeID.class));
+  }
+  
   @Test
   public void testDestroy() throws Exception {
     TestingResponse response = mockResponse();
