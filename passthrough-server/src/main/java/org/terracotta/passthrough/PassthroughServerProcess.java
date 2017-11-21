@@ -140,8 +140,8 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.platformConfiguration = new PassthroughPlatformConfiguration(serverName, extendedConfigurationObjects);
     this.entityServices = new Vector<>();
     this.messageQueue = new Vector<>();
-    this.activeEntities = (isActiveMode ? new HashMap<>() : null);
-    this.passiveEntities = (isActiveMode ? null : new HashMap<>());
+    this.activeEntities = (isActiveMode ? new LinkedHashMap<>() : null);
+    this.passiveEntities = (isActiveMode ? null : new LinkedHashMap<>());
     this.consumerToLiveContainerMap = new HashMap<>();
     this.serviceProviders = new Vector<>();
     this.implementationProvidedServiceProviders = new Vector<>();
