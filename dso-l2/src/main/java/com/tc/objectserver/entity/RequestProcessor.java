@@ -91,10 +91,7 @@ public class RequestProcessor {
     // Determine if this kind of action is one we want to replicate.
     ServerEntityAction requestAction = request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
-    boolean isActionReplicated = !((ServerEntityAction.LOCAL_FLUSH == requestAction)
-        || (ServerEntityAction.MANAGED_ENTITY_GC == requestAction)
-        || (ServerEntityAction.FAILOVER_FLUSH == requestAction)
-        || (ServerEntityAction.LOCAL_FLUSH_AND_SYNC == requestAction));
+    boolean isActionReplicated = requestAction.isReplicated();
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
 //  if there is somewhere to replicate to but replication was not required
@@ -144,15 +141,20 @@ public class RequestProcessor {
     
     // Handle our replicated message creations as special-cases, if they aren't normal invokes.
     SyncReplicationActivity activity = null;
-    if (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER == actionCode) {
-      activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, instance, tid, oldest, payload.getDebugId());
-    } else if (SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN == actionCode) {
-      activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, fetchID, concurrency);
-    } else if (SyncReplicationActivity.ActivityType.INVOKE_ACTION == actionCode) {
-      activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
-    } else {
-      // Normal replication.
-      activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload());
+    switch (actionCode) {
+      case SYNC_ENTITY_CONCURRENCY_BEGIN:
+        activity = SyncReplicationActivity.createStartEntityKeyMessage(id, version, fetchID, concurrency);
+        break;
+      case ORDERING_PLACEHOLDER:
+        activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, instance, tid, oldest, payload.getDebugId());
+        break;
+      case INVOKE_ACTION:
+        activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+        break;
+      default:
+        // Normal replication.
+        activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload());
+        break;
     }
     return activity;
   }
