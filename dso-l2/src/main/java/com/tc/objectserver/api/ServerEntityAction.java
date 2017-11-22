@@ -68,11 +68,21 @@ public enum ServerEntityAction {
   /**
    * Same as Request.Type.
    */
-  INVOKE_ACTION,
+  INVOKE_ACTION {
+    @Override
+    public boolean isReplicated() {
+      return true;
+    }
+  },
   /**
    * Ask an entity to synchronize itself to a passive.
    */
-  REQUEST_SYNC_ENTITY,
+  REQUEST_SYNC_ENTITY{
+    @Override
+    public boolean isReplicated() {
+      return true;
+    }
+  },
   /**
    * Reload the active entity with the new supplied configuration.
    */
@@ -152,5 +162,9 @@ public enum ServerEntityAction {
 
   public boolean isLifecycle() {
     return false;
+  }
+  
+  public boolean isReplicated() {
+    return isLifecycle();
   }
 }
