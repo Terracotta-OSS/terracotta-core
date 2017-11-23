@@ -25,13 +25,9 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
-import com.tc.net.core.SecurityInfo;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.ClientConfigImpl;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.UUID;
 import com.tc.cluster.ClusterInternal;
 
@@ -47,17 +43,12 @@ import org.terracotta.connection.ConnectionPropertyNames;
 public class DistributedObjectClientFactory {
   private final List<String> stripeMemberUris;
   private final ClientBuilder builder;
-  private final TCSecurityManager securityManager;
-  private final SecurityInfo      securityInfo;
   private final Properties        properties;
 
-  public DistributedObjectClientFactory(List<String> stripeMemberUris, ClientBuilder builder, TCSecurityManager securityManager,
-                                        SecurityInfo securityInfo, 
+  public DistributedObjectClientFactory(List<String> stripeMemberUris, ClientBuilder builder,
                                         Properties properties) {
     this.stripeMemberUris = stripeMemberUris;
     this.builder = builder;
-    this.securityManager = securityManager;
-    this.securityInfo = securityInfo;
     this.properties = properties;
   }
 
@@ -66,7 +57,7 @@ public class DistributedObjectClientFactory {
 
     ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris);
 
-    L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager(securityInfo);
+    L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
 
     final PreparedComponentsFromL2Connection connectionComponents;
     try {
@@ -95,7 +86,7 @@ public class DistributedObjectClientFactory {
     String name = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME, "");
     
     
-    DistributedObjectClient client = ClientFactory.createClient(configHelper, builder, group, connectionComponents, cluster, securityManager,
+    DistributedObjectClient client = ClientFactory.createClient(configHelper, builder, group, connectionComponents, cluster,
         uuid,
         name);
 

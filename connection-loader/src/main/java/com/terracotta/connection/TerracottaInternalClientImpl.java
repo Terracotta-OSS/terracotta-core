@@ -19,7 +19,6 @@
 package com.terracotta.connection;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.net.core.SecurityInfo;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
@@ -63,10 +62,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     }
 
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-         new StandardClientBuilder(product), 
-         null,  // no security features
-         new SecurityInfo(false, null),  // no security info
-         props);
+         new StandardClientBuilder(product), props);
   }
 
   @Override

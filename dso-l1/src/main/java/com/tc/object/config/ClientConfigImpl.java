@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
-import com.tc.net.core.SecurityInfo;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -57,11 +56,6 @@ public class ClientConfigImpl implements ClientConfig {
   @Override
   public CommonL1Config getCommonL1Config() {
     return configSetupManager.commonL1Config();
-  }
-
-  @Override
-  public SecurityInfo getSecurityInfo() {
-    return configSetupManager.getSecurityInfo();
   }
 
   @Override

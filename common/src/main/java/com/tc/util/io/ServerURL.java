@@ -21,7 +21,6 @@ package com.tc.util.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.core.SecurityInfo;
 import com.tc.security.TCAuthenticationException;
 import com.tc.security.TCAuthorizationException;
 
@@ -39,17 +38,15 @@ public class ServerURL {
 
   private final URL             theURL;
   private final int             timeout;
-  private final SecurityInfo    securityInfo;
 
-  public ServerURL(String host, int port, String file, SecurityInfo securityInfo) throws MalformedURLException {
-    this(host, port, file, -1, securityInfo);
+  public ServerURL(String host, int port, String file) throws MalformedURLException {
+    this(host, port, file, -1);
   }
 
-  public ServerURL(String host, int port, String file, int timeout, SecurityInfo securityInfo)
+  public ServerURL(String host, int port, String file, int timeout)
       throws MalformedURLException {
     this.timeout = timeout;
-    this.securityInfo = securityInfo;
-    this.theURL = new URL(securityInfo.isSecure() ? "https" : "http", host, port, file);
+    this.theURL = new URL("http", host, port, file);
   }
 
   public InputStream openStream() throws IOException {
@@ -62,13 +59,9 @@ public class ServerURL {
         int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
         switch (responseCode) {
           case 401:
-            throw new TCAuthenticationException("Authentication error connecting to " + urlConnection.getURL()
-                                                + " - invalid credentials (tried user " + securityInfo.getUsername()
-                                                + ")", e);
+            throw new TCAuthenticationException("Authentication error connecting to " + urlConnection.getURL(), e);
           case 403:
-            throw new TCAuthorizationException("Authorization error connecting to " + urlConnection.getURL()
-                                               + " - does the user '" + securityInfo.getUsername()
-                                               + "' have the required roles?", e);
+            throw new TCAuthorizationException("Authorization error connecting to " + urlConnection.getURL(), e);
           default:
         }
       }
@@ -94,10 +87,6 @@ public class ServerURL {
   @Override
   public String toString() {
     return theURL.toString();
-  }
-
-  public String getUsername() {
-    return securityInfo.isSecure() ? securityInfo.getUsername() : null;
   }
 
 }

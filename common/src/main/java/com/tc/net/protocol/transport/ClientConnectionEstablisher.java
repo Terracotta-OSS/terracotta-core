@@ -145,7 +145,7 @@ public class ClientConnectionEstablisher {
       try {
         return cmt.open(info);
       } catch (TransportRedirect redirect) {
-        ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), info.getSecurityInfo());
+        ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort());
         info = null;
         if (this.connAddressProvider.add(add)) {
           info = add;
@@ -236,7 +236,7 @@ public class ClientConnectionEstablisher {
             cmt.reopen(target);
             connected = cmt.getConnectionId().isValid();        
           } catch (TransportRedirect redirect) {
-            ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), target.getSecurityInfo());
+            ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort());
             target = null;
             if (this.connAddressProvider.add(add)) {
               target = add;

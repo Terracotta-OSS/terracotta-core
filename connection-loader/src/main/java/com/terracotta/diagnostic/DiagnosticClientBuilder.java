@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
 import com.tc.cluster.ClusterInternalEventsGun;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.util.ProductID;
 import com.tc.management.TCClient;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -64,10 +64,10 @@ public class DiagnosticClientBuilder implements ClientBuilder {
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                                           TCSecurityManager securityManager) {
+                                                           BufferManagerFactory bufferManagerFactory) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
                                          connectionPolicy, 0, new DisabledHealthCheckerConfigImpl() /* ignore health check settings */, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         reconnectionRejectedHandler, securityManager);
+                                         reconnectionRejectedHandler, bufferManagerFactory);
   }
 
   @Override

@@ -22,8 +22,6 @@ package com.tc.config.schema.setup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.core.SecurityInfo;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,7 +41,7 @@ public class ClientConfigurationSetupManagerFactory {
     this.stripeMemberUris = stripeMemberUris;
   }
 
-  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) throws ConfigurationSetupException {
+  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
     int memberCount = stripeMemberUris.size();
     String[] hosts = new String[memberCount];
     int[] ports = new int[memberCount];
@@ -66,6 +64,6 @@ public class ClientConfigurationSetupManagerFactory {
       }
       index++;
     }
-    return new ClientConfigurationSetupManager(this.stripeMemberUris, args, hosts, ports, securityInfo);
+    return new ClientConfigurationSetupManager(this.stripeMemberUris, args, hosts, ports);
   }
 }

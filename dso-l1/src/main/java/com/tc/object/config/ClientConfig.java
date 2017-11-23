@@ -19,7 +19,6 @@
 package com.tc.object.config;
 
 import com.tc.config.schema.CommonL1Config;
-import com.tc.net.core.SecurityInfo;
 
 public interface ClientConfig extends DSOMBeanConfig {
   
@@ -27,5 +26,4 @@ public interface ClientConfig extends DSOMBeanConfig {
 
   CommonL1Config getCommonL1Config();
 
-  SecurityInfo getSecurityInfo();
 }

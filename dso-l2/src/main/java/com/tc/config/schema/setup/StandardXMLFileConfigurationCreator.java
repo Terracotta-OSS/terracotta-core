@@ -33,7 +33,6 @@ import com.tc.config.schema.setup.sources.ResourceConfigurationSource;
 import com.tc.config.schema.setup.sources.ServerConfigurationSource;
 import com.tc.config.schema.setup.sources.URLConfigurationSource;
 import com.tc.logging.TCLogging;
-import com.tc.net.core.SecurityInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -45,8 +44,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -176,25 +173,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private ConfigurationSource attemptToCreateServerSource(String text) {
     Matcher matcher = SERVER_PATTERN.matcher(text);
     if (matcher.matches()) {
-      boolean secure = false;
-      String username = null;
       String host = matcher.group(1);
-      int userSeparatorIndex = host.indexOf('@');
-      if (userSeparatorIndex > -1) {
-        username = host.substring(0, userSeparatorIndex);
-        try {
-          username = URLDecoder.decode(username, "UTF-8");
-        } catch (UnsupportedEncodingException uee) {
-          // cannot happen
-        }
-        secure = true;
-        host = host.substring(userSeparatorIndex + 1);
-      }
-      final SecurityInfo securityInfo = new SecurityInfo(secure, username);
       String portText = matcher.group(2);
 
       try {
-        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()), securityInfo);
+        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()));
       } catch (Exception e) {/**/
       }
     }

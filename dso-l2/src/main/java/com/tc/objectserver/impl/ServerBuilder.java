@@ -28,7 +28,7 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
-import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -47,7 +47,8 @@ import java.io.IOException;
 public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID,
-                                      StripeIDStateManager stripeStateManager, TCSecurityManager mgr, WeightGeneratorFactory weightGeneratorFactory);
+                                      StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
+                                      BufferManagerFactory bufferManagerFactory);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,

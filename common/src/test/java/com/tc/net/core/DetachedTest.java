@@ -46,7 +46,7 @@ public class DetachedTest extends TCTestCase {
     NullProtocolAdaptor adaptor = new NullProtocolAdaptor();
     SocketParams socketParams = new SocketParams();
     CoreNIOServices coreNIOServices = new CoreNIOServices("mock core nio thread", null, socketParams);
-    TCConnectionImpl tcConnection = new TCConnectionImpl(null, adaptor, socketChannel, connectionManager, coreNIOServices, socketParams, null);
+    TCConnectionImpl tcConnection = new TCConnectionImpl(null, adaptor, socketChannel, connectionManager, coreNIOServices, socketParams, new ClearTextBufferManagerFactory());
     try {
       tcConnection.finishConnect();
       // detach the connection -> this creates the pipe socket, then close it

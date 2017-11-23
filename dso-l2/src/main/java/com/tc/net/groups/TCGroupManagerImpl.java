@@ -41,9 +41,9 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
@@ -122,7 +122,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final ReconnectConfig                             l2ReconnectConfig;
 
   private final String                                      version;
-  private final TCSecurityManager                           securityManager;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
@@ -142,6 +141,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final boolean                                     isUseOOOLayer;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
+  private final BufferManagerFactory                        bufferManagerFactory;
 
   private CommunicationsManager                             communicationsManager;
   private NetworkListener                                   groupListener;
@@ -157,17 +157,18 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Node thisNode, NodesStore nodesStore, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, nodesStore, securityManager, weightGenerator);
+                            ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, nodesStore, weightGenerator, bufferManagerFactory);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
-                            TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
-    this.securityManager = securityManager;
+    this.bufferManagerFactory = bufferManagerFactory;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
@@ -211,10 +212,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                            StageManager stageManager, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
+                            StageManager stageManager, WeightGeneratorFactory weightGenerator) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
-    this.securityManager = securityManager;
+    this.bufferManagerFactory = new ClearTextBufferManagerFactory();
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
@@ -244,8 +245,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                                                           new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
-                                                          messageTypeClassMapping, Collections.emptyMap(),
-        securityManager);
+                                                          messageTypeClassMapping, Collections.emptyMap(), bufferManagerFactory
+    );
 
     groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory());
     // Listen to channel creation/removal
@@ -591,8 +592,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return groupResponse;
   }
 
-  private void openChannel(ConnectionInfo info, ChannelEventListener listener, String username, char[] password)
-      throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
+  private void openChannel(ConnectionInfo info, ChannelEventListener listener)
+      throws TCTimeoutException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
     if (isStopped.get()) return;
@@ -610,25 +611,15 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ClientMessageChannel channel = communicationsManager.createClientChannel(ProductID.SERVER, sessionProvider, 10000 /*  timeout */);
 
     channel.addListener(listener);
-    channel.open(Collections.singleton(info), username, password);
+    channel.open(Collections.singleton(info));
 
     handshake(channel);
     return;
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
-      UnknownHostException, MaxConnectionsExceededException, IOException, CommStackMismatchException {
-    final String username = (securityManager == null) ? null : securityManager.getIntraL2Username();
-    final char[] password;
-    final SecurityInfo securityInfo;
-    if (isSecured()) {
-      securityInfo = new SecurityInfo(true, securityManager.getIntraL2Username());
-      password = securityManager.getPasswordForTC(securityInfo.getUsername(), hostname, port);
-    } else {
-      password = null;
-      securityInfo = new SecurityInfo();
-    }
-    openChannel(new ConnectionInfo(hostname, port, securityInfo), listener, username, password);
+      MaxConnectionsExceededException, IOException, CommStackMismatchException {
+    openChannel(new ConnectionInfo(hostname, port), listener);
   }
 
   private boolean isSecured() {

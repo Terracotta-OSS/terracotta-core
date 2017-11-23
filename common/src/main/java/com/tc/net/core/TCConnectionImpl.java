@@ -27,7 +27,6 @@ import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.WireProtocolGroupMessageImpl;
@@ -125,17 +124,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     logger.debug("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
   }
 
-  // for creating unconnected client connections
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
                    TCConnectionManagerImpl managerJDK14, CoreNIOServices nioServiceThread,
-                   SocketParams socketParams, TCSecurityManager securityManager) {
-    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, securityManager);
+                   SocketParams socketParams, BufferManagerFactory bufferManagerFactory) {
+    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, bufferManagerFactory);
   }
 
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor, SocketChannel ch,
                    TCConnectionManagerImpl parent, CoreNIOServices nioServiceThread,
-                   SocketParams socketParams, TCSecurityManager securityManager) {
-
+                   SocketParams socketParams, BufferManagerFactory bufferManagerFactory) {
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
 
@@ -148,11 +145,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.channel = ch;
 
-    if (securityManager != null) {
-      this.bufferManagerFactory = securityManager.getBufferManagerFactory();
-    } else {
-      this.bufferManagerFactory = new ClearTextBufferManagerFactory();
-    }
+    this.bufferManagerFactory = bufferManagerFactory;
 
     if (ch != null) {
       socketParams.applySocketParams(ch.socket());
