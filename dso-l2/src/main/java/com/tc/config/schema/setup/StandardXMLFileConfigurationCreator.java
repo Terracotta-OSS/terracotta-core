@@ -36,7 +36,6 @@ import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.IOUtils;
@@ -83,26 +82,19 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private String baseConfigDescription = "";
   private TcConfiguration tcConfigDocument;
   private TcConfiguration providedTcConfigDocument;
-  private final PwProvider pwProvider;
-  
+
   private ClassLoader loader;
 
   public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory) {
-    this(LoggerFactory.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, null);
-  }
-
-  public StandardXMLFileConfigurationCreator(ConfigurationSpec configurationSpec, ConfigBeanFactory beanFactory,
-                                             PwProvider pwProvider) {
-    this(LoggerFactory.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory, pwProvider);
+    this(LoggerFactory.getLogger(StandardXMLFileConfigurationCreator.class), configurationSpec, beanFactory);
   }
 
   public StandardXMLFileConfigurationCreator(Logger logger, ConfigurationSpec configurationSpec,
-                                             ConfigBeanFactory beanFactory, PwProvider pwProvider) {
+                                             ConfigBeanFactory beanFactory) {
     Assert.assertNotNull(beanFactory);
     this.logger = logger;
     this.beanFactory = beanFactory;
     this.configurationSpec = configurationSpec;
-    this.pwProvider = pwProvider;
   }
   
   @Override
@@ -202,7 +194,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       String portText = matcher.group(2);
 
       try {
-        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()), securityInfo, pwProvider);
+        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()), securityInfo);
       } catch (Exception e) {/**/
       }
     }

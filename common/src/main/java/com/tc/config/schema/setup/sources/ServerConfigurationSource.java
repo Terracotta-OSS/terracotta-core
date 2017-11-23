@@ -20,7 +20,6 @@ package com.tc.config.schema.setup.sources;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.net.core.SecurityInfo;
-import com.tc.security.PwProvider;
 import com.tc.util.Assert;
 import com.tc.util.io.ServerURL;
 
@@ -39,15 +38,13 @@ public class ServerConfigurationSource implements ConfigurationSource {
   private final String       host;
   private final int          port;
   private final SecurityInfo securityInfo;
-  private final PwProvider   pwProvider;
 
-  public ServerConfigurationSource(String host, int port, SecurityInfo securityInfo, PwProvider pwProvider) {
+  public ServerConfigurationSource(String host, int port, SecurityInfo securityInfo) {
       this.securityInfo = securityInfo;
     Assert.assertNotBlank(host);
     Assert.assertTrue(port > 0);
     this.host = host;
     this.port = port;
-    this.pwProvider = pwProvider;
   }
 
   @Override
@@ -59,7 +56,7 @@ public class ServerConfigurationSource implements ConfigurationSource {
       System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(maxTimeoutMillis));
       System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(maxTimeoutMillis));
 
-      return theURL.openStream(pwProvider);
+      return theURL.openStream();
     } catch (MalformedURLException murle) {
       throw new ConfigurationSetupException("Can't load configuration from "+this+".");
     }

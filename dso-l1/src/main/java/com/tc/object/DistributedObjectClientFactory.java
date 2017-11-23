@@ -64,7 +64,7 @@ public class DistributedObjectClientFactory {
   public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
     final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<DistributedObjectClient>();
 
-    ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris, securityManager);
+    ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager(securityInfo);
 

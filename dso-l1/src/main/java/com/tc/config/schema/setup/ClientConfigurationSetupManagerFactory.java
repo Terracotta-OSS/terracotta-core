@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.core.SecurityInfo;
-import com.tc.security.PwProvider;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -38,12 +37,10 @@ public class ClientConfigurationSetupManagerFactory {
   private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
   private final String[] args;
   private final List<String> stripeMemberUris;
-  private final PwProvider securityManager;
 
-  public ClientConfigurationSetupManagerFactory(String[] args, List<String> stripeMemberUris, PwProvider securityManager) {
+  public ClientConfigurationSetupManagerFactory(String[] args, List<String> stripeMemberUris) {
     this.args = args;
     this.stripeMemberUris = stripeMemberUris;
-    this.securityManager = securityManager;
   }
 
   public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager(SecurityInfo securityInfo) throws ConfigurationSetupException {
