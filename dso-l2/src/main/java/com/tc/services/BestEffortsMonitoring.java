@@ -60,23 +60,7 @@ public class BestEffortsMonitoring {
   public synchronized void flushAfterActivePromotion(PlatformServer thisServer, TerracottaServiceProviderRegistry globalRegistry) {
     // We no longer care about the timer so clear it, if one exists.
     ensureTimerCancelled();
-    
-    // Walk each consumerID, looking up their registries, and flushing all entries to the implementation.
-    for (Map.Entry<Long, Map<String, Serializable>> perConsumerEntry : this.bestEffortsCache.entrySet()) {
-      IStripeMonitoring collector = null;
-      try {
-        IStripeMonitoring underlyingCollector = globalRegistry.subRegistry(perConsumerEntry.getKey()).getService(new BasicServiceConfiguration<>(IStripeMonitoring.class));
-        // NOTE:  We assert that there _is_ a registry for IStripeMonitoring if we received this call.
-        Assert.assertNotNull(underlyingCollector);
-        collector = new IStripeMonitoringWrapper(underlyingCollector, LOGGER);
-      } catch (ServiceException e) {
-        Assert.fail("Multiple IStripeMonitoring implementations found!");
-      }
 
-      for (Map.Entry<String, Serializable> entry : perConsumerEntry.getValue().entrySet()) {
-        collector.pushBestEffortsData(thisServer, entry.getKey(), entry.getValue());
-      }
-    }
     // We can now drop this (gratuitous but makes it clear we are done).
     this.bestEffortsCache.clear();
   }
