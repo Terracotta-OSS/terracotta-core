@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
-import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.persistence.IPlatformPersistence;
@@ -204,6 +203,7 @@ import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
+import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
 import com.tc.objectserver.entity.VoltronMessageSink;
@@ -211,6 +211,7 @@ import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.services.InternalServiceRegistry;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
@@ -451,7 +452,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     // The platform gets the reserved consumerID 0.
     long platformConsumerID = 0;
-    ServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
+    InternalServiceRegistry platformServiceRegistry = serviceRegistry.subRegistry(platformConsumerID);
     
     Set<ProductID> capablities = EnumSet.allOf(ProductID.class);
     

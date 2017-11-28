@@ -39,6 +39,7 @@ import com.tc.classloader.BuiltinService;
 import com.tc.net.ServerID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import java.util.Arrays;
 
 
 /**
@@ -60,7 +61,7 @@ import com.tc.util.Assert;
  *  probably has better solutions.
  */
 @BuiltinService
-public class LocalMonitoringProducer implements ImplementationProvidedServiceProvider {
+public class LocalMonitoringProducer implements ImplementationProvidedServiceProvider, ManagedEntity.LifecycleListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(LocalMonitoringProducer.class);
   private final TerracottaServiceProviderRegistry globalRegistry;
   private final PlatformServer thisServer;
@@ -74,10 +75,24 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ISimpleTimer timer) {
     this.globalRegistry = globalRegistry;
     this.thisServer = thisServer;
-    this.otherServers = new HashMap<ServerID, PlatformServer>();
-    this.cachedTreeRoot = new HashMap<Long, CacheNode>();
+    this.otherServers = new HashMap<>();
+    this.cachedTreeRoot = new HashMap<>();
     this.bestEfforts = new BestEffortsMonitoring(timer);
   }
+
+  @Override
+  public synchronized void entityCreated(ManagedEntity sender) {
+
+  }
+
+  @Override
+  public synchronized void entityDestroyed(ManagedEntity sender) {
+    if (this.cachedTreeRoot != null) {
+      this.cachedTreeRoot.remove(sender.getConsumerID());
+    }
+  }
+  
+  
 
   public PlatformServer getLocalServerInfo() {
     return this.thisServer;
@@ -88,12 +103,17 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     Class<T> type = configuration.getServiceType();
     Assert.assertEquals(type, IMonitoringProducer.class);
     // If we are caching, make sure that we have a node.
-    if ((null != this.cachedTreeRoot) && !this.cachedTreeRoot.containsKey(consumerID)) {
-      this.cachedTreeRoot.put(consumerID, new CacheNode(null));
-    }
     IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
+
     T service = null;
     if (null != underlyingCollector) {
+      if ((null != this.cachedTreeRoot) && !this.cachedTreeRoot.containsKey(consumerID)) {
+        this.cachedTreeRoot.put(consumerID, new CacheNode(null));
+        if (owningEntity != null) {
+          owningEntity.addLifecycleListener(this);
+        }
+      }
+      
       service = type.cast(new IMonitoringProducer() {
         @Override
         public boolean addNode(String[] parents, String name, Serializable value) {
@@ -178,6 +198,14 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
       this.bestEfforts.attachToNewActive(this.activeWrapper);
     } else {
 //  split brain.  one of the actives will die shortly.
+    }
+  }
+  
+  private void debugOut(CacheNode node) {
+    if (node != null) {
+      walkCacheChildren(new String[0], node.children, (String[] parents, String name, Serializable value) -> {
+        LOGGER.info(Arrays.toString(parents) + ":" + name + "=" + value);
+      });
     }
   }
 

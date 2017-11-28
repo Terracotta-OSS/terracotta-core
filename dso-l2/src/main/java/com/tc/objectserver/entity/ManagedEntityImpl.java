@@ -179,12 +179,12 @@ public class ManagedEntityImpl implements ManagedEntity {
   
   private void notifyEntityCreated() {
     CommonServerEntity entity = (this.isInActiveState) ? this.activeServerEntity : this.passiveServerEntity;
-    createListener.forEach((l)->l.entityCreated(entity));
+    createListener.forEach((l)->l.entityCreated(this));
   }
   
   private void notifyEntityDestroyed() {
     CommonServerEntity entity = (this.isInActiveState) ? this.activeServerEntity : this.passiveServerEntity;
-    createListener.forEach((l)->l.entityDestroyed(entity));
+    createListener.forEach((l)->l.entityDestroyed(this));
     createListener.clear();
   }
 /**

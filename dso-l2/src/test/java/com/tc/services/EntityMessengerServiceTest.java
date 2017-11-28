@@ -54,7 +54,7 @@ public class EntityMessengerServiceTest {
     EntityMessengerService service = new EntityMessengerService(sink, entity, true);
     when(entity.isDestroyed()).thenReturn(false);
     ActiveServerEntity ae = mock(ActiveServerEntity.class);
-    service.entityCreated(ae);
+    service.entityCreated(entity);
 
     EntityMessage deferrableMessage = mock(EntityMessage.class);
     EntityMessage futureMessage = mock(EntityMessage.class);

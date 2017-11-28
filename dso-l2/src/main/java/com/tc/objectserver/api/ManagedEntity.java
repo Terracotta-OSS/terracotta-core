@@ -124,7 +124,7 @@ public interface ManagedEntity {
      * 
      * @param sender The entity which is ready.
      */
-    public void entityCreated(CommonServerEntity sender);
-    public void entityDestroyed(CommonServerEntity sender);
+    public void entityCreated(ManagedEntity sender);
+    public void entityDestroyed(ManagedEntity sender);
   }
 }
