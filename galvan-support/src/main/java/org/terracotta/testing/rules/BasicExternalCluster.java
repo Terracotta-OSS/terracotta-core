@@ -86,7 +86,7 @@ class BasicExternalCluster extends Cluster {
     this.serverJars = serverJars;
     this.clientReconnectWindowTime = clientReconnectWindowTime;
     this.tcProperties.putAll(tcProperties);
-    this.systemProperties.putAll(tcProperties);
+    this.systemProperties.putAll(systemProperties1);
     this.logConfigExt = logConfigExt;
     
     this.clientThread = Thread.currentThread();
