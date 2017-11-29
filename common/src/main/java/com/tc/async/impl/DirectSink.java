@@ -23,6 +23,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,54 +49,42 @@ public class DirectSink<EC> implements Sink<EC> {
     Assert.assertNotNull(this.isIdle);
     Assert.assertNotNull(this.ifNotDirect);
   }
-
-  @Override
-  public void addSingleThreaded(EC context) {
-    // access here MUST be single threaded
+  
+  private void pipeline(EC context, Consumer<EC> underlying) {
+    // access here MUST be fed by a single stage
     if (isSingleThreaded()) {
       try {
-        Assert.assertTrue(isIdle.get());
         directInflight = true;
+        Assert.assertTrue(isIdle.get());
         handler.handleEvent(context);
-        directInflight = false;
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
         throw new RuntimeException(ee);
+      } finally {
+        directInflight = false;
       }
     } else {
       if (directInflight) {
         throw new AssertionError();
       } else {
-        this.ifNotDirect.addSingleThreaded(context);
+        underlying.accept(context);
       }
     }
+  }
+
+  @Override
+  public void addSingleThreaded(EC context) {
+    pipeline(context, ifNotDirect::addSingleThreaded);
   }
 
   @Override
   public void addMultiThreaded(EC context) {
-    // access here MUST be single threaded
-    if (isSingleThreaded()) {
-      try {
-        Assert.assertTrue(isIdle.get());
-        directInflight = true;
-        handler.handleEvent(context);
-        directInflight = false;
-        Assert.assertTrue(isIdle.get());
-      } catch (EventHandlerException ee) {
-        throw new RuntimeException(ee);
-      }
-    } else {
-      if (directInflight) {
-        throw new AssertionError();
-      } else {
-        this.ifNotDirect.addMultiThreaded(context);
-      }
-    }
+    pipeline(context, ifNotDirect::addMultiThreaded);
   }
 
   @Override
   public boolean isEmpty() {
-    return this.ifNotDirect.isEmpty();
+    return !directInflight || this.ifNotDirect.isEmpty();
   }
 
   @Override
