@@ -114,12 +114,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
   
   @Override
-  public synchronized void entityCreated(CommonServerEntity sender) {
+  public synchronized void entityCreated(ManagedEntity sender) {
 
   }
 
   @Override
-  public synchronized void entityDestroyed(CommonServerEntity sender) {
+  public synchronized void entityDestroyed(ManagedEntity sender) {
 
   }
 

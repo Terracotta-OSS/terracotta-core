@@ -824,13 +824,13 @@ public class ManagedEntityImplTest {
     final boolean[] indirectFlag = new boolean[1];
     managedEntity.addLifecycleListener(new ManagedEntity.LifecycleListener(){
       @Override
-      public void entityCreated(CommonServerEntity sender) {
+      public void entityCreated(ManagedEntity sender) {
         indirectFlag[0] = true;
       }
 
       @Override
-      public void entityDestroyed(CommonServerEntity sender) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      public void entityDestroyed(ManagedEntity sender) {
+
       }
     });
     TestingResponse response = mockResponse();
