@@ -22,8 +22,8 @@ package com.tc.object.request;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
-import java.util.Map;
 
 
 public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEntityMultiResponse> {
@@ -35,20 +35,35 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
 
   @Override
   public void handleEvent(VoltronEntityMultiResponse response) throws EventHandlerException {
-    for (TransactionID received : response.getReceivedTransactions()) {
-      handler.received(received);
-    }
-    Map<TransactionID, byte[]> results = response.getResults();
-    for (Map.Entry<TransactionID, byte[]> entry : results.entrySet()) {
-      byte[] result = entry.getValue();
-      if (result == null) {
-        handler.complete(entry.getKey());
-      } else {
-        handler.complete(entry.getKey(), result);
+    response.replay(new VoltronEntityMultiResponse.ReplayReceiver() {
+      @Override
+      public void received(TransactionID tid) {
+        handler.received(tid);
       }
-    }
-    for (TransactionID retires : response.getRetiredTransactions()) {
-      handler.retired(retires);
-    }
+
+      @Override
+      public void retired(TransactionID tid) {
+        handler.retired(tid);
+      }
+
+      @Override
+      public void result(TransactionID tid, byte[] result) {
+        if (result != null) {
+          handler.complete(tid, result);
+        } else {
+          handler.complete(tid);
+        }
+      }
+
+      @Override
+      public void message(ClientInstanceID cid, byte[] message) {
+        handler.handleMessage(cid, message);
+      }
+
+      @Override
+      public void message(TransactionID tid, byte[] message) {
+        handler.handleMessage(tid, message);
+      }
+    });
   }
 }

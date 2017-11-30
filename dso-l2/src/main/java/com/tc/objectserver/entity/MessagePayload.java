@@ -51,6 +51,7 @@ public class MessagePayload {
 
   private final byte[] raw;
   private EntityMessage message;
+  private MessageCodecException exception;
   private final int concurrency;
   private final int referenceCount;
   private final boolean replicate;
@@ -61,7 +62,7 @@ public class MessagePayload {
   private MessagePayload(byte[] raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
     this.raw = raw;
     this.message = message;
-    this.debugId = (message != null) ? message.toString() : "";
+    this.debugId = null;
     this.concurrency = concurrency;
     this.referenceCount = referenceCount;
     this.replicate = replicate;
@@ -77,27 +78,29 @@ public class MessagePayload {
   }
   
   public String getDebugId() {
+    if (debugId == null && this.message != null) {
+      debugId = message.toString();
+    }
     return debugId;
   }
   
   public boolean canBeBusy() {
     return canBeBusy;
   }
-  
-  public EntityMessage decodeRawMessage(MessageDecoder codec) {
-    try {
-      return decodeMessage(codec);
-    } catch (MessageCodecException mce) {
-      throw new RuntimeException(mce);
-    }
-  }
 
   public EntityMessage decodeMessage(MessageDecoder codec) throws MessageCodecException {
-    if (message == null) {
-      message = codec.decode(raw);
-      setDebugId(message.toString());
+    if (exception != null) {
+      throw exception;
     }
-    return message;
+    try {
+      if (message == null) {
+        message = codec.decode(raw);
+      }
+      return message;
+    } catch (MessageCodecException ce) {
+      exception = ce;
+      throw exception;
+    }
   }
   
   public int getConcurrency() {

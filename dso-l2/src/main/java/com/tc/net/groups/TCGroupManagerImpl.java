@@ -56,12 +56,11 @@ import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
-import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -82,6 +81,7 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.TCServerMain;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
@@ -120,7 +120,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   private final ReconnectConfig                             l2ReconnectConfig;
-
+  
+  private final int                                         serverCount;
+  
   private final String                                      version;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
@@ -148,7 +150,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private TCGroupMemberDiscovery                            discover;
   private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
                                                                                                                              logger);
-  private Stage<HydrateContext> hydrateStage;
   private Stage<TCGroupMessageWrapper> receiveGroupMessageStage;
   private Stage<TCGroupHandshakeMessage> handshakeMessageStage;
   private Stage<DiscoveryStateMachine> discoveryStage;
@@ -174,6 +175,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.version = getVersion();
 
     L2Config l2DSOConfig = configSetupManager.dsoL2Config();
+    serverCount = configSetupManager.allCurrentlyKnownServers().length - 2;  // minus 2 because we don't need to include local node and main selector can be used if only talking to one other server
 
     this.groupPort = l2DSOConfig.tsaGroupPort().getValue();
     this.weightGeneratorFactory = weightGenerator;
@@ -221,6 +223,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.groupPort = groupPort;
     this.version = getVersion();
     this.weightGeneratorFactory = weightGenerator;
+    this.serverCount = 0;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
@@ -240,8 +243,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
                                                           new NullMessageMonitor(), messageRouter,
-                                                          networkStackHarnessFactory, this.connectionPolicy,
-                                                          L2Utils.getOptimalCommWorkerThreads(),
+                                                          networkStackHarnessFactory, this.connectionPolicy, 
+                                                          serverCount,
                                                           new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
@@ -265,7 +268,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   private void createTCGroupManagerStages() {
     int maxStageSize = 5000;
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE, HydrateContext.class,new HydrateHandler(), 1, maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
     discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize);
@@ -278,10 +280,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private void initMessageRouter(TCMessageRouter messageRouter) {
-    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
-                                   hydrateStage.getSink());
-    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
-                                   hydrateStage.getSink());
+    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, new TCMessageHydrateSink<>(receiveGroupMessageStage.getSink()));
+    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(handshakeMessageStage.getSink()));
   }
 
   /*

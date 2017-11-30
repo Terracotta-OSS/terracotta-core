@@ -32,6 +32,7 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.Arrays;
 
 /**
  * The SEDA Stage
@@ -42,6 +43,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final String         name;
   private final EventHandler<EC> handler;
   private final StageQueue<EC> stageQueue;
+  private final Sink<EC> sink;
   private final WorkerThread<EC>[] threads;
   private final ThreadGroup    group;
   private final Logger logger;
@@ -64,12 +66,13 @@ public class StageImpl<EC> implements Stage<EC> {
    */
   @SuppressWarnings("unchecked")
   public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler<EC> handler, int queueCount,
-                   ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize) {
+                   ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
     this.threads = new WorkerThread[queueCount];
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, loggerProvider, name, queueSize);
+    this.sink = !canBeDirect ? this.stageQueue : new DirectSink<>(this.handler, stageQueue::isEmpty, this.stageQueue);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
@@ -108,7 +111,7 @@ public class StageImpl<EC> implements Stage<EC> {
 
   @Override
   public Sink<EC> getSink() {
-    return stageQueue;
+    return sink;
   }
 
   @Override
@@ -120,6 +123,24 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public void unpause() {
     paused = false;
+  }
+
+  @Override
+  public void clear() {
+    boolean interrupted = Thread.interrupted();
+    this.stageQueue.clear();
+    for (WorkerThread wt : threads) {
+      try {
+        if (wt != null) {
+          wt.waitForIdle();
+        }
+      } catch (InterruptedException ie) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
   }
  
   private synchronized void startThreads() {
@@ -154,6 +175,10 @@ public class StageImpl<EC> implements Stage<EC> {
   public String toString() {
     return "StageImpl(" + name + ")";
   }
+// for testing
+  void waitForIdle() {
+    Arrays.stream(threads).forEach(t->t.waitForIdleUninterruptibly());
+  }
 
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
@@ -161,6 +186,9 @@ public class StageImpl<EC> implements Stage<EC> {
     private final Logger     tcLogger;
     private final int          sleepMs;
     private final boolean      pausable;
+    private volatile boolean idle = false;
+    private final Object idleLock = new Object();
+    private boolean waitingForIdle = false;
     private final String       stageName;
 
     public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler, ThreadGroup group, Logger logger, int sleepMs, boolean pausable, String stageName) {
@@ -185,14 +213,20 @@ public class StageImpl<EC> implements Stage<EC> {
         ThreadUtil.reallySleep(1000);
       }
     }
+    
+    public boolean isIdle() {
+      return this.idle;
+    }
 
     @Override
     public void run() {
       while (!shutdown || !source.isEmpty()) {
         ContextWrapper<EC> ctxt = null;
         try {
+          this.setToIdle();
           ctxt = source.poll(pollTime);
           if (ctxt != null) {
+            this.idle = false;
             handleStageDebugPauses();
             ctxt.runWithHandler(handler);
           }
@@ -215,6 +249,43 @@ public class StageImpl<EC> implements Stage<EC> {
           // to the context will exist until another context comes in. This can potentially keep many objects in memory
           // longer than necessary
           ctxt = null;
+        }
+      }
+    }
+    
+    private void setToIdle() {
+      if (this.idle != true && source.isEmpty()) {
+        this.idle = true;
+        synchronized (idleLock) {
+          if (waitingForIdle) {
+            idleLock.notifyAll();
+          }
+        }
+      }
+    }
+    
+    private void waitForIdleUninterruptibly() {
+      boolean interrupted = false;
+      boolean localIdle = false;
+      while (!localIdle) {
+        try {
+          waitForIdle();
+          localIdle = true;
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+    
+    private void waitForIdle() throws InterruptedException {
+      while (!this.idle) {
+        synchronized (idleLock) {
+          waitingForIdle = true;
+          idleLock.wait();
+          waitingForIdle = false;
         }
       }
     }

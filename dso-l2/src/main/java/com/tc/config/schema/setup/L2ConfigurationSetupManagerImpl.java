@@ -18,6 +18,7 @@
  */
 package com.tc.config.schema.setup;
 
+import com.tc.classloader.ServiceLocator;
 import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupConfigObject;
@@ -30,6 +31,7 @@ import com.tc.object.config.schema.L2ConfigObject;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
+import com.tc.server.ServiceClassLoader;
 import com.tc.util.Assert;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
@@ -55,6 +57,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.terracotta.config.service.ServiceConfigParser;
 
 
 /**
@@ -67,6 +70,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private final ConfigTCProperties configTCProperties;
   private final Set<InetAddress> localInetAddresses;
   private final TcConfiguration configuration;
+  private final ServiceLocator locator;
 
   private volatile ActiveServerGroupConfig activeServerGroupConfig;
 
@@ -84,9 +88,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     this.l2ConfigData = new HashMap<>();
 
     this.localInetAddresses = getAllLocalInetAddresses();
-
+    this.locator = new ServiceLocator(loader);
     // this sets the beans in each repository
-    runConfigurationCreator(loader);
+    runConfigurationCreator(new ServiceClassLoader(this.locator.getImplementations(ServiceConfigParser.class, loader)));
     this.configTCProperties = new ConfigTCPropertiesFromObject(tcPropertiesRepository());
     overwriteTcPropertiesFromConfig();
 
@@ -135,11 +139,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     this.activeServerGroupConfig = new ActiveServerGroupConfigObject(serversBean, this);
 
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
-  }
-
-  @Override
-  public boolean isSecure() {
-    return false;
   }
 
   @Override
@@ -410,4 +409,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     return this.activeServerGroupConfig;
   }
 
+  @Override
+  public ServiceLocator getServiceLocator() {
+    return this.locator;
+  }
 }

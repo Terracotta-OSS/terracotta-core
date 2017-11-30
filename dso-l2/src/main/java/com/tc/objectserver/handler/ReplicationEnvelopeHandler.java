@@ -27,7 +27,7 @@ import java.util.concurrent.Callable;
 /**
  * @author tim
  */
-public class BackupHandler extends AbstractEventHandler<Callable<?>> {
+public class ReplicationEnvelopeHandler extends AbstractEventHandler<Callable<?>> {
   @Override
   public void handleEvent(Callable<?> context) throws EventHandlerException {
     try {

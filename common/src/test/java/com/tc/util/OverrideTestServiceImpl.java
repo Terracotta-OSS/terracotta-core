@@ -16,19 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.entity;
+package com.tc.util;
 
-import com.tc.async.api.Sink;
-import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.classloader.OverrideService;
 
 /**
  *
  */
-public class VoltronHydrateContext extends HydrateContext {
-
-  public VoltronHydrateContext(TCMessage message, Sink<TCMessage> destSink) {
-    super(message, destSink);
-  }
+@OverrideService("com.tc.util.TestServiceImpl")
+public class OverrideTestServiceImpl implements TestService {
   
 }

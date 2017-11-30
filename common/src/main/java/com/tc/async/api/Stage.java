@@ -18,8 +18,6 @@
  */
 package com.tc.async.api;
 
-import com.tc.text.PrettyPrintable;
-
 /**
  * @author steve
  */
@@ -37,4 +35,5 @@ public interface Stage<EC> {
     
   public String getName();
 
+  public void clear();
 }

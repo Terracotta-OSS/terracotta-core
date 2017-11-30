@@ -21,7 +21,6 @@ package com.tc.object;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.entity.MessageCodecSupplier;
@@ -30,7 +29,6 @@ import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
@@ -98,6 +96,14 @@ public class ClientEntityManagerTest extends TestCase {
         return stage;
       }
     });
+    when(this.stageMgr.getStage(any(String.class), any(Class.class))).then(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        Stage stage = mock(Stage.class);
+        when(stage.getSink()).thenReturn(new FakeSink(null));
+        return stage;
+      }
+    });
     this.manager = new ClientEntityManagerImpl(this.channel, stageMgr);
     
     String entityClassName = "Class Name";
@@ -134,6 +140,17 @@ public class ClientEntityManagerTest extends TestCase {
     // We expect that we found the entity.
     assertTrue(didFindEndpoint(fetcher));
   }
+  
+  // Test to make sure we can still receive items without error after close, needed due to shutdown sequence
+  public void testReceiveAfterClose() throws Exception {
+    TransactionID tid = new TransactionID(1L);
+    manager.shutdown(false);
+    manager.complete(tid);
+    manager.failed(tid, new EntityException(this.entityID.getClassName(), this.entityID.getEntityName(), "", null) {});
+    manager.received(tid);
+    manager.retired(tid);
+    // nothing should throw exception
+  }  
 
   // Test that a simple lookup can fail.
   public void testSimpleLookupFailure() throws Exception {
@@ -325,7 +342,15 @@ public class ClientEntityManagerTest extends TestCase {
   public void testShutdownWhilePaused() throws Exception {
     // We will create a runnable which will attempt to fetch the entity (and we will get this stuck in "WAITING" on pause).
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });
     // Pause the manager before we start anything.
     this.manager.pause();
     // Now we can start the lookup thread as we expect it to stall on the paused state.
@@ -425,7 +450,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
+    InFlightMessage result = this.manager.invokeAction(entityID, descriptor, Collections.<Acks>emptySet(), null, false, true, false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -438,7 +463,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InvokeFuture<byte[]> result = this.manager.invokeAction(descriptor, Collections.<Acks>emptySet(), false, true, new byte[0]);
+    InFlightMessage result = this.manager.invokeAction(entityID, descriptor, Collections.<Acks>emptySet(), null, false, true, false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     long start = System.currentTimeMillis();
     try {
@@ -480,7 +505,7 @@ public class ClientEntityManagerTest extends TestCase {
 
       @Override
       public void run() {
-        mgr.invokeAction(descriptor, requestedAcks, false, true, new byte[0]);
+        mgr.invokeAction(entityID, descriptor, requestedAcks, null, false, true, false, new byte[0]);
       }
       
     });
@@ -571,8 +596,10 @@ public class ClientEntityManagerTest extends TestCase {
     private final boolean autoComplete;
     private TransactionID transactionID;
     private EntityDescriptor descriptor;
+    private EntityID entityID;
     private byte[] extendedData;
     private boolean requiresReplication;
+    private Type type;
     
     public TestRequestBatchMessage(ClientEntityManager clientEntityManager, byte[] resultObject, EntityException resultException, boolean autoComplete) {
       this.clientEntityManager = clientEntityManager;
@@ -595,6 +622,11 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public TransactionID getTransactionID() {
       return this.transactionID;
+    }
+
+    @Override
+    public EntityID getEntityID() {
+      return this.entityID;
     }
 
     @Override
@@ -673,7 +705,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public Type getVoltronType() {
-      return Type.INVOKE_ACTION;
+      return type;
     }
     @Override
     public byte[] getExtendedData() {
@@ -684,12 +716,15 @@ public class ClientEntityManagerTest extends TestCase {
       throw new UnsupportedOperationException();
     }
     @Override
-    public void setContents(ClientID clientID, TransactionID transactionID, EntityDescriptor entityDescriptor, 
+    public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
             Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
+      Assert.assertNotNull(eid);
+      this.entityID = eid;
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;
       this.requiresReplication = requiresReplication;
+      this.type = type;
     }
 
     @Override
@@ -726,13 +761,13 @@ public class ClientEntityManagerTest extends TestCase {
     }
 
     @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public int size() {
+      return 0;
     }
 
     @Override
-    public int size() {
-      return 0;
+    public boolean isEmpty() {
+      return true;
     }
 
     @Override

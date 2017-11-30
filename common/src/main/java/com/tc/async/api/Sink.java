@@ -43,15 +43,7 @@ public interface Sink<EC> extends Monitorable {
    */
   public void addMultiThreaded(EC context);
 
-  /**
-   * Adds a specialized event to the queue for multi-threaded execution.
-   * Specialized events differ from the normal kind in 2 ways:
-   * 1) They are always multi-threaded (the inherit from that class)
-   * 2) They are NOT invoked by the handler, but directly "execute()"-ed.
-   * 
-   * @param specialized The specialized context to execute().
-   */
-  public void addSpecialized(SpecializedEventContext specialized);
+  boolean isEmpty();
 
   /**
    * returns the current size of the queue

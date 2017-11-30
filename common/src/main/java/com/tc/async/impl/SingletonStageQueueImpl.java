@@ -19,12 +19,8 @@
 package com.tc.async.impl;
 
 
-import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
 import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
@@ -99,8 +95,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<>(context);
     deliverToQueue("Single", wrapper);
   }
 
@@ -115,23 +110,13 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
-    MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
-    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context) : new HandledContext<EC>(context);
+    ContextWrapper<EC> wrapper = new HandledContext<>(context);
     deliverToQueue("Multi", wrapper);
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    deliverToQueue("Specialized", wrapper);
   }
 
   private void deliverToQueue(String type, ContextWrapper<EC> wrapper) {
     boolean interrupted = Thread.interrupted();
+    addInflight();
     try {
       for (; ; ) {
         try {
@@ -149,12 +134,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
   }
 
-  // Used for testing
-  @Override
-  public int size() {
-    return sourceQueue.size();
-  }
-
   @Override
   public String toString() {
     return "StageQueue(" + this.stageName + ")";
@@ -163,6 +142,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   @Override
   public void clear() {
     int clearCount = sourceQueue.clear();
+    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
@@ -250,7 +230,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
     @Override
     public W poll(long timeout) throws InterruptedException {
-      W rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+      W rv = (timeout == 0) ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       return rv;
     }
 
@@ -270,27 +250,5 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       return "Singleton";
     }
 
-  }
-
-  private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
-    private final EC context;
-    private int executionCount = 0;
-
-    public FlushingHandledContext(EC context) {
-      this.context = context;
-    }
-
-    @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      handler.handleEvent(this.context);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
-    }
   }
 }

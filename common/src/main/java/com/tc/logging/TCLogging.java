@@ -21,8 +21,6 @@ package com.tc.logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ServiceLoader;
-
 /**
  * Factory class for obtaining Logger instances.
  * 

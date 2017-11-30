@@ -21,7 +21,6 @@ package com.tc.objectserver.core.api;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.util.State;
 
@@ -68,7 +67,7 @@ public interface ITopologyEventCollector {
    * 
    * @param id The unique identifier for this entity.
    */
-  public void entityWasDestroyed(EntityID id);
+  public void entityWasDestroyed(EntityID id, long consumerID);
 
   /**
    * Called when an entity is reloaded from an existing state, either on restart (loading from disk) on fail-over promotion
@@ -89,7 +88,7 @@ public interface ITopologyEventCollector {
    * @param entityDescriptor The descriptor describing which entity is fetched and which fetch instance this was, on the client.
    * @param clientDescriptor corresponding ClientDescriptor for client
    */
-  public void clientDidFetchEntity(ClientID client, EntityID entity, ClientInstanceID entityDescriptor);
+  public void clientDidFetchEntity(ClientID client, EntityID entity, long consumerID, ClientInstanceID entityDescriptor);
 
   /**
    * Called when a given client successfully releases a specific entity.  Note that the same client can fetch a given entity
@@ -99,5 +98,5 @@ public interface ITopologyEventCollector {
    * @param client The client.
    * @param entityDescriptor The descriptor describing which entity is fetched and which fetch instance this was, on the client.
    */
-  public void clientDidReleaseEntity(ClientID client, EntityID entity, ClientInstanceID entityDescriptor);
+  public void clientDidReleaseEntity(ClientID client, EntityID entity, long consumerID, ClientInstanceID entityDescriptor);
 }

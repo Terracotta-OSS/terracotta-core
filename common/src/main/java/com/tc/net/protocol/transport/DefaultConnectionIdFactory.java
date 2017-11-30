@@ -59,11 +59,6 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   @Override
-  public void restoreConnectionId(ConnectionID rv) {
-    //
-  }
-
-  @Override
   public long getCurrentConnectionID() {
     return sequence;
   }
@@ -71,11 +66,4 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   public String getServerID() {
     return serverID;
   }
-
-  @Override
-  public ConnectionID buildConnectionID(ClientID client) {
-    return new ConnectionID(ConnectionID.NULL_JVM_ID, client.getChannelID().toLong(), serverID);
-  }
-  
-  
 }

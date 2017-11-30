@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -28,11 +30,9 @@ import org.junit.Test;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
@@ -47,13 +47,19 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doAnswer;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.util.function.Consumer;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class EntityManagerImplTest {
-  private EntityManager entityManager;
+  private EntityManagerImpl entityManager;
   private EntityID id;
   private FetchID fetch;
   private long version;
@@ -65,17 +71,20 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
-        ((Runnable)invoke.getArguments()[5]).run();
+    ActivePassiveAckWaiter waiter = mock(ActivePassiveAckWaiter.class);
+    doAnswer((invoke)->{
+        ((Consumer)invoke.getArguments()[6]).accept(waiter);
         return null;
-      });
+    }).when(processor).scheduleRequest(anyBoolean(), any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
-        mock(ITopologyEventCollector.class),
+        new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
         processor,
-        mock(ManagementKeyCallback.class)
+        mock(ManagementKeyCallback.class),
+        new ServiceLocator(this.getClass().getClassLoader())
     );
+    entityManager.setMessageSink(mock(Sink.class));
     id = new EntityID(TestEntity.class.getName(), "foo");
     consumerID = 1L;
     fetch = new FetchID(consumerID);
@@ -89,7 +98,12 @@ public class EntityManagerImplTest {
 
   @Test
   public void testCreateEntity() throws Exception {
-    entityManager.createEntity(id, version, consumerID, true);
+    try {
+      entityManager.createEntity(id, version, consumerID, true);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)).get().getID(), is(id));
   }
 
@@ -158,7 +172,7 @@ public class EntityManagerImplTest {
       }
     };
     //  set the destroyed flag in the entity
-    entity.addRequestMessage(req, MessagePayload.emptyPayload(), null, null, null);
+    entity.addRequestMessage(req, MessagePayload.emptyPayload(), mock(ResultCapture.class));
     //  remove it from the manager
     entityManager.removeDestroyed(fetch);
     assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));

@@ -25,7 +25,6 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 
 
@@ -36,9 +35,22 @@ public class TestEntityServer implements ActiveServerEntity<EntityMessage, Entit
   }
 
   @Override
-  public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
-    // Do nothing.
+  public ReconnectHandler startReconnect() {
+    return new ReconnectHandler() {
+      @Override
+      public void handleReconnect(ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
+        // Do nothing.
+      }
+
+      @Override
+      public void close() {
+
+      }
+    };
   }
+
+  
+
 
   @Override
   public void disconnected(ClientDescriptor clientDescriptor) {

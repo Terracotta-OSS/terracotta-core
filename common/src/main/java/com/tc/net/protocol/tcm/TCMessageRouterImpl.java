@@ -76,11 +76,6 @@ public class TCMessageRouterImpl implements TCMessageRouter {
   }
 
   @Override
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
-    routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
-  }
-
-  @Override
   public void unrouteMessageType(TCMessageType type) {
     routesByType.remove(type);
   }

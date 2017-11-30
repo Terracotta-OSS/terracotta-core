@@ -16,16 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.tc.objectserver.handler;
 
-package com.tc.entity;
-
-import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandlerException;
 
 /**
- * @author twu
+ *
  */
-public interface ServerEntityResponseMessage extends TCMessage {
-  void setResponseId(long responseId);
+public class GenericHandler<T extends Runnable> extends AbstractEventHandler<T> {
 
-  long getResponseId();
+  @Override
+  public void handleEvent(T context) throws EventHandlerException {
+    context.run();
+  }
+  
 }

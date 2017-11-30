@@ -1,7 +1,5 @@
 package com.tc.classloader;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author vmad
  */

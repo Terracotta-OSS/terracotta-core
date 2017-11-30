@@ -16,13 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.async.api;
+package com.tc.util;
 
 /**
- * This type of context has a build in execute() method which is run instead of the handler's handleEvent() method.
- * These contexts are used to run some code inband to do stuff after all the other queued event contexts are executed.
+ *
  */
-public interface SpecializedEventContext extends MultiThreadedEventContext {
-
-  public void execute() throws EventHandlerException;
+public class TestServiceImpl implements TestService {
+  
 }

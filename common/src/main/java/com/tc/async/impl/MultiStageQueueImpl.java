@@ -18,29 +18,20 @@
  */
 package com.tc.async.impl;
 
-import org.slf4j.Logger;
-
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
-import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
+import org.slf4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
-import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollector;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
 
 /**
  * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
@@ -52,7 +43,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   static final String FINDSTRATEGY_PROPNAME = "tc.stagequeueimpl.findstrategy";
 
 
-  private static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
+  static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
 
   static {
     ShortestFindStrategy strat = ShortestFindStrategy.PARTITION;
@@ -63,6 +54,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     SHORTEST_FIND_STRATEGY = strat;
   }
 
+
   static enum ShortestFindStrategy {
     BRUTE,
     PARTITION
@@ -71,9 +63,10 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private final boolean moduloAnd;
   private final int moduleMask;
   private final int PARTITION_SHIFT;
+  final int PARTITION_MAX_MASK;
   private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
   private volatile int fcheck = 0;  // used to start the shortest queue search
-  private AtomicInteger partitionHand =new AtomicInteger(0);
+  AtomicInteger partitionHand =new AtomicInteger(0);
 
   /**
    * The Constructor.
@@ -98,6 +91,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     } else {
       PARTITION_SHIFT = 1;
     }
+    PARTITION_MAX_MASK = (1 << (31 - PARTITION_SHIFT)) - 1;
 
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
@@ -163,6 +157,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
+    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -193,6 +188,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
+    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -220,36 +216,11 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
   }
 
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    boolean interrupted = Thread.interrupted();
-    int index = getSourceQueueFor(specialized);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[index].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
   // TODO:  Way too busy. REALLY need a better way
   private int findShortestQueueIndex() {
     switch (SHORTEST_FIND_STRATEGY) {
       case PARTITION: {
-        int offset = moduloQueueCount(partitionHand.getAndIncrement() << PARTITION_SHIFT);
+        int offset = moduloQueueCount(nextPartition() << PARTITION_SHIFT);
         int min = Integer.MAX_VALUE;
         int can = -1;
         for (int i = 0; i < (1 << PARTITION_SHIFT); i++) {
@@ -287,6 +258,15 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     throw new IllegalStateException();
   }
 
+  private int nextPartition() {
+    int p = partitionHand.get();
+    int newP = (p + 1) & PARTITION_MAX_MASK;
+    while(!partitionHand.compareAndSet(p, newP)) {
+      p = partitionHand.get();
+      newP = (p + 1) & PARTITION_MAX_MASK;
+    } return newP;
+  }
+
   private int getSourceQueueFor(MultiThreadedEventContext context) {
     Object schedulingKey = context.getSchedulingKey();
     if (null == schedulingKey) {
@@ -300,17 +280,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private int hashCodeToArrayIndex(int hashcode, int arrayLength) {
     return Math.abs(hashcode % arrayLength);
   }
-
-  // Used for testing
-  @Override
-  public int size() {
-    int totalQueueSize = 0;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
-      totalQueueSize += sourceQueue.size();
-    }
-    return totalQueueSize;
-  }
-
+  
   @Override
   public String toString() {
     return "StageQueue(" + this.stageName + ")";
@@ -322,6 +292,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
+    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
@@ -469,12 +440,11 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
   }
 
-  private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
-    private final EC context;
+  private class FlushingHandledContext<T extends EC> extends HandledContext<EC> {
     private final int offset;
     private int executionCount = 0;
     public FlushingHandledContext(EC context, int offset) {
-      this.context = context;
+      super(context);
       this.offset = offset;
     }
 
@@ -482,7 +452,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
       if (++executionCount == sourceQueues.length) {
 //  been through all the queues.  execute now.
-        handler.handleEvent(this.context);
+        super.runWithHandler(handler);
       } else {
 //  move to next queue
         boolean interrupted = false;
@@ -502,14 +472,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
           }
         }
       }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
     }
   }
 }

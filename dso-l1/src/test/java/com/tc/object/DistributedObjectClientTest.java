@@ -99,7 +99,7 @@ public class DistributedObjectClientTest extends TestCase {
     Assert.assertFalse(connected);
     client.shutdown();
     Assert.assertTrue(threadGroup.activeCount() == 0);
-    Assert.assertTrue(System.currentTimeMillis() - start < 11000);
+    Assert.assertTrue(System.currentTimeMillis() - start, System.currentTimeMillis() - start < 15000);
     int count = Thread.activeCount();
     System.out.println("active threads:" + count);
     Thread[] t = new Thread[count];

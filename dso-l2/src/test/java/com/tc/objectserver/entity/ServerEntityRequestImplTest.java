@@ -33,6 +33,7 @@ import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.objectserver.api.ServerEntityRequest;
 
 import java.util.Optional;
 
@@ -70,7 +71,7 @@ public class ServerEntityRequestImplTest {
     serverEntityRequest.complete(value);
     serverEntityRequest.retired();
     
-    verify(responseMessage).setSuccess(transactionID, value, false);
+    verify(responseMessage).setSuccess(transactionID, value);
     verify(responseMessage).send();
   }
 
@@ -78,12 +79,13 @@ public class ServerEntityRequestImplTest {
   public void testCompleteCreate() throws Exception {
     boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), requiresReplication, isReplicatedMessage);
+    ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.CREATE_ENTITY, nodeID, transactionID, TransactionID.NULL_ID, requiresReplication);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(request, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
 
     serverEntityRequest.complete();
     serverEntityRequest.retired();
     
-    verify(responseMessage).setSuccess(transactionID, new byte[0], false);
+    verify(responseMessage).setSuccess(transactionID, new byte[0]);
     verify(responseMessage).send();
   }
 
@@ -110,6 +112,7 @@ public class ServerEntityRequestImplTest {
     boolean isReplicatedMessage = false;
     boolean isReceivedRequested = false;
     EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
-    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, ()->Optional.of(messageChannel), isReceivedRequested, isReplicatedMessage);
+    ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.INVOKE_ACTION, nodeID, transactionID, TransactionID.NULL_ID, isReceivedRequested);
+    return new ServerEntityRequestResponse(request, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
   }
 }

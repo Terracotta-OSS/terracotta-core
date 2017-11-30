@@ -25,6 +25,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -36,81 +37,86 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
+import java.util.function.Consumer;
 import org.terracotta.exception.EntityException;
 
 
 public abstract class AbstractServerEntityRequestResponse implements ServerEntityRequest, ServerEntityResponse, Retiree {
-  private final ServerEntityAction action;
-  private final TransactionID transaction;
-  private final TransactionID oldest;
-  private final ClientID  src;
-  
+  private final ServerEntityRequest request;
+  private final Consumer<byte[]> complete;
+  private final Consumer<EntityException> fail;
+    
   private boolean isComplete = false;
   private boolean isRetired = false;
   private boolean alsoRetire = false;
 
   private volatile Future<Void> transactionOrderPersistenceFuture;
-
-  public AbstractServerEntityRequestResponse(ServerEntityAction action, TransactionID transaction, TransactionID oldest, ClientID src) {
-    this.action = action;
-    this.transaction = transaction;
-    this.oldest = oldest;
-    this.src = src;
+  
+  public AbstractServerEntityRequestResponse(ServerEntityRequest action, Consumer<byte[]> complete, Consumer<EntityException> fail) {
+    this.request = action;
+    this.complete = complete;
+    this.fail = fail;
   }
   
   public abstract Optional<MessageChannel> getReturnChannel();
 
-  public void autoRetire(boolean auto) {
+  public final void autoRetire(boolean auto) {
     this.alsoRetire = auto;
+  }
+
+  @Override
+  public ClientInstanceID getClientInstance() {
+    return request.getClientInstance();
+  }
+
+  @Override
+  public boolean requiresReceived() {
+    return request.requiresReceived();
   }
   
   @Override
   public TransactionID getTransaction() {
-    if (transaction == null) {
-      return TransactionID.NULL_ID;
-    }
-    return transaction;
+    return request.getTransaction();
   }
   
   @Override
   public TransactionID getOldestTransactionOnClient() {
-    if (oldest == null) {
-      return TransactionID.NULL_ID;
-    }
-    return oldest;
+    return request.getOldestTransactionOnClient();
   }
 
   @Override
   public Set<NodeID> replicateTo(Set<NodeID> current) {
-    return current;
+    return request.replicateTo(current);
   }
 
   @Override
   public String getTraceID() {
-    return src.toLong() + ":" + transaction.toLong();
+    return request.getTraceID();
   }
-
+    
   @Override
   public ClientID getNodeID() {
-    return src;
+    return request.getNodeID();
   }
-
+      
   @Override
   public ServerEntityAction getAction() {
-    return action;
+    return request.getAction();
   }
-  
+     
   @Override
-  public synchronized void failure(EntityException e) {
-    if (isComplete()) throw new AssertionError("Error after successful complete");
-    getReturnChannel().ifPresent(channel -> {
-      VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-      message.setFailure(transaction, e, alsoRetire);
-      message.send();
-    });
-    this.isComplete = true;
-    this.notifyAll();
+  public void failure(EntityException e) {
+    if (!this.getNodeID().isNull()) {
+      getReturnChannel().ifPresent(channel -> {
+        VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+        message.setFailure(request.getTransaction(), e);
+        message.send();
+      });
+      this.isComplete = true;
+    }
+    if (fail != null) {
+      fail.accept(e);
+    }
   }
 
   @Override
@@ -124,51 +130,67 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
           throw new RuntimeException("Caught exception while persisting transaction order", e);
         }
       }
-      message.setTransactionID(transaction);
+      message.setTransactionID(request.getTransaction());
       message.send();
     });
   }
   
   @Override
-  public synchronized void complete() {
-    getReturnChannel().ifPresent(channel -> {
-      VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-      switch (action) {
-        case CREATE_ENTITY:
-        case DESTROY_ENTITY:
-        case RELEASE_ENTITY:
-        case FETCH_ENTITY:
-          // In these cases, we just return an empty success to acknowledge that they completed.
-          actionResponse.setSuccess(transaction, new byte[0], alsoRetire);
-          actionResponse.send();
+  public void complete() {
+    if (!this.getNodeID().isNull()) {
+      getReturnChannel().ifPresent(channel -> {
+        VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+        switch (request.getAction()) {
+          case DISCONNECT_CLIENT:
+            // do nothing, really shouldn't happen because this client is gone but maybe if there is 
+            // some large delay in cleanup, this can occur
+            break;
+          case CREATE_ENTITY:
+          case DESTROY_ENTITY:
+          case RELEASE_ENTITY:
+          case FETCH_ENTITY:
+            // In these cases, we just return an empty success to acknowledge that they completed.
+            actionResponse.setSuccess(request.getTransaction(), new byte[0]);
+            actionResponse.send();
 
-          break;
-        default:
-          // Unknown action completion type.
-          throw new IllegalArgumentException("Unexpected action in complete() " + action);
-      }
-    });
-    this.isComplete = true;
-    this.notifyAll();
+            break;
+          default:
+            // Unknown action completion type.
+            throw new IllegalArgumentException("Unexpected action in complete() " + request.getAction());
+        }
+      });
+      this.isComplete = true;
+    }
+    if (complete != null) {
+      complete.accept(null);
+    }
   }
   
   @Override
-  public synchronized void complete(byte[] value) {
-    getReturnChannel().ifPresent(channel -> {
-      switch (action) {
-        case INVOKE_ACTION:
-        case FETCH_ENTITY:
-        case RECONFIGURE_ENTITY:
-          VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-          actionResponse.setSuccess(transaction, value, alsoRetire);
-          actionResponse.send();
-          break;
-        default:
-          throw new IllegalArgumentException("Unexpected action in complete(byte[]) " + action);
-      }
-    });
-    this.isComplete = true;
-    this.notifyAll();
+  public void complete(byte[] value) {
+    if (!this.getNodeID().isNull()) {
+      getReturnChannel().ifPresent(channel -> {
+        switch (request.getAction()) {
+          case DISCONNECT_CLIENT:
+            // do nothing, really shouldn't happen because this client is gone but maybe if there is 
+            // some large delay in cleanup, this can occur
+            break;
+          case INVOKE_ACTION:
+          case FETCH_ENTITY:
+          case RECONFIGURE_ENTITY:
+            VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+            actionResponse.setSuccess(request.getTransaction(), value);
+            actionResponse.send();
+            break;
+          default:
+            throw new IllegalArgumentException("Unexpected action in complete(byte[]) " + request.getAction());
+        }
+      });
+      this.isComplete = true;
+    }
+    if (complete != null) {
+      complete.accept(value);
+    }
   }
 
   public void setTransactionOrderPersistenceFuture(Future<Void> transactionOrderPersistenceFuture) {
@@ -176,16 +198,15 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   }
   
   @Override
-  public synchronized void retired() {
+  public void retired() {
     Assert.assertTrue("Double-retire", !isRetired());
     
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityRetiredResponse response = (VoltronEntityRetiredResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE);
-      response.setTransactionID(transaction);
+      response.setTransactionID(request.getTransaction());
       response.send();
     });
     this.isRetired = true;
-    this.notifyAll();
   }
   
   protected boolean isComplete() {

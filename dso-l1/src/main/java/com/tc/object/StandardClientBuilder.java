@@ -64,7 +64,7 @@ public class StandardClientBuilder implements ClientBuilder {
   @Override
   public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter,
                                                            NetworkStackHarnessFactory stackHarnessFactory,
-                                                           ConnectionPolicy connectionPolicy, int commThread,
+                                                           ConnectionPolicy connectionPolicy, 
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler,
@@ -83,7 +83,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                                              String name, 
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity, false);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
   }
 
   @Override

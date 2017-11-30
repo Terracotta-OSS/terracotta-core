@@ -64,7 +64,7 @@ public class TCServerMain {
 
 //  set this as the context loader for creation of all the infrastructure at bootstrap time.
 
-      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, systemLoader)));
+      setup = factory.createL2TVSConfigurationSetupManager(null, systemLoader);
 
       TCLogbackLogging.redirectLogging(setup.commonl2Config().logsPath().getCanonicalPath());
 

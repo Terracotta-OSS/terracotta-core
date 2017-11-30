@@ -29,8 +29,6 @@ public interface TCMessageRouter extends TCMessageSink {
 
   public void routeMessageType(TCMessageType protocol, TCMessageSink sink);
 
-  public void routeMessageType(TCMessageType protocol, Sink destSink, Sink hydrateSink);
-
   public void unrouteMessageType(TCMessageType protocol);
 
 }

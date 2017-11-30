@@ -20,7 +20,6 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 
 import java.util.concurrent.BlockingQueue;
@@ -65,8 +64,8 @@ public class MockSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    throw new UnsupportedOperationException();
+  public boolean isEmpty() {
+    return this.queue.isEmpty();
   }
 
   @Override

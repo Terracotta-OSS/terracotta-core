@@ -19,7 +19,6 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 
 /**
@@ -41,9 +40,8 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // Not expected in the null case.
-    throw new UnsupportedOperationException();
+  public boolean isEmpty() {
+    return true;
   }
 
   @Override

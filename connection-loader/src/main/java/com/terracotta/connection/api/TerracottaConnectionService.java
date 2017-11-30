@@ -44,7 +44,7 @@ import java.util.concurrent.TimeoutException;
  * This is possible because the underlying connection knows how to probe the stripe for active nodes on start-up or
  * fail-over.
  */
-public class TerracottaConnectionService implements ConnectionService {
+public class TerracottaConnectionService extends AbstractConnectionService {
   private static final String SCHEME = "terracotta";
 
   private final EndpointConnector endpointConnector;
@@ -63,37 +63,7 @@ public class TerracottaConnectionService implements ConnectionService {
   }
 
   @Override
-  public Connection connect(URI uri, Properties properties) throws ConnectionException {
-    if (!handlesURI(uri)) {
-      throw new IllegalArgumentException("Unknown URI " + uri);
-    }
-
-    // TODO: Make use of those properties
-    // TODO: hook in the connection listener
-
-    // We may be specifying a comma-delimited list of servers in the stripe so parse the URI with this possibility in mind.
-    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams();
-    String[] hosts = uri.getSchemeSpecificPart().split(",");
-    for(String host : hosts) {
-      // Note that we will need the "//" prefix in order to make sure that the URI is parsed correctly (only the first in
-      // the list normally has this).
-      if (0 != host.indexOf("//")) {
-        host = "//" + host;
-      }
-      // Make this back into a URI so that we can parse out the user info, etc, using high-level routines.
-      URI oneHost = null;
-      try {
-        oneHost = new URI(host);
-      } catch (URISyntaxException e) {
-        // We just pulled this from a URI so we don't expect this failure.
-        Assert.fail(e.getLocalizedMessage());
-      }
-      String userInfo = oneHost.getUserInfo();
-      String stripeUri = ((null != userInfo) ? (userInfo + "@") : "") + oneHost.getHost() + ":" + oneHost.getPort();
-      clientConfig.addStripeMemberUri(stripeUri);
-    }
-    
-    clientConfig.addGenericProperties(properties);
+  public Connection internalConnect(TerracottaClientConfigParams clientConfig) throws ConnectionException {
     final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
     try {
       client.init();
@@ -103,8 +73,9 @@ public class TerracottaConnectionService implements ConnectionService {
       throw new ConnectionException(config);
     } catch (InterruptedException ie) {
       throw new ConnectionException(ie);
+    } catch (Throwable t) {
+      throw new ConnectionException(t);
     }
-
     return new TerracottaConnection(client.getClientEntityManager(), endpointConnector, new Runnable() {
         public void run() {
           client.shutdown();

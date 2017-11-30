@@ -6,7 +6,6 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageQueueStats;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
@@ -18,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
+  private final AtomicInteger inflight = new AtomicInteger();
   final Logger logger;
   final String stageName;
   
@@ -28,12 +28,32 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   
   abstract SourceQueue[] getSources();
   
+  void addInflight() {
+    inflight.incrementAndGet();
+  }
+  
+  public void clear() {
+    inflight.set(0);
+  }
+    
   Logger getLogger() {
     return logger;
   }
   
   boolean isClosed() {
     return closed;
+  }
+
+  @Override
+  public int size() {
+    return inflight.get();
+  }
+  
+  @Override
+  public boolean isEmpty() {
+    int val = inflight.get();
+    Assert.assertTrue(val >= 0);
+    return val == 0;
   }
 
   @Override
@@ -45,6 +65,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
         q.put(new CloseContext());
       } catch (InterruptedException ie) {
         logger.debug("closing stage", ie);
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -182,20 +203,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
   }
 
-  static class DirectExecuteContext<EC> implements ContextWrapper<EC> {
-    private final SpecializedEventContext context;
-
-    public DirectExecuteContext(SpecializedEventContext context) {
-      this.context = context;
-    }
-
-    @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
-      this.context.execute();
-    }
-  }
-
-  static class HandledContext<C> implements ContextWrapper<C> {
+  class HandledContext<C> implements ContextWrapper<C> {
     private final C context;
 
     public HandledContext(C context) {
@@ -204,7 +212,11 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
     @Override
     public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
-      handler.handleEvent(this.context);
+      try {
+        handler.handleEvent(this.context);
+      } finally {
+        Assert.assertTrue(inflight.decrementAndGet() >= 0);
+      }
     }
 
     @Override

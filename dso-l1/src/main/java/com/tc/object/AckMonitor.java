@@ -16,13 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.handler;
+package com.tc.object;
 
-import com.tc.l2.msg.ReplicationMessage;
+import com.tc.entity.VoltronEntityMessage;
 
 /**
  *
  */
-public interface PassiveSyncFilter {
-  boolean filter(ReplicationMessage message);
+public interface AckMonitor {
+  void ackDelivered(VoltronEntityMessage.Acks ack);
 }

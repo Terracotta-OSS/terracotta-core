@@ -19,7 +19,6 @@
 package com.tc.objectserver.api;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.stats.Stats;
 
 import java.util.LinkedList;
@@ -41,13 +40,6 @@ public class TestSink<EC> implements Sink<EC> {
 
   @Override
   public void addMultiThreaded(EC context) {
-    // Not handled in this test.
-    throw new UnsupportedOperationException();
-    
-  }
-  
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
     // Not handled in this test.
     throw new UnsupportedOperationException();
     
@@ -74,6 +66,11 @@ public class TestSink<EC> implements Sink<EC> {
       }
       return queue.remove(0);
     }
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return queue.isEmpty();
   }
 
   @Override

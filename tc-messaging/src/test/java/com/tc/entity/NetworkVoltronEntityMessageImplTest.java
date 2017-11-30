@@ -63,7 +63,7 @@ public class NetworkVoltronEntityMessageImplTest {
     boolean requiresReplication = false;
     byte[] extendedData = new byte[1];
     TransactionID oldestTransactionPending = new TransactionID(1);
-    message.setContents(clientID, transactionID, entityDescriptor, messageType, 
+    message.setContents(clientID, transactionID, EntityID.NULL_ID, entityDescriptor, messageType, 
             requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));
     message.dehydrate();
     

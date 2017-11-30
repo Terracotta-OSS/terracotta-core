@@ -11,17 +11,19 @@ public class InvokeContextImpl implements InvokeContext {
   private final long oldestid;
   private final long currentId;
   private final ClientSourceId sourceId;
+  private final int concurrencyKey;
 
   private InvokeContextImpl() {
-    this(ClientSourceIdImpl.NULL_ID, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
+    this(ClientSourceIdImpl.NULL_ID, -1, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
   }
 
-  public InvokeContextImpl(ClientSourceId sourceid) {
-    this(sourceid, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
+  public InvokeContextImpl(int concurrencyKey) {
+    this(ClientSourceIdImpl.NULL_ID, concurrencyKey, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong());
   }
 
-  public InvokeContextImpl(ClientSourceId sourceId, long oldestid, long currentId) {
+  public InvokeContextImpl(ClientSourceId sourceId, int concurrencyKey, long oldestid, long currentId) {
     this.sourceId = sourceId;
+    this.concurrencyKey = concurrencyKey;
     this.oldestid = oldestid;
     this.currentId = currentId;
   }
@@ -49,6 +51,11 @@ public class InvokeContextImpl implements InvokeContext {
   @Override
   public ClientSourceId makeClientSourceId(long l) {
     return new ClientSourceIdImpl(l);
+  }
+
+  @Override
+  public int getConcurrencyKey() {
+    return concurrencyKey;
   }
 
   @Override

@@ -43,7 +43,7 @@ import java.util.Arrays;
  */
 public class DiagnosticsHandler implements TCMessageSink {
   
-  private final Logger logger = LoggerFactory.getLogger(DiagnosticsHandler.class);
+  private final static Logger logger = LoggerFactory.getLogger(DiagnosticsHandler.class);
   private final DistributedObjectServer server;
   private final JMXSubsystem subsystem;
 

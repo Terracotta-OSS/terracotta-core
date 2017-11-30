@@ -30,7 +30,6 @@ public interface VoltronEntityAppliedResponse extends VoltronEntityResponse {
   EntityException getFailureException();
   
   // Writable interface for the sender.
-  public void setSuccess(TransactionID transactionID, byte[] response, boolean retire);
-  public void setFailure(TransactionID transactionID, EntityException exception, boolean retire);
-  public boolean alsoRetire();
+  public void setSuccess(TransactionID transactionID, byte[] response);
+  public void setFailure(TransactionID transactionID, EntityException exception);  //  implied retire
 }

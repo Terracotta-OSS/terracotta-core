@@ -19,22 +19,11 @@
 
 package com.tc.services;
 
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventHandlerException;
-import com.tc.entity.ServerEntityResponseMessage;
+import com.tc.net.ClientID;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
 
-/**
- * @author twu
- */
-public class CommunicatorResponseHandler extends AbstractEventHandler<ServerEntityResponseMessage> {
-  private final CommunicatorService communicatorService;
-
-  public CommunicatorResponseHandler(CommunicatorService communicatorService) {
-    this.communicatorService = communicatorService;
-  }
-
-  @Override
-  public void handleEvent(ServerEntityResponseMessage responseMessage) throws EventHandlerException {
-    communicatorService.response(responseMessage.getSourceNodeID(), responseMessage.getResponseId());
-  }
+public interface ClientMessageSender {
+  void send(ClientID client, ClientInstanceID clientInstance, byte[] payload);
+  void send(ClientID client, TransactionID clientInstance, byte[] payload);
 }

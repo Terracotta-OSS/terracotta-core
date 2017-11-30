@@ -36,11 +36,13 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.entity.InvokeMonitor;
 
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
@@ -129,6 +131,9 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     private boolean requiresReplication = true;
     // By default, we block the get() on the RETIRE ack.
     private boolean shouldBlockGetOnRetire = true;
+    private InvokeMonitor<R> monitor;
+    private Executor executor;
+    private boolean deferred;
 
     // TODO: fill in durability/consistency options here.
 
@@ -164,6 +169,24 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
+    public InvocationBuilder<M, R> monitor(InvokeMonitor<R> consumer) {
+      this.monitor = consumer;
+      return this;
+    }
+
+    @Override
+    public InvocationBuilder<M, R> withExecutor(Executor useForDelivery) {
+      this.executor = useForDelivery;
+      return this;
+    }
+    
+    @Override
+    public InvocationBuilder<M, R> asDeferredResponse() {
+      this.deferred = true;
+      return this;
+    }    
+
+    @Override
     public InvocationBuilder<M, R> replicate(boolean requiresReplication) {
       this.requiresReplication = requiresReplication;
       return this;
@@ -174,22 +197,18 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       this.shouldBlockGetOnRetire = shouldBlock;
       return this;
     }
-
-    @Override
-    public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
-      checkInvoked();
-      invoked = true;
-      final InvokeFuture<byte[]> invokeFuture = invocationHandler.invokeAction(invokeDescriptor, this.acks, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request));
-      return new InvokeFuture<R>() {
+    
+    private InvokeFuture<R> returnTypedInvoke(final InFlightMessage result) {
+    return new InvokeFuture<R>() {
         @Override
         public boolean isDone() {
-          return invokeFuture.isDone();
+          return result.isDone();
         }
 
         @Override
         public R get() throws InterruptedException, EntityException {
           try {
-            return codec.decodeResponse(invokeFuture.get());
+            return codec.decodeResponse(result.get());
           } catch (MessageCodecException e) {
             throw new RuntimeException(e);
           }
@@ -198,7 +217,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         @Override
         public R getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
           try {
-            return codec.decodeResponse(invokeFuture.getWithTimeout(timeout, unit));
+            return codec.decodeResponse(result.getWithTimeout(timeout, unit));
           } catch (MessageCodecException e) {
             throw new RuntimeException(e);
           }
@@ -206,9 +225,26 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
 
         @Override
         public void interrupt() {
-          invokeFuture.interrupt();
+          result.interrupt();
         }
       };
+    }
+    
+    @Override
+    public synchronized InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws MessageCodecException, InterruptedException, TimeoutException {
+      checkInvoked();
+      invoked = true;
+      InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
+      return returnTypedInvoke(invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, time, units, codec.encodeMessage(request)));
+    }
+
+    @Override
+    public synchronized InvokeFuture<R> invoke() throws MessageCodecException {
+      checkInvoked();
+      invoked = true;
+      InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
+      return returnTypedInvoke(invocationHandler.invokeAction(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, codec.encodeMessage(request)));
+      
     }
 
     private void checkInvoked() {

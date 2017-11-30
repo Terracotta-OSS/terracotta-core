@@ -16,14 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.handler;
+package com.tc.util;
 
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.objectserver.context.LowWaterMarkCallbackContext;
-
-public class LowWaterMarkCallbackHandler extends AbstractEventHandler<LowWaterMarkCallbackContext> {
-  @Override
-  public void handleEvent(LowWaterMarkCallbackContext context) {
-    context.run();
-  }
+/**
+ *
+ */
+public interface TestService {
+  
 }

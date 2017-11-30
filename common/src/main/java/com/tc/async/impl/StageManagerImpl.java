@@ -106,7 +106,12 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize) {
+  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize) {
+    return this.createStage(name, verification, handler, threads, maxSize, false);
+  }
+
+  @Override
+  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize, boolean canBeDirect) {
     if (started) {
       throw new IllegalStateException("A new stage cannot be created, because StageManager is already started.");
     }
@@ -115,7 +120,7 @@ public class StageManagerImpl implements StageManager {
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
     @SuppressWarnings("unchecked")
     QueueFactory<ContextWrapper<EC>> queueFactory = (QueueFactory<ContextWrapper<EC>>) this.queueFactory;
-    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, handler, queueCount, group, queueFactory, capacity);
+    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, handler, queueCount, group, queueFactory, capacity, canBeDirect);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;
