@@ -19,21 +19,38 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
+import com.tc.l2.state.StateManager;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
+import java.util.function.Supplier;
 
 public class ChannelWeightGenerator implements WeightGenerator {
   private final DSOChannelManager channelManager;
+  private final Supplier<StateManager> stateManager;
 
-  public ChannelWeightGenerator(DSOChannelManager channelManager) {
+  public ChannelWeightGenerator(Supplier<StateManager> stateManager, DSOChannelManager channelManager) {
     Assert.assertNotNull(channelManager);
+    Assert.assertNotNull(stateManager);
     this.channelManager = channelManager;
+    this.stateManager = stateManager;
   }
 
   @Override
   public long getWeight() {
-    // return number of connected clients and are active
-    return channelManager.getAllActiveClientConnections().length;
+    int count = 0;
+    if (stateManager.get().isActiveCoordinator()) {
+      // return number of connected clients and are active
+      MessageChannel[] connections = channelManager.getActiveChannels();
+      for (MessageChannel c : connections) {
+        if (c.getProductId() != ProductID.DIAGNOSTIC &&
+            c.getProductId() != ProductID.INFORMATIONAL) {
+          count += 1;
+        }
+      }
+    }
+    return count;
   }
 
 }

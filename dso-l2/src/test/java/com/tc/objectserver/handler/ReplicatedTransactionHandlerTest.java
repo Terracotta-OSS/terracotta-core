@@ -22,6 +22,7 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.SpecializedEventContext;
+import com.tc.async.api.Stage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.io.TCByteBufferInput;
@@ -72,6 +73,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -118,9 +120,17 @@ public class ReplicatedTransactionHandlerTest {
       ((Consumer<byte[]>)invocation.getArguments()[3]).accept(null);
       return null;
     }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(Runnable.class), any(Consumer.class), any(Consumer.class));
+    when(entityManager.getEntity(Matchers.any(EntityDescriptor.class))).thenReturn(Optional.empty());
     when(entityManager.getEntity(Matchers.eq(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, 1L)))).thenReturn(Optional.of(platform));
-    this.rth = new ReplicatedTransactionHandler(stateManager, persistor, this.entityManager, this.groupManager);
-    this.rth.setOutgoingResponseSink(new ForwardingSink<ReplicatedTransactionHandler.SedaToken>(this.rth.getOutgoingResponseHandler()));
+    Stage runner = mock(Stage.class);
+    Sink<Runnable> sink = mock(Sink.class);
+    when(runner.getSink()).thenReturn(sink);
+    doAnswer(answer->{
+      ((Runnable)answer.getArguments()[0]).run();
+      return null;
+    }).when(sink).addSingleThreaded(any(Runnable.class));
+
+    this.rth = new ReplicatedTransactionHandler(stateManager, runner, persistor, this.entityManager, this.groupManager);
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
     this.source = new ClientID(1);
     this.instance = new ClientInstanceID(1);
@@ -366,7 +376,7 @@ public class ReplicatedTransactionHandlerTest {
       case RECEIVE_SYNC_ENTITY_KEY_START:
         Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         last = req;
-        Assert.assertEquals(0, concurrency);
+        Assert.assertEquals(c - 1, concurrency);
         concurrency = c;
         break;
       case RECEIVE_SYNC_PAYLOAD:
@@ -380,15 +390,15 @@ public class ReplicatedTransactionHandlerTest {
         Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
         last = req;
         Assert.assertEquals(concurrency, c);
-        concurrency = 0;
+        concurrency = c;
         break;
       case RECEIVE_SYNC_ENTITY_END:
-        Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END || last.getAction() == ServerEntityAction.INVOKE_ACTION);
         last = req;
         invoked = false;
         break;
       case INVOKE_ACTION:
-        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         int sid = ByteBuffer.wrap(payload).getInt();
         Assert.assertEquals(lastSid + 1, sid);
         Assert.assertEquals(concurrency, c);
@@ -440,7 +450,7 @@ public class ReplicatedTransactionHandlerTest {
 
   private long send(SyncReplicationActivity activity) throws EventHandlerException {
     ReplicationMessage msg = createReceivedActivity(activity);
-    msg.setReplicationID(rid++);
+    msg.setSequenceID(rid++);
     loopbackSink.addSingleThreaded(msg);
     return rid;
   }

@@ -32,13 +32,13 @@ public interface NetworkStackHarnessFactory {
    * @param transportListeners An array of MessageTransportListeners that ought to be wired up to the transport (in
    *        addition to any that might be created by the stack harness)
    */
-  NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport,
+  ServerNetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport,
                                           MessageTransportListener[] transportListeners);
 
   /**
    * Creates client-side stack harnesses.
    */
-  NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel,
+  ClientNetworkStackHarness createClientHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel,
                                           MessageTransportListener[] transportListeners);
 
 }

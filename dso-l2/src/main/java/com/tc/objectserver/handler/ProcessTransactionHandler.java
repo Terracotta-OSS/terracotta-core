@@ -281,13 +281,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
               serverEntityRequest.complete();
             }
           }, (exception) -> {
-            this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
+            this.persistor.getEntityPersistor().entityCreateFailed(entityID, sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             serverEntityRequest.failure(exception);
           });
       } catch (EntityException ee) {
-        if (!sourceNodeID.isNull()) {
-          this.persistor.getEntityPersistor().entityCreateFailed(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
-        }
+        this.persistor.getEntityPersistor().entityCreateFailed(descriptor.getEntityID(), sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
         serverEntityRequest.failure(ee);
       }
     } else {
@@ -618,6 +616,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
         break;
       case LOCAL_ENTITY_GC:
         action = ServerEntityAction.MANAGED_ENTITY_GC;
+        break;
+      case DISCONNECT_CLIENT:
+        action = ServerEntityAction.DISCONNECT_CLIENT;
         break;
       default:
         // Unknown request type.

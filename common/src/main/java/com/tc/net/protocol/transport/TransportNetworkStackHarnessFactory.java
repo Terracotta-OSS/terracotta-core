@@ -28,7 +28,7 @@ import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
   @Override
-  public NetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
+  public ServerNetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
     return new ServerNetworkStackHarness(channelFactory, transport) {
@@ -42,7 +42,7 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
   }
 
   @Override
-  public NetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
+  public ClientNetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
     return new ClientNetworkStackHarness(transportFactory, channel, false){

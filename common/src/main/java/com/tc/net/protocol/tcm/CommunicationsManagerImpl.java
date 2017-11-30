@@ -371,21 +371,21 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       }
 
       @Override
-      public ServerMessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+      public ServerMessageTransport createNewTransport(TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List<MessageTransportListener> transportListeners) {
-        ServerMessageTransport rv = new ServerMessageTransport(connectionID, handler, handshakeMessageFactory);
+        ServerMessageTransport rv = new ServerMessageTransport(handler, handshakeMessageFactory);
         rv.addTransportListeners(transportListeners);
         rv.addTransportListener(connectionHealthChecker);
         return rv;
       }
 
       @Override
-      public ServerMessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+      public ServerMessageTransport createNewTransport(TCConnection connection,
                                                  TransportHandshakeErrorHandler handler,
                                                  TransportHandshakeMessageFactory handshakeMessageFactory,
                                                  List<MessageTransportListener> transportListeners) {
-        ServerMessageTransport rv = new ServerMessageTransport(connectionId, connection, handler, handshakeMessageFactory);
+        ServerMessageTransport rv = new ServerMessageTransport(connection, handler, handshakeMessageFactory);
         rv.addTransportListeners(transportListeners);
         rv.addTransportListener(connectionHealthChecker);
         return rv;

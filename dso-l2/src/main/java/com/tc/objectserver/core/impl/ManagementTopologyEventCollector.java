@@ -38,12 +38,15 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Collectors;
 import org.terracotta.monitoring.ServerState;
 
 
@@ -56,17 +59,19 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   private static final Logger LOGGER = LoggerFactory.getLogger(ManagementTopologyEventCollector.class);
   private final IMonitoringProducer serviceInterface;
   private final Set<ClientID> connectedClients;
-  private final Set<EntityID> entities;
-  private final Map<ClientID, Collection<EntityDescriptor>> incomingReleases;
+  private final Map<Long, EntityID> entities;
+  private final Map<ClientID, Collection<FetchID>> incomingDisconnects;
+  private final Map<ClientID, Collection<ClientInstanceID>> incomingReleases;
   private final Map<ClientID, Collection<ResolvedDescriptors>> incomingFetches;
   private boolean isActiveState;
 
   public ManagementTopologyEventCollector(IMonitoringProducer serviceInterface) {
     this.serviceInterface = serviceInterface;
     this.connectedClients = new HashSet<ClientID>();
-    this.entities = new HashSet<EntityID>();
+    this.entities = new HashMap<Long, EntityID>();
     this.incomingReleases = new HashMap<>();
     this.incomingFetches = new HashMap<>();
+    this.incomingDisconnects = new HashMap<>();
     this.isActiveState = false;
     
     // Do our initial configuration of the service.
@@ -136,11 +141,11 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
       if (earlyFetches != null && !earlyFetches.isEmpty()) {
         for (ResolvedDescriptors ed : earlyFetches) {
-          String fetchIdentifier = fetchIdentifierForService(client, ed.id, ed.getClientInstanceID());
+          String fetchIdentifier = fetchIdentifierForService(client, ed.id, ed.consumerID, ed.instance);
           boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, 
                   fetchIdentifier, 
                   new PlatformClientFetchedEntity(clientIdentifierForService(client), 
-                          entityIdentifierForService(ed.getEntityID()), 
+                          entityIdentifierForService(ed.id, ed.consumerID), 
                           new ClientDescriptorImpl(client, ed.getClientInstanceID())));
           // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
           if (!didAdd) {
@@ -161,10 +166,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     this.connectedClients.remove(client);
     
     // Remove it from the monitoring interface.
-    if (null != this.serviceInterface && !incomingReleases.containsKey(client)) {
-      String nodeName = clientIdentifierForService(client);
-      this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
-    }
+    removeClientIfPossible(client);
     LOGGER.debug("client did disconnect " + client);
   }
 
@@ -173,17 +175,17 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     // Ensure that this is the expected state.
     Assert.assertTrue(isActive == this.isActiveState);
     // Ensure that this entity didn't already exist.
-    Assert.assertFalse(this.entities.contains(id));
+    Assert.assertFalse(this.entities.containsKey(consumerID));
     addEntityToTracking(id, consumerID, isActive);
     LOGGER.debug("entity created " + id);
   }
 
   @Override
-  public synchronized void entityWasDestroyed(EntityID id) {
+  public synchronized void entityWasDestroyed(EntityID id, long consumerID) {
     // Ensure that this entity already exists.
-    Assert.assertTrue(this.entities.contains(id));
+    Assert.assertTrue(this.entities.containsKey(consumerID));
     // Now, remove it from the set.
-    removeEntityFromTracking(id);
+    removeEntityFromTracking(id, consumerID);
     LOGGER.debug("entity destroyed " + id);
   }
 
@@ -195,14 +197,14 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
   }
 
   @Override
-  public synchronized void clientDidFetchEntity(ClientID client, EntityID entity, ClientInstanceID instance) {
+  public synchronized void clientDidFetchEntity(ClientID client, EntityID entity, long consumerID, ClientInstanceID instance) {
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       String clientIdentifier = clientIdentifierForService(client);
-      String entityIdentifier = entityIdentifierForService(entity);
+      String entityIdentifier = entityIdentifierForService(entity, consumerID);
       PlatformClientFetchedEntity record = new PlatformClientFetchedEntity(clientIdentifier, entityIdentifier, new ClientDescriptorImpl(client, instance));
       if (connectedClients.contains(client)) {
-        String fetchIdentifier = fetchIdentifierForService(client, entity, instance);
+        String fetchIdentifier = fetchIdentifierForService(client, entity, consumerID, instance);
         boolean didAdd = this.serviceInterface.addNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier, record);
         // This MUST have been added (otherwise, it implies that there is a serious bug somewhere).
         if (!didAdd) {
@@ -210,17 +212,17 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
         }
       } else {
         Collection<ResolvedDescriptors> set = incomingFetches.computeIfAbsent(client, (c)->new HashSet<>());
-        set.add(new ResolvedDescriptors(entity, instance));
+        set.add(new ResolvedDescriptors(entity, consumerID, instance));
       }
     }
     LOGGER.debug("client " + client + " fetched " + instance);
   }
 
   @Override
-  public synchronized void clientDidReleaseEntity(ClientID client, EntityID entity, ClientInstanceID instance) {
+  public synchronized void clientDidReleaseEntity(ClientID client, EntityID entity, long consumerID, ClientInstanceID instance) {
     // Remove it from the monitoring interface.
     if (null != this.serviceInterface) {
-      String fetchIdentifier = fetchIdentifierForService(client, entity, instance);
+      String fetchIdentifier = fetchIdentifierForService(client, entity, consumerID, instance);
       boolean didRemove = this.serviceInterface.removeNode(PlatformMonitoringConstants.FETCHED_PATH, fetchIdentifier);
       // This CANNOT be unbalanced (it implies that there is a serious bug somewhere).
       if (!didRemove) {
@@ -229,46 +231,79 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     }
     
     if (incomingReleases.containsKey(client)) {
-      Collection<EntityDescriptor> expected = incomingReleases.get(client);
-      Assert.assertTrue(expected.removeIf(des->des.getEntityID().equals(entity)));
+      Collection<ClientInstanceID> expected = incomingReleases.get(client);
+      Assert.assertTrue(expected.removeIf(des->des.equals(instance)));
       if (expected.isEmpty()) {
         incomingReleases.remove(client);
-        // Remove it from the monitoring interface.
-        if (null != this.serviceInterface) {
-          String nodeName = clientIdentifierForService(client);
-          this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
-        }
+        removeClientIfPossible(client);
       }
     }
     LOGGER.debug("client " + client + " released " + entity);
   }
   
-  public synchronized void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
-    if (null != serviceInterface && !releases.isEmpty()) {
-      incomingReleases.put(cid, releases);
+  public synchronized void expectedDisconnects(ClientID cid, Collection<FetchID> releases) {
+    if (null != serviceInterface) {
+      if (!releases.isEmpty()) {
+        incomingDisconnects.put(cid, new ArrayList<>(releases));
+      }
+      removeClientIfPossible(cid);
+    }
+  }  
+  
+  public synchronized void clientDisconnectedFromEntity(ClientID cid, FetchID fetch, Collection<EntityDescriptor> fids) {
+    if (null != serviceInterface) {
+      Collection<FetchID> fetches = incomingDisconnects.get(cid);
+      expectedReleases(cid, fids);
+      Assert.assertTrue(fetches.remove(fetch));
+      if (fetches.isEmpty()) {
+        incomingDisconnects.remove(cid);
+        removeClientIfPossible(cid);
+      }
+    }
+  }
+  
+  private void removeClientIfPossible(ClientID client) {
+    if (!incomingReleases.containsKey(client) && !incomingDisconnects.containsKey(client)) {
+      // Remove it from the monitoring interface.
+      if (null != this.serviceInterface) {
+        String nodeName = clientIdentifierForService(client);
+        this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
+      }
+    }
+  }
+  
+  private void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {
+    if (!releases.isEmpty()) {
+      incomingReleases.compute(cid, (ignore,ex)->{
+        if (ex == null) {
+          ex = new HashSet<>();
+        }
+        ex.addAll(releases.stream().map(EntityDescriptor::getClientInstanceID).collect(Collectors.toList()));
+        return ex;
+      });
     }
   }
 
 
   private void addEntityToTracking(EntityID id, long consumerID, boolean isActive) {
-    this.entities.add(id);
+    this.entities.put(consumerID, id);
     
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       String entityClassName = id.getClassName();
       String entityName = id.getEntityName();
       PlatformEntity record = new PlatformEntity(entityClassName, entityName, consumerID, isActive);
-      String entityIdentifier = entityIdentifierForService(id);
+      String entityIdentifier = entityIdentifierForService(id, consumerID);
       this.serviceInterface.addNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier, record);
     }
   }
 
-  private void removeEntityFromTracking(EntityID id) {
-    this.entities.remove(id);
+  private void removeEntityFromTracking(EntityID id, long consumerID) {
+    this.entities.remove(consumerID);
     
     // Remove it to the monitoring interface.
     if (null != this.serviceInterface) {
-      String entityIdentifier = entityIdentifierForService(id);
+      String entityIdentifier = entityIdentifierForService(id, consumerID);
       this.serviceInterface.removeNode(PlatformMonitoringConstants.ENTITIES_PATH, entityIdentifier);
     }
   }
@@ -277,21 +312,27 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     return "" + id.toLong();
   }
 
-  private String entityIdentifierForService(EntityID id) {
-    return id.getClassName() + id.getEntityName();
+  private String entityIdentifierForService(EntityID id, long consumerID) {
+    return id.getClassName() + id.getEntityName() + consumerID;
   }
   
-  private String fetchIdentifierForService(ClientID client, EntityID entity, ClientInstanceID cid) {
-    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity) + "_" + cid.getID(); 
+  private String fetchIdentifierForService(ClientID client, EntityID entity, long consumerID, ClientInstanceID cid) {
+    return clientIdentifierForService(client) + "_" + entityIdentifierForService(entity, consumerID) + "_" + cid.getID(); 
   }
   
   private static class ResolvedDescriptors {
     private final EntityID   id;
+    private final long consumerID;
     private final ClientInstanceID instance;
 
-    public ResolvedDescriptors(EntityID entityID, ClientInstanceID instance) {
+    public ResolvedDescriptors(EntityID entityID, long consumerID, ClientInstanceID instance) {
       this.id = entityID;
+      this.consumerID = consumerID;
       this.instance = instance;
+    }
+
+    public long getConsumerID() {
+      return consumerID;
     }
 
     public ClientInstanceID getClientInstanceID() {

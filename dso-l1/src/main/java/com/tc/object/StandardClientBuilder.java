@@ -83,7 +83,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                                              String name, 
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity, false);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
   }
 
   @Override

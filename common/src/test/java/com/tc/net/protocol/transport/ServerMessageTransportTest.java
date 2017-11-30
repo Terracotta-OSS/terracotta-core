@@ -79,7 +79,8 @@ public class ServerMessageTransportTest {
     }).when(connection).addListener(Matchers.any(TCConnectionEventListener.class));
     TransportHandshakeErrorHandler errHdr = mock(TransportHandshakeErrorHandler.class);
     TransportHandshakeMessageFactory factory = mock(TransportHandshakeMessageFactory.class);
-    ServerMessageTransport transport = new ServerMessageTransport(id, connection, errHdr, factory);
+    ServerMessageTransport transport = new ServerMessageTransport(connection, errHdr, factory);
+    transport.initConnectionID(id);
     transport.addTransportListener(checker);
 
     Assert.assertTrue(transport.status.isStart());

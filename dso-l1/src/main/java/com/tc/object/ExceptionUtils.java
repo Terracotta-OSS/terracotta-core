@@ -21,28 +21,30 @@ import java.util.Arrays;
 
 
 public class ExceptionUtils {
-  public static EntityException addLocalStackTraceToEntityException(EntityException e) throws RuntimeEntityException {
+  public static EntityException addLocalStackTraceToEntityException(EntityID eid, EntityException e) throws RuntimeEntityException {
     EntityException wrappedException;
+    String entityType = eid.getClassName();
+    String enityName = eid.getEntityName();
     if(e instanceof VoltronEntityUserExceptionWrapper) {
       //should we add local stack trace here?
-      wrappedException = new EntityServerException(e.getClassName(), e.getEntityName(), e.getDescription(), e.getCause());
+      wrappedException = new EntityServerException(entityType, enityName, e.getDescription(), e.getCause());
     } else if(e instanceof EntityNotFoundException) {
-      wrappedException = new EntityNotFoundException(e.getClassName(), e.getEntityName(), e);
+      wrappedException = new EntityNotFoundException(entityType, enityName, e);
     } else if(e instanceof VoltronWrapperException) {
-      throwRuntimeExceptionWithLocalStack(((VoltronWrapperException)e).getWrappedException());
+      throwRuntimeExceptionWithLocalStack(eid, ((VoltronWrapperException)e).getWrappedException());
       // We won't reach this point.
       wrappedException = null;
     } else if(e instanceof EntityNotProvidedException) {
-      wrappedException = new EntityNotProvidedException(e.getClassName(), e.getEntityName(), e);
+      wrappedException = new EntityNotProvidedException(entityType, enityName, e);
     } else if(e instanceof EntityVersionMismatchException) {
       EntityVersionMismatchException vme = (EntityVersionMismatchException) e;
-      wrappedException = new EntityVersionMismatchException(e.getClassName(), e.getEntityName(), vme.getExpectedVersion(), vme.getAttemptedVersion(), e);
+      wrappedException = new EntityVersionMismatchException(entityType, enityName, vme.getExpectedVersion(), vme.getAttemptedVersion(), e);
     } else if(e instanceof EntityAlreadyExistsException) {
-      wrappedException = new EntityAlreadyExistsException(e.getClassName(), e.getEntityName(), e);
+      wrappedException = new EntityAlreadyExistsException(entityType, enityName, e);
     } else if(e instanceof EntityConfigurationException) {
-      wrappedException = new EntityConfigurationException(e.getClassName(), e.getEntityName(), e);
+      wrappedException = new EntityConfigurationException(entityType, enityName, e);
     } else if(e instanceof EntityBusyException) {
-      wrappedException = new EntityBusyException(e.getClassName(), e.getEntityName(), e);
+      wrappedException = new EntityBusyException(entityType, enityName, e);
     } else {
 //  just return the remote exception with remote stack, don't want to hide the type of the 
 //  exception in these cases.
@@ -54,13 +56,15 @@ public class ExceptionUtils {
     return wrappedException;
   }
 
-  private static void throwRuntimeExceptionWithLocalStack(RuntimeEntityException wrappedException) throws RuntimeEntityException {
+  private static void throwRuntimeExceptionWithLocalStack(EntityID eid, RuntimeEntityException wrappedException) throws RuntimeEntityException {
+    String entityType = eid.getClassName();
+    String enityName = eid.getEntityName();
     if (wrappedException instanceof PermanentEntityException) {
-      throw new PermanentEntityException(wrappedException.getClassName(), wrappedException.getEntityName(), wrappedException);
+      throw new PermanentEntityException(entityType, enityName, wrappedException);
     } else if (wrappedException instanceof ConnectionClosedException) {
-      throw new ConnectionClosedException(wrappedException.getDescription(), wrappedException);
+      throw new LocalConnectionClosedException(eid, wrappedException.getDescription(), wrappedException);
     } else if (wrappedException instanceof EntityServerUncaughtException) {
-      throw new EntityServerUncaughtException(wrappedException.getClassName(), wrappedException.getEntityName(), wrappedException.getDescription(), wrappedException);
+      throw new EntityServerUncaughtException(entityType, enityName, wrappedException.getDescription(), wrappedException);
     } else {
       // Unknown exception - this must be populated.
       Assert.fail("Unhandled runtime exception type");

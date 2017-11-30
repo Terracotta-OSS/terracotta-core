@@ -32,7 +32,9 @@ public class Trace {
   }
 
   public void log(String message) {
-    LOGGER.trace("[trace - {}] {} - {}", id, componentName, message);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[trace - {}] {} - {}", id, componentName, message);
+    }
   }
 
   public void start() {
@@ -61,6 +63,9 @@ public class Trace {
   }
 
   public static Trace activeTrace() {
+    if (!LOGGER.isTraceEnabled()) {
+      return DUMMY;
+    }
     Trace trace = ACTIVE_TRACE.get();
     return trace != null ? trace : DUMMY;
   }

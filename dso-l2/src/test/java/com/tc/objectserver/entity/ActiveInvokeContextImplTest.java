@@ -14,19 +14,20 @@ public class ActiveInvokeContextImplTest {
     ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(
       new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)),
       1,
+      1,
       2);
     Assert.assertThat(ctx.isValidClientInformation(), is(true));
   }
 
   @Test
   public void testInvalid() {
-    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 2);
+    ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 1, 2);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
-    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), -1, -1);
+    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, -1, -1);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
-    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), -1, 2);
+    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1, 2);
     Assert.assertThat(ctx.isValidClientInformation(), is(true));
-    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1);
+    ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, 1, -1);
     Assert.assertThat(ctx.isValidClientInformation(), is(false));
   }
 

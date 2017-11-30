@@ -27,12 +27,7 @@ public interface ConnectionIDFactory {
 
   public ConnectionID populateConnectionID(ConnectionID connectionID);
 
-  public void restoreConnectionId(ConnectionID rv);
-
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener);
 
   public void activate(StripeID clusterID, long nextID);
-  
-  public ConnectionID buildConnectionID(ClientID client);
-
 }

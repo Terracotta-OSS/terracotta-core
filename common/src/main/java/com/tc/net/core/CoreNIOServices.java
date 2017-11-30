@@ -105,9 +105,15 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     }
   }
 
-  public void cleanupChannel(SocketChannel channel, Runnable callback) {
-    readerComm.cleanupChannel(channel, callback);
-    writerComm.cleanupChannel(channel, callback);
+  public void cleanupChannel(final SocketChannel channel, final Runnable callback) {
+//  shutdown the writer side first, the the read side.  Doing this because
+//  cleanup can race with handshake if the writer side is shutdown after or in parallel
+    writerComm.cleanupChannel(channel, new Runnable() {
+      @Override
+      public void run() {
+        readerComm.cleanupChannel(channel, callback);
+      }
+    });
   }
 
   @Override
@@ -735,8 +741,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       try {
         if (sc.finishConnect()) {
-          sc.register(selector, SelectionKey.OP_READ, conn);
           conn.finishConnect();
+          sc.register(selector, SelectionKey.OP_READ, conn);
         } else {
           String errMsg = "finishConnect() returned false, but no exception thrown";
 
