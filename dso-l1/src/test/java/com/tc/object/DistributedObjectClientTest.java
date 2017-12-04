@@ -26,7 +26,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.management.TCClient;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.config.ClientConfigImpl;
@@ -41,7 +40,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.slf4j.LoggerFactory;
@@ -81,13 +79,6 @@ public class DistributedObjectClientTest extends TestCase {
         return Mockito.mock(L2ConfigForL1.class);
       }
 
-      @Override
-      public SecurityInfo getSecurityInfo() {
-        SecurityInfo si = Mockito.mock(SecurityInfo.class);
-        Mockito.when(si.isSecure()).thenReturn(Boolean.FALSE);
-        return si;
-      }
-      
       @Override
       public Map<String, String> getOverrideTCProperties() {
         return Collections.<String, String>emptyMap();
@@ -153,13 +144,6 @@ public class DistributedObjectClientTest extends TestCase {
       }
 
       @Override
-      public SecurityInfo getSecurityInfo() {
-        SecurityInfo si = Mockito.mock(SecurityInfo.class);
-        Mockito.when(si.isSecure()).thenReturn(Boolean.FALSE);
-        return si;
-      }
-      
-      @Override
       public Map<String, String> getOverrideTCProperties() {
         return Collections.<String, String>emptyMap();
       }
@@ -176,7 +160,7 @@ public class DistributedObjectClientTest extends TestCase {
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
         try {
-          Mockito.when(channel.open(Mockito.anyCollection(), Matchers.anyString(), Matchers.any(char[].class))).thenThrow(new RuntimeException("bad connection"));
+          Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));
         } catch (Exception exp) {
           
         }
@@ -185,7 +169,7 @@ public class DistributedObjectClientTest extends TestCase {
       }
     };
     
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null, null);
+    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();

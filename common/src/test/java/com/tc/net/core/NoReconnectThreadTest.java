@@ -115,8 +115,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
                                                                          Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
-                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(),
-                                                                         null);
+                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
+    );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.<ClientID>emptySet());
@@ -179,8 +179,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
                                                                          Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
-                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(),
-                                                                         null);
+                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
+    );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.<ClientID>emptySet());

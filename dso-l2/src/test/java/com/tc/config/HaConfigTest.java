@@ -47,19 +47,19 @@ public class HaConfigTest extends TCTestCase {
                                                                                                         "-f",
                                                                                                         tcConfig
                                                                                                             .getAbsolutePath() },
-                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
+                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.L2);
       HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null, getClass().getClassLoader()));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // test for picking up right active server group for a give server
       factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
-          "server1" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
+          "server1" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2);
       haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null, getClass().getClassLoader()));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // expecting an error when given non existing server for haConfig
       factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
-          "server2" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
+          "server2" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2);
       try {
         new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null, getClass().getClassLoader()));
         throw new AssertionError("Config setup manager is suppose to blast for non-existing server name");

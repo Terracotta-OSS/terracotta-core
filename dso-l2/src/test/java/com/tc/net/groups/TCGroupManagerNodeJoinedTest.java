@@ -126,7 +126,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -179,7 +179,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -245,7 +245,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;

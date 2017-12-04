@@ -19,7 +19,6 @@
 package com.terracotta.diagnostic;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.net.core.SecurityInfo;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
@@ -50,10 +49,7 @@ public class DiagnosticClientImpl implements TerracottaInternalClient {
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-         new DiagnosticClientBuilder(),
-         null,  // no security features
-         new SecurityInfo(false, null),  // no security info
-         props);
+         new DiagnosticClientBuilder(), props);
   }
 
   public synchronized void init() throws TimeoutException, InterruptedException, ConfigurationSetupException {

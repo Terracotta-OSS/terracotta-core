@@ -108,7 +108,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
                                                 serverConnMgr, new NullConnectionPolicy(), 0, serverHC,
                                                 new TransportHandshakeErrorNullHandler(),
                                                 Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
-                                                Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
+                                                Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
     String host = "localhost";
 
     serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);

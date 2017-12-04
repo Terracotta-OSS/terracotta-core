@@ -57,7 +57,7 @@ public class TCServerMain {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
 
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
-                                                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
+                                                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2);
 
       ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
       Thread.currentThread().setContextClassLoader(systemLoader);

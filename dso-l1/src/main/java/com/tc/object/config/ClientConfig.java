@@ -19,10 +19,6 @@
 package com.tc.object.config;
 
 import com.tc.config.schema.CommonL1Config;
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.net.core.SecurityInfo;
-import com.tc.properties.ReconnectConfig;
-import com.tc.security.PwProvider;
 
 public interface ClientConfig extends DSOMBeanConfig {
   
@@ -30,10 +26,4 @@ public interface ClientConfig extends DSOMBeanConfig {
 
   CommonL1Config getCommonL1Config();
 
-  public ReconnectConfig getL1ReconnectProperties(PwProvider pwProvider) throws ConfigurationSetupException;
-
-  public void validateClientServerCompatibility(PwProvider pwProvider, SecurityInfo securityInfo)
-      throws ConfigurationSetupException;
-
-  SecurityInfo getSecurityInfo();
 }

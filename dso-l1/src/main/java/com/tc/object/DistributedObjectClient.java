@@ -35,8 +35,8 @@ import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
-import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.util.ProductID;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
@@ -47,7 +47,6 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -144,8 +143,6 @@ public class DistributedObjectClient implements TCClient {
 
   private Stage<ClusterInternalEventsContext> clusterEventsStage;
 
-  private final TCSecurityManager                    securityManager;
-
   private final String                                 uuid;
   private final String                               name;
 
@@ -164,17 +161,16 @@ public class DistributedObjectClient implements TCClient {
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster) {
-    this(config, new StandardClientBuilder(ProductID.PERMANENT), threadGroup, connectionComponents, cluster, null,
+    this(config, new StandardClientBuilder(ProductID.PERMANENT), threadGroup, connectionComponents, cluster,
         UUID.NULL_ID.toString(), "");
   }
 
   public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
-                                 ClusterInternal cluster, TCSecurityManager securityManager,
+                                 ClusterInternal cluster,
                                  String uuid, String name) {
     Assert.assertNotNull(config);
     this.config = config;
-    this.securityManager = securityManager;
     this.connectionComponents = connectionComponents;
     this.cluster = cluster;
     this.threadGroup = threadGroup;
@@ -187,13 +183,6 @@ public class DistributedObjectClient implements TCClient {
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA<Void> seda = new SEDA<Void>(threadGroup);
     communicationStageManager = seda.getStageManager();
-  }
-
-  private void validateSecurityConfig() {
-    if (config.getSecurityInfo().isSecure() && securityManager == null) { throw new TCRuntimeException(
-                                                                                                       "client configured as secure but was constructed without securityManager"); }
-    if (!config.getSecurityInfo().isSecure() && securityManager != null) { throw new TCRuntimeException(
-                                                                                                        "client not configured as secure but was constructed with securityManager"); }
   }
 
   private ReconnectConfig getReconnectPropertiesFromServer() {
@@ -241,8 +230,6 @@ public class DistributedObjectClient implements TCClient {
   }
 
   public synchronized void start() {
-    validateSecurityConfig();
-
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
@@ -281,7 +268,8 @@ public class DistributedObjectClient implements TCClient {
                                      new NullConnectionPolicy(),
                                      hc,
                                      getMessageTypeClassMapping(),
-            ReconnectionRejectedHandlerL1.SINGLETON, securityManager);
+                                     ReconnectionRejectedHandlerL1.SINGLETON,
+                                     new ClearTextBufferManagerFactory());
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
@@ -426,17 +414,7 @@ public class DistributedObjectClient implements TCClient {
       while (!clientStopped.isSet()) {
         try {
           DSO_LOGGER.debug("Trying to open channel....");
-          final char[] pw;
-          final String username;
-          if (config.getSecurityInfo().hasCredentials()) {
-            Assert.assertNotNull(securityManager);
-            username = config.getSecurityInfo().getUsername();
-            pw = securityManager.getPasswordForTC(config.getSecurityInfo().getUsername(), hostname, port);
-          } else {
-            pw = null;
-            username = null;
-          }
-          this.channel.open(infos, username, pw);
+          this.channel.open(infos);
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
