@@ -35,7 +35,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -59,17 +62,26 @@ public class ManagedServiceLoader {
    */
   protected Collection<Class<?>> discoverImplementations(String interfaceName, ClassLoader loader) {
     try {
-      HashMap<String, Class<?>> urls = new HashMap<>();
+      Set<String> processed = new HashSet<>();
+      HashMap<String, ClassWithLocation> urls = new HashMap<>();
       HashMap<String, String> overrides = new HashMap<>();
       Enumeration<URL> urlEnumeration = loader.getResources(
           METAINFCONST + interfaceName);
       StringBuilder sb = new StringBuilder();
       while (urlEnumeration.hasMoreElements()) {
         URL x = urlEnumeration.nextElement();
+        String urlString = parseURLString(x, interfaceName);
+        if (!processed.add(urlString)) {
+          LOG.debug("already processed " + urlString);
+          continue;
+        } else {
+          LOG.debug("reading " + urlString + " for " + interfaceName);
+        }
         InputStream s = x.openStream();
         LineNumberReader reader = new LineNumberReader(new InputStreamReader(s, Charset.forName("UTF-8")));
         String split = reader.readLine();
         while (split != null) {
+          LOG.debug(reader.getLineNumber() + ":processing " + split);
           String[] trim = split.trim().split("\\#");
           split = reader.readLine();
           for (int c=0;c<trim.length;c++) {
@@ -78,7 +90,6 @@ public class ManagedServiceLoader {
           if(trim.length == 0 || trim[0].isEmpty()) {
             continue;
           }
-          String urlString = parseURLString(x);
   //  make sure the class is loadable         
           Class<?> type = loadClass(trim[0], urlString, loader);          
           if (type != null) {
@@ -120,9 +131,9 @@ public class ManagedServiceLoader {
             }
             // only add the service if it is not part of the override graph
             if (!overrides.containsKey(trim[0])) {
-              Class<?> previous = urls.put(trim[0], type);
+              ClassWithLocation previous = urls.putIfAbsent(trim[0], new ClassWithLocation(type, urlString));
               if (previous != null) {
-                LOG.info("MULTIPLE instances of " + trim[0] + " found, ignoring:" + urlString + " keeping:" + previous.getName());
+                LOG.info("MULTIPLE instances of " + trim[0] + " found, ignoring:" + urlString + " keeping:" + previous.location + " using classloader:" + type.getClassLoader());
               }
             }
           } else {
@@ -136,18 +147,19 @@ public class ManagedServiceLoader {
         LOG.debug("overrides:" + overrides.toString());
       }
 
-      return urls.values();
+      return urls.values().stream().map(cwl->cwl.impl).collect(Collectors.toList());
     } catch (IOException e) {
       LOG.warn("unable to load", e);
     }
     return null;
   }
   
-  private static String parseURLString(URL src) {
+  private static String parseURLString(URL src, String interfaceName) {
     String urlString = src.toExternalForm();
     if (urlString.startsWith("jar:")) {
+      int resourcePart = urlString.indexOf("!/" + METAINFCONST + interfaceName);
 //  strip the jar file notation from the URL, start index of 4 is for 'jar:'
-      urlString = urlString.substring(4, urlString.indexOf("!"));
+      urlString = urlString.substring(4, resourcePart);
     } else {
 //  strip the meta file information from the path
       int index = urlString.indexOf(METAINFCONST);
@@ -222,5 +234,17 @@ public class ManagedServiceLoader {
       LOG.warn("No implementations found for " + className, c);
     }
     return null;
+  }
+  
+  private static class ClassWithLocation {
+    private final Class<?> impl;
+    private final String location;
+
+    public ClassWithLocation(Class<?> impl, String location) {
+      this.impl = impl;
+      this.location = location;
+    }
+    
+    
   }
 }
