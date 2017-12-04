@@ -23,6 +23,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.async.impl.DirectSink;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
@@ -100,7 +101,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private boolean reconnecting = true;
   
   private Sink<TCMessage> multiSend;
-  private final ConcurrentHashMap<ClientID, TCMessage> invokeReturn = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<ClientID, Integer> inflightFetch = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
   
@@ -118,29 +119,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       if(context instanceof VoltronEntityMultiResponse) {
         VoltronEntityMultiResponse voltronEntityMultiResponse = (com.tc.entity.VoltronEntityMultiResponse) context;
         voltronEntityMultiResponse.stopAdding();
-        voltronEntityMultiResponse.replay(new VoltronEntityMultiResponse.ReplayReceiver() {
-          @Override
-          public void received(TransactionID tid) {
-            waitForTransactionOrderPersistenceFuture(tid);
-          }
-
-          @Override
-          public void retired(TransactionID tid) {
-          }
-
-          @Override
-          public void result(TransactionID tid, byte[] result) {
-          }
-
-          @Override
-          public void message(ClientInstanceID cid, byte[] message) {
-          }
-
-          @Override
-          public void message(TransactionID tid, byte[] message) {
-          }
-        });
-        
+        waitForTransactions(voltronEntityMultiResponse);
       } else if(context instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)context).getTransactionID());
       } else {
@@ -157,6 +136,31 @@ public class ProcessTransactionHandler implements ReconnectListener {
   };
   public AbstractEventHandler<TCMessage> getMultiResponseSender() {
     return multiSender;
+  }
+
+  private void waitForTransactions(VoltronEntityMultiResponse vmr) {
+    vmr.replay(new VoltronEntityMultiResponse.ReplayReceiver() {
+      @Override
+      public void received(TransactionID tid) {
+        waitForTransactionOrderPersistenceFuture(tid);
+      }
+
+      @Override
+      public void retired(TransactionID tid) {
+      }
+
+      @Override
+      public void result(TransactionID tid, byte[] result) {
+      }
+
+      @Override
+      public void message(ClientInstanceID cid, byte[] message) {
+      }
+
+      @Override
+      public void message(TransactionID tid, byte[] message) {
+      }
+    });
   }
   
   private final AbstractEventHandler<VoltronEntityMessage> voltronHandler = new AbstractEventHandler<VoltronEntityMessage>() {
@@ -274,30 +278,28 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
-    boolean handled = false;
-    while (!handled) {
-      TCMessage old = invokeReturn.get(target);
-      if (old instanceof VoltronEntityMultiResponse) {
-        handled = adder.test((VoltronEntityMultiResponse)old);
-      }
-      if (!handled) {
+    // if not, compute the result and schedule send if neccessary
+    invokeReturn.compute(target, (client, vmr)-> {
+      if (vmr != null) {
+        boolean added = adder.test(vmr);
+        Assert.assertTrue(added);
+      } else {
         Optional<MessageChannel> channel = safeGetChannel(target);
         if (channel.isPresent()) {
-          VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
-          old = invokeReturn.putIfAbsent(target, vmr);
-          if (old instanceof VoltronEntityMultiResponse) {
-            handled = adder.test((VoltronEntityMultiResponse)old);
+          vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          boolean added = adder.test(vmr);
+          Assert.assertTrue(added);
+          if (DirectSink.isActivated() && multiSend.isEmpty()) {
+            waitForTransactions(vmr);
+            vmr.send();
+            vmr = null;
           } else {
-            handled = adder.test(vmr);
-            Assert.assertTrue(handled);
             multiSend.addSingleThreaded(vmr);
           }
-        } else {
-          handled = true;
-//  no more client.  ignore
         }
       }
-    }
+      return vmr;
+    });
   }
 
 // only the process transaction thread will add messages here except for on reconnect
@@ -696,8 +698,16 @@ public class ProcessTransactionHandler implements ReconnectListener {
           safeGetChannel(getNodeID()).ifPresent(channel -> {
             VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
             failMessage.setFailure(getTransaction(), exception);
-            invokeReturn.put(getNodeID(), failMessage);
-            multiSend.addSingleThreaded(failMessage);
+            invokeReturn.compute(getNodeID(), (client, vmr)-> {
+              if (vmr == null && DirectSink.isActivated() && multiSend.isEmpty()) {
+                waitForTransactionOrderPersistenceFuture(failMessage.getTransactionID());
+                failMessage.send();
+              } else {
+                multiSend.addSingleThreaded(failMessage);
+              }
+              // unmap anything that was previously there
+              return null;
+            });
           });
         }
       } else {

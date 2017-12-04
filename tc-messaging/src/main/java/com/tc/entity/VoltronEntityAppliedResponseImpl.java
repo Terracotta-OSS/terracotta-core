@@ -44,7 +44,6 @@ import org.terracotta.exception.EntityServerUncaughtException;
 public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements VoltronEntityAppliedResponse {
   private TransactionID transactionID;
   private boolean isSuccess;
-  private final boolean isRetire = true;
   private byte[] successResponse;
   private EntityException failureException;
   
