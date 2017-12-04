@@ -22,6 +22,8 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.logging.TCLogging;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.MappedStateCollector;
 import com.tc.services.PlatformConfigurationImpl;
@@ -108,7 +110,6 @@ import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
@@ -512,8 +513,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
 
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
-    
-    TCSecurityManager mgr = new PluggableSecurityManager(this.serviceRegistry.subRegistry(platformConsumerID));
+
+    BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
     
     this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
                                                                messageRouter, networkStackHarnessFactory,
@@ -523,7 +524,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.emptyMap(),
-                                                               mgr);
+                                                               bufferManagerFactory
+    );
 
 
     final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300,
@@ -674,7 +676,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
-                                                                      this.stripeIDStateManager, mgr, this.globalWeightGeneratorFactory);
+                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory,
+                                                                      bufferManagerFactory);
 
     L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService), eventCollector);
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
@@ -788,7 +791,20 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     startDiagnosticListener();
     setLoggerOnExit();
   }
-  
+
+  private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {
+    BufferManagerFactory bufferManagerFactory = null;
+    try {
+      bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
+    } catch (ServiceException e) {
+      Assert.fail("Multiple BufferManagerFactory implementations found!");
+    }
+    if (bufferManagerFactory == null) {
+      bufferManagerFactory = new ClearTextBufferManagerFactory();
+    }
+    return bufferManagerFactory;
+  }
+
   private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
     Stage<PlatformInfoRequest> stage = stageManager.createStage(ServerConfigurationContext.PLATFORM_INFORMATION_REQUEST, 
         PlatformInfoRequest.class, new PlatformInfoRequestHandler(groupCommManager, monitoringSupport).getEventHandler(), 1, maxStageSize);

@@ -21,7 +21,6 @@ package com.tc.net.core;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.PortChooser;
 import java.io.IOException;
@@ -30,12 +29,12 @@ import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static junit.framework.TestCase.fail;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,25 +44,6 @@ import static org.mockito.Mockito.when;
  *
  */
 public class TCConnectionImplTest {
-  
-  public TCConnectionImplTest() {
-  }
-  
-  @BeforeClass
-  public static void setUpClass() {
-  }
-  
-  @AfterClass
-  public static void tearDownClass() {
-  }
-  
-  @Before
-  public void setUp() {
-  }
-  
-  @After
-  public void tearDown() {
-  }
 
   @Test
   public void testFinishConnection() throws Exception {
@@ -75,27 +55,23 @@ public class TCConnectionImplTest {
     TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
     final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
     SocketParams socketParams = new SocketParams();
-    TCSecurityManager securityManager = mock(TCSecurityManager.class);
-    when(securityManager.getBufferManagerFactory()).thenReturn(new BufferManagerFactory() {
+    BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+    when(bufferManagerFactory.createBufferManager(any(SocketChannel.class), anyBoolean())).thenAnswer(new Answer<BufferManager>() {
       @Override
-      public BufferManager createBufferManager(SocketChannel socketChannel, boolean client) {
-        if (createManager.get()) {
-          verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
-          verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
-          return new ClearTextBufferManager(socketChannel);
-        } else {
-          return null;
-        }
+      public BufferManager answer(InvocationOnMock invocationOnMock) {
+        verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
+        verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
+        return new ClearTextBufferManager((SocketChannel) invocationOnMock.getArguments()[0]);
       }
     });
-    TCConnection conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, securityManager);    
+    TCConnection conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, bufferManagerFactory);
     TCSocketAddress addr = new TCSocketAddress("localhost", port);
     conn.connect(addr, 0);
     verify(listener).connectEvent(any(TCConnectionEvent.class));
     
     verify(nioServiceThread).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
-    
-    conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, securityManager);
+
+    conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, mock(BufferManagerFactory.class));
     createManager.set(false);
     
     try {

@@ -30,7 +30,6 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -62,7 +61,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final int                         timeout;
-  private final TCSecurityManager           securityManager;
   private ConnectionInfo                    connectionInfo;
 
   public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
@@ -70,7 +68,7 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout) {
     this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort, timeout,
-         ReconnectionRejectedHandlerL1.SINGLETON, null);
+         ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
   /**
@@ -81,15 +79,13 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout,
-                                ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                TCSecurityManager securityManager) {
+                                ReconnectionRejectedHandler reconnectionRejectedHandler) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, LoggerFactory.getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;
     this.timeout = timeout;
-    this.securityManager = securityManager;
   }
 
   /**
@@ -341,12 +337,6 @@ public class ClientMessageTransport extends MessageTransportBase {
       this.waitForSynAckResult = targetFuture;
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
-      if (getConnectionId().isSecured() && getConnectionId().getPassword() == null) {
-        // Re-init the password
-        getConnectionId().setPassword(securityManager.getPasswordForTC(getConnectionId().getUsername(),
-                                                                  connectionInfo.getHostname(),
-                                                                  connectionInfo.getPort()));
-      }
       TransportHandshakeMessage syn = this.messageFactory.createSyn(getConnectionId(), getConnection(),
                                                                     stackLayerFlags, this.callbackPort);
       // send syn message

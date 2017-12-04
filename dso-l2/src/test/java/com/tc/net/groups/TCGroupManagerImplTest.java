@@ -35,7 +35,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -106,7 +105,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);
@@ -601,7 +600,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     });
     TCGroupManagerImpl tcGroupManager = spy(new TCGroupManagerImpl(new NullConnectionPolicy(), "localhost",
         portChooser.chooseRandomPort(), portChooser.chooseRandomPort(),
-        mock(StageManager.class, RETURNS_MOCKS.get()), mock(TCSecurityManager.class), weightGeneratorFactory) {
+        mock(StageManager.class, RETURNS_MOCKS.get()), weightGeneratorFactory) {
       @Override
       protected String getVersion() {
         return "4.2.0";

@@ -19,7 +19,6 @@
 package com.tc.objectserver.impl;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
@@ -33,7 +32,7 @@ import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
-import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -65,8 +64,10 @@ public class StandardServerBuilder implements ServerBuilder {
   @Override
   public GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
                                              StageManager stageManager, ServerID serverNodeID,
-                                             StripeIDStateManager stripeStateManager, TCSecurityManager mgr, WeightGeneratorFactory weightGeneratorFactory) {
-    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getThisNode(), this.haConfig.getNodesStore(), mgr, weightGeneratorFactory);
+                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
+                                             BufferManagerFactory bufferManagerFactory) {
+    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getThisNode(),
+        this.haConfig.getNodesStore(), weightGeneratorFactory, bufferManagerFactory);
   }
 
   @Override

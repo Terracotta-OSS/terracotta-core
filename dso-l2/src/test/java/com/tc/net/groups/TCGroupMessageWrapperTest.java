@@ -22,7 +22,6 @@ import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
-import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
@@ -42,7 +41,6 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -87,12 +85,12 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
-                                                Collections.emptyMap(), null);
+                                                Collections.emptyMap());
     serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
-                                                Collections.emptyMap(), null);
+                                                Collections.emptyMap());
   }
 
   @Override

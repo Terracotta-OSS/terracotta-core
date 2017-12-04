@@ -25,7 +25,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.Assert;
@@ -61,14 +60,13 @@ final class TCListenerImpl implements TCListener {
   private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<TCListenerEventListener>();
   private final ProtocolAdaptorFactory                       factory;
   private final CoreNIOServices                              commNIOServiceThread;
-  private final TCSecurityManager                            securityManager;
+  private final BufferManagerFactory                         bufferManagerFactory;
 
   TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
-                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread,
-                 TCSecurityManager securityManager) {
-    this.securityManager = securityManager;
+                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread, BufferManagerFactory bufferManagerFactory) {
     this.addr = ssc.socket().getInetAddress();
     this.port = ssc.socket().getLocalPort();
+    this.bufferManagerFactory = bufferManagerFactory;
     this.sockAddr = new TCSocketAddress(this.addr, this.port);
     this.factory = factory;
     this.staticEvent = new TCListenerEvent(this);
@@ -85,8 +83,7 @@ final class TCListenerImpl implements TCListener {
   TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
       throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams,
-                                               securityManager);
+    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams, bufferManagerFactory);
     rv.finishConnect();
     parent.newConnection(rv);
     return rv;

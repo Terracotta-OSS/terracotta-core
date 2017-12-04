@@ -25,7 +25,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
 import com.tc.config.Directories;
-import com.tc.security.PwProvider;
 import com.tc.text.StringUtils;
 
 import java.io.File;
@@ -50,25 +49,19 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
   private final String[] args;
   private final String defaultL2Identifier;
   private final ConfigurationSpec configurationSpec;
-  private final PwProvider pwProvider;
 
   public static enum ConfigMode {
     L2, CUSTOM_L1, EXPRESS_L1
   }
 
-  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode, PwProvider pwProvider)
+  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode)
       throws ConfigurationSetupException {
-    this(args, parseDefaultCommandLine(args, configMode), configMode, pwProvider);
+    this(args, parseDefaultCommandLine(args, configMode), configMode);
   }
 
-  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode, PwProvider pwProvider)
+  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode)
       throws ConfigurationSetupException {
-    this(args, commandLine, configMode, System.getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME), pwProvider);
-  }
-
-  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode, String configSpec,
-                                                  PwProvider pwProvider) throws ConfigurationSetupException {
-    this(args, parseDefaultCommandLine(args, configMode), configMode, configSpec, pwProvider);
+    this(args, commandLine, configMode, System.getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME));
   }
 
   private static CommandLine parseDefaultCommandLine(String[] args, ConfigMode configMode) throws ConfigurationSetupException {
@@ -85,8 +78,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     }
   }
 
-  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode, String configSpec,
-                                                  PwProvider pwProvider) throws ConfigurationSetupException {
+  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode, String configSpec) throws ConfigurationSetupException {
     String effectiveConfigSpec = getEffectiveConfigSpec(configSpec, commandLine, configMode);
     String cwdAsString = System.getProperty("user.dir");
     if (StringUtils.isBlank(cwdAsString)) { throw new ConfigurationSetupException(
@@ -99,7 +91,6 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                    System.getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
                                                    configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
-    this.pwProvider = pwProvider;
   }
 
   private String getDefaultL2Identifier(CommandLine commandLine) {
@@ -180,7 +171,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
-    configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory, this.pwProvider);
+    configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory);
 
     return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, loader);
   }

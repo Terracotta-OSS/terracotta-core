@@ -61,7 +61,7 @@ public class ConfigDefaultPortTest extends TCTestCase {
 
                       + "\n      <server name=\"server4\">" + "\n</server>" + "\n</servers>" + "\n</tc-config>";
       writeConfigFile(config);
-      StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null, null);
+      StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null);
 
       L2ConfigurationSetupManager configSetupMgr = null;
 

@@ -317,7 +317,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                      new ServerID(),
                                                                      new TransportHandshakeErrorNullHandler(),
                                                                      Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
-                                                                     Collections.<TCMessageType, GeneratedMessageFactory>emptyMap(), null);
+                                                                     Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
       NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                          new DefaultConnectionIdFactory());
       listener.start(Collections.<ClientID>emptySet());
