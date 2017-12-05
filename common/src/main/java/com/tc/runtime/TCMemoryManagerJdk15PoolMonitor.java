@@ -37,13 +37,24 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
   private static final String          IBMJDK_TENURED_GEN_NAME = "Java heap";
   private static final String          JROCKETJDK_OLD_GEN_NAME = "Old Space";
 
+  private final boolean memoryPoolMonitoringSupported;
   private final MemoryPoolMXBean       oldGenBean;
   private final GarbageCollectorMXBean oldGenCollectorBean;
 
   public TCMemoryManagerJdk15PoolMonitor() {
-    super();
-    this.oldGenBean = getOldGenMemoryPoolBean();
-    this.oldGenCollectorBean = getOldGenCollectorBean();
+    boolean memoryPoolMonitoringSupportedTmp = false;
+    MemoryPoolMXBean oldGenBeanTmp = null;
+    GarbageCollectorMXBean oldGenCollectorBeanTmp = null;
+    try {
+      oldGenBeanTmp = getOldGenMemoryPoolBean();
+      oldGenCollectorBeanTmp = getOldGenCollectorBean();
+      memoryPoolMonitoringSupportedTmp = true;
+    } catch (AssertionError e) {
+      // Ignore, will indicate memory monitoring is not supported
+    }
+    this.oldGenBean = oldGenBeanTmp;
+    this.oldGenCollectorBean = oldGenCollectorBeanTmp;
+    this.memoryPoolMonitoringSupported = memoryPoolMonitoringSupportedTmp;
   }
 
   private MemoryPoolMXBean getOldGenMemoryPoolBean() {
@@ -87,7 +98,7 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
 
   @Override
   public boolean isMemoryPoolMonitoringSupported() {
-    return true;
+    return memoryPoolMonitoringSupported;
   }
 
   @Override
