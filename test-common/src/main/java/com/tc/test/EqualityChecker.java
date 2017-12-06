@@ -18,7 +18,7 @@
  */
 package com.tc.test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 /**
  * Contains a simple method that checks two arrays for equality. Checks that elements at the same index in both arrays

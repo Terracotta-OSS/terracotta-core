@@ -24,7 +24,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Random;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import junit.framework.TestCase;
 
 public class SampledCumulativeCounterTest extends TestCase {

@@ -25,8 +25,8 @@ import org.mockito.internal.util.collections.Sets;
 import static com.tc.util.Assert.assertFalse;
 import static com.tc.util.Assert.assertTrue;
 import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.hasItem;
-import static org.junit.matchers.JUnitMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
 
 /**
  * @author tim
