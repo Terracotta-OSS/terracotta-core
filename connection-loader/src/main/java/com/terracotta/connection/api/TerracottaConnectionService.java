@@ -19,23 +19,9 @@
 
 package com.terracotta.connection.api;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.terracotta.connection.EndpointConnector;
-import com.terracotta.connection.EndpointConnectorImpl;
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.ConnectionService;
-
-import com.tc.util.Assert;
-import com.terracotta.connection.TerracottaConnection;
-import com.terracotta.connection.TerracottaInternalClient;
-import com.terracotta.connection.TerracottaInternalClientStaticFactory;
-import com.terracotta.connection.client.TerracottaClientConfigParams;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Properties;
-import java.util.concurrent.TimeoutException;
+import com.terracotta.connection.TerracottaInternalClientFactory;
+import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
 
 
 /**
@@ -47,40 +33,15 @@ import java.util.concurrent.TimeoutException;
 public class TerracottaConnectionService extends AbstractConnectionService {
   private static final String SCHEME = "terracotta";
 
-  private final EndpointConnector endpointConnector;
-
-  @Override
-  public boolean handlesURI(URI uri) {
-    return SCHEME.equals(uri.getScheme());
-  }
-
   public TerracottaConnectionService() {
-    this(new EndpointConnectorImpl());
+    super(SCHEME);
   }
 
   public TerracottaConnectionService(EndpointConnector endpointConnector) {
-    this.endpointConnector = endpointConnector;
+    super(SCHEME, endpointConnector, new TerracottaInternalClientFactoryImpl());
   }
 
-  @Override
-  public Connection internalConnect(TerracottaClientConfigParams clientConfig) throws ConnectionException {
-    final TerracottaInternalClient client = TerracottaInternalClientStaticFactory.getOrCreateTerracottaInternalClient(clientConfig);
-    try {
-      client.init();
-    } catch (TimeoutException exp) {
-      throw new ConnectionException(exp);
-    } catch (ConfigurationSetupException config) {
-      throw new ConnectionException(config);
-    } catch (InterruptedException ie) {
-      throw new ConnectionException(ie);
-    } catch (Throwable t) {
-      throw new ConnectionException(t);
-    }
-    return new TerracottaConnection(client.getClientEntityManager(), endpointConnector, new Runnable() {
-        public void run() {
-          client.shutdown();
-          }
-        }
-      );
+  public TerracottaConnectionService(EndpointConnector endpointConnector, TerracottaInternalClientFactory clientFactory) {
+    super(SCHEME, endpointConnector, clientFactory);
   }
 }
