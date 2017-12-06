@@ -284,10 +284,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     public final void errorEvent(TCConnectionErrorEvent event) {
       try {
         final Throwable err = event.getException();
-
         if (err != null) {
           if (err instanceof IOException) {
-            if (logger.isInfoEnabled()) {
+            if (!event.getSource().isClosed()) {
               logger.info("error event on connection " + event.getSource() + ": " + err.getMessage());
             } else if (logger.isDebugEnabled()) {
               logger.debug("error event on connection " + event.getSource() + ": " + err.getMessage(), err);
