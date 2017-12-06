@@ -93,7 +93,7 @@ public class DistributedObjectClientFactory {
     try {
       client.start();
       String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
-      if (!client.waitForConnection(Integer.parseInt(timeout), TimeUnit.MILLISECONDS)) {
+      if (!client.waitForConnection(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
 //  timed out, shutdown the extra threads and return null;
         client.shutdown();
         return null;
