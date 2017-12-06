@@ -21,7 +21,6 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -50,7 +49,6 @@ import java.util.Set;
 public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
-  private final StateManager                coordinator;
   private final ClientEntityStateManager      clientEvents;
   private final ProcessTransactionHandler   pth;
   private final ManagementTopologyEventCollector collector;
@@ -64,12 +62,10 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
                                  StageManager stageManager,
                                  DSOChannelManager channelManager,
                                  ClientEntityStateManager chain,
-                                 StateManager coordinator,
                                  ProcessTransactionHandler handler,
                                  ManagementTopologyEventCollector collector) {
     this.commsManager = commsManager;
     this.channelMgr = channelManager;
-    this.coordinator = coordinator;
     this.clientEvents = chain;
     this.collector = collector;
     this.pth = handler;
@@ -80,18 +76,17 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(NodeID nodeID, ProductID productId, boolean wasActive) {
+  private void nodeDisconnected(NodeID nodeID, ProductID productId) {
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
       // Broadcast locally (chain) and remotely this message if active
-      if (coordinator.isActiveCoordinator()) {
-        broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
-        // send a disconnection message to the platform entity to initiate the disconnection sequence, this flushes the PTH 
-        // of any possible fetches there
-        voltronSink.addSingleThreaded(createDisconnectMessage(clientID, wasActive));
-      }
+      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
+      // send a disconnection message to the platform entity to initiate the disconnection sequence, this flushes the PTH 
+      // of any possible fetches there
+      voltronSink.addSingleThreaded(createDisconnectMessage(clientID));
     }
+
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
@@ -99,26 +94,24 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     }
   }
   
-  private VoltronEntityMessage createDisconnectMessage(ClientID clientID, boolean wasActive) {
+  private VoltronEntityMessage createDisconnectMessage(ClientID clientID) {
     return new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(PlatformEntity.PLATFORM_FETCH_ID, ClientInstanceID.NULL_ID), ()-> {
 //  now the pth is flushed, check that there are no pending removes in the managed entities
       if (pth.removeClient(clientID)) {
     // no fetches, safe to remove the client
-          notifyEnitiesOfDisconnect(clientID, wasActive);
+          notifyEnitiesOfDisconnect(clientID);
         } else {
     // there are fetches in the managed entity, not safe to remove the client, recursion
-          voltronSink.addSingleThreaded(createDisconnectMessage(clientID, wasActive));
+          voltronSink.addSingleThreaded(createDisconnectMessage(clientID));
         }
       });
   }
   
-  private void notifyEnitiesOfDisconnect(ClientID clientID, boolean wasActive) {
+  private void notifyEnitiesOfDisconnect(ClientID clientID) {
     List<FetchID> msg = clientEvents.clientDisconnected(clientID);
     collector.expectedDisconnects(clientID, msg);
     msg.forEach(m->voltronSink.addSingleThreaded(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), null)));
-    if (wasActive) {
-      notifyClientRemoved(clientID);
-    }
+    notifyClientRemoved(clientID);
   }
 
   private void nodeConnected(NodeID nodeID, ProductID productId) {
@@ -126,9 +119,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
       // Broadcast locally (chain) and remotely this message if active
-      if (coordinator.isActiveCoordinator()) {
-        broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
-      }
+      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
     }
   }
 
@@ -161,9 +152,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
  //  brand new member, broadcast the change if active
     clientCreated(clientID, channel.getProductId());
  //  client is connecting to the active
-    if (coordinator.isActiveCoordinator()) {
-      notifyClientAdded(channel, clientID);
-    }
+    notifyClientAdded(channel, clientID);
   }
   
   private void notifyClientAdded(MessageChannel channel, ClientID clientID) {
@@ -187,8 +176,8 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   }
   
   public void clientDropped(ClientID clientID, ProductID product, boolean wasActive) {
-    if (coordinator.isActiveCoordinator()) {
-      nodeDisconnected(clientID, product, wasActive);
+    if (wasActive) {
+      nodeDisconnected(clientID, product);
     }
   }
 /**
