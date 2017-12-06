@@ -50,6 +50,7 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.AbstractServerEntityRequestResponse;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
+import com.tc.objectserver.entity.CreateSystemEntityMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
@@ -96,8 +97,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
   // Data required for handling transaction resends.
   private List<ReferenceMessage> references;
   private List<VoltronEntityMessage> reconnectDone;
-  private SparseList<ResendVoltronEntityMessage> resendReplayList;
-  private List<ResendVoltronEntityMessage> resendNewList;
+  private SparseList<VoltronEntityMessage> resendReplayList;
+  private List<VoltronEntityMessage> resendNewList;
   private boolean reconnecting = true;
   
   private Sink<TCMessage> multiSend;
@@ -210,7 +211,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
           }
           break;
       }
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, MessagePayload.commonMessagePayloadBusy(extendedData, entityMessage, doesRequireReplication), transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
+      MessagePayload payload =  MessagePayload.commonMessagePayload(extendedData, entityMessage, doesRequireReplication, !message.getSource().isNull());
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
     }
 
     @Override
@@ -446,7 +448,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     this.references.add(msg);
   }
 
-  public void handleResentMessage(ResendVoltronEntityMessage resentMessage) {
+  public void handleResentMessage(VoltronEntityMessage resentMessage) {
     boolean cached = false;
     byte[] result = null;
     int index = -1;
@@ -537,14 +539,14 @@ public class ProcessTransactionHandler implements ReconnectListener {
     this.reconnectDone = null;
     
     // Replay all the already-ordered messages.
-    for (ResendVoltronEntityMessage message : this.resendReplayList) {
+    for (VoltronEntityMessage message : this.resendReplayList) {
       LOGGER.debug("RESENDS:" + message);
       executeResend(message);
     }
     this.resendReplayList = null;
     
     // Replay all the new messages found during resends.
-    for (ResendVoltronEntityMessage message : this.resendNewList) {
+    for (VoltronEntityMessage message : this.resendNewList) {
       LOGGER.debug("RESENDS:" + message);
       executeResend(message);
     }

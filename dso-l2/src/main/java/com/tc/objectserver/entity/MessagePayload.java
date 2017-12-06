@@ -32,6 +32,10 @@ public class MessagePayload {
     return new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, false, false);
   }
 
+  public static final MessagePayload commonMessagePayload(byte[] raw, EntityMessage message, boolean replicate, boolean allowBusy) {
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, allowBusy);
+  }
+
   public static final MessagePayload commonMessagePayloadBusy(byte[] raw, EntityMessage message, boolean replicate) {
     return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, true);
   }
