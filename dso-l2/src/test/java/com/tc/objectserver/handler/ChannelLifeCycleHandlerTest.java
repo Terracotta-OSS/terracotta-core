@@ -31,7 +31,6 @@ import org.junit.Test;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -59,7 +58,7 @@ public class ChannelLifeCycleHandlerTest {
     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
     this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager,
-      mock(ClientEntityStateManager.class), mock(StateManager.class),
+      mock(ClientEntityStateManager.class), 
       mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
   }
 

@@ -684,7 +684,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
-                                                                                        clientEntityStateManager, state, processTransactionHandler, eventCollector);
+                                                                                        clientEntityStateManager, processTransactionHandler, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
@@ -696,7 +696,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
                                                                   this.stripeIDStateManager,
                                                                   channelLifeCycleHandler);
 
-    connectServerStateToReplicatedState(state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
+    connectServerStateToReplicatedState(processTransactionHandler, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
     final Stage<Runnable> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, Runnable.class, new GenericHandler<>(), 1, maxStageSize);
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
@@ -925,7 +925,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     };
   }
   
-  private void connectServerStateToReplicatedState(StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
+  private void connectServerStateToReplicatedState(ProcessTransactionHandler pth, StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
     mgr.registerForStateChangeEvents(new StateChangeListener() {
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
@@ -936,7 +936,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         existingConnections.addAll(clients.clearClientReferences());
         if (sce.movedToActive()) {
           getContext().getClientHandshakeManager().setStarting(existingConnections);
-          startActiveMode(sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
+          startActiveMode(pth, sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
           } catch (IOException ioe) {
@@ -1015,7 +1015,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     });
   }
 
-  private void startActiveMode(boolean wasStandby) {
+  private void startActiveMode(ProcessTransactionHandler pth, boolean wasStandby) {
     if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
       
       Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();

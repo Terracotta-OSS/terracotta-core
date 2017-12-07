@@ -894,8 +894,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         }
         this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
       } else {
-        if (logger.isInfoEnabled()) {
+        if (!isClosed()) {
           logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+        } else if  (logger.isDebugEnabled()) {
+          logger.debug("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
         }
 
         this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);

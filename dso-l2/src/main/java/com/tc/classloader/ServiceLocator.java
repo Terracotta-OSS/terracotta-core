@@ -59,6 +59,7 @@ public class ServiceLocator extends ManagedServiceLoader {
     defaultClassLoader = parent;
   }
   
+  @Override
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {
     try {
       return Class.forName(className, false, new ComponentURLClassLoader(new URL[] {new URL(location)}, getApiClassLoader(loader), new AnnotationOrDirectoryStrategyChecker()));
