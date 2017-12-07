@@ -33,7 +33,7 @@ import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import junit.framework.TestCase;
 
 public class TCNotRunningTest extends TestCase {
