@@ -41,7 +41,8 @@ package com.tc.objectserver.entity;
 import com.tc.classloader.PermanentEntity;
 import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.objectserver.impl.PermanentEntityParser;
+import com.tc.object.EntityID;
+
 import java.util.ArrayList;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
@@ -88,14 +89,18 @@ public class ServerEntityFactory {
             String single = p.name();
             int version = p.version();
             if (single != null && single.length() > 0) {
-              msgs.add(PermanentEntityParser.createMessage(type, single, version, new byte[0]));
+              msgs.add(createMessage(type, single, version, new byte[0]));
             }
             for (String name : names) {
-              msgs.add(PermanentEntityParser.createMessage(type, name, version, new byte[0]));
+              msgs.add(createMessage(type, name, version, new byte[0]));
             }
           }
         }
     }
     return msgs;
   }  
+
+  public static VoltronEntityMessage createMessage(String type, String name, int version, byte[] data) {
+    return new CreateSystemEntityMessage(new EntityID(type, name),version, data);
+  }
 }
