@@ -37,7 +37,6 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,10 +58,10 @@ public class StageManagerImpl implements StageManager {
   private TCLoggerProvider           loggerProvider;
   private final ThreadGroup          group;
   private String[]                   stageNames    = new String[] {};
-  private final QueueFactory<?> queueFactory;
+  private final QueueFactory queueFactory;
   private volatile boolean           started;
 
-  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory<?> queueFactory) {
+  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
     this.group = threadGroup;
     this.queueFactory = queueFactory;
@@ -118,9 +117,7 @@ public class StageManagerImpl implements StageManager {
 
     int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
-    @SuppressWarnings("unchecked")
-    QueueFactory<ContextWrapper<EC>> queueFactory = (QueueFactory<ContextWrapper<EC>>) this.queueFactory;
-    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, handler, queueCount, group, queueFactory, capacity, canBeDirect);
+    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, capacity, canBeDirect);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;

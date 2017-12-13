@@ -84,18 +84,18 @@ public class SingletonStageQueueImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.anyObject(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[1]);
         cxts.add(queue);
         return queue;
       }
 
     });
-    StageQueue<Object> instance = new SingletonStageQueueImpl(context, logger, "mock", 16);
+    StageQueue<Object> instance = new SingletonStageQueueImpl(context, Object.class, logger, "mock", 16);
     assertEquals(cxts.size(), 1);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));

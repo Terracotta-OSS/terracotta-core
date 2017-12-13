@@ -54,15 +54,15 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  SingletonStageQueueImpl(QueueFactory<ContextWrapper<EC>> queueFactory,
+  SingletonStageQueueImpl(QueueFactory queueFactory, Class<EC> type, 
                           TCLoggerProvider loggerProvider,
                           String stageName,
                           int queueSize) {
     super(loggerProvider, stageName);
-    this.sourceQueue = createWorkerQueue(queueFactory, queueSize, stageName);
+    this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize, stageName);
   }
 
-  private SourceQueueImpl<ContextWrapper<EC>> createWorkerQueue(QueueFactory<ContextWrapper<EC>> queueFactory,
+  private SourceQueueImpl<ContextWrapper<EC>> createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
                                                                 int queueSize,
                                                                 String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
@@ -70,8 +70,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
     Assert.eval(queueSize > 0);
 
-    q = queueFactory.createInstance(queueSize);
-    return new SourceQueueImpl<ContextWrapper<EC>>(q, statsCollector);
+    return new SourceQueueImpl<>(queueFactory.createInstance(type, queueSize), statsCollector);
   }
 
   @Override

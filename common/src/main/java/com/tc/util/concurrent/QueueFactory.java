@@ -18,17 +18,17 @@
  */
 package com.tc.util.concurrent;
 
+import com.tc.async.impl.ContextWrapper;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class QueueFactory<E> {
+public class QueueFactory {
 
-  public BlockingQueue<E> createInstance() {
-    return new LinkedBlockingQueue<E>();
+  public <E> BlockingQueue<ContextWrapper<E>> createInstance(Class<E> type) {
+    return new LinkedBlockingQueue<>();
   }
 
-  public BlockingQueue<E> createInstance(int capacity) {
-    return new LinkedBlockingQueue<E>(capacity);
+  public <E> BlockingQueue<ContextWrapper<E>> createInstance(Class<E> type, int capacity) {
+    return new LinkedBlockingQueue<>(capacity);
   }
-
 }

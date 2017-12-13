@@ -87,18 +87,18 @@ public class MultiStageQueueImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[1]);
         cxts.add(queue);
         return queue;
       }
 
     });
-    StageQueue<Object> instance = new MultiStageQueueImpl(size, context, logger, "mock", 16);
+    StageQueue<Object> instance = new MultiStageQueueImpl(size, context, Object.class, logger, "mock", 16);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));
     }
@@ -152,18 +152,18 @@ public class MultiStageQueueImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[1]);
         cxts.add(queue);
         return queue;
       }
 
     });
-    StageQueue impl = new MultiStageQueueImpl(6, context, logger, "mock", 16);
+    StageQueue impl = new MultiStageQueueImpl(6, context, Object.class, logger, "mock", 16);
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.getSchedulingKey()).thenReturn(null);
     // fcheck starts at zero and should stay at zero because first queue is always empty
@@ -204,9 +204,10 @@ public class MultiStageQueueImplTest {
       return;
     }
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory<ContextWrapper<MultiThreadedEventContext>> qFactory = new QueueFactory<ContextWrapper<MultiThreadedEventContext>>();
-    MultiStageQueueImpl<MultiThreadedEventContext> impl = new MultiStageQueueImpl<MultiThreadedEventContext>(8,
+    QueueFactory qFactory = new QueueFactory();
+    MultiStageQueueImpl<MultiThreadedEventContext> impl = new MultiStageQueueImpl<>(8,
                                                                                                              qFactory,
+                                                                                                             MultiThreadedEventContext.class,
                                                                                                              logger,
                                                                                                              "perf",
                                                                                                              100);
@@ -239,16 +240,15 @@ public class MultiStageQueueImplTest {
 
   public void syntheticThroughput(int secondsToRun, final int qCount, int qSize) throws InterruptedException {
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory<ContextWrapper<MultiThreadedEventContext>> qFactory = new
-      QueueFactory<ContextWrapper<MultiThreadedEventContext>>();
-    final StageQueue<MultiThreadedEventContext> impl = new MultiStageQueueImpl<MultiThreadedEventContext>(qCount,
+    QueueFactory qFactory = new QueueFactory();
+    final StageQueue<MultiThreadedEventContext> impl = new MultiStageQueueImpl<>(qCount,
                                                                                                           qFactory,
+                                                                                                          MultiThreadedEventContext.class,
                                                                                                           logger,
                                                                                                           "perf",
                                                                                                           qSize);
 
     AtomicBoolean die = new AtomicBoolean(false);
-    final ArrayList<DelayingThread> suppliers = new ArrayList<DelayingThread>(4);
     final MultiThreadedEventContext incoming = new MultiThreadedEventContext() {
       @Override
       public Object getSchedulingKey() {

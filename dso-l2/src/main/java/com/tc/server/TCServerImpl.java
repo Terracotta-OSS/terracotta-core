@@ -42,7 +42,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -70,7 +69,7 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 
 
-public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServer, StateChangeListener {
+public class TCServerImpl extends SEDA implements TCServer, StateChangeListener {
   public static final String                CONNECTOR_NAME_TERRACOTTA                    = "terracotta";
 
   private static final Logger logger = LoggerFactory.getLogger(TCServer.class);

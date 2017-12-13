@@ -65,13 +65,13 @@ public class StageImpl<EC> implements Stage<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler<EC> handler, int queueCount,
-                   ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, boolean canBeDirect) {
+  public StageImpl(TCLoggerProvider loggerProvider, String name, Class<EC> type, EventHandler<EC> handler, int queueCount,
+                   ThreadGroup group, QueueFactory queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
     this.threads = new WorkerThread[queueCount];
-    this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, loggerProvider, name, queueSize);
+    this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, loggerProvider, name, queueSize);
     this.sink = !canBeDirect ? this.stageQueue : new DirectSink<>(this.handler, stageQueue::isEmpty, this.stageQueue);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);

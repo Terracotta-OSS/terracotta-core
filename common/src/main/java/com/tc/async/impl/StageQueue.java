@@ -65,14 +65,15 @@ public interface StageQueue<EC> extends Sink<EC> {
      * @param queueSize : Max queue Size allowed
      */
     public static <C> StageQueue<C> factory(int queueCount,
-                                            QueueFactory<ContextWrapper<C>> queueFactory,
+                                            QueueFactory queueFactory,
+                                            Class<C> type, 
                                             TCLoggerProvider loggerProvider,
                                             String stageName,
                                             int queueSize) {
       if (queueCount == 1) {
-        return new SingletonStageQueueImpl<C>(queueFactory, loggerProvider, stageName, queueSize);
+        return new SingletonStageQueueImpl<>(queueFactory, type, loggerProvider, stageName, queueSize);
       } else {
-        return new MultiStageQueueImpl<C>(queueCount, queueFactory, loggerProvider, stageName, queueSize);
+        return new MultiStageQueueImpl<>(queueCount, queueFactory, type, loggerProvider, stageName, queueSize);
       }
     }
   }

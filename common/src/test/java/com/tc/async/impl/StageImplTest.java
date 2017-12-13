@@ -85,12 +85,12 @@ public class StageImplTest {
   @Test
   public void testRapidTeardown() throws Exception {
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance()).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
-    when(context.createInstance(anyInt())).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any())).thenReturn(new ArrayBlockingQueue<>(16));
+    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, 1, null, context, 16, false);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
     instance.destroy();
     verify(handler, never()).destroy();
     
@@ -128,19 +128,19 @@ public class StageImplTest {
       public void initializeContext(ConfigurationContext context) { }
     };
     
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
 //  spy each call to put of the queue to make sure each queue is getting hit.
-        BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[0]));
+        BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[1]));
         cxts.add(queue);
         return queue;
       }
     
     });
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, size, null, context, 16, false);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, size, null, context, 16, false);
     assertEquals(cxts.size(), size);
     instance.start(null);
     

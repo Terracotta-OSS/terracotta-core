@@ -79,7 +79,8 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
    */
   @SuppressWarnings("unchecked")
   MultiStageQueueImpl(int queueCount,
-                      QueueFactory<ContextWrapper<EC>> queueFactory,
+                      QueueFactory queueFactory,
+                      Class<EC> type, 
                       TCLoggerProvider loggerProvider,
                       String stageName,
                       int queueSize) {
@@ -94,7 +95,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     PARTITION_MAX_MASK = (1 << (31 - PARTITION_SHIFT)) - 1;
 
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
-    createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
+    createWorkerQueues(queueCount, queueFactory, type, queueSize, stageName);
 
     int sz=sourceQueues.length;
     if (Integer.bitCount(sz) == 1) {
@@ -130,9 +131,8 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
   }
 
-  private void createWorkerQueues(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, String stage) {
+  private void createWorkerQueues(int queueCount, QueueFactory queueFactory, Class<EC> type, int queueSize, String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
-    BlockingQueue<ContextWrapper<EC>> q = null;
 
     if (queueSize != Integer.MAX_VALUE) {
       queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
@@ -140,8 +140,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     Assert.eval(queueSize > 0);
 
     for (int i = 0; i < queueCount; i++) {
-      q = queueFactory.createInstance(queueSize);
-      this.sourceQueues[i] = new MultiSourceQueueImpl<ContextWrapper<EC>>(q, i, statsCollector);
+      this.sourceQueues[i] = new MultiSourceQueueImpl<>(queueFactory.createInstance(type, queueSize), i, statsCollector);
     }
   }
 
