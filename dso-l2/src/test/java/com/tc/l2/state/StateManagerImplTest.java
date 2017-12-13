@@ -66,7 +66,8 @@ public class StateManagerImplTest {
     PortChooser pc = new PortChooser();
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
-
+    ConsistencyManager mgr = mock(ConsistencyManager.class);
+    when(mgr.requestTransition()).thenReturn(Boolean.TRUE);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       int port = pc.chooseRandom2Port();
       ports[i] = port;
@@ -77,7 +78,8 @@ public class StateManagerImplTest {
       ClusterStatePersistor clusterStatePersistorMock = mock(ClusterStatePersistor.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], weightGeneratorFactory);
-      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageChangeSinkMock, stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mock(ConsistencyManager.class), 
+
+      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageChangeSinkMock, stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mgr, 
         clusterStatePersistorMock);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
@@ -163,7 +165,9 @@ public class StateManagerImplTest {
           return election;
         });
     
-    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory, mock(ConsistencyManager.class), 
+    ConsistencyManager mgr = mock(ConsistencyManager.class);
+    when(mgr.requestTransition()).thenReturn(Boolean.TRUE);
+    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory, mgr, 
           statePersistor);
     state.initializeAndStartElection();
     

@@ -49,6 +49,7 @@ public class StateManagerImpl implements StateManager {
   private final Logger consoleLogger;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final ElectionManagerImpl        electionMgr;
+  private final ConsistencyManager     availabilityMgr;
   private final Sink<StateChangedEvent> stateChangeSink;
   private final Sink<ElectionContext> electionSink;
   private final WeightGeneratorFactory weightsFactory;
@@ -74,11 +75,13 @@ public class StateManagerImpl implements StateManager {
   public StateManagerImpl(Logger consoleLogger, GroupManager<AbstractGroupMessage> groupManager,
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
                           int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
+                          ConsistencyManager availabilityMgr, 
                           ClusterStatePersistor clusterStatePersistor) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
     this.weightsFactory = weightFactory;
+    this.availabilityMgr = availabilityMgr;
     this.electionMgr = new ElectionManagerImpl(groupManager, expectedServers, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
@@ -155,7 +158,13 @@ public class StateManagerImpl implements StateManager {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-          moveToActiveState();
+          if (this.availabilityMgr.requestTransition()) {
+            moveToActiveState();
+          } else {
+            logger.info("rerunning election because " + nodeid + " not allowed to transition");
+            electionMgr.reset(null);
+            rerun = true;
+          }
         } else if (nodeid.isNull()) {
           Assert.fail();
         } else {

@@ -227,6 +227,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
+import com.tc.l2.state.ConsistencyManager;
 
 
 /**
@@ -649,7 +650,19 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
     
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
+    ConsistencyManager consistencyMgr = new ConsistencyManager() {
+      @Override
+      public boolean requestTransition() throws IllegalStateException {
+        return true;
+      }
+
+      @Override
+      public void setTransitionsAllowed(boolean allowed) {
+
+      }
+    };
+        
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
@@ -657,7 +670,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
-
+    
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
@@ -669,7 +682,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         stateChange.getSink(), stageManager, 
         configSetupManager.getActiveServerGroupForThisL2().getMembers().length,
         configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs(),
-        weightGeneratorFactory, 
+        weightGeneratorFactory, consistencyMgr, 
         this.persistor.getClusterStatePersistor());
     
     state.registerForStateChangeEvents(this.server);
@@ -701,7 +714,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final Stage<Runnable> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, Runnable.class, new GenericHandler<>(), 1, maxStageSize);
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
@@ -1132,8 +1145,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     throw new UnsupportedOperationException();
   }
 
-  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler) {
-    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName(), entities, processTransactionHandler);
+  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, ConsistencyManager cm) {
+    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName(), entities, processTransactionHandler, cm);
   }
 
   // for tests only
