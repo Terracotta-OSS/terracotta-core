@@ -60,11 +60,17 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private final long            electionTime;
   private final int             expectedServers;
+  private final VoterManager voterManager;
 
   public ElectionManagerImpl(GroupManager groupManager, int expectedServers, int electionTimeInSec) {
     this.groupManager = groupManager;
     this.electionTime = electionTimeInSec * 1000;
     this.expectedServers = expectedServers;
+    try {
+      this.voterManager = new VoterManagerImpl();
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to instantiate voter manager", e);
+    }
     this.groupManager.registerForGroupEvents(new GroupEventsListener() {
       @Override
       public void nodeJoined(NodeID nodeID) {
