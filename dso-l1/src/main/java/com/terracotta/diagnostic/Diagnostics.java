@@ -41,5 +41,7 @@ public interface Diagnostics extends Entity {
   String set(String name, String attribute, String arg);
   
   String invoke(String name, String cmd);
-  
+
+  String invokeWithArg(String name, String cmd, String arg);
+
 }
