@@ -70,6 +70,8 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
                 return "setJMX " + args[0] + " " + args[1] + " " + args[2];
               } else if (methodName.equals("invoke")) {
                 return "invokeJMX " + args[0] + " " + args[1];
+              } else if (methodName.equals("invokeWithArg")) {
+                return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
               } else {
                 return methodName;
               }

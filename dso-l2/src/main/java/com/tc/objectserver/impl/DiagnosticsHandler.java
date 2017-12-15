@@ -111,7 +111,14 @@ public class DiagnosticsHandler implements TCMessageSink {
           if (cmd.length != 3) {
             result = ("Invalid JMX call:" + raw).getBytes(set);
           } else {
-            result = subsystem.call(cmd[1], cmd[2]).getBytes(set);
+            result = subsystem.call(cmd[1], cmd[2], null).getBytes(set);
+          }
+          break;
+        case "invokeWithArgJMX":
+          if (cmd.length != 4) {
+            result = ("Invalid JMX call:" + raw).getBytes(set);
+          } else {
+            result = subsystem.call(cmd[1], cmd[2], cmd[3]).getBytes(set);
           }
           break;
         default:
