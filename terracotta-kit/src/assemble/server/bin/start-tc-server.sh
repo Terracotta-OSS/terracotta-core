@@ -43,11 +43,11 @@ fi
 
 # Determine supported JVM args
 for JAVA_COMMAND_ARGS in \
-    "-d64 -server -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-server -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-client -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-XX:MaxDirectMemorySize=9223372036854775807"
+    "-d64 -server -XX:MaxDirectMemorySize=1048576g" \
+    "-server -XX:MaxDirectMemorySize=1048576g" \
+    "-d64 -client  -XX:MaxDirectMemorySize=1048576g" \
+    "-client -XX:MaxDirectMemorySize=1048576g" \
+    "-XX:MaxDirectMemorySize=1048576g"
 do
     # accept the first one that works
     "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1 && break

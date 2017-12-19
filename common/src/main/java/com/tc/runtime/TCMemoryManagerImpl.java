@@ -146,12 +146,10 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
           if (run) {
             interrupt = true;
           }
+        } catch (InternalError ie) {
+          // Do nothing - sometimes the information, while bean setup worked, will fail to be accessed
+          logger.debug("Memory information could not be accessed at this time", ie);
         } catch (Throwable t) {
-          // for debugging purpose
-          StackTraceElement[] trace = t.getStackTrace();
-          for (StackTraceElement element : trace)
-            logger.warn(element.toString());
-          logger.error("Exception: ", t);
           throw new TCRuntimeException(t);
         }
       }
