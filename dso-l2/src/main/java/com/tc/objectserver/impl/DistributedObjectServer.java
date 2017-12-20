@@ -1026,12 +1026,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 //  map them to weed out duplicates
         checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
       } 
-//  first configured permanent entities
-      List<VoltronEntityMessage> msgs = PermanentEntityParser.parseEntities(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
-      for (VoltronEntityMessage vem : msgs) {
-//  map them to weed out duplicates, opt for the configured version when there are duplicates
-        checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
-      }
       for (VoltronEntityMessage vem : checkdups.values()) {
         msgSink.addSingleThreaded(vem);
       }
