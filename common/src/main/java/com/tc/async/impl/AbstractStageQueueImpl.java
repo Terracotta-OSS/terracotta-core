@@ -10,6 +10,7 @@ import com.tc.async.api.StageQueueStats;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author cschanck
@@ -18,6 +19,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
   private final AtomicInteger inflight = new AtomicInteger();
+  private final LongAdder totalQueuedCount = new LongAdder();
   final Logger logger;
   final String stageName;
   
@@ -30,12 +32,18 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   
   void addInflight() {
     inflight.incrementAndGet();
+    totalQueuedCount.increment();
   }
   
   public void clear() {
     inflight.set(0);
   }
-    
+
+  @Override
+  public long totalQueuedCount() {
+    return totalQueuedCount.longValue();
+  }
+
   Logger getLogger() {
     return logger;
   }

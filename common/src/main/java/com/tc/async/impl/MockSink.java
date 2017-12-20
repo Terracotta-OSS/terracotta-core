@@ -74,6 +74,11 @@ public class MockSink<EC> implements Sink<EC> {
   }
 
   @Override
+  public long totalQueuedCount() {
+    return 0;
+  }
+
+  @Override
   public void clear() {
     throw new UnsupportedOperationException();
   }

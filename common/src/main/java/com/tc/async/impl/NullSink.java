@@ -50,6 +50,11 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
+  public long totalQueuedCount() {
+    return 0;
+  }
+
+  @Override
   public void close() {
   }
 

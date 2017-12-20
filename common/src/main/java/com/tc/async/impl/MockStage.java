@@ -77,4 +77,14 @@ public class MockStage implements Stage {
     return name;
   }
 
+  @Override
+  public int getQueueSize() {
+    return 0;
+  }
+
+  @Override
+  public int getQueueCount() {
+    return 0;
+  }
+
 }

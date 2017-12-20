@@ -74,6 +74,8 @@ import com.tc.util.State;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.mockito.Matchers;
 import static org.mockito.Matchers.anyString;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -355,6 +357,11 @@ public class ProcessTransactionHandlerTest {
     @Override
     public void clear() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long totalQueuedCount() {
+      return 0L;
     }
   }
 

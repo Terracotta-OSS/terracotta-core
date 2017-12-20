@@ -75,6 +75,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityServerUncaughtException;
 
@@ -175,9 +177,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   
   private <T> Sink<T> makeDirectSink(final EventHandler<T> handler) {
     return new Sink<T>() {
+      private final LongAdder totalQueuedCount = new LongAdder();
       @Override
       public void addSingleThreaded(T context) {
         try {
+          totalQueuedCount.increment();
           handler.handleEvent(context);
         } catch (EventHandlerException ee) {
           throw new RuntimeException(ee);
@@ -192,6 +196,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       @Override
       public int size() {
         return 0;
+      }
+
+      @Override
+      public long totalQueuedCount() {
+        return totalQueuedCount.longValue();
       }
 
       @Override

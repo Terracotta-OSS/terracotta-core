@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -157,6 +158,11 @@ public class StageManagerImpl implements StageManager {
     stages.clear();
     this.classVerifications.clear();
     started = false;
+  }
+
+  @Override
+  public Collection<Stage<?>> stages() {
+    return stages.values();
   }
 
   @Override

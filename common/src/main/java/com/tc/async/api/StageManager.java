@@ -22,7 +22,9 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.text.PrettyPrintable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 
 public interface StageManager extends PrettyPrintable {
@@ -37,6 +39,8 @@ public interface StageManager extends PrettyPrintable {
   public void startAll(ConfigurationContext context, List<PostInit> toInit, String...exclusion);
   
   public void stopAll();
+
+  public Collection<Stage<?>> stages();
 
   public <EC> Stage<EC> getStage(String name, Class<EC> verification);
 

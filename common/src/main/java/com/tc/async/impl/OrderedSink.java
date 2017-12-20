@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * This class provides an order to the events processed. If events are added out of order, this class orderes them
@@ -39,6 +40,7 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
   private final Sink<T> sink;
   private final Logger logger;
+  private final LongAdder totalQueuedCount = new LongAdder();
 
   private long           current = 0;
   private final SortedSet<T> pending = new TreeSet<T>(new Comparator<T>() {
@@ -59,6 +61,7 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
   @Override
   public synchronized void addSingleThreaded(T oc) {
+    totalQueuedCount.increment();
     long seq = oc.getSequenceID();
     if (seq == 0) {
       if (pending.isEmpty()) {
@@ -129,6 +132,11 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   @Override
   public int size() {
     return sink.size();
+  }
+
+  @Override
+  public long totalQueuedCount() {
+    return totalQueuedCount.longValue();
   }
 
   @Override

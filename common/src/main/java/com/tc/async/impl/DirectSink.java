@@ -23,6 +23,8 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
+
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
@@ -41,6 +43,7 @@ public class DirectSink<EC> implements Sink<EC> {
   private volatile boolean directInflight = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(DirectSink.class);
   private static final ThreadLocal<Thread> ACTIVATED = new ThreadLocal<>();
+  private final LongAdder totalQueuedCount = new LongAdder();
 
   public DirectSink(EventHandler<EC> handler, Supplier<Boolean> isIdle, StageQueue<EC> queue) {
     this.handler = handler;
@@ -51,6 +54,7 @@ public class DirectSink<EC> implements Sink<EC> {
   }
   
   private void pipeline(EC context, Consumer<EC> underlying) {
+    totalQueuedCount.increment();
     // access here MUST be fed by a single stage
     if (isSingleThreaded()) {
       try {
@@ -90,6 +94,11 @@ public class DirectSink<EC> implements Sink<EC> {
   @Override
   public int size() {
     return this.ifNotDirect.size();
+  }
+
+  @Override
+  public long totalQueuedCount() {
+    return totalQueuedCount.longValue();
   }
 
   @Override

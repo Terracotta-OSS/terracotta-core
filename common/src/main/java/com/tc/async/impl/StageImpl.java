@@ -49,6 +49,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final Logger logger;
   private final int            sleepMs;
   private final boolean        pausable;
+  private final int queueSize;
 
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
@@ -69,6 +70,7 @@ public class StageImpl<EC> implements Stage<EC> {
                    ThreadGroup group, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
+    this.queueSize = queueSize;
     this.handler = handler;
     this.threads = new WorkerThread[queueCount];
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, loggerProvider, name, queueSize);
@@ -169,6 +171,16 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public int getQueueSize() {
+    return queueSize;
+  }
+
+  @Override
+  public int getQueueCount() {
+    return threads.length;
   }
 
   @Override

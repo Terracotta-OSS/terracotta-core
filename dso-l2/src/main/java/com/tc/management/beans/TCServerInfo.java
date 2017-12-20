@@ -18,16 +18,15 @@
  */
 package com.tc.management.beans;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.tc.async.api.SEDA;
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
@@ -36,11 +35,16 @@ import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import javax.management.AttributeChangeNotification;
+import javax.management.MBeanNotificationInfo;
+import javax.management.NotCompliantMBeanException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -48,10 +52,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import javax.management.AttributeChangeNotification;
-import javax.management.MBeanNotificationInfo;
-import javax.management.NotCompliantMBeanException;
 
 public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInfoMBean, StateChangeListener {
   private static final Logger logger = LoggerFactory.getLogger(TCServerInfo.class);
@@ -285,6 +285,21 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
     map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
     map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
+
+    SEDA server = (SEDA) this.server;
+    StageManager stageManager = server.getStageManager();
+    Collection<Stage<?>> stages = stageManager.stages();
+    for (Stage<?> stage : stages) {
+      String name = stage.getName();
+      int queueCount = stage.getQueueCount();
+      int maxQueueSize = stage.getQueueSize();
+      int currentQueueSize = stage.getSink().size();
+      long totalQueuedCount = stage.getSink().totalQueuedCount();
+      map.put(name + ".queueCount", queueCount);
+      map.put(name + ".maxQueueSize", maxQueueSize);
+      map.put(name + ".currentQueueSize", currentQueueSize);
+      map.put(name + ".totalQueuedCount", totalQueuedCount);
+    }
 
     return map;
   }

@@ -52,6 +52,8 @@ public interface Sink<EC> extends Monitorable {
    */
   public int size();
 
+  public long totalQueuedCount();
+
   public void clear();
 
   public void close();

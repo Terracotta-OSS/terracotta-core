@@ -59,6 +59,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.LongAdder;
 
 import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
@@ -763,6 +764,11 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public int size() {
       return 0;
+    }
+
+    @Override
+    public long totalQueuedCount() {
+      return 0L;
     }
 
     @Override

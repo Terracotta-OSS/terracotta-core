@@ -78,6 +78,11 @@ public class TestSink<EC> implements Sink<EC> {
     return queue.size();
   }
 
+  @Override
+  public long totalQueuedCount() {
+    return 0;
+  }
+
   public List<EC> getInternalQueue() {
     return queue;
   }

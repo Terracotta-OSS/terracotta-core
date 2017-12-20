@@ -96,6 +96,10 @@ public class ReplicationSenderTest {
       Assert.fail("Not in test");
       return 0;
     }
+    @Override
+    public long totalQueuedCount() {
+      return 0;
+    }
 
     @Override
     public boolean isEmpty() {

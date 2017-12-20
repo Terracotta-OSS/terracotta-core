@@ -35,5 +35,9 @@ public interface Stage<EC> {
     
   public String getName();
 
+  public int getQueueSize();
+
+  public int getQueueCount();
+
   public void clear();
 }
