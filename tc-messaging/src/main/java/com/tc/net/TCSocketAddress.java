@@ -22,6 +22,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.util.Assert;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -34,20 +35,14 @@ import java.net.UnknownHostException;
  */
 public class TCSocketAddress {
   /**
-   * Bytes for IPv4 wildcard address (ie. 0.0.0.0). This address is used to bind a listening socket to all available
-   * interfaces
+   * String form the loopback adaptor address (ie. 127.0.0.1)
    */
-  private static final byte[]     WILDCARD_BYTES = new byte[] { (byte) 0, (byte) 0, (byte) 0, (byte) 0 };
-
-  /**
-   * Bytes for the loopback adapator (ie. 127.0.0.1)
-   */
-  private static final byte[]     LOOPBACK_BYTES = new byte[] { (byte) 127, (byte) 0, (byte) 0, (byte) 1 };
+  public static final String      LOOPBACK_IP    = "127.0.0.1";
 
   /**
    * String form the loopback adaptor address (ie. 127.0.0.1)
    */
-  public static final String      LOOPBACK_IP    = "127.0.0.1";
+  public static final String      LOOPBACK_IPv6  = "::1";
 
   /**
    * String form of the wildcard IP address (ie. 0.0.0.0)
@@ -55,14 +50,29 @@ public class TCSocketAddress {
   public static final String      WILDCARD_IP    = "0.0.0.0";
 
   /**
-   * java.net.InetAddress form of the wildcard IP address (ie. 0.0.0.0)
+   * String form of the wildcard IPv6 address (ie. ::)
+   */
+  public static final String      WILDCARD_IPv6  = "::";
+
+  /**
+   * java.net.InetAddress form of the wildcard IPv4 address (ie. 0.0.0.0)
    */
   public static final InetAddress WILDCARD_ADDR;
 
   /**
-   * java.net.InetAddress form of the wildcard IP address (ie. 127.0.0.1)
+   * java.net.InetAddress form of the wildcard IPv6 address (ie. ::)
+   */
+  public static final InetAddress WILDCARD_ADDR_IPv6;
+
+  /**
+   * java.net.InetAddress form of the wildcard IPv4 address (ie. 127.0.0.1)
    */
   public static final InetAddress LOOPBACK_ADDR;
+
+  /**
+   * java.net.InetAddress form of the wildcard IPv6 address (ie. ::1)
+   */
+  public static final InetAddress LOOPBACK_ADDR_IPv6;
 
   static {
     try {
@@ -72,25 +82,29 @@ public class TCSocketAddress {
     }
 
     try {
+      WILDCARD_ADDR_IPv6 = InetAddress.getByName(WILDCARD_IPv6);
+    } catch (UnknownHostException e) {
+      throw new TCRuntimeException("Cannot create InetAddress instance for " + WILDCARD_IPv6);
+    }
+
+    try {
       LOOPBACK_ADDR = InetAddress.getByName(LOOPBACK_IP);
     } catch (UnknownHostException e) {
       throw new TCRuntimeException("Cannot create InetAddress instance for " + LOOPBACK_IP);
+    }
+
+    try {
+      LOOPBACK_ADDR_IPv6 = InetAddress.getByName(LOOPBACK_IPv6);
+    } catch (UnknownHostException e) {
+      throw new TCRuntimeException("Cannot create InetAddress instance for " + LOOPBACK_IPv6);
     }
   }
 
   private String                  stringForm;
   private String                  canonicalStringForm;
 
-  public static byte[] getLoopbackBytes() {
-    return LOOPBACK_BYTES.clone();
-  }
-
-  public static byte[] getWilcardBytes() {
-    return WILDCARD_BYTES.clone();
-  }
-
   // TODO: add a constructor that takes the output of toStringForm() and
-  // reconsitutes a TCSocketAddress instance
+  // reconstitutes a TCSocketAddress instance
 
   public TCSocketAddress(ConnectionInfo connInfo) throws UnknownHostException {
     this(connInfo.getHostname(), connInfo.getPort());
@@ -186,7 +200,16 @@ public class TCSocketAddress {
   public String getStringForm() {
     if (stringForm == null) {
       StringBuffer buf = new StringBuffer();
-      buf.append(addr.getHostAddress()).append(":").append(port);
+      String hostAddr = addr.getHostAddress();
+      boolean isPhysicalIPv6 = addr instanceof Inet6Address && hostAddr.contains(":");
+      if (isPhysicalIPv6) {
+        buf.append("[");
+      }
+      buf.append(hostAddr);
+      if (isPhysicalIPv6) {
+        buf.append("]");
+      }
+      buf.append(":").append(port);
       stringForm = buf.toString();
     }
     return stringForm;
@@ -198,7 +221,16 @@ public class TCSocketAddress {
   public String getCanonicalStringForm() {
     if (canonicalStringForm == null) {
       StringBuffer buf = new StringBuffer();
-      buf.append(addr.getCanonicalHostName()).append(":").append(port);
+      String hostName = addr.getCanonicalHostName();
+      boolean isPhysicalIPv6 = addr instanceof Inet6Address && hostName.contains(":");
+      if (isPhysicalIPv6) {
+        buf.append("[");
+      }
+      buf.append(hostName);
+      if (isPhysicalIPv6) {
+        buf.append("]");
+      }
+      buf.append(":").append(port);
       canonicalStringForm = buf.toString();
     }
     return canonicalStringForm;
