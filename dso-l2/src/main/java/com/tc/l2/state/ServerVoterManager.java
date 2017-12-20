@@ -16,12 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.voter;
+package com.tc.l2.state;
 
-public interface TCVoter {
+import com.tc.management.TerracottaMBean;
+import com.tc.voter.VoterManager;
 
-  void register(String clusterName, String... hostPort);
+public interface ServerVoterManager extends VoterManager, TerracottaMBean {
 
-  void deregister(String clusterName);
+  void startElection(long electionTerm);
+
+  int getVoteCount();
+
+  void endElection();
+
+  default long vote(String idTerm) {
+    String[] split = idTerm.split(":");
+    return vote(split[0], Long.parseLong(split[1]));
+  }
+
+  long vote(String id, long electionTerm);
 
 }

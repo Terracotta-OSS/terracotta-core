@@ -22,7 +22,7 @@ package com.tc.services;
 /**
  * A time source for use in tests which use a SingleThreadedTimer.
  */
-public class TestTimeSource implements SingleThreadedTimer.TimeSource {
+public class TestTimeSource implements TimeSource {
   private long currentTimeMillis;
   
   public TestTimeSource(long currentTimeMillis) {

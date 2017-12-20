@@ -16,15 +16,17 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.l2.state;
+package com.tc.services;
 
-import com.tc.management.TerracottaMBean;
+public interface TimeSource {
 
-public interface VoterManager extends TerracottaMBean {
+  TimeSource SYSTEM_TIME_SOURCE = new TimeSource() {
+    @Override
+    public long currentTimeMillis() {
+      return System.currentTimeMillis();
+    }
+  };
 
-  boolean registerVoter(String id);
+  long currentTimeMillis();
 
-  boolean confirmVoter(String id);
-
-  boolean deregisterVoter(String id);
 }

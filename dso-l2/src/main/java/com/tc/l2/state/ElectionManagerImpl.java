@@ -38,6 +38,7 @@ import com.tc.util.State;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ElectionManagerImpl implements ElectionManager {
 
@@ -60,14 +61,15 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private final long            electionTime;
   private final int             expectedServers;
-  private final VoterManager voterManager;
+  private final ServerVoterManager voterManager;
+  private AtomicLong electionTerm = new AtomicLong(0);
 
   public ElectionManagerImpl(GroupManager groupManager, int expectedServers, int electionTimeInSec) {
     this.groupManager = groupManager;
     this.electionTime = electionTimeInSec * 1000;
     this.expectedServers = expectedServers;
     try {
-      this.voterManager = new VoterManagerImpl();
+      this.voterManager = new ServerVoterManagerImpl(1);
     } catch (Exception e) {
       throw new RuntimeException("Unable to instantiate voter manager", e);
     }
@@ -208,7 +210,9 @@ public class ElectionManagerImpl implements ElectionManager {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
+        voterManager.startElection(electionTerm.incrementAndGet());
         winnerID = doElection(myNodeId, isNew, weightsFactory, currentState);
+        voterManager.endElection();
       } catch (InterruptedException e) {
         logger.error("Interrupted during election : ", e);
         reset(null);

@@ -64,6 +64,7 @@ public class StateManagerImpl implements StateManager {
   private volatile State               state               = START_STATE;
   private State               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
+  private final boolean consistencyPreferred = true;
 
   // Known servers from previous election
   Set<NodeID> prevKnownServers = new HashSet<>();
