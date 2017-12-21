@@ -61,6 +61,7 @@ public class ElectionManagerImpl implements ElectionManager {
 
   private final long            electionTime;
   private final int             expectedServers;
+
   private final ServerVoterManager voterManager;
   private AtomicLong electionTerm = new AtomicLong(0);
 
@@ -205,14 +206,13 @@ public class ElectionManagerImpl implements ElectionManager {
   private NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
+    voterManager.startElection(electionTerm.incrementAndGet());
     while (winnerID.isNull()) {
       if (count++ > 0) {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
-        voterManager.startElection(electionTerm.incrementAndGet());
         winnerID = doElection(myNodeId, isNew, weightsFactory, currentState);
-        voterManager.endElection();
       } catch (InterruptedException e) {
         logger.error("Interrupted during election : ", e);
         reset(null);
@@ -221,6 +221,7 @@ public class ElectionManagerImpl implements ElectionManager {
         reset(null);
       }
     }
+    voterManager.endElection();
     return winnerID;
   }
   
@@ -266,6 +267,10 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election took " + TimeUnit.MILLISECONDS.toSeconds(electionTime - waited) + " sec. ending in " + this.state);
     // Step 3: Compute Winner
     Enrollment lWinner = computeResult();
+    if (lWinner == null) {
+      return ServerID.NULL_ID;
+    }
+
     if (lWinner != e) {
       logger.info("Election lost : Winner is : " + lWinner);
       Assert.assertNotNull(lWinner);
@@ -312,6 +317,15 @@ public class ElectionManagerImpl implements ElectionManager {
       }
     }
     Assert.assertNotNull(computedWinner);
+
+    if (voterManager != null) {
+      int totalVotes = votes.size() + voterManager.getVoteCount();
+      int majority = ((expectedServers + voterManager.getVoterLimit()) / 2) + 1;
+      if (totalVotes < majority) {
+        return null;
+      }
+    }
+
     return computedWinner;
   }
 

@@ -509,6 +509,9 @@ public class StateManagerImpl implements StateManager {
         throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
       } else if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {
         elect = true;
+      } else if (consistencyPreferred && state == ACTIVE_COORDINATOR) {
+        activeNode = ServerID.NULL_ID;
+        elect = true;
       }
     }
     if (elect) {

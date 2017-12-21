@@ -23,6 +23,8 @@ import com.tc.voter.VoterManager;
 
 public interface ServerVoterManager extends VoterManager, TerracottaMBean {
 
+  int getVoterLimit();
+
   void startElection(long electionTerm);
 
   int getVoteCount();

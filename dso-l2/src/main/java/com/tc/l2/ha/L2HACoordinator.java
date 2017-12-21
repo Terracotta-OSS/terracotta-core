@@ -145,9 +145,8 @@ public class L2HACoordinator implements L2Coordinator {
     warn(nodeID + " left the cluster");
     if (this.stateManager.isActiveCoordinator()) {
       Assert.assertFalse(nodeID.getNodeType() == NodeID.CLIENT_NODE_TYPE);
-    } else {
-      this.stateManager.startElectionIfNecessary(nodeID);
     }
+    this.stateManager.startElectionIfNecessary(nodeID);
   }
 
   @Override

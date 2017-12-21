@@ -59,6 +59,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   @Override
+  public int getVoterLimit() {
+    return voterLimit;
+  }
+
+  @Override
   public synchronized boolean registerVoter(String id) {
     if (!canAcceptVoter()) {
       logger.info("Voter id: " + id + " could not be registered as there is no voter vacancy available");
