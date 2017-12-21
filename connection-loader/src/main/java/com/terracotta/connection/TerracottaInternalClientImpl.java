@@ -19,16 +19,14 @@
 package com.terracotta.connection;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.object.ClientBuilderFactory;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
-import com.tc.object.StandardClientBuilder;
-import com.tc.util.ProductID;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.connection.ConnectionPropertyNames;
 
 
 public class TerracottaInternalClientImpl implements TerracottaInternalClient {
@@ -41,28 +39,18 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
 
-  TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
+  public TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     try {
       this.clientCreator = buildClientCreator(stripeConnectionConfig, props);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  
-  private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  
-    String typeName = props.getProperty(ConnectionPropertyNames.CONNECTION_TYPE);  
-    ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
-    try {
-      if (typeName != null) {
-        product = ProductID.valueOf(typeName);
-      }
-    } catch (IllegalArgumentException arg) {
-      // do nothing, just stick with the default
-    }
 
+  private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-         new StandardClientBuilder(product), props);
+        ClientBuilderFactory.get().create(props),
+        props);
   }
 
   @Override
