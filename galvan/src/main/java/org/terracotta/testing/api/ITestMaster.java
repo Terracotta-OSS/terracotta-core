@@ -26,8 +26,6 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
 
   public String getServiceConfigXMLSnippet();
 
-  public String getEntityConfigXMLSnippet();
-
   /**
    * @return tc properties to be used with server
    */

@@ -78,7 +78,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     List<String> extraJarPaths = CommonIdioms.uniquifyList(extraServerJarPaths);
     String namespaceFragment = master.getConfigNamespaceSnippet();
     String serviceFragment = master.getServiceConfigXMLSnippet();
-    String entityFragment = master.getEntityConfigXMLSnippet();
     int clientReconnectWindowTime = master.getClientReconnectWindowTime();
     Properties tcProperties = master.getTcProperties();
     Properties serverProperties = master.getServerProperties();
@@ -101,7 +100,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.extraJarPaths = extraJarPaths;
       harnessOptions.namespaceFragment = namespaceFragment;
       harnessOptions.serviceFragment = serviceFragment;
-      harnessOptions.entityFragment = entityFragment;
       harnessOptions.clientReconnectWindowTime = clientReconnectWindowTime;
       harnessOptions.tcProperties = tcProperties;
       harnessOptions.serverProperties = serverProperties;
@@ -153,7 +151,6 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     public int clientReconnectWindowTime;
     public String namespaceFragment;
     public String serviceFragment;
-    public String entityFragment;
     public Properties tcProperties;
     public Properties serverProperties;
     
