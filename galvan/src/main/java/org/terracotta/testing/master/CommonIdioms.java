@@ -38,7 +38,7 @@ public class CommonIdioms {
         stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate,
         stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart,
         stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment,
-        stripeConfiguration.serviceFragment, stripeConfiguration.entityFragment, stripeConfiguration.clientReconnectWindowTime,
+        stripeConfiguration.serviceFragment, stripeConfiguration.clientReconnectWindowTime,
         stripeConfiguration.tcProperties, stripeConfiguration.serverProperties, stripeConfiguration.logConfigExtension);
   }
   /**
@@ -79,7 +79,6 @@ public class CommonIdioms {
     public List<String> extraJarPaths;
     public String namespaceFragment;
     public String serviceFragment;
-    public String entityFragment;
     public String stripeName;
     public String logConfigExtension;
   }

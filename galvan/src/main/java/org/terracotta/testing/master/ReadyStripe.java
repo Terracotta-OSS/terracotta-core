@@ -48,7 +48,6 @@ public class ReadyStripe {
    * @param extraJarPaths The full paths to additional jars which need to be installed in each server.
    * @param namespaceFragment The namespace declaration string which must be injected into each config.
    * @param serviceFragment The service definition string which must be injected into each config.
-   * @param entityFragment The static/built-in entity definition string which must be injected into each config.
    * @param serverProperties the Java system properties to apply to to each stripe server
    * @return The objects required to interact with and control the stripe.
    * @throws IOException Thrown in case something went wrong during server installation.
@@ -59,7 +58,7 @@ public class ReadyStripe {
                                                     String kitOriginDirectory, int serversToCreate, int heapInM,
                                                     int serverStartPort, int serverDebugPortStart, int serverStartNumber,
                                                     List<String> extraJarPaths, String namespaceFragment,
-                                                    String serviceFragment, String entityFragment,
+                                                    String serviceFragment,
                                                     int clientReconnectWindowTime, Properties tcProperties,
                                                     Properties serverProperties, String logConfigExt)
       throws IOException, GalvanFailureException {
