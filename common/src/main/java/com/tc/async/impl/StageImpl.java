@@ -29,6 +29,7 @@ import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
@@ -44,12 +45,13 @@ public class StageImpl<EC> implements Stage<EC> {
   private final EventHandler<EC> handler;
   private final StageQueue<EC> stageQueue;
   private final Sink<EC> sink;
-  private final WorkerThread<EC>[] threads;
+  private final WorkerThread[] threads;
   private final ThreadGroup    group;
   private final Logger logger;
   private final int            sleepMs;
   private final boolean        pausable;
-
+  private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
+                                                     .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
 
@@ -69,10 +71,10 @@ public class StageImpl<EC> implements Stage<EC> {
                    ThreadGroup group, QueueFactory queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
-    this.handler = handler;
     this.threads = new WorkerThread[queueCount];
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, loggerProvider, name, queueSize);
-    this.sink = !canBeDirect ? this.stageQueue : new DirectSink<>(this.handler, stageQueue::isEmpty, this.stageQueue);
+    this.sink = createSink(handler, canBeDirect);
+    this.handler = (this.sink instanceof MonitoringSink) ? ((MonitoringSink)this.sink).getHandler() : handler;
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
@@ -82,6 +84,11 @@ public class StageImpl<EC> implements Stage<EC> {
     if (this.pausable) {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
+  }
+  
+  private Sink<EC> createSink(EventHandler<EC> handler, boolean direct) {
+    return MONITOR ? new MonitoringSink<>(name, stageQueue, handler, direct) : 
+        direct ? new DirectSink<>(handler, stageQueue::isEmpty, stageQueue) : stageQueue;
   }
 
   @Override
@@ -151,13 +158,13 @@ public class StageImpl<EC> implements Stage<EC> {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread<EC>(threadName, this.stageQueue.getSource(i), handler, group, logger, sleepMs, pausable, name);
+      threads[i] = new WorkerThread<>(threadName, this.stageQueue.getSource(i), handler);
       threads[i].start();
     }
   }
 
   private synchronized void stopThreads() {
-    for (WorkerThread<EC> thread : threads) {
+    for (WorkerThread thread : threads) {
       try {
         thread.join();
       } catch (InterruptedException ie) {
@@ -183,32 +190,24 @@ public class StageImpl<EC> implements Stage<EC> {
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
     private final EventHandler<EC> handler;
-    private final Logger     tcLogger;
-    private final int          sleepMs;
-    private final boolean      pausable;
     private volatile boolean idle = false;
     private final Object idleLock = new Object();
     private boolean waitingForIdle = false;
-    private final String       stageName;
 
-    public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler, ThreadGroup group, Logger logger, int sleepMs, boolean pausable, String stageName) {
+    public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler) {
       super(group, name);
-      tcLogger = logger;
       setDaemon(true);
       this.source = source;
       this.handler = handler;
-      this.sleepMs = sleepMs;
-      this.pausable = pausable;
-      this.stageName = stageName;
     }
 
     private void handleStageDebugPauses() {
       if (sleepMs > 0) {
         ThreadUtil.reallySleep(sleepMs);
       }
-      while (paused || (pausable && "paused".equalsIgnoreCase(System.getProperty(stageName)))) {
+      while (paused || (pausable && "paused".equalsIgnoreCase(System.getProperty(name)))) {
         if (!paused) {
-          tcLogger.info("Stage paused, sleeping for 1s");
+          logger.info("Stage paused, sleeping for 1s");
         }
         ThreadUtil.reallySleep(1000);
       }
@@ -239,7 +238,7 @@ public class StageImpl<EC> implements Stage<EC> {
         } catch (Exception e) {
           if (isTCNotRunningException(e)) {
             if (shutdown) { continue; }
-            tcLogger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
+            logger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
                           + ctxt);
           } else {
             throw new TCRuntimeException("Uncaught exception in stage", e);

@@ -16,31 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.tc.objectserver.handler;
 
-package com.tc.config.schema.setup;
-
-import java.net.InetSocketAddress;
+import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandlerException;
+import com.tc.async.impl.MonitoringSink;
+import com.tc.async.impl.PipelineMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 
-/**
- * @author vmad
- */
-public class ClientConfigurationSetupManagerFactory {
+public class MonitorHandler extends AbstractEventHandler<Runnable> {
+  
+  private static final Logger LOGGER = LoggerFactory.getLogger(MonitorHandler.class);
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ClientConfigurationSetupManagerFactory.class);
-
-  private final String[] args;
-  private final List<InetSocketAddress> stripeMemberUris;
-
-  public ClientConfigurationSetupManagerFactory(String[] args, List<InetSocketAddress> stripeMemberUris) {
-    this.args = args;
-    this.stripeMemberUris = stripeMemberUris;
+  @Override
+  public void handleEvent(Runnable context) throws EventHandlerException {
+    PipelineMonitor monitor = MonitoringSink.finish();
+    LOGGER.info(monitor.toString());
   }
-
-  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
-    return new ClientConfigurationSetupManager(this.stripeMemberUris, args);
-  }
+  
 }

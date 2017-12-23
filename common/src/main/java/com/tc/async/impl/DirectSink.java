@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * across process boundaries.
  */
 public class DirectSink<EC> implements Sink<EC> {
-  
   private final EventHandler<EC> handler;
   private final Supplier<Boolean> isIdle;
   private final StageQueue<EC> ifNotDirect;

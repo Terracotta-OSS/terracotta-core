@@ -38,7 +38,6 @@ import org.terracotta.monitoring.PlatformServer;
 import com.tc.classloader.BuiltinService;
 import com.tc.net.ServerID;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.util.Assert;
 import java.util.Arrays;
 
 
@@ -101,7 +100,6 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   @Override
   public synchronized <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
     Class<T> type = configuration.getServiceType();
-    Assert.assertEquals(type, IMonitoringProducer.class);
     // If we are caching, make sure that we have a node.
     IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
 
@@ -237,38 +235,53 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 
   public synchronized void handleRemoteAdd(ServerID sender, long consumerID, String[] parents, String name, Serializable value) {
     // If we are getting these, we MUST be in active mode.
-    Assert.assertNull(this.cachedTreeRoot);
-    
-    IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
-    if (null != underlyingCollector) {
-      PlatformServer sendingServer = this.otherServers.get(sender);
-      Assert.assertNotNull(sendingServer);
-      underlyingCollector.addNode(sendingServer, parents, name, value);
+    if (this.cachedTreeRoot != null) {
+      LOGGER.error("tree root is not null");
+    } else {
+      IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
+      if (null != underlyingCollector) {
+        PlatformServer sendingServer = this.otherServers.get(sender);
+        if (sendingServer == null) {
+          LOGGER.error("unknown server " + sender + " sending " + Arrays.toString(parents) + ":" + name + " value:" + value);
+        } else {
+          underlyingCollector.addNode(sendingServer, parents, name, value);
+        }
+      }
     }
   }
 
   public synchronized void handleRemoteRemove(ServerID sender, long consumerID, String[] parents, String name) {
     // If we are getting these, we MUST be in active mode.
-    Assert.assertNull(this.cachedTreeRoot);
-    
-    IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
-    if (null != underlyingCollector) {
-      PlatformServer sendingServer = this.otherServers.get(sender);
-      Assert.assertNotNull(sendingServer);
-      underlyingCollector.removeNode(sendingServer, parents, name);
+    if (this.cachedTreeRoot != null) {
+      LOGGER.error("tree root is not null");
+    } else {    
+      IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
+      if (null != underlyingCollector) {
+        PlatformServer sendingServer = this.otherServers.get(sender);
+        if (sendingServer == null) {
+          LOGGER.error("unknown server " + sender + " removing " + Arrays.toString(parents) + ":" + name);
+        } else {
+          underlyingCollector.removeNode(sendingServer, parents, name);
+        }
+      }
     }
   }
 
   public synchronized void handleRemoteBestEffortsBatch(ServerID sender, long[] consumerIDs, String[] keys, Serializable[] values) {
     // If we are getting these, we MUST be in active mode.
-    Assert.assertNull(this.cachedTreeRoot);
-    
-    for (int i = 0; i < consumerIDs.length; ++i) {
-      IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerIDs[i]);
-      if (null != underlyingCollector) {
-        PlatformServer sendingServer = this.otherServers.get(sender);
-        Assert.assertNotNull(sendingServer);
-        underlyingCollector.pushBestEffortsData(sendingServer, keys[i], values[i]);
+    if (this.cachedTreeRoot != null) {
+      LOGGER.error("tree root is not null");
+    } else {       
+      for (int i = 0; i < consumerIDs.length; ++i) {
+        IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerIDs[i]);
+        if (null != underlyingCollector) {
+          PlatformServer sendingServer = this.otherServers.get(sender);
+          if (sendingServer == null) {
+            LOGGER.error("unknown server " + sender + " removing");
+          } else {
+            underlyingCollector.pushBestEffortsData(sendingServer, keys[i], values[i]);
+          }
+        }
       }
     }
   }
@@ -289,7 +302,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
         return new IStripeMonitoringWrapper(collector, LOGGER);
       }
     } catch (ServiceException e) {
-      Assert.fail("Multiple IStripeMonitoring implementations found!");
+      LOGGER.error("service error", e);  
     }
     return null;
   }
@@ -371,8 +384,9 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 
   private void walkCacheNode(String[] parents, String nodeName, CacheNode node, CacheWalker walker) {
     // Make sure we aren't walking the root node.
-    Assert.assertNotNull(nodeName);
-    
+    if (nodeName == null) {
+      throw new IllegalArgumentException("null nodename");
+    }
     walker.didEnterNode(parents, nodeName, node.data);
     String[] newParents = new String[parents.length + 1];
     System.arraycopy(parents, 0, newParents, 0, parents.length);

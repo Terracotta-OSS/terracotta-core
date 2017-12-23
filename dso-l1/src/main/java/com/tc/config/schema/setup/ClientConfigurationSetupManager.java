@@ -21,6 +21,7 @@ package com.tc.config.schema.setup;
 
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.L2ConfigForL1;
+import java.net.InetSocketAddress;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,29 +37,29 @@ public class ClientConfigurationSetupManager implements L1ConfigurationSetupMana
   private L2ConfigForL1.L2Data[] l2Data;
   // For historical reasons, we need to serialize the list of member URIs.
   private final String legacyStripeConfigText;
-
-  public ClientConfigurationSetupManager(List<String> stripeMemberUris, String[] args, String[] hosts, int[] ports) {
+  
+  public ClientConfigurationSetupManager(List<InetSocketAddress> stripeMemberUris, String[] args) {
     this.args = args;
-    l2Data = new L2ConfigForL1.L2Data[hosts.length];
-    for(int i = 0; i < hosts.length; i++) {
-      l2Data[i] = new L2ConfigForL1.L2Data(hosts[i], ports[i], false);
+    l2Data = new L2ConfigForL1.L2Data[stripeMemberUris.size()];
+    for(int i = 0; i < l2Data.length; i++) {
+      l2Data[i] = new L2ConfigForL1.L2Data(stripeMemberUris.get(i), false);
     }
     
     // Build the legacyStripeConfigText.
     String stripeText = null;
-    for (String member : stripeMemberUris) {
+    for (InetSocketAddress member : stripeMemberUris) {
       if (null == stripeText) {
-        stripeText = member;
+        stripeText = member.toString();
       } else {
         stripeText = stripeText + "," + member;
       }
     }
     this.legacyStripeConfigText = stripeText;
   }
-  
+
   public void addServer(String host, int port) {
     l2Data = Arrays.copyOf(l2Data, l2Data.length + 1);
-    l2Data[l2Data.length - 1] = new L2ConfigForL1.L2Data(host, port, false);
+    l2Data[l2Data.length - 1] = new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved(host, port), false);
   }
 
   @Override
