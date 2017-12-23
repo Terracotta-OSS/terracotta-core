@@ -40,7 +40,6 @@ public class ConfigBuilder {
   private final List<Integer> tsaGroupPorts;
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
-  private String entityXMLSnippet;
   private int clientReconnectWindowTime; // in secs
   private Properties tcProperties = new Properties();
   
@@ -69,11 +68,6 @@ public class ConfigBuilder {
     return this;
   }
 
-  public ConfigBuilder setEntitySnippet(String entityFragment) {
-    this.entityXMLSnippet = entityFragment;
-    return this;
-  }
-
   public ConfigBuilder setClientReconnectWindowTime(final int clientReconnectWindowTime) {
     this.clientReconnectWindowTime = clientReconnectWindowTime;
     return this;
@@ -95,12 +89,7 @@ public class ConfigBuilder {
         + "  <plugins>\n";
     String services = ((null != this.serviceXMLSnippet) ? this.serviceXMLSnippet : "");
     String postservices =
-          "  </plugins>\n"
-        + "  <entities>\n";
-    
-    String entities = (null != this.entityXMLSnippet) ? this.entityXMLSnippet : "";
-    
-    String postentities = "  </entities>\n" +
+          "  </plugins>\n" +
                           "  <tc-properties>\n";
     String properties = "";
     for (Map.Entry<Object, Object> entry : tcProperties.entrySet()) {
@@ -128,7 +117,7 @@ public class ConfigBuilder {
         "    <client-reconnect-window>" + this.clientReconnectWindowTime + "</client-reconnect-window>\n"
         + "  </servers>\n"
         + "</tc-config>\n";
-    return pre + services + postservices + entities + postentities + properties  + postProperties + servers + post;
+    return pre + services + postservices + properties  + postProperties + servers + post;
   }
 
   public String buildUri() {

@@ -69,7 +69,6 @@ public class ReadyStripe {
     // Set fixed config details.
     configBuilder.setNamespaceSnippet(namespaceFragment);
     configBuilder.setServiceSnippet(serviceFragment);
-    configBuilder.setEntitySnippet(entityFragment);
     configBuilder.setClientReconnectWindowTime(clientReconnectWindowTime);
     configBuilder.addTcProperties(tcProperties);
     // Create the stripe installer.
