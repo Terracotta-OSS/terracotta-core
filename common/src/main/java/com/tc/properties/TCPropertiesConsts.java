@@ -48,6 +48,7 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String ENTITY_PROCESSOR_THREADS                                    = "server.entity.processor.threads";
+  public static final String MIN_ENTITY_PROCESSOR_THREADS                                    = "server.entity.processor.minthreads";
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
   public static final String L2_SEDA_STAGE_DISABLE_DIRECT_SINKS                                    = "l2.seda.stage.sink.disable.direct";
   String L2_TCCOM_WORKERTHREADS                                                          = "l2.tccom.workerthreads";

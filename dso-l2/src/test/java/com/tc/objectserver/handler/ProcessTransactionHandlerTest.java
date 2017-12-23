@@ -75,7 +75,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 
@@ -120,11 +123,15 @@ public class ProcessTransactionHandlerTest {
     
     StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();
+    Stage runnableStage = mock(Stage.class);
+    when(runnableStage.getSink()).thenReturn(this.requestProcessorSink);
     
     this.clientEntityStateManager = new ClientEntityStateManagerImpl();
     this.eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
-    RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    RequestProcessor processor = new RequestProcessor(stageManager, true);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);

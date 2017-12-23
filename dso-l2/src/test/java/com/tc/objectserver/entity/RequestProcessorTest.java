@@ -20,23 +20,37 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -67,6 +81,23 @@ public class RequestProcessorTest {
   @After
   public void tearDown() {
   }
+  
+  /**
+   * Test of scheduleRequest method, of class RequestProcessor.
+   */
+  @Test
+  public <E> void testMinimumProcessingThreads() throws Exception {
+    StageManager mgr = mock(StageManager.class);
+    TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(new HashMap<>());
+    int minProcs = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.MIN_ENTITY_PROCESSOR_THREADS);
+    when(mgr.createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean())).then(inv->{
+      Assert.assertThat((Integer)inv.getArguments()[3], greaterThanOrEqualTo(minProcs));
+      return mock(Stage.class);
+    });
+    RequestProcessor instance = new RequestProcessor(mgr, true);
+    // one for sync stage and once for regular
+    verify(mgr, times(2)).createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean());
+  }  
 
   /**
    * Test of scheduleRequest method, of class RequestProcessor.
@@ -74,7 +105,6 @@ public class RequestProcessorTest {
   @Test
   public void testBasicScheduleRequest() {
     System.out.println("scheduleRequest");
-    ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
@@ -135,7 +165,7 @@ public class RequestProcessorTest {
     System.out.println("management key");
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     EntityID testid = new EntityID("MockEntity", "foo");
-    ManagedEntityImpl entity = mock(ManagedEntityImpl.class);
+    ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.getID()).thenReturn(testid);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());

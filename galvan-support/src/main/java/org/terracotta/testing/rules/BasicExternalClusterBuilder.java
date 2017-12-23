@@ -14,7 +14,6 @@ public class BasicExternalClusterBuilder {
   private List<File> serverJars = Collections.emptyList();
   private String namespaceFragment = "";
   private String serviceFragment = "";
-  private String entityFragment = "";
   private int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
   private Properties tcProperties = new Properties();
   private Properties systemProperties = new Properties();
@@ -68,14 +67,6 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
-  public BasicExternalClusterBuilder withEntityFragment(final String entityFragment) {
-    if (entityFragment == null) {
-      throw new NullPointerException("Entity fragment must be non-null");
-    }
-    this.entityFragment = entityFragment;
-    return this;
-  }
-
   public BasicExternalClusterBuilder withClientReconnectWindowTime(final int clientReconnectWindowTime) {
     this.clientReconnectWindowTime = clientReconnectWindowTime;
     return this;
@@ -107,7 +98,7 @@ public class BasicExternalClusterBuilder {
   }
 
   public BasicExternalCluster build() {
-    return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment,
+    return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt);
   }
 }

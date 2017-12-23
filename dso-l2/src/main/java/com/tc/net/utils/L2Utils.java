@@ -18,7 +18,6 @@
  */
 package com.tc.net.utils;
 
-import com.tc.bytes.TCByteBufferFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;

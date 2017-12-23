@@ -31,8 +31,8 @@ public class CorruptServerConfigIT extends MultiProcessGalvanTest {
   }
 
   @Override
-  public String getEntityConfigXMLSnippet() {
-    return "Bogus<String<";
+  public String getServiceConfigXMLSnippet() {
+    return "Bogus<String";
   }
 
   @Override

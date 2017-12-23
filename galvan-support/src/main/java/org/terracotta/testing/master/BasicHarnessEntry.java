@@ -46,7 +46,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stripeConfiguration.extraJarPaths = harnessOptions.extraJarPaths;
     stripeConfiguration.namespaceFragment = harnessOptions.namespaceFragment;
     stripeConfiguration.serviceFragment = harnessOptions.serviceFragment;
-    stripeConfiguration.entityFragment = harnessOptions.entityFragment;
     stripeConfiguration.clientReconnectWindowTime = harnessOptions.clientReconnectWindowTime;
     stripeConfiguration.tcProperties = harnessOptions.tcProperties;
     stripeConfiguration.logConfigExtension = "logback-ext.xml";
