@@ -30,13 +30,11 @@ import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
-import org.terracotta.testing.master.ConfigBuilder;
 import org.terracotta.testing.master.GalvanFailureException;
 import org.terracotta.testing.master.GalvanStateInterlock;
 import org.terracotta.testing.master.ReadyStripe;
 import org.terracotta.testing.master.TestStateManager;
 
-import static java.util.Collections.emptyList;
 
 /**
  *
@@ -49,7 +47,6 @@ class BasicExternalCluster extends Cluster {
   private final List<File> serverJars;
   private final String namespaceFragment;
   private final String serviceFragment;
-  private final String entityFragment;
   private final int clientReconnectWindowTime;
   private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
@@ -67,7 +64,7 @@ class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, String entityFragment, int clientReconnectWindowTime, Properties tcProperties, Properties systemProperties1, String logConfigExt) {
+  BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment, String serviceFragment, int clientReconnectWindowTime, Properties tcProperties, Properties systemProperties1, String logConfigExt) {
     if (clusterDirectory.exists()) {
       if (clusterDirectory.isFile()) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
@@ -82,7 +79,6 @@ class BasicExternalCluster extends Cluster {
     this.stripeSize = stripeSize;
     this.namespaceFragment = namespaceFragment;
     this.serviceFragment = serviceFragment;
-    this.entityFragment = entityFragment;
     this.serverJars = serverJars;
     this.clientReconnectWindowTime = clientReconnectWindowTime;
     this.tcProperties.putAll(tcProperties);
@@ -148,7 +144,7 @@ class BasicExternalCluster extends Cluster {
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(), testParentDirectory.getAbsolutePath(), stripeSize, heapInM, serverPort,
-        serverDebugStartPort, 0, serverJarPaths, namespaceFragment, serviceFragment, entityFragment,
+        serverDebugStartPort, 0, serverJarPaths, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
