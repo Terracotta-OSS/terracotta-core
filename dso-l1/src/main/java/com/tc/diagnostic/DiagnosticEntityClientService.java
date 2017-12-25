@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.diagnostic;
+package com.tc.diagnostic;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;

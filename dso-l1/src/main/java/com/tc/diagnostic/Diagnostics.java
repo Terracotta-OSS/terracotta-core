@@ -16,24 +16,30 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.connection;
+package com.tc.diagnostic;
+
+import org.terracotta.connection.entity.Entity;
 
 
-import com.terracotta.connection.client.TerracottaClientConfigParams;
+public interface Diagnostics extends Entity {
+  String getState();
+  
+  String getClusterState();  
+  
+  String getConfig();
 
-public class TerracottaInternalClientStaticFactory {
+  String getProcessArguments();
 
-  private static final TerracottaInternalClientFactory INSTANCE;
+  String getThreadDump();
 
-  static {
-    INSTANCE = new TerracottaInternalClientFactoryImpl();
-  }
+  String terminateServer();
 
-  private TerracottaInternalClientStaticFactory() {
-    // not instantiable
-  }
-
-  public static TerracottaInternalClient getOrCreateTerracottaInternalClient(TerracottaClientConfigParams config) {
-    return INSTANCE.createL1Client(config);
-  }
+  String forceTerminateServer();  
+  
+  String get(String name, String attribute);
+ 
+  String set(String name, String attribute, String arg);
+  
+  String invoke(String name, String cmd);
+  
 }

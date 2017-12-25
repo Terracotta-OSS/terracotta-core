@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
 import com.tc.management.TCClient;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -44,8 +43,8 @@ import java.util.Map;
 
 public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                     SessionProvider sessionProvider,
-                                                     int socketConnectTimeout, TCClient client);
+                                                  SessionProvider sessionProvider,
+                                                  int socketConnectTimeout, TCClient client);
 
   CommunicationsManager createCommunicationsManager(MessageMonitor monitor,
                                                     TCMessageRouter messageRouter,
@@ -53,8 +52,7 @@ public interface ClientBuilder {
                                                     ConnectionPolicy connectionPolicy,
                                                     HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
-                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour,
-                                                    BufferManagerFactory bufferManagerFactory);
+                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour);
 
   ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
