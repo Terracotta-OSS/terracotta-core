@@ -30,10 +30,10 @@ esac
 TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
 PLUGIN_LIB_DIR="${TC_SERVER_DIR}/plugins/lib"
 PLUGIN_API_DIR="${TC_SERVER_DIR}/plugins/api"
-INSTALLER_DIR="$(dirname $(dirname "$TC_SERVER_DIR"))/install"
 
-if [ -r "$INSTALLER_DIR"/bin/setenv.sh ] ; then
-  . "$INSTALLER_DIR"/bin/setenv.sh
+# this will only happen if using sag installer
+if [ -r "${TC_SERVER_DIR}/bin/setenv.sh" ] ; then
+  . "${TC_SERVER_DIR}/bin/setenv.sh"
 fi
 
 if ! [ -d "${JAVA_HOME}" ]; then
