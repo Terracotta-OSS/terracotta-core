@@ -228,7 +228,6 @@ import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
-import com.tc.objectserver.handler.MonitorHandler;
 
 
 /**
@@ -635,7 +634,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
     final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, USE_DIRECT);
     final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, false);
-    final Stage<Runnable> monitor = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, Runnable.class, new MonitorHandler(), 1, maxStageSize, false);
     final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
@@ -831,7 +829,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE,
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
-        ServerConfigurationContext.MONITOR_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
@@ -856,7 +853,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         logger.debug("completed mgmt " + action + " on " + eid);
     }
     boolean forDestroy = (action == ServerEntityAction.DESTROY_ENTITY);
-    MonitoringSink.reset();
     if (!this.l2Coordinator.getStateManager().isActiveCoordinator()) {
       try {
         this.seda.getStageManager()
@@ -893,7 +889,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.MONITOR_STAGE);
     control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addTriggerToState(StateManager.ACTIVE_COORDINATOR, () -> {
       server.updateActivateTime();

@@ -102,7 +102,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private boolean reconnecting = true;
   
   private Sink<TCMessage> multiSend;
-  private Sink<Runnable> monitor;
   private final ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<ClientID, Integer> inflightFetch = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
@@ -226,7 +225,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
       
       Stage<TCMessage> mss = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
       multiSend = mss.getSink();
-      monitor = server.getStage(ServerConfigurationContext.MONITOR_STAGE, Runnable.class).getSink();
       
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       reconnectDone = entityManager.enterActiveState();
@@ -718,8 +716,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
               return null;
             });
           });
-          monitor.addSingleThreaded(new Runnable() {public void run() {}});
         }
+        LOGGER.info(MonitoringSink.finish().toString());
       } else {
         throw new AssertionError();
       }
@@ -730,8 +728,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
       if (!getNodeID().isNull()) {
         Assert.assertTrue(sent.isSet());
         addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));
-        monitor.addSingleThreaded(new Runnable() {public void run() {}});
       }
+      LOGGER.info(MonitoringSink.finish().toString());
     }
   }
   
@@ -813,7 +811,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
         }
       }
       super.failure(e); 
-      monitor.addSingleThreaded(new Runnable() {public void run() {}});
     }
 
     @Override
@@ -844,7 +841,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
         }
       }
       super.complete(); 
-      monitor.addSingleThreaded(new Runnable() {public void run() {}});
     }
 
     @Override
@@ -872,7 +868,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
         }
       }
       super.complete(value); 
-      monitor.addSingleThreaded(new Runnable() {public void run() {}});
     }
   }
 }
