@@ -38,6 +38,7 @@ import com.tc.util.State;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ElectionManagerImpl implements ElectionManager {
 
@@ -61,10 +62,18 @@ public class ElectionManagerImpl implements ElectionManager {
   private final long            electionTime;
   private final int             expectedServers;
 
+  private final ServerVoterManager voterManager;
+  private AtomicLong electionTerm = new AtomicLong(0);
+
   public ElectionManagerImpl(GroupManager groupManager, int expectedServers, int electionTimeInSec) {
     this.groupManager = groupManager;
     this.electionTime = electionTimeInSec * 1000;
     this.expectedServers = expectedServers;
+    try {
+      this.voterManager = new ServerVoterManagerImpl(1);
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to instantiate voter manager", e);
+    }
     this.groupManager.registerForGroupEvents(new GroupEventsListener() {
       @Override
       public void nodeJoined(NodeID nodeID) {
@@ -197,6 +206,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
+    voterManager.startElection(electionTerm.incrementAndGet());
     while (winnerID.isNull()) {
       if (count++ > 0) {
         logger.info("Requesting Re-election !!! count = " + count);
@@ -211,6 +221,7 @@ public class ElectionManagerImpl implements ElectionManager {
         reset(null);
       }
     }
+    voterManager.endElection();
     return winnerID;
   }
   
@@ -256,6 +267,10 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election took " + TimeUnit.MILLISECONDS.toSeconds(electionTime - waited) + " sec. ending in " + this.state);
     // Step 3: Compute Winner
     Enrollment lWinner = computeResult();
+    if (lWinner == null) {
+      return ServerID.NULL_ID;
+    }
+
     if (lWinner != e) {
       logger.info("Election lost : Winner is : " + lWinner);
       Assert.assertNotNull(lWinner);
@@ -302,6 +317,15 @@ public class ElectionManagerImpl implements ElectionManager {
       }
     }
     Assert.assertNotNull(computedWinner);
+
+    if (voterManager != null) {
+      int totalVotes = votes.size() + voterManager.getVoteCount();
+      int majority = ((expectedServers + voterManager.getVoterLimit()) / 2) + 1;
+      if (totalVotes < majority) {
+        return null;
+      }
+    }
+
     return computedWinner;
   }
 

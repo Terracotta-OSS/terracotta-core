@@ -16,32 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.diagnostic;
+package org.terracotta.voter;
 
-import org.terracotta.connection.entity.Entity;
+public interface TCVoter {
 
+  void register(String clusterName, String... hostPort);
 
-public interface Diagnostics extends Entity {
-  String getState();
-  
-  String getClusterState();  
-  
-  String getConfig();
-
-  String getProcessArguments();
-
-  String getThreadDump();
-
-  String terminateServer();
-
-  String forceTerminateServer();  
-  
-  String get(String name, String attribute);
- 
-  String set(String name, String attribute, String arg);
-  
-  String invoke(String name, String cmd);
-
-  String invokeWithArg(String name, String cmd, String arg);
+  void deregister(String clusterName);
 
 }

@@ -64,6 +64,7 @@ public class StateManagerImpl implements StateManager {
   private volatile State               state               = START_STATE;
   private State               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
+  private final boolean consistencyPreferred = true;
 
   // Known servers from previous election
   Set<NodeID> prevKnownServers = new HashSet<>();
@@ -507,6 +508,9 @@ public class StateManagerImpl implements StateManager {
         clusterStatePersistor.setDBClean(false);
         throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
       } else if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {
+        elect = true;
+      } else if (consistencyPreferred && state == ACTIVE_COORDINATOR) {
+        activeNode = ServerID.NULL_ID;
         elect = true;
       }
     }

@@ -197,8 +197,4 @@ public class SingleThreadedTimer implements ISimpleTimer {
     }
   }
 
-
-  public interface TimeSource {
-    public long currentTimeMillis();
-  }
 }

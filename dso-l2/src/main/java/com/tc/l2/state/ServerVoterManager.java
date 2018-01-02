@@ -16,32 +16,26 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.diagnostic;
+package com.tc.l2.state;
 
-import org.terracotta.connection.entity.Entity;
+import com.tc.management.TerracottaMBean;
+import com.tc.voter.VoterManager;
 
+public interface ServerVoterManager extends VoterManager, TerracottaMBean {
 
-public interface Diagnostics extends Entity {
-  String getState();
-  
-  String getClusterState();  
-  
-  String getConfig();
+  int getVoterLimit();
 
-  String getProcessArguments();
+  void startElection(long electionTerm);
 
-  String getThreadDump();
+  int getVoteCount();
 
-  String terminateServer();
+  void endElection();
 
-  String forceTerminateServer();  
-  
-  String get(String name, String attribute);
- 
-  String set(String name, String attribute, String arg);
-  
-  String invoke(String name, String cmd);
+  default long vote(String idTerm) {
+    String[] split = idTerm.split(":");
+    return vote(split[0], Long.parseLong(split[1]));
+  }
 
-  String invokeWithArg(String name, String cmd, String arg);
+  long vote(String id, long electionTerm);
 
 }
