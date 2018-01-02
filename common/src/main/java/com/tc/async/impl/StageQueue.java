@@ -34,26 +34,6 @@ public interface StageQueue<EC> extends Sink<EC> {
   @Override
   void clear();
 
-  /*********************************************************************************************************************
-   * Monitorable Interface
-   * @param enable
-   */
-
-  @Override
-  void enableStatsCollection(boolean enable);
-
-  @Override
-  Stats getStats(long frequency);
-
-  @Override
-  Stats getStatsAndReset(long frequency);
-
-  @Override
-  boolean isStatsCollectionEnabled();
-
-  @Override
-  void resetStats();
-
   class StageQueueFactory {
     /**
      * The StageQueue factory.

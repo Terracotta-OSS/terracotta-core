@@ -127,7 +127,6 @@ public class StageManagerImpl implements StageManager {
   private synchronized <EC> void addStage(String name, Stage<EC> s) {
     Object prev = stages.put(name, s);
     Assert.assertNull(prev);
-    s.getSink().enableStatsCollection(MONITOR);
     stageNames = stages.keySet().toArray(new String[stages.size()]);
     Arrays.sort(stageNames);
   }

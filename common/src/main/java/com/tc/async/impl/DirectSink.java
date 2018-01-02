@@ -100,31 +100,6 @@ public class DirectSink<EC> implements Sink<EC> {
   public void close() {
     this.ifNotDirect.close();
   }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    this.ifNotDirect.enableStatsCollection(enable);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    return this.ifNotDirect.isStatsCollectionEnabled();
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    return this.ifNotDirect.getStats(frequency);
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return this.ifNotDirect.getStatsAndReset(frequency);
-  }
-
-  @Override
-  public void resetStats() {
-    this.ifNotDirect.resetStats();
-  }
   
   public static void activate(boolean activate) {
     if (activate) {

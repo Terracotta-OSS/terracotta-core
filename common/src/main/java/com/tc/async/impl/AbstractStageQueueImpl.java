@@ -6,7 +6,6 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.StageQueueStats;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,10 +70,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   }
   
   interface SourceQueue<W> extends Source<W> {
-    AbstractStageQueueImpl.StageQueueStatsCollector getStatsCollector();
-
-    void setStatsCollector(AbstractStageQueueImpl.StageQueueStatsCollector collector);
-
     int clear();
 
     @Override
@@ -89,118 +84,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
     @Override
     String getSourceName();
-  }
-
-  static abstract class StageQueueStatsCollector implements StageQueueStats {
-
-    public void logDetails(Logger statsLogger) {
-      statsLogger.info(getDetails());
-    }
-
-    public abstract void contextAdded();
-
-    public abstract void reset();
-
-    public abstract void contextRemoved();
-
-    protected String makeWidth(String name, int width) {
-      final int len = name.length();
-      if (len == width) {
-        return name;
-      }
-      if (len > width) {
-        return name.substring(0, width);
-      }
-
-      StringBuffer buf = new StringBuffer(name);
-      for (int i = len; i < width; i++) {
-        buf.append(' ');
-      }
-      return buf.toString();
-    }
-  }
-
-  static class NullStageQueueStatsCollector extends StageQueueStatsCollector {
-
-    private final String name;
-    private final String trimmedName;
-
-    public NullStageQueueStatsCollector(String stage) {
-      this.trimmedName = stage.trim();
-      this.name = makeWidth(stage, 40);
-    }
-
-    @Override
-    public String getDetails() {
-      return this.name + " : Not Monitored";
-    }
-
-    @Override
-    public void contextAdded() {
-      // NO-OP
-    }
-
-    @Override
-    public void contextRemoved() {
-      // NO-OP
-    }
-
-    @Override
-    public void reset() {
-      // NO-OP
-    }
-
-    @Override
-    public String getName() {
-      return this.trimmedName;
-    }
-
-    @Override
-    public int getDepth() {
-      return -1;
-    }
-  }
-
-  static class StageQueueStatsCollectorImpl extends StageQueueStatsCollector {
-
-    private final AtomicInteger count = new AtomicInteger(0);
-    private final String name;
-    private final String trimmedName;
-
-    public StageQueueStatsCollectorImpl(String stage) {
-      this.trimmedName = stage.trim();
-      this.name = makeWidth(stage, 40);
-    }
-
-    @Override
-    public String getDetails() {
-      return this.name + " : " + this.count;
-    }
-
-    @Override
-    public void contextAdded() {
-      this.count.incrementAndGet();
-    }
-
-    @Override
-    public void contextRemoved() {
-      this.count.decrementAndGet();
-    }
-
-    @Override
-    public void reset() {
-      this.count.set(0);
-    }
-
-    @Override
-    public String getName() {
-      return this.trimmedName;
-    }
-
-    @Override
-    public int getDepth() {
-      return this.count.get();
-    }
   }
 
   class HandledContext<C> implements ContextWrapper<C> {

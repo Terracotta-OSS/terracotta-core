@@ -57,31 +57,4 @@ public class NullSink<EC> implements Sink<EC> {
   public void clear() {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void resetStats() {
-    throw new UnsupportedOperationException();
-    
-  }
-
 }

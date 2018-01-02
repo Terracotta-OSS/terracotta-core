@@ -132,15 +132,13 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   }
 
   private void createWorkerQueues(int queueCount, QueueFactory queueFactory, Class<EC> type, int queueSize, String stage) {
-    StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
-
     if (queueSize != Integer.MAX_VALUE) {
       queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
     }
     Assert.eval(queueSize > 0);
 
     for (int i = 0; i < queueCount; i++) {
-      this.sourceQueues[i] = new MultiSourceQueueImpl<>(queueFactory.createInstance(type, queueSize), i, statsCollector);
+      this.sourceQueues[i] = new MultiSourceQueueImpl<>(queueFactory.createInstance(type, queueSize), i);
     }
   }
 
@@ -295,96 +293,19 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     this.logger.info("Cleared " + clearCount);
   }
 
-  /*********************************************************************************************************************
-   * Monitorable Interface
-   * @param enable
-   */
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    StageQueueStatsCollector collector = null;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> src : this.sourceQueues) {
-      String name = this.stageName + "[" + src.getSourceName() + "]";
-      if (collector == null || !collector.getName().equals(name)) {
-        collector = (enable) ? new StageQueueStatsCollectorImpl(name) : new NullStageQueueStatsCollector(name);
-      }
-      src.setStatsCollector(collector);
-    }
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    // Since all source queues have the same collector, the first reference is passed.
-    if (this.sourceQueues.length == 1 ) {
-      return this.sourceQueues[0].getStatsCollector();
-    } else {
-      return new Stats() {
-
-        @Override
-        public String getDetails() {
-          StringBuilder build = new StringBuilder();
-          StageQueueStatsCollector stats = null;
-          for (MultiSourceQueueImpl<ContextWrapper<EC>> impl : sourceQueues) {
-            StageQueueStatsCollector current = impl.getStatsCollector();
-            if (stats != current) {
-              if (stats != null) build.append('\n');
-              build.append(current.getDetails());
-            }
-            stats = current;
-          }
-          return build.toString();
-        }
-
-        @Override
-        public void logDetails(Logger statsLogger) {
-          statsLogger.info(getDetails());
-        }
-      };
-    }
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return getStats(frequency);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    // Since all source queues have the same collector, the first reference is used.
-    return this.sourceQueues[0].getStatsCollector() instanceof StageQueueStatsCollectorImpl;
-  }
-
-  @Override
-  public void resetStats() {
-    // Since all source queues have the same collector, the first reference is used.
-    this.sourceQueues[0].getStatsCollector().reset();
-  }
-
   private final class MultiSourceQueueImpl<W> implements SourceQueue<W> {
 
     private final BlockingQueue<W> queue;
     private final int                      sourceIndex;
-    private volatile StageQueueStatsCollector statsCollector;
 
-    public MultiSourceQueueImpl(BlockingQueue<W> queue, int sourceIndex, StageQueueStatsCollector statsCollector) {
+    public MultiSourceQueueImpl(BlockingQueue<W> queue, int sourceIndex) {
       this.queue = queue;
       this.sourceIndex = sourceIndex;
-      this.statsCollector = statsCollector;
     }
 
     @Override
     public String toString() {
       return "SourceQueueImpl{" + sourceIndex + "size=" + queue.size() + '}';
-    }
-
-    @Override
-    public StageQueueStatsCollector getStatsCollector() {
-      return this.statsCollector;
-    }
-
-    @Override
-    public void setStatsCollector(StageQueueStatsCollector collector) {
-      this.statsCollector = collector;
     }
 
     // XXX: poor man's clear.
@@ -410,7 +331,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     public W poll(long timeout) throws InterruptedException {
       W rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       if (rv != null) {
-        this.statsCollector.contextRemoved();
         if (queue.isEmpty()) {
           // set the empty index for shortest queue in hopes of catching it on the first try
           fcheck = this.sourceIndex;
@@ -424,7 +344,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     @Override
     public void put(W context) throws InterruptedException {
       this.queue.put(context);
-      this.statsCollector.contextAdded();
     }
 
     @Override

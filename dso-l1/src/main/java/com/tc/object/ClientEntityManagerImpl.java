@@ -208,31 +208,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       public void close() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
-
-      @Override
-      public void enableStatsCollection(boolean enable) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public boolean isStatsCollectionEnabled() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public Stats getStats(long frequency) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public Stats getStatsAndReset(long frequency) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void resetStats() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
     };
   }
 

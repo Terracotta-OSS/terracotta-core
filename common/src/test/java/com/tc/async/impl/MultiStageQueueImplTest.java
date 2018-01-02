@@ -260,7 +260,6 @@ public class MultiStageQueueImplTest {
         return false;
       }
     };
-    impl.enableStatsCollection(true);
     final long[] incomingCount = new long[1];
     final Random r = new Random(0);
     DelayingThread supplier = DelayingThread.createDelayViaSleepThread(die, "Supplier", new Runnable() {
@@ -299,7 +298,9 @@ public class MultiStageQueueImplTest {
     DelayingThread.createDelayViaSleepThread(die, "size", new Runnable() {
                                                @Override
                                                public void run() {
-                                                 System.out.println(impl.getStats(1000).getDetails());
+                                                 for(int i=0;i<qCount;i++) {
+                                                  System.out.println(impl.getSource(i).size());
+                                                 }
                                                }
                                              }, 10, TimeUnit.SECONDS).start();
 

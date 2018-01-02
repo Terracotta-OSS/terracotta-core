@@ -130,29 +130,4 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   public int size() {
     return sink.size();
   }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    sink.enableStatsCollection(enable);
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    return sink.getStats(frequency);
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return sink.getStatsAndReset(frequency);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    return sink.isStatsCollectionEnabled();
-  }
-
-  @Override
-  public void resetStats() {
-    sink.resetStats();
-  }
 }

@@ -31,4 +31,6 @@ public interface Source<EC> {
   public String getSourceName();
 
   public boolean isEmpty();
+  
+  public int size();
 }

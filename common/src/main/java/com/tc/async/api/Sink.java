@@ -18,12 +18,14 @@
  */
 package com.tc.async.api;
 
-import com.tc.stats.Monitorable;
+import com.tc.text.PrettyPrinter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents the sink in the SEDA system
  */
-public interface Sink<EC> extends Monitorable {
+public interface Sink<EC> {
   /**
    * Add the given event to the internal queue 0 (that is, it won't be executed concurrently with any other contexts passed
    * in this way.
@@ -56,4 +58,14 @@ public interface Sink<EC> extends Monitorable {
 
   public void close();
 
+  default public Map<String, ?> getState() {
+    Map<String, Object> map = new HashMap<>();
+    map.put("size", (Integer)size());
+    return map;
+  }
+
+  default public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.println(getState());
+    return out;
+  }
 }

@@ -33,7 +33,9 @@ public class MonitorHandler extends AbstractEventHandler<Runnable> {
   @Override
   public void handleEvent(Runnable context) throws EventHandlerException {
     PipelineMonitor monitor = MonitoringSink.finish();
-    LOGGER.info(monitor.toString());
+    if (monitor != null) {
+      LOGGER.info(monitor.toString());
+    }
   }
   
 }
