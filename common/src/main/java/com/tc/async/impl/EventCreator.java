@@ -16,19 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util.concurrent;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import com.tc.async.impl.Event;
+package com.tc.async.impl;
 
-public class QueueFactory {
-
-  public <E> BlockingQueue<Event> createInstance(Class<E> type) {
-    return new LinkedBlockingQueue<>();
-  }
-
-  public <E> BlockingQueue<Event> createInstance(Class<E> type, int capacity) {
-    return new LinkedBlockingQueue<>(capacity);
-  }
+/**
+ */
+public interface EventCreator<EC> {
+  Event createEvent(EC event);
 }

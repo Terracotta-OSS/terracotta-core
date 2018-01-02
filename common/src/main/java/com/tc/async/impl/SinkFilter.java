@@ -16,15 +16,17 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+
 package com.tc.async.impl;
 
 import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
 
 /**
-   * This interface is used to wrap the contexts put into the queues since we use them different ways but still want them
-   * handled in-order.  This replaces an instanceof hack, previously in use.
-   */
-public interface ContextWrapper<EC> {
-  public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException;
+ */
+public interface SinkFilter<EC> {
+  boolean filter(EC context);
+  
+  default EventHandler<EC> filterHandler(EventHandler<EC> handler) {
+    return handler;
+  }
 }

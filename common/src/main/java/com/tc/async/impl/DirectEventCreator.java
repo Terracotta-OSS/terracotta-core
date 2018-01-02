@@ -20,10 +20,7 @@ package com.tc.async.impl;
 
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,72 +30,42 @@ import org.slf4j.LoggerFactory;
  * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
  * across process boundaries.
  */
-public class DirectSink<EC> implements Sink<EC> {
+public class DirectEventCreator<EC> implements EventCreator<EC> {
   private final EventHandler<EC> handler;
   private final Supplier<Boolean> isIdle;
-  private final StageQueue<EC> ifNotDirect;
   private volatile boolean directInflight = false;
-  private static final Logger LOGGER = LoggerFactory.getLogger(DirectSink.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DirectEventCreator.class);
   private static final ThreadLocal<Thread> ACTIVATED = new ThreadLocal<>();
 
-  public DirectSink(EventHandler<EC> handler, Supplier<Boolean> isIdle, StageQueue<EC> queue) {
+  public DirectEventCreator(EventHandler<EC> handler, Supplier<Boolean> isIdle) {
     this.handler = handler;
     this.isIdle = isIdle;
-    this.ifNotDirect = queue;
     Assert.assertNotNull(this.isIdle);
-    Assert.assertNotNull(this.ifNotDirect);
   }
-  
-  private void pipeline(EC context, Consumer<EC> underlying) {
-    // access here MUST be fed by a single stage
+
+  @Override
+  public Event createEvent(EC event) {
     if (isSingleThreaded()) {
       try {
         directInflight = true;
         Assert.assertTrue(isIdle.get());
-        handler.handleEvent(context);
+        handler.handleEvent(event);
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
         throw new RuntimeException(ee);
       } finally {
         directInflight = false;
       }
+      return null;
     } else {
       if (directInflight) {
         throw new AssertionError();
-      } else {
-        underlying.accept(context);
       }
+      return ()->{
+        handler.handleEvent(event);
+        return null;
+      };
     }
-  }
-
-  @Override
-  public void addSingleThreaded(EC context) {
-    pipeline(context, ifNotDirect::addSingleThreaded);
-  }
-
-  @Override
-  public void addMultiThreaded(EC context) {
-    pipeline(context, ifNotDirect::addMultiThreaded);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return !directInflight || this.ifNotDirect.isEmpty();
-  }
-
-  @Override
-  public int size() {
-    return this.ifNotDirect.size();
-  }
-
-  @Override
-  public void clear() {
-    this.ifNotDirect.clear();
-  }
-
-  @Override
-  public void close() {
-    this.ifNotDirect.close();
   }
   
   public static void activate(boolean activate) {
@@ -117,7 +84,6 @@ public class DirectSink<EC> implements Sink<EC> {
     if (LOGGER.isDebugEnabled()) {
       if (isActivated()) {
         if (!this.isIdle.get()) {
-          LOGGER.debug("checked but not idle:" + ifNotDirect.toString());
           return false;
         } else {
           return true;

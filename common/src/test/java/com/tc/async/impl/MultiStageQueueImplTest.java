@@ -18,6 +18,7 @@
  */
 package com.tc.async.impl;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
@@ -98,7 +99,9 @@ public class MultiStageQueueImplTest {
       }
 
     });
-    StageQueue<Object> instance = new MultiStageQueueImpl(size, context, Object.class, logger, "mock", 16);
+    StageQueue<Object> instance = new MultiStageQueueImpl(size, context, Object.class, 
+        mock(EventCreator.class),
+        logger, "mock", 16);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));
     }
@@ -163,7 +166,9 @@ public class MultiStageQueueImplTest {
       }
 
     });
-    StageQueue impl = new MultiStageQueueImpl(6, context, Object.class, logger, "mock", 16);
+    StageQueue impl = new MultiStageQueueImpl(6, context, Object.class,                                                                                                           
+        mock(EventCreator.class),
+        logger, "mock", 16);
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.getSchedulingKey()).thenReturn(null);
     // fcheck starts at zero and should stay at zero because first queue is always empty
@@ -205,9 +210,10 @@ public class MultiStageQueueImplTest {
     }
     TCLoggerProvider logger = new DefaultLoggerProvider();
     QueueFactory qFactory = new QueueFactory();
-    MultiStageQueueImpl<MultiThreadedEventContext> impl = new MultiStageQueueImpl<>(8,
+    MultiStageQueueImpl impl = new MultiStageQueueImpl(8,
                                                                                                              qFactory,
                                                                                                              MultiThreadedEventContext.class,
+                                                                                                          mock(EventCreator.class),
                                                                                                              logger,
                                                                                                              "perf",
                                                                                                              100);
@@ -244,6 +250,7 @@ public class MultiStageQueueImplTest {
     final StageQueue<MultiThreadedEventContext> impl = new MultiStageQueueImpl<>(qCount,
                                                                                                           qFactory,
                                                                                                           MultiThreadedEventContext.class,
+                                                                                                          mock(EventCreator.class),
                                                                                                           logger,
                                                                                                           "perf",
                                                                                                           qSize);

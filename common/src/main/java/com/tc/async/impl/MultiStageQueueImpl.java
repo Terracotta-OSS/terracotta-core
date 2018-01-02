@@ -24,14 +24,13 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
-import org.slf4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
@@ -64,7 +63,8 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private final int moduleMask;
   private final int PARTITION_SHIFT;
   final int PARTITION_MAX_MASK;
-  private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
+  private final EventCreator<EC> creator;
+  private final MultiSourceQueueImpl[] sourceQueues;
   private volatile int fcheck = 0;  // used to start the shortest queue search
   AtomicInteger partitionHand =new AtomicInteger(0);
 
@@ -81,6 +81,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   MultiStageQueueImpl(int queueCount,
                       QueueFactory queueFactory,
                       Class<EC> type, 
+                      EventCreator<EC> creator,
                       TCLoggerProvider loggerProvider,
                       String stageName,
                       int queueSize) {
@@ -93,14 +94,13 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       PARTITION_SHIFT = 1;
     }
     PARTITION_MAX_MASK = (1 << (31 - PARTITION_SHIFT)) - 1;
-
+    this.creator = creator;
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, type, queueSize, stageName);
 
-    int sz=sourceQueues.length;
-    if (Integer.bitCount(sz) == 1) {
+    if (Integer.bitCount(queueCount) == 1) {
       this.moduloAnd = true;
-      this.moduleMask = sz - 1;
+      this.moduleMask = queueCount - 1;
     } else {
       this.moduloAnd = false;
       this.moduleMask = 0;
@@ -138,12 +138,12 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     Assert.eval(queueSize > 0);
 
     for (int i = 0; i < queueCount; i++) {
-      this.sourceQueues[i] = new MultiSourceQueueImpl<>(queueFactory.createInstance(type, queueSize), i);
+      this.sourceQueues[i] = new MultiSourceQueueImpl(queueFactory.createInstance(type, queueSize), v->this.fcheck = v, i);
     }
   }
 
   @Override
-  public Source<ContextWrapper<EC>> getSource(int index) {
+  public Source getSource(int index) {
     return (index < 0 || index >= this.sourceQueues.length) ? null : this.sourceQueues[index];
   }
 
@@ -158,22 +158,24 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-
-    boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[0].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
+    Event event = creator.createEvent(context);
+    if (event != null) {
+      boolean interrupted = Thread.interrupted();
+      Event wrapper = new HandledEvent<>(event);
+      try {
+        while (true) {
+          try {
+            this.sourceQueues[0].put(wrapper);
+            break;
+          } catch (InterruptedException e) {
+            this.logger.debug("StageQueue Add: " + e);
+            interrupted = true;
+          }
         }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }
@@ -189,26 +191,27 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-
-    // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
-    boolean interrupted = Thread.interrupted();
-    MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
-    int index = getSourceQueueFor(cxt);
-    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context, index) : new HandledContext<EC>(
-      context);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[index].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
+    Event event = creator.createEvent(context);
+    if (event != null) {
+      // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
+      boolean interrupted = Thread.interrupted();
+      MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
+      int index = getSourceQueueFor(cxt);
+      Event wrapper = (cxt.flush()) ? new FlushingHandledContext(event, index) : new HandledEvent<>(event);
+      try {
+        while (true) {
+          try {
+            this.sourceQueues[index].put(wrapper);
+            break;
+          } catch (InterruptedException e) {
+            this.logger.debug("StageQueue Add: " + e);
+            interrupted = true;
+          }
         }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }
@@ -237,7 +240,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
         // special case where context can go to any queue, pick the shortest
         for (int x = 0; x < this.sourceQueues.length; x++) {
           int index = moduloQueueCount(pointer + x);
-          MultiSourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[index];
+          MultiSourceQueueImpl impl = this.sourceQueues[index];
           if (impl.isEmpty()) {
             return index;
           } else {
@@ -286,20 +289,22 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   @Override
   public void clear() {
     int clearCount = 0;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
+    for (MultiSourceQueueImpl sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
     super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
-  private final class MultiSourceQueueImpl<W> implements SourceQueue<W> {
+  private static final class MultiSourceQueueImpl implements SourceQueue {
 
-    private final BlockingQueue<W> queue;
+    private final Consumer<Integer> hint;
+    private final BlockingQueue<Event> queue;
     private final int                      sourceIndex;
 
-    public MultiSourceQueueImpl(BlockingQueue<W> queue, int sourceIndex) {
+    public MultiSourceQueueImpl(BlockingQueue<Event> queue, Consumer<Integer> hint, int sourceIndex) {
       this.queue = queue;
+      this.hint = hint;
       this.sourceIndex = sourceIndex;
     }
 
@@ -328,21 +333,21 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
 
     @Override
-    public W poll(long timeout) throws InterruptedException {
-      W rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+    public Event poll(long timeout) throws InterruptedException {
+      Event rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       if (rv != null) {
         if (queue.isEmpty()) {
           // set the empty index for shortest queue in hopes of catching it on the first try
-          fcheck = this.sourceIndex;
+          hint.accept(this.sourceIndex);
         }
       } else {
-        fcheck = this.sourceIndex;
+        hint.accept(this.sourceIndex);
       }
       return rv;
     }
 
     @Override
-    public void put(W context) throws InterruptedException {
+    public void put(Event context) throws InterruptedException {
       this.queue.put(context);
     }
 
@@ -358,19 +363,19 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
   }
 
-  private class FlushingHandledContext<T extends EC> extends HandledContext<EC> {
+  private class FlushingHandledContext<T extends EC> extends HandledEvent<EC> {
     private final int offset;
     private int executionCount = 0;
-    public FlushingHandledContext(EC context, int offset) {
+    public FlushingHandledContext(Event context, int offset) {
       super(context);
       this.offset = offset;
     }
-
+    
     @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
+    public Void call() throws EventHandlerException {
       if (++executionCount == sourceQueues.length) {
 //  been through all the queues.  execute now.
-        super.runWithHandler(handler);
+        super.call();
       } else {
 //  move to next queue
         boolean interrupted = false;
@@ -390,6 +395,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
           }
         }
       }
+      return null;
     }
   }
 }

@@ -45,7 +45,7 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.MonitoringSink;
+import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.config.HaConfig;

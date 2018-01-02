@@ -16,19 +16,17 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util.concurrent;
+package com.tc.async.impl;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import com.tc.async.impl.Event;
+import com.tc.async.api.EventHandlerException;
+import java.util.concurrent.Callable;
 
-public class QueueFactory {
-
-  public <E> BlockingQueue<Event> createInstance(Class<E> type) {
-    return new LinkedBlockingQueue<>();
-  }
-
-  public <E> BlockingQueue<Event> createInstance(Class<E> type, int capacity) {
-    return new LinkedBlockingQueue<>(capacity);
-  }
+/**
+   * This interface is used to wrap the contexts put into the queues since we use them different ways but still want them
+   * handled in-order.  This replaces an instanceof hack, previously in use.
+   */
+public interface Event extends Callable<Void> {
+  @Override
+  public Void call() throws EventHandlerException;
+  
 }

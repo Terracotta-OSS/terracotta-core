@@ -21,7 +21,6 @@ package com.tc.async.impl;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
@@ -39,7 +38,8 @@ import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
  */
 public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
-  private final SourceQueueImpl<ContextWrapper<EC>> sourceQueue;
+  private final EventCreator<EC> creator;
+  private final SourceQueueImpl sourceQueue;
 
   /**
    * The Constructor.
@@ -50,26 +50,27 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  SingletonStageQueueImpl(QueueFactory queueFactory, Class<EC> type, 
+  SingletonStageQueueImpl(QueueFactory queueFactory, Class<EC> type, EventCreator<EC> creator,
                           TCLoggerProvider loggerProvider,
                           String stageName,
                           int queueSize) {
     super(loggerProvider, stageName);
+    this.creator = creator;
     this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize, stageName);
   }
 
-  private SourceQueueImpl<ContextWrapper<EC>> createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
+  private SourceQueueImpl createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
                                                                 int queueSize,
                                                                 String stage) {
-    BlockingQueue<ContextWrapper<EC>> q = null;
+    BlockingQueue<Event> q = null;
 
     Assert.eval(queueSize > 0);
 
-    return new SourceQueueImpl<>(queueFactory.createInstance(type, queueSize));
+    return new SourceQueueImpl(queueFactory.createInstance(type, queueSize));
   }
 
   @Override
-  public Source<ContextWrapper<EC>> getSource(int index) {
+  public Source getSource(int index) {
     return (index != 0) ? null : this.sourceQueue;
   }
 
@@ -88,9 +89,10 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-
-    ContextWrapper<EC> wrapper = new HandledContext<>(context);
-    deliverToQueue("Single", wrapper);
+    Event wrapper = creator.createEvent(context);
+    if (wrapper != null) {
+      deliverToQueue("Multi", new HandledEvent(wrapper));
+    }
   }
 
   @Override
@@ -104,11 +106,13 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    ContextWrapper<EC> wrapper = new HandledContext<>(context);
-    deliverToQueue("Multi", wrapper);
+    Event wrapper = creator.createEvent(context);
+    if (wrapper != null) {
+      deliverToQueue("Multi", new HandledEvent(wrapper));
+    }
   }
 
-  private void deliverToQueue(String type, ContextWrapper<EC> wrapper) {
+  private void deliverToQueue(String type, Event wrapper) {
     boolean interrupted = Thread.interrupted();
     addInflight();
     try {
@@ -140,11 +144,11 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     this.logger.info("Cleared " + clearCount);
   }
 
-  private final class SourceQueueImpl<W> implements SourceQueue<W> {
+  private final class SourceQueueImpl implements SourceQueue {
 
-    private final BlockingQueue<W> queue;
+    private final BlockingQueue<Event> queue;
 
-    public SourceQueueImpl(BlockingQueue<W> queue) {
+    public SourceQueueImpl(BlockingQueue<Event> queue) {
       this.queue = queue;
     }
 
@@ -173,13 +177,13 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
 
     @Override
-    public W poll(long timeout) throws InterruptedException {
-      W rv = (timeout == 0) ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+    public Event poll(long timeout) throws InterruptedException {
+      Event rv = (timeout == 0) ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       return rv;
     }
 
     @Override
-    public void put(W context) throws InterruptedException {
+    public void put(Event context) throws InterruptedException {
       this.queue.put(context);
     }
 

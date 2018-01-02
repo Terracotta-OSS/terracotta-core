@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The SEDA Stage
@@ -49,7 +48,6 @@ public class StageImpl<EC> implements Stage<EC> {
   private final String         name;
   private final EventHandler<EC> handler;
   private final StageQueue<EC> stageQueue;
-  private final Sink<EC> sink;
   private final WorkerThread[] threads;
   private final ThreadGroup    group;
   private final Logger logger;
@@ -77,9 +75,8 @@ public class StageImpl<EC> implements Stage<EC> {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.threads = new WorkerThread[queueCount];
-    this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, loggerProvider, name, queueSize);
-    this.sink = createSink(handler, canBeDirect);
-    this.handler = (this.sink instanceof MonitoringSink) ? ((MonitoringSink)this.sink).getHandler() : handler;
+    this.handler = handler;
+    this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, eventCreator(canBeDirect), loggerProvider, name, queueSize);
     this.group = group;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
@@ -90,10 +87,18 @@ public class StageImpl<EC> implements Stage<EC> {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
   }
+
+  private EventCreator<EC> eventCreator(boolean direct) {
+    EventCreator<EC> base = (direct) ? new DirectEventCreator<>(handler, ()->stageQueue.isEmpty()) : baseCreator();
+    base = MONITOR ? new MonitoringEventCreator<>(name, base) : base;
+    return base;
+  }
   
-  private Sink<EC> createSink(EventHandler<EC> handler, boolean direct) {
-    return MONITOR ? new MonitoringSink<>(name, stageQueue, handler, direct) : 
-        direct ? new DirectSink<>(handler, stageQueue::isEmpty, stageQueue) : stageQueue;
+  private EventCreator<EC> baseCreator() {
+    return (event) -> () -> {
+      handler.handleEvent(event);
+      return null;
+    };
   }
 
   @Override
@@ -123,7 +128,7 @@ public class StageImpl<EC> implements Stage<EC> {
 
   @Override
   public Sink<EC> getSink() {
-    return sink;
+    return this.stageQueue;
   }
 
   @Override
@@ -205,16 +210,17 @@ public class StageImpl<EC> implements Stage<EC> {
   }
 
   private class WorkerThread<EC> extends Thread {
-    private final Source<ContextWrapper<EC>>       source;
+    private final Source       source;
     private final EventHandler<EC> handler;
     private volatile boolean idle = false;
     private final Object idleLock = new Object();
     private boolean waitingForIdle = false;
+    // these are single threaded, don't need special handling
     private long idleTime  = 0;
     private long runTime = 0;
     private long count = 0;
 
-    public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler) {
+    public WorkerThread(String name, Source source, EventHandler<EC> handler) {
       super(group, name);
       setDaemon(true);
       this.source = source;
@@ -240,7 +246,7 @@ public class StageImpl<EC> implements Stage<EC> {
     @Override
     public void run() {
       while (!shutdown || !source.isEmpty()) {
-        ContextWrapper<EC> ctxt = null;
+        Event ctxt = null;
         try {
           this.setToIdle();
           long stopped = System.nanoTime();
@@ -250,7 +256,7 @@ public class StageImpl<EC> implements Stage<EC> {
             this.idle = false;
             handleStageDebugPauses();
             idleTime += (running - stopped);
-            ctxt.runWithHandler(handler);
+            ctxt.call();
             runTime += (System.nanoTime() - running);
             count += 1;
           } else {

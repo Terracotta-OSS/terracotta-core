@@ -18,16 +18,15 @@
  */
 package com.tc.async.impl;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -36,11 +35,8 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -95,7 +91,7 @@ public class SingletonStageQueueImplTest {
       }
 
     });
-    StageQueue<Object> instance = new SingletonStageQueueImpl(context, Object.class, logger, "mock", 16);
+    StageQueue<Object> instance = new SingletonStageQueueImpl(context, Object.class, mock(EventCreator.class), logger, "mock", 16);
     assertEquals(cxts.size(), 1);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));

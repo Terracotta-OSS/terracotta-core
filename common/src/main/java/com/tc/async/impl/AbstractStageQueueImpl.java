@@ -2,7 +2,6 @@ package com.tc.async.impl;
 
 import org.slf4j.Logger;
 
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
@@ -61,7 +60,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     this.closed = true;
     for (SourceQueue q : this.getSources()) {
       try {
-        q.put(new CloseContext());
+        q.put(new CloseEvent());
       } catch (InterruptedException ie) {
         logger.debug("closing stage", ie);
         Thread.currentThread().interrupt();
@@ -69,16 +68,16 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
   }
   
-  interface SourceQueue<W> extends Source<W> {
+  interface SourceQueue extends Source {
     int clear();
 
     @Override
     boolean isEmpty();
 
     @Override
-    W poll(long timeout) throws InterruptedException;
+    Event poll(long timeout) throws InterruptedException;
 
-    void put(W context) throws InterruptedException;
+    void put(Event context) throws InterruptedException;
 
     int size();
 
@@ -86,39 +85,34 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     String getSourceName();
   }
 
-  class HandledContext<C> implements ContextWrapper<C> {
-    private final C context;
+  class HandledEvent<C> implements Event {
+    private final Event event;
 
-    public HandledContext(C context) {
-      this.context = context;
+    public HandledEvent(Event event) {
+      this.event = event;
     }
 
     @Override
-    public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
+    public Void call() throws EventHandlerException {
       try {
-        handler.handleEvent(this.context);
+        event.call();
       } finally {
         Assert.assertTrue(inflight.decrementAndGet() >= 0);
       }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
+      return null;
     }
   }
   
   
-  static class CloseContext<C> implements ContextWrapper<C> {
+  static class CloseEvent<C> implements Event {
 
-    public CloseContext() {
+    public CloseEvent() {
     }
 
     @Override
-    public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
+    public Void call() throws EventHandlerException {
+      return null;
     }
+
   }
 }
