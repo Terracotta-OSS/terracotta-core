@@ -21,39 +21,45 @@ package com.tc.async.impl;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.stats.Stats;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
 /**
- * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
- * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
- * across process boundaries.
  */
 public class MonitoringSink<EC> implements Sink<EC> {
   private final String name;
-  private final Sink<EC> delegate;
+  private final Sink<StatsWrapper<EC>> delegate;
   private final EventHandler<EC> handler;
-  private final Map<Object, PipelineMonitor> record = Collections.synchronizedMap(new IdentityHashMap<>());
-  private static final ThreadLocal<PipelineMonitor> current = new ThreadLocal<>();
+  private static final ThreadLocal<PipelineMonitor> CURRENT = new ThreadLocal<>();
+  private final LongAdder queueTime = new LongAdder();
+  private final LongAdder runTime = new LongAdder();
+  private final LongAdder queued = new LongAdder();
 
 
   public MonitoringSink(String name, StageQueue<EC> delegate, EventHandler<EC> handler, boolean direct) {
     this.name = name;
     this.handler = wrapHandler(handler);
-    this.delegate = direct ? delegate : new DirectSink<>(this.handler, delegate::isEmpty, delegate);
+    Sink base = direct ? delegate : new DirectSink<>(this.handler, delegate::isEmpty, delegate);
+    this.delegate = (Sink<StatsWrapper<EC>>)base;
   }
   
   public static PipelineMonitor finish() {
-    return current.get().close();
+    PipelineMonitor mon = CURRENT.get();
+    if (mon != null) {
+      mon.close();
+      CURRENT.remove();
+    }
+    return mon;
   }
   
-  public static void reset() {
-    current.remove();
+  public static void start() {
+    CURRENT.set(new PipelineMonitor());
   }
   
   public EventHandler<EC> getHandler() {
@@ -64,11 +70,25 @@ public class MonitoringSink<EC> implements Sink<EC> {
     return new EventHandler<EC>() {
       @Override
       public void handleEvent(EC context) throws EventHandlerException {
-        PipelineMonitor monitor = record.remove(context);
-        current.set(monitor.action(name, PipelineMonitor.Type.RUN, context));
-        handle.handleEvent(context);
-        current.remove();
-        monitor.action(name, PipelineMonitor.Type.END, context);
+        StatsWrapper<EC> stats = (StatsWrapper<EC>)context;
+        PipelineMonitor monitor = stats.monitor();
+        if (monitor != null) {
+          CURRENT.set(monitor.action(name, PipelineMonitor.Type.RUN, context));
+        }
+        stats.run();
+        handle.handleEvent(stats.getBase());
+        stats.end();
+        addStats(stats);
+        if (monitor != null) {
+          CURRENT.remove();
+          monitor.action(name, PipelineMonitor.Type.END, context);
+        }
+      }
+      
+      private void addStats(StatsWrapper stats) {
+        runTime.add(stats.runTime());
+        queueTime.add(stats.queueTime());
+        queued.increment();
       }
 
       @Override
@@ -90,26 +110,22 @@ public class MonitoringSink<EC> implements Sink<EC> {
     };
   }
   
-  private void record(EC context, Consumer<EC> next) {
-    PipelineMonitor running = current.get();
-    if (running == null) {
-      running = new PipelineMonitor();
-    }
-    running = running.action(name, PipelineMonitor.Type.ENQUEUE, context);
-    if (record.put(context, running) != null) {
-      throw new AssertionError();
+  private void record(StatsWrapper<EC> context, Consumer<StatsWrapper<EC>> next) {
+    PipelineMonitor running = context.monitor();
+    if (running != null) {
+      running.action(name, PipelineMonitor.Type.ENQUEUE, context);
     }
     next.accept(context);
   }
 
   @Override
   public void addSingleThreaded(EC context) {
-    record(context, delegate::addSingleThreaded);
+    record(new StatsWrapper<>(context), delegate::addSingleThreaded);
   }
 
   @Override
   public void addMultiThreaded(EC context) {
-    record(context, delegate::addMultiThreaded);
+    record(new MultiThreadedStatsWrapper<>(context), delegate::addMultiThreaded);
   }
 
   @Override
@@ -133,31 +149,76 @@ public class MonitoringSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void enableStatsCollection(boolean enable) {
-    this.delegate.enableStatsCollection(enable);
+  public Map<String, ?> getState() {
+    Map<String, Object> stats = new LinkedHashMap<>();
+    stats.put("queueTime", queueTime);
+    stats.put("runTime", runTime);
+    stats.put("count", queued);
+    long count = queued.sum();
+    if (count > 0) {
+      stats.put("average queue time", TimeUnit.NANOSECONDS.toNanos(queueTime.sum()/count));
+      stats.put("average run time", TimeUnit.NANOSECONDS.toNanos(runTime.sum()/count));
+    }
+    return stats;
   }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    return this.delegate.isStatsCollectionEnabled();
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    return this.delegate.getStats(frequency);
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return this.delegate.getStatsAndReset(frequency);
-  }
-
-  @Override
-  public void resetStats() {
-    this.delegate.resetStats();
-  }
-
-
   
-  
+  private static class MultiThreadedStatsWrapper<EC> extends StatsWrapper<EC> implements MultiThreadedEventContext {
+
+    public MultiThreadedStatsWrapper(EC base) {
+      super(base);
+    }
+
+    @Override
+    public Object getSchedulingKey() {
+      return ((MultiThreadedEventContext)getBase()).getSchedulingKey();
+    }
+
+    @Override
+    public boolean flush() {
+      return ((MultiThreadedEventContext)getBase()).flush();
+    }
+    
+  }
+
+  private static class StatsWrapper<EC> {
+    private final EC base;
+    private long queue = 0;
+    private long run = 0;
+    private long end = 0;
+    private final PipelineMonitor monitor = CURRENT.get();
+
+    public StatsWrapper(EC base) {
+      this.base = base;
+      queue();
+    }
+    
+    void run() {
+      run = System.nanoTime();
+    }
+    
+    final void queue() {
+      queue = System.nanoTime();
+    }
+    
+    void end() {
+      end = System.nanoTime();
+    }
+    
+    long queueTime() {
+      return run - queue;
+    }
+    
+    long runTime() {
+      return end - run;
+    }
+    
+    EC getBase() {
+      return base;
+    }
+    
+    PipelineMonitor monitor() {
+      return monitor;
+    }
+    
+  }
 }

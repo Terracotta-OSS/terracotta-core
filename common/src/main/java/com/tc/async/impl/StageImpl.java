@@ -33,7 +33,12 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The SEDA Stage
@@ -186,6 +191,18 @@ public class StageImpl<EC> implements Stage<EC> {
   void waitForIdle() {
     Arrays.stream(threads).forEach(t->t.waitForIdleUninterruptibly());
   }
+  
+  @Override
+  public Map<String, ?> getState() {
+    Map<String, Object> data = new LinkedHashMap<>();
+    List<Object> tl = new ArrayList<>(threads.length);
+    Arrays.stream(threads).forEach(t->{if (t != null) tl.add(t.getStats());});
+    data.put("name", name);
+    data.put("threadCount", threads.length);
+    data.put("sink", getSink().getState());
+    data.put("threads", tl);
+    return data;
+  }
 
   private class WorkerThread<EC> extends Thread {
     private final Source<ContextWrapper<EC>>       source;
@@ -193,6 +210,9 @@ public class StageImpl<EC> implements Stage<EC> {
     private volatile boolean idle = false;
     private final Object idleLock = new Object();
     private boolean waitingForIdle = false;
+    private long idleTime  = 0;
+    private long runTime = 0;
+    private long count = 0;
 
     public WorkerThread(String name, Source<ContextWrapper<EC>> source, EventHandler<EC> handler) {
       super(group, name);
@@ -223,11 +243,18 @@ public class StageImpl<EC> implements Stage<EC> {
         ContextWrapper<EC> ctxt = null;
         try {
           this.setToIdle();
+          long stopped = System.nanoTime();
           ctxt = source.poll(pollTime);
           if (ctxt != null) {
+            long running = System.nanoTime();
             this.idle = false;
             handleStageDebugPauses();
+            idleTime += (running - stopped);
             ctxt.runWithHandler(handler);
+            runTime += (System.nanoTime() - running);
+            count += 1;
+          } else {
+            idleTime += (System.nanoTime() - stopped);
           }
         } catch (InterruptedException ie) {
           if (shutdown) { continue; }
@@ -288,7 +315,18 @@ public class StageImpl<EC> implements Stage<EC> {
         }
       }
     }
+    
+    private Map<String, ?> getStats() {
+      Map<String, Object> state = new LinkedHashMap<>();
+      state.put("idle", idleTime);
+      state.put("run", runTime);
+      state.put("processed", count);
+      state.put("backlog", source.size());
+      return state;
+    }
   }
+  
+  
 
   private static boolean isTCNotRunningException(Throwable e) {
     Throwable rootCause = null;

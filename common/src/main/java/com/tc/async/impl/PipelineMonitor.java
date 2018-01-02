@@ -7,6 +7,7 @@ package com.tc.async.impl;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -87,6 +88,7 @@ public class PipelineMonitor {
     }
     StringBuilder builder = new StringBuilder("\n" + parent + "\n");
     items.forEach(r->builder.append("\t" + r + "\n"));
+    builder.append("time:" + TimeUnit.NANOSECONDS.toMicros(items.get(items.size()-1).time - items.get(0).time));
     return builder.toString();
   }
   

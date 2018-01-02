@@ -30,14 +30,15 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
+import com.tc.text.MapListPrettyPrint;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.ArrayList;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -181,21 +182,34 @@ public class StageManagerImpl implements StageManager {
     final Stats[] stats = new Stats[names.length];
 
     for (int i = 0; i < names.length; i++) {
-      stats[i] = stages.get(names[i]).getSink().getStats(MONITOR_DELAY);
+      Map<String, ?> data = stages.get(names[i]).getState();
+      stats[i] = new Stats() {
+        @Override
+        public String getDetails() {
+          MapListPrettyPrint pp = new MapListPrettyPrint();
+          pp.println(data);
+          return pp.toString();
+        }
+
+        @Override
+        public void logDetails(Logger statsLogger) {
+          statsLogger.info(getDetails());
+        }
+      };
     }
     return stats;
   }
 
   @Override
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    Map<String,Object> map = new LinkedHashMap<String,Object>();
+    Map<String,Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     map.put("monitor", MONITOR);
-    Map<String,Object> stageMap = new LinkedHashMap<String,Object>();
+    List<Object> list = new ArrayList<>(stages.size());
     for (Stage<?> stage : stages.values()) {
-      stageMap.put(stage.getName(), stage.getSink().size());
+      list.add(stage.getState());
     }
-    map.put("stages", stageMap);
+    map.put("stages", list);
     return out.println(map);
   }
 }
