@@ -32,7 +32,7 @@ import java.nio.channels.SocketChannel;
 /**
  * @author Ludovic Orban
  */
-class ClearTextBufferManager implements BufferManager {
+class ClearTextBufferManager extends AbstractBufferManager {
   private static final Logger logger         = LoggerFactory.getLogger(ClearTextBufferManager.class);
   private static final String   BUFFER_SIZE    = "clear.text.buffer.size";
   private static final int      BUFFER_SIZE_KB = Integer.getInteger(BUFFER_SIZE, 16) * 1024;
@@ -69,42 +69,12 @@ class ClearTextBufferManager implements BufferManager {
   }
 
   @Override
-  public int forwardFromReadBuffer(ByteBuffer dest) {
-    recvBuffer.flip();
-    int forwarded = forwardBuffer(recvBuffer, dest);
-    recvBuffer.compact();
-    return forwarded;
+  protected ByteBuffer getRecvBuffer() {
+    return recvBuffer;
   }
 
   @Override
-  public int forwardFromReadBuffer(GatheringByteChannel gbc) throws IOException {
-    recvBuffer.flip();
-    int forwarded = gbc.write(recvBuffer);
-    recvBuffer.compact();
-    if (forwarded == -1) { throw new EOFException(); }
-    return forwarded;
-  }
-
-  @Override
-  public int forwardToWriteBuffer(ByteBuffer src) {
-    return forwardBuffer(src, sendBuffer);
-  }
-
-  @Override
-  public int forwardToWriteBuffer(ScatteringByteChannel sbc) throws IOException {
-    int read = sbc.read(sendBuffer);
-    if (read == -1) { throw new EOFException(); }
-    return read;
-  }
-
-  private static int forwardBuffer(ByteBuffer source, ByteBuffer dest) {
-    int size = Math.min(dest.remaining(), source.remaining());
-    if (size > 0) {
-      ByteBuffer tmpBuf = source.duplicate();
-      tmpBuf.limit(tmpBuf.position() + size);
-      dest.put(tmpBuf);
-      source.position(source.position() + size);
-    }
-    return size;
+  protected ByteBuffer getSendBuffer() {
+    return sendBuffer;
   }
 }
