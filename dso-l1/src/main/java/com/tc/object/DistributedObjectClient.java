@@ -36,7 +36,6 @@ import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.lang.TCThreadGroup;
-import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.util.ProductID;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
@@ -116,6 +115,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 
@@ -160,9 +160,9 @@ public class DistributedObjectClient implements TCClient {
   
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
-                                 ClusterInternal cluster) {
-    this(config, new StandardClientBuilder(ProductID.PERMANENT), threadGroup, connectionComponents, cluster,
-        UUID.NULL_ID.toString(), "");
+                                 ClusterInternal cluster, Properties properties) {
+    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents, cluster,
+         UUID.NULL_ID.toString(), "");
   }
 
   public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
@@ -268,8 +268,7 @@ public class DistributedObjectClient implements TCClient {
                                      new NullConnectionPolicy(),
                                      hc,
                                      getMessageTypeClassMapping(),
-                                     ReconnectionRejectedHandlerL1.SINGLETON,
-                                     new ClearTextBufferManagerFactory());
+                                     ReconnectionRejectedHandlerL1.SINGLETON);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 

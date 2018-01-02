@@ -25,15 +25,22 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.StandardClientBuilder;
 import com.tc.util.ProductID;
 
+import java.util.Properties;
+
 
 public class DiagnosticClientBuilder extends StandardClientBuilder {
 
-  public DiagnosticClientBuilder() {
-    super(ProductID.DIAGNOSTIC);
+  public DiagnosticClientBuilder(Properties connectionProperties) {
+    super(connectionProperties);
   }
 
   @Override
   public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
     return new DiagnosticClientEntityManager(channel);
+  }
+
+  @Override
+  protected ProductID getTypeOfClient(Properties connectionProperties) {
+    return ProductID.DIAGNOSTIC;
   }
 }

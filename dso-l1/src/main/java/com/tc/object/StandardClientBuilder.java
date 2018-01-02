@@ -19,11 +19,13 @@
 package com.tc.object;
 
 import org.slf4j.Logger;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 import com.tc.async.api.StageManager;
-import com.tc.net.core.BufferManagerFactory;
-import com.tc.util.ProductID;
+import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.management.TCClient;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -41,19 +43,20 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.cluster.ClusterInternalEventsGun;
+import com.tc.util.ProductID;
 
 import java.util.Map;
+import java.util.Properties;
 
 
 public class StandardClientBuilder implements ClientBuilder {
   
   private final ProductID typeOfClient;
 
-  public StandardClientBuilder(ProductID product) {
-    this.typeOfClient = product;
+  public StandardClientBuilder(Properties connectionProperties) {
+    this.typeOfClient = getTypeOfClient(connectionProperties);
   }
-  
+
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
@@ -67,11 +70,10 @@ public class StandardClientBuilder implements ClientBuilder {
                                                            ConnectionPolicy connectionPolicy, 
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
-                                                           ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                                           BufferManagerFactory bufferManagerFactory) {
+                                                           ReconnectionRejectedHandler reconnectionRejectedHandler) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
                                          connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         reconnectionRejectedHandler, bufferManagerFactory);
+                                         reconnectionRejectedHandler, getBufferManagerFactory());
   }
 
   @Override
@@ -91,4 +93,24 @@ public class StandardClientBuilder implements ClientBuilder {
     return new ClientEntityManagerImpl(channel, stages);
   }
 
+  protected ProductID getTypeOfClient(Properties connectionProperties) {
+    boolean noreconnect =
+        Boolean.valueOf(connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT,
+                                                         "false"));
+    String typeName = connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE);
+    ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
+    try {
+      if (typeName != null) {
+        product = ProductID.valueOf(typeName);
+      }
+    } catch (IllegalArgumentException arg) {
+      // do nothing, just stick with the default
+    }
+
+    return product;
+  }
+
+  protected BufferManagerFactory getBufferManagerFactory() {
+    return new ClearTextBufferManagerFactory();
+  }
 }

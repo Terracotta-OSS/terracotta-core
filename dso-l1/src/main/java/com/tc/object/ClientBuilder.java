@@ -53,8 +53,7 @@ public interface ClientBuilder {
                                                     ConnectionPolicy connectionPolicy,
                                                     HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
-                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour,
-                                                    BufferManagerFactory bufferManagerFactory);
+                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour);
 
   ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
