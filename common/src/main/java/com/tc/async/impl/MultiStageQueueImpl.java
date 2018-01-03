@@ -372,7 +372,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
     
     @Override
-    public Void call() throws EventHandlerException {
+    public void call() throws EventHandlerException {
       if (++executionCount == sourceQueues.length) {
 //  been through all the queues.  execute now.
         super.call();
@@ -395,7 +395,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
           }
         }
       }
-      return null;
     }
   }
 }

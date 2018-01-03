@@ -25,6 +25,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.DirectEventCreator;
 import com.tc.async.impl.MonitoringEventCreator;
+import com.tc.async.impl.PipelineMonitor;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -717,7 +718,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
             });
           });
         }
-        LOGGER.info(MonitoringEventCreator.finish().toString());
+        PipelineMonitor monitor = MonitoringEventCreator.finish();
+        if (monitor != null) {
+          LOGGER.info(monitor.toString());
+        }
       } else {
         throw new AssertionError();
       }
@@ -729,7 +733,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
         Assert.assertTrue(sent.isSet());
         addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));
       }
-      LOGGER.info(MonitoringEventCreator.finish().toString());
+      PipelineMonitor monitor = MonitoringEventCreator.finish();
+      if (monitor != null) {
+        LOGGER.info(monitor.toString());
+      }
     }
   }
   

@@ -100,7 +100,7 @@ public class MultiStageQueueImplTest {
 
     });
     StageQueue<Object> instance = new MultiStageQueueImpl(size, context, Object.class, 
-        mock(EventCreator.class),
+        (event)->()->System.out.println(event),
         logger, "mock", 16);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));
@@ -136,7 +136,7 @@ public class MultiStageQueueImplTest {
       if (x != 1) {
         assertTrue(cxts.get(x).isEmpty());
       } else {
-        assertEquals(cxts.get(x).poll(), context1);
+        assertNotNull(cxts.get(x).poll());
       }
     }
 
@@ -144,7 +144,7 @@ public class MultiStageQueueImplTest {
     when(context1.getSchedulingKey()).thenReturn(rand);
     instance.addMultiThreaded(context1);
     //  tests specific implementation.  test expectation
-    assertEquals(cxts.get(rand % cxts.size()).poll(), context1);
+    assertNotNull(cxts.get(rand % cxts.size()).poll());
   }
 
   @Test
@@ -213,7 +213,7 @@ public class MultiStageQueueImplTest {
     MultiStageQueueImpl impl = new MultiStageQueueImpl(8,
                                                                                                              qFactory,
                                                                                                              MultiThreadedEventContext.class,
-                                                                                                          mock(EventCreator.class),
+                                                                                                             (event)->()->{},
                                                                                                              logger,
                                                                                                              "perf",
                                                                                                              100);

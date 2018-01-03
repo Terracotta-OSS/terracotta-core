@@ -19,14 +19,11 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.EventHandlerException;
-import java.util.concurrent.Callable;
 
 /**
    * This interface is used to wrap the contexts put into the queues since we use them different ways but still want them
    * handled in-order.  This replaces an instanceof hack, previously in use.
    */
-public interface Event extends Callable<Void> {
-  @Override
-  public Void call() throws EventHandlerException;
-  
+public interface Event {
+  public void call() throws EventHandlerException;
 }

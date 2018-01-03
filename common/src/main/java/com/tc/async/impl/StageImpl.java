@@ -95,10 +95,7 @@ public class StageImpl<EC> implements Stage<EC> {
   }
   
   private EventCreator<EC> baseCreator() {
-    return (event) -> () -> {
-      handler.handleEvent(event);
-      return null;
-    };
+    return (event) -> () -> handler.handleEvent(event);
   }
 
   @Override

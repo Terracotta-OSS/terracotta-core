@@ -61,10 +61,7 @@ public class DirectEventCreator<EC> implements EventCreator<EC> {
       if (directInflight) {
         throw new AssertionError();
       }
-      return ()->{
-        handler.handleEvent(event);
-        return null;
-      };
+      return ()->handler.handleEvent(event);
     }
   }
   

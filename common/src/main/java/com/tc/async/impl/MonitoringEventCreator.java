@@ -74,7 +74,6 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
           CURRENT.remove();
           monitor.action(name, PipelineMonitor.Type.END, event);
         }
-        return null;
       };
     } else {
       if (running != null) {

@@ -91,7 +91,7 @@ public class SingletonStageQueueImplTest {
       }
 
     });
-    StageQueue<Object> instance = new SingletonStageQueueImpl(context, Object.class, mock(EventCreator.class), logger, "mock", 16);
+    StageQueue<Object> instance = new SingletonStageQueueImpl(context, Object.class, (e)->()->{}, logger, "mock", 16);
     assertEquals(cxts.size(), 1);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));
@@ -126,7 +126,7 @@ public class SingletonStageQueueImplTest {
       if (x != 0) {
         assertTrue(cxts.get(x).isEmpty());
       } else {
-        assertEquals(cxts.get(x).poll(), context1);
+        assertNotNull(cxts.get(x).poll());
       }
     }
 
@@ -134,7 +134,7 @@ public class SingletonStageQueueImplTest {
     when(context1.getSchedulingKey()).thenReturn(rand);
     instance.addMultiThreaded(context1);
     //  tests specific implementation.  test expectation
-    assertEquals(cxts.get(rand % cxts.size()).poll(), context1);
+    assertNotNull(cxts.get(rand % cxts.size()).poll());
   }
 
 }

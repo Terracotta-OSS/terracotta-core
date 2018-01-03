@@ -93,13 +93,12 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
 
     @Override
-    public Void call() throws EventHandlerException {
+    public void call() throws EventHandlerException {
       try {
         event.call();
       } finally {
         Assert.assertTrue(inflight.decrementAndGet() >= 0);
       }
-      return null;
     }
   }
   
@@ -110,8 +109,8 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
 
     @Override
-    public Void call() throws EventHandlerException {
-      return null;
+    public void call() throws EventHandlerException {
+
     }
 
   }
