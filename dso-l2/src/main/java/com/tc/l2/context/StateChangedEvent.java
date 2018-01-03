@@ -32,7 +32,7 @@ public class StateChangedEvent {
   }
 
   public boolean movedToActive() {
-    return to == StateManager.ACTIVE_COORDINATOR;
+    return StateManager.ACTIVE_COORDINATOR.equals(to);
   }
   
   public State getCurrentState() {

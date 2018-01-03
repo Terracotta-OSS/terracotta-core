@@ -34,6 +34,9 @@ import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManager.Transition;
+import com.tc.l2.state.ServerMode;
+import static org.mockito.Matchers.any;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -58,7 +61,7 @@ public class ActiveToPassiveReplicationTest {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
     ConsistencyManager cmgr = mock(ConsistencyManager.class);
-    when(cmgr.requestTransition()).thenReturn(Boolean.TRUE);
+    when(cmgr.requestTransition(any(ServerMode.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     replication = new ActiveToPassiveReplication(cmgr, mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   

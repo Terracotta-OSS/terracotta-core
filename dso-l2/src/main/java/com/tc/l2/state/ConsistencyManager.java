@@ -19,8 +19,13 @@
 package com.tc.l2.state;
 
 public interface ConsistencyManager {
-
-  boolean requestTransition() throws IllegalStateException;
   
-  void setTransitionsAllowed(boolean allowed);
+  public enum Transition {
+    MOVE_TO_ACTIVE,
+    ADD_CLIENT,
+    REMOVE_PASSIVE,
+    ADD_PASSIVE
+  }
+
+  boolean requestTransition(ServerMode mode, Transition newMode) throws IllegalStateException;
 }

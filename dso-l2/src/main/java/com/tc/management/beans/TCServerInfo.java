@@ -24,20 +24,18 @@ import org.slf4j.LoggerFactory;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
 import com.tc.server.TCServer;
 import com.tc.util.ProductInfo;
-import com.tc.util.State;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -378,18 +376,18 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   @Override
   public void l2StateChanged(StateChangedEvent sce) {
-    State state = sce.getCurrentState();
+    ServerMode cmode = StateManager.convert(sce.getCurrentState());
 
-    if (state.equals(StateManager.ACTIVE_COORDINATOR)) {
+    if (cmode == ServerMode.ACTIVE) {
       server.updateActivateTime();
     }
 
-    debugPrintln("*****  msg=[" + stateChangeNotificationInfo.getMsg(state) + "] attrName=["
-                 + stateChangeNotificationInfo.getAttributeName(state) + "] attrType=["
-                 + stateChangeNotificationInfo.getAttributeType(state) + "] stateName=[" + state.getName() + "]");
+    debugPrintln("*****  msg=[" + stateChangeNotificationInfo.getMsg(cmode) + "] attrName=["
+                 + stateChangeNotificationInfo.getAttributeName(cmode) + "] attrType=["
+                 + stateChangeNotificationInfo.getAttributeType(cmode) + "] stateName=[" + cmode.getName() + "]");
 
-    _sendNotification(stateChangeNotificationInfo.getMsg(state), stateChangeNotificationInfo.getAttributeName(state),
-                      stateChangeNotificationInfo.getAttributeType(state), Boolean.FALSE, Boolean.TRUE);
+    _sendNotification(stateChangeNotificationInfo.getMsg(cmode), stateChangeNotificationInfo.getAttributeName(cmode),
+                      stateChangeNotificationInfo.getAttributeType(cmode), Boolean.FALSE, Boolean.TRUE);
   }
 
   private synchronized void _sendNotification(String msg, String attr, String type, Object oldVal, Object newVal) {

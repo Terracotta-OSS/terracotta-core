@@ -13,6 +13,7 @@ import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
@@ -67,7 +68,7 @@ public class StateManagerImplTest {
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
     ConsistencyManager mgr = mock(ConsistencyManager.class);
-    when(mgr.requestTransition()).thenReturn(Boolean.TRUE);
+    when(mgr.requestTransition(any(ServerMode.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       int port = pc.chooseRandom2Port();
       ports[i] = port;
@@ -166,7 +167,7 @@ public class StateManagerImplTest {
         });
     
     ConsistencyManager mgr = mock(ConsistencyManager.class);
-    when(mgr.requestTransition()).thenReturn(Boolean.TRUE);
+    when(mgr.requestTransition(any(ServerMode.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory, mgr, 
           statePersistor);
     state.initializeAndStartElection();
@@ -205,5 +206,10 @@ public class StateManagerImplTest {
     Assert.assertEquals(active, stateManagers[2].getActiveNodeID());
   }
 
+  @Test
+  public void testStateConversion() {
+    ServerMode mode = StateManager.convert(StateManager.ACTIVE_COORDINATOR);
+    com.tc.util.Assert.assertEquals(ServerMode.ACTIVE, mode);
+  }
 
 }

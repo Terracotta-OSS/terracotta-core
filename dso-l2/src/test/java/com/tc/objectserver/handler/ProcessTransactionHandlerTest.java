@@ -39,6 +39,7 @@ import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -151,7 +152,7 @@ public class ProcessTransactionHandlerTest {
     when(l2.getReplicatedClusterStateManager()).thenReturn(rep);
     when(cxt.getL2Coordinator()).thenReturn(l2);
     StateManager state = mock(StateManager.class);
-    when(state.getCurrentState()).thenReturn(new State("ACTIVE"));
+    when(state.getCurrentMode()).thenReturn(ServerMode.ACTIVE);
     when(l2.getStateManager()).thenReturn(state);
     Stage stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));

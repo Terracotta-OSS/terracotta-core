@@ -221,7 +221,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       super.initialize(context); 
       ServerConfigurationContext server = (ServerConfigurationContext)context;
       
-      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentState());
+      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentMode().getState());
       server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
       
       Stage<TCMessage> mss = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
@@ -363,6 +363,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           } else {
             //  can be null because of flush or disconnect
             LOGGER.error("fetched entity not found " + descriptor + " action:" + action + " " + sourceNodeID);
+            return;
           }
         }
       }

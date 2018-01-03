@@ -24,28 +24,20 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public interface StateManager {
-
-  public static final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
-  public static final State       RECOVERING           = new State("RECOVERING");
-  public static final State       PASSIVE_UNINITIALIZED = new State("PASSIVE-UNINITIALIZED");
-  public static final State       PASSIVE_SYNCING = new State("PASSIVE-SYNCING");
-  public static final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
-  public static final State       START_STATE          = new State("START-STATE");
-  public static final State       STOP_STATE           = new State("STOP-STATE");
-  public static final List<State> VALID_STATES          = Collections.unmodifiableList(Arrays
-                                                           .asList(START_STATE, PASSIVE_UNINITIALIZED, PASSIVE_SYNCING, PASSIVE_STANDBY,
-                                                                   ACTIVE_COORDINATOR, STOP_STATE, RECOVERING));
-  public static final List<State> PASSIVE_STATES          = Collections.unmodifiableList(Arrays
-                                                           .asList(PASSIVE_UNINITIALIZED, PASSIVE_SYNCING, PASSIVE_STANDBY));
+  
+  public final State       ACTIVE_COORDINATOR   = new State("ACTIVE-COORDINATOR");
+  public final State       RECOVERING_STATE           = new State("RECOVERING");
+  public final State       PASSIVE_UNINITIALIZED = new State("PASSIVE-UNINITIALIZED");
+  public final State       PASSIVE_SYNCING = new State("PASSIVE-SYNCING");
+  public final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
+  public final State       START_STATE          = new State("START-STATE");
+  public final State       STOP_STATE           = new State("STOP-STATE");
 
   public void initializeAndStartElection();
 
-  public State getCurrentState();
+  public ServerMode getCurrentMode();
 
   public void startElectionIfNecessary(NodeID disconnectedNode);
 
@@ -66,4 +58,12 @@ public interface StateManager {
   public NodeID getActiveNodeID();
 
   public void cleanupKnownServers();
+  
+  public static ServerMode convert(State state) {
+    if (state == null) {
+      return null;
+    } else {
+      return ServerMode.VALID_STATES.stream().filter(m->m.getState().equals(state)).findFirst().get();
+    }
+  }
 }

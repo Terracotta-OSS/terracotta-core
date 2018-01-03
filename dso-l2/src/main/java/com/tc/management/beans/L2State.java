@@ -19,6 +19,7 @@
 package com.tc.management.beans;
 
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.util.State;
@@ -55,7 +56,7 @@ public class L2State implements StateChangeListener {
   }
 
   private boolean validateState(State state) {
-    return StateManager.VALID_STATES.contains(state);
+    return ServerMode.VALID_STATES.contains(StateManager.convert(state));
   }
 
   @Override
@@ -84,7 +85,7 @@ public class L2State implements StateChangeListener {
   }
 
   public boolean isRecovering() {
-    return getState().equals(StateManager.RECOVERING);
+    return getState().equals(StateManager.RECOVERING_STATE);
   }
 
   public void registerStateChangeListener(StateChangeListener listener) {

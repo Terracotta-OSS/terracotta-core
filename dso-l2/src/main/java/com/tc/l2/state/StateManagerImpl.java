@@ -36,7 +36,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.Assert;
-import com.tc.util.State;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -62,8 +61,8 @@ public class StateManagerImpl implements StateManager {
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
   private NodeID                       syncdTo          = ServerID.NULL_ID;
-  private volatile State               state               = START_STATE;
-  private State               startState               = null;
+  private volatile ServerMode               state               = ServerMode.START;
+  private ServerMode               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
 
   // Known servers from previous election
@@ -88,7 +87,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   @Override
-  public State getCurrentState() {
+  public ServerMode getCurrentMode() {
     return this.state;
   }
   
@@ -125,13 +124,13 @@ public class StateManagerImpl implements StateManager {
   @Override
   public void initializeAndStartElection() {
     debugInfo("Starting election");
-    startState = clusterStatePersistor.getInitialState();
+    startState = StateManager.convert(clusterStatePersistor.getInitialState());
     // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
     // the election and wait for a zap.
     info("Starting election initial state:" + startState);
-    if (startState != null && !startState.equals(ACTIVE_COORDINATOR)) {
+    if (startState != null && startState != ServerMode.ACTIVE) {
       info("Skipping election and waiting for the active to zap since this L2 did not go down as active.");
-    } else if (state.equals(START_STATE) || state.equals(PASSIVE_STANDBY)) {
+    } else if (state == ServerMode.START || state == ServerMode.PASSIVE) {
       runElection();
     } else {
       info("Ignoring Election request since not in right state: " + this.state);
@@ -151,14 +150,14 @@ public class StateManagerImpl implements StateManager {
     NodeID myNodeID = getLocalNodeID();
     // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
     // concluded)
-    boolean isNew = state.equals(START_STATE) && startState == null;
+    boolean isNew = state == ServerMode.START && startState == null;
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, state, (nodeid)-> {
+      electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-          if (this.availabilityMgr.requestTransition()) {
+          if (this.availabilityMgr.requestTransition(this.state, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
             moveToActiveState();
           } else {
             logger.info("rerunning election because " + nodeid + " not allowed to transition");
@@ -222,54 +221,62 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void fireStateChangedEvent(StateChangedEvent sce) {
-    for (StateChangeListener listener : listeners) {
+    listeners.forEach((listener) -> {
       listener.l2StateChanged(sce);
-    }
+    });
   }
 
   private synchronized void moveToPassiveReady(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
     logger.info("moving to passive ready " + state + " " + winningEnrollment);
-    if (state.equals(START_STATE)) {
-      setActiveNodeID(winningEnrollment.getNodeID());
-      state = (startState == null) ? PASSIVE_UNINITIALIZED : startState;
-      if (!state.equals(PASSIVE_STANDBY) && !state.equals(PASSIVE_UNINITIALIZED)) {
-// TODO:  make sure this is the proper way to handle this.
-        logger.error("caught in an unclean state " + state);
-        clusterStatePersistor.setDBClean(false);
-        throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB"); 
-      }
-      info("Moved to " + state, true);
-      stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state));
-    } else if (state.equals(PASSIVE_UNINITIALIZED)) {
-// double election
-      Assert.assertTrue(syncdTo.isNull());
-      setActiveNodeID(winningEnrollment.getNodeID());
-    } else if (state.equals(PASSIVE_SYNCING)) {
-      setActiveNodeID(winningEnrollment.getNodeID());
-      if (!syncdTo.equals(winningEnrollment.getNodeID())) {
-// TODO:  make sure this is the proper way to handle this.
-        logger.error("Passive only partially synced when active disappeared.  Restarting");
-        clusterStatePersistor.setDBClean(false);
-        throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting");
-      }
-    } else if (state.equals(ACTIVE_COORDINATOR)) {
-      // TODO:: Support this later
-      throw new AssertionError("Cant move to " + PASSIVE_UNINITIALIZED + " from " + ACTIVE_COORDINATOR
-                               + " at least for now");
-    } else {
+    if (null == state) {
       //  PASSIVE_STANDBY
       setActiveNodeID(winningEnrollment.getNodeID());
+    } else switch (state) {
+      case START:
+        setActiveNodeID(winningEnrollment.getNodeID());
+        state = (startState == null) ? ServerMode.UNINITIALIZED : startState;
+        if (state != ServerMode.PASSIVE && state != ServerMode.UNINITIALIZED) {
+// TODO:  make sure this is the proper way to handle this.
+          logger.error("caught in an unclean state " + state);
+          clusterStatePersistor.setDBClean(false);
+          throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB");
+        } 
+        info("Moved to " + state, true);
+        stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state.getState()));
+        break;
+      case UNINITIALIZED:
+        // double election
+        Assert.assertTrue(syncdTo.isNull());
+        setActiveNodeID(winningEnrollment.getNodeID());
+        break;
+      case SYNCING:
+        setActiveNodeID(winningEnrollment.getNodeID());
+        if (!syncdTo.equals(winningEnrollment.getNodeID())) {
+          // TODO:  make sure this is the proper way to handle this.
+          logger.error("Passive only partially synced when active disappeared.  Restarting");
+          clusterStatePersistor.setDBClean(false);
+          throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting");
+        } 
+        break;
+      case ACTIVE:
+        // TODO:: Support this later
+        throw new AssertionError("Cant move to " + PASSIVE_UNINITIALIZED + " from " + ACTIVE_COORDINATOR
+            + " at least for now");
+      default:
+        //  PASSIVE_STANDBY
+        setActiveNodeID(winningEnrollment.getNodeID());
+        break;
     }
   }
   
   @Override
   public synchronized void moveToPassiveSyncing(NodeID connectedTo) {
     synchronizedWaitForStart();
-    if (state.equals(PASSIVE_UNINITIALIZED)) {
+    if (state == ServerMode.UNINITIALIZED) {
       syncdTo = connectedTo;
-      stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_SYNCING));
-      state = PASSIVE_SYNCING;
+      stateChangeSink.addSingleThreaded(new StateChangedEvent(state.getState(), PASSIVE_SYNCING));
+      state = ServerMode.SYNCING;
       info("Moved to " + state, true);
     } 
   }
@@ -277,12 +284,12 @@ public class StateManagerImpl implements StateManager {
   @Override
   public synchronized void moveToPassiveStandbyState() {
     synchronizedWaitForStart();
-    if (state.equals(ACTIVE_COORDINATOR)) {
+    if (state == ServerMode.ACTIVE) {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
-    } else if (state != PASSIVE_STANDBY) {
-      stateChangeSink.addSingleThreaded(new StateChangedEvent(state, PASSIVE_STANDBY));
-      state = PASSIVE_STANDBY;
+    } else if (state != ServerMode.PASSIVE) {
+      stateChangeSink.addSingleThreaded(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
+      state = ServerMode.PASSIVE;
       info("Moved to " + state, true);
     } else {
       info("Already in " + state);
@@ -290,11 +297,11 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void moveToActiveState() {
-    if (state.equals(START_STATE) || state.equals(PASSIVE_STANDBY)) {
+    if (state == ServerMode.START || state == ServerMode.PASSIVE) {
       // TODO :: If state == START_STATE publish cluster ID
       debugInfo("Moving to active state");
-      StateChangedEvent event = new StateChangedEvent(state, ACTIVE_COORDINATOR);
-      state = ACTIVE_COORDINATOR;
+      StateChangedEvent event = new StateChangedEvent(state.getState(), ACTIVE_COORDINATOR);
+      state = ServerMode.ACTIVE;
       stateChangeSink.addSingleThreaded(event);
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
@@ -302,7 +309,7 @@ public class StateManagerImpl implements StateManager {
       // known servers list as they are in sync in with previous active
       currKnownServers.clear();
       currKnownServers.addAll(prevKnownServers);
-      electionMgr.declareWinner(getLocalNodeID(), state);
+      electionMgr.declareWinner(getLocalNodeID(), state.getState());
     } else {
       throw new AssertionError("Cant move to " + ACTIVE_COORDINATOR + " from " + state);
     }
@@ -325,11 +332,11 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public boolean isActiveCoordinator() {
-    return (state.equals(ACTIVE_COORDINATOR));
+    return (state == ServerMode.ACTIVE);
   }
 
   public boolean isPassiveUnitialized() {
-    return (state.equals(PASSIVE_UNINITIALIZED));
+    return (state == ServerMode.UNINITIALIZED);
   }
 
   @Override
@@ -366,7 +373,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won or election_already_won msg: " + clusterMsg);
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
-    if (state.equals(ACTIVE_COORDINATOR)) {
+    if (state == ServerMode.ACTIVE) {
       // Can't get Election Won from another node : Split brain
       String error = state + " Received Election Won Msg : " + clusterMsg
                      + ". A Terracotta server tried to join the mirror group as a second ACTIVE";
@@ -380,7 +387,7 @@ public class StateManagerImpl implements StateManager {
       // There is no active server for this node or the other node just detected a failure of ACTIVE server and ran an
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
-      if (startState == null || startState.equals(START_STATE)) {
+      if (startState == null || startState == ServerMode.START) {
         moveToPassiveReady(winningEnrollment);
         if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
           sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
@@ -407,11 +414,11 @@ public class StateManagerImpl implements StateManager {
     if (activeNode.equals(msg.getEnrollment().getNodeID())) {
       Assert.assertFalse(ServerID.NULL_ID.equals(activeNode));
       // This wouldn't normally happen, but we agree - so ack
-      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state);
+      AbstractGroupMessage resultAgreed = L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state.getState());
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
-    } else if (state.equals(ACTIVE_COORDINATOR) || !activeNode.isNull()
-               || (msg.getEnrollment().isANewCandidate() && state != START_STATE)) {
+    } else if (state == ServerMode.ACTIVE || !activeNode.isNull()
+               || (msg.getEnrollment().isANewCandidate() && state != ServerMode.START)) {
       // Condition 1 :
       // Obviously an issue.
       // Condition 2 :
@@ -421,45 +428,45 @@ public class StateManagerImpl implements StateManager {
       // Condition 3 :
       // We don't want new L2s to win an election when there are old L2s in PASSIVE states.
       AbstractGroupMessage resultConflict = L2StateMessage.createResultConflictMessage(msg, EnrollmentFactory
-          .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
+          .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state.getState());
       warn("WARNING :: Active Node = " + activeNode + " , " + state
            + " received ELECTION_RESULT message from another node : " + msg + " : Forcing re-election "
            + resultConflict);
       groupManager.sendTo(msg.messageFrom(), resultConflict);
     } else {
       debugInfo("ElectionMgr handling election result msg: " + msg);
-      electionMgr.handleElectionResultMessage(msg, state);
+      electionMgr.handleElectionResultMessage(msg, state.getState());
     }
   }
 
   private synchronized void handleElectionAbort(L2StateMessage clusterMsg) {
-    if (state.equals(ACTIVE_COORDINATOR)) {
+    if (state == ServerMode.ACTIVE) {
       // Cant get Abort back to ACTIVE, if so then there is a split brain
       String error = state + " Received Abort Election  Msg : Possible split brain detected ";
       logger.error(error);
       groupManager.zapNode(clusterMsg.messageFrom(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, error);
     } else {
       debugInfo("ElectionMgr handling election abort");
-      electionMgr.handleElectionAbort(clusterMsg, state);
+      electionMgr.handleElectionAbort(clusterMsg, state.getState());
       moveToPassiveReady(clusterMsg.getEnrollment());
     }
   }
 
   private synchronized void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
-    if (state.equals(ACTIVE_COORDINATOR)) {
+    if (state == ServerMode.ACTIVE) {
       //  if this is not a new candidate, zap it and start over
       if (!msg.getEnrollment().isANewCandidate() && msg.getState().equals(START_STATE)) {
         groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "");
       } else {
         // This is either a new L2 joining a cluster or a renegade L2. Force it to abort
         AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, EnrollmentFactory
-            .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
+            .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state.getState());
         info("Forcing Abort Election for " + msg + " with " + abortMsg);
         groupManager.sendTo(msg.messageFrom(), abortMsg);
       }
     } else {
       currKnownServers.add(msg.getEnrollment().getNodeID());
-      if (!electionMgr.handleStartElectionRequest(msg, state)) {
+      if (!electionMgr.handleStartElectionRequest(msg, state.getState())) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
         startElectionIfNecessary(ServerID.NULL_ID);
       }
@@ -472,7 +479,7 @@ public class StateManagerImpl implements StateManager {
     debugInfo("Publishing active state to nodeId: " + nodeID);
     Assert.assertTrue(isActiveCoordinator());
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(EnrollmentFactory
-        .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state);
+        .createTrumpEnrollment(getLocalNodeID(), weightsFactory), state.getState());
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validateResponse(nodeID, response);
   }
@@ -506,16 +513,16 @@ public class StateManagerImpl implements StateManager {
 
     synchronized (this) {
       currKnownServers.remove(disconnectedNode);
-      if (state.equals(START_STATE) || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
+      if (state == ServerMode.START || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);
       }
-      if (state.equals(PASSIVE_SYNCING) && syncdTo.equals(disconnectedNode)) {
+      if (state == ServerMode.SYNCING && syncdTo.equals(disconnectedNode)) {
         //  need to zap and start over.  The active being synced to is gone.
         logger.error("Passive only partially synced when active disappeared.  Restarting");
         clusterStatePersistor.setDBClean(false);
         throw new TCServerRestartException("Passive only partially synced when active disappeared.  Restarting"); 
-      } else if (state != ACTIVE_COORDINATOR && activeNode.isNull()) {
+      } else if (state != ServerMode.ACTIVE && activeNode.isNull()) {
         elect = true;
       }
     }
@@ -529,7 +536,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendOKResponse(NodeID fromNode, L2StateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state));
+      groupManager.sendTo(fromNode, L2StateMessage.createResultAgreedMessage(msg, msg.getEnrollment(), state.getState()));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }
@@ -537,7 +544,7 @@ public class StateManagerImpl implements StateManager {
 
   private void sendNGResponse(NodeID fromNode, L2StateMessage msg) {
     try {
-      groupManager.sendTo(fromNode, L2StateMessage.createResultConflictMessage(msg, msg.getEnrollment(), state));
+      groupManager.sendTo(fromNode, L2StateMessage.createResultConflictMessage(msg, msg.getEnrollment(), state.getState()));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
     }

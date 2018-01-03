@@ -48,6 +48,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 import java.util.concurrent.TimeUnit;
 
 
@@ -145,7 +146,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * @param newNode
    */
   private void executePassiveSync(final NodeID newNode) {
-    this.consistencyMgr.requestTransition();
+    this.consistencyMgr.requestTransition(ServerMode.ACTIVE, ConsistencyManager.Transition.ADD_PASSIVE);
     passiveSyncPool.execute(new Runnable() {
       @Override
       public void run() {    
@@ -276,7 +277,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   
   private void removeWaiters(NodeID nodeID) {
     passiveSyncPool.execute(()->{
-      while (!consistencyMgr.requestTransition()) {
+      while (!consistencyMgr.requestTransition(ServerMode.ACTIVE, ConsistencyManager.Transition.REMOVE_PASSIVE)) {
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException ie) {

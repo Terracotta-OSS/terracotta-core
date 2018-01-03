@@ -45,7 +45,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.config.HaConfig;
@@ -228,6 +227,7 @@ import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 
 
 /**
@@ -650,17 +650,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
     
-    ConsistencyManager consistencyMgr = new ConsistencyManager() {
-      @Override
-      public boolean requestTransition() throws IllegalStateException {
-        return true;
-      }
-
-      @Override
-      public void setTransitionsAllowed(boolean allowed) {
-
-      }
-    };
+    ConsistencyManager consistencyMgr = (ServerMode mode, ConsistencyManager.Transition transition) -> true;
         
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
@@ -874,23 +864,23 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     StageController control = new StageController();
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
-    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
-    control.addStageToState(StateManager.PASSIVE_UNINITIALIZED, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here.  SYNC also needs to be handled.
-    control.addStageToState(StateManager.PASSIVE_SYNCING, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
-    control.addStageToState(StateManager.PASSIVE_SYNCING, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(ServerMode.SYNCING.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  REPLICATION needs to continue in STANDBY so include that stage here. SYNC goes away
-    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
-    control.addStageToState(StateManager.PASSIVE_STANDBY, ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
+    control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
+    control.addStageToState(ServerMode.PASSIVE.getState(), ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE);
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
-    control.addStageToState(StateManager.ACTIVE_COORDINATOR, ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
-    control.addTriggerToState(StateManager.ACTIVE_COORDINATOR, () -> {
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    control.addTriggerToState(ServerMode.ACTIVE.getState(), () -> {
       server.updateActivateTime();
   // transition the local monitoring producer to active so the tree is rebuilt as a new active of the stripe
       monitoringSupport.serverIsActive();

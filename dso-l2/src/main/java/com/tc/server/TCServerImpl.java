@@ -30,6 +30,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
@@ -81,7 +82,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   protected DistributedObjectServer         dsoServer;
 
   private final Object                      stateLock                                    = new Object();
-  private State                             serverState                                  = StateManager.START_STATE;
+  private ServerMode           serverState                                  = ServerMode.START;
   
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
@@ -107,14 +108,14 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
     this.configurationSetupManager = manager;
   }
   
-  public synchronized void setState(State state) {
+  public synchronized void setState(ServerMode state) {
     if (!validateState(state)) { throw new AssertionError("Unrecognized server state: [" + state.getName() + "]"); }
 
     serverState = state;
   }
 
-  private boolean validateState(State state) {
-    return StateManager.VALID_STATES.contains(state);
+  private boolean validateState(ServerMode state) {
+    return ServerMode.VALID_STATES.contains(state);
   }
 
   @Override
@@ -201,7 +202,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
           throw new RuntimeException(t);
         }
       } else {
-        logger.warn("Server in incorrect state (" + this.serverState + ") to be started.");
+        logger.warn("Server in incorrect state (" + this.serverState.getName() + ") to be started.");
       }
     }
   }
@@ -209,22 +210,22 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   @Override
   public boolean canShutdown() {
     synchronized (this.stateLock) {
-      return serverState.equals(StateManager.PASSIVE_STANDBY) ||
-       serverState.equals(StateManager.ACTIVE_COORDINATOR) || 
-       serverState.equals(StateManager.PASSIVE_UNINITIALIZED) ||
-       serverState.equals(StateManager.PASSIVE_SYNCING);
+      return serverState == ServerMode.PASSIVE ||
+       serverState == ServerMode.ACTIVE || 
+       serverState == ServerMode.UNINITIALIZED ||
+       serverState == ServerMode.SYNCING;
     }
   }
 
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
-      setState(StateManager.STOP_STATE);
+      setState(ServerMode.STOP);
       consoleLogger.info("Server exiting...");
       notifyShutdown();
       Runtime.getRuntime().exit(0);
     } else {
-      logger.warn("Server in incorrect state (" + serverState + ") to be shutdown.");
+      logger.warn("Server in incorrect state (" + serverState.getName() + ") to be shutdown.");
     }
   }
 
@@ -279,14 +280,14 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   @Override
   public boolean isStarted() {
     synchronized (this.stateLock) {
-      return !this.serverState.equals(StateManager.START_STATE);
+      return this.serverState != ServerMode.START;
     }
   }
 
   @Override
   public boolean isActive() {
     synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.ACTIVE_COORDINATOR);
+      return this.serverState == ServerMode.ACTIVE;
     }
   }
 
@@ -294,21 +295,21 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   public boolean isStopped() {
     // XXX:: introduce a new state when stop is officially supported.
     synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.START_STATE);
+      return this.serverState == ServerMode.START;
     }
   }
 
   @Override
   public boolean isPassiveUnitialized() {
     synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.PASSIVE_UNINITIALIZED);
+      return this.serverState == ServerMode.UNINITIALIZED;
     }
   }
 
   @Override
   public boolean isPassiveStandby() {
     synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.PASSIVE_STANDBY);
+      return this.serverState == ServerMode.PASSIVE;
     }
   }
 
@@ -324,7 +325,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   
   @Override
   public State getState() {
-    return this.serverState;
+    return this.serverState.getState();
   }
   
   @Override
@@ -481,7 +482,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   @Override
   public void l2StateChanged(StateChangedEvent sce) {
     synchronized (this.stateLock) {
-      this.serverState = sce.getCurrentState();
+      this.serverState = StateManager.convert(sce.getCurrentState());
     }
   } 
 }
