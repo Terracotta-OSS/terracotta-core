@@ -18,6 +18,8 @@
  */
 package com.tc.async.impl;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +34,8 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
   private final LongAdder queueTime = new LongAdder();
   private final LongAdder runTime = new LongAdder();
   private final LongAdder queued = new LongAdder();
-
+  private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
+                                                     .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
 
   public MonitoringEventCreator(String name, EventCreator<EC> next) {
     this.name = name;
@@ -40,39 +43,44 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
   }
   
   public static PipelineMonitor finish() {
-    PipelineMonitor mon = CURRENT.get();
-    if (mon != null) {
-      mon.close();
-      CURRENT.remove();
+    if (MONITOR) {
+      PipelineMonitor mon = CURRENT.get();
+      if (mon != null) {
+        mon.close();
+        CURRENT.remove();
+      }
+      return mon;
+    } else {
+      return null;
     }
-    return mon;
   }
   
   public static void start() {
-    CURRENT.set(new PipelineMonitor());
+    if (MONITOR) {
+      CURRENT.set(new PipelineMonitor());    
+    }
   }
   
   @Override
   public Event createEvent(EC event) {
     MonitorStats stats = new MonitorStats();
-    PipelineMonitor running = stats.monitor();
+    PipelineMonitor running = CURRENT.get();
     if (running != null) {
       running.action(name, PipelineMonitor.Type.ENQUEUE, event);
     }
     Event nextEvent = next.createEvent(event);
     if (nextEvent != null) {
       return () -> {
-        PipelineMonitor monitor = stats.monitor();
-        if (monitor != null) {
-          CURRENT.set(monitor.action(name, PipelineMonitor.Type.RUN, event));
+        if (running != null) {
+          CURRENT.set(running.action(name, PipelineMonitor.Type.RUN, event));
         }
         stats.run();
         nextEvent.call();
         stats.end();
         addStats(stats);
-        if (monitor != null) {
+        if (running != null) {
           CURRENT.remove();
-          monitor.action(name, PipelineMonitor.Type.END, event);
+          running.action(name, PipelineMonitor.Type.END, event);
         }
       };
     } else {
@@ -107,7 +115,6 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     private long queue = 0;
     private long run = 0;
     private long end = 0;
-    private final PipelineMonitor monitor = CURRENT.get();
 
     public MonitorStats() {
       queue();
@@ -132,10 +139,5 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     long runTime() {
       return end - run;
     }
-    
-    PipelineMonitor monitor() {
-      return monitor;
-    }
-    
   }
 }
