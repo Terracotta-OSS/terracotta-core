@@ -54,6 +54,7 @@
     <module>common</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
+    <module>voter</module>
     <module>connection-loader</module>
     <module>connection-impl</module>
     <module>management</module>
