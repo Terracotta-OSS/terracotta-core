@@ -578,8 +578,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
-
     final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
 
@@ -778,7 +776,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
-                                                         serverStats, channelStats, instanceMonitor,
+                                                         serverStats, channelStats,
                                                          connectionPolicy);
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
