@@ -29,6 +29,7 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -74,6 +75,11 @@ public class InFlightMessageTest extends TestCase {
     AtomicInteger interruptCount = new AtomicInteger();
     CyclicBarrier barrier = new CyclicBarrier(2);
     Thread t = new Thread(()->{
+      try {
+        barrier.await();
+      } catch (BrokenBarrierException | InterruptedException e) {
+        
+      }
       inf.waitForAcks();
     }) {
       @Override
@@ -83,8 +89,9 @@ public class InFlightMessageTest extends TestCase {
       }
     };
     t.start();
+    barrier.await();
     //  sleep to make sure the thread has progressed to the wait
-    TimeUnit.SECONDS.sleep(2);
+    TimeUnit.SECONDS.sleep(1);
     t.interrupt();
     inf.sent();
     inf.received();
