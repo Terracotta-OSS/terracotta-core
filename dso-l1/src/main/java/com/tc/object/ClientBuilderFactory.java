@@ -9,7 +9,8 @@ public interface ClientBuilderFactory {
 
     ClientBuilderFactory clientBuilderFactory = null;
 
-    for (ClientBuilderFactory factory : ServiceLoader.load(ClientBuilderFactory.class)) {
+    for (ClientBuilderFactory factory : ServiceLoader.load(ClientBuilderFactory.class,
+                                                           ClientBuilderFactory.class.getClassLoader())) {
       if (clientBuilderFactory == null) {
         clientBuilderFactory = factory;
       } else {
