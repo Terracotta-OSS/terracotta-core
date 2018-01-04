@@ -19,6 +19,9 @@
 
 package com.tc.async.impl;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  */
 public interface EventCreator<EC> {

@@ -32,6 +32,8 @@ public interface StageQueue<EC> extends Sink<EC> {
 
   @Override
   void clear();
+  
+  void enableAdditionalStatistics(boolean track);
 
   class StageQueueFactory {
     /**

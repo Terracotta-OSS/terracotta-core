@@ -29,7 +29,6 @@ import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
@@ -53,8 +52,6 @@ public class StageImpl<EC> implements Stage<EC> {
   private final Logger logger;
   private final int            sleepMs;
   private final boolean        pausable;
-  private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
-                                                     .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
 
@@ -90,12 +87,15 @@ public class StageImpl<EC> implements Stage<EC> {
 
   private EventCreator<EC> eventCreator(boolean direct) {
     EventCreator<EC> base = (direct) ? new DirectEventCreator<>(handler, ()->stageQueue.isEmpty()) : baseCreator();
-    base = MONITOR ? new MonitoringEventCreator<>(name, base) : base;
     return base;
   }
   
   private EventCreator<EC> baseCreator() {
     return (event) -> () -> handler.handleEvent(event);
+  }
+
+  public void trackExtraStatistics(boolean enable) {
+    stageQueue.enableAdditionalStatistics(enable);
   }
 
   @Override

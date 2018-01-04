@@ -18,7 +18,6 @@
  */
 package com.tc.async.impl;
 
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
@@ -26,6 +25,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +64,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private final int moduleMask;
   private final int PARTITION_SHIFT;
   final int PARTITION_MAX_MASK;
-  private final EventCreator<EC> creator;
   private final MultiSourceQueueImpl[] sourceQueues;
   private volatile int fcheck = 0;  // used to start the shortest queue search
   AtomicInteger partitionHand =new AtomicInteger(0);
@@ -85,7 +85,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
                       TCLoggerProvider loggerProvider,
                       String stageName,
                       int queueSize) {
-    super(loggerProvider, stageName);
+    super(loggerProvider, stageName, creator);
     Assert.eval(queueCount > 0);
 
     if (queueCount >= 8) {
@@ -94,7 +94,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       PARTITION_SHIFT = 1;
     }
     PARTITION_MAX_MASK = (1 << (31 - PARTITION_SHIFT)) - 1;
-    this.creator = creator;
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
     createWorkerQueues(queueCount, queueFactory, type, queueSize, stageName);
 
@@ -158,7 +157,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-    Event event = creator.createEvent(context);
+    Event event = getEventCreator().createEvent(context);
     if (event != null) {
       boolean interrupted = Thread.interrupted();
       Event wrapper = new HandledEvent<>(event);
@@ -191,7 +190,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-    Event event = creator.createEvent(context);
+    Event event = getEventCreator().createEvent(context);
     if (event != null) {
       // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
       boolean interrupted = Thread.interrupted();

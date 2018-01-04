@@ -16,20 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object;
+package com.tc.async.impl;
+
 
 /**
  *
- * @author cdennis
  */
-public enum LogicalOperation {
-  FOR_TESTING_ONLY,
-  
-  REGISTER_SERVER_EVENT_LISTENER, 
-  UNREGISTER_SERVER_EVENT_LISTENER, 
-  REGISTER_SERVER_EVENT_LISTENER_PASSIVE, 
-  UNREGISTER_SERVER_EVENT_LISTENER_PASSIVE, 
-  REMOVE_EVENT_LISTENING_CLIENT,
-  
-  INVOKE_WITH_PAYLOAD;
+public interface PipelineMonitoringConsumer {
+  void record(PipelineMonitor monitor);
 }

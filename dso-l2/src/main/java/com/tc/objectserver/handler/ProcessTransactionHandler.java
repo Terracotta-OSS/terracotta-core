@@ -33,7 +33,6 @@ import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
@@ -719,10 +718,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
             });
           });
         }
-        PipelineMonitor monitor = MonitoringEventCreator.finish();
-        if (monitor != null) {
-          LOGGER.info(monitor.toString());
-        }
+        MonitoringEventCreator.finish();
       } else {
         throw new AssertionError();
       }
@@ -734,10 +730,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         Assert.assertTrue(sent.isSet());
         addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));
       }
-      PipelineMonitor monitor = MonitoringEventCreator.finish();
-      if (monitor != null) {
-        LOGGER.info(monitor.toString());
-      }
+      MonitoringEventCreator.finish();
     }
   }
   

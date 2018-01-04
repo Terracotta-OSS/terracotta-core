@@ -38,7 +38,6 @@ import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
  */
 public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
-  private final EventCreator<EC> creator;
   private final SourceQueueImpl sourceQueue;
 
   /**
@@ -54,8 +53,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
                           TCLoggerProvider loggerProvider,
                           String stageName,
                           int queueSize) {
-    super(loggerProvider, stageName);
-    this.creator = creator;
+    super(loggerProvider, stageName, creator);
     this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize, stageName);
   }
 
@@ -89,7 +87,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-    Event wrapper = creator.createEvent(context);
+    Event wrapper = getEventCreator().createEvent(context);
     if (wrapper != null) {
       deliverToQueue("Multi", new HandledEvent(wrapper));
     }
@@ -106,7 +104,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    Event wrapper = creator.createEvent(context);
+    Event wrapper = getEventCreator().createEvent(context);
     if (wrapper != null) {
       deliverToQueue("Multi", new HandledEvent(wrapper));
     }

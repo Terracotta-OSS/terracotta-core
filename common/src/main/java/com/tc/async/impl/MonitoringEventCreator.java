@@ -18,8 +18,6 @@
  */
 package com.tc.async.impl;
 
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -34,31 +32,32 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
   private final LongAdder queueTime = new LongAdder();
   private final LongAdder runTime = new LongAdder();
   private final LongAdder queued = new LongAdder();
-  private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
-                                                     .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
+  private static PipelineMonitoringConsumer pipelineConsumer;
 
   public MonitoringEventCreator(String name, EventCreator<EC> next) {
     this.name = name;
     this.next = next;
   }
   
-  public static PipelineMonitor finish() {
-    if (MONITOR) {
+  public static void setPipelineMonitor(PipelineMonitoringConsumer consumer) {
+    pipelineConsumer = consumer;
+  }
+  
+  public static void finish() {
+    if (pipelineConsumer != null) {
       PipelineMonitor mon = CURRENT.get();
       if (mon != null) {
         mon.close();
         CURRENT.remove();
+        pipelineConsumer.record(mon);
       }
-      return mon;
-    } else {
-      return null;
     }
   }
   
   public static void start() {
-    if (MONITOR) {
-      CURRENT.set(new PipelineMonitor());    
-    }
+    if (pipelineConsumer != null) {
+      CURRENT.set(new PipelineMonitor());
+    }    
   }
   
   @Override
