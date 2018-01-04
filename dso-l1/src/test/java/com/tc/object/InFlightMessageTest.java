@@ -36,6 +36,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
+import org.hamcrest.Matchers;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.terracotta.exception.ConnectionClosedException;
@@ -96,7 +98,7 @@ public class InFlightMessageTest extends TestCase {
     inf.sent();
     inf.received();
     t.join();
-    assertEquals(2, interruptCount.get());
+    assertThat(interruptCount.get(), Matchers.lessThan(3));
   }
    
   public void testExceptionWaitForAcks() throws Exception {
