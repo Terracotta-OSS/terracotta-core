@@ -16,16 +16,16 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.l1.api;
+package com.tc.l2.state;
 
-import com.tc.object.ObjectID;
+public interface ConsistencyManager {
+  
+  public enum Transition {
+    MOVE_TO_ACTIVE,
+    ADD_CLIENT,
+    REMOVE_PASSIVE,
+    ADD_PASSIVE
+  }
 
-import java.util.Set;
-
-public interface ObjectReferenceAddListener {
-
-  public void objectReferenceAdded(ObjectID objectID);
-
-  public void objectReferencesAdded(Set<ObjectID> objectIDs);
-
+  boolean requestTransition(ServerMode mode, Transition newMode) throws IllegalStateException;
 }

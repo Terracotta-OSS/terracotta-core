@@ -19,7 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.async.impl.DirectSink;
+import com.tc.async.impl.DirectEventCreator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
@@ -301,7 +301,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace.activeTrace().log("ManagedEntityImpl.scheduleInOrder");
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
-    if (!DirectSink.isActivated()) {
+    if (!DirectEventCreator.isActivated()) {
       if (isInActiveState) {
         Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE));
       } else {

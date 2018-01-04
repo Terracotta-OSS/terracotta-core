@@ -3,7 +3,6 @@ package com.tc.async.impl;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.stats.Stats;
 import com.tc.util.concurrent.QueueFactory;
 
 /**
@@ -13,7 +12,7 @@ public interface StageQueue<EC> extends Sink<EC> {
 
   StageQueueFactory FACTORY = new StageQueueFactory();
 
-  Source<ContextWrapper<EC>> getSource(int index);
+  Source getSource(int index);
 
   @Override
   void close();
@@ -33,26 +32,8 @@ public interface StageQueue<EC> extends Sink<EC> {
 
   @Override
   void clear();
-
-  /*********************************************************************************************************************
-   * Monitorable Interface
-   * @param enable
-   */
-
-  @Override
-  void enableStatsCollection(boolean enable);
-
-  @Override
-  Stats getStats(long frequency);
-
-  @Override
-  Stats getStatsAndReset(long frequency);
-
-  @Override
-  boolean isStatsCollectionEnabled();
-
-  @Override
-  void resetStats();
+  
+  void enableAdditionalStatistics(boolean track);
 
   class StageQueueFactory {
     /**
@@ -65,14 +46,16 @@ public interface StageQueue<EC> extends Sink<EC> {
      * @param queueSize : Max queue Size allowed
      */
     public static <C> StageQueue<C> factory(int queueCount,
-                                            QueueFactory<ContextWrapper<C>> queueFactory,
+                                            QueueFactory queueFactory,
+                                            Class<C> type, 
+                                            EventCreator<C> creator,
                                             TCLoggerProvider loggerProvider,
                                             String stageName,
                                             int queueSize) {
       if (queueCount == 1) {
-        return new SingletonStageQueueImpl<C>(queueFactory, loggerProvider, stageName, queueSize);
+        return new SingletonStageQueueImpl<>(queueFactory, type, creator, loggerProvider, stageName, queueSize);
       } else {
-        return new MultiStageQueueImpl<C>(queueCount, queueFactory, loggerProvider, stageName, queueSize);
+        return new MultiStageQueueImpl(queueCount, queueFactory, type, creator, loggerProvider, stageName, queueSize);
       }
     }
   }

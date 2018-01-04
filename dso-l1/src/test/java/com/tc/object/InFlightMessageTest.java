@@ -29,8 +29,10 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 import static org.mockito.Mockito.mock;
@@ -63,6 +65,31 @@ public class InFlightMessageTest extends TestCase {
     } catch (Exception closed) {
       System.out.println("expected " + closed.toString());
     }
+  }
+  
+  public void testUninterruptability() throws Exception {
+    Set<VoltronEntityMessage.Acks> acks = EnumSet.of(VoltronEntityMessage.Acks.RECEIVED);
+    VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
+    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), msg, acks, null, true, false);
+    AtomicInteger interruptCount = new AtomicInteger();
+    CyclicBarrier barrier = new CyclicBarrier(2);
+    Thread t = new Thread(()->{
+      inf.waitForAcks();
+    }) {
+      @Override
+      public void interrupt() {
+        int count = interruptCount.incrementAndGet();
+        super.interrupt(); 
+      }
+    };
+    t.start();
+    //  sleep to make sure the thread has progressed to the wait
+    TimeUnit.SECONDS.sleep(2);
+    t.interrupt();
+    inf.sent();
+    inf.received();
+    t.join();
+    assertEquals(2, interruptCount.get());
   }
    
   public void testExceptionWaitForAcks() throws Exception {

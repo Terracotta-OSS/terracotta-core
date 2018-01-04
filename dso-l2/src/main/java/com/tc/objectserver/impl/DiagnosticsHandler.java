@@ -69,7 +69,7 @@ public class DiagnosticsHandler implements TCMessageSink {
     try {
       switch (cmd[0]) {
         case "getState":
-          result = server.getContext().getL2Coordinator().getStateManager().getCurrentState().getName().getBytes(set);
+          result = server.getContext().getL2Coordinator().getStateManager().getCurrentMode().getName().getBytes(set);
           break;
         case "getClusterState":
           result = server.getClusterState(set);

@@ -19,7 +19,6 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.StageManager;
 
 import org.slf4j.Logger;
 import org.terracotta.exception.EntityException;

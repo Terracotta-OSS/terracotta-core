@@ -27,10 +27,8 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
-import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.stats.api.ClassInfo;
 import com.tc.stats.api.DSOMBean;
 import com.tc.stats.api.Stats;
 
@@ -83,7 +81,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final Map<ObjectName, Client>             clientMap              = new HashMap<>();
   private final DSOChannelManagerMBean                 channelMgr;
   private final ChannelStats                           channelStats;
-  private final ObjectInstanceMonitorMBean             instanceMonitor;
   private final ConnectionPolicy                       connectionPolicy;
 
   private volatile int jmxRemotePort = DEFAULT_JMX_REMOTE_PORT;
@@ -102,7 +99,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.dsoStats = new StatsImpl(managementContext);
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
-    this.instanceMonitor = managementContext.getInstanceMonitor();
     this.connectionPolicy = managementContext.getConnectionPolicy();
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
@@ -151,20 +147,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     synchronized (clientObjectNames) {
       return clientObjectNames.toArray(new ObjectName[clientObjectNames.size()]);
     }
-  }
-
-  @Override
-  public ClassInfo[] getClassInfo() {
-    Map<String, Integer> counts = instanceMonitor.getInstanceCounts();
-    List<ClassInfo> list = new ArrayList<>();
-
-    Iterator<Map.Entry<String, Integer>> iter = counts.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry<String, Integer> entry = iter.next();
-      list.add(new ClassInfo(entry.getKey(), entry.getValue()));
-    }
-
-    return list.toArray(new ClassInfo[list.size()]);
   }
 
   private void setupClients() {

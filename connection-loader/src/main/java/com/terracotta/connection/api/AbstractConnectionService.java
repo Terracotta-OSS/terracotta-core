@@ -12,9 +12,11 @@ import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
 import com.terracotta.connection.client.TerracottaClientConfigParams;
+import java.net.InetSocketAddress;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Properties;
 
 abstract class AbstractConnectionService implements ConnectionService {
@@ -65,9 +67,8 @@ abstract class AbstractConnectionService implements ConnectionService {
       } catch (URISyntaxException e) {
         throw new IllegalArgumentException("Unable to parse uri " + uri, e);
       }
-      String userInfo = oneHost.getUserInfo();
-      String stripeUri = ((null != userInfo) ? (userInfo + "@") : "") + oneHost.getHost() + ":" + oneHost.getPort();
-      clientConfig.addStripeMemberUri(stripeUri);
+      InetSocketAddress address = InetSocketAddress.createUnresolved(oneHost.getHost(), oneHost.getPort());
+      clientConfig.addStripeMember(address);
     }
 
     properties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.of(scheme));

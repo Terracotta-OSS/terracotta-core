@@ -22,7 +22,8 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.impl.DirectSink;
+import com.tc.async.impl.DirectEventCreator;
+import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import org.slf4j.Logger;
@@ -30,23 +31,30 @@ import org.slf4j.LoggerFactory;
 
 public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMessage> {
   private final Sink<VoltronEntityMessage> destSink;
+  private boolean useDirect = false;
   private Sink<VoltronEntityMessage> fastPath;
   private boolean activated = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(VoltronMessageHandler.class);
 
-  public VoltronMessageHandler(Sink<VoltronEntityMessage> destSink) {
+  public VoltronMessageHandler(Sink<VoltronEntityMessage> destSink, boolean use_direct) {
     this.destSink = destSink;
+    this.useDirect = use_direct;
   }
 
   @Override
   public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
-    boolean fast = fastPath.size() < 2;
-    if (fast != activated) {
-      activated = fast;
-      DirectSink.activate(activated);
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("switching to direct sink activated:" + activated + " with " + fastPath.size());
+    if (useDirect) {
+      boolean fast = fastPath.size() < 2;
+      if (fast != activated) {
+        activated = fast;
+        DirectEventCreator.activate(activated);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("switching to direct sink activated:" + activated + " with " + fastPath.size());
+        }
       }
+    }
+    if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
+      MonitoringEventCreator.start();
     }
     destSink.addSingleThreaded(message);
   }

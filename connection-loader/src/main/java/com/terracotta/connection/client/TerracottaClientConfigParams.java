@@ -18,27 +18,28 @@
  */
 package com.terracotta.connection.client;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.Vector;
 
 
 public class TerracottaClientConfigParams {
-  private final List<String> stripeMembers;
+  private final List<InetSocketAddress> stripeMembers;
   private boolean disableReconnect = false;
   private ClassLoader clasLoader;
   private final Properties properties = new Properties();
 
   public TerracottaClientConfigParams() {
-    this.stripeMembers = new Vector<String>();
+    this.stripeMembers = new ArrayList<>();
   }
 
-  public List<String> getStripeMemberUris() {
+  public List<InetSocketAddress> getStripeMemberUris() {
     return Collections.unmodifiableList(this.stripeMembers);
   }
 
-  public TerracottaClientConfigParams addStripeMemberUri(String stripeMember) {
+  public TerracottaClientConfigParams addStripeMember(InetSocketAddress stripeMember) {
     this.stripeMembers.add(stripeMember);
     return this;
   }

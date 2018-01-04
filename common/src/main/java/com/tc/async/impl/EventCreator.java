@@ -16,10 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.core.api;
 
-import com.tc.object.ObjectID;
+package com.tc.async.impl;
 
-public interface Filter {
-  public boolean shouldVisit(ObjectID referencedObject);
+import java.util.Collections;
+import java.util.Map;
+
+/**
+ */
+public interface EventCreator<EC> {
+  Event createEvent(EC event);
 }

@@ -16,14 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.stats.api;
+package com.tc.async.impl;
 
-import com.tc.object.ObjectID;
 
-public interface RootMBean {
-
-  public String getRootName();
-
-  public ObjectID getObjectID();
-
+/**
+ *
+ */
+public interface PipelineMonitoringConsumer {
+  void record(PipelineMonitor monitor);
 }

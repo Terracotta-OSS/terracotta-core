@@ -64,9 +64,9 @@ public class StageManagerImplTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-      stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory<TestEventContext>());
-      testEventHandler = new TestEventHandler<TestEventContext>();
-      multiThreadedStageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory<TestMultiThreadedEventContext>());
+      stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory());
+      testEventHandler = new TestEventHandler<>();
+      multiThreadedStageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory());
       multiThreadedTestEventHandler = new TestEventHandler<TestMultiThreadedEventContext>();
   }
 

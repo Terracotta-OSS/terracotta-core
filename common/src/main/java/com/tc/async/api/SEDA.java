@@ -34,7 +34,7 @@ public class SEDA<EC> {
 
   public SEDA(TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory<EC>());
+    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
     TCByteBufferFactory.registerThreadGroup(threadGroup);
   }
 

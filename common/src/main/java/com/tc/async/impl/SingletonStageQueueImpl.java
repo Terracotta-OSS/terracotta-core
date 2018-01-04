@@ -21,8 +21,6 @@ package com.tc.async.impl;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
-import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
@@ -32,9 +30,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollector;
-import com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
-import com.tc.stats.Stats;
 
 /**
  * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
@@ -43,7 +38,7 @@ import com.tc.stats.Stats;
  */
 public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
-  private final SourceQueueImpl<ContextWrapper<EC>> sourceQueue;
+  private final SourceQueueImpl sourceQueue;
 
   /**
    * The Constructor.
@@ -54,28 +49,26 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
-  SingletonStageQueueImpl(QueueFactory<ContextWrapper<EC>> queueFactory,
+  SingletonStageQueueImpl(QueueFactory queueFactory, Class<EC> type, EventCreator<EC> creator,
                           TCLoggerProvider loggerProvider,
                           String stageName,
                           int queueSize) {
-    super(loggerProvider, stageName);
-    this.sourceQueue = createWorkerQueue(queueFactory, queueSize, stageName);
+    super(loggerProvider, stageName, creator);
+    this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize, stageName);
   }
 
-  private SourceQueueImpl<ContextWrapper<EC>> createWorkerQueue(QueueFactory<ContextWrapper<EC>> queueFactory,
+  private SourceQueueImpl createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
                                                                 int queueSize,
                                                                 String stage) {
-    StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
-    BlockingQueue<ContextWrapper<EC>> q = null;
+    BlockingQueue<Event> q = null;
 
     Assert.eval(queueSize > 0);
 
-    q = queueFactory.createInstance(queueSize);
-    return new SourceQueueImpl<ContextWrapper<EC>>(q, statsCollector);
+    return new SourceQueueImpl(queueFactory.createInstance(type, queueSize));
   }
 
   @Override
-  public Source<ContextWrapper<EC>> getSource(int index) {
+  public Source getSource(int index) {
     return (index != 0) ? null : this.sourceQueue;
   }
 
@@ -94,9 +87,10 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-
-    ContextWrapper<EC> wrapper = new HandledContext<>(context);
-    deliverToQueue("Single", wrapper);
+    Event wrapper = getEventCreator().createEvent(context);
+    if (wrapper != null) {
+      deliverToQueue("Multi", new HandledEvent(wrapper));
+    }
   }
 
   @Override
@@ -110,11 +104,13 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
 
-    ContextWrapper<EC> wrapper = new HandledContext<>(context);
-    deliverToQueue("Multi", wrapper);
+    Event wrapper = getEventCreator().createEvent(context);
+    if (wrapper != null) {
+      deliverToQueue("Multi", new HandledEvent(wrapper));
+    }
   }
 
-  private void deliverToQueue(String type, ContextWrapper<EC> wrapper) {
+  private void deliverToQueue(String type, Event wrapper) {
     boolean interrupted = Thread.interrupted();
     addInflight();
     try {
@@ -146,67 +142,17 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     this.logger.info("Cleared " + clearCount);
   }
 
-  /*********************************************************************************************************************
-   * Monitorable Interface
-   * @param enable
-   */
+  private final class SourceQueueImpl implements SourceQueue {
 
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    StageQueueStatsCollector collector = null;
+    private final BlockingQueue<Event> queue;
 
-    String name = this.stageName + "[" + sourceQueue.getSourceName() + "]";
-    if (collector == null || !collector.getName().equals(name)) {
-      collector = (enable) ? new StageQueueStatsCollectorImpl(name) : new NullStageQueueStatsCollector(name);
-    }
-    sourceQueue.setStatsCollector(collector);
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    return this.sourceQueue.getStatsCollector();
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return getStats(frequency);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    // Since all source queues have the same collector, the first reference is used.
-    return this.sourceQueue.getStatsCollector() instanceof StageQueueStatsCollectorImpl;
-  }
-
-  @Override
-  public void resetStats() {
-    // Since all source queues have the same collector, the first reference is used.
-    this.sourceQueue.getStatsCollector().reset();
-  }
-
-  private final class SourceQueueImpl<W> implements SourceQueue<W> {
-
-    private final BlockingQueue<W> queue;
-    private volatile StageQueueStatsCollector statsCollector;
-
-    public SourceQueueImpl(BlockingQueue<W> queue, StageQueueStatsCollector statsCollector) {
+    public SourceQueueImpl(BlockingQueue<Event> queue) {
       this.queue = queue;
-      this.statsCollector = statsCollector;
     }
 
     @Override
     public String toString() {
       return "SourceQueueImpl{Singleton size=" + queue.size() + '}';
-    }
-
-    @Override
-    public StageQueueStatsCollector getStatsCollector() {
-      return this.statsCollector;
-    }
-
-    @Override
-    public void setStatsCollector(StageQueueStatsCollector collector) {
-      this.statsCollector = collector;
     }
 
     // XXX: poor man's clear.
@@ -229,15 +175,14 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
 
     @Override
-    public W poll(long timeout) throws InterruptedException {
-      W rv = (timeout == 0) ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+    public Event poll(long timeout) throws InterruptedException {
+      Event rv = (timeout == 0) ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       return rv;
     }
 
     @Override
-    public void put(W context) throws InterruptedException {
+    public void put(Event context) throws InterruptedException {
       this.queue.put(context);
-      this.statsCollector.contextAdded();
     }
 
     @Override

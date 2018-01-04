@@ -2,13 +2,13 @@ package com.tc.async.impl;
 
 import org.slf4j.Logger;
 
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
-import com.tc.async.api.StageQueueStats;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -17,13 +17,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
+  private volatile boolean extraStats = true;  
   private final AtomicInteger inflight = new AtomicInteger();
+  private final MonitoringEventCreator<EC> monitoring;
+  private final EventCreator<EC> creator;
   final Logger logger;
   final String stageName;
   
-  public AbstractStageQueueImpl(TCLoggerProvider loggerProvider, String stageName) {
+  public AbstractStageQueueImpl(TCLoggerProvider loggerProvider, String stageName, EventCreator<EC> creator) {
     this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
     this.stageName = stageName;
+    this.creator = creator;
+    this.monitoring = new MonitoringEventCreator<>(stageName, creator);
   }
   
   abstract SourceQueue[] getSources();
@@ -31,7 +36,17 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   void addInflight() {
     inflight.incrementAndGet();
   }
+
+  @Override
+  public void enableAdditionalStatistics(boolean track) {
+    extraStats = track;
+  }
   
+  final EventCreator<EC> getEventCreator() {
+    return (extraStats) ? this.monitoring : creator;
+  }
+  
+  @Override
   public void clear() {
     inflight.set(0);
   }
@@ -62,7 +77,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     this.closed = true;
     for (SourceQueue q : this.getSources()) {
       try {
-        q.put(new CloseContext());
+        q.put(new CloseEvent());
       } catch (InterruptedException ie) {
         logger.debug("closing stage", ie);
         Thread.currentThread().interrupt();
@@ -70,20 +85,29 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
   }
   
-  interface SourceQueue<W> extends Source<W> {
-    AbstractStageQueueImpl.StageQueueStatsCollector getStatsCollector();
-
-    void setStatsCollector(AbstractStageQueueImpl.StageQueueStatsCollector collector);
-
+  @Override
+  public Map<String, ?> getState() {
+    Map<String, Object> queueState = new LinkedHashMap<>();
+    if (extraStats) {
+      Map<String, ?> stats = this.monitoring.getState();
+      if (!stats.isEmpty()) {
+        queueState.put("stats", stats);
+      }
+    }
+    queueState.put("backlog", this.size());
+    return queueState;
+  }
+  
+  interface SourceQueue extends Source {
     int clear();
 
     @Override
     boolean isEmpty();
 
     @Override
-    W poll(long timeout) throws InterruptedException;
+    Event poll(long timeout) throws InterruptedException;
 
-    void put(W context) throws InterruptedException;
+    void put(Event context) throws InterruptedException;
 
     int size();
 
@@ -91,151 +115,33 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     String getSourceName();
   }
 
-  static abstract class StageQueueStatsCollector implements StageQueueStats {
+  class HandledEvent<C> implements Event {
+    private final Event event;
 
-    public void logDetails(Logger statsLogger) {
-      statsLogger.info(getDetails());
-    }
-
-    public abstract void contextAdded();
-
-    public abstract void reset();
-
-    public abstract void contextRemoved();
-
-    protected String makeWidth(String name, int width) {
-      final int len = name.length();
-      if (len == width) {
-        return name;
-      }
-      if (len > width) {
-        return name.substring(0, width);
-      }
-
-      StringBuffer buf = new StringBuffer(name);
-      for (int i = len; i < width; i++) {
-        buf.append(' ');
-      }
-      return buf.toString();
-    }
-  }
-
-  static class NullStageQueueStatsCollector extends StageQueueStatsCollector {
-
-    private final String name;
-    private final String trimmedName;
-
-    public NullStageQueueStatsCollector(String stage) {
-      this.trimmedName = stage.trim();
-      this.name = makeWidth(stage, 40);
+    public HandledEvent(Event event) {
+      this.event = event;
     }
 
     @Override
-    public String getDetails() {
-      return this.name + " : Not Monitored";
-    }
-
-    @Override
-    public void contextAdded() {
-      // NO-OP
-    }
-
-    @Override
-    public void contextRemoved() {
-      // NO-OP
-    }
-
-    @Override
-    public void reset() {
-      // NO-OP
-    }
-
-    @Override
-    public String getName() {
-      return this.trimmedName;
-    }
-
-    @Override
-    public int getDepth() {
-      return -1;
-    }
-  }
-
-  static class StageQueueStatsCollectorImpl extends StageQueueStatsCollector {
-
-    private final AtomicInteger count = new AtomicInteger(0);
-    private final String name;
-    private final String trimmedName;
-
-    public StageQueueStatsCollectorImpl(String stage) {
-      this.trimmedName = stage.trim();
-      this.name = makeWidth(stage, 40);
-    }
-
-    @Override
-    public String getDetails() {
-      return this.name + " : " + this.count;
-    }
-
-    @Override
-    public void contextAdded() {
-      this.count.incrementAndGet();
-    }
-
-    @Override
-    public void contextRemoved() {
-      this.count.decrementAndGet();
-    }
-
-    @Override
-    public void reset() {
-      this.count.set(0);
-    }
-
-    @Override
-    public String getName() {
-      return this.trimmedName;
-    }
-
-    @Override
-    public int getDepth() {
-      return this.count.get();
-    }
-  }
-
-  class HandledContext<C> implements ContextWrapper<C> {
-    private final C context;
-
-    public HandledContext(C context) {
-      this.context = context;
-    }
-
-    @Override
-    public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
+    public void call() throws EventHandlerException {
       try {
-        handler.handleEvent(this.context);
+        event.call();
       } finally {
         Assert.assertTrue(inflight.decrementAndGet() >= 0);
       }
     }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
-    }
   }
   
   
-  static class CloseContext<C> implements ContextWrapper<C> {
+  static class CloseEvent<C> implements Event {
 
-    public CloseContext() {
+    public CloseEvent() {
     }
 
     @Override
-    public void runWithHandler(EventHandler<C> handler) throws EventHandlerException {
+    public void call() throws EventHandlerException {
+
     }
+
   }
 }

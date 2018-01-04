@@ -18,6 +18,7 @@
  */
 package com.tc.async.impl;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
@@ -87,18 +88,20 @@ public class MultiStageQueueImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[1]);
         cxts.add(queue);
         return queue;
       }
 
     });
-    StageQueue<Object> instance = new MultiStageQueueImpl(size, context, logger, "mock", 16);
+    StageQueue<Object> instance = new MultiStageQueueImpl(size, context, Object.class, 
+        (event)->()->System.out.println(event),
+        logger, "mock", 16);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));
     }
@@ -133,7 +136,7 @@ public class MultiStageQueueImplTest {
       if (x != 1) {
         assertTrue(cxts.get(x).isEmpty());
       } else {
-        assertEquals(cxts.get(x).poll(), context1);
+        assertNotNull(cxts.get(x).poll());
       }
     }
 
@@ -141,7 +144,7 @@ public class MultiStageQueueImplTest {
     when(context1.getSchedulingKey()).thenReturn(rand);
     instance.addMultiThreaded(context1);
     //  tests specific implementation.  test expectation
-    assertEquals(cxts.get(rand % cxts.size()).poll(), context1);
+    assertNotNull(cxts.get(rand % cxts.size()).poll());
   }
 
   @Test
@@ -152,18 +155,20 @@ public class MultiStageQueueImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[1]);
         cxts.add(queue);
         return queue;
       }
 
     });
-    StageQueue impl = new MultiStageQueueImpl(6, context, logger, "mock", 16);
+    StageQueue impl = new MultiStageQueueImpl(6, context, Object.class,                                                                                                           
+        mock(EventCreator.class),
+        logger, "mock", 16);
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.getSchedulingKey()).thenReturn(null);
     // fcheck starts at zero and should stay at zero because first queue is always empty
@@ -204,9 +209,11 @@ public class MultiStageQueueImplTest {
       return;
     }
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory<ContextWrapper<MultiThreadedEventContext>> qFactory = new QueueFactory<ContextWrapper<MultiThreadedEventContext>>();
-    MultiStageQueueImpl<MultiThreadedEventContext> impl = new MultiStageQueueImpl<MultiThreadedEventContext>(8,
+    QueueFactory qFactory = new QueueFactory();
+    MultiStageQueueImpl impl = new MultiStageQueueImpl(8,
                                                                                                              qFactory,
+                                                                                                             MultiThreadedEventContext.class,
+                                                                                                             (event)->()->{},
                                                                                                              logger,
                                                                                                              "perf",
                                                                                                              100);
@@ -239,16 +246,16 @@ public class MultiStageQueueImplTest {
 
   public void syntheticThroughput(int secondsToRun, final int qCount, int qSize) throws InterruptedException {
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory<ContextWrapper<MultiThreadedEventContext>> qFactory = new
-      QueueFactory<ContextWrapper<MultiThreadedEventContext>>();
-    final StageQueue<MultiThreadedEventContext> impl = new MultiStageQueueImpl<MultiThreadedEventContext>(qCount,
+    QueueFactory qFactory = new QueueFactory();
+    final StageQueue<MultiThreadedEventContext> impl = new MultiStageQueueImpl<>(qCount,
                                                                                                           qFactory,
+                                                                                                          MultiThreadedEventContext.class,
+                                                                                                          mock(EventCreator.class),
                                                                                                           logger,
                                                                                                           "perf",
                                                                                                           qSize);
 
     AtomicBoolean die = new AtomicBoolean(false);
-    final ArrayList<DelayingThread> suppliers = new ArrayList<DelayingThread>(4);
     final MultiThreadedEventContext incoming = new MultiThreadedEventContext() {
       @Override
       public Object getSchedulingKey() {
@@ -260,7 +267,6 @@ public class MultiStageQueueImplTest {
         return false;
       }
     };
-    impl.enableStatsCollection(true);
     final long[] incomingCount = new long[1];
     final Random r = new Random(0);
     DelayingThread supplier = DelayingThread.createDelayViaSleepThread(die, "Supplier", new Runnable() {
@@ -299,7 +305,9 @@ public class MultiStageQueueImplTest {
     DelayingThread.createDelayViaSleepThread(die, "size", new Runnable() {
                                                @Override
                                                public void run() {
-                                                 System.out.println(impl.getStats(1000).getDetails());
+                                                 for(int i=0;i<qCount;i++) {
+                                                  System.out.println(impl.getSource(i).size());
+                                                 }
                                                }
                                              }, 10, TimeUnit.SECONDS).start();
 

@@ -16,30 +16,14 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.api;
+package com.tc.async.impl;
 
-import java.util.Collections;
-import java.util.Map;
+import com.tc.async.api.EventHandlerException;
 
-public class NullObjectInstanceMonitor implements ObjectInstanceMonitor {
-
-  public NullObjectInstanceMonitor() {
-    //
-  }
-
-  @Override
-  public void instanceCreated(String type) {
-    //
-  }
-
-  @Override
-  public void instanceDestroyed(String type) {
-    //
-  }
-
-  @Override
-  public Map<String, Integer> getInstanceCounts() {
-    return Collections.emptyMap();
-  }
-
+/**
+   * This interface is used to wrap the contexts put into the queues since we use them different ways but still want them
+   * handled in-order.  This replaces an instanceof hack, previously in use.
+   */
+public interface Event {
+  public void call() throws EventHandlerException;
 }

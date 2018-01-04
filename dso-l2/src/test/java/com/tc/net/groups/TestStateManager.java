@@ -20,6 +20,7 @@ package com.tc.net.groups;
 
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
@@ -38,8 +39,8 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
-  public State getCurrentState() {
-    return new State("NO_STATE");
+  public ServerMode getCurrentMode() {
+    return ServerMode.STOP;
   }
 
   @Override
