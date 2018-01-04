@@ -110,9 +110,9 @@ public class InFlightMessage {
       } catch (TimeoutException te) {
         throw new AssertionError(te);
       }
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
     }
   }
   
