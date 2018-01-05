@@ -100,6 +100,11 @@ public class TCServerMain {
       String longPatchString = info.toLongPatchString();
       LOGGER.info(longPatchString);
     }
+
+    String versionMessage = info.versionMessage();
+    if (!versionMessage.isEmpty()) {
+      LOGGER.info(versionMessage);
+    }
   }
 
   private static void writePID() {
