@@ -25,8 +25,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -153,7 +152,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
-    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -186,7 +184,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
-    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
@@ -196,7 +193,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
       boolean interrupted = Thread.interrupted();
       MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
       int index = getSourceQueueFor(cxt);
-      Event wrapper = (cxt.flush()) ? new FlushingHandledContext(event, index) : new HandledEvent<>(event);
+      Event wrapper = (cxt.flush()) ? new FlushingHandledContext(event, index) : event;
       try {
         while (true) {
           try {
@@ -291,7 +288,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     for (MultiSourceQueueImpl sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
-    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 

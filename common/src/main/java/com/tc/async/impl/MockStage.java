@@ -53,6 +53,18 @@ public class MockStage implements Stage {
   }
 
   @Override
+  public boolean isEmpty() {
+    return true;
+  }
+
+  @Override
+  public int size() {
+    return 0;
+  }
+  
+  
+
+  @Override
   public int pause() {
 //
     return 0;

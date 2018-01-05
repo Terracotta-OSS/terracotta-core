@@ -75,15 +75,15 @@ public class StageManagerImplTest extends TestCase {
     Stage<TestEventContext> s = stageManager.getStage("testStage", TestEventContext.class);
     assertTrue(s != null);
     s.getSink().addSingleThreaded(new TestEventContext());
-    assertTrue(s.getSink().size() == 1);
+    assertTrue(s.size() == 1);
     assertTrue(testEventHandler.getContexts().size() == 0);
     s.getSink().addSingleThreaded(new TestEventContext());
-    assertTrue(s.getSink().size() == 2);
+    assertTrue(s.size() == 2);
     assertTrue(testEventHandler.getContexts().size() == 0);
     s.start(new ConfigurationContextImpl(null));
     testEventHandler.waitForEventContextCount(2, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
-    assertTrue(s.getSink().size() == 0);
+    assertTrue(s.size() == 0);
     assertTrue(testEventHandler.getContexts().size() == 2);
     stageManager.stopAll();
   }
@@ -96,20 +96,20 @@ public class StageManagerImplTest extends TestCase {
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());
-    assertTrue(s.getSink().size() == 4);
+    assertTrue(s.size() == 4);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());
     s.getSink().addSingleThreaded(new TestEventContext());
-    assertTrue(s.getSink().size() == 8);
+    assertTrue(s.size() == 8);
     assertTrue(testEventHandler.getContexts().size() == 0);
 
     s.start(new ConfigurationContextImpl(null));
     testEventHandler.waitForEventContextCount(8, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
-    assertTrue(s.getSink().size() == 0);
+    assertTrue(s.size() == 0);
     assertTrue(testEventHandler.getContexts().size() == 8);
     stageManager.stopAll();
   }
@@ -122,20 +122,20 @@ public class StageManagerImplTest extends TestCase {
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
-    assertTrue(s.getSink().size() == 4);
+    assertTrue(s.size() == 4);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext());
-    assertTrue(s.getSink().size() == 8);
+    assertTrue(s.size() == 8);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     s.start(new ConfigurationContextImpl(null));
     multiThreadedTestEventHandler.waitForEventContextCount(8, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
-    assertTrue(s.getSink().size() == 0);
+    assertTrue(s.size() == 0);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 8);
     multiThreadedStageManager.stopAll();
   }
@@ -149,7 +149,7 @@ public class StageManagerImplTest extends TestCase {
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-3"));
 
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-1"));
-    assertTrue(s.getSink().size() == 4);
+    assertTrue(s.size() == 4);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-2"));
@@ -158,13 +158,13 @@ public class StageManagerImplTest extends TestCase {
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-1"));
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-2"));
     s.getSink().addMultiThreaded(new TestMultiThreadedEventContext("Thread-3"));
-    assertTrue(s.getSink().size() == 9);
+    assertTrue(s.size() == 9);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     s.start(new ConfigurationContextImpl(null));
     multiThreadedTestEventHandler.waitForEventContextCount(9, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
-    assertTrue(s.getSink().size() == 0);
+    assertTrue(s.size() == 0);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 9);
     stageManager.stopAll();
   }

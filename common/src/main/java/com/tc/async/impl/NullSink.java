@@ -40,21 +40,7 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public boolean isEmpty() {
-    return true;
-  }
-
-  @Override
-  public int size() {
-    return 0;
-  }
-
-  @Override
   public void close() {
   }
 
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
 }

@@ -68,22 +68,7 @@ public class TestSink<EC> implements Sink<EC> {
     }
   }
 
-  @Override
-  public boolean isEmpty() {
-    return queue.isEmpty();
-  }
-
-  @Override
-  public int size() {
-    return queue.size();
-  }
-
   public List<EC> getInternalQueue() {
     return queue;
-  }
-
-  @Override
-  public void clear() {
-    queue.clear();
   }
 }

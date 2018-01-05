@@ -164,7 +164,7 @@ public class StageManagerImpl implements StageManager {
     skipStages.add("cluster_events_stage");
     for (Stage<?> s : stages.values()) {
       if (!skipStages.contains(s.getName())) {
-        s.getSink().clear();
+        s.clear();
       }
     }
   }

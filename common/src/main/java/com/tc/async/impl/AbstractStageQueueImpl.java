@@ -9,7 +9,6 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author cschanck
@@ -18,7 +17,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
   private volatile boolean extraStats = true;  
-  private final AtomicInteger inflight = new AtomicInteger();
   private final MonitoringEventCreator<EC> monitoring;
   private final EventCreator<EC> creator;
   final Logger logger;
@@ -32,10 +30,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   }
   
   abstract SourceQueue[] getSources();
-  
-  void addInflight() {
-    inflight.incrementAndGet();
-  }
 
   @Override
   public void enableAdditionalStatistics(boolean track) {
@@ -45,11 +39,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   final EventCreator<EC> getEventCreator() {
     return (extraStats) ? this.monitoring : creator;
   }
-  
-  @Override
-  public void clear() {
-    inflight.set(0);
-  }
     
   Logger getLogger() {
     return logger;
@@ -57,18 +46,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   
   boolean isClosed() {
     return closed;
-  }
-
-  @Override
-  public int size() {
-    return inflight.get();
-  }
-  
-  @Override
-  public boolean isEmpty() {
-    int val = inflight.get();
-    Assert.assertTrue(val >= 0);
-    return val == 0;
   }
 
   @Override
@@ -85,7 +62,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
   }
   
-  @Override
   public Map<String, ?> getState() {
     Map<String, Object> queueState = new LinkedHashMap<>();
     if (extraStats) {
@@ -94,7 +70,6 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
         queueState.put("stats", stats);
       }
     }
-    queueState.put("backlog", this.size());
     return queueState;
   }
   
@@ -124,11 +99,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
     @Override
     public void call() throws EventHandlerException {
-      try {
-        event.call();
-      } finally {
-        Assert.assertTrue(inflight.decrementAndGet() >= 0);
-      }
+      event.call();
     }
   }
   

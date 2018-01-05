@@ -19,7 +19,6 @@
 package com.tc.object;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
@@ -58,7 +57,6 @@ import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.stats.Stats;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
@@ -187,21 +185,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       @Override
       public void addMultiThreaded(T context) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public int size() {
-        return 0;
-      }
-
-      @Override
-      public boolean isEmpty() {
-        return true;
-      }
-
-      @Override
-      public void clear() {
-
       }
 
       @Override

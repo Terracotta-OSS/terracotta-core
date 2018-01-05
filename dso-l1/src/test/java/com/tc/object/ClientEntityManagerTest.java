@@ -761,21 +761,6 @@ public class ClientEntityManagerTest extends TestCase {
     }
 
     @Override
-    public int size() {
-      return 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
-
-    @Override
-    public void clear() {
-// NOOP
-    }
-
-    @Override
     public void close() {
 //  NOOP
     }

@@ -4,6 +4,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.concurrent.QueueFactory;
+import java.util.Map;
 
 /**
  * Created by cschanck on 5/23/2017.
@@ -23,15 +24,12 @@ public interface StageQueue<EC> extends Sink<EC> {
   @Override
   void addMultiThreaded(EC context);
 
-  // Used for testing
-  @Override
-  int size();
-
   @Override
   String toString();
 
-  @Override
   void clear();
+  
+  Map<String, ?> getState();
   
   void enableAdditionalStatistics(boolean track);
 

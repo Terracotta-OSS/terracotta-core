@@ -20,7 +20,9 @@ package com.tc.async.impl;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -60,13 +62,14 @@ public class PipelineMonitor {
   
   public PipelineMonitor() {
     this.parent = null;
+    action("COMPLETE", Type.ENQUEUE, null);
   }
   
   public PipelineMonitor(PipelineMonitor parent) {
     this.parent = parent;
   }
   
-  public synchronized PipelineMonitor action(String name, Type type, Object target) {
+  public final synchronized PipelineMonitor action(String name, Type type, Object target) {
     PipelineMonitor monitor = checkClosed();
     monitor.items.add(new Record(name, System.nanoTime(), type, target));
     return monitor;
@@ -76,6 +79,7 @@ public class PipelineMonitor {
     if (closed) {
       throw new IllegalStateException("already closed", closedOn);
     }
+    action("COMPLETE", Type.END, null);
     this.closed = true;
     this.closedOn = new Exception();
     return this;
@@ -102,6 +106,21 @@ public class PipelineMonitor {
     StringBuilder builder = new StringBuilder("\n" + parent + "\n");
     items.forEach(r->builder.append("\t" + r + "\n"));
     builder.append("time:" + TimeUnit.NANOSECONDS.toMicros(items.get(items.size()-1).time - items.get(0).time));
+    builder.append('\n');
+    Set<String> names = items.stream().map(i->i.name).collect(Collectors.toSet());
+    builder.append(names.toString());
+    builder.append('\n');
+    for (String name : names) {
+      builder.append(name);
+      builder.append('\n');
+      items.stream().filter(i->i.name.equals(name)).reduce((l, r)->{
+        if (l.type != Type.END) {
+          builder.append("\t" + l.type + "->" + r.type + " time:" + (r.time - l.time) + " ");
+        }
+        return r;
+      });
+      builder.append('\n');
+    }
     return builder.toString();
   }
   

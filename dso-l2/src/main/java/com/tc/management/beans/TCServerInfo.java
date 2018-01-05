@@ -18,6 +18,7 @@
  */
 package com.tc.management.beans;
 
+import com.tc.async.impl.MonitoringEventCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,9 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     this.nextSequenceNumber = 1;
     this.stateChangeNotificationInfo = new StateChangeNotificationInfo();
     this.manager = TCRuntime.getJVMMemoryManager();
+    if (TCPropertiesImpl.getProperties().getBoolean("tc.pipeline.monitoring.stats", false)) {
+      setPipelineMonitoring(true);
+    }
   }
 
   @Override
@@ -281,8 +285,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   public Map<String, Object> getStatistics() {
     Map<String, Object> map = new HashMap<>();
 
-    map.put(MEMORY_USED, Long.valueOf(getUsedMemory()));
-    map.put(MEMORY_MAX, Long.valueOf(getMaxMemory()));
+    map.put(MEMORY_USED, getUsedMemory());
+    map.put(MEMORY_MAX, getMaxMemory());
 
     return map;
   }
@@ -309,7 +313,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   private String format(Properties properties, String keyPrefix) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     Enumeration<?> keys = properties.propertyNames();
     ArrayList<String> l = new ArrayList<>();
 
@@ -418,6 +422,17 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     _sendNotification("VerboseGC changed", "VerboseGC", "java.lang.Boolean", oldValue, verboseGC);
   }
 
+  @Override
+  public final void setPipelineMonitoring(boolean monitor) {
+    if (monitor) {
+      MonitoringEventCreator.setPipelineMonitor(consumer->{
+        logger.info(consumer.toString());
+      });
+    } else {
+      MonitoringEventCreator.setPipelineMonitor(null);
+    }
+  }
+  
   @Override
   public String getResourceState() {
     return server.getResourceState();

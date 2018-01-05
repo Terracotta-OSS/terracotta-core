@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The SEDA Stage
@@ -54,6 +55,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final boolean        pausable;
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
+  private final AtomicInteger  inflight = new AtomicInteger();
 
   /**
    * The Constructor.
@@ -86,12 +88,31 @@ public class StageImpl<EC> implements Stage<EC> {
   }
 
   private EventCreator<EC> eventCreator(boolean direct) {
-    EventCreator<EC> base = (direct) ? new DirectEventCreator<>(handler, ()->stageQueue.isEmpty()) : baseCreator();
+    EventCreator<EC> base = (direct) ? new DirectEventCreator<>(handler, ()->inflight.get() == 0) : baseCreator();
     return base;
   }
   
   private EventCreator<EC> baseCreator() {
-    return (event) -> () -> handler.handleEvent(event);
+    return (event) -> {
+      inflight.incrementAndGet();
+      return ()-> {
+        try {
+          handler.handleEvent(event);
+        } finally {
+          inflight.decrementAndGet();
+        }
+      };
+    };
+  }
+  
+  @Override
+  public boolean isEmpty() {
+    return inflight.get() == 0;
+  }
+
+  @Override
+  public int size() {
+    return inflight.get();
   }
 
   public void trackExtraStatistics(boolean enable) {
@@ -131,7 +152,7 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public int pause() {
     paused = true;
-    return stageQueue.size();
+    return inflight.get();
   }
 
   @Override
@@ -201,7 +222,8 @@ public class StageImpl<EC> implements Stage<EC> {
     Arrays.stream(threads).forEach(t->{if (t != null) tl.add(t.getStats());});
     data.put("name", name);
     data.put("threadCount", threads.length);
-    data.put("sink", getSink().getState());
+    data.put("backlog", inflight.get());
+    data.put("sink", this.stageQueue.getState());
     data.put("threads", tl);
     return data;
   }

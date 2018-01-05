@@ -101,7 +101,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private List<VoltronEntityMessage> resendNewList;
   private boolean reconnecting = true;
   
-  private Sink<TCMessage> multiSend;
+  private Stage<TCMessage> multiSend;
   private final ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<ClientID, Integer> inflightFetch = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
@@ -223,8 +223,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentMode().getState());
       server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
       
-      Stage<TCMessage> mss = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
-      multiSend = mss.getSink();
+      multiSend = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
       
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       reconnectDone = entityManager.enterActiveState();
@@ -296,7 +295,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
             vmr.send();
             vmr = null;
           } else {
-            multiSend.addSingleThreaded(vmr);
+            multiSend.getSink().addSingleThreaded(vmr);
           }
         }
       }
@@ -711,7 +710,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
                 waitForTransactionOrderPersistenceFuture(failMessage.getTransactionID());
                 failMessage.send();
               } else {
-                multiSend.addSingleThreaded(failMessage);
+                multiSend.getSink().addSingleThreaded(failMessage);
               }
               // unmap anything that was previously there
               return null;

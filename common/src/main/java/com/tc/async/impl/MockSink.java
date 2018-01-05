@@ -62,19 +62,4 @@ public class MockSink<EC> implements Sink<EC> {
   public void addMultiThreaded(EC context) {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public boolean isEmpty() {
-    return this.queue.isEmpty();
-  }
-
-  @Override
-  public int size() {
-    return this.queue.size();
-  }
-
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
 }

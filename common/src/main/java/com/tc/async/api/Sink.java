@@ -18,10 +18,6 @@
  */
 package com.tc.async.api;
 
-import com.tc.text.PrettyPrinter;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Represents the sink in the SEDA system
  */
@@ -45,27 +41,5 @@ public interface Sink<EC> {
    */
   public void addMultiThreaded(EC context);
 
-  boolean isEmpty();
-
-  /**
-   * returns the current size of the queue
-   * 
-   * @return
-   */
-  public int size();
-
-  public void clear();
-
   public void close();
-
-  default public Map<String, ?> getState() {
-    Map<String, Object> map = new HashMap<>();
-    map.put("size", (Integer)size());
-    return map;
-  }
-
-  default public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.println(getState());
-    return out;
-  }
 }

@@ -453,19 +453,7 @@ public class ReplicatedTransactionHandlerTest {
   }
 
   private static abstract class NoStatsSink<T> implements Sink<T> {
-    @Override
-    public int size() {
-      throw new UnsupportedOperationException();
-    }
 
-    @Override
-    public boolean isEmpty() {
-      throw new UnsupportedOperationException("Not supported yet."); 
-    }
-    @Override
-    public void clear() {
-      throw new UnsupportedOperationException();
-    }
   }
 
 

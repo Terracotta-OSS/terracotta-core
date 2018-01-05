@@ -112,22 +112,4 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
       }
     }
   }
-
-  @Override
-  public synchronized void clear() {
-    pending.clear();
-    current = 0;
-    sink.clear();
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return sink.isEmpty();
-  }
-
-  
-  @Override
-  public int size() {
-    return sink.size();
-  }
 }

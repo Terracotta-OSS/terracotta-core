@@ -89,7 +89,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
     Event wrapper = getEventCreator().createEvent(context);
     if (wrapper != null) {
-      deliverToQueue("Multi", new HandledEvent(wrapper));
+      deliverToQueue("Multi", wrapper);
     }
   }
 
@@ -106,13 +106,12 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
     Event wrapper = getEventCreator().createEvent(context);
     if (wrapper != null) {
-      deliverToQueue("Multi", new HandledEvent(wrapper));
+      deliverToQueue("Multi", wrapper);
     }
   }
 
   private void deliverToQueue(String type, Event wrapper) {
     boolean interrupted = Thread.interrupted();
-    addInflight();
     try {
       for (; ; ) {
         try {
@@ -138,7 +137,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   @Override
   public void clear() {
     int clearCount = sourceQueue.clear();
-    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
