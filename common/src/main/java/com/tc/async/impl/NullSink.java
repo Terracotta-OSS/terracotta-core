@@ -19,7 +19,6 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.stats.Stats;
 
 /**
  * @author steve
@@ -30,17 +29,7 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSingleThreaded(EC context) {
+  public void addToSink(EC context) {
     //
   }
-
-  @Override
-  public void addMultiThreaded(EC context) {
-    //
-  }
-
-  @Override
-  public void close() {
-  }
-
 }

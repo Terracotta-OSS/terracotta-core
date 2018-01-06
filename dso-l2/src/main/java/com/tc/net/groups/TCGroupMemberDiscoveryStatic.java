@@ -105,7 +105,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   private void discoveryPut(DiscoveryStateMachine stateMachine) {
-    manager.getDiscoveryHandlerSink().addSingleThreaded(stateMachine);
+    manager.getDiscoveryHandlerSink().addToSink(stateMachine);
   }
 
   @Override

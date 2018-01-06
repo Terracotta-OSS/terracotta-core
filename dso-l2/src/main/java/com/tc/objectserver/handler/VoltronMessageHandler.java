@@ -20,10 +20,10 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.async.impl.DirectEventCreator;
 import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -48,7 +48,7 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
       boolean fast = fastPath.size() < 2;
       if (fast != activated) {
         activated = fast;
-        DirectEventCreator.activate(activated);
+        DirectExecutionMode.activate(activated);
         if (LOGGER.isDebugEnabled()) {
           LOGGER.debug("switching to direct sink activated:" + activated + " with " + fastPath.size());
         }
@@ -57,7 +57,7 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
     if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
       MonitoringEventCreator.start();
     }
-    destSink.addSingleThreaded(message);
+    destSink.addToSink(message);
   }
 
   @Override

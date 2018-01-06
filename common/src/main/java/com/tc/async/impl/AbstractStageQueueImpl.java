@@ -36,8 +36,8 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     extraStats = track;
   }
   
-  final EventCreator<EC> getEventCreator() {
-    return (extraStats) ? this.monitoring : creator;
+  final Event createEvent(EC context) {
+    return (extraStats) ? this.monitoring.createEvent(context) : creator.createEvent(context);
   }
     
   Logger getLogger() {

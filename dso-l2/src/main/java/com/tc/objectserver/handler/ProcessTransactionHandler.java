@@ -20,12 +20,10 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.async.impl.DirectEventCreator;
 import com.tc.async.impl.MonitoringEventCreator;
-import com.tc.async.impl.PipelineMonitor;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -290,12 +288,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
           vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
           boolean added = adder.test(vmr);
           Assert.assertTrue(added);
-          if (DirectEventCreator.isActivated() && multiSend.isEmpty()) {
+          if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
             waitForTransactions(vmr);
             vmr.send();
             vmr = null;
           } else {
-            multiSend.getSink().addSingleThreaded(vmr);
+            multiSend.getSink().addToSink(vmr);
           }
         }
       }
@@ -706,11 +704,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
             VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
             failMessage.setFailure(getTransaction(), exception);
             invokeReturn.compute(getNodeID(), (client, vmr)-> {
-              if (vmr == null && DirectEventCreator.isActivated() && multiSend.isEmpty()) {
+              if (vmr == null && DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
                 waitForTransactionOrderPersistenceFuture(failMessage.getTransactionID());
                 failMessage.send();
               } else {
-                multiSend.getSink().addSingleThreaded(failMessage);
+                multiSend.getSink().addToSink(failMessage);
               }
               // unmap anything that was previously there
               return null;

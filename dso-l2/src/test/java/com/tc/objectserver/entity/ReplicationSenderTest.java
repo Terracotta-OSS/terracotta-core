@@ -60,17 +60,10 @@ public class ReplicationSenderTest {
   List<ReplicationMessage> collector = new LinkedList<>();
   Sink<Runnable> sink = new Sink<Runnable>() {
     @Override
-    public void addSingleThreaded(Runnable context) {
+    public void addToSink(Runnable context) {
       context.run();
     }
-    @Override
-    public void addMultiThreaded(Runnable context) {
-      Assert.fail("Not in test");
-    }
-    @Override
-    public void close() {
-      Assert.fail("Not in test");
-    }};
+  };
   Stage<Runnable> stage = mock(Stage.class);
 
   ReplicationSender testSender;

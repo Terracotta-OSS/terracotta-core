@@ -64,7 +64,7 @@ public class EntityMessengerServiceTest {
     verify(retirementManager).deferRetirement(deferrableMessage, futureMessage);
     handle.release();
     // verify that got scheduled.
-    verify(sink).addSingleThreaded(any());
+    verify(sink).addToSink(any());
   }
   
   @Test
@@ -91,6 +91,6 @@ public class EntityMessengerServiceTest {
     EntityMessage delayMessage = mock(EntityMessage.class);
     service.messageSelf(delayMessage);
 
-    verify(sink).addSingleThreaded(any(VoltronEntityMessage.class));
+    verify(sink).addToSink(any(VoltronEntityMessage.class));
   }
 }

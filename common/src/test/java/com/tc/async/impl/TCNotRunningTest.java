@@ -61,7 +61,7 @@ public class TCNotRunningTest extends TestCase {
     debug("Running direct test");
     Stage<TestEventContext> stage = stageManager.createStage("some-stage", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().addSingleThreaded(new TestEventContext());
+    stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
     debug("test complete");
@@ -72,7 +72,7 @@ public class TCNotRunningTest extends TestCase {
     testHandler.state = HandlerState.WRAPPED_EXCEPTION;
     Stage<TestEventContext> stage = stageManager.createStage("some-stage-2", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().addSingleThreaded(new TestEventContext());
+    stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
     debug("test complete");
@@ -83,7 +83,7 @@ public class TCNotRunningTest extends TestCase {
     testHandler.state = HandlerState.OTHER_EXCEPTION;
     Stage<TestEventContext> stage = stageManager.createStage("some-stage-3", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().addSingleThreaded(new TestEventContext());
+    stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     callbackOnExitHandler.waitUntilExitCalled();
     debug("test complete");

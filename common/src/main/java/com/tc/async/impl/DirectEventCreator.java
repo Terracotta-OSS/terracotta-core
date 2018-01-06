@@ -18,7 +18,7 @@
  */
 package com.tc.async.impl;
 
-import com.tc.async.api.EventHandler;
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
 import com.tc.util.Assert;
 import java.util.function.Supplier;
@@ -31,14 +31,13 @@ import org.slf4j.LoggerFactory;
  * across process boundaries.
  */
 public class DirectEventCreator<EC> implements EventCreator<EC> {
-  private final EventHandler<EC> handler;
+  private final EventCreator<EC> base;
   private final Supplier<Boolean> isIdle;
   private volatile boolean directInflight = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(DirectEventCreator.class);
-  private static final ThreadLocal<Thread> ACTIVATED = new ThreadLocal<>();
 
-  public DirectEventCreator(EventHandler<EC> handler, Supplier<Boolean> isIdle) {
-    this.handler = handler;
+  public DirectEventCreator(EventCreator<EC> base, Supplier<Boolean> isIdle) {
+    this.base = base;
     this.isIdle = isIdle;
     Assert.assertNotNull(this.isIdle);
   }
@@ -49,7 +48,7 @@ public class DirectEventCreator<EC> implements EventCreator<EC> {
       try {
         directInflight = true;
         Assert.assertTrue(isIdle.get());
-        handler.handleEvent(event);
+        base.createEvent(event).call();
         Assert.assertTrue(isIdle.get());
       } catch (EventHandlerException ee) {
         throw new RuntimeException(ee);
@@ -61,25 +60,13 @@ public class DirectEventCreator<EC> implements EventCreator<EC> {
       if (directInflight) {
         throw new AssertionError();
       }
-      return ()->handler.handleEvent(event);
+      return base.createEvent(event);
     }
-  }
-  
-  public static void activate(boolean activate) {
-    if (activate) {
-      ACTIVATED.set(Thread.currentThread());
-    } else {
-      ACTIVATED.remove();
-    }
-  }
-  
-  public static boolean isActivated() {
-    return ACTIVATED.get() == Thread.currentThread();
   }
   
   private boolean isSingleThreaded() {
     if (LOGGER.isDebugEnabled()) {
-      if (isActivated()) {
+      if (DirectExecutionMode.isActivated()) {
         if (!this.isIdle.get()) {
           return false;
         } else {
@@ -88,7 +75,7 @@ public class DirectEventCreator<EC> implements EventCreator<EC> {
       }
       return false;
     } else {
-      return isActivated() && this.isIdle.get();
+      return DirectExecutionMode.isActivated() && this.isIdle.get();
     }
   }
   

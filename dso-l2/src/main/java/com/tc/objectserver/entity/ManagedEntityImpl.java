@@ -18,8 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.Sink;
-import com.tc.async.impl.DirectEventCreator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
@@ -301,7 +301,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace.activeTrace().log("ManagedEntityImpl.scheduleInOrder");
 // this all makes sense because this is only called by the PTH single thread
 // deferCleared is cleared by one of the request queues
-    if (!DirectEventCreator.isActivated()) {
+    if (!DirectExecutionMode.isActivated()) {
       if (isInActiveState) {
         Assert.assertTrue(Thread.currentThread().getName().contains(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE));
       } else {
@@ -524,7 +524,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.activeServerEntity.notifyDestroyed(new ClientSourceIdImpl(cid.toLong()));
       List<EntityDescriptor> eds = this.clientEntityStateManager.clientDisconnectedFromEntity(cid, this.fetchID);
       eventCollector.clientDisconnectedFromEntity(cid, fetchID, eds);
-      eds.forEach(ed->messageSelf.addSingleThreaded(new ReferenceMessage(cid, false, ed, null)));
+      eds.forEach(ed->messageSelf.addToSink(new ReferenceMessage(cid, false, ed, null)));
     } else {
       this.passiveServerEntity.notifyDestroyed(new ClientSourceIdImpl(cid.toLong()));
     }

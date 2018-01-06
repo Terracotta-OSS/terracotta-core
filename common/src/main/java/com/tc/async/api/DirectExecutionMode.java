@@ -16,16 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.entity;
+package com.tc.async.api;
 
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
+/**
+ *
+ */
+public class DirectExecutionMode {
+  
+  private static final ThreadLocal<Thread> ACTIVATED = new ThreadLocal<>();
 
-public class RequestProcessorHandler extends AbstractEventHandler<EntityRequest> {
-
-  @Override
-  public void handleEvent(EntityRequest context) {
-    context.run();
+  public static void activate(boolean activate) {
+    if (activate) {
+      ACTIVATED.set(Thread.currentThread());
+    } else {
+      ACTIVATED.remove();
+    }
   }
-
+  
+  public static boolean isActivated() {
+    return ACTIVATED.get() == Thread.currentThread();
+  }  
 }

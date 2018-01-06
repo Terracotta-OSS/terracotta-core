@@ -164,7 +164,7 @@ public class ProcessTransactionHandlerTest {
   }
   
   private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
-    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
+    loopbackSink.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
   @After
@@ -348,19 +348,9 @@ public class ProcessTransactionHandlerTest {
       }
     }
     @Override
-    public void addSingleThreaded(Runnable context) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addMultiThreaded(Runnable context) {
+    public void addToSink(Runnable context) {
       this.runnableQueue.add(context);
     }
-
-    @Override
-    public void close() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
   }
 
 
@@ -372,23 +362,12 @@ public class ProcessTransactionHandlerTest {
     }
 
     @Override
-    public void addSingleThreaded(VoltronEntityMessage context) {
+    public void addToSink(VoltronEntityMessage context) {
       try {
         this.target.handleEvent(context);
       } catch (EventHandlerException e) {
         Assert.fail();
       }
     }
-    @Override
-    public void addMultiThreaded(VoltronEntityMessage context) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void close() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-    
-    
-}
 }

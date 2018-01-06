@@ -152,7 +152,7 @@ public class ManagedEntityImplTest {
       System.out.println(invoke.getArguments()[0]);
       exec.submit((Runnable)invoke.getArguments()[0]);
       return null;
-    }).when(executionSink).addMultiThreaded(Matchers.any());
+    }).when(executionSink).addToSink(Matchers.any());
     
     activeServerEntity = mock(ActiveServerEntity.class);
     passiveServerEntity = mock(PassiveServerEntity.class);
@@ -667,7 +667,7 @@ public class ManagedEntityImplTest {
           queued.add((Integer)request.getSchedulingKey());
         }
         return null;
-    }).when(executionSink).addMultiThreaded(Matchers.any());
+    }).when(executionSink).addToSink(Matchers.any());
 
     Mockito.doAnswer(invocation->{
         TestingResponse resp = mockResponse();

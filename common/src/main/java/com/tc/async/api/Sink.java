@@ -28,18 +28,5 @@ public interface Sink<EC> {
    * 
    * @param context
    */
-  public void addSingleThreaded(EC context);
-
-  /**
-   * Adds an event to the queue for multi-threaded execution (that is, it could be executed concurrently with other contexts
-   * pass in this way or even relative to single-threaded contexts).
-   * 
-   * TODO:  Split out the multi-threaded cases to avoid the casts required in the implementations.  This hack is just a
-   * stop-gap to keep the change to add types to SEDA smaller.
-   * 
-   * @param context
-   */
-  public void addMultiThreaded(EC context);
-
-  public void close();
+  public void addToSink(EC context);
 }

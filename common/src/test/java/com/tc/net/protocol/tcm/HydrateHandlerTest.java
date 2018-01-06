@@ -43,6 +43,6 @@ public class HydrateHandlerTest extends TCTestCase {
     handler.handleEvent(context);
     verify(channel).close();
     verify(message).hydrate();
-    verify(sink, never()).addSingleThreaded(any(TCMessage.class));
+    verify(sink, never()).addToSink(any(TCMessage.class));
   }
 }

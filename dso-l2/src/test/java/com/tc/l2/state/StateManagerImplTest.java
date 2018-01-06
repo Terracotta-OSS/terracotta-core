@@ -161,7 +161,7 @@ public class StateManagerImplTest {
               t.printStackTrace();
             }
             return null;
-          }).when(electionSink).addSingleThreaded(any());
+          }).when(electionSink).addToSink(any());
           when(election.getSink()).thenReturn(electionSink);
           return election;
         });

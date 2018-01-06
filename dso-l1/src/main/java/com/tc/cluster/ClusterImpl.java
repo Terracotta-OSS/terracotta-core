@@ -307,7 +307,7 @@ public class ClusterImpl implements ClusterInternal {
         }
       });
     } else {
-      this.eventsProcessorSink.addSingleThreaded(new ClusterInternalEventsContext(eventType, event, listener));
+      this.eventsProcessorSink.addToSink(new ClusterInternalEventsContext(eventType, event, listener));
     }
   }
 

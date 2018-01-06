@@ -78,39 +78,21 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   }
 
   @Override
-  public void addSingleThreaded(EC context) {
+  public void addToSink(EC context) {
     Assert.assertNotNull(context);
-    Assert.assertFalse(context instanceof MultiThreadedEventContext);
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-    Event wrapper = getEventCreator().createEvent(context);
+    Event wrapper = createEvent(context);
     if (wrapper != null) {
-      deliverToQueue("Multi", wrapper);
+      deliverToQueue(wrapper);
     }
   }
 
-  @Override
-  public void addMultiThreaded(EC context) {
-    Assert.assertNotNull(context);
-    Assert.assertTrue(context instanceof MultiThreadedEventContext);
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    if (this.logger.isDebugEnabled()) {
-      this.logger.debug("Added:" + context + " to:" + this.stageName);
-    }
-
-    Event wrapper = getEventCreator().createEvent(context);
-    if (wrapper != null) {
-      deliverToQueue("Multi", wrapper);
-    }
-  }
-
-  private void deliverToQueue(String type, Event wrapper) {
+  private void deliverToQueue(Event wrapper) {
     boolean interrupted = Thread.interrupted();
     try {
       for (; ; ) {
@@ -118,7 +100,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
           this.sourceQueue.put(wrapper);
           break;
         } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: [" + type + "] " + e);
+          this.logger.debug("StageQueue Add: " + e);
           interrupted = true;
         }
       }

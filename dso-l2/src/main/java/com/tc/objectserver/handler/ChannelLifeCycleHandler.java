@@ -84,7 +84,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
       broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
       // send a disconnection message to the platform entity to initiate the disconnection sequence, this flushes the PTH 
       // of any possible fetches there
-      voltronSink.addSingleThreaded(createDisconnectMessage(clientID));
+      voltronSink.addToSink(createDisconnectMessage(clientID));
     }
 
     if (commsManager.isInShutdown()) {
@@ -102,7 +102,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
           notifyEnitiesOfDisconnect(clientID);
         } else {
     // there are fetches in the managed entity, not safe to remove the client, recursion
-          voltronSink.addSingleThreaded(createDisconnectMessage(clientID));
+          voltronSink.addToSink(createDisconnectMessage(clientID));
         }
       });
   }
@@ -110,7 +110,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private void notifyEnitiesOfDisconnect(ClientID clientID) {
     List<FetchID> msg = clientEvents.clientDisconnected(clientID);
     collector.expectedDisconnects(clientID, msg);
-    msg.forEach(m->voltronSink.addSingleThreaded(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), null)));
+    msg.forEach(m->voltronSink.addToSink(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), null)));
     notifyClientRemoved(clientID);
   }
 

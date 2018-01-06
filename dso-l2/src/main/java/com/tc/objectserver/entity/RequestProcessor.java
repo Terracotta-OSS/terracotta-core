@@ -47,8 +47,8 @@ import org.terracotta.entity.ConcurrencyStrategy;
 
 public class RequestProcessor {
   private PassiveReplicationBroker passives;
-  private final Sink<Runnable> requestExecution;
-  private final Sink<Runnable> syncExecution;
+  private final Sink<EntityRequest> requestExecution;
+  private final Sink<EntityRequest> syncExecution;
   private boolean isActive = false;
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   
@@ -57,16 +57,16 @@ public class RequestProcessor {
     int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     int numOfProcessors = L2Utils.getOptimalApplyStageWorkerThreads(true);
     numOfProcessors = Math.max(MIN_NUM_PROCESSORS, numOfProcessors);
-    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class, new RequestProcessorHandler(), numOfProcessors, maxStageSize, use_direct).getSink();
-    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, Runnable.class, new RequestProcessorHandler(), MIN_NUM_PROCESSORS, maxStageSize, use_direct).getSink();
+    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, EntityRequest.class, new RequestProcessorHandler(), numOfProcessors, maxStageSize, use_direct).getSink();
+    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new RequestProcessorHandler(), MIN_NUM_PROCESSORS, maxStageSize, use_direct).getSink();
   }
 //  TODO: do some accounting for transaction de-dupping on failover
   
-  RequestProcessor(Sink<Runnable> requestExecution) {
+  RequestProcessor(Sink<EntityRequest> requestExecution) {
     this(requestExecution, requestExecution);
   }
   
-  RequestProcessor(Sink<Runnable> requestExecution, Sink<Runnable> syncExecution) {
+  RequestProcessor(Sink<EntityRequest> requestExecution, Sink<EntityRequest> syncExecution) {
     this.requestExecution = requestExecution;
     this.syncExecution = requestExecution;
   }
@@ -118,9 +118,9 @@ public class RequestProcessor {
       PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + eid + ":" + concurrencyKey);
     }
     if (inSync) {
-      syncExecution.addMultiThreaded(entityRequest);
+      syncExecution.addToSink(entityRequest);
     } else {
-      requestExecution.addMultiThreaded(entityRequest);
+      requestExecution.addToSink(entityRequest);
     }
   }
   

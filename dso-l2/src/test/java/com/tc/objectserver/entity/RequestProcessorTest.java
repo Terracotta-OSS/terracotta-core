@@ -30,6 +30,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import java.util.Collections;
@@ -37,7 +38,6 @@ import java.util.HashMap;
 import java.util.Set;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -50,7 +50,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -108,12 +107,12 @@ public class RequestProcessorTest {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
-    Sink<Runnable> dump = mock(Sink.class);
+    Sink<EntityRequest> dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
 
     instance.scheduleRequest(false, mock(EntityID.class), 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
     
-    verify(dump).addMultiThreaded(Matchers.any());
+    verify(dump).addToSink(Matchers.any());
   }
   
   @Test
@@ -137,7 +136,7 @@ public class RequestProcessorTest {
 
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.commonMessagePayloadBusy(payload, null, true), (w)->{}, true, key);
 
-    verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
+    verify(dump).addToSink(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
   }
 
   @Test
@@ -157,7 +156,7 @@ public class RequestProcessorTest {
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
 
-    verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
+    verify(dump).addToSink(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
   }
 
   @Test
@@ -176,7 +175,7 @@ public class RequestProcessorTest {
     instance.setReplication(broker);
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.MANAGEMENT_KEY);
 
-    verify(dump).addMultiThreaded(Matchers.argThat(new MultiThreadedEventMatcher(testid, ConcurrencyStrategy.MANAGEMENT_KEY)));
+    verify(dump).addToSink(Matchers.argThat(new MultiThreadedEventMatcher(testid, ConcurrencyStrategy.MANAGEMENT_KEY)));
   }
   
   @Test

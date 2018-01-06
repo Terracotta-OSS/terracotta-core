@@ -845,7 +845,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
+            .getSink().addToSink(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
@@ -855,7 +855,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     this.seda.getStageManager()
         .getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class)
-        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
+        .getSink().addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {
@@ -920,7 +920,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           PlatformInfoRequest fake = PlatformInfoRequest.createServerInfoRemoveMessage((ServerID)nodeID);
           fake.setMessageOrginator(nodeID);
-          infoHandler.addSingleThreaded(fake);
+          infoHandler.addToSink(fake);
         }
       }
     };
@@ -1028,7 +1028,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
       } 
       for (VoltronEntityMessage vem : checkdups.values()) {
-        msgSink.addSingleThreaded(vem);
+        msgSink.addToSink(vem);
       }
       EntityPersistor ep = this.persistor.getEntityPersistor();
       for (VoltronEntityMessage vem : checkdups.values()) {

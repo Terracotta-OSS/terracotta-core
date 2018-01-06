@@ -174,22 +174,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private <T> Sink<T> makeDirectSink(final EventHandler<T> handler) {
     return new Sink<T>() {
       @Override
-      public void addSingleThreaded(T context) {
+      public void addToSink(T context) {
         try {
           handler.handleEvent(context);
         } catch (EventHandlerException ee) {
           throw new RuntimeException(ee);
         }
-      }
-
-      @Override
-      public void addMultiThreaded(T context) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public void close() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
     };
   }
@@ -376,10 +366,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     Stage<VoltronEntityResponse> responder = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class);
     Stage<VoltronEntityMultiResponse> responderMulti = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class);
     FlushResponse flush = new FlushResponse();
-    responder.getSink().addSingleThreaded(flush);
+    responder.getSink().addToSink(flush);
     flush.waitForAccess();
     flush = new FlushResponse();
-    responderMulti.getSink().addSingleThreaded(flush);
+    responderMulti.getSink().addToSink(flush);
     flush.waitForAccess();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
@@ -541,7 +531,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage inFlight = new InFlightMessage(message.getEntityID(), message, requestedAcks, monitor, shouldBlockGetOnRetire, isDeferred);
     
     // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
-    outbound.addSingleThreaded(inFlight);
+    outbound.addToSink(inFlight);
     return inFlight;
   }
 

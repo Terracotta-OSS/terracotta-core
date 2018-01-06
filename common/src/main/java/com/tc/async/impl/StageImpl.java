@@ -21,8 +21,10 @@ package com.tc.async.impl;
 import org.slf4j.Logger;
 
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.Stage;
@@ -30,6 +32,7 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.ArrayList;
@@ -73,6 +76,9 @@ public class StageImpl<EC> implements Stage<EC> {
                    ThreadGroup group, QueueFactory queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
+    if (queueCount > 1 && !MultiThreadedEventContext.class.isAssignableFrom(type)) {
+      throw new IllegalArgumentException("the requested queue count is greater than one but the event type is not multi-threaded for stage:" + this.name);
+    }
     this.threads = new WorkerThread[queueCount];
     this.handler = handler;
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, eventCreator(canBeDirect), loggerProvider, name, queueSize);
@@ -86,10 +92,9 @@ public class StageImpl<EC> implements Stage<EC> {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
   }
-
+  
   private EventCreator<EC> eventCreator(boolean direct) {
-    EventCreator<EC> base = (direct) ? new DirectEventCreator<>(handler, ()->inflight.get() == 0) : baseCreator();
-    return base;
+    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->inflight.get() == 0) : baseCreator();
   }
   
   private EventCreator<EC> baseCreator() {

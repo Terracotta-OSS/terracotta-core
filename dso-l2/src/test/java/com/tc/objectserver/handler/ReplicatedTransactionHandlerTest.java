@@ -128,7 +128,7 @@ public class ReplicatedTransactionHandlerTest {
     doAnswer(answer->{
       ((Runnable)answer.getArguments()[0]).run();
       return null;
-    }).when(sink).addSingleThreaded(any(Runnable.class));
+    }).when(sink).addToSink(any(Runnable.class));
 
     this.rth = new ReplicatedTransactionHandler(stateManager, runner, persistor, this.entityManager, this.groupManager);
     // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
@@ -147,7 +147,7 @@ public class ReplicatedTransactionHandlerTest {
     
   private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
     ReplicationMessage flush = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, action == ServerEntityAction.DESTROY_ENTITY));
-    loopbackSink.addSingleThreaded(flush);
+    loopbackSink.addToSink(flush);
   }
   
   @Test
@@ -185,13 +185,13 @@ public class ReplicatedTransactionHandlerTest {
         new SyncReplicationActivity.EntityCreationTuple(eid, 1, 10L, new byte[0], true)
     };
     int referenceCount = 0;
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(entitiesToSync)));
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), entitiesToSync[0].configPayload, referenceCount)));
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartEntityKeyMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), rand)));
-    this.loopbackSink.addSingleThreaded(msg);
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityKeyMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), rand)));
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID))));
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(entitiesToSync)));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), entitiesToSync[0].configPayload, referenceCount)));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartEntityKeyMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), rand)));
+    this.loopbackSink.addToSink(msg);
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndEntityKeyMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), rand)));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID))));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
     verify(activity).getExtendedData();
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
     verify(groupManager, times(2)).sendToWithSentCallback(Matchers.eq(sid), Matchers.any(), Matchers.any());
@@ -225,9 +225,9 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       return null;
     }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
-    this.loopbackSink.addSingleThreaded(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
-    this.loopbackSink.addSingleThreaded(msg);
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(new byte[0])));
+    this.loopbackSink.addToSink(msg);
     verify(activity).getExtendedData();
     verify(activity).getConcurrency();  // make sure RTH is pulling the concurrency from the message
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
@@ -439,7 +439,7 @@ public class ReplicatedTransactionHandlerTest {
   private long send(SyncReplicationActivity activity) throws EventHandlerException {
     ReplicationMessage msg = createReceivedActivity(activity);
     msg.setSequenceID(rid++);
-    loopbackSink.addSingleThreaded(msg);
+    loopbackSink.addToSink(msg);
     return rid;
   }
   @After
@@ -465,25 +465,14 @@ public class ReplicatedTransactionHandlerTest {
     }
 
     @Override
-    public void addSingleThreaded(M context) {
+    public void addToSink(M context) {
       try {
         this.target.handleEvent(context);
       } catch (EventHandlerException e) {
         Assert.fail();
       }
     }
-    @Override
-    public void addMultiThreaded(M context) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void close() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-    
-    
-}
 
 
   /**

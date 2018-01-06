@@ -18,7 +18,6 @@
  */
 package com.tc.async.impl;
 
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
@@ -111,7 +110,7 @@ public class MultiStageQueueImplTest {
     MultiThreadedEventContext context1 = mock(MultiThreadedEventContext.class);
     when(context1.getSchedulingKey()).thenReturn(null);
     System.out.println("test add");
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     boolean found = false;
     for (Queue<Object> q : cxts) {
       if (q.poll() != null) {
@@ -121,7 +120,7 @@ public class MultiStageQueueImplTest {
     assertTrue(found);
     System.out.println("test even distribution with no key");
     for (int x = 0; x < size * 2; x++) {
-      instance.addMultiThreaded(context1);
+      instance.addToSink(context1);
     }
     for (Queue<Object> q : cxts) {
       assertThat(q.size(), org.hamcrest.Matchers.lessThanOrEqualTo(2));
@@ -130,7 +129,7 @@ public class MultiStageQueueImplTest {
 
     System.out.println("test specific queue");
     when(context1.getSchedulingKey()).thenReturn(1);
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     //  int should hash to int
     for (int x = 0; x < cxts.size(); x++) {
       if (x != 1) {
@@ -142,7 +141,7 @@ public class MultiStageQueueImplTest {
 
     int rand = (int) (Math.random() * Integer.MAX_VALUE);
     when(context1.getSchedulingKey()).thenReturn(rand);
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     //  tests specific implementation.  test expectation
     assertNotNull(cxts.get(rand % cxts.size()).poll());
   }
@@ -174,13 +173,13 @@ public class MultiStageQueueImplTest {
     // fcheck starts at zero and should stay at zero because first queue is always empty
     for (int x = 0; x < 6; x++) {
       Assert.assertTrue(impl.getSource(0).isEmpty());
-      impl.addMultiThreaded(cxt);
+      impl.addToSink(cxt);
       Assert.assertNotNull(impl.getSource(0).poll(0));
     }
     //  now try and fill one each on the the queues
     for (int x = 0; x < 6; x++) {
       Assert.assertTrue(impl.getSource(x).isEmpty());
-      impl.addMultiThreaded(cxt);
+      impl.addToSink(cxt);
       Assert.assertFalse(cxts.get(x).isEmpty());
     }
     //  now clear the last three and re-fill them
@@ -188,7 +187,7 @@ public class MultiStageQueueImplTest {
       Assert.assertFalse(impl.getSource(x).isEmpty());
       Assert.assertNotNull(impl.getSource(x).poll(0));
       Assert.assertTrue(cxts.get(x).isEmpty());
-      impl.addMultiThreaded(cxt);
+      impl.addToSink(cxt);
       Assert.assertFalse(cxts.get(x).isEmpty());
     }
     //  now clear all again
@@ -199,7 +198,7 @@ public class MultiStageQueueImplTest {
     }
     // now add one more and make sure it is at the last queue since that was the
     // last to be cleared
-    impl.addMultiThreaded(cxt);
+    impl.addToSink(cxt);
     Assert.assertFalse(cxts.get(5).isEmpty());
   }
 
@@ -232,7 +231,7 @@ public class MultiStageQueueImplTest {
       }
     };
     for (int i = 0; i < 100; i++) {
-      impl.addMultiThreaded(incoming);
+      impl.addToSink(incoming);
     }
     assertTrue(impl.partitionHand.get() > 0);
     assertTrue(impl.partitionHand.get() < prior);
@@ -273,7 +272,7 @@ public class MultiStageQueueImplTest {
       @Override
       public void run() {
         incomingCount[0]++;
-        impl.addMultiThreaded(incoming);
+        impl.addToSink(incoming);
       }
     }, 1, TimeUnit.MILLISECONDS);
     supplier.start();
