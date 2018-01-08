@@ -18,11 +18,9 @@
  */
 package com.tc.l2.state;
 
-import com.tc.management.TerracottaMBean;
-import com.tc.voter.VoterManager;
+import com.tc.voter.VoterManagerMBean;
 
-public interface ServerVoterManager extends VoterManager {
-
+public interface ServerVoterManager extends VoterManagerMBean {
 
   /**
    *
@@ -52,6 +50,5 @@ public interface ServerVoterManager extends VoterManager {
   /**
    * Notify all voters to stop voting.
    */
-  void endVoting();
-
+  void stopVoting();
 }

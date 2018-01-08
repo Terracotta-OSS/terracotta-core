@@ -18,15 +18,20 @@
  */
 package com.tc.voter;
 
+import java.util.concurrent.TimeoutException;
+
 public interface VoterManager {
+
+  long HEARTBEAT_RESPONSE = 0;
+  long INVALID_VOTER_RESPONSE = -1;
 
   /**
    * Get registered with a server using the provided id.
    *
    * @param id voter id
-   * @return the current term of the server
+   * @return the current term of the server. -1 if the registration fails.
    */
-  long registerVoter(String id);
+  long registerVoter(String id) throws TimeoutException;
 
   /**
    *
@@ -34,7 +39,7 @@ public interface VoterManager {
    * @return a positive election term number when the server is in election.
    * 0 if the server is not in election. -1 if the server does not recognise this voter as a valid one.
    */
-  long heartbeat(String id);
+  long heartbeat(String id) throws TimeoutException;
 
   /**
    *
@@ -43,7 +48,7 @@ public interface VoterManager {
    * @return a positive election term number when the server is in election.
    * 0 if the server is not in election. -1 if the server does not recognise this voter as a valid one.
    */
-  long vote(String id, long electionTerm);
+  long vote(String id, long electionTerm) throws TimeoutException;
 
   /**
    * For casting a veto vote during election.
@@ -52,18 +57,7 @@ public interface VoterManager {
    *
    * @param id the voter id
    */
-  boolean vetoVote(String id);
-
-
-  /**
-   *
-   * Try and reconnect with the server after a disconnect.
-   * If the reconnect attempt fails then the voter must try to re-register with the server.
-   *
-   * @param id voter id
-   * @return the current term of the server if the reconnect succeeded. Else -1.
-   */
-  boolean reconnect(String id);
+  boolean vetoVote(String id) throws TimeoutException;
 
   /**
    * De-register the voter with the given id from the server.
@@ -71,5 +65,5 @@ public interface VoterManager {
    * @param id the voter id
    * @return true if de-registration succeeds. Otherwise false.
    */
-  boolean deregisterVoter(String id);
+  boolean deregisterVoter(String id) throws TimeoutException;
 }

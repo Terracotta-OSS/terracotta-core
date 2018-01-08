@@ -18,23 +18,15 @@
  */
 package com.tc.services;
 
+public interface TimeSource {
 
-/**
- * A time source for use in tests which use a SingleThreadedTimer.
- */
-public class TestTimeSource implements TimeSource {
-  private long currentTimeMillis;
-  
-  public TestTimeSource(long currentTimeMillis) {
-    this.currentTimeMillis = currentTimeMillis;
-  }
-  
-  public void passTime(long millis) {
-    this.currentTimeMillis += millis;
-  }
-  
-  @Override
-  public long currentTimeMillis() {
-    return this.currentTimeMillis;
-  }
+  TimeSource SYSTEM_TIME_SOURCE = new TimeSource() {
+    @Override
+    public long currentTimeMillis() {
+      return System.currentTimeMillis();
+    }
+  };
+
+  long currentTimeMillis();
+
 }
