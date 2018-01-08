@@ -201,7 +201,7 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String,Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     map.put("monitor", MONITOR);
@@ -210,6 +210,6 @@ public class StageManagerImpl implements StageManager {
       list.add(stage.getState());
     }
     map.put("stages", list);
-    return out.println(map);
+    return map;
   }
 }

@@ -93,8 +93,8 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return out;
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 
   @Override

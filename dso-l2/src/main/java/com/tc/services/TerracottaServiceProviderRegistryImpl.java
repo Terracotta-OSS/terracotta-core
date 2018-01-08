@@ -164,7 +164,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     List<Object> services = new ArrayList<>(serviceProviders.size());
     map.put("services", services);
@@ -187,7 +187,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         services.add("unable to collect state for " + implementationProvidedServiceProvider.getClass().getName() + ":" +  t.getMessage());
       }
     }
-    return out.println(map);
+    return map;
   }
 
 }

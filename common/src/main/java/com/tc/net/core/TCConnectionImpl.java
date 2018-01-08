@@ -38,7 +38,6 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.SetOnceRef;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -49,12 +48,13 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -155,6 +155,20 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.socketParams = socketParams;
     this.commWorker = nioServiceThread;
+  }
+  
+  @Override
+  public Map<String, ?> getState() {
+    Map<String, Object> state = new LinkedHashMap<>();
+    state.put("localAddress", this.getLocalAddress());
+    state.put("remoteAddress", this.getRemoteAddress());
+    state.put("totalRead", this.totalRead.get());
+    state.put("totalWrite", this.totalWrite.get());
+    state.put("connectTime", new Date(this.getConnectTime()));
+    state.put("receiveIdleTime", this.getIdleReceiveTime());
+    state.put("idleTime", this.getIdleTime());
+    state.put("worker", commWorker.getName());
+    return state;
   }
 
   public void setCommWorker(CoreNIOServices worker) {

@@ -48,9 +48,10 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
@@ -306,6 +307,19 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       return "[" + this.commThreadName + ", FD, wt:" + this.clientWeights + "]";
     }
   }
+  
+  public String getName() {
+    return this.commThreadName;
+  }
+  
+  public Map<String, ?> getState() {
+    Map<String, Object> state = new LinkedHashMap<>();
+    state.put("name", this.commThreadName);
+    state.put("weights", this.clientWeights);
+    state.put("writer", this.readerComm.getCommState());
+    state.put("reader", this.writerComm.getCommState());
+    return state;
+  }
 
   void requestConnectInterest(TCConnectionImpl conn, SocketChannel sc) {
     readerComm.requestConnectInterest(conn, sc);
@@ -351,6 +365,15 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       this.selector = createSelector();
       this.selectorTasks = new ConcurrentLinkedQueue<Runnable>();
       this.mode = mode;
+    }
+    
+    private Map<String, ?> getCommState() {
+      Map<String, Object> state = new LinkedHashMap<>();
+      state.put("name", name);
+      state.put("mode", mode);
+      state.put("bytesMoved", bytesMoved);
+      state.put("selectorBacklog", selectorTasks.size());
+      return state;
     }
 
     private boolean isReader() {

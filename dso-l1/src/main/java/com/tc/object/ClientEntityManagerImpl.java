@@ -65,6 +65,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -281,9 +282,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-  //  TODO: implement something sane
-    return out;
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 
   @Override

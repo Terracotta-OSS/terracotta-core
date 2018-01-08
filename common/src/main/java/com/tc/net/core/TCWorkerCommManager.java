@@ -27,6 +27,10 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 /**
@@ -124,5 +128,8 @@ public class TCWorkerCommManager {
   protected long getTotalBytesWrittenByWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getTotalBytesWritten();
   }
-
+  
+  public List<?> getState() {
+    return Arrays.stream(workerCommThreads).map(s->s.getState()).collect(Collectors.toList());
+  }
 }

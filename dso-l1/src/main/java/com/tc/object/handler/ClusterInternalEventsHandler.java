@@ -56,7 +56,7 @@ public class ClusterInternalEventsHandler<EC> extends AbstractEventHandler<EC> {
   private final ClusterEventsNotifier    clusterEventsNotifier;
   private final ClusterEventExecutor     clusterEventExecutor      = new ClusterEventExecutor();
 
-  private static class ClusterEventExecutor implements PrettyPrintable {
+  private static class ClusterEventExecutor {
 
     private final DaemonThreadFactory daemonThreadFactory = new DaemonThreadFactory();
     private final ThreadPoolExecutor  eventExecutor       = new ThreadPoolExecutor(1, EXECUTOR_MAX_THREADS, 60L,
@@ -68,14 +68,6 @@ public class ClusterInternalEventsHandler<EC> extends AbstractEventHandler<EC> {
     public ThreadPoolExecutor getExecutorService() {
       return eventExecutor;
     }
-
-    @Override
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      out.println("clusterEventExecutor active: " + eventExecutor.getActiveCount() + " queue: "
-                    + eventExecutor.getQueue().size()).flush();
-      return out;
-    }
-
   }
 
   private static class DaemonThreadFactory implements ThreadFactory {

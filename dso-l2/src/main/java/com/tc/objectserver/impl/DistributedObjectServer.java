@@ -321,6 +321,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
     collectState(this.seda.getStageManager(), pp);
     collectState(this.persistor, pp);
+    collectState(this.communicationsManager, pp);
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
