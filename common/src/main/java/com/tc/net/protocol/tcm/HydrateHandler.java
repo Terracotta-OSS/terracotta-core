@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.MultiThreadedEventContext;
 
 public class HydrateHandler extends AbstractEventHandler<HydrateContext> {
   private static Logger logger = LoggerFactory.getLogger(HydrateHandler.class);

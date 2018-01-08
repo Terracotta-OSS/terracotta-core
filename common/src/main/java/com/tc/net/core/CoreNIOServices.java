@@ -38,6 +38,7 @@ import java.net.Socket;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.Channel;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SelectableChannel;
@@ -55,7 +56,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The communication thread. Creates {@link Selector selector}, registers {@link SocketChannel} to the selector and does
@@ -176,6 +176,21 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   public long getTotalBytesWritten() {
     return readerComm.getTotalBytesWritten() + writerComm.getTotalBytesWritten();
+  }
+  
+  public static boolean hasPendingReads() {
+    Thread t = Thread.currentThread();
+    if (t instanceof CommThread) {
+      CommThread ct = (CommThread)t;
+      if (ct.isReader()) {
+        try {
+          return ct.selector.selectedKeys().stream().anyMatch(key->key.isReadable());
+        } catch (ClosedSelectorException closed) {
+          return false;
+        }
+      }
+    }
+    return false;
   }
   
   public boolean compareWeights(CoreNIOServices incoming) {
@@ -326,8 +341,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     private final Selector                      selector;
     private final Queue<Runnable> selectorTasks;
     private final String                        name;
-    private final AtomicLong                    bytesRead    = new AtomicLong(0);
-    private final AtomicLong                    bytesWritten = new AtomicLong(0);
+    private long                    bytesMoved    = 0;
     private final COMM_THREAD_MODE              mode;
 
     public CommThread(COMM_THREAD_MODE mode) {
@@ -678,13 +692,13 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
               TCChannelReader reader = (TCChannelReader) key.attachment();
               do {
                 read = reader.doRead();
-                this.bytesRead.addAndGet(read);
+                bytesMoved += read;
               } while ((read != 0) && key.isReadable());
             }
 
             if (key.isValid() && !isReader() && key.isWritable()) {
               int written = ((TCChannelWriter) key.attachment()).doWrite();
-              this.bytesWritten.addAndGet(written);
+                bytesMoved += written;
             }
 
             TCConnection conn = (TCConnection) key.attachment();
@@ -762,11 +776,11 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     }
 
     public long getTotalBytesRead() {
-      return this.bytesRead.get();
+      return this.mode == COMM_THREAD_MODE.NIO_READER ? this.bytesMoved : 0;
     }
 
     public long getTotalBytesWritten() {
-      return this.bytesWritten.get();
+      return this.mode == COMM_THREAD_MODE.NIO_WRITER ? this.bytesMoved : 0;
     }
 
     private void handleRequest(final InterestRequest req) {

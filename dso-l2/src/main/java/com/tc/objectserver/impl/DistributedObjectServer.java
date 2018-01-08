@@ -228,6 +228,8 @@ import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
+import com.tc.net.protocol.tcm.HydrateContext;
+import com.tc.net.protocol.tcm.HydrateHandler;
 
 
 /**
@@ -652,8 +654,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
+    Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
+    
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
@@ -815,6 +819,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.SINGLE_THREADED_FAST_PATH,
         ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE,
+        ServerConfigurationContext.HYDRATE_MESSAGE_STAGE,
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
@@ -875,6 +880,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.HYDRATE_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
