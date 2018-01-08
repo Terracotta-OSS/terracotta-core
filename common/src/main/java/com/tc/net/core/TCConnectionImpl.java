@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
@@ -211,13 +210,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         Assert.eval(this.commWorker != null);
         this.commWorker.cleanupChannel(newSocket, null);
         throw new TCTimeoutException("Timeout of " + timeout + "ms occured connecting to " + addr, ste);
-      } catch (final ClosedSelectorException cse) {
-        if (NIOWorkarounds.connectWorkaround(cse)) {
-          logger.warn("Retrying connect to " + addr + ", attempt " + i);
-          ThreadUtil.reallySleep(500);
-          continue;
-        }
-        throw cse;
       }
     }
     this.channel = newSocket;
@@ -925,7 +917,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
           logger.info("error writing to channel " + this.channel.toString() + ": " + ioe.getMessage());
         }
 
-        if (NIOWorkarounds.windowsWritevWorkaround(ioe)) { return; }
         this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
       }
     }

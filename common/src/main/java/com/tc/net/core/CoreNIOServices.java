@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.exception.TCInternalError;
-import com.tc.net.NIOWorkarounds;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
@@ -397,18 +396,6 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             return selector1;
           } catch (IOException ioe) {
             throw new RuntimeException(ioe);
-          } catch (NullPointerException npe) {
-            if (i < tries && NIOWorkarounds.selectorOpenRace(npe)) {
-              System.err
-                  .println("Attempting to work around sun bug 6427854 (attempt " + (i + 1) + " of " + tries + ")");
-              try {
-                Thread.sleep(new Random().nextInt(20) + 5);
-              } catch (InterruptedException ie) {
-                interrupted = true;
-              }
-              continue;
-            }
-            throw npe;
           }
         }
       } finally {
@@ -621,16 +608,6 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         try {
           numKeys = localSelector.select();
         } catch (IOException ioe) {
-          if (NIOWorkarounds.linuxSelectWorkaround(ioe)) {
-            logger.warn("working around Sun bug 4504001");
-            continue;
-          }
-
-          if (NIOWorkaroundsTemp.solarisSelectWorkaround(ioe)) {
-            logger.warn("working around Solaris select IOException");
-            continue;
-          }
-
           throw ioe;
         } catch (CancelledKeyException cke) {
           logger.warn("Cencelled Key " + cke);
@@ -940,24 +917,4 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       return buf.toString();
     }
   }
-
-  /**
-   * A temporary class. These apis are available in the latest tim-api version. Since, TC 3.6 can't use the newer
-   * tim-api version, having a copy of them here.
-   */
-  private static class NIOWorkaroundsTemp {
-    /**
-     * Workaround for select() throwing IOException("Bad file number") in Solaris Sun bug 6994017 looks related --
-     * http://wesunsolve.net/bugid/id/6994017
-     */
-    private static boolean solarisSelectWorkaround(IOException ioe) {
-      if (Os.isSolaris()) {
-        String msg = ioe.getMessage();
-        if ((msg != null) && msg.contains("Bad file number")) { return true; }
-      }
-      return false;
-    }
-
-  }
-
 }

@@ -103,7 +103,6 @@ import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
-import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -402,7 +401,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
                                                                              + "]. Local addresses are "
                                                                              + addressChecker.getAllLocalAddresses()); }
 
-    NIOWorkarounds.solaris10Workaround();
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
