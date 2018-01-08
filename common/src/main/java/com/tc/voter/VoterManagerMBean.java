@@ -16,39 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.l2.state;
+package com.tc.voter;
 
-import com.tc.voter.VoterManagerMBean;
+import com.tc.management.TerracottaMBean;
 
-public interface ServerVoterManager extends VoterManagerMBean {
+public interface VoterManagerMBean extends VoterManager, TerracottaMBean {
 
-  /**
-   *
-   * @return the configured limit of voters
-   */
-  int getVoterLimit();
+  String MBEAN_NAME = "VoterManager";
 
   /**
-   * Notify all voters to start voting the given election term.
-   *
-   * @param electionTerm current election term
+   * @param idTerm voter id and the election term number for which this vote is cast separated by a ":"
+   * @return @see VoterManager
    */
-  void startVoting(long electionTerm);
+  long vote(String idTerm);
 
-  /**
-   *
-   * @return the total number of votes received so far
-   */
-  int getVoteCount();
-
-  /**
-   *
-   * @return true if the server has received a veto vote from some voter client. Else false.
-   */
-  boolean vetoVoteReceived();
-
-  /**
-   * Notify all voters to stop voting.
-   */
-  void stopVoting();
 }
