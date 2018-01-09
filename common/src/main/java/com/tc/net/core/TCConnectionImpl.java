@@ -60,6 +60,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -88,7 +89,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final TCConnectionManagerImpl         parent;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
   private final AtomicLong                      lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder                      messagesWritten           = new LongAdder();
   private final AtomicLong                      lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder                      messagesRead           = new LongAdder();
   private final AtomicLong                      connectTime                 = new AtomicLong(NO_CONNECT_TIME);
   private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<TCConnectionEventListener>();
   private final TCProtocolAdaptor               protocolAdaptor;
@@ -167,6 +170,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("connectTime", new Date(this.getConnectTime()));
     state.put("receiveIdleTime", this.getIdleReceiveTime());
     state.put("idleTime", this.getIdleTime());
+    state.put("messageWritten", this.messagesWritten.longValue());
+    state.put("messageRead", this.messagesRead.longValue());
     state.put("worker", commWorker.getName());
     return state;
   }
@@ -314,6 +319,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     } while (read != 0);
 
     this.totalRead.addAndGet(totalBytesReadFromBuffer);
+    this.messagesRead.increment();
     return totalBytesReadFromBuffer;
   }
 
@@ -743,7 +749,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   @Override
   public final void putMessage(TCNetworkMessage message) {
     this.lastDataWriteTime.set(System.currentTimeMillis());
-
+    this.messagesWritten.increment();
     putMessageImpl(message);
   }
 
