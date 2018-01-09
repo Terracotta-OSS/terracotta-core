@@ -113,7 +113,7 @@ public class ServerClientHandshakeManagerTest {
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
     
-    verify(this.voltronSink).addSingleThreaded(any(LocalPipelineFlushMessage.class));
+    verify(this.voltronSink).addToSink(any(LocalPipelineFlushMessage.class));
   }
 
   @Test
@@ -149,7 +149,7 @@ public class ServerClientHandshakeManagerTest {
     this.manager.notifyClientConnect(message1, entityManager, transactionHandler);
     assertFalse(this.manager.isStarted());
     verify(this.transactionHandler).handleResentMessage(resend);
-    verify(this.voltronSink, never()).addSingleThreaded(any(LocalPipelineFlushMessage.class));
+    verify(this.voltronSink, never()).addToSink(any(LocalPipelineFlushMessage.class));
     
     // This second message will now start the server.
     ClientHandshakeMessage message2 = mock(ClientHandshakeMessage.class);
@@ -160,7 +160,7 @@ public class ServerClientHandshakeManagerTest {
     this.manager.notifyClientConnect(message2, entityManager, transactionHandler);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
-    verify(this.voltronSink).addSingleThreaded(any(LocalPipelineFlushMessage.class));
+    verify(this.voltronSink).addToSink(any(LocalPipelineFlushMessage.class));
   }
 
   @Test

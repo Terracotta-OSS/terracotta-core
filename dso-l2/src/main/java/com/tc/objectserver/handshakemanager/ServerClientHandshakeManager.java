@@ -196,7 +196,7 @@ public class ServerClientHandshakeManager {
     notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    voltron.addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
+    voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
   }
   
   public void notifyComplete() {

@@ -39,5 +39,9 @@ public interface Stage<EC> {
 
   public void clear();
   
+  public boolean isEmpty();
+  
+  public int size();
+  
   public Map<String, ?> getState();
 }

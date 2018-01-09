@@ -1,9 +1,11 @@
 package com.tc.async.impl;
 
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.concurrent.QueueFactory;
+import java.util.Map;
 
 /**
  * Created by cschanck on 5/23/2017.
@@ -14,24 +16,14 @@ public interface StageQueue<EC> extends Sink<EC> {
 
   Source getSource(int index);
 
-  @Override
   void close();
-
-  @Override
-  void addSingleThreaded(EC context);
-
-  @Override
-  void addMultiThreaded(EC context);
-
-  // Used for testing
-  @Override
-  int size();
 
   @Override
   String toString();
 
-  @Override
   void clear();
+  
+  Map<String, ?> getState();
   
   void enableAdditionalStatistics(boolean track);
 
@@ -52,8 +44,8 @@ public interface StageQueue<EC> extends Sink<EC> {
                                             TCLoggerProvider loggerProvider,
                                             String stageName,
                                             int queueSize) {
-      if (queueCount == 1) {
-        return new SingletonStageQueueImpl<>(queueFactory, type, creator, loggerProvider, stageName, queueSize);
+      if (!MultiThreadedEventContext.class.isAssignableFrom(type)) {
+        return new SingletonStageQueueImpl(queueFactory, type, creator, loggerProvider, stageName, queueSize);
       } else {
         return new MultiStageQueueImpl(queueCount, queueFactory, type, creator, loggerProvider, stageName, queueSize);
       }

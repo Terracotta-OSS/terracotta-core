@@ -34,7 +34,7 @@ public class TCMessageHydrateSink<T> implements TCMessageSink {
   public void putMessage(TCMessage message) {    
       try {
         message.hydrate();
-        this.destSink.addSingleThreaded((T)message);
+        this.destSink.addToSink((T)message);
       } catch (Throwable t) {
         try {
           LOGGER.error("Error hydrating message of type " + message.getMessageType(), t);

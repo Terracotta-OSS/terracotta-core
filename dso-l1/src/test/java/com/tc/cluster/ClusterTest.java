@@ -59,7 +59,7 @@ public class ClusterTest extends TestCase {
         return null;
       }
 
-    }).when(mockSink).addSingleThreaded(Matchers.any(ClusterInternalEventsContext.class));
+    }).when(mockSink).addToSink(Matchers.any(ClusterInternalEventsContext.class));
     cluster.init(mockStage);
   }
 

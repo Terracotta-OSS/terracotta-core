@@ -35,25 +35,25 @@ public class OrderedSinkTest extends TCTestCase {
     Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
 
     OrderedEventContext oc = new MyOrderedEventContext(1);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertEvents(des, 1, 1);
 
     oc = new MyOrderedEventContext(3);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertTrue(des.queue.isEmpty());
 
     oc = new MyOrderedEventContext(4);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertTrue(des.queue.isEmpty());
 
     oc = new MyOrderedEventContext(2);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertEvents(des, 2, 3);
 
     oc = new MyOrderedEventContext(2);
     boolean failed = false;
     try {
-      s.addSingleThreaded(oc);
+      s.addToSink(oc);
       failed = true;
     } catch (AssertionError ae) {
       // Excepted
@@ -71,7 +71,7 @@ public class OrderedSinkTest extends TCTestCase {
     while (!l.isEmpty()) {
       int idx = r.nextInt(l.size());
       MyOrderedEventContext oc = l.remove(idx);
-      s.addSingleThreaded(oc);
+      s.addToSink(oc);
     }
     
     assertEvents(des, 1, 1000);

@@ -16,15 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.text;
+package com.tc.async.api;
 
-import java.util.Map;
+/**
+ *
+ */
+public class DirectExecutionMode {
+  
+  private static final ThreadLocal<Thread> ACTIVATED = new ThreadLocal<>();
 
-public interface PrettyPrintable {
-
-  default PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return out.println(getStateMap());
+  public static void activate(boolean activate) {
+    if (activate) {
+      ACTIVATED.set(Thread.currentThread());
+    } else {
+      ACTIVATED.remove();
+    }
   }
   
-  public Map<String, ?> getStateMap();
+  public static boolean isActivated() {
+    return ACTIVATED.get() == Thread.currentThread();
+  }  
 }

@@ -25,6 +25,7 @@ import com.tc.net.ServerID;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
+import java.util.Collections;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -183,7 +184,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    throw new UnsupportedOperationException();
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 }

@@ -19,7 +19,6 @@
 package com.tc.object;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
@@ -58,7 +57,6 @@ import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.stats.Stats;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
@@ -67,6 +65,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -176,37 +175,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private <T> Sink<T> makeDirectSink(final EventHandler<T> handler) {
     return new Sink<T>() {
       @Override
-      public void addSingleThreaded(T context) {
+      public void addToSink(T context) {
         try {
           handler.handleEvent(context);
         } catch (EventHandlerException ee) {
           throw new RuntimeException(ee);
         }
-      }
-
-      @Override
-      public void addMultiThreaded(T context) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public int size() {
-        return 0;
-      }
-
-      @Override
-      public boolean isEmpty() {
-        return true;
-      }
-
-      @Override
-      public void clear() {
-
-      }
-
-      @Override
-      public void close() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
       }
     };
   }
@@ -308,9 +282,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-  //  TODO: implement something sane
-    return out;
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 
   @Override
@@ -393,10 +366,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     Stage<VoltronEntityResponse> responder = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_RESPONSE_STAGE, VoltronEntityResponse.class);
     Stage<VoltronEntityMultiResponse> responderMulti = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class);
     FlushResponse flush = new FlushResponse();
-    responder.getSink().addSingleThreaded(flush);
+    responder.getSink().addToSink(flush);
     flush.waitForAccess();
     flush = new FlushResponse();
-    responderMulti.getSink().addSingleThreaded(flush);
+    responderMulti.getSink().addToSink(flush);
     flush.waitForAccess();
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
@@ -558,7 +531,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage inFlight = new InFlightMessage(message.getEntityID(), message, requestedAcks, monitor, shouldBlockGetOnRetire, isDeferred);
     
     // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
-    outbound.addSingleThreaded(inFlight);
+    outbound.addToSink(inFlight);
     return inFlight;
   }
 

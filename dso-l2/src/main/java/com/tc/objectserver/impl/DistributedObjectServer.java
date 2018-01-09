@@ -103,7 +103,6 @@ import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
-import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -228,6 +227,8 @@ import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
+import com.tc.net.protocol.tcm.HydrateContext;
+import com.tc.net.protocol.tcm.HydrateHandler;
 
 
 /**
@@ -320,6 +321,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
     collectState(this.seda.getStageManager(), pp);
     collectState(this.persistor, pp);
+    collectState(this.communicationsManager, pp);
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
@@ -400,7 +402,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
                                                                              + "]. Local addresses are "
                                                                              + addressChecker.getAllLocalAddresses()); }
 
-    NIOWorkarounds.solaris10Workaround();
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
@@ -652,8 +653,10 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
+    Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
+    
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(fast.getSink(), entityManager));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
@@ -815,6 +818,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     stageManager.startAll(this.context, toInit, 
         ServerConfigurationContext.SINGLE_THREADED_FAST_PATH,
         ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE,
+        ServerConfigurationContext.HYDRATE_MESSAGE_STAGE,
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
@@ -845,7 +849,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addSingleThreaded(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
+            .getSink().addToSink(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
@@ -855,7 +859,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     this.seda.getStageManager()
         .getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class)
-        .getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
+        .getSink().addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
   private StageController createStageController(LocalMonitoringProducer monitoringSupport) {
@@ -875,6 +879,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.HYDRATE_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
@@ -920,7 +925,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           PlatformInfoRequest fake = PlatformInfoRequest.createServerInfoRemoveMessage((ServerID)nodeID);
           fake.setMessageOrginator(nodeID);
-          infoHandler.addSingleThreaded(fake);
+          infoHandler.addToSink(fake);
         }
       }
     };
@@ -1028,7 +1033,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
         checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
       } 
       for (VoltronEntityMessage vem : checkdups.values()) {
-        msgSink.addSingleThreaded(vem);
+        msgSink.addToSink(vem);
       }
       EntityPersistor ep = this.persistor.getEntityPersistor();
       for (VoltronEntityMessage vem : checkdups.values()) {

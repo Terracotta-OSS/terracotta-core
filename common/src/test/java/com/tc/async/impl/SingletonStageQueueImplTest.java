@@ -101,7 +101,7 @@ public class SingletonStageQueueImplTest {
     MultiThreadedEventContext context1 = mock(MultiThreadedEventContext.class);
     when(context1.getSchedulingKey()).thenReturn(null);
     System.out.println("test add");
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     boolean found = false;
     for (Queue<Object> q : cxts) {
       if (q.poll() != null) {
@@ -111,7 +111,7 @@ public class SingletonStageQueueImplTest {
     assertTrue(found);
     System.out.println("test even distribution with no key");
     for (int x = 0; x < 2; x++) {
-      instance.addMultiThreaded(context1);
+      instance.addToSink(context1);
     }
     for (Queue<Object> q : cxts) {
       assertThat(q.size(), org.hamcrest.Matchers.lessThanOrEqualTo(2));
@@ -120,7 +120,7 @@ public class SingletonStageQueueImplTest {
 
     System.out.println("test specific queue");
     when(context1.getSchedulingKey()).thenReturn(1);
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     //  everything should hash to 0
     for (int x = 0; x < cxts.size(); x++) {
       if (x != 0) {
@@ -132,7 +132,7 @@ public class SingletonStageQueueImplTest {
 
     int rand = (int) (Math.random() * Integer.MAX_VALUE);
     when(context1.getSchedulingKey()).thenReturn(rand);
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     //  tests specific implementation.  test expectation
     assertNotNull(cxts.get(rand % cxts.size()).poll());
   }

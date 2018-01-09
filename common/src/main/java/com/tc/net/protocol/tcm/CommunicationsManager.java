@@ -23,12 +23,13 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.ProductID;
 
 /**
  * CommsMgr provides Listener and Channel endpoints for exchanging <code>TCMessage</code> type messages
  */
-public interface CommunicationsManager {
+public interface CommunicationsManager extends PrettyPrintable {
 
   static final String COMMSMGR_GROUPS = "L2_L2";
   static final String COMMSMGR_SERVER = "L2_L1";

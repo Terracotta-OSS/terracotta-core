@@ -140,14 +140,15 @@ public class StageImplTest {
       }
     
     });
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, size, null, context, 16, false);
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, 16, false);
     assertEquals(cxts.size(), size);
     instance.start(null);
     
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.flush()).thenReturn(Boolean.TRUE);
+    when(cxt.getSchedulingKey()).thenReturn(1);
     
-    instance.getSink().addMultiThreaded(cxt);
+    instance.getSink().addToSink(cxt);
     if (size > 1) {
       // if size is one, this will not be called.
       verify(cxt).getSchedulingKey();

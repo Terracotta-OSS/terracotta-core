@@ -629,7 +629,7 @@ public class ReplicatedTransactionHandler {
     // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
     //  available).
     if (!stateManager.isActiveCoordinator()) {
-      this.sentToActive.addSingleThreaded(()->{
+      this.sentToActive.addToSink(()->{
         try {
           this.cachedBatchAck.flushBatch();
         } catch (GroupException group) {

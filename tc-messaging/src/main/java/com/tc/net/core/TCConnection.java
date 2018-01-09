@@ -25,6 +25,7 @@ import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 
 /**
  * Common interface for TC network connections
@@ -149,4 +150,6 @@ public interface TCConnection extends NetworkMessageSink {
    * @return true iff the connection as been marked for close but hasn't been closed yet
    */
   boolean isClosePending();
+  
+  Map<String, ?> getState();
 }

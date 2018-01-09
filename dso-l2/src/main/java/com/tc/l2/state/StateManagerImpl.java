@@ -153,7 +153,7 @@ public class StateManagerImpl implements StateManager {
     boolean isNew = state == ServerMode.START && startState == null;
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      electionSink.addSingleThreaded(new ElectionContext(myNodeID, isNew, weightsFactory, state.getState(), (nodeid)-> {
+      electionSink.addToSink(new ElectionContext(myNodeID, isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
@@ -243,7 +243,7 @@ public class StateManagerImpl implements StateManager {
           throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB");
         } 
         info("Moved to " + state, true);
-        stateChangeSink.addSingleThreaded(new StateChangedEvent(START_STATE, state.getState()));
+        stateChangeSink.addToSink(new StateChangedEvent(START_STATE, state.getState()));
         break;
       case UNINITIALIZED:
         // double election
@@ -275,7 +275,7 @@ public class StateManagerImpl implements StateManager {
     synchronizedWaitForStart();
     if (state == ServerMode.UNINITIALIZED) {
       syncdTo = connectedTo;
-      stateChangeSink.addSingleThreaded(new StateChangedEvent(state.getState(), PASSIVE_SYNCING));
+      stateChangeSink.addToSink(new StateChangedEvent(state.getState(), PASSIVE_SYNCING));
       state = ServerMode.SYNCING;
       info("Moved to " + state, true);
     } 
@@ -288,7 +288,7 @@ public class StateManagerImpl implements StateManager {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
     } else if (state != ServerMode.PASSIVE) {
-      stateChangeSink.addSingleThreaded(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
+      stateChangeSink.addToSink(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
       state = ServerMode.PASSIVE;
       info("Moved to " + state, true);
     } else {
@@ -302,7 +302,7 @@ public class StateManagerImpl implements StateManager {
       debugInfo("Moving to active state");
       StateChangedEvent event = new StateChangedEvent(state.getState(), ACTIVE_COORDINATOR);
       state = ServerMode.ACTIVE;
-      stateChangeSink.addSingleThreaded(event);
+      stateChangeSink.addToSink(event);
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
       // we are moving from passive standby to active state with a new election but we need to use previous election

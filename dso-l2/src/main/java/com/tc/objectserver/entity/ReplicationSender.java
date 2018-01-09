@@ -95,7 +95,7 @@ public class ReplicationSender {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
     Optional<SyncState> syncing = getSyncState(dest, activity);
-    outgoing.addSingleThreaded(()->{
+    outgoing.addToSink(()->{
       Optional<Boolean> didSend = syncing.map(state->state.attemptToSend(activity));
       if (sentCallback != null) {
         sentCallback.accept(didSend.orElse(false));
@@ -342,7 +342,7 @@ public class ReplicationSender {
     }
         
     private void flushBatch() {
-      outgoing.addSingleThreaded(()->{
+      outgoing.addToSink(()->{
         try {
           long mid = this.batchContext.flushBatch();
         } catch (GroupException group) {

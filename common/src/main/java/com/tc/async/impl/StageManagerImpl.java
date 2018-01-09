@@ -164,7 +164,7 @@ public class StageManagerImpl implements StageManager {
     skipStages.add("cluster_events_stage");
     for (Stage<?> s : stages.values()) {
       if (!skipStages.contains(s.getName())) {
-        s.getSink().clear();
+        s.clear();
       }
     }
   }
@@ -201,7 +201,7 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String,Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     map.put("monitor", MONITOR);
@@ -210,6 +210,6 @@ public class StageManagerImpl implements StageManager {
       list.add(stage.getState());
     }
     map.put("stages", list);
-    return out.println(map);
+    return map;
   }
 }

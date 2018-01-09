@@ -31,6 +31,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -107,7 +108,8 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
 
   @Override
   public int replay(ReplayReceiver receiver) {
-    return timeline.stream().map(op->{
+    int count = 0;
+    for (Op op : timeline) {
       switch(op.type) {
         case INVOKE_MESSAGE:
           receiver.message(new TransactionID(op.id), op.data);
@@ -132,9 +134,9 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
         default:
           throw new AssertionError("unknown op");
       }
-      return 1;
-    }).reduce(Integer::sum).get();
-    
+      count+=1;
+    }
+    return count;
   }
   
   
@@ -199,16 +201,17 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
   @Override
   public synchronized void stopAdding() {
     stopAdding = true;
+    timeline = Collections.unmodifiableList(timeline);
   }
   
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     if (name == OP_ID) {
       Operation type = Operation.values()[getShortValue()];
-      long id = getInputStream().readLong();
+      long id = getLongValue();
       byte[] data = null;
       if (type.hasData()) {
-        int len = getInputStream().readInt();
+        int len = getIntValue();
         data = new byte[len];
         getInputStream().readFully(data);
       }

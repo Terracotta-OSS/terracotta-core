@@ -21,8 +21,10 @@ package com.tc.async.impl;
 import org.slf4j.Logger;
 
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.Stage;
@@ -30,6 +32,7 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.ArrayList;
@@ -37,6 +40,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The SEDA Stage
@@ -54,6 +58,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final boolean        pausable;
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
+  private final AtomicInteger  inflight = new AtomicInteger();
 
   /**
    * The Constructor.
@@ -71,6 +76,9 @@ public class StageImpl<EC> implements Stage<EC> {
                    ThreadGroup group, QueueFactory queueFactory, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
+    if (queueCount > 1 && !MultiThreadedEventContext.class.isAssignableFrom(type)) {
+      throw new IllegalArgumentException("the requested queue count is greater than one but the event type is not multi-threaded for stage:" + this.name);
+    }
     this.threads = new WorkerThread[queueCount];
     this.handler = handler;
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, eventCreator(canBeDirect), loggerProvider, name, queueSize);
@@ -84,14 +92,32 @@ public class StageImpl<EC> implements Stage<EC> {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
   }
-
+  
   private EventCreator<EC> eventCreator(boolean direct) {
-    EventCreator<EC> base = (direct) ? new DirectEventCreator<>(handler, ()->stageQueue.isEmpty()) : baseCreator();
-    return base;
+    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->inflight.get() == 0) : baseCreator();
   }
   
   private EventCreator<EC> baseCreator() {
-    return (event) -> () -> handler.handleEvent(event);
+    return (event) -> {
+      inflight.incrementAndGet();
+      return ()-> {
+        try {
+          handler.handleEvent(event);
+        } finally {
+          inflight.decrementAndGet();
+        }
+      };
+    };
+  }
+  
+  @Override
+  public boolean isEmpty() {
+    return inflight.get() == 0;
+  }
+
+  @Override
+  public int size() {
+    return inflight.get();
   }
 
   public void trackExtraStatistics(boolean enable) {
@@ -131,7 +157,7 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public int pause() {
     paused = true;
-    return stageQueue.size();
+    return inflight.get();
   }
 
   @Override
@@ -201,7 +227,8 @@ public class StageImpl<EC> implements Stage<EC> {
     Arrays.stream(threads).forEach(t->{if (t != null) tl.add(t.getStats());});
     data.put("name", name);
     data.put("threadCount", threads.length);
-    data.put("sink", getSink().getState());
+    data.put("backlog", inflight.get());
+    data.put("sink", this.stageQueue.getState());
     data.put("threads", tl);
     return data;
   }

@@ -747,37 +747,12 @@ public class ClientEntityManagerTest extends TestCase {
     }
 
     @Override
-    public void addSingleThreaded(Object context) {
+    public void addToSink(Object context) {
       try {
         handle.handleEvent(context);
       } catch (EventHandlerException e) {
         throw new RuntimeException(e);
       }
-    }
-
-    @Override
-    public void addMultiThreaded(Object context) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int size() {
-      return 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return true;
-    }
-
-    @Override
-    public void clear() {
-// NOOP
-    }
-
-    @Override
-    public void close() {
-//  NOOP
     }
   }
 }

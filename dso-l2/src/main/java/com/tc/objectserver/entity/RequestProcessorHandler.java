@@ -19,11 +19,12 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
 
-public class RequestProcessorHandler extends AbstractEventHandler<Runnable> {
+public class RequestProcessorHandler extends AbstractEventHandler<EntityRequest> {
 
   @Override
-  public void handleEvent(Runnable context) {
+  public void handleEvent(EntityRequest context) {
     context.run();
   }
 

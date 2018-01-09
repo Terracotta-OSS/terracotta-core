@@ -25,8 +25,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +36,7 @@ import java.util.function.Consumer;
  * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
  * across process boundaries.
  */
-public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
+public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends AbstractStageQueueImpl<EC> {
 
   static final String FINDSTRATEGY_PROPNAME = "tc.stagequeueimpl.findstrategy";
 
@@ -147,56 +145,20 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   }
 
   @Override
-  public void addSingleThreaded(EC context) {
+  public void addToSink(EC context) {
     Assert.assertNotNull(context);
-    Assert.assertFalse(context instanceof MultiThreadedEventContext);
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
-    addInflight();
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-    Event event = getEventCreator().createEvent(context);
-    if (event != null) {
-      boolean interrupted = Thread.interrupted();
-      Event wrapper = new HandledEvent<>(event);
-      try {
-        while (true) {
-          try {
-            this.sourceQueues[0].put(wrapper);
-            break;
-          } catch (InterruptedException e) {
-            this.logger.debug("StageQueue Add: " + e);
-            interrupted = true;
-          }
-        }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
-  }
-
-  @Override
-  public void addMultiThreaded(EC context) {
-    Assert.assertNotNull(context);
-    Assert.assertTrue(context instanceof MultiThreadedEventContext);
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    addInflight();
-    if (this.logger.isDebugEnabled()) {
-      this.logger.debug("Added:" + context + " to:" + this.stageName);
-    }
-    Event event = getEventCreator().createEvent(context);
+    Event event = createEvent(context);
     if (event != null) {
       // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
       boolean interrupted = Thread.interrupted();
-      MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
-      int index = getSourceQueueFor(cxt);
-      Event wrapper = (cxt.flush()) ? new FlushingHandledContext(event, index) : new HandledEvent<>(event);
+      int index = getSourceQueueFor(context);
+      Event wrapper = (context.flush()) ? new FlushingHandledContext(event, index) : event;
       try {
         while (true) {
           try {
@@ -266,13 +228,13 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     } return newP;
   }
 
-  private int getSourceQueueFor(MultiThreadedEventContext context) {
-    Object schedulingKey = context.getSchedulingKey();
+  private int getSourceQueueFor(EC context) {
+    EC multi = context;
+    Object schedulingKey = multi.getSchedulingKey();
     if (null == schedulingKey) {
       return findShortestQueueIndex();
     } else {
-      int index = hashCodeToArrayIndex(schedulingKey.hashCode(), this.sourceQueues.length);
-      return index;
+      return hashCodeToArrayIndex(schedulingKey.hashCode(), this.sourceQueues.length);
     }
   }
 
@@ -291,7 +253,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     for (MultiSourceQueueImpl sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
-    super.clear();
     this.logger.info("Cleared " + clearCount);
   }
 
