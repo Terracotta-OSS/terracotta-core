@@ -281,16 +281,6 @@ public interface TCPropertiesConsts {
    *                         successful socket connects
    * </code>
    ********************************************************************************************************************/
-  public static final String L2_HEALTHCHECK_L1_PING_ENABLED                                 = "l2.healthcheck.l1.ping.enabled";
-  public static final String L2_HEALTHCHECK_L1_PING_IDLETIME                                = "l2.healthcheck.l1.ping.idletime";
-  public static final String L2_HEALTHCHECK_L1_PING_INTERVAL                                = "l2.healthcheck.l1.ping.interval";
-  public static final String L2_HEALTHCHECK_L1_PING_PROBES                                  = "l2.healthcheck.l1.ping.probes";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT                              = "l2.healthcheck.l1.socketConnect";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_TIMEOUT                      = "l2.healthcheck.l1.socketConnectTimeout";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_COUNT                        = "l2.healthcheck.l1.socketConnectCount";
-  public static final String L2_HEALTHCHECK_L1_CHECK_TIME_ENABLED                           = "l2.healthcheck.l1.checkTime.enabled";
-  public static final String L2_HEALTHCHECK_L1_CHECK_TIME_INTERVAL                          = "l2.healthcheck.l1.checkTime.interval";
-  public static final String L2_HEALTHCHECK_L1_CHECK_TIME_THRESHOLD                         = "l2.healthcheck.l1.checkTime.threshold";
 
   public static final String L2_HEALTHCHECK_L2_PING_ENABLED                                 = "l2.healthcheck.l2.ping.enabled";
   public static final String L2_HEALTHCHECK_L2_PING_IDLETIME                                = "l2.healthcheck.l2.ping.idletime";
@@ -303,8 +293,6 @@ public interface TCPropertiesConsts {
   public static final String L2_HEALTHCHECK_L2_CHECK_TIME_INTERVAL                          = "l2.healthcheck.l2.checkTime.interval";
   public static final String L2_HEALTHCHECK_L2_CHECK_TIME_THRESHOLD                         = "l2.healthcheck.l2.checkTime.threshold";
 
-  public static final String L1_HEALTHCHECK_L2_BIND_ADDRESS                                 = "l1.healthcheck.l2.bindAddress";
-  public static final String L1_HEALTHCHECK_L2_BIND_PORT                                    = "l1.healthcheck.l2.bindPort";
   public static final String L1_HEALTHCHECK_L2_PING_ENABLED                                 = "l1.healthcheck.l2.ping.enabled";
   public static final String L1_HEALTHCHECK_L2_PING_IDLETIME                                = "l1.healthcheck.l2.ping.idletime";
   public static final String L1_HEALTHCHECK_L2_PING_INTERVAL                                = "l1.healthcheck.l2.ping.interval";

@@ -129,7 +129,6 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
@@ -229,6 +228,7 @@ import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 
 
 /**
@@ -515,8 +515,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionPolicy, commWorkerThreadCount,
-                                                               new HealthCheckerConfigImpl(tcProperties
-                                                                   .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY), "TSA Server"),
+                                                               new DisabledHealthCheckerConfigImpl(),
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.emptyMap(),

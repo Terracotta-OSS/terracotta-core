@@ -61,7 +61,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final int                         timeout;
-  private ConnectionInfo                    connectionInfo;
 
   public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,

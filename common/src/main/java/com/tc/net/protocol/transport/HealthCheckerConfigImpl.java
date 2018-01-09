@@ -141,16 +141,6 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   }
 
   @Override
-  public String getCallbackPortListenerBindAddress() {
-    throw new AssertionError("CallbackPort Listener not needed for servers");
-  }
-
-  @Override
-  public Set<Integer> getCallbackPortListenerBindPort() {
-    throw new AssertionError("CallbackPort Listener not needed for servers");
-  }
-
-  @Override
   public boolean isCallbackPortListenerNeeded() {
     return false;
   }
