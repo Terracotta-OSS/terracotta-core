@@ -723,6 +723,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     
     @Override
     public void retired() {
+      this.waiter.get().waitForCompleted();
       if (!getNodeID().isNull()) {
         Assert.assertTrue(sent.isSet());
         addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));

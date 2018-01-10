@@ -225,6 +225,7 @@ import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
@@ -647,8 +648,15 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     entityManager.setMessageSink(fast.getSink());    
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
-    
-    ConsistencyManager consistencyMgr = (ServerMode mode, ConsistencyManager.Transition transition) -> true;
+            
+    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+                                                                      this.thisServerNodeID,
+                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory,
+                                                                      bufferManagerFactory);
+
+    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
+    int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
+    ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(this.groupCommManager, knownPeers, voteCount);
         
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
@@ -660,11 +668,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
-    
-    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
-                                                                      this.thisServerNodeID,
-                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory);
 
     L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService), eventCollector);
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);

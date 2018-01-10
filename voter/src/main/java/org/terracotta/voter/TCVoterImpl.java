@@ -23,14 +23,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 public class TCVoterImpl implements TCVoter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterImpl.class);
 
   private final String id;
-  private final Map<String, VoterDaemon> registeredClusters = new ConcurrentHashMap<>();
+  private final Map<String, AutoCloseable> registeredClusters = new ConcurrentHashMap<>();
 
   public TCVoterImpl() {
     this.id = UUID.getUUID().toString();
@@ -60,16 +61,20 @@ public class TCVoterImpl implements TCVoter {
 
   @Override
   public void register(String clusterName, String... hostPorts) {
-    if (registeredClusters.putIfAbsent(clusterName, new VoterDaemon(this.id, hostPorts)) != null) {
+    if (registeredClusters.putIfAbsent(clusterName, new ActiveVoter(id, hostPorts).start()) != null) {
       throw new RuntimeException("Another cluster is already registered with the name: " + clusterName);
     }
   }
 
   @Override
   public void deregister(String clusterName) {
-    VoterDaemon removed = registeredClusters.remove(clusterName);
+    AutoCloseable removed = registeredClusters.remove(clusterName);
     if (removed != null) {
-      removed.stop();
+      try {
+        removed.close();
+      } catch (Exception exp) {
+      throw new RuntimeException(exp);
+      }
     } else {
       throw new RuntimeException("A cluster with the given name: " + clusterName + " is not registered with this voter");
     }

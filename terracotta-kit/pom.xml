@@ -27,6 +27,11 @@
             <artifactId>client-runtime</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+          <groupId>org.terracotta.internal</groupId>
+          <artifactId>voter</artifactId>
+          <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

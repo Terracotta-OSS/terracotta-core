@@ -48,7 +48,7 @@ import java.util.concurrent.Future;
  */
 public class TransactionOrderPersistor {
   private final IPlatformPersistence storageManager;
-  private Long receivedTransactionCount = new Long(0L);
+  private Long receivedTransactionCount = 0L;
     
   private List<ClientTransaction> globalList = null;
   private final Set<ClientID> permNodeIDs = new HashSet<>();

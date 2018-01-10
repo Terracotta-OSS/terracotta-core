@@ -18,35 +18,23 @@
  */
 package org.terracotta.voter;
 
-import com.tc.voter.VoterManager;
+import java.util.Arrays;
+import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeoutException;
-
-public interface ClientVoterManager extends VoterManager {
-
-  /**
-   * The host and port information of the server that this client is connected to.
-   *
-   * @return host and port of the server separated by a ":"
-   */
-  String getTargetHostPort();
+/**
+ *
+ */
+public class VetoVote {
 
   /**
-   * Establish a connection with the server at the given host and port
    */
-  void connect();
-
-  /**
-   *
-   * @return the current state of the server that this voter is connected to.
-   */
-  String getServerState() throws TimeoutException;
-
-  /**
-   * Close the connection with the server.
-   */
-  void close();
+  public static void main(String[] args) {
+    if (args.length != 1) {
+      throw new IllegalArgumentException(Arrays.toString(args));
+    }
+    ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("root");
+    logger.setLevel(ch.qos.logback.classic.Level.INFO);
+    new TCVoterImpl().vetoVote(args[0]);
+  }
   
-  
-  boolean isConnected();
 }

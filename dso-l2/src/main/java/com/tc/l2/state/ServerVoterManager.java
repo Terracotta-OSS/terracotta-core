@@ -40,6 +40,12 @@ public interface ServerVoterManager extends VoterManagerMBean {
    * @return the total number of votes received so far
    */
   int getVoteCount();
+  
+    /**
+   *
+   * @return the total number of registered voters
+   */
+  int getRegisteredVoters();
 
   /**
    *
@@ -50,5 +56,5 @@ public interface ServerVoterManager extends VoterManagerMBean {
   /**
    * Notify all voters to stop voting.
    */
-  void stopVoting();
+  long stopVoting();
 }
