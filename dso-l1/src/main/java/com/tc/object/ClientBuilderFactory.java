@@ -1,7 +1,8 @@
 package com.tc.object;
 
+import com.tc.util.ManagedServiceLoader;
+
 import java.util.Properties;
-import java.util.ServiceLoader;
 
 public interface ClientBuilderFactory {
 
@@ -9,7 +10,7 @@ public interface ClientBuilderFactory {
 
     ClientBuilderFactory clientBuilderFactory = null;
 
-    for (ClientBuilderFactory factory : ServiceLoader.load(ClientBuilderFactory.class,
+    for (ClientBuilderFactory factory : ManagedServiceLoader.loadServices(ClientBuilderFactory.class,
                                                            ClientBuilderFactory.class.getClassLoader())) {
       if (clientBuilderFactory == null) {
         clientBuilderFactory = factory;
