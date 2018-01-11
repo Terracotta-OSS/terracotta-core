@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 
 /**
  * Top level service locator class used to identify and isolate service dependencies in its own classloader.
@@ -49,6 +51,18 @@ public class ManagedServiceLoader {
   private static final Logger LOG = LoggerFactory.getLogger(ManagedServiceLoader.class);
 
   private static final String METAINFCONST = "META-INF/services/";
+
+  public static <T> Collection<T> loadServices(Class<T> serviceClass, ClassLoader loader) {
+    return new ManagedServiceLoader().getImplementations(serviceClass, loader)
+        .stream()
+        .map((clazz) -> {
+          try {
+            return clazz.newInstance();
+          } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("Unable to resolve service implementations for " + serviceClass, e);
+          }})
+        .collect(toList());
+  }
     
   public ManagedServiceLoader() {
   }
@@ -209,8 +223,7 @@ public class ManagedServiceLoader {
    * Create list of instance of implementation given interface each with an individual implementation having its own isolated classloader.
    *
    * @param interfaceName service type to be created
-   * @param parent        parent classloader for all component to be loaded
-   * @param <T>           concrete type of service/entity
+   * @param loader        parent classloader for all component to be loaded
    * @return list of implementation
    */
   private Collection<Class<?>> getImplementations(String interfaceName, final ClassLoader loader) {
