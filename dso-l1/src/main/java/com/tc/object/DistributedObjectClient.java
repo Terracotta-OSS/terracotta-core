@@ -399,16 +399,11 @@ public class DistributedObjectClient implements TCClient {
   }
 
   private void openChannel() throws InterruptedException {
-    String hostname;
-    int port;
     Collection<ConnectionInfo> infos = Arrays.asList(this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos());
     if (infos.isEmpty()) {
 //  can't open a connection to nowhere
       return;
     }
-    ConnectionInfo info = infos.iterator().next();
-    hostname = info.getHostname();
-    port = info.getPort();
     synchronized(clientStopped) {
       while (!clientStopped.isSet()) {
         try {
@@ -417,10 +412,12 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
-          DSO_LOGGER.info("Timeout connecting to server: " + tcte.getMessage());
+          DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
+          DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", infos, tcte.getMessage());
           clientStopped.wait(5000);
         } catch (final ConnectException e) {
-          DSO_LOGGER.info("Connection refused from server: " + e.getMessage());
+          DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
+          DSO_LOGGER.debug("Connection refused from server/s: {} {}", infos, e.getMessage());
           clientStopped.wait(5000);
         } catch (final MaxConnectionsExceededException e) {
           DSO_LOGGER.error(e.getMessage());
@@ -432,8 +429,8 @@ public class DistributedObjectClient implements TCClient {
           DSO_LOGGER.error(handshake.getMessage());
           throw new IllegalStateException(handshake.getMessage(), handshake);
         } catch (final IOException ioe) {
-          DSO_LOGGER.info("IOException connecting to server: " + hostname + ":" + port + ". "
-                              + ioe.getMessage());
+          DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
+          DSO_LOGGER.debug("IOException connecting to server/s: {} {}", infos, ioe.getMessage());
           clientStopped.wait(5000);
         }
       }
