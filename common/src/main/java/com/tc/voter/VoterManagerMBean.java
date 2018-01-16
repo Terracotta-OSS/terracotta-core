@@ -16,34 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.voter;
+package com.tc.voter;
 
-import com.tc.voter.VoterManager;
+import com.tc.management.TerracottaMBean;
 
-import java.util.concurrent.TimeoutException;
+public interface VoterManagerMBean extends VoterManager, TerracottaMBean {
 
-public interface ClientVoterManager extends VoterManager {
-
-  /**
-   * The host and port information of the server that this client is connected to.
-   *
-   * @return host and port of the server separated by a ":"
-   */
-  String getTargetHostPort();
+  String MBEAN_NAME = "VoterManager";
 
   /**
-   * Establish a connection with the server at the given host and port
+   * @param idTerm voter id and the election term number for which this vote is cast separated by a ":"
+   * @return @see VoterManager
    */
-  void connect();
+  long vote(String idTerm);
 
-  /**
-   *
-   * @return the current state of the server that this voter is connected to.
-   */
-  String getServerState() throws TimeoutException;
-
-  /**
-   * Close the connection with the server.
-   */
-  void close();
 }

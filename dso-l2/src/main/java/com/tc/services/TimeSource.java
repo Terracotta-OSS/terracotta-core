@@ -16,32 +16,17 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.diagnostic;
+package com.tc.services;
 
-import org.terracotta.connection.entity.Entity;
+public interface TimeSource {
 
+  TimeSource SYSTEM_TIME_SOURCE = new TimeSource() {
+    @Override
+    public long currentTimeMillis() {
+      return System.currentTimeMillis();
+    }
+  };
 
-public interface Diagnostics extends Entity {
-  String getState();
-  
-  String getClusterState();  
-  
-  String getConfig();
-
-  String getProcessArguments();
-
-  String getThreadDump();
-
-  String terminateServer();
-
-  String forceTerminateServer();  
-  
-  String get(String name, String attribute);
- 
-  String set(String name, String attribute, String arg);
-  
-  String invoke(String name, String cmd);
-
-  String invokeWithArg(String name, String cmd, String arg);
+  long currentTimeMillis();
 
 }
