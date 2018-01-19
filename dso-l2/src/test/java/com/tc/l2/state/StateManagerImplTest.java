@@ -7,6 +7,7 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
+import com.tc.exception.TCServerRestartException;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -42,9 +43,11 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -77,6 +80,7 @@ public class StateManagerImplTest {
       nodeSet.add(nodes[i]);
       Sink<StateChangedEvent> stageChangeSinkMock = mock(Sink.class);
       ClusterStatePersistor clusterStatePersistorMock = mock(ClusterStatePersistor.class);
+      when(clusterStatePersistorMock.isDBClean()).thenReturn(Boolean.TRUE);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], weightGeneratorFactory);
 
@@ -134,6 +138,7 @@ public class StateManagerImplTest {
     StageManager stageManager = mock(StageManager.class);
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     ClusterStatePersistor statePersistor = mock(ClusterStatePersistor.class);
+    when(statePersistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(statePersistor.getInitialState()).thenReturn(new State("PASSIVE-STANDBY"));
 
     NodeID node = mock(NodeID.class);
@@ -211,5 +216,35 @@ public class StateManagerImplTest {
     ServerMode mode = StateManager.convert(StateManager.ACTIVE_COORDINATOR);
     com.tc.util.Assert.assertEquals(ServerMode.ACTIVE, mode);
   }
+  
+  @Test
+  public void testZapAndSync() {
+    Logger tcLogger = mock(Logger.class);
+    GroupManager groupManager = mock(GroupManager.class);
+    Sink stateChangeSink = mock(Sink.class);
+    StageManager stageMgr = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
+    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
+    ConsistencyManager availabilityMgr = mock(ConsistencyManager.class);
+    ClusterStatePersistor persistor = mock(ClusterStatePersistor.class);
+    when(persistor.isDBClean()).thenReturn(Boolean.TRUE);
+    when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);
+    StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stateChangeSink, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor);
+    mgr.initializeAndStartElection();
+    Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
+    Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
+    
+    L2StateMessage sw = mock(L2StateMessage.class);
+    when(sw.getType()).thenReturn(L2StateMessage.ABORT_ELECTION);
+    when(sw.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);
+    when(sw.getEnrollment()).thenReturn(mock(Enrollment.class));
 
+    try {
+      mgr.handleClusterStateMessage(sw);
+      Assert.fail();
+    } catch (TCServerRestartException expected) {
+      
+    }
+    
+    verify(persistor).setDBClean(eq(Boolean.FALSE));
+  }
 }

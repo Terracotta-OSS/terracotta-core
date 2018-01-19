@@ -470,8 +470,9 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
 
     persistor = serverBuilder.createPersistor(platformServiceRegistry);
-
+    boolean wasZapped = false;
     while(!persistor.start(capablities.contains(ProductID.PERMANENT))) {
+      wasZapped = true;
       // make sure peristor is not using any storage service
       persistor.close();
       // Log that that the state was not clean so we are going to clear all service provider state.
@@ -480,6 +481,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       // create the persistor once again as underlying storage service might have cleared its internal state
       persistor = serverBuilder.createPersistor(platformServiceRegistry);
     }
+    //  if the DB was zapped, reset the flag until the server has finished sync
+    persistor.getClusterStatePersistor().setDBClean(!wasZapped);
 
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
 

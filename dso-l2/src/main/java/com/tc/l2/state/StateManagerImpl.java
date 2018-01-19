@@ -157,17 +157,20 @@ public class StateManagerImpl implements StateManager {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-          if (this.availabilityMgr.requestTransition(this.state, nodeid, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
+          if (clusterStatePersistor.isDBClean() && 
+              this.availabilityMgr.requestTransition(this.state, nodeid, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
             moveToActiveState();
           } else {
-            logger.info("rerunning election because " + nodeid + " not allowed to transition");
-            electionMgr.reset(null);
+            if (!clusterStatePersistor.isDBClean()) {
+              logger.info("rerunning election because " + nodeid + " must be synced to an active");
+            } else {
+              logger.info("rerunning election because " + nodeid + " not allowed to transition");
+            }
             rerun = true;
           }
         } else if (nodeid.isNull()) {
           Assert.fail();
         } else {
-          electionMgr.reset(null);
           // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
           // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
           // thinking the other one is the winner.
@@ -180,6 +183,7 @@ public class StateManagerImpl implements StateManager {
         }
         electionFinished();
         if (rerun) {
+          electionMgr.reset(null);
           runElection();
         }
       }));
@@ -229,10 +233,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void moveToPassiveReady(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
     logger.info("moving to passive ready " + state + " " + winningEnrollment);
-    if (null == state) {
-      //  PASSIVE_STANDBY
-      setActiveNodeID(winningEnrollment.getNodeID());
-    } else switch (state) {
+    switch (state) {
       case START:
         setActiveNodeID(winningEnrollment.getNodeID());
         state = (startState == null) ? ServerMode.UNINITIALIZED : startState;
@@ -288,6 +289,7 @@ public class StateManagerImpl implements StateManager {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
     } else if (state != ServerMode.PASSIVE) {
+      clusterStatePersistor.setDBClean(true);
       stateChangeSink.addToSink(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
       state = ServerMode.PASSIVE;
       info("Moved to " + state, true);
