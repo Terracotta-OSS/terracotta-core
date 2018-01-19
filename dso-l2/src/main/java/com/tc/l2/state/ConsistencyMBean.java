@@ -18,7 +18,12 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.state.ConsistencyManager.Transition;
+import java.util.Collection;
+
 
 public interface ConsistencyMBean {
   boolean isBlocked();
+  
+  Collection<Transition> requestedActions();
 }

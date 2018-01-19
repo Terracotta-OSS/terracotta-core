@@ -25,7 +25,10 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
 import com.tc.util.Assert;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +41,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
   private final int peerServers;
   private boolean activeVote = false;
+  private Set<Transition> actions = EnumSet.noneOf(Transition.class);
   private long voteTerm = 0;
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
@@ -93,11 +97,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     }
     boolean allow = false;
     // activate voting to lock the voting members and return the number of server votes
-    int serverVotes = activateVoting(mode);
+    int serverVotes = activateVoting(mode, newMode);
     int threshold = voteThreshold(mode);
     if (serverVotes >= threshold || serverVotes == this.peerServers) {
     // if the threshold is achieved with just servers or all the servers are visible, transition is granted
-      endVoting();
+      endVoting(newMode);
       return true;
     }
     long start = System.currentTimeMillis();
@@ -107,7 +111,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
           //  servers connected + votes received
-          if (serverVotes + voter.getVoteCount() < threshold) {
+          if (serverVotes + voter.getVoteCount() < threshold || voter.vetoVoteReceived()) {
             TimeUnit.MILLISECONDS.sleep(100);
           } else {
             allow = true;
@@ -118,7 +122,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
       }
     } finally {
       if (allow) {
-        endVoting();
+        endVoting(newMode);
       }    
     }
     return allow;
@@ -136,11 +140,12 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     }
   }
   
-  private synchronized int activateVoting(ServerMode mode) {
+  private synchronized int activateVoting(ServerMode mode, Transition moveTo) {
     if (!activeVote) {
       activeVote = true;
       voter.startVoting(++voteTerm);
     }
+    actions.add(moveTo);
     if (mode != ServerMode.ACTIVE) {
       return this.activePeers.size();
     } else {
@@ -148,11 +153,16 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     }
   }
   
-  private synchronized void endVoting() {
+  private synchronized void endVoting(Transition moveTo) {
     if (activeVote) {
       Assert.assertEquals(voteTerm, voter.stopVoting());
       activeVote = false;
     }
+    actions.remove(moveTo);
+  }
+  
+  private synchronized Collection<Transition> getActions() {
+    return new ArrayList<>(actions);
   }
   
   public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements com.tc.l2.state.ConsistencyMBean {
@@ -165,6 +175,13 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     public boolean isBlocked() {
       return activeVote;
     }
+
+    @Override
+    public Collection<Transition> requestedActions() {
+      return getActions();
+    }
+    
+    
 
     @Override
     public void reset() {
