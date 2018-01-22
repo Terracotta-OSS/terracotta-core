@@ -25,10 +25,13 @@ import java.net.InetSocketAddress;
  * Contains the information from the L2s that L1 needs.
  */
 public interface L2ConfigForL1 {
+  public static final int DEFAULT_PORT = 9410;
+
   public static class L2Data {
-    private final InetSocketAddress  address;
-    private int           groupId = -1;
-    private final boolean secure;
+  private final InetSocketAddress  address;
+  private int           groupId = -1;
+  private final boolean secure;
+    
 
     public L2Data(InetSocketAddress host) {
       this(host, false);
@@ -36,7 +39,7 @@ public interface L2ConfigForL1 {
 
     public L2Data(InetSocketAddress host, boolean secure) {
       Assert.assertNotNull(host);
-      this.address = host;
+      this.address = host.getPort() <= 0 ? InetSocketAddress.createUnresolved(host.getHostString(), DEFAULT_PORT) : host;
       this.secure = secure;
     }
 
