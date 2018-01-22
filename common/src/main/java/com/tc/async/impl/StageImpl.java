@@ -30,6 +30,8 @@ import com.tc.async.api.Source;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
+import com.tc.exception.TCServerRestartException;
+import com.tc.exception.TCShutdownServerException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -292,12 +294,17 @@ public class StageImpl<EC> implements Stage<EC> {
         } catch (EventHandlerException ie) {
           if (shutdown) { continue; }
           throw new TCRuntimeException(ie);
+        } catch (TCServerRestartException restart) {
+          throw restart;
+        } catch (TCShutdownServerException shutdown) {
+          throw shutdown;
         } catch (Exception e) {
           if (isTCNotRunningException(e)) {
             if (shutdown) { continue; }
             logger.info("Ignoring " + TCNotRunningException.class.getSimpleName() + " while handling context: "
                           + ctxt);
           } else {
+            logger.error("Uncaught exception in stage", e);
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
         } finally {
