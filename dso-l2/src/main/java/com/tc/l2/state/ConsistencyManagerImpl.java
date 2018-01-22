@@ -161,8 +161,12 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     actions.remove(moveTo);
   }
   
-  private synchronized Collection<Transition> getActions() {
+  public synchronized Collection<Transition> getActions() {
     return new ArrayList<>(actions);
+  }
+   
+  public boolean isVoting() {
+    return activeVote;
   }
   
   public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements com.tc.l2.state.ConsistencyMBean {

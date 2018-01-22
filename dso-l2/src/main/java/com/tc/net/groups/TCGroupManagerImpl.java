@@ -69,7 +69,6 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
-import com.tc.net.utils.L2Utils;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
@@ -81,8 +80,6 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.TCServerMain;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.ProductInfo;
@@ -825,18 +822,18 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     map.put("communications", this.communicationsManager.getStateMap());
     map.put("channelMap", channels);
     for (Entry<MessageChannel, ServerID> entry : this.channelToNodeID.entrySet()) {
-      channels.put(entry.getKey().toString(), entry.getValue().toString());
+      channels.put(entry.getKey().toString(), entry.getValue());
     }
 
     Map<String, Object> memberReport = new LinkedHashMap<>();
     map.put("members", memberReport);
     for (Entry<ServerID, TCGroupMember> entry : this.members.entrySet()) {
-      memberReport.put(entry.getKey().toString(), entry.getValue().toString());
+      memberReport.put(entry.getKey().toString(), entry.getValue());
     }
 
-    List<String> zapped = new ArrayList<>(this.zappedSet.size());
+    List<Object> zapped = new ArrayList<>(this.zappedSet.size());
     map.put("zapped", zapped);
-    this.zappedSet.forEach(node->zapped.add(node.toString()));
+    this.zappedSet.forEach(node->zapped.add(node));
     return map;
   }
   

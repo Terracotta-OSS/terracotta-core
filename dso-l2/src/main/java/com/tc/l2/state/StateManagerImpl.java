@@ -38,6 +38,8 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -84,6 +86,23 @@ public class StateManagerImpl implements StateManager {
     this.electionMgr = new ElectionManagerImpl(groupManager, expectedServers, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+    map.put("startState", this.startState);
+    map.put("currentState", this.state);
+    map.put("active", this.activeNode);
+    map.put("syncedTo", this.syncdTo);
+    if (this.availabilityMgr instanceof ConsistencyManagerImpl) {
+      ConsistencyManagerImpl cc = (ConsistencyManagerImpl)this.availabilityMgr;
+      map.put("requestedActions", cc.getActions());
+      map.put("availabilityRestriction", cc.isVoting());
+    } else {
+      // no useful information to report
+    }
+    return map;
   }
 
   @Override

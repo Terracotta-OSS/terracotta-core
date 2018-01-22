@@ -41,6 +41,8 @@ import com.tc.util.concurrent.SetOnceRef;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -173,6 +175,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("messageWritten", this.messagesWritten.longValue());
     state.put("messageRead", this.messagesRead.longValue());
     state.put("worker", commWorker.getName());
+    state.put("closed", isClosed());
+    state.put("connected", isConnected());
+    state.put("closePending", isClosePending());
+    state.put("transportConnected", isTransportEstablished());
     return state;
   }
 
@@ -597,6 +603,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public final void asynchClose() {
     if (this.closed.attemptSet()) {
       closeImpl(createCloseCallback(null));
+    } else {
+      this.parent.removeConnection(this);
     }
   }
 
@@ -755,22 +763,30 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   @Override
   public final TCSocketAddress getLocalAddress() {
-    return this.localSocketAddress.get();
+    if (this.localSocketAddress.isSet()) {
+      return this.localSocketAddress.get();
+    } else {
+      return null;
+    }
   }
 
   @Override
   public final TCSocketAddress getRemoteAddress() {
-    return this.remoteSocketAddress.get();
+    if (this.remoteSocketAddress.isSet()) {
+      return this.remoteSocketAddress.get();
+    } else {
+      return null;
+    }
   }
 
-  private final void setConnected(boolean connected) {
+  private void setConnected(boolean connected) {
     if (connected) {
       this.connectTime.set(System.currentTimeMillis());
     }
     this.connected.set(connected);
   }
 
-  private final void recordSocketAddress(Socket socket) throws IOException {
+  private void recordSocketAddress(Socket socket) throws IOException {
     if (socket != null) {
       final InetAddress localAddress = socket.getLocalAddress();
       final InetAddress remoteAddress = socket.getInetAddress();
