@@ -63,6 +63,11 @@
       <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>lease-api</artifactId>
+      <version>${terracotta-platform.version}</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
