@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,7 @@ public class DistributedObjectClientFactory {
     this.properties = properties;
   }
 
-  public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
+  public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException, TimeoutException {
     final AtomicReference<DistributedObjectClient> clientRef = new AtomicReference<DistributedObjectClient>();
 
     ClientConfigurationSetupManagerFactory factory = new ClientConfigurationSetupManagerFactory(null, this.stripeMemberUris);
@@ -95,8 +96,13 @@ public class DistributedObjectClientFactory {
       client.start();
       String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
       if (!client.waitForConnection(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
-//  timed out, shutdown the extra threads and return null;
+//  timed out, shutdown the extra threads and return null if internal digested exception is null;
+//  otherwise throw TimeoutException wrapping the original exception
         client.shutdown();
+        Exception digestedException = client.getLastDigestedException();
+        if(digestedException!=null){
+          throw new TimeoutException(digestedException.getMessage());
+        }
         return null;
       }
     } catch (InterruptedException ie) {

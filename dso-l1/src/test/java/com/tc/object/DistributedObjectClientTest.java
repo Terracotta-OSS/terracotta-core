@@ -105,6 +105,7 @@ public class DistributedObjectClientTest extends TestCase {
     long start = System.currentTimeMillis();
     boolean connected = client.waitForConnection(10, TimeUnit.SECONDS);
     Assert.assertFalse(connected);
+    Assert.assertNotNull(client.getLastDigestedException());
     client.shutdown();
     Assert.assertTrue(threadGroup.activeCount() == 0);
     Assert.assertTrue(System.currentTimeMillis() - start, System.currentTimeMillis() - start < 15000);

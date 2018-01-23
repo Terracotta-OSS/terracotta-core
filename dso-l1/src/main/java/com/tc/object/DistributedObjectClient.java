@@ -117,6 +117,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -153,6 +154,8 @@ public class DistributedObjectClient implements TCClient {
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
   private final SetOnceFlag                          connectionMade                       = new SetOnceFlag();
   private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<Exception>();
+
+  private final AtomicReference<Exception>           lastDigestedExceptionMade               = new AtomicReference<>();
  
   private ClientEntityManager clientEntityManager;
   private final StageManager communicationStageManager;
@@ -398,6 +401,10 @@ public class DistributedObjectClient implements TCClient {
     return connectionMade.isSet();
   }
 
+  public Exception getLastDigestedException(){
+    return lastDigestedExceptionMade.get();
+  }
+
   private void openChannel() throws InterruptedException {
     String hostname;
     int port;
@@ -418,9 +425,11 @@ public class DistributedObjectClient implements TCClient {
           break;
         } catch (final TCTimeoutException tcte) {
           DSO_LOGGER.info("Timeout connecting to server: " + tcte.getMessage());
+          lastDigestedExceptionMade.set(tcte);
           clientStopped.wait(5000);
         } catch (final ConnectException e) {
           DSO_LOGGER.info("Connection refused from server: " + e.getMessage());
+          lastDigestedExceptionMade.set(e);
           clientStopped.wait(5000);
         } catch (final MaxConnectionsExceededException e) {
           DSO_LOGGER.error(e.getMessage());
@@ -434,6 +443,7 @@ public class DistributedObjectClient implements TCClient {
         } catch (final IOException ioe) {
           DSO_LOGGER.info("IOException connecting to server: " + hostname + ":" + port + ". "
                               + ioe.getMessage());
+          lastDigestedExceptionMade.set(ioe);
           clientStopped.wait(5000);
         }
       }
@@ -444,9 +454,11 @@ public class DistributedObjectClient implements TCClient {
     this.clientHandshakeManager.waitForHandshake();
     if (this.channel != null) {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
-      final String infoMsg = "Connection successfully established to server at " + remoteAddress;
-      if (!this.channel.getProductId().isInternal()) {
-        DSO_LOGGER.info(infoMsg);
+      if(remoteAddress!=null){
+          final String infoMsg = "Connection successfully established to server at " + remoteAddress;
+          if (!this.channel.getProductId().isInternal()) {
+              DSO_LOGGER.info(infoMsg);
+          }
       }
     }
   }
@@ -696,7 +708,7 @@ public class DistributedObjectClient implements TCClient {
         clientStopped.notifyAll();
       }
       if (this.channel != null && !this.channel.getProductId().isInternal()) {
-        DSO_LOGGER.info("closing down Terracotta Connection hook=" + fromShutdownHook + " force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
+        DSO_LOGGER.debug("closing down Terracotta Connection hook=" + fromShutdownHook + " force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
       }
       shutdownClient(fromShutdownHook, forceImmediate);
     }
