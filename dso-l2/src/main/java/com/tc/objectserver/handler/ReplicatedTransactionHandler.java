@@ -31,6 +31,7 @@ import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.msg.SyncReplicationActivity.ActivityType;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -129,8 +130,8 @@ public class ReplicatedTransactionHandler {
     protected void initialize(ConfigurationContext context) {
       ServerConfigurationContext scxt = (ServerConfigurationContext)context;
   //  when this spins up, send  request to active and ask for sync
-      scxt.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(scxt.getL2Coordinator().getStateManager().getCurrentState());
-      if (stateManager.getCurrentState().equals(StateManager.PASSIVE_UNINITIALIZED)) {
+      scxt.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(scxt.getL2Coordinator().getStateManager().getCurrentMode().getState());
+      if (stateManager.getCurrentMode() == ServerMode.UNINITIALIZED) {
         requestPassiveSync();
       }
     }
@@ -628,7 +629,7 @@ public class ReplicatedTransactionHandler {
     // If we created this message, enqueue the decision to flush it (the other case where we may flush is network
     //  available).
     if (!stateManager.isActiveCoordinator()) {
-      this.sentToActive.addSingleThreaded(()->{
+      this.sentToActive.addToSink(()->{
         try {
           this.cachedBatchAck.flushBatch();
         } catch (GroupException group) {

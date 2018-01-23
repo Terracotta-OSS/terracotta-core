@@ -27,6 +27,8 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String SINGLE_THREADED_FAST_PATH                          = "single_threaded_fastpath";
   public final static String RESPOND_TO_REQUEST_STAGE                           = "respond_to_request_stage";
+  public final static String MONITOR_STAGE                           = "monitor_stage";
+  public final static String HYDRATE_MESSAGE_STAGE                              = "hydrate_message_stage";
   public final static String VOLTRON_MESSAGE_STAGE                              = "voltron_message_stage";
   public final static String CLIENT_HANDSHAKE_STAGE                             = "client_handshake_stage";
   public static final String L2_STATE_CHANGE_STAGE                              = "l2_state_change_stage";

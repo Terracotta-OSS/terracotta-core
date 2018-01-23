@@ -19,12 +19,11 @@
 
 package com.tc.config.schema.setup;
 
+import java.net.InetSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author vmad
@@ -32,38 +31,16 @@ import java.util.regex.Pattern;
 public class ClientConfigurationSetupManagerFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientConfigurationSetupManagerFactory.class);
-  private static final Pattern SERVER_PATTERN = Pattern.compile("(.*):(.*)", Pattern.CASE_INSENSITIVE);
-  private final String[] args;
-  private final List<String> stripeMemberUris;
 
-  public ClientConfigurationSetupManagerFactory(String[] args, List<String> stripeMemberUris) {
+  private final String[] args;
+  private final List<InetSocketAddress> stripeMemberUris;
+
+  public ClientConfigurationSetupManagerFactory(String[] args, List<InetSocketAddress> stripeMemberUris) {
     this.args = args;
     this.stripeMemberUris = stripeMemberUris;
   }
 
   public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
-    int memberCount = stripeMemberUris.size();
-    String[] hosts = new String[memberCount];
-    int[] ports = new int[memberCount];
-    int index = 0;
-    for (String stripeMemberUri : this.stripeMemberUris) {
-      Matcher matcher = SERVER_PATTERN.matcher(stripeMemberUri);
-      if (matcher.matches()) {
-        String host = matcher.group(1);
-        int userSeparatorIndex = host.indexOf('@');
-        if (userSeparatorIndex > -1) {
-          host = host.substring(userSeparatorIndex + 1);
-        }
-        int port = Integer.parseInt(matcher.group(2));
-        hosts[index] = host;
-        ports[index] = port;
-      } else {
-        String errMsg = "Invalid configuration URL: " + stripeMemberUri;
-        LOGGER.error(errMsg);
-        throw new ConfigurationSetupException(errMsg);
-      }
-      index++;
-    }
-    return new ClientConfigurationSetupManager(this.stripeMemberUris, args, hosts, ports);
+    return new ClientConfigurationSetupManager(this.stripeMemberUris, args);
   }
 }

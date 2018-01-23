@@ -34,6 +34,12 @@ import com.tc.net.NodeID;
 import static com.tc.net.groups.MockStageManagerFactory.createEventHandler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.TestClusterStatePersistor;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManager.Transition;
+import com.tc.l2.state.ServerMode;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -60,7 +66,9 @@ public class TestStateManagerFactory {
     
     LateLoadingEventHandler handler = new LateLoadingEventHandler();
     Stage stateChange = stages.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, handler, 0, 1024);
-    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
+    ConsistencyManager cmgr = mock(ConsistencyManager.class);
+    when(cmgr.requestTransition(any(ServerMode.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), cmgr, new TestClusterStatePersistor());
     handler.setMgr(mgr);
 
     stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();

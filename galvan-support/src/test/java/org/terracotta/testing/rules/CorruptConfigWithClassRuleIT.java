@@ -15,11 +15,10 @@
  */
 package org.terracotta.testing.rules;
 
-import java.io.File;
-import java.util.Collections;
 import java.util.Properties;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
@@ -34,7 +33,7 @@ import org.terracotta.testing.master.GalvanFailureException;
  */
 public class CorruptConfigWithClassRuleIT {
   @ClassRule
-  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster().withEntityFragment("BOGUS<ENTITY<FRAGMENT").build();
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster().withServiceFragment("Bogus<Frag").build();
 
   @Test(expected=ConnectionException.class)
   public void testDirectConnection() throws Exception {

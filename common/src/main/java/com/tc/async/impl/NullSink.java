@@ -19,7 +19,6 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.stats.Stats;
 
 /**
  * @author steve
@@ -30,58 +29,7 @@ public class NullSink<EC> implements Sink<EC> {
   }
 
   @Override
-  public void addSingleThreaded(EC context) {
+  public void addToSink(EC context) {
     //
   }
-
-  @Override
-  public void addMultiThreaded(EC context) {
-    //
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return true;
-  }
-
-  @Override
-  public int size() {
-    return 0;
-  }
-
-  @Override
-  public void close() {
-  }
-
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void resetStats() {
-    throw new UnsupportedOperationException();
-    
-  }
-
 }

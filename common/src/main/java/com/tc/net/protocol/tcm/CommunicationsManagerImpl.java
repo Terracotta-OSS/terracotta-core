@@ -66,6 +66,7 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -74,6 +75,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -224,6 +226,15 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
     connectionHealthChecker.start();
     startHealthCheckCallbackPortListener(healthCheckerConfig);
+  }
+  
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("name", this.commsMgrName);
+    map.put("connectionPolicy", this.connectionPolicy.toString());
+    map.put("connectionManager", this.connectionManager.getStateMap());
+    return map;
   }
 
   @Override

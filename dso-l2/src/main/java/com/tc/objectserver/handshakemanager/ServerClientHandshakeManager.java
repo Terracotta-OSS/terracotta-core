@@ -19,7 +19,6 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.StageManager;
 
 import org.slf4j.Logger;
 import org.terracotta.exception.EntityException;
@@ -197,7 +196,7 @@ public class ServerClientHandshakeManager {
     notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    voltron.addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
+    voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
   }
   
   public void notifyComplete() {

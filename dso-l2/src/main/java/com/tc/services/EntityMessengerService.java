@@ -128,7 +128,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     // to deserialize, but also because we may have to replicate the message to the passive).
     FakeEntityMessage interEntityMessage = encodeAsFake(message, response);
     // if the entity isDestroyed(), this message could be being sent during the create sequence
-    this.messageSink.addSingleThreaded(interEntityMessage);
+    this.messageSink.addToSink(interEntityMessage);
   }
 
   private FakeEntityMessage encodeAsFake(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {

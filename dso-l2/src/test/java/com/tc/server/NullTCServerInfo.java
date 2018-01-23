@@ -220,6 +220,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public void setPipelineMonitoring(boolean monitor) {
+    /**/
+  }
+  
+  @Override
   public String getTCProperties() {
     return null;
   }

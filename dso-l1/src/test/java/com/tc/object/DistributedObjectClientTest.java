@@ -38,11 +38,15 @@ import com.tc.util.ProductID;
 import com.tc.cluster.ClusterInternal;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 import org.mockito.Mockito;
+
+import static com.tc.object.ClientBuilderFactory.CLIENT_BUILDER_TYPE;
 import static org.mockito.Mockito.when;
 import org.slf4j.LoggerFactory;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 
 public class DistributedObjectClientTest extends TestCase {
@@ -91,7 +95,11 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup, l2connection, cluster);
+    Properties connectionProperties = new Properties();
+    connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
+    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup,
+                                                                 l2connection, cluster, connectionProperties);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();
@@ -156,7 +164,9 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
-    ClientBuilder builder = new StandardClientBuilder(ProductID.PERMANENT) {
+    Properties connectionProperties = new Properties();
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
+    ClientBuilder builder = new StandardClientBuilder(connectionProperties) {
       @Override
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);

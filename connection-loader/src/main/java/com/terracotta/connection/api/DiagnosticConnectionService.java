@@ -19,19 +19,9 @@
 
 package com.terracotta.connection.api;
 
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.terracotta.connection.TerracottaConnection;
-import com.terracotta.connection.URLConfigUtil;
-import com.terracotta.connection.client.TerracottaClientConfigParams;
-import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
-import com.terracotta.diagnostic.DiagnosticClientImpl;
-
-import java.net.URI;
-import java.util.concurrent.TimeoutException;
-
+import com.terracotta.connection.EndpointConnector;
+import com.terracotta.connection.TerracottaInternalClientFactory;
+import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
 
 /**
  * This connection service handles the cases of connecting to a single stripe:  one active and potentially multiple passives
@@ -42,38 +32,15 @@ import java.util.concurrent.TimeoutException;
 public class DiagnosticConnectionService extends AbstractConnectionService {
   private static final String SCHEME = "diagnostic";
 
-  @Override
-  public boolean handlesURI(URI uri) {
-    return SCHEME.equals(uri.getScheme());
+  public DiagnosticConnectionService() {
+    super(SCHEME);
   }
 
-  @Override
-  public Connection internalConnect(TerracottaClientConfigParams clientConfig) throws ConnectionException {
-    TerracottaClientStripeConnectionConfig stripeConnectionConfig = new TerracottaClientStripeConnectionConfig();
+  public DiagnosticConnectionService(EndpointConnector endpointConnector) {
+    super(SCHEME, endpointConnector, new TerracottaInternalClientFactoryImpl());
+  }
 
-    for (String memberUri : clientConfig.getStripeMemberUris()) {
-      String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
-      stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
-    }
-
-    final DiagnosticClientImpl client = new DiagnosticClientImpl(stripeConnectionConfig, clientConfig.getGenericProperties());
-    try {
-      client.init();
-    } catch (TimeoutException exp) {
-      throw new ConnectionException(exp);
-    } catch (ConfigurationSetupException config) {
-      throw new ConnectionException(config);
-    } catch (InterruptedException ie) {
-      throw new ConnectionException(ie);
-    } catch (Throwable t) {
-      throw new ConnectionException(t);
-    }
-    
-    return new TerracottaConnection(client.getClientEntityManager(), new Runnable() {
-        public void run() {
-          client.shutdown();
-          }
-        }
-      );
+  public DiagnosticConnectionService(EndpointConnector endpointConnector, TerracottaInternalClientFactory clientFactory) {
+    super(SCHEME, endpointConnector, clientFactory);
   }
 }

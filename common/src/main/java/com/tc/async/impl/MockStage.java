@@ -21,7 +21,8 @@ package com.tc.async.impl;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.text.PrettyPrinter;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author orion
@@ -52,6 +53,18 @@ public class MockStage implements Stage {
   }
 
   @Override
+  public boolean isEmpty() {
+    return true;
+  }
+
+  @Override
+  public int size() {
+    return 0;
+  }
+  
+  
+
+  @Override
   public int pause() {
 //
     return 0;
@@ -76,5 +89,12 @@ public class MockStage implements Stage {
   public String getName() {
     return name;
   }
+
+  @Override
+  public Map getState() {
+    return Collections.emptyMap();
+  }
+  
+  
 
 }

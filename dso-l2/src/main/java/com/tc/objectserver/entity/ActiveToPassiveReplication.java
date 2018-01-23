@@ -47,6 +47,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -68,8 +71,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
+  private final ConsistencyManager consistencyMgr;
 
-  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
+    this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
     this.passives = passives;
     this.persistor = persistor;
@@ -141,6 +146,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * @param newNode
    */
   private void executePassiveSync(final NodeID newNode) {
+    this.consistencyMgr.requestTransition(ServerMode.ACTIVE, ConsistencyManager.Transition.ADD_PASSIVE);
     passiveSyncPool.execute(new Runnable() {
       @Override
       public void run() {    
@@ -270,9 +276,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
   
   private void removeWaiters(NodeID nodeID) {
-      // This is a an unexpected kind of completion.
+    passiveSyncPool.execute(()->{
+      while (!consistencyMgr.requestTransition(ServerMode.ACTIVE, ConsistencyManager.Transition.REMOVE_PASSIVE)) {
+        try {
+          TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException ie) {
+          logger.info("interrupted while waiting for permission to remove node");
+        }
+      }
+        // This is a an unexpected kind of completion.
       boolean isNormalComplete = false;
       waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
+    });
   }
 
   @Override

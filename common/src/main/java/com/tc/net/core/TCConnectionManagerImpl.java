@@ -40,8 +40,11 @@ import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The {@link TCConnectionManager} implementation.
@@ -76,6 +79,16 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     this.bufferManagerFactory = bufferManagerFactory;
     this.comm = new TCCommImpl(name, workerCommCount, socketParams);
     this.comm.start();
+  }
+  
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> state = new LinkedHashMap<>();
+    synchronized(connections) {
+      state.put("connections", connections.stream().map(connection->connection.getState()).collect(Collectors.toList()));
+    }
+    state.put("processors", comm.getState());
+    return state;
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {

@@ -39,6 +39,7 @@ import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -75,7 +76,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 import org.mockito.Matchers;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 
@@ -120,11 +124,15 @@ public class ProcessTransactionHandlerTest {
     
     StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();
+    Stage runnableStage = mock(Stage.class);
+    when(runnableStage.getSink()).thenReturn(this.requestProcessorSink);
     
     this.clientEntityStateManager = new ClientEntityStateManagerImpl();
     this.eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
-    RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    RequestProcessor processor = new RequestProcessor(stageManager, true);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
@@ -144,7 +152,7 @@ public class ProcessTransactionHandlerTest {
     when(l2.getReplicatedClusterStateManager()).thenReturn(rep);
     when(cxt.getL2Coordinator()).thenReturn(l2);
     StateManager state = mock(StateManager.class);
-    when(state.getCurrentState()).thenReturn(new State("ACTIVE"));
+    when(state.getCurrentMode()).thenReturn(ServerMode.ACTIVE);
     when(l2.getStateManager()).thenReturn(state);
     Stage stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));
@@ -156,7 +164,7 @@ public class ProcessTransactionHandlerTest {
   }
   
   private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
-    loopbackSink.addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
+    loopbackSink.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
   @After
@@ -322,40 +330,7 @@ public class ProcessTransactionHandlerTest {
 
 
   public static abstract class NoStatsSink<T> implements Sink<T> {
-    @Override
-    public void enableStatsCollection(boolean enable) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public boolean isStatsCollectionEnabled() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public Stats getStats(long frequency) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public Stats getStatsAndReset(long frequency) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void resetStats() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public int size() {
-      throw new UnsupportedOperationException();
-    }
 
-    @Override
-    public boolean isEmpty() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
-    @Override
-    public void clear() {
-      throw new UnsupportedOperationException();
-    }
   }
 
 
@@ -373,19 +348,9 @@ public class ProcessTransactionHandlerTest {
       }
     }
     @Override
-    public void addSingleThreaded(Runnable context) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addMultiThreaded(Runnable context) {
+    public void addToSink(Runnable context) {
       this.runnableQueue.add(context);
     }
-
-    @Override
-    public void close() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
   }
 
 
@@ -397,23 +362,12 @@ public class ProcessTransactionHandlerTest {
     }
 
     @Override
-    public void addSingleThreaded(VoltronEntityMessage context) {
+    public void addToSink(VoltronEntityMessage context) {
       try {
         this.target.handleEvent(context);
       } catch (EventHandlerException e) {
         Assert.fail();
       }
     }
-    @Override
-    public void addMultiThreaded(VoltronEntityMessage context) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void close() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-    
-    
-}
 }

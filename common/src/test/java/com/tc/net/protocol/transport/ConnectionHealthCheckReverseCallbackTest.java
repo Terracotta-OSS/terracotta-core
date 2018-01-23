@@ -51,6 +51,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
@@ -231,6 +232,13 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     public TCConnection[] getAllActiveConnections() {
       return delegate.getAllConnections();
     }
+
+    @Override
+    public Map<String, ?> getStateMap() {
+      return Collections.emptyMap();
+    }
+    
+    
   }
 
 }

@@ -19,40 +19,32 @@
 package com.terracotta.connection.client;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
 
-import com.terracotta.connection.URLConfigUtil;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 
 /**
  * Describes the servers, belonging to a single stripe, to which the client wishes to connect.
  */
 public class TerracottaClientStripeConnectionConfig {
-  private final List<String> stripeMembers;
+  private final List<InetSocketAddress> stripeMembers;
 
   public TerracottaClientStripeConnectionConfig() {
-    this.stripeMembers = new Vector<String>();
+    this.stripeMembers = new ArrayList<>();
   }
 
-  public void addStripeMemberUri(String member) {
+  public void addStripeMemberUri(InetSocketAddress member) {
     this.stripeMembers.add(member);
   }
 
-  public List<String> getStripeMemberUris() {
+  public List<InetSocketAddress> getStripeMemberUris() {
     return Collections.unmodifiableList(this.stripeMembers);
   }
 
-  public String getUsername() {
-    // TODO:  Move this helper inside, instead of re-assembling the ,-delimited list.  This is just a stop-gap until a larger refactoring.
-    String temp = null;
-    for (String member : this.stripeMembers) {
-      if (null == temp) {
-        temp = member;
-      } else {
-        temp = temp + "," + member;
-      }
-    }
-    return URLConfigUtil.getUsername(temp);
+  public Optional<String> getUsername() {
+    return Optional.empty();
   }
 }

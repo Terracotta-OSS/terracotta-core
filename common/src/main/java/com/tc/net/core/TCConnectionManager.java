@@ -21,6 +21,7 @@ package com.tc.net.core;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.text.PrettyPrintable;
 
 import java.io.IOException;
 
@@ -30,7 +31,7 @@ import java.io.IOException;
  * 
  * @author teck
  */
-public interface TCConnectionManager {
+public interface TCConnectionManager extends PrettyPrintable {
 
   /**
    * Create a new non-connected connection

@@ -101,15 +101,18 @@ public class InFlightMessage {
   public void waitForAcks() {
     boolean interrupted = false;
     boolean complete = false;
-    while (!complete) {
-      try {
-        waitForAcks(0, TimeUnit.MILLISECONDS);
-        complete = true;
-      } catch (InterruptedException ie) {
-        interrupted = true;
-      } catch (TimeoutException te) {
-        throw new AssertionError(te);
+    try {
+      while (!complete) {
+        try {
+          waitForAcks(0, TimeUnit.MILLISECONDS);
+          complete = true;
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        } catch (TimeoutException te) {
+          throw new AssertionError(te);
+        }
       }
+    } finally {
       if (interrupted) {
         Thread.currentThread().interrupt();
       }
@@ -187,6 +190,9 @@ public class InFlightMessage {
     if (exception != null) {
       throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
     } else {
+      if (this.message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
+        Assert.assertNotNull(value);
+      }
       return value;
     }
   }
@@ -206,7 +212,7 @@ public class InFlightMessage {
       this.getCanComplete = true;
       notifyAll();
     } else {
-      Assert.assertNull(error);
+      Assert.assertNotNull(value);
       if (isDeferred) {
         pushOneMessage(value);
       } else if (this.canSetResult) {
@@ -247,6 +253,9 @@ public class InFlightMessage {
     ackDelivered(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
       this.getCanComplete = true;
+      if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
+        Assert.assertTrue("failed " + this.message.getTransactionID(), value != null || exception != null);
+      }
     }
     notifyAll();
     if (monitor != null) {

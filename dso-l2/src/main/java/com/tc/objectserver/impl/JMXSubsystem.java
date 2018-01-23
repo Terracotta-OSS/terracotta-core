@@ -90,16 +90,16 @@ public class JMXSubsystem {
     }
   }
   
-  public String call(String target, String cmd) {
+  public String call(String target, String cmd, String arg) {
     try {
-      return callMBean(getObjectName(target), cmd);
+      return callMBean(getObjectName(target), cmd, arg);
     } catch (Throwable t) {
       String error = "Invalid JMX call:" + cmd + " " + t.getMessage();
       warn(t, error, target);
       return error;
     }
   }
-  
+
   private void printInfo(ObjectName name) throws IntrospectionException, InstanceNotFoundException, ReflectionException {
     MBeanInfo info = server.getMBeanInfo(name);
     for ( MBeanOperationInfo op : info.getOperations()) {
@@ -123,15 +123,19 @@ public class JMXSubsystem {
     }
   }
   
-  private String callMBean(ObjectName name, String arg) throws InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
+  private String callMBean(ObjectName name, String cmd, String arg) throws InstanceNotFoundException, MBeanException, ReflectionException, AttributeNotFoundException {
     Object result = null;
     
-    if (arg.startsWith("get")) {
-      result = server.getAttribute(name, arg.substring(3));
-    } else if (arg.startsWith("is")) {
-      result = server.getAttribute(name, arg.substring(2));
+    if (cmd.startsWith("get")) {
+      result = server.getAttribute(name, cmd.substring(3));
+    } else if (cmd.startsWith("is")) {
+      result = server.getAttribute(name, cmd.substring(2));
     } else {
-      result = server.invoke(name, arg, new Object[0], new String[0]);
+      if (arg == null) {
+        result = server.invoke(name, cmd, new Object[0], new String[0]);
+      } else {
+        result = server.invoke(name, cmd, new Object[] {arg}, new String[] {String.class.getName()});
+      }
     }
 
     return (processReturnType(result));

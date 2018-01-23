@@ -97,6 +97,6 @@ public class EntityMessengerProviderTest {
     
     // Verify the calls we observed.
     verify(this.messageCodec).encodeMessage(message);
-    verify(this.messageSink).addSingleThreaded(any(VoltronEntityMessage.class));
+    verify(this.messageSink).addToSink(any(VoltronEntityMessage.class));
   }
 }

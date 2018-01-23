@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.stats.Stats;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -58,14 +57,14 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
   }
 
   @Override
-  public synchronized void addSingleThreaded(T oc) {
+  public synchronized void addToSink(T oc) {
     long seq = oc.getSequenceID();
     if (seq == 0) {
       if (pending.isEmpty()) {
         logger.debug("Sequence reset. Message with ID " + (current)
             + " was last before reset");
         current = 0;
-        sink.addSingleThreaded(oc);
+        sink.addToSink(oc);
       } else {
         throw new AssertionError(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
             + " is missing still but reset was requested");
@@ -75,7 +74,7 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
           + " Seq Id = " + seq + " Event = " + oc);
     } else if (seq == current + 1) {
       current = seq;
-      sink.addSingleThreaded(oc);
+      sink.addToSink(oc);
       processPendingIfNecessary();
     } else {
       pending.add(oc);
@@ -86,17 +85,6 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
     }
   }
 
-  @Override
-  public void close() {
-    this.sink.close();
-  }
-
-  @Override
-  public void addMultiThreaded(OrderedEventContext specialized) {
-    // Not used in the ordered case.
-    throw new UnsupportedOperationException();
-  }
-
   private void processPendingIfNecessary() {
     if (!pending.isEmpty()) {
       for (Iterator<T> i = pending.iterator(); i.hasNext();) {
@@ -104,55 +92,12 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
         long seq = oc.getSequenceID();
         if (seq == current + 1) {
           current = seq;
-          sink.addSingleThreaded(oc);
+          sink.addToSink(oc);
           i.remove();
         } else {
           break;
         }
       }
     }
-  }
-
-  @Override
-  public synchronized void clear() {
-    pending.clear();
-    current = 0;
-    sink.clear();
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return sink.isEmpty();
-  }
-
-  
-  @Override
-  public int size() {
-    return sink.size();
-  }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    sink.enableStatsCollection(enable);
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    return sink.getStats(frequency);
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return sink.getStatsAndReset(frequency);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    return sink.isStatsCollectionEnabled();
-  }
-
-  @Override
-  public void resetStats() {
-    sink.resetStats();
   }
 }

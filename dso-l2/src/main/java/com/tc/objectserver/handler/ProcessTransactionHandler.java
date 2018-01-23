@@ -20,11 +20,10 @@ package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
-import com.tc.async.impl.DirectSink;
-import com.tc.entity.ResendVoltronEntityMessage;
+import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -50,7 +49,6 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.AbstractServerEntityRequestResponse;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
-import com.tc.objectserver.entity.CreateSystemEntityMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.entity.ServerEntityRequestImpl;
@@ -101,7 +99,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private List<VoltronEntityMessage> resendNewList;
   private boolean reconnecting = true;
   
-  private Sink<TCMessage> multiSend;
+  private Stage<TCMessage> multiSend;
   private final ConcurrentHashMap<ClientID, VoltronEntityMultiResponse> invokeReturn = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<ClientID, Integer> inflightFetch = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<TransactionID, Future<Void>> transactionOrderPersistenceFutures = new ConcurrentHashMap<>();
@@ -220,11 +218,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
       super.initialize(context); 
       ServerConfigurationContext server = (ServerConfigurationContext)context;
       
-      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentState());
+      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentMode().getState());
       server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
       
-      Stage<TCMessage> mss = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
-      multiSend = mss.getSink();
+      multiSend = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class);
       
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       reconnectDone = entityManager.enterActiveState();
@@ -291,12 +288,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
           vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
           boolean added = adder.test(vmr);
           Assert.assertTrue(added);
-          if (DirectSink.isActivated() && multiSend.isEmpty()) {
+          if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
             waitForTransactions(vmr);
             vmr.send();
             vmr = null;
           } else {
-            multiSend.addSingleThreaded(vmr);
+            multiSend.getSink().addToSink(vmr);
           }
         }
       }
@@ -357,7 +354,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
           rr.failure(new EntityNotFoundException(descriptor.getEntityID().getClassName(), descriptor.getEntityID().getEntityName()));
           return;
         } else {
-          throw new AssertionError("fetched entity not found " + descriptor);
+          if (descriptor.getClientInstanceID() != ClientInstanceID.NULL_ID) {
+            throw new AssertionError("fetched entity not found " + descriptor + " action:" + action + " " + sourceNodeID);
+          } else {
+            //  can be null because of flush or disconnect
+            LOGGER.error("fetched entity not found " + descriptor + " action:" + action + " " + sourceNodeID);
+            return;
+          }
         }
       }
       ManagedEntity entity = optionalEntity.get();
@@ -701,17 +704,18 @@ public class ProcessTransactionHandler implements ReconnectListener {
             VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
             failMessage.setFailure(getTransaction(), exception);
             invokeReturn.compute(getNodeID(), (client, vmr)-> {
-              if (vmr == null && DirectSink.isActivated() && multiSend.isEmpty()) {
+              if (vmr == null && DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
                 waitForTransactionOrderPersistenceFuture(failMessage.getTransactionID());
                 failMessage.send();
               } else {
-                multiSend.addSingleThreaded(failMessage);
+                multiSend.getSink().addToSink(failMessage);
               }
               // unmap anything that was previously there
               return null;
             });
           });
         }
+        MonitoringEventCreator.finish();
       } else {
         throw new AssertionError();
       }
@@ -723,6 +727,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         Assert.assertTrue(sent.isSet());
         addSequentially(getNodeID(), addTo->addTo.addRetired(InvokeHandler.this.getTransaction()));
       }
+      MonitoringEventCreator.finish();
     }
   }
   

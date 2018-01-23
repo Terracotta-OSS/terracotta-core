@@ -107,7 +107,7 @@ public class Persistor implements PrettyPrintable {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String,Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     map.put("started", started);
@@ -132,8 +132,6 @@ public class Persistor implements PrettyPrintable {
       map.put("orderPersistor", substate);
       transactionOrderPersistor.reportStateToMap(substate);
     }
-
-    out.println(map);
-    return out;
+    return map;
   }
 }

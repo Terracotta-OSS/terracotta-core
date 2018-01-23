@@ -330,7 +330,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String, Object> entityMap = new LinkedHashMap<>();
     Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
     entityMap.put("className", this.getClass().getName());
@@ -338,7 +338,7 @@ public class EntityManagerImpl implements EntityManager {
     List<Map<String, Object>> entities  = new ArrayList<>(entityIndex.size());
     entityMap.put("entities", entities);
     entityIndex.values().forEach(entity->entities.add(entity.getState()));
-    return out.println(entityMap);
+    return entityMap;
   }
 }
 

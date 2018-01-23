@@ -18,42 +18,15 @@
  */
 package com.tc.async.api;
 
-import com.tc.stats.Monitorable;
-
 /**
  * Represents the sink in the SEDA system
  */
-public interface Sink<EC> extends Monitorable {
+public interface Sink<EC> {
   /**
    * Add the given event to the internal queue 0 (that is, it won't be executed concurrently with any other contexts passed
    * in this way.
    * 
    * @param context
    */
-  public void addSingleThreaded(EC context);
-
-  /**
-   * Adds an event to the queue for multi-threaded execution (that is, it could be executed concurrently with other contexts
-   * pass in this way or even relative to single-threaded contexts).
-   * 
-   * TODO:  Split out the multi-threaded cases to avoid the casts required in the implementations.  This hack is just a
-   * stop-gap to keep the change to add types to SEDA smaller.
-   * 
-   * @param context
-   */
-  public void addMultiThreaded(EC context);
-
-  boolean isEmpty();
-
-  /**
-   * returns the current size of the queue
-   * 
-   * @return
-   */
-  public int size();
-
-  public void clear();
-
-  public void close();
-
+  public void addToSink(EC context);
 }

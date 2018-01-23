@@ -34,7 +34,6 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -61,55 +60,10 @@ public class ReplicationSenderTest {
   List<ReplicationMessage> collector = new LinkedList<>();
   Sink<Runnable> sink = new Sink<Runnable>() {
     @Override
-    public void enableStatsCollection(boolean enable) {
-      Assert.fail("Not in test");
-    }
-    @Override
-    public boolean isStatsCollectionEnabled() {
-      Assert.fail("Not in test");
-      return false;
-    }
-    @Override
-    public Stats getStats(long frequency) {
-      Assert.fail("Not in test");
-      return null;
-    }
-    @Override
-    public Stats getStatsAndReset(long frequency) {
-      Assert.fail("Not in test");
-      return null;
-    }
-    @Override
-    public void resetStats() {
-      Assert.fail("Not in test");
-    }
-    @Override
-    public void addSingleThreaded(Runnable context) {
+    public void addToSink(Runnable context) {
       context.run();
     }
-    @Override
-    public void addMultiThreaded(Runnable context) {
-      Assert.fail("Not in test");
-    }
-    @Override
-    public int size() {
-      Assert.fail("Not in test");
-      return 0;
-    }
-
-    @Override
-    public boolean isEmpty() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
-    @Override
-    public void clear() {
-      Assert.fail("Not in test");
-    }
-    @Override
-    public void close() {
-      Assert.fail("Not in test");
-    }};
+  };
   Stage<Runnable> stage = mock(Stage.class);
 
   ReplicationSender testSender;

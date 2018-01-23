@@ -818,10 +818,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     Map<String, Object> channels = new LinkedHashMap<>();
+    map.put("communications", this.communicationsManager.getStateMap());
     map.put("channelMap", channels);
     for (Entry<MessageChannel, ServerID> entry : this.channelToNodeID.entrySet()) {
       channels.put(entry.getKey().toString(), entry.getValue().toString());
@@ -836,10 +837,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     List<String> zapped = new ArrayList<>(this.zappedSet.size());
     map.put("zapped", zapped);
     this.zappedSet.forEach(node->zapped.add(node.toString()));
-    
-    out.println(map);
-    
-    return out;
+    return map;
   }
   
   private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {

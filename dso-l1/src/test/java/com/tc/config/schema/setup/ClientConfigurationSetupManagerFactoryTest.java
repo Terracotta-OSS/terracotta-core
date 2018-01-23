@@ -19,6 +19,7 @@
 
 package com.tc.config.schema.setup;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
@@ -36,7 +37,7 @@ public class ClientConfigurationSetupManagerFactoryTest {
 
   @Test
   public void testGetL1TVSConfigurationSetupManager() throws Exception {
-    ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(HOST + ":" + PORT));
+    ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(InetSocketAddress.createUnresolved(HOST, PORT)));
     L1ConfigurationSetupManager l1ConfigurationSetupManager = clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
 
     Assert.assertNotNull(l1ConfigurationSetupManager);
@@ -46,9 +47,9 @@ public class ClientConfigurationSetupManagerFactoryTest {
 
   @Test
   public void testGetL1TVSConfigurationSetupManagerMultiUrl() throws Exception {
-    List<String> stripeMemberUris = new Vector<String>();
-    stripeMemberUris.add(HOST + ":" + PORT);
-    stripeMemberUris.add(HOST + ":" + PORT);
+    List<InetSocketAddress> stripeMemberUris = new Vector<>();
+    stripeMemberUris.add(InetSocketAddress.createUnresolved(HOST, PORT));
+    stripeMemberUris.add(InetSocketAddress.createUnresolved(HOST, PORT));
     ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], stripeMemberUris);
     L1ConfigurationSetupManager l1ConfigurationSetupManager = clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
 
@@ -60,9 +61,9 @@ public class ClientConfigurationSetupManagerFactoryTest {
     Assert.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[1].tsaPort());
   }
 
-  @Test (expected = ConfigurationSetupException.class)
+  @Test (expected = IllegalArgumentException.class)
   public void testGetL1TVSConfigurationSetupManagerFailure() throws Exception {
-    ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(HOST + PORT));
+    ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(InetSocketAddress.createUnresolved("local", -1)));
     clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
   }
 }

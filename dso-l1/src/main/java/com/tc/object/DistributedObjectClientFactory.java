@@ -30,6 +30,7 @@ import com.tc.object.config.ClientConfigImpl;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.util.UUID;
 import com.tc.cluster.ClusterInternal;
+import java.net.InetSocketAddress;
 
 import java.util.List;
 import java.util.Properties;
@@ -42,11 +43,11 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 public class DistributedObjectClientFactory {
-  private final List<String> stripeMemberUris;
+  private final List<InetSocketAddress> stripeMemberUris;
   private final ClientBuilder builder;
   private final Properties        properties;
 
-  public DistributedObjectClientFactory(List<String> stripeMemberUris, ClientBuilder builder,
+  public DistributedObjectClientFactory(List<InetSocketAddress> stripeMemberUris, ClientBuilder builder,
                                         Properties properties) {
     this.stripeMemberUris = stripeMemberUris;
     this.builder = builder;

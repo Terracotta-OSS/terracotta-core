@@ -34,7 +34,8 @@ public class State implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof State)) { return false; }
+    if (o == null) return false;
+    if (!(o instanceof State)) { throw new AssertionError(); }
     return name.equals(((State) o).name);
   }
 
