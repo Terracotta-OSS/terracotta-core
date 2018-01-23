@@ -49,7 +49,7 @@
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.15</surefire.version>
-    <powermock.version>1.5.1</powermock.version>
+    <powermock.version>1.6.1</powermock.version>
     <hamcrest.version>1.3</hamcrest.version>
     <skip.testjar>false</skip.testjar>
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>

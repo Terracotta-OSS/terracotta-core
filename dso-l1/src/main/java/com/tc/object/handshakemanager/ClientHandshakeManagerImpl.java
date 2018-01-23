@@ -34,6 +34,8 @@ import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
 import com.tc.cluster.ClusterInternalEventsGun;
 
+import java.util.Objects;
+
 /**
  * This class has been changed to be heavily synchronized. This is in attempt to 
  * address a rare bug where handshake is not initiated properly because the state 
@@ -185,6 +187,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
                          + serverVersion + ".  Terminating client now.";
       LOGGER.error(msg);
       throw new IllegalStateException(msg);
+    } else if (!Objects.equals(clientVersion, serverVersion)) {
+      String message = String.format("Client version %s is different from server version %s.",
+              clientVersion, serverVersion);
+      logger.info(message);
     }
   }
 
