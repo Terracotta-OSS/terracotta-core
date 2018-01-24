@@ -179,6 +179,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   @Override
   public long stopVoting() {
     votingInProgress = false;
+    this.vetoVote = false;
     return this.electionTerm;
   }
 

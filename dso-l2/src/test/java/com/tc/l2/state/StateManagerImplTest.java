@@ -225,6 +225,7 @@ public class StateManagerImplTest {
     StageManager stageMgr = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     ConsistencyManager availabilityMgr = mock(ConsistencyManager.class);
+    when(availabilityMgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     ClusterStatePersistor persistor = mock(ClusterStatePersistor.class);
     when(persistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);

@@ -410,7 +410,11 @@ public class StateManagerImpl implements StateManager {
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
       if (startState == null || startState == ServerMode.START) {
-        moveToPassiveReady(winningEnrollment);
+        if (availabilityMgr.requestTransition(state, winningEnrollment.getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE)) {
+          moveToPassiveReady(winningEnrollment);
+        } else {
+          throw new AssertionError("connect to active transition should never fail");
+        }
         if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
           sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
         }
@@ -470,7 +474,11 @@ public class StateManagerImpl implements StateManager {
     } else {
       debugInfo("ElectionMgr handling election abort");
       electionMgr.handleElectionAbort(clusterMsg, state.getState());
-      moveToPassiveReady(clusterMsg.getEnrollment());
+      if (availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE)) {
+        moveToPassiveReady(clusterMsg.getEnrollment());
+      } else {
+        throw new AssertionError("connect to active transition should never fail");
+      }
     }
   }
 

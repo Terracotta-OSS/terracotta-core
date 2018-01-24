@@ -88,6 +88,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
       //  adding a passive to an active is always OK
       return true;
     }
+    if (newMode == Transition.CONNECT_TO_ACTIVE) {
+      endVoting(true, newMode);
+      return true;
+    }
     if (newMode == Transition.REMOVE_PASSIVE) {
  //  try and remove the passive from the list of 
  //  votes for an active, need to check below if the 
@@ -102,20 +106,24 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     int threshold = voteThreshold(mode);
     if (serverVotes >= threshold || serverVotes == this.peerServers) {
     // if the threshold is achieved with just servers or all the servers are visible, transition is granted
-      endVoting(newMode);
+      endVoting(true, newMode);
       return true;
     }
     long start = System.currentTimeMillis();
     try {
-      if (voter.getRegisteredVoters() + serverVotes < threshold && !voter.vetoVoteReceived()) {
+      if (voter.vetoVoteReceived()) {
+        allow = true;
+        LOGGER.info("Action:" + newMode + " granted on override vote");
+      } else if (voter.getRegisteredVoters() + serverVotes < threshold) {
         blocked = true;
         LOGGER.warn("Not enough registered voters.  Require veto intervention or all members of the stripe to be connected for operation " + newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
           //  servers connected + votes received
-          if (serverVotes + voter.getVoteCount() < threshold || voter.vetoVoteReceived()) {
+          if (serverVotes + voter.getVoteCount() < threshold) {
             TimeUnit.MILLISECONDS.sleep(100);
           } else {
+            LOGGER.info("Action:" + newMode + " granted on vote tally servers:{} external:{} of total:{}", serverVotes, voter.getVoteCount(), peerServers + voter.getVoterLimit() + 1);
             allow = true;
           }
         } catch (InterruptedException ie) {
@@ -123,9 +131,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
         }
       }
     } finally {
-      if (allow) {
-        endVoting(newMode);
-      }    
+      endVoting(allow, newMode);
     }
     return allow;
   }
@@ -155,13 +161,23 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     }
   }
   
-  private synchronized void endVoting(Transition moveTo) {
+  private synchronized void endVoting(boolean allowed, Transition moveTo) {
     if (activeVote) {
-      Assert.assertEquals(voteTerm, voter.stopVoting());
-      activeVote = false;
-      blocked = false;
+      if (allowed) {
+        Assert.assertEquals(voteTerm, voter.stopVoting());
+        activeVote = false;
+        blocked = false;
+        switch(moveTo) {
+          case CONNECT_TO_ACTIVE:
+          case MOVE_TO_ACTIVE:
+            actions.remove(Transition.CONNECT_TO_ACTIVE);
+            actions.remove(Transition.MOVE_TO_ACTIVE);
+            break;
+          default:
+            actions.remove(moveTo);
+        }
+      }
     }
-    actions.remove(moveTo);
   }
   
   public synchronized Collection<Transition> getActions() {

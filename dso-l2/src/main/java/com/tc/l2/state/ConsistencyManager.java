@@ -25,6 +25,7 @@ public interface ConsistencyManager {
   
   public enum Transition {
     MOVE_TO_ACTIVE,
+    CONNECT_TO_ACTIVE,
     ADD_CLIENT,
     REMOVE_PASSIVE,
     ADD_PASSIVE
