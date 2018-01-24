@@ -307,8 +307,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
-                                        NodeNameProvider activeNameProvider) {
-    return createListener(addr, transportDisconnectRemovesChannel, new NullConnectionIDFactoryImpl(), true, null, activeNameProvider);
+                                        ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider) {
+    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider);
   }
 
   @Override

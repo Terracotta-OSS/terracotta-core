@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
+import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.util.Assert;
@@ -37,6 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
   private final MutableSequence                   connectionIDSequence;
+  private final NullConnectionIDFactoryImpl                        internalClients = new NullConnectionIDFactoryImpl();
   private StripeID                                stripe;
   private final Set<ProductID>                          supported;
   private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
@@ -48,20 +50,21 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
 
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
-    if (!new ChannelID(connectionID.getChannelID()).isValid()) {
+    // internal or redirect
+    if (connectionID.getProductId().isInternal() || this.stripe == null) {
+      return internalClients.populateConnectionID(connectionID);
+    } else if (!new ChannelID(connectionID.getChannelID()).isValid()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
+    } else if (!stripe.getName().equals(connectionID.getServerID())) {
+      return ConnectionID.NULL_ID;
     } else {
-      if (!stripe.getName().equals(connectionID.getServerID())) {
-        return ConnectionID.NULL_ID;
-      } else {
-        return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
-      }
+      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
     }
   }
 
   private ConnectionID nextConnectionId(String clientJvmID, ProductID productId) {
     return formConnectionId(clientJvmID, connectionIDSequence.next(), productId);
-  }
+    }
 
   private ConnectionID formConnectionId(String jvmID, long channelID, ProductID productId) {
     Assert.assertNotNull(stripe);

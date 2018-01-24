@@ -58,5 +58,5 @@ public interface CommunicationsManager extends PrettyPrintable {
                                         ConnectionIDFactory connectionIdFactory);
 
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
-                                        NodeNameProvider activeNameProvider);
+                                        ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider);
 }

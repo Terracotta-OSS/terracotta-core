@@ -537,7 +537,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
     
-    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, () -> {
+    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, this.connectionIdFactory, () -> {
       StateManager stateMgr = l2Coordinator.getStateManager();
       // only provide an active name if this server is not active
       ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
