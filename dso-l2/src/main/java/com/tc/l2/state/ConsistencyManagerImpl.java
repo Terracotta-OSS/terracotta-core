@@ -41,6 +41,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
   private final int peerServers;
   private boolean activeVote = false;
+  private boolean blocked = false;
   private Set<Transition> actions = EnumSet.noneOf(Transition.class);
   private long voteTerm = 0;
   private final ServerVoterManager voter;
@@ -107,6 +108,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     long start = System.currentTimeMillis();
     try {
       if (voter.getRegisteredVoters() + serverVotes < threshold && !voter.vetoVoteReceived()) {
+        blocked = true;
         LOGGER.warn("Not enough registered voters.  Require veto intervention or all members of the stripe to be connected for operation " + newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
@@ -157,6 +159,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     if (activeVote) {
       Assert.assertEquals(voteTerm, voter.stopVoting());
       activeVote = false;
+      blocked = false;
     }
     actions.remove(moveTo);
   }
@@ -169,6 +172,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     return activeVote;
   }
   
+  public boolean isBlocked() {
+    return blocked;
+  }
+  
   public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements com.tc.l2.state.ConsistencyMBean {
 
     public ConsistencyMBeanImpl() throws Exception {
@@ -177,8 +184,14 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     
     @Override
     public boolean isBlocked() {
-      return activeVote;
+      return blocked;
     }
+    
+    
+    @Override
+    public boolean isStuck() {
+      return activeVote ;
+    }    
 
     @Override
     public Collection<Transition> requestedActions() {

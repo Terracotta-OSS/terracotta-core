@@ -99,6 +99,7 @@ public class StateManagerImpl implements StateManager {
       ConsistencyManagerImpl cc = (ConsistencyManagerImpl)this.availabilityMgr;
       map.put("requestedActions", cc.getActions());
       map.put("availabilityRestriction", cc.isVoting());
+      map.put("availabilityStuck", cc.isBlocked());
     } else {
       // no useful information to report
     }

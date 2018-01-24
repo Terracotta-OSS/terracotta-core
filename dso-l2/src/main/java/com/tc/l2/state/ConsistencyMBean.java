@@ -23,7 +23,24 @@ import java.util.Collection;
 
 
 public interface ConsistencyMBean {
+  /**
+   * a server is stuck when a restricted action is requested and there are not
+   * enough registered voters to grant access.  The only way to release such a
+   * server is to veto vote or connect all members of the stripe
+   * @return true if the server is in the above state;
+   */
+  boolean isStuck();
+  /**
+   * a server is requesting a restricted action and is currently blocked from doing so while 
+   * conducting a vote tally.
+   * 
+   * @return true if the server is blocked
+   */
   boolean isBlocked();
-  
+  /**
+   * the list of restricted actions that are currently restricted but blocked. 
+   * 
+   * @return the list of transitions requested.
+   */
   Collection<Transition> requestedActions();
 }
