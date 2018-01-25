@@ -33,7 +33,7 @@ import static com.tc.voter.VoterManager.HEARTBEAT_RESPONSE;
 import static com.tc.voter.VoterManager.INVALID_VOTER_RESPONSE;
 import static java.util.stream.Collectors.toList;
 
-public class VoterDaemon {
+public class VoterDaemon implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(VoterDaemon.class);
 
@@ -173,4 +173,8 @@ public class VoterDaemon {
     this.voter.interrupt();
   }
 
+  @Override
+  public void close() {
+    stop();
+  }
 }

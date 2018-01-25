@@ -20,10 +20,21 @@ package com.terracotta.diagnostic;
 
 
 import com.tc.async.api.StageManager;
+import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.CommunicationsManager;
+import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionPolicy;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.StandardClientBuilder;
 import com.tc.util.ProductID;
+import java.util.Map;
 
 import java.util.Properties;
 
@@ -34,6 +45,11 @@ public class DiagnosticClientBuilder extends StandardClientBuilder {
     super(connectionProperties);
   }
 
+  @Override
+  public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter, NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy, HealthCheckerConfig aConfig, Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping, ReconnectionRejectedHandler reconnectionRejectedHandler) {
+    return super.createCommunicationsManager(monitor, messageRouter, stackHarnessFactory, connectionPolicy, new DisabledHealthCheckerConfigImpl(), messageTypeClassMapping, reconnectionRejectedHandler); 
+  }
+  
   @Override
   public ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages) {
     return new DiagnosticClientEntityManager(channel);

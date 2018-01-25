@@ -171,57 +171,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
-  public void testCallbackPort() throws Exception {
-    setupGroups(2);
-
-    int proxyPort = new PortChooser().chooseRandomPort();
-    TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), groupPorts[1], 0, false, null);
-    proxy.start();
-
-    groups[0].setDiscover(new NullTCGroupMemberDiscovery());
-    groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    Set<Node> nodeSet = new HashSet<>();
-    Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-    groups[0].join(nodes[0], nodeStore);
-    groups[1].join(nodes[1], nodeStore);
-    // open test
-    groups[0].openChannel(LOCALHOST, proxyPort, new NullChannelEventListener());
-
-    Thread.sleep(2000);
-
-    assertEquals(1, groups[0].size());
-    assertEquals(1, groups[1].size());
-    TCGroupMember member1 = getMember(groups[0], 0);
-    TCGroupMember member2 = getMember(groups[1], 0);
-    assertTrue("Expected  " + member1.getLocalNodeID() + " but got " + member2.getPeerNodeID(), member1
-        .getLocalNodeID().equals(member2.getPeerNodeID()));
-    assertTrue("Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID(), member1.getPeerNodeID()
-        .equals(member2.getLocalNodeID()));
-
-    proxy.setDelay(Integer.MAX_VALUE);
-
-    long minTimeToSayDead = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_IDLETIME)
-                            + (TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_INTERVAL) * TCPropertiesImpl
-                                .getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_PROBES));
-    // giving more buffer time, to catch problem if any
-    minTimeToSayDead += (3 * TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_IDLETIME));
-
-    // HC will not say the other end is DEAD as the callback port from the client TCGroupMgr is available
-    System.out.println("Sleeping for min time " + minTimeToSayDead);
-    ThreadUtil.reallySleep(minTimeToSayDead);
-    System.out.println("checking the client state");
-    assertEquals(1, groups[1].size());
-
-    // eventually after full probe, the node has to goto DEAD state
-    while (groups[1].size() != 0) {
-      System.out.println(".");
-      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_INTERVAL)
-                             * TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_PROBES));
-    }
-    tearGroups();
-  }
-
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
 

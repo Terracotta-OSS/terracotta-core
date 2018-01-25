@@ -62,11 +62,16 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     URI uri = URI.create("diagnostic://" + hostPort);
     Properties properties = new Properties();
     try {
-      connection = CONNECTION_SERVICE.connect(uri, properties);
-      properties.setProperty("request.timeout.response", "false");
-      EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1L, "root");;
-      this.diagnostics = ref.fetchEntity(properties);
-    } catch (ConnectionException | EntityNotProvidedException | EntityNotFoundException | EntityVersionMismatchException e) {
+      Connection temp = CONNECTION_SERVICE.connect(uri, properties);
+      synchronized (this) {
+        if (connection != null) {
+          connection.close();
+        }
+        connection = temp;
+        EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1L, "root");;
+        this.diagnostics = ref.fetchEntity(properties);        
+      }
+    } catch (IOException | ConnectionException | EntityNotProvidedException | EntityNotFoundException | EntityVersionMismatchException e) {
       throw new RuntimeException("Unable to connect to " + hostPort, e);
     }
   }
@@ -108,19 +113,31 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   }
 
   String processInvocation(String invocation) throws TimeoutException {
-    if (invocation == REQUEST_TIMEOUT) {
+    if (invocation == null) {
+      return "UNKNOWN";
+    }
+    if (invocation.equals(REQUEST_TIMEOUT)) {
       throw new TimeoutException("Request timed out");
     }
     return invocation;
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     try {
-      this.connection.close();
+      if (this.connection != null) {
+        this.connection.close();
+      }
     } catch (IOException e) {
       LOGGER.error("Failed to close the connection: {}", connection);
+    } finally {
+      this.connection = null;
     }
+  }
+  
+  @Override
+  public synchronized boolean isConnected() {
+    return this.connection != null;
   }
 
 }

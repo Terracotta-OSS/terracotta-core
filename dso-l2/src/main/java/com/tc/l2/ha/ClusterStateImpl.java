@@ -181,7 +181,7 @@ public class ClusterStateImpl implements ClusterState {
     this.connections.forEach((c)->connects.add(c.toString()));
     state.put("connections", connects);
     state.put("nextChannelID", this.nextAvailChannelID);
-    state.put("currentState", this.currentState.toString());
-    state.put("stripeID", this.stripeID.toString());
+    state.put("currentState", this.currentState);
+    state.put("stripeID", this.stripeID);
   }
 }

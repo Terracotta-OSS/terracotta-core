@@ -41,6 +41,8 @@ import com.tc.util.concurrent.SetOnceRef;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -60,6 +62,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -88,7 +91,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final TCConnectionManagerImpl         parent;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
   private final AtomicLong                      lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder                      messagesWritten           = new LongAdder();
   private final AtomicLong                      lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder                      messagesRead           = new LongAdder();
   private final AtomicLong                      connectTime                 = new AtomicLong(NO_CONNECT_TIME);
   private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<TCConnectionEventListener>();
   private final TCProtocolAdaptor               protocolAdaptor;
@@ -167,7 +172,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("connectTime", new Date(this.getConnectTime()));
     state.put("receiveIdleTime", this.getIdleReceiveTime());
     state.put("idleTime", this.getIdleTime());
+    state.put("messageWritten", this.messagesWritten.longValue());
+    state.put("messageRead", this.messagesRead.longValue());
     state.put("worker", commWorker.getName());
+    state.put("closed", isClosed());
+    state.put("connected", isConnected());
+    state.put("closePending", isClosePending());
+    state.put("transportConnected", isTransportEstablished());
     return state;
   }
 
@@ -314,6 +325,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     } while (read != 0);
 
     this.totalRead.addAndGet(totalBytesReadFromBuffer);
+    this.messagesRead.increment();
     return totalBytesReadFromBuffer;
   }
 
@@ -591,6 +603,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public final void asynchClose() {
     if (this.closed.attemptSet()) {
       closeImpl(createCloseCallback(null));
+    } else {
+      this.parent.removeConnection(this);
     }
   }
 
@@ -743,28 +757,36 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   @Override
   public final void putMessage(TCNetworkMessage message) {
     this.lastDataWriteTime.set(System.currentTimeMillis());
-
+    this.messagesWritten.increment();
     putMessageImpl(message);
   }
 
   @Override
   public final TCSocketAddress getLocalAddress() {
-    return this.localSocketAddress.get();
+    if (this.localSocketAddress.isSet()) {
+      return this.localSocketAddress.get();
+    } else {
+      return null;
+    }
   }
 
   @Override
   public final TCSocketAddress getRemoteAddress() {
-    return this.remoteSocketAddress.get();
+    if (this.remoteSocketAddress.isSet()) {
+      return this.remoteSocketAddress.get();
+    } else {
+      return null;
+    }
   }
 
-  private final void setConnected(boolean connected) {
+  private void setConnected(boolean connected) {
     if (connected) {
       this.connectTime.set(System.currentTimeMillis());
     }
     this.connected.set(connected);
   }
 
-  private final void recordSocketAddress(Socket socket) throws IOException {
+  private void recordSocketAddress(Socket socket) throws IOException {
     if (socket != null) {
       final InetAddress localAddress = socket.getLocalAddress();
       final InetAddress remoteAddress = socket.getInetAddress();

@@ -129,7 +129,6 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
@@ -226,9 +225,11 @@ import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 
 
 /**
@@ -469,8 +470,9 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
 
     persistor = serverBuilder.createPersistor(platformServiceRegistry);
-
+    boolean wasZapped = false;
     while(!persistor.start(capablities.contains(ProductID.PERMANENT))) {
+      wasZapped = true;
       // make sure peristor is not using any storage service
       persistor.close();
       // Log that that the state was not clean so we are going to clear all service provider state.
@@ -479,6 +481,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       // create the persistor once again as underlying storage service might have cleared its internal state
       persistor = serverBuilder.createPersistor(platformServiceRegistry);
     }
+    //  if the DB was zapped, reset the flag until the server has finished sync
+    persistor.getClusterStatePersistor().setDBClean(!wasZapped);
 
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
 
@@ -515,8 +519,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionPolicy, commWorkerThreadCount,
-                                                               new HealthCheckerConfigImpl(tcProperties
-                                                                   .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY), "TSA Server"),
+                                                               new DisabledHealthCheckerConfigImpl(),
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.emptyMap(),
@@ -534,7 +537,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
     
-    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, () -> {
+    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, this.connectionIdFactory, () -> {
       StateManager stateMgr = l2Coordinator.getStateManager();
       // only provide an active name if this server is not active
       ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
@@ -648,8 +651,15 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     entityManager.setMessageSink(fast.getSink());    
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
-    
-    ConsistencyManager consistencyMgr = (ServerMode mode, ConsistencyManager.Transition transition) -> true;
+            
+    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+                                                                      this.thisServerNodeID,
+                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory,
+                                                                      bufferManagerFactory);
+
+    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
+    int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
+    ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(this.groupCommManager, knownPeers, voteCount);
         
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
@@ -661,11 +671,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
-    
-    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
-                                                                      this.thisServerNodeID,
-                                                                      this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory);
 
     L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService), eventCollector);
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);

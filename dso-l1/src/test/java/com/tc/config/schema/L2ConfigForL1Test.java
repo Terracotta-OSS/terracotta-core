@@ -21,6 +21,8 @@ package com.tc.config.schema;
 import com.tc.test.EqualityChecker;
 import com.tc.test.TCTestCase;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import org.junit.Assert;
 
 /**
  * Unit test for {@link L2ConfigForL1}.
@@ -54,6 +56,16 @@ public class L2ConfigForL1Test extends TCTestCase {
                       new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("foobaz", 20)),
                       new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("foobar", 2)),
                       new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("foobar", 30)) });
+  }
+
+  @SuppressWarnings("unused")
+  public void testL2DefaultPort() throws Exception {
+    URI uri = new URI("http://localhost");
+    System.out.println(uri.getHost() +":" + uri.getPort());
+    L2ConfigForL1.L2Data data = new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("localhost", 0));
+    Assert.assertEquals(L2ConfigForL1.DEFAULT_PORT, data.tsaPort());
+    data = new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("localhost", 0));
+    Assert.assertEquals(L2ConfigForL1.DEFAULT_PORT, data.tsaPort());
   }
 
 }

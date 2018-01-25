@@ -43,8 +43,7 @@ public class TransportMessageFactoryImpl implements TransportHandshakeMessageFac
   }
 
   @Override
-  public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source, short stackLayerFlags,
-                                             int callbackPort) {
+  public TransportHandshakeMessage createSyn(ConnectionID connectionId, TCConnection source, short stackLayerFlags, int callbackPort) {
     return createNewMessage(TransportMessageImpl.SYN, connectionId, null, null, source, false, 0,
                             WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE, stackLayerFlags, callbackPort);
   }

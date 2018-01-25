@@ -67,7 +67,7 @@ public class TestStateManagerFactory {
     LateLoadingEventHandler handler = new LateLoadingEventHandler();
     Stage stateChange = stages.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, handler, 0, 1024);
     ConsistencyManager cmgr = mock(ConsistencyManager.class);
-    when(cmgr.requestTransition(any(ServerMode.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), cmgr, new TestClusterStatePersistor());
     handler.setMgr(mgr);
 

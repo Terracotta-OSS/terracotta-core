@@ -91,6 +91,7 @@ The Initial Developer of the Covered Software is
       <outputDirectory>client/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-*</include>
+        <include>org.terracotta.internal:voter</include>
       </includes>
     </dependencySet>
     <dependencySet>

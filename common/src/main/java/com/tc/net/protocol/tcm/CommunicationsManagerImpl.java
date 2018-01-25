@@ -21,11 +21,9 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.util.ProductID;
-import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -41,10 +39,8 @@ import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.MessageTransportFactory;
@@ -66,13 +62,10 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -109,7 +102,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private ConnectionHealthChecker                                              connectionHealthChecker;
   private ServerID                                                             serverID                  = ServerID.NULL_ID;
   private int                                                                  callbackPort              = TransportHandshakeMessage.NO_CALLBACK_PORT;
-  private NetworkListener                                                      callbackportListener      = null;
   private final TransportHandshakeErrorHandler                                 handshakeErrHandler;
   private final String                                                         commsMgrName;
   private final SessionManager                                                 sessionManager = new NullSessionManager();
@@ -225,7 +217,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       connectionHealthChecker = new ConnectionHealthCheckerEchoImpl();
     }
     connectionHealthChecker.start();
-    startHealthCheckCallbackPortListener(healthCheckerConfig);
   }
   
   @Override
@@ -316,8 +307,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
-                                        NodeNameProvider activeNameProvider) {
-    return createListener(addr, transportDisconnectRemovesChannel, new NullConnectionIDFactoryImpl(), true, null, activeNameProvider);
+                                        ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider) {
+    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider);
   }
 
   @Override
@@ -412,61 +403,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
   }
 
-  private void startHealthCheckCallbackPortListener(HealthCheckerConfig healthCheckrConfig) {
-    if (!healthCheckrConfig.isCallbackPortListenerNeeded()) {
-      // Callback Port Listeners are not needed for L2s.
-      logger.info("HealthCheck CallbackPort Listener not requested");
-      return;
-    }
-
-    InetAddress bindAddr;
-    String bindAddress = healthCheckrConfig.getCallbackPortListenerBindAddress();
-    if (bindAddress == null || bindAddress.equals("")) {
-      bindAddress = TCSocketAddress.WILDCARD_IP;
-    }
-
-    try {
-      bindAddr = InetAddress.getByName(bindAddress);
-    } catch (UnknownHostException e) {
-      throw new TCRuntimeException("Cannot create InetAddress instance for " + TCSocketAddress.WILDCARD_IP);
-    }
-    AddressChecker addressChecker = new AddressChecker();
-    if (!addressChecker.isLegalBindAddress(bindAddr)) { throw new TCRuntimeException(
-                                                                                     "Invalid bind address ["
-                                                                                         + bindAddr
-                                                                                         + "]. Local addresses are "
-                                                                                         + addressChecker
-                                                                                             .getAllLocalAddresses()); }
-
-    startCallbackListener(healthCheckrConfig, bindAddr);
-  }
-
-  private void startCallbackListener(HealthCheckerConfig healthCheckrConfig, InetAddress bindAddr) {
-    for (Integer bindPort : healthCheckrConfig.getCallbackPortListenerBindPort()) {
-      if (bindPort == TransportHandshakeMessage.NO_CALLBACK_PORT) {
-        logger.info("HealthCheck CallbackPort Listener disabled");
-        return;
-      }
-
-      TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
-      NetworkListener callbackPortListener = createListener(address, true, new DefaultConnectionIdFactory());
-      try {
-        callbackPortListener.start(Collections.<ClientID>emptySet());
-        this.callbackPort = callbackPortListener.getBindPort();
-        this.callbackportListener = callbackPortListener;
-        logger.info("HealthCheck CallbackPort Listener started at " + callbackPortListener.getBindAddress() + ":"
-                    + callbackPort);
-        return;
-      } catch (IOException ioe) {
-        if (healthCheckrConfig.getCallbackPortListenerBindPort().size() == 1) {
-          logger.warn("Unable to start HealthCheck CallbackPort Listener at" + address + ": " + ioe);
-        }
-      }
-    }
-
-    logger.warn("Unable to start HealthCheck CallbackPort Listener on any port");
-  }
-
   void registerListener(NetworkListener lsnr) {
     synchronized (listeners) {
       boolean added = listeners.add(lsnr);
@@ -492,10 +428,6 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.connectionHealthChecker.stop();
     this.connectionHealthChecker = checker;
     this.connectionHealthChecker.start();
-  }
-
-  public NetworkListener getCallbackPortListener() {
-    return this.callbackportListener;
   }
 
   public TCMessageRouter getMessageRouter() {

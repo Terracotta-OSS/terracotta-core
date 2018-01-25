@@ -84,7 +84,7 @@ public class ClientConnectionEstablisherTest {
   public void setup() throws Exception {
     MockitoAnnotations.initMocks(this);
     try {
-      cmt = spy(new ClientMessageTransport(connManager, mock(TransportHandshakeErrorHandler.class), mock(TransportHandshakeMessageFactory.class), mock(WireProtocolAdaptorFactory.class), 0, 0));
+      cmt = spy(new ClientMessageTransport(connManager, mock(TransportHandshakeErrorHandler.class), mock(TransportHandshakeMessageFactory.class), mock(WireProtocolAdaptorFactory.class), TransportHandshakeMessage.NO_CALLBACK_PORT, 0));
       doNothing().when(cmt).sendToConnection(any(TCNetworkMessage.class));
       doNothing().when(cmt).reconnect(any(TCSocketAddress.class));
       doReturn(new NetworkStackID(0)).when(cmt).open(any(ConnectionInfo.class));

@@ -103,8 +103,8 @@ public class ServerVoterManagerImplTest {
     manager.voters.put("bar", 1L);
     manager.voters.put("baz", 1L);
     manager.startVoting(5L);
-    assertThat(manager.vote("foo", 5L), is(5L));
-    assertThat(manager.vote("bar", 5L), is(5L));
+    assertThat(manager.vote("foo", 5L), is(0L));
+    assertThat(manager.vote("bar", 5L), is(0L));
     assertThat(manager.getVoteCount(), is(2));
   }
 
@@ -122,8 +122,8 @@ public class ServerVoterManagerImplTest {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     manager.voters.put("foo", 1L);
     manager.startVoting(5L);
-    assertThat(manager.vote("foo", 5L), is(5L));
-    assertThat(manager.vote("foo", 5L), is(5L));  //duplicate
+    assertThat(manager.vote("foo", 5L), is(0L));
+    assertThat(manager.vote("foo", 5L), is(0L));  //duplicate
     assertThat(manager.getVoteCount(), is(1));
   }
 

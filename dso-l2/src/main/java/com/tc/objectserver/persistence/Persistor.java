@@ -21,7 +21,6 @@ package com.tc.objectserver.persistence;
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductID;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,7 +30,6 @@ import org.terracotta.persistence.IPlatformPersistence;
 
 public class Persistor implements PrettyPrintable {
   private final IPlatformPersistence persistentStorage;
-  private boolean wasDBClean;
 
   private volatile boolean started = false;
 
@@ -61,7 +59,7 @@ public class Persistor implements PrettyPrintable {
     if (!trackClients) {
       entityPersistor.clearEntityClientJournal();
     }
-    wasDBClean = this.clusterStatePersistor.isDBClean();
+    boolean wasDBClean = this.clusterStatePersistor.isDBClean();
     started = true;
     return wasDBClean;
   }

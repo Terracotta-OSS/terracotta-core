@@ -68,11 +68,8 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   @Override
   public synchronized long registerVoter(String id) {
     if (voters.containsKey(id)) {
-      return electionTerm;
-    }
-
-    if (votingInProgress) {
-      return INVALID_VOTER_RESPONSE;
+      //  already registered.  double register is not supported
+      return HEARTBEAT_RESPONSE;
     }
 
     if (!canAcceptVoter()) {
@@ -86,20 +83,23 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   boolean canAcceptVoter() {
-    return voters.entrySet().stream()
-        .filter((entry) -> {
-          if (timeSource.currentTimeMillis() - entry.getValue() < VOTEBEAT_TIMEOUT) {
-            return true;
-          }
-          voters.remove(entry.getKey());
-          return false;
-        })
-        .count() < voterLimit;
+    return !votingInProgress && getRegisteredVoters() < voterLimit;
   }
 
   @Override
   public long heartbeat(String id) {
-    Long val = voters.computeIfPresent(id, (key, timeStamp) -> timeSource.currentTimeMillis());
+    Long val = voters.computeIfPresent(id, (key, timeStamp) -> {
+      long currentTime = timeSource.currentTimeMillis();
+      // make sure some crazy time lapse didn't happen since last heartbeat
+      if (currentTime - timeStamp < VOTEBEAT_TIMEOUT) {
+        return currentTime;
+      } else {
+        votes.remove(key);
+        voters.remove(key);
+        return null;
+      }
+    });
+    
     if (val == null) {
       return INVALID_VOTER_RESPONSE;
     }
@@ -124,15 +124,32 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     long response = heartbeat(id);
     if (response > 0 && electionTerm == this.electionTerm) {
       votes.add(id);
+      return HEARTBEAT_RESPONSE;
+    } else {
+      return response;
     }
-    return response;
   }
 
   public long vote(String idTerm) {
     String[] split = idTerm.split(":");
     return vote(split[0], Long.parseLong(split[1]));
   }
-
+  
+  @Override
+  public int getRegisteredVoters() {
+    return (int)voters.entrySet().stream()
+        .filter((entry) -> {
+          if (timeSource.currentTimeMillis() - entry.getValue() < VOTEBEAT_TIMEOUT) {
+            return true;
+          } else {
+            String id = entry.getKey();
+            votes.remove(id);
+            voters.remove(id);
+            return false;
+          }
+        })
+        .count();
+    }
 
   @Override
   public int getVoteCount() {
@@ -160,14 +177,16 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   @Override
-  public void stopVoting() {
+  public long stopVoting() {
     votingInProgress = false;
+    this.vetoVote = false;
+    return this.electionTerm;
   }
 
   @Override
   public boolean deregisterVoter(String id) {
     System.out.println("Deregister " + id);
-    return voters.remove(id) != null;
+    return !votingInProgress ? voters.remove(id) != null : false;
   }
 
   @Override

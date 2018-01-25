@@ -156,6 +156,7 @@ public class L2HACoordinator implements L2Coordinator {
     if(rClusterStateMgr != null) {
       Map<String, Object> state = new LinkedHashMap<>();
       this.rClusterStateMgr.reportStateToMap(state);
+      state.put("stateManager", this.stateManager.getStateMap());
       return state;
     } else {
       return Collections.emptyMap();

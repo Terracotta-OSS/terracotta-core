@@ -67,7 +67,8 @@ abstract class AbstractConnectionService implements ConnectionService {
       } catch (URISyntaxException e) {
         throw new IllegalArgumentException("Unable to parse uri " + uri, e);
       }
-      InetSocketAddress address = InetSocketAddress.createUnresolved(oneHost.getHost(), oneHost.getPort());
+      int port = oneHost.getPort() < 0 ? 0 : oneHost.getPort();
+      InetSocketAddress address = InetSocketAddress.createUnresolved(oneHost.getHost(), port);
       clientConfig.addStripeMember(address);
     }
 

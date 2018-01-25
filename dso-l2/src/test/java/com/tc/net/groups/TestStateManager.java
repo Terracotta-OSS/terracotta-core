@@ -24,15 +24,16 @@ import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
-import com.tc.util.State;
+import java.util.Collections;
+import java.util.Map;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
 public class TestStateManager implements StateManager {
-  private boolean                    isActive  = false;
+
+  private boolean isActive = false;
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<>();
-  private final NodeID               localNodeID;
+  private final NodeID localNodeID;
 
   public TestStateManager(NodeID localNodeID) {
     this.localNodeID = localNodeID;
@@ -107,6 +108,11 @@ public class TestStateManager implements StateManager {
 
   public boolean isPassiveUnitialized() {
     return false;
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 
 }

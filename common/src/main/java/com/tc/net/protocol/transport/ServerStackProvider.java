@@ -414,8 +414,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         }
       } else {
         int callbackPort = source.getLocalAddress().getPort();
-        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections,
-                                                      callbackPort);
+        synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections, callbackPort);
       }
       sendMessage(synAck);
     }

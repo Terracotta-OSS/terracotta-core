@@ -38,6 +38,8 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -84,6 +86,24 @@ public class StateManagerImpl implements StateManager {
     this.electionMgr = new ElectionManagerImpl(groupManager, expectedServers, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+    map.put("startState", this.startState);
+    map.put("currentState", this.state);
+    map.put("active", this.activeNode);
+    map.put("syncedTo", this.syncdTo);
+    if (this.availabilityMgr instanceof ConsistencyManagerImpl) {
+      ConsistencyManagerImpl cc = (ConsistencyManagerImpl)this.availabilityMgr;
+      map.put("requestedActions", cc.getActions());
+      map.put("availabilityRestriction", cc.isVoting());
+      map.put("availabilityStuck", cc.isBlocked());
+    } else {
+      // no useful information to report
+    }
+    return map;
   }
 
   @Override
@@ -157,17 +177,20 @@ public class StateManagerImpl implements StateManager {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-          if (this.availabilityMgr.requestTransition(this.state, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
+          if (clusterStatePersistor.isDBClean() && 
+              this.availabilityMgr.requestTransition(this.state, nodeid, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
             moveToActiveState();
           } else {
-            logger.info("rerunning election because " + nodeid + " not allowed to transition");
-            electionMgr.reset(null);
+            if (!clusterStatePersistor.isDBClean()) {
+              logger.info("rerunning election because " + nodeid + " must be synced to an active");
+            } else {
+              logger.info("rerunning election because " + nodeid + " not allowed to transition");
+            }
             rerun = true;
           }
         } else if (nodeid.isNull()) {
           Assert.fail();
         } else {
-          electionMgr.reset(null);
           // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
           // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
           // thinking the other one is the winner.
@@ -180,6 +203,7 @@ public class StateManagerImpl implements StateManager {
         }
         electionFinished();
         if (rerun) {
+          electionMgr.reset(null);
           runElection();
         }
       }));
@@ -229,10 +253,7 @@ public class StateManagerImpl implements StateManager {
   private synchronized void moveToPassiveReady(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
     logger.info("moving to passive ready " + state + " " + winningEnrollment);
-    if (null == state) {
-      //  PASSIVE_STANDBY
-      setActiveNodeID(winningEnrollment.getNodeID());
-    } else switch (state) {
+    switch (state) {
       case START:
         setActiveNodeID(winningEnrollment.getNodeID());
         state = (startState == null) ? ServerMode.UNINITIALIZED : startState;
@@ -288,6 +309,7 @@ public class StateManagerImpl implements StateManager {
       // TODO:: Support this later
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
     } else if (state != ServerMode.PASSIVE) {
+      clusterStatePersistor.setDBClean(true);
       stateChangeSink.addToSink(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
       state = ServerMode.PASSIVE;
       info("Moved to " + state, true);
@@ -388,7 +410,11 @@ public class StateManagerImpl implements StateManager {
       // election and is sending the results. This can happen if this node for some reason is not able to detect that
       // the active is down but the other node did. Go with the new active.
       if (startState == null || startState == ServerMode.START) {
-        moveToPassiveReady(winningEnrollment);
+        if (availabilityMgr.requestTransition(state, winningEnrollment.getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE)) {
+          moveToPassiveReady(winningEnrollment);
+        } else {
+          throw new AssertionError("connect to active transition should never fail");
+        }
         if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
           sendOKResponse(clusterMsg.messageFrom(), clusterMsg);
         }
@@ -448,7 +474,11 @@ public class StateManagerImpl implements StateManager {
     } else {
       debugInfo("ElectionMgr handling election abort");
       electionMgr.handleElectionAbort(clusterMsg, state.getState());
-      moveToPassiveReady(clusterMsg.getEnrollment());
+      if (availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE)) {
+        moveToPassiveReady(clusterMsg.getEnrollment());
+      } else {
+        throw new AssertionError("connect to active transition should never fail");
+      }
     }
   }
 
