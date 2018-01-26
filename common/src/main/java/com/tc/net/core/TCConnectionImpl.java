@@ -41,8 +41,6 @@ import com.tc.util.concurrent.SetOnceRef;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -63,9 +61,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -303,10 +298,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private int doReadInternal() throws IOException {
     try {
       bufferManager.recvToBuffer();
-    } catch (SSLException ssle) {
-      logger.error("SSL error: " + ssle);
-      closeReadOnException(ssle);
-      return 0;
     } catch (IOException ioe) {
       closeReadOnException(ioe);
       return 0;
@@ -358,15 +349,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       int sent;
       try {
         sent = bufferManager.sendFromBuffer();
-      } catch (SSLHandshakeException she) {
-        logger
-            .error("SSL handshake error: unable to find valid certification path to requested target, closing connection.");
-        closeWriteOnException(she);
-        break;
-      } catch (SSLException ssle) {
-        logger.error("SSL error: " + ssle);
-        closeWriteOnException(ssle);
-        break;
       } catch (IOException ioe) {
         closeWriteOnException(ioe);
         break;
