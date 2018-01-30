@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.net.NodeID;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 public class ConsistencyManagerImpl implements ConsistencyManager {
   
+  private static final Logger CONSOLE = TCLogging.getConsoleLogger();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
   private final int peerServers;
   private boolean activeVote = false;
@@ -106,6 +108,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     int threshold = voteThreshold(mode);
     if (serverVotes >= threshold || serverVotes == this.peerServers) {
     // if the threshold is achieved with just servers or all the servers are visible, transition is granted
+      CONSOLE.info("Action:{} allowed because enough servers are connected", newMode);
       endVoting(true, newMode);
       return true;
     }
@@ -113,24 +116,25 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     try {
       if (voter.vetoVoteReceived()) {
         allow = true;
-        LOGGER.info("Action:" + newMode + " granted on override vote");
+        CONSOLE.info("Action:" + newMode + " granted on override vote");
       } else if (voter.getRegisteredVoters() + serverVotes < threshold) {
         blocked = true;
-        LOGGER.warn("Not enough registered voters.  Require veto intervention or all members of the stripe to be connected for operation " + newMode);
+        CONSOLE.warn("Not enough registered voters.  Require override intervention or all members of the stripe to be connected for action " + newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
           //  servers connected + votes received
           if (serverVotes + voter.getVoteCount() < threshold) {
             TimeUnit.MILLISECONDS.sleep(100);
           } else {
-            LOGGER.info("Action:" + newMode + " granted on vote tally servers:{} external:{} of total:{}", serverVotes, voter.getVoteCount(), peerServers + voter.getVoterLimit() + 1);
             allow = true;
           }
         } catch (InterruptedException ie) {
+          LOGGER.info("interrupted", ie);
           break;
         }
       }
     } finally {
+      CONSOLE.info("Action:{} granted:{} vote tally servers:{} external:{} of total:{}", newMode, allow, serverVotes + 1, voter.getVoteCount(), peerServers + voter.getVoterLimit() + 1);
       endVoting(allow, newMode);
     }
     return allow;
