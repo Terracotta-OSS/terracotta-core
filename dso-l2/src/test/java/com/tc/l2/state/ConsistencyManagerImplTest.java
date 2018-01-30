@@ -106,7 +106,7 @@ public class ConsistencyManagerImplTest {
     
     when(conf.getFailoverPriority()).thenReturn(null);
     // default consistency with no voters
-    Assert.assertEquals(0, ConsistencyManager.parseVoteCount(conf));
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
     
     when(conf.getFailoverPriority()).thenReturn(fail);
     

@@ -18,7 +18,9 @@
  */
 package com.tc.l2.state;
 
+import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import org.slf4j.Logger;
 import org.terracotta.config.TcConfig;
 
 public interface ConsistencyManager {
@@ -39,8 +41,13 @@ public interface ConsistencyManager {
         return -1;
       }
     } catch (NullPointerException npe) {
-      // default to consistency
-      return 0;
+      Logger consoleLogger = TCLogging.getConsoleLogger();
+      consoleLogger.info("*****************************************************************************");
+      consoleLogger.info("*   Consistency preference not specified, defaulting to AVAILABILITY mode.  *");
+      consoleLogger.info("*   This default is deprecated and will be removed in future releases.      *");
+      consoleLogger.info("*****************************************************************************");
+      // default to availability
+      return -1;
     }
     try {
       int voters = config.getFailoverPriority().getConsistency().getVoter().getCount();
