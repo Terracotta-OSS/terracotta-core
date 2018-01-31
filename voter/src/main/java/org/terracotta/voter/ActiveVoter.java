@@ -29,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import static com.tc.voter.VoterManager.HEARTBEAT_RESPONSE;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -48,7 +49,7 @@ public class ActiveVoter implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveVoter.class);
 
-  private final String ACTIVE_COORDINATOR   = "ACTIVE-COORDINATOR";
+  private final static String ACTIVE_COORDINATOR   = "ACTIVE-COORDINATOR";
 
   private static final long HEARTBEAT_INTERVAL = 1000L;
   private static final long REG_RETRY_INTERVAL = 5000L;
@@ -143,6 +144,7 @@ public class ActiveVoter implements AutoCloseable {
                   long result = voterManager.vote(id, election);
                   LOGGER.info("own the vote, voting {} {} {}", voterManager.getTargetHostPort(), election, result);
                 } else if (owner.isConnected()) {
+                  owner = voteOwner.get();
                   // ignore, back to heartbeating
                   LOGGER.info("not the vote owner and the owner is still connected, rejecting the request for vote {} {}", voterManager.getTargetHostPort(), election);
                   // can never steal the vote back having voted in a previous vote tally
@@ -178,8 +180,8 @@ public class ActiveVoter implements AutoCloseable {
     int tryCount = 0;
     String state;
     while (tryCount < 10) {
+      ClientVoterManager voter = voteOwner.get();
       try {
-        ClientVoterManager voter = voteOwner.get();
         state = voter.isConnected() ? voteOwner.get().getServerState() : "Not Connected";
       } catch (TimeoutException to) {
         state = "Timeout";
@@ -197,7 +199,11 @@ public class ActiveVoter implements AutoCloseable {
         break;
       } else {
       // unknown state, try again shortly, vote should be stolen soon
-        TimeUnit.SECONDS.sleep(10);
+        Optional<ClientVoterManager> om = voterManagers.stream().filter(ActiveVoter::isActive).findFirst();
+        om.ifPresent(target->voteOwner.compareAndSet(voter, target));
+        if (!om.isPresent()) {
+          sleepFor10();
+        }
         tryCount++;
       }
     }
@@ -207,6 +213,22 @@ public class ActiveVoter implements AutoCloseable {
     futures.forEach(f->f.cancel(true));
     voterManagers.stream().forEach(ClientVoterManager::close);
     LOGGER.warn("Rejected by all servers. Attempting to re-register");
+  }
+  
+  private static void sleepFor10() {
+    try {
+      TimeUnit.SECONDS.sleep(10);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+  }
+  
+  private static boolean isActive(ClientVoterManager vm) {
+    try {
+      return vm.isConnected() && vm.getServerState().equals(ACTIVE_COORDINATOR);
+    } catch (TimeoutException to) {
+      return false;
+    }
   }
   
   private void registerAsVoter(ClientVoterManager voterManager) throws TimeoutException, InterruptedException {
