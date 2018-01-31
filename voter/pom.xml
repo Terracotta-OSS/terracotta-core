@@ -16,14 +16,10 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>connection-api</artifactId>
-      <version>${terracotta-apis.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
@@ -32,6 +28,16 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
+      <exclusions>
+          <exclusion>
+              <groupId>org.terracotta</groupId>
+              <artifactId>entity-common-api</artifactId>
+          </exclusion>
+          <exclusion>
+              <groupId>org.terracotta</groupId>
+              <artifactId>entity-server-api</artifactId>
+          </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -73,7 +79,7 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+              <promoteTransitiveDependencies>false</promoteTransitiveDependencies>
             </configuration>
           </execution>
         </executions>

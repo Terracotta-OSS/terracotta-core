@@ -659,6 +659,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
+
     ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(this.groupCommManager, knownPeers, voteCount);
         
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);

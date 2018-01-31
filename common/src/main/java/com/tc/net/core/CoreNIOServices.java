@@ -316,8 +316,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     Map<String, Object> state = new LinkedHashMap<>();
     state.put("name", this.commThreadName);
     state.put("weights", this.clientWeights);
-    state.put("writer", this.readerComm.getCommState());
-    state.put("reader", this.writerComm.getCommState());
+    state.put("writer", this.writerComm.getCommState());
+    state.put("reader", this.readerComm.getCommState());
     return state;
   }
 

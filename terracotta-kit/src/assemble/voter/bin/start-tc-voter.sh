@@ -31,6 +31,7 @@ fi
 
 TC_KIT_ROOT=$(dirname $TC_VOTER_DIR)
 TC_LOGGING_ROOT=$TC_KIT_ROOT/client/logging
-CLASS_PATH="${TC_VOTER_DIR}/lib/*:${TC_LOGGING_ROOT}/*:${TC_LOGGING_ROOT}/impl/*:${TC_LOGGING_ROOT}/impl/"
+TC_CLIENT_ROOT=$TC_KIT_ROOT/client/lib
+CLASS_PATH="${TC_VOTER_DIR}/lib/*:${TC_LOGGING_ROOT}/*:${TC_CLIENT_ROOT}/*:${TC_LOGGING_ROOT}/impl/*:${TC_LOGGING_ROOT}/impl/"
 
 "$JAVA_HOME/bin/java" ${JAVA_OPTS} -cp $CLASS_PATH org.terracotta.voter.TCVoterMain "$@"
