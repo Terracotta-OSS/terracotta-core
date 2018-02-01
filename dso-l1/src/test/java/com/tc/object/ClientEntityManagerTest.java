@@ -377,6 +377,34 @@ public class ClientEntityManagerTest extends TestCase {
     }
   }
   
+  public void testFullQueueTimesOut() throws Exception {
+    // Set the target for success.
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });       
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    fetcher.start();
+    fetcher.join();
+    
+    try {
+      EntityClientEndpoint endpoint = fetcher.getResult();
+      endpoint.beginInvoke().invokeWithTimeout(5, TimeUnit.SECONDS);
+      Assert.fail("Timeout expected");
+    } catch (TimeoutException to) {
+      // expected
+    } catch (Exception e) {
+      e.printStackTrace();
+      // not expected
+      throw e;
+    }
+  }
+  
   public void testThreadInterruptsDontCauseSendIssues() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];

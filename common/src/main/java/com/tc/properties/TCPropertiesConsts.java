@@ -127,7 +127,6 @@ public interface TCPropertiesConsts {
   public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE                 = "l1.transactionmanager.strings.compress.minSize";
   
   public static final String CLIENT_MAX_PENDING_REQUESTS                                    = "client.requests.pending.max";
-  public static final String CLIENT_MAX_SENT_REQUESTS                                       = "client.requests.sent.max";
 
   public static final String TC_TRANSPORT_HANDSHAKE_TIMEOUT                                 = "tc.transport.handshake.timeout";
   public static final String TC_CONFIG_SOURCEGET_TIMEOUT                                    = "tc.config.getFromSource.timeout";
@@ -384,7 +383,6 @@ public interface TCPropertiesConsts {
       L2_SEDA_STAGE_DISABLE_DIRECT_SINKS,
       L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
       CLIENT_MAX_PENDING_REQUESTS,
-      CLIENT_MAX_SENT_REQUESTS,
       L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS,
       L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS
   };

@@ -33,7 +33,6 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
 
   public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
-  public static final int                MAX_SENT_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS, 200);
   
   private final ClientEntityManager       entityManager;
   private final ClientHandshakeManager    clientHandshakeManager;
