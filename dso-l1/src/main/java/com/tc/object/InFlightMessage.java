@@ -173,10 +173,8 @@ public class InFlightMessage {
           wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
         }
       }
-    } catch (InterruptedException ie) {
+    } catch (InterruptedException | TimeoutException ie) {
       throw ie;
-    } catch (TimeoutException to) {
-      throw to;
     } catch (Exception exp) {
       throw new AssertionError(exp);
     } finally {
