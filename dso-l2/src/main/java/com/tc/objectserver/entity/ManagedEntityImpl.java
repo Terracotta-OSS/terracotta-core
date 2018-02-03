@@ -1389,8 +1389,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       for (NodeID passive : passives) {
         try {
           byte[] message = syncCodec.encode(concurrencyKey, payload);
-          executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
-                                                                             concurrencyKey, message, ""), passive).waitForReceived();
+          ActivePassiveAckWaiter waiter = executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
+                                             concurrencyKey, message, ""), passive);
         } catch (MessageCodecException ce) {
           throw new RuntimeException(ce);
         }

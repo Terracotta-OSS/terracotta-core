@@ -18,10 +18,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.tracing.Trace;
@@ -57,7 +53,6 @@ import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
@@ -67,7 +62,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -233,11 +227,13 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     trace.start();
     long start = System.nanoTime();
     InFlightMessage inFlightMessage = queueInFlightMessage(message, acks, monitor, invokeTimeout, units, shouldBlockGetOnRetire, deferred);
-    long timeLeft = System.nanoTime() - start - units.toNanos(invokeTimeout);
-    if (timeLeft > 0) {
+    long timeLeft = units.toNanos(invokeTimeout) - (System.nanoTime() - start);
+    if (invokeTimeout == 0) {
+      inFlightMessage.waitForAcks();
+    } else if (timeLeft > 0) {
       inFlightMessage.waitForAcks(timeLeft, TimeUnit.NANOSECONDS);
     } else {
-      throw new TimeoutException();
+      throw new TimeoutException(invokeTimeout + " " + units);
     }
     trace.end();
     return inFlightMessage;

@@ -46,14 +46,15 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.stats.Stats;
 import com.tc.util.ProductID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -66,8 +67,11 @@ import org.hamcrest.Matchers;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -112,7 +116,7 @@ public class ClientEntityManagerTest extends TestCase {
     this.instance = new ClientInstanceID(1);
     this.descriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(1), instance);
   }
-  
+ 
   public void testResponseSinkFlush() throws Exception {
     
   }
@@ -392,8 +396,20 @@ public class ClientEntityManagerTest extends TestCase {
     fetcher.start();
     fetcher.join();
     
+    List<TestRequestBatchMessage> full = new ArrayList<>();
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        TestRequestBatchMessage msg = new TestRequestBatchMessage(manager, resultObject, resultException, false);
+        full.add(msg);
+        return msg;
+      }
+    });       
     try {
       EntityClientEndpoint endpoint = fetcher.getResult();
+      for (int x=0;x<ClientConfigurationContext.MAX_PENDING_REQUESTS;x++) {
+        endpoint.beginInvoke().invokeWithTimeout(5, TimeUnit.SECONDS);
+      }
       endpoint.beginInvoke().invokeWithTimeout(5, TimeUnit.SECONDS);
       Assert.fail("Timeout expected");
     } catch (TimeoutException to) {
@@ -402,9 +418,65 @@ public class ClientEntityManagerTest extends TestCase {
       e.printStackTrace();
       // not expected
       throw e;
+    } finally {
+      full.stream().forEach(m->{
+        manager.complete(m.getTransactionID(), new byte[0]);
+        manager.retired(m.getTransactionID());
+       });
     }
   }
-  
+    
+  public void testInvokeWithTimeoutZeroWaitsForever() throws Exception {
+    // Set the target for success.
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });       
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    fetcher.start();
+    fetcher.join();
+    List<TestRequestBatchMessage> full = new ArrayList<>();
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        TestRequestBatchMessage msg = new TestRequestBatchMessage(manager, resultObject, resultException, false);
+        full.add(msg);
+        return msg;
+      }
+    }); 
+    Thread t = Thread.currentThread();
+    new Thread(()->{
+     try {
+       TimeUnit.SECONDS.sleep(1);
+     } catch (InterruptedException ie) {
+       
+     }
+     full.stream().forEach(m->{
+        manager.complete(m.getTransactionID(), new byte[0]);
+        manager.retired(m.getTransactionID());
+       });
+    }).start();
+    
+    try {
+      EntityClientEndpoint endpoint = fetcher.getResult();
+      for (int x=0;x<ClientConfigurationContext.MAX_PENDING_REQUESTS;x++) {
+        endpoint.beginInvoke().invokeWithTimeout(5, TimeUnit.SECONDS);
+      }
+      endpoint.beginInvoke().invokeWithTimeout(0, TimeUnit.SECONDS);
+    } catch (TimeoutException to) {
+      to.printStackTrace();
+    } catch (Exception e) {
+      e.printStackTrace();
+      // not expected
+      throw e;
+    } 
+  }
+    
   public void testThreadInterruptsDontCauseSendIssues() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];
