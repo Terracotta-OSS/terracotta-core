@@ -230,6 +230,8 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 
 /**
@@ -336,6 +338,11 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       prettyPrintable.prettyPrint(prettyPrinter);
     } catch (Throwable t) {
       prettyPrinter.println("unable to collect cluster state for " + prettyPrintable.getClass().getName() + " : " + t.getLocalizedMessage());
+      StringWriter w = new StringWriter();
+      PrintWriter p = new PrintWriter(w);
+      t.printStackTrace(p);
+      p.close();
+      prettyPrinter.println(w.toString());
     }
   }
 
@@ -353,7 +360,12 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       prettyPrinter.println(state);
     } catch (Throwable t) {
       prettyPrinter.println("unable to collect cluster state for ExtendedConfigs" + " : " + t.getLocalizedMessage());
-    }
+      StringWriter w = new StringWriter();
+      PrintWriter p = new PrintWriter(w);
+      t.printStackTrace(p);
+      p.close();
+      prettyPrinter.println(w.toString());
+    }  
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
