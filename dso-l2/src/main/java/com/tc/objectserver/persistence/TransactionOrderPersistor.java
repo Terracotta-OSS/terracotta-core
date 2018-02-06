@@ -261,7 +261,7 @@ public class TransactionOrderPersistor {
     return this.receivedTransactionCount;
   }
   
-  public Map<String, Object> reportStateToMap(Map<String, Object> map) {
+  public synchronized Map<String, Object> reportStateToMap(Map<String, Object> map) {
     map.put("className", this.getClass().getName());
     map.put("receivedTransactions", getReceivedTransactionCount());
     if(this.permNodeIDs != null && storageManager != null) {
