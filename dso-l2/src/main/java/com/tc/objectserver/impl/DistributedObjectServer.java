@@ -646,16 +646,15 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
-    final Stage<VoltronEntityMessage> processTransactionStage_voltron = stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, USE_DIRECT);
-    final Stage<TCMessage> multiRespond = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, false);
-    final Sink<VoltronEntityMessage> voltronMessageSink = processTransactionStage_voltron.getSink();
+    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, USE_DIRECT);
+    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, TCMessage.class, processTransactionHandler.getMultiResponseSender(), 1, maxStageSize, false);
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
     channelManager.addEventListener(communicatorService);
     communicatorService.initialized();
     serviceRegistry.registerImplementationProvided(communicatorService);
 
-    VoltronMessageHandler voltron = new VoltronMessageHandler(voltronMessageSink, USE_DIRECT);
+    VoltronMessageHandler voltron = new VoltronMessageHandler(channelManager, USE_DIRECT);
     // We need to connect the IInterEntityMessengerProvider to the voltronMessageSink.
     
     Stage<VoltronEntityMessage> fast = stageManager.createStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class, voltron, 1, maxStageSize);
