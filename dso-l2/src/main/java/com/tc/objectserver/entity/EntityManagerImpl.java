@@ -37,7 +37,6 @@ import com.tc.object.FetchID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,6 +56,8 @@ import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.LinkedHashMap;
 
 

@@ -54,12 +54,16 @@ public class NoopResultCapture implements ResultCapture {
 
   @Override
   public void complete(byte[] value) {
-    Trace.activeTrace().log("Completed with result of length " + value.length);
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("Completed with result of length " + value.length);
+    }
   }
 
   @Override
   public void failure(EntityException ee) {
-    Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
+    }
   }
   
   @Override

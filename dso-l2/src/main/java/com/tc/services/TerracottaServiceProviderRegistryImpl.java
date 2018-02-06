@@ -33,6 +33,8 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -174,7 +176,10 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         serviceProvider.addStateTo(dump.subStateDumpCollector(serviceProvider.getClass().getName()));
         services.add(dump.getMap());
       } catch (Throwable t) {
-        services.add("unable to collect state for " + serviceProvider.getClass().getName() + ":" +  t.getMessage());
+        StringWriter w = new StringWriter();
+        PrintWriter p = new PrintWriter(w);
+        t.printStackTrace(p);
+        services.add(w.toString());
       }
     }
 
@@ -184,7 +189,10 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         implementationProvidedServiceProvider.addStateTo(dump);
         services.add(dump.getMap());
       } catch (Throwable t) {
-        services.add("unable to collect state for " + implementationProvidedServiceProvider.getClass().getName() + ":" +  t.getMessage());
+        StringWriter w = new StringWriter();
+        PrintWriter p = new PrintWriter(w);
+        t.printStackTrace(p);
+        services.add(w.toString());
       }
     }
     return map;

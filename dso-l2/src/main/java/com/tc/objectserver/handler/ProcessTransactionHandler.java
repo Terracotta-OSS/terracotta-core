@@ -277,28 +277,34 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
+    // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
-    invokeReturn.compute(target, (client, vmr)-> {
-      if (vmr != null) {
-        boolean added = adder.test(vmr);
-        Assert.assertTrue(added);
+    if (!target.isNull()) {
+      if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+        safeGetChannel(target).ifPresent(channel->{
+          Assert.assertFalse(invokeReturn.containsKey(target));
+          VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          waitForTransactions(vmr);
+          vmr.send();
+        });
       } else {
-        Optional<MessageChannel> channel = safeGetChannel(target);
-        if (channel.isPresent()) {
-          vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
-          boolean added = adder.test(vmr);
-          Assert.assertTrue(added);
-          if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-            waitForTransactions(vmr);
-            vmr.send();
-            vmr = null;
+      invokeReturn.compute(target, (client, vmr)-> {
+          if (vmr != null) {
+            boolean added = adder.test(vmr);
+            Assert.assertTrue(added);
           } else {
-            multiSend.getSink().addToSink(vmr);
+            Optional<MessageChannel> channel = safeGetChannel(target);
+            if (channel.isPresent()) {
+              vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+              boolean added = adder.test(vmr);
+              Assert.assertTrue(added);
+              multiSend.getSink().addToSink(vmr);
+            }
           }
-        }
+          return vmr;
+        });
       }
-      return vmr;
-    });
+    }
   }
 
 // only the process transaction thread will add messages here except for on reconnect
@@ -322,9 +328,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
       transactionOrderPersistenceFuture = this.persistor.getTransactionOrderPersistor().updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
     }
 
-    Trace trace = new Trace(request.getTraceID(), "ProcessTransactionHandler.AddMessage");
-    trace.start();
-    trace.log("Handling " + action);
+    Trace trace = null;
+    if (Trace.isTraceEnabled()) {
+      trace = new Trace(request.getTraceID(), "ProcessTransactionHandler.AddMessage");
+      trace.start();
+      trace.log("Handling " + action);    
+    }
 
     if (ServerEntityAction.CREATE_ENTITY == action) {
       long consumerID = this.persistor.getEntityPersistor().getNextConsumerID();
@@ -398,7 +407,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
         rr.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
         entity.addRequestMessage(rr, entityMessage, rr);
       }
-      trace.end();
+      if (trace != null) {
+        trace.end();
+      }
     }
   }
 
@@ -562,10 +573,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
   private Optional<MessageChannel> safeGetChannel(NodeID id) {
     try {
-      return Optional.of(dsoChannelManager.getActiveChannel(id));
+      if (!id.isNull()) {
+        return Optional.of(dsoChannelManager.getActiveChannel(id));
+      }
     } catch (NoSuchChannelException e) {
-      return Optional.empty();
+      // ignore
     }
+    return Optional.empty();
   }
 
   private void executeResend(VoltronEntityMessage message) {

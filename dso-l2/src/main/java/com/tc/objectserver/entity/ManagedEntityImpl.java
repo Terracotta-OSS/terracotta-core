@@ -800,7 +800,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     long currentId = wrappedRequest.getTransaction().toLong();
     long oldestId = wrappedRequest.getOldestTransactionOnClient().toLong();
 
-    Trace.activeTrace().log("invoking " + message);
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("invoking " + message);
+    }
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
@@ -1391,6 +1393,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           byte[] message = syncCodec.encode(concurrencyKey, payload);
           ActivePassiveAckWaiter waiter = executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
                                              concurrencyKey, message, ""), passive);
+          //  wait for the passive to receive before sending the next
           waiter.waitForReceived();
         } catch (MessageCodecException ce) {
           throw new RuntimeException(ce);
