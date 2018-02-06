@@ -280,27 +280,30 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
     if (!target.isNull()) {
+      if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+        safeGetChannel(target).ifPresent(channel->{
+          Assert.assertFalse(invokeReturn.containsKey(target));
+          VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          waitForTransactions(vmr);
+          vmr.send();
+        });
+      } else {
       invokeReturn.compute(target, (client, vmr)-> {
-        if (vmr != null) {
-          boolean added = adder.test(vmr);
-          Assert.assertTrue(added);
-        } else {
-          Optional<MessageChannel> channel = safeGetChannel(target);
-          if (channel.isPresent()) {
-            vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          if (vmr != null) {
             boolean added = adder.test(vmr);
             Assert.assertTrue(added);
-            if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-              waitForTransactions(vmr);
-              vmr.send();
-              vmr = null;
-            } else {
+          } else {
+            Optional<MessageChannel> channel = safeGetChannel(target);
+            if (channel.isPresent()) {
+              vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+              boolean added = adder.test(vmr);
+              Assert.assertTrue(added);
               multiSend.getSink().addToSink(vmr);
             }
           }
-        }
-        return vmr;
-      });
+          return vmr;
+        });
+      }
     }
   }
 
