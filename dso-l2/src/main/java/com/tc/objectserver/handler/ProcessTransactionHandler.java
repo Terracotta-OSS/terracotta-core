@@ -277,28 +277,31 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
   
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
+    // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
-    invokeReturn.compute(target, (client, vmr)-> {
-      if (vmr != null) {
-        boolean added = adder.test(vmr);
-        Assert.assertTrue(added);
-      } else {
-        Optional<MessageChannel> channel = safeGetChannel(target);
-        if (channel.isPresent()) {
-          vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+    if (!target.isNull()) {
+      invokeReturn.compute(target, (client, vmr)-> {
+        if (vmr != null) {
           boolean added = adder.test(vmr);
           Assert.assertTrue(added);
-          if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-            waitForTransactions(vmr);
-            vmr.send();
-            vmr = null;
-          } else {
-            multiSend.getSink().addToSink(vmr);
+        } else {
+          Optional<MessageChannel> channel = safeGetChannel(target);
+          if (channel.isPresent()) {
+            vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+            boolean added = adder.test(vmr);
+            Assert.assertTrue(added);
+            if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+              waitForTransactions(vmr);
+              vmr.send();
+              vmr = null;
+            } else {
+              multiSend.getSink().addToSink(vmr);
+            }
           }
         }
-      }
-      return vmr;
-    });
+        return vmr;
+      });
+    }
   }
 
 // only the process transaction thread will add messages here except for on reconnect
@@ -562,10 +565,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
   private Optional<MessageChannel> safeGetChannel(NodeID id) {
     try {
-      return Optional.of(dsoChannelManager.getActiveChannel(id));
+      if (!id.isNull()) {
+        return Optional.of(dsoChannelManager.getActiveChannel(id));
+      }
     } catch (NoSuchChannelException e) {
-      return Optional.empty();
+      // ignore
     }
+    return Optional.empty();
   }
 
   private void executeResend(VoltronEntityMessage message) {
