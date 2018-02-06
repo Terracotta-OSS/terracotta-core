@@ -461,7 +461,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     TCGroupMember m = members.get(member.getPeerNodeID());
     if ((m != null) && (m.getChannel() == member.getChannel())) {
       membersRemove(member);
-      if (member.isJoinedEventFired()) fireNodeEvent(member, false);
+      if (member.isJoinedEventFired()) {
+        fireNodeEvent(member, false);
+      }
+      zappedSet.remove(member.getPeerNodeID());
       member.setJoinedEventFired(false);
       notifyAnyPendingRequests(member);
     }
