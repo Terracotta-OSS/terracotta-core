@@ -85,7 +85,9 @@ public class ResultCaptureImpl implements ResultCapture {
 
   @Override
   public void complete(byte[] value) {
-    Trace.activeTrace().log("Completed with result: " + value);
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("Completed with result: " + value);
+    }
     if (!this.receivedSent.isSet()) {
       received();
     }
@@ -96,7 +98,9 @@ public class ResultCaptureImpl implements ResultCapture {
 
   @Override
   public void failure(EntityException ee) {
-    Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
+    }
     if (!this.receivedSent.isSet()) {
       received();
     }

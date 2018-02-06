@@ -36,6 +36,10 @@ public class Trace {
       LOGGER.trace("[trace - {}] {} - {}", id, componentName, message);
     }
   }
+  
+  public static boolean isTraceEnabled() {
+    return LOGGER.isTraceEnabled();
+  }
 
   public void start() {
     this.startTime = System.nanoTime();

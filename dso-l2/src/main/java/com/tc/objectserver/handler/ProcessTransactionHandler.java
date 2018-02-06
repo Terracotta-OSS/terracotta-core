@@ -328,9 +328,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
       transactionOrderPersistenceFuture = this.persistor.getTransactionOrderPersistor().updateWithNewMessage(sourceNodeID, transactionID, oldestTransactionOnClient);
     }
 
-    Trace trace = new Trace(request.getTraceID(), "ProcessTransactionHandler.AddMessage");
-    trace.start();
-    trace.log("Handling " + action);
+    Trace trace = null;
+    if (Trace.isTraceEnabled()) {
+      trace = new Trace(request.getTraceID(), "ProcessTransactionHandler.AddMessage");
+      trace.start();
+      trace.log("Handling " + action);    
+    }
 
     if (ServerEntityAction.CREATE_ENTITY == action) {
       long consumerID = this.persistor.getEntityPersistor().getNextConsumerID();
@@ -404,7 +407,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
         rr.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
         entity.addRequestMessage(rr, entityMessage, rr);
       }
-      trace.end();
+      if (trace != null) {
+        trace.end();
+      }
     }
   }
 

@@ -196,7 +196,9 @@ public class InFlightMessage {
   }
 
   public synchronized void setResult(byte[] value, EntityException error) {
-    trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
+    if (Trace.isTraceEnabled()) {
+      trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
+    }
     ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
     ackDelivered(VoltronEntityMessage.Acks.COMPLETED);
     if (pendingAcks.isEmpty()) {
@@ -241,7 +243,9 @@ public class InFlightMessage {
   }
   
   private void ackDelivered(VoltronEntityMessage.Acks ack) {
-    trace.log("Received ACK: " + ack);
+    if (Trace.isTraceEnabled()) {
+      trace.log("Received ACK: " + ack);
+    }
     if (this.pendingAcks.remove(ack) && monitor != null) {
       monitor.ackDelivered(ack);
     }

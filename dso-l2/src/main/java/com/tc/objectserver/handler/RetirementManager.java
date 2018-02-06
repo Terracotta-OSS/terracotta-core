@@ -156,7 +156,9 @@ public class RetirementManager {
   }
 
   public synchronized void deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
-    Trace.activeTrace().log("Deferring retirement for " + invokeMessageToDefer + " until " + laterMessage + " is finished");
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("Deferring retirement for " + invokeMessageToDefer + " until " + laterMessage + " is finished");
+    }
     
     LogicalSequence myRequest = this.currentlyRunning.get(invokeMessageToDefer);
     
@@ -195,7 +197,9 @@ public class RetirementManager {
     List<Retiree> readyToRetire = retireForCompletion(message);
     for (Retiree toRetire : readyToRetire) {
       if (null != toRetire) {
-        Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
+        if (Trace.isTraceEnabled()) {
+          Trace.activeTrace().log("Retiring message with trace id " + toRetire.getTraceID());
+        }
         // if not, retire the message
         toRetire.retired();
       }

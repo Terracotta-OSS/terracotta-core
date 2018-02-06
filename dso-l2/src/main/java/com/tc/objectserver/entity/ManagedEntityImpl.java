@@ -800,7 +800,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     long currentId = wrappedRequest.getTransaction().toLong();
     long oldestId = wrappedRequest.getOldestTransactionOnClient().toLong();
 
-    Trace.activeTrace().log("invoking " + message);
+    if (Trace.isTraceEnabled()) {
+      Trace.activeTrace().log("invoking " + message);
+    }
     if (this.isInActiveState) {
       if (null == this.activeServerEntity) {
         throw new IllegalStateException("Actions on a non-existent entity. active:" + this.isActive() + " " + message.toString());
