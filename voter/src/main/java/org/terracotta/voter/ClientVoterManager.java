@@ -43,6 +43,12 @@ public interface ClientVoterManager extends VoterManager {
   String getServerState() throws TimeoutException;
 
   /**
+   *
+   * @return the configuration of the server that this voter is connected to.
+   */
+  String getServerConfig() throws TimeoutException;
+
+  /**
    * Close the connection with the server.
    */
   void close();

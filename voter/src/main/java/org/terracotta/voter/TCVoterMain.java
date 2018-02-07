@@ -19,11 +19,11 @@
 package org.terracotta.voter;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.cli.PosixParser;
-import org.terracotta.config.Server;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 import org.xml.sax.SAXException;
@@ -34,92 +34,104 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.UUID;
 
 import static java.util.stream.Collectors.toList;
 
 public class TCVoterMain {
 
   private static final String HELP = "h";
-  private static final String CLUSTER_NAME = "n";
-  private static final String SERVER = "s";
-  private static final String CONFIG_FILE = "f";
-  private static final String VETO = "v";
+  private static final String OVERRIDE = "o";
+  protected static final String SERVER = "s";
+  protected static final String CONFIG_FILE = "f";
 
-  public static TCVoter voter = new TCVoterImpl();
+  private static final String ID = UUID.randomUUID().toString();
 
-  public static void main(String[] args) throws ConfigurationSetupException {
-    CommandLine commandLine = null;
-    Options options = voterOptions();
-    try {
-      commandLine = new PosixParser().parse(options, args);
-    } catch (ParseException pe) {
-      throw new ConfigurationSetupException(pe.getLocalizedMessage(), pe);
-    }
+  public TCVoter voter = new TCVoterImpl();
+
+  public void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
+    DefaultParser parser = new DefaultParser();
+    Options voterOptions = voterOptions();
+    CommandLine commandLine = parser.parse(voterOptions, args);
 
     if (commandLine.getArgList().size() > 0) {
       throw new ConfigurationSetupException("Invalid arguments provided: " + commandLine.getArgList());
     }
 
     if (commandLine.hasOption(HELP)) {
-      new HelpFormatter().printHelp("start-voter.sh[bat]", options);
+      new HelpFormatter().printHelp("start-voter.sh[bat]", voterOptions);
+      return;
+    }
+
+    if (commandLine.getOptions().length == 0) {
+      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s or -f provided");
+    }
+
+    if (commandLine.hasOption(SERVER) && commandLine.hasOption(CONFIG_FILE)) {
+      throw new ConfigurationSetupException("Both -s and -f options provided. Use either one and not both together.");
+    }
+
+    if (commandLine.hasOption(SERVER)) {
+      processServerArg(commandLine.getOptionValues(SERVER));
+    } else if (commandLine.hasOption(CONFIG_FILE)) {
+      processConfigFileArg(commandLine.getOptionValues(CONFIG_FILE));
+    } else if (commandLine.hasOption(OVERRIDE)) {
+      String hostPort = commandLine.getOptionValue(OVERRIDE);
+      validateHostPort(hostPort);
+      voter.vetoVote(hostPort);
     } else {
-      if (!commandLine.hasOption(VETO) && !commandLine.hasOption(CLUSTER_NAME)) {
-        throw new ConfigurationSetupException("Neither the veto option -v nor the regular options with -n and -s or -f provided");
-      }
-
-      if (commandLine.hasOption(VETO)) {
-        String vetoTarget = commandLine.getOptionValue(VETO);
-        validatedHostPort(vetoTarget);
-        voter.vetoVote(vetoTarget);
-      }
-
-      if (commandLine.hasOption(CLUSTER_NAME)) {
-        if (commandLine.hasOption(SERVER) && commandLine.hasOption(CONFIG_FILE)) {
-          throw new ConfigurationSetupException("Both -s and -f options provided. Use either one and not both together.");
-        }
-        String clusterName = commandLine.getOptionValue(CLUSTER_NAME);
-        if (commandLine.hasOption(SERVER)) {
-          String[] hostPorts = commandLine.getOptionValues(SERVER);
-          for (String hostPort : hostPorts) {
-            validatedHostPort(hostPort);
-          }
-          voter.register(clusterName, hostPorts);
-        } else if (commandLine.hasOption(CONFIG_FILE)) {
-          String[] hostPorts = getServerHostPortsFromConfig(commandLine.getOptionValue(CONFIG_FILE));
-          voter.register(clusterName, hostPorts);
-        } else {
-          throw new ConfigurationSetupException("Neither -s nor -f option provided with -n option");
-        }
-      }
+      throw new AssertionError("This should not happen");
     }
   }
 
-  private static String[] getServerHostPortsFromConfig(String tcConfigPath) throws ConfigurationSetupException {
-    TcConfiguration config;
-    try {
-      config = TCConfigurationParser.parse(new File(tcConfigPath));
-    } catch (IOException | SAXException e) {
-      throw new ConfigurationSetupException("Failed to parse the configuration file at : " + tcConfigPath);
+  private void processServerArg(String[] stripes) throws ConfigurationSetupException {
+    validateStripesLimit(SERVER, stripes);
+    for (String servers: stripes) {
+      String[] hostPorts = servers.split(",");
+      for (String hostPort : hostPorts) {
+        validateHostPort(hostPort);
+      }
+      startVoter(hostPorts);
     }
-
-    List<Server> servers = config.getPlatformConfiguration().getServers().getServer();
-    return servers.stream()
-        .map(s -> s.getHost() + ":" + s.getTsaPort().getValue())
-        .collect(toList())
-        .toArray(new String[0]);
   }
 
-  private static Options voterOptions() {
+  private void processConfigFileArg(String[] stripes) throws ConfigurationSetupException {
+    validateStripesLimit(CONFIG_FILE, stripes);
+    for (String tcConfigPath: stripes) {
+      TcConfiguration config;
+      try {
+        config = TCConfigurationParser.parse(new File(tcConfigPath));
+      } catch (IOException | SAXException e) {
+        throw new ConfigurationSetupException("Failed to parse the configuration file at : " + tcConfigPath);
+      }
+
+      String[] hostPorts = config.getPlatformConfiguration().getServers().getServer().stream()
+          .map(s -> s.getHost() + ":" + s.getTsaPort().getValue())
+          .collect(toList()).toArray(new String[0]);
+
+      startVoter(hostPorts);
+    }
+  }
+
+  protected void startVoter(String... hostPorts) {
+    new ActiveVoter(ID, hostPorts).start();
+  }
+
+  protected void validateStripesLimit(String option, String[] args) throws ConfigurationSetupException {
+    if (args.length > 1) {
+      throw new ConfigurationSetupException("Usage of multiple -" + option + " options not supported");
+    }
+  }
+
+  private Options voterOptions() {
     return new Options()
-        .addOption(HELP, "help", false, "Help")
-        .addOption(CLUSTER_NAME, "name", true, "Cluster name")
-        .addOption(SERVER, "server", true, "Server host:port")
-        .addOption(CONFIG_FILE, "file", true, "Terracotta server configuration file")
-        .addOption(VETO, "veto", true, "Veto vote");
+        .addOption(Option.builder(HELP).desc("Help").hasArg(false).build())
+        .addOption(Option.builder(OVERRIDE).desc("Override vote").hasArg().argName("host:port").build())
+        .addOption(Option.builder(CONFIG_FILE).desc("Server configuration file").hasArgs().argName("tc-config path").build())
+        .addOption(Option.builder(SERVER).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
   }
 
-  private static void validatedHostPort(String hostPort) throws ConfigurationSetupException {
+  protected void validateHostPort(String hostPort) throws ConfigurationSetupException {
     URI uri;
     try {
       uri = new URI("tc://" + hostPort);
@@ -131,4 +143,10 @@ public class TCVoterMain {
       throw new ConfigurationSetupException("Invalid host:port combination provided: " + hostPort);
     }
   }
+
+  public static void main(String[] args) throws ConfigurationSetupException, ParseException {
+    TCVoterMain main = new TCVoterMain();
+    main.processArgs(args);
+  }
+
 }

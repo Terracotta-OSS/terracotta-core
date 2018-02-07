@@ -22,6 +22,7 @@ import com.tc.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,6 +69,7 @@ public class ActiveVoter implements AutoCloseable {
   }
 
   private Thread voterThread(String... hostPorts) {
+    LOGGER.info("Registering with stripe: {} ", Arrays.toString(hostPorts));
     return new Thread(() -> {
       ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
       List<ClientVoterManager> voterManagers = Stream.of(hostPorts).map(ClientVoterManagerImpl::new).collect(toList());
