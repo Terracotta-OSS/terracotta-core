@@ -284,6 +284,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
         safeGetChannel(target).ifPresent(channel->{
           Assert.assertFalse(invokeReturn.containsKey(target));
           VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          boolean added = adder.test(vmr);
+          Assert.assertTrue(added);
           waitForTransactions(vmr);
           vmr.send();
         });
