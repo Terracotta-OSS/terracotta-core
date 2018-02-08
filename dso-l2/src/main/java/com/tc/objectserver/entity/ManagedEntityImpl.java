@@ -311,7 +311,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     SchedulingRunnable next = new SchedulingRunnable(request, payload, r, ckey);
-    logger.debug("Scheduling " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+    if (logger.isDebugEnabled()) {
+      logger.debug("Scheduling " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+    }
     
     if (isActive()) {
 // only if this is active is waiting required.  This is set to wait for the 
@@ -320,12 +322,16 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
     
     for (SchedulingRunnable msg : runnables) {
-      logger.debug("Starting " + msg.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Starting " + msg.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      }
       msg.start();
     }
 
     if (!runnables.offer(next)) {
-      logger.debug("Starting offered " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      if (logger.isDebugEnabled()) {
+        logger.debug("Starting offered " + next.request.getAction() + " on " + getID() + ":" + getConsumerID());
+      }
       Assert.assertTrue(next, runnables.isEmpty() && runnables.deferCleared);
       next.start();
     }
