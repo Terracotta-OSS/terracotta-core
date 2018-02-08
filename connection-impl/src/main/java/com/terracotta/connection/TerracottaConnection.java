@@ -24,6 +24,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.ConnectionShutdownException;
 import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
@@ -89,7 +90,7 @@ public class TerracottaConnection implements Connection {
 
   private void checkShutdown() {
     if (isShutdown) {
-      throw new IllegalStateException("Already shut down");
+      throw new ConnectionShutdownException("Already shut down");
     }
   }
 
