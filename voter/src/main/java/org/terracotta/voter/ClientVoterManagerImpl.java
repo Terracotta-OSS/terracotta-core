@@ -112,6 +112,11 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     return processInvocation(diagnostics.getState());
   }
 
+  @Override
+  public String getServerConfig() throws TimeoutException {
+    return processInvocation(diagnostics.getConfig());
+  }
+
   String processInvocation(String invocation) throws TimeoutException {
     if (invocation == null) {
       return "UNKNOWN";

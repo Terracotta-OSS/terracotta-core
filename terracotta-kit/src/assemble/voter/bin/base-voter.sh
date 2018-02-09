@@ -17,7 +17,21 @@
 #
 
 
-TC_VOTER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
-TC_VOTER_MAIN=org.terracotta.voter.TCVoterMain
+# this will only happen if using sag installer
+if [ -r "${TC_VOTER_DIR}/bin/setenv.sh" ] ; then
+  . "${TC_VOTER_DIR}/bin/setenv.sh"
+fi
 
-. "${TC_VOTER_DIR}/bin/base-voter.sh"
+if ! [ -d "${JAVA_HOME}" ]; then
+  echo "$0: the JAVA_HOME environment variable is not defined correctly"
+  exit 2
+fi
+
+TC_KIT_ROOT=$(dirname "$TC_VOTER_DIR")
+TC_LOGGING_ROOT=$TC_KIT_ROOT/client/logging
+TC_CLIENT_ROOT=$TC_KIT_ROOT/client/lib
+TC_SERVER_ROOT=$TC_KIT_ROOT/server
+
+CLASS_PATH="${TC_VOTER_DIR}/lib/*:${TC_SERVER_ROOT}/plugins/lib/*:${TC_CLIENT_ROOT}/*:${TC_LOGGING_ROOT}/*:${TC_LOGGING_ROOT}/impl/*:${TC_LOGGING_ROOT}/impl/"
+
+"$JAVA_HOME/bin/java" ${JAVA_OPTS} -cp "$CLASS_PATH" $TC_VOTER_MAIN "$@"
