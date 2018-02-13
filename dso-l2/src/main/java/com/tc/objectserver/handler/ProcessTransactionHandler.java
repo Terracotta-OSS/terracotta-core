@@ -355,13 +355,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
       try {
         optionalEntity = entityManager.getEntity(descriptor);
       } catch (EntityException ee) {
-        ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), null, null, isReplicatedMessage);
+        ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
         rr.failure(ee);
         return;
       }
       if (!optionalEntity.isPresent()) {
         if (!descriptor.isIndexed()) {
-          ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), null, null, isReplicatedMessage);
+          ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
           rr.failure(new EntityNotFoundException(descriptor.getEntityID().getClassName(), descriptor.getEntityID().getEntityName()));
           return;
         } else {

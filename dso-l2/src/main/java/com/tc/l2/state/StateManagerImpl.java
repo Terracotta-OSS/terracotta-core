@@ -149,7 +149,7 @@ public class StateManagerImpl implements StateManager {
     // the election and wait for a zap.
     info("Starting election initial state:" + startState);
     if (startState != null && startState != ServerMode.ACTIVE) {
-      info("Skipping election and waiting for the active to zap since this L2 did not go down as active.");
+      info("Skipping election and waiting for the active to zap since this L2 did not go down as active.", true);
     } else if (state == ServerMode.START || state == ServerMode.PASSIVE) {
       runElection();
     } else {
