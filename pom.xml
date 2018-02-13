@@ -34,7 +34,7 @@ limitations under the License.
 
     <!-- External dependency versions for the project -->
     <guava.version>18.0</guava.version>
-    <terracotta-apis.version>1.4.0-pre9</terracotta-apis.version>
+    <terracotta-apis.version>1.4.0-pre10</terracotta-apis.version>
     <galvan.version>1.4.0-pre6</galvan.version>
     <junit.version>4.11</junit.version>
     <mockito.version>1.10.19</mockito.version>
