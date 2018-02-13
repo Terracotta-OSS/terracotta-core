@@ -50,6 +50,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -204,6 +205,11 @@ public class RequestProcessorTest {
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.singleton(mock(NodeID.class)));
     when(broker.replicateActivity(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
+    doAnswer(i->{
+      EntityRequest req = (EntityRequest)i.getArguments()[0];
+      req.run();
+      return null;
+    }).when(dump).addToSink(any());
     RequestProcessor instance = new RequestProcessor(dump);
     instance.setReplication(broker);
     

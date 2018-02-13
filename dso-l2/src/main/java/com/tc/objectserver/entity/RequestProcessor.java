@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,23 +94,17 @@ public class RequestProcessor {
 //  to happen in the same order.  synchronizing this method enforces that
   public synchronized void scheduleRequest(boolean inSync, EntityID eid, long version, FetchID fetchID, ServerEntityRequest request, MessagePayload payload, Consumer<ActivePassiveAckWaiter> call, boolean replicate, int concurrencyKey) {
     // Determine if this kind of action is one we want to replicate.
-    ServerEntityAction requestAction = request.getAction();
+    final ServerEntityAction requestAction = (!replicate && request.requiresReceived()) ? ServerEntityAction.ORDER_PLACEHOLDER_ONLY : request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
     boolean isActionReplicated = requestAction.isReplicated();
     // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
     Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
 //  if there is somewhere to replicate to but replication was not required
-    if (!replicateTo.isEmpty() && !replicate) {
-      if (request.requiresReceived()) {
-//  ordering symantics requested, send a special placeholder that is completed
-//  as soon as it is received
-        requestAction = ServerEntityAction.ORDER_PLACEHOLDER_ONLY;
-      } else {
+    if (!replicateTo.isEmpty() && !replicate && !request.requiresReceived()) {
 //  ordering is not requested so don't bother replicating a placeholder
-        replicateTo = Collections.emptySet();
-      }
+      replicateTo.clear();
     }
-    ActivePassiveAckWaiter token = (!replicateTo.isEmpty())
+    Supplier<ActivePassiveAckWaiter> token = ()->(!replicateTo.isEmpty())
         ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), request.getClientInstance(), requestAction, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
@@ -167,9 +162,9 @@ public class RequestProcessor {
     private final EntityID entity;
     private final Consumer<ActivePassiveAckWaiter> invoke;
     private final int key;
-    private final ActivePassiveAckWaiter waiter;
+    private final Supplier<ActivePassiveAckWaiter> waiter;
 
-    public EntityRequest(EntityID entity, Consumer<ActivePassiveAckWaiter> runnable, ActivePassiveAckWaiter waiter, int key) {
+    public EntityRequest(EntityID entity, Consumer<ActivePassiveAckWaiter> runnable, Supplier<ActivePassiveAckWaiter> waiter, int key) {
       this.entity = entity;
       this.invoke = runnable;
       this.key = key;
@@ -196,7 +191,7 @@ public class RequestProcessor {
 	// and EntityMessenger
 
         // We can now run the invoke.
-        invoke.accept(waiter);
+        invoke.accept(waiter.get());
     }
 
     @Override
