@@ -18,14 +18,12 @@
  */
 package org.terracotta.voter;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.TCConfigurationParser;
-import org.terracotta.config.TcConfiguration;
 import org.xml.sax.SAXException;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,17 +35,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
-import static java.util.stream.Collectors.toList;
-
 public class TCVoterImpl implements TCVoter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterImpl.class);
 
-  protected final String id;
+  protected final String id = UUID.getUUID().toString();
+  private final TCConfigParserUtil parser = new TCConfigParserUtil();
   private final Map<String, List<ActiveVoter>> registeredClusters = new ConcurrentHashMap<>();
 
   public TCVoterImpl() {
-    this.id = UUID.getUUID().toString();
     LOGGER.info("Voter ID: {}", id);
   }
 
@@ -55,7 +51,6 @@ public class TCVoterImpl implements TCVoter {
   public boolean vetoVote(String hostPort) {
     ClientVoterManager voterManager = new ClientVoterManagerImpl(hostPort);
     voterManager.connect();
-    String id = UUID.getUUID().toString();
     boolean veto;
     try {
       veto = voterManager.vetoVote(id);
@@ -94,25 +89,16 @@ public class TCVoterImpl implements TCVoter {
       CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
         ClientVoterManagerImpl voterManager = new ClientVoterManagerImpl(hostPort);
         voterManager.connect();
-        String serverConfig;
         try {
-          serverConfig = voterManager.getServerConfig();
-          TcConfiguration config;
-
+          String serverConfig = voterManager.getServerConfig();
           try {
-            config = TCConfigurationParser.parse(serverConfig);
+            String[] stripe = parser.parseHostPorts(new ByteArrayInputStream(serverConfig.getBytes("UTF-8")));
+            cluster.add(Arrays.asList(stripe));
           } catch (SAXException | IOException e) {
             throw new AssertionError("Received invalid config from server: " + serverConfig);
           }
-
-          List<String> stripe = config.getPlatformConfiguration().getServers().getServer().stream()
-              .map(s -> s.getHost() + ":" + s.getTsaPort().getValue())
-              .sorted()
-              .collect(toList());
-          cluster.add(stripe);
-
         } catch (TimeoutException e) {
-
+          // Ignore
         }
       });
       completableFutures.add(completableFuture);
