@@ -1,5 +1,6 @@
 package org.terracotta.voter;
 
+import com.tc.config.schema.L2ConfigForL1;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.arrayContaining;
@@ -28,5 +29,16 @@ public class TCConfigParserUtilTest {
     assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
 
   }
+  
+
+  @Test
+  public void testParseDefaultPorts() throws Exception {
+    String hostPort1 = "foo:" + L2ConfigForL1.DEFAULT_PORT;
+    String hostPort2 = "bar:" + L2ConfigForL1.DEFAULT_PORT;
+
+    String[] hostPorts = parser.parseHostPorts(getClass().getClassLoader().getResourceAsStream("tc-config-services-noport.xml"));
+    assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
+
+  }  
 
 }

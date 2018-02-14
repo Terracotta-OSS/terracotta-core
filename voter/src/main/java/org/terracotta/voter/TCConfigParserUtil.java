@@ -1,5 +1,6 @@
 package org.terracotta.voter;
 
+import com.tc.config.schema.L2ConfigForL1;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -40,8 +41,12 @@ public class TCConfigParserUtil {
       Node node = serverList.item(i);
       if (node.getNodeType() == Node.ELEMENT_NODE) {
         Element serverNode = (Element) node;
+        if (!serverNode.hasAttribute(HOST_ATTR)) {
+          throw new RuntimeException(HOST_ATTR + " attribute must be specified");
+        }
         String hostname = serverNode.getAttributes().getNamedItem(HOST_ATTR).getNodeValue();
-        int port = Integer.parseInt(serverNode.getElementsByTagName(TSA_PORT_NODE).item(0).getTextContent());
+        NodeList list = serverNode.getElementsByTagName(TSA_PORT_NODE);
+        int port = list.getLength() == 0 ? L2ConfigForL1.DEFAULT_PORT : Integer.parseInt(serverNode.getElementsByTagName(TSA_PORT_NODE).item(0).getTextContent());
         hostPorts[i] = hostname + ":" + port;
       }
     }
