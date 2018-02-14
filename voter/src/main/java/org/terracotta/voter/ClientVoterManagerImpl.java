@@ -96,8 +96,8 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   }
 
   @Override
-  public boolean vetoVote(String id) {
-    String result = diagnostics.invokeWithArg(MBEAN_NAME, "vetoVote", id);
+  public boolean overrideVote(String id) {
+    String result = diagnostics.invokeWithArg(MBEAN_NAME, "overrideVote", id);
     return Boolean.parseBoolean(result);
   }
 

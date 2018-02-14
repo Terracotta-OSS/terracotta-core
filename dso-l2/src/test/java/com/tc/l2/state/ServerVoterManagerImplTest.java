@@ -136,17 +136,17 @@ public class ServerVoterManagerImplTest {
   }
 
   @Test
-  public void testVetoVote() throws Exception {
+  public void testOverrideVote() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     manager.startVoting(5L);
-    assertThat(manager.vetoVote("foo"), is(true));
-    assertThat(manager.vetoVoteReceived(), is(true));
+    assertThat(manager.overrideVote("foo"), is(true));
+    assertThat(manager.overrideVoteReceived(), is(true));
   }
 
   @Test
-  public void testVetoVoteIgnoredWhenNotInElection() throws Exception {
+  public void testOverrideVoteIgnoredWhenNotInElection() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
-    assertThat(manager.vetoVote("foo"), is(false));
-    assertThat(manager.vetoVoteReceived(), is(false));
+    assertThat(manager.overrideVote("foo"), is(false));
+    assertThat(manager.overrideVoteReceived(), is(false));
   }
 }

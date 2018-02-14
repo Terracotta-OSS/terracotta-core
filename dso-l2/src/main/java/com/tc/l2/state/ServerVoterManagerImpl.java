@@ -43,7 +43,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   private volatile long electionTerm;
   private final Set<String> votes = ConcurrentHashMap.newKeySet();
 
-  private volatile boolean vetoVote = false;
+  private volatile boolean overrideVote = false;
 
   public ServerVoterManagerImpl(int voterLimit) throws Exception {
     this(voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
@@ -115,7 +115,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   public void startVoting(long electionTerm) {
     this.electionTerm = electionTerm;
     votes.clear();
-    vetoVote = false;
+    overrideVote = false;
     votingInProgress = true;
   }
 
@@ -153,33 +153,33 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   @Override
   public int getVoteCount() {
-    if (vetoVote) {
+    if (overrideVote) {
       return voterLimit;
     }
     return votes.size();
   }
 
   @Override
-  public boolean vetoVote(String id) {
+  public boolean overrideVote(String id) {
     if (votingInProgress) {
-      logger.info("Veto vote received from {}", id);
-      this.vetoVote = true;
+      logger.info("Override vote received from {}", id);
+      this.overrideVote = true;
       return true;
     } else {
-      logger.info("Veto vote from {} ignored as the server is not in the middle of an election", id);
+      logger.info("Override vote from {} ignored as the server is not in the middle of an election", id);
       return false;
     }
   }
 
   @Override
-  public boolean vetoVoteReceived() {
-    return this.vetoVote;
+  public boolean overrideVoteReceived() {
+    return this.overrideVote;
   }
 
   @Override
   public long stopVoting() {
     votingInProgress = false;
-    this.vetoVote = false;
+    this.overrideVote = false;
     return this.electionTerm;
   }
 

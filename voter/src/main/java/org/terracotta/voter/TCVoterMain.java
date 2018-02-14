@@ -24,19 +24,15 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.terracotta.config.TCConfigurationParser;
-import org.terracotta.config.TcConfiguration;
 import org.xml.sax.SAXException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
-import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
-
-import static java.util.stream.Collectors.toList;
 
 public class TCVoterMain {
 
@@ -49,7 +45,7 @@ public class TCVoterMain {
 
   public TCVoter voter = new TCVoterImpl();
 
-  public void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
+  protected void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
     DefaultParser parser = new DefaultParser();
     Options voterOptions = voterOptions();
     CommandLine commandLine = parser.parse(voterOptions, args);
@@ -78,7 +74,7 @@ public class TCVoterMain {
     } else if (commandLine.hasOption(OVERRIDE)) {
       String hostPort = commandLine.getOptionValue(OVERRIDE);
       validateHostPort(hostPort);
-      voter.vetoVote(hostPort);
+      voter.overrideVote(hostPort);
     } else {
       throw new AssertionError("This should not happen");
     }
@@ -97,18 +93,15 @@ public class TCVoterMain {
 
   private void processConfigFileArg(String[] stripes) throws ConfigurationSetupException {
     validateStripesLimit(CONFIG_FILE, stripes);
-    for (String tcConfigPath: stripes) {
-      TcConfiguration config;
+
+    TCConfigParserUtil parser = new TCConfigParserUtil();
+    for (String tcConfigPath : stripes) {
+      String[] hostPorts;
       try {
-        config = TCConfigurationParser.parse(new File(tcConfigPath));
-      } catch (IOException | SAXException e) {
-        throw new ConfigurationSetupException("Failed to parse the configuration file at : " + tcConfigPath);
+        hostPorts = parser.parseHostPorts(new FileInputStream(tcConfigPath));
+      } catch (SAXException | IOException e) {
+        throw new ConfigurationSetupException(e);
       }
-
-      String[] hostPorts = config.getPlatformConfiguration().getServers().getServer().stream()
-          .map(s -> s.getHost() + ":" + s.getTsaPort().getValue())
-          .collect(toList()).toArray(new String[0]);
-
       startVoter(hostPorts);
     }
   }

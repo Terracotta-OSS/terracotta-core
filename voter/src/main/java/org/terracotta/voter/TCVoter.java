@@ -29,15 +29,14 @@ public interface TCVoter {
   void register(String clusterName, String... hostPorts);
 
   /**
-   * Send a veto vote to the server at the given host:port
-   * to force promote it to be an active. The server will
-   * accept this vote if and only if it's trying to get promoted.
+   * Send an override vote to the server at the given host:port to force promote it to be an active.
+   * The server will accept this vote if and only if it's trying to get promoted.
    * Else this vote will be ignored.
    *
    * @param hostPort The host:port combination of the target server
-   * @return true if the veto vote was accepted by the server. Else false.
+   * @return true if the override vote was accepted by the server. Else false.
    */
-  boolean vetoVote(String hostPort);
+  boolean overrideVote(String hostPort);
 
   /**
    * De-register this voter instance from a cluster that it was previously registered with.

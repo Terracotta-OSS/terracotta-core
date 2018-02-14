@@ -51,13 +51,13 @@ public interface VoterManager {
   long vote(String id, long electionTerm) throws TimeoutException;
 
   /**
-   * For casting a veto vote during election.
-   * A veto vote is accepted by the server if and only if the server is in the middle of an election.
-   * Veto votes are ignored if the vote is cast when the server is not in election.
+   * For casting an override vote during election.
+   * An override vote is accepted by the server if and only if the server is in the middle of an election.
+   * Override votes are ignored if the vote is cast when the server is not in election.
    *
    * @param id the voter id
    */
-  boolean vetoVote(String id) throws TimeoutException;
+  boolean overrideVote(String id) throws TimeoutException;
 
   /**
    * De-register the voter with the given id from the server.
