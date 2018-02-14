@@ -48,23 +48,23 @@ public class TCVoterImpl implements TCVoter {
   }
 
   @Override
-  public boolean vetoVote(String hostPort) {
+  public boolean overrideVote(String hostPort) {
     ClientVoterManager voterManager = new ClientVoterManagerImpl(hostPort);
     voterManager.connect();
-    boolean veto;
+    boolean override;
     try {
-      veto = voterManager.vetoVote(id);
+      override = voterManager.overrideVote(id);
     } catch (TimeoutException e) {
-      LOGGER.error("Veto vote to {} timed-out", hostPort);
+      LOGGER.error("Override vote to {} timed-out", hostPort);
       return false;
     }
 
-    if (veto) {
-      LOGGER.info("Successfully cast a veto vote to {}", hostPort);
+    if (override) {
+      LOGGER.info("Successfully cast an override vote to {}", hostPort);
     } else {
-      LOGGER.info("Veto vote rejected by {}", hostPort);
+      LOGGER.info("Override vote rejected by {}", hostPort);
     }
-    return veto;
+    return override;
   }
 
   @Override

@@ -40,11 +40,11 @@ public class TCVoterMainTest {
     TCVoter voter = mock(TCVoter.class);
     voterMain.voter = voter;
 
-    String vetoTarget = "foo:1234";
-    String[] args = new String[] {"-o", vetoTarget};
+    String overrideTarget = "foo:1234";
+    String[] args = new String[] {"-o", overrideTarget};
     voterMain.processArgs(args);
 
-    verify(voter).vetoVote(vetoTarget);
+    verify(voter).overrideVote(overrideTarget);
   }
 
   @Test
@@ -88,7 +88,7 @@ public class TCVoterMainTest {
   }
 
   @Test
-  public void testMultipleConfigFileOptArgs() throws Exception {
+  public void testConfigFileOpt() throws Exception {
     String hostPort1 = "foo:1234";
     String hostPort2 = "bar:2345";
     TCVoterMain voterMain = new TCVoterMain() {

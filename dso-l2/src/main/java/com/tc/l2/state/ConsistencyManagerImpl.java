@@ -114,7 +114,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     }
     long start = System.currentTimeMillis();
     try {
-      if (voter.vetoVoteReceived()) {
+      if (voter.overrideVoteReceived()) {
         allow = true;
         CONSOLE.info("Action:" + newMode + " granted on override vote");
       } else if (voter.getRegisteredVoters() + serverVotes < threshold) {
