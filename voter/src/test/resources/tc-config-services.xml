@@ -19,6 +19,10 @@
   -->
 
 <tc-config xmlns="http://www.terracotta.org/config">
+    <plugins>
+        <foo/>
+    </plugins>
+
     <servers>
         <server host="foo">
             <tsa-port>1234</tsa-port>
