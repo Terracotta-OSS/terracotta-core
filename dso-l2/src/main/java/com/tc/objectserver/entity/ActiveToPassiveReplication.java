@@ -227,7 +227,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public Set<NodeID> passives() {
-    return passiveNodes;
+    return new HashSet<>(passiveNodes);
   }
 
   @Override
@@ -243,8 +243,6 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       //  command.
       boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
       for (NodeID node : copy) {
-        // This is a normal completion.
-        boolean didSend = false;
         if (!isLocalFlush) {
           // This isn't local-only so try to replicate.
           this.replicationSender.replicateMessage(node, activity, sent->{

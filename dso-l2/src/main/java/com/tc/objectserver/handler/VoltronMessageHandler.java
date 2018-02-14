@@ -68,7 +68,8 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
   public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
     if (useDirect) {
       // only use the fastpath if there is one client connected and nothing in the pipeline
-      boolean fast = fastPath.size() < 2 && destPath.isEmpty() && requestProcessor.isEmpty() && requestProcessorSync.isEmpty();
+      boolean fast = fastPath.size() < 2 && destPath.isEmpty() && requestProcessor.isEmpty() 
+          && requestProcessorSync.isEmpty() && clientsConnected.get() == 1;
       if (fast != activated) {
         activated = fast;
         DirectExecutionMode.activate(activated);
