@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class VetoVote {
+public class OverrideVote {
 
   /**
    */
@@ -34,7 +34,7 @@ public class VetoVote {
     }
     ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("root");
     logger.setLevel(ch.qos.logback.classic.Level.INFO);
-    new TCVoterImpl().vetoVote(args[0]);
+    new TCVoterImpl().overrideVote(args[0]);
   }
   
 }

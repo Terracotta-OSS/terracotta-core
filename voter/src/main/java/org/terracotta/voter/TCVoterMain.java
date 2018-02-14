@@ -74,7 +74,7 @@ public class TCVoterMain {
     } else if (commandLine.hasOption(OVERRIDE)) {
       String hostPort = commandLine.getOptionValue(OVERRIDE);
       validateHostPort(hostPort);
-      voter.vetoVote(hostPort);
+      voter.overrideVote(hostPort);
     } else {
       throw new AssertionError("This should not happen");
     }
