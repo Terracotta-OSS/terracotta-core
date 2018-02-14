@@ -79,21 +79,21 @@ public class ClientVoterManagerImplTest {
   }
 
   @Test
-  public void testVetoVote() {
-    when(diagnostics.invokeWithArg(MBEAN_NAME, "vetoVote", "foo")).thenReturn("true");
-    assertThat(manager.vetoVote("foo"), is(true));
+  public void testOverrideVote() {
+    when(diagnostics.invokeWithArg(MBEAN_NAME, "overrideVote", "foo")).thenReturn("true");
+    assertThat(manager.overrideVote("foo"), is(true));
   }
 
   @Test
-  public void testVetoVoteFailure() {
-    when(diagnostics.invokeWithArg(MBEAN_NAME, "vetoVote", "foo")).thenReturn("false");
-    manager.vetoVote("foo");
+  public void testOverrideVoteFailure() {
+    when(diagnostics.invokeWithArg(MBEAN_NAME, "overrideVote", "foo")).thenReturn("false");
+    manager.overrideVote("foo");
   }
 
   @Test
-  public void testVetoVoteTimeout() {
-    when(diagnostics.invokeWithArg(MBEAN_NAME, "vetoVote", "foo")).thenReturn(REQUEST_TIMEOUT);
-    assertThat(manager.vetoVote("foo"), is(false));
+  public void testOverrideVoteTimeout() {
+    when(diagnostics.invokeWithArg(MBEAN_NAME, "overrideVote", "foo")).thenReturn(REQUEST_TIMEOUT);
+    assertThat(manager.overrideVote("foo"), is(false));
   }
 
   @Test

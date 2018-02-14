@@ -49,9 +49,9 @@ public interface ServerVoterManager extends VoterManagerMBean {
 
   /**
    *
-   * @return true if the server has received a veto vote from some voter client. Else false.
+   * @return true if the server has received an override vote from some voter client. Else false.
    */
-  boolean vetoVoteReceived();
+  boolean overrideVoteReceived();
 
   /**
    * Notify all voters to stop voting.

@@ -17,7 +17,11 @@ REM The Initial Developer of the Covered Software is
 REM     Terracotta, Inc., a Software AG company
 REM
 
+setlocal
+
 set TC_VOTER_DIR=%~d0%~p0..
 set TC_VOTER_MAIN=org.terracotta.voter.TCVoterMain
 
 call "%TC_VOTER_DIR%\bin\base-voter.bat"
+
+endlocal

@@ -26,7 +26,7 @@ public interface ConsistencyMBean {
   /**
    * a server is stuck when a restricted action is requested and there are not
    * enough registered voters to grant access.  The only way to release such a
-   * server is to veto vote or connect all members of the stripe
+   * server is to give an override vote or connect all members of the stripe
    * @return true if the server is in the above state;
    */
   boolean isStuck();
