@@ -71,6 +71,14 @@ public class TCPropertyStoreTest extends TestCase {
     }
   }
 
+  public void testUnset() {
+    TCPropertyStore props = new TCPropertyStore();
+    props.setProperty("a", "b");
+    props.setProperty("a", null);
+    assertNull(props.getProperty("a"));
+  }
+
+
   public void testOrder() {
     TCPropertyStore props = new TCPropertyStore();
 
