@@ -21,6 +21,7 @@ package com.tc.l2.state;
 import com.tc.services.TestTimeSource;
 import org.junit.Test;
 
+import static com.tc.voter.VoterManager.HEARTBEAT_RESPONSE;
 import static com.tc.voter.VoterManager.INVALID_VOTER_RESPONSE;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
@@ -74,11 +75,52 @@ public class ServerVoterManagerImplTest {
   }
 
   @Test
+  public void testRegisterVoter_VoteRightTransferAfterExpiry() throws Exception {
+    ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
+    assertThat(manager.registerVoter("foo"), is(0L));
+    timeSource.passTime(1L + ServerVoterManagerImpl.VOTEBEAT_TIMEOUT);
+    assertThat(manager.registerVoter("bar"), is(0L));
+  }
+
+  @Test
+  public void testVoterReRegisterFailsWhenVotingInProgress() throws Exception {
+    ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
+    manager.registerVoter("foo");
+    manager.startVoting(5L);
+    assertThat(manager.registerVoter("foo"), is(INVALID_VOTER_RESPONSE));
+    manager.stopVoting();
+    assertThat(manager.registerVoter("foo"), is(HEARTBEAT_RESPONSE));
+  }
+
+  @Test
+  public void testVoterReRegisterFailsWhenVotingRightsTransferred() throws Exception {
+    ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
+    manager.registerVoter("foo");
+    timeSource.passTime(1L + ServerVoterManagerImpl.VOTEBEAT_TIMEOUT);
+    assertThat(manager.registerVoter("bar"), is(0L));
+    assertThat(manager.registerVoter("foo"), is(INVALID_VOTER_RESPONSE));
+  }
+
+  @Test
   public void testDeregisterVoter() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     assertThat(manager.registerVoter("foo"), is(0L));
     assertThat(manager.deregisterVoter("foo"), is(true));
     assertThat(manager.registerVoter("bar"), is(0L));
+  }
+
+  @Test
+  public void testDeregisterInvalidVoter() throws Exception {
+    ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
+    assertThat(manager.deregisterVoter("foo"), is(false));
+  }
+
+  @Test
+  public void testReRegisterAfterDeRegister() throws Exception {
+    ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
+    assertThat(manager.registerVoter("foo"), is(0L));
+    assertThat(manager.deregisterVoter("foo"), is(true));
+    assertThat(manager.registerVoter("foo"), is(0L));
   }
 
   @Test

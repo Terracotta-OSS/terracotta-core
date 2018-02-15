@@ -45,7 +45,7 @@ public class TCVoterMain {
 
   public TCVoter voter = new TCVoterImpl();
 
-  protected void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
+  public void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
     DefaultParser parser = new DefaultParser();
     Options voterOptions = voterOptions();
     CommandLine commandLine = parser.parse(voterOptions, args);
@@ -60,7 +60,7 @@ public class TCVoterMain {
     }
 
     if (commandLine.getOptions().length == 0) {
-      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s or -f provided");
+      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s or -f provided. Use the -h option for more details on the available options.");
     }
 
     if (commandLine.hasOption(SERVER) && commandLine.hasOption(CONFIG_FILE)) {
