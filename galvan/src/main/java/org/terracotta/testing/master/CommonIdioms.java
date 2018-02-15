@@ -38,7 +38,7 @@ public class CommonIdioms {
         stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate,
         stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart,
         stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment,
-        stripeConfiguration.serviceFragment, stripeConfiguration.clientReconnectWindowTime,
+        stripeConfiguration.serviceFragment, stripeConfiguration.failoverPriorityVoterCount, stripeConfiguration.clientReconnectWindowTime,
         stripeConfiguration.tcProperties, stripeConfiguration.serverProperties, stripeConfiguration.logConfigExtension);
   }
   /**
@@ -74,6 +74,7 @@ public class CommonIdioms {
     public int serverDebugPortStart;
     public int serverStartNumber;
     public int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
+    public int failoverPriorityVoterCount = ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
     public Properties tcProperties;
     public Properties serverProperties;
     public List<String> extraJarPaths;
