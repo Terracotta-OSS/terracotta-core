@@ -284,32 +284,29 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
     if (!target.isNull()) {
-      if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-        safeGetChannel(target).ifPresent(channel->{
-          Assert.assertFalse(invokeReturn.containsKey(target));
-          VoltronEntityMultiResponse vmr = (VoltronEntityMultiResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+      invokeReturn.compute(target, (client, vmr)-> {
+        if (vmr != null) {
           boolean added = adder.test(vmr);
           Assert.assertTrue(added);
-          waitForTransactions(vmr);
-          vmr.send();
-        });
-      } else {
-        invokeReturn.compute(target, (client, vmr)-> {
-          if (vmr != null) {
+        } else {
+          Optional<MessageChannel> channel = safeGetChannel(target);
+          if (channel.isPresent()) {
+            vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
             boolean added = adder.test(vmr);
             Assert.assertTrue(added);
-          } else {
-            Optional<MessageChannel> channel = safeGetChannel(target);
-            if (channel.isPresent()) {
-              vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
-              boolean added = adder.test(vmr);
-              Assert.assertTrue(added);
+            // direct execution must be under compute lock because not all 
+            // messages are coming from the pipeline
+            if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+              waitForTransactions(vmr);
+              vmr.send();
+              vmr = null;
+            } else {
               multiSend.getSink().addToSink(new ResponseMessage(vmr));
             }
           }
-          return vmr;
-        });
-      }
+        }
+        return vmr;
+      });
     }
   }
 
