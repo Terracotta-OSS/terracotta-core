@@ -18,11 +18,13 @@
  */
 package com.terracotta.connection;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.object.ClientBuilder;
 import com.tc.object.ClientBuilderFactory;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
+import com.tc.net.protocol.transport.ClientConnectionErrorDetails;
+import com.terracotta.connection.api.DetailedConnectionException;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Properties;
@@ -35,6 +37,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   private final DistributedObjectClientFactory clientCreator;
+  private final ClientConnectionErrorDetails errorListener = new ClientConnectionErrorDetails();
   private volatile ClientHandle       clientHandle;
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
@@ -48,21 +51,26 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-                                              ClientBuilderFactory.get().create(props),
-                                              props);
+    ClientBuilder clientBuilder = ClientBuilderFactory.get().create(props);
+    clientBuilder.setClientConnectionErrorListener(errorListener);
+    return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(), clientBuilder, props);
   }
 
   @Override
-  public synchronized void init() throws TimeoutException, InterruptedException, ConfigurationSetupException {
+  public synchronized void init() throws DetailedConnectionException {
     if (isInitialized) { return; }
-
-    DistributedObjectClient client = clientCreator.create();
+    DistributedObjectClient client = null;
+    try {
+      client = clientCreator.create();
+    }catch (Exception e){
+      throw new DetailedConnectionException(e, errorListener.getErrors());
+    }
     if (client != null) {
       clientHandle = new ClientHandleImpl(client);
       isInitialized = true;
     } else {
-      throw new TimeoutException();
+      TimeoutException e = new TimeoutException();
+      throw new DetailedConnectionException(e, errorListener.getErrors());
     }
   }
 

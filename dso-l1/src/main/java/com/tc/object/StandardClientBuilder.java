@@ -34,6 +34,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
@@ -52,6 +53,7 @@ import java.util.Properties;
 public class StandardClientBuilder implements ClientBuilder {
   
   private final ProductID typeOfClient;
+  private volatile ClientConnectionErrorListener listener;
 
   public StandardClientBuilder(Properties connectionProperties) {
     this.typeOfClient = getTypeOfClient(connectionProperties);
@@ -61,7 +63,11 @@ public class StandardClientBuilder implements ClientBuilder {
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
                                                          int socketConnectTimeout, TCClient client) {
-    return commMgr.createClientChannel(typeOfClient, sessionProvider, socketConnectTimeout);
+    ClientMessageChannel cmc = commMgr.createClientChannel(typeOfClient, sessionProvider, socketConnectTimeout);
+    if (listener != null){
+      cmc.addClientConnectionErrorListener(listener);
+    }
+    return cmc;
   }
 
   @Override
@@ -112,5 +118,10 @@ public class StandardClientBuilder implements ClientBuilder {
 
   protected BufferManagerFactory getBufferManagerFactory() {
     return new ClearTextBufferManagerFactory();
+  }
+
+  @Override
+  public void setClientConnectionErrorListener(ClientConnectionErrorListener listener) {
+    this.listener = listener;
   }
 }
