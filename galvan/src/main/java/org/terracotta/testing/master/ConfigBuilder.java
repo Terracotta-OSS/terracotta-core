@@ -28,6 +28,7 @@ import org.terracotta.testing.logging.ContextualLogger;
 public class ConfigBuilder {
 
   public static final int DEFAULT_CLIENT_RECONNECT_WINDOW_TIME = 120;
+  public static final int FAILOVER_PRIORITY_AVAILABILITY = -1;
 
   public static ConfigBuilder buildStartPort(ContextualLogger logger, int startPort) {
     return new ConfigBuilder(logger, startPort);
@@ -41,6 +42,7 @@ public class ConfigBuilder {
   private String xmlNamespaceFragment;
   private String serviceXMLSnippet;
   private int clientReconnectWindowTime; // in secs
+  private int failoverPriorityVoterCount = FAILOVER_PRIORITY_AVAILABILITY;
   private Properties tcProperties = new Properties();
   
   private ConfigBuilder(ContextualLogger logger, int startPort) {
@@ -70,6 +72,11 @@ public class ConfigBuilder {
 
   public ConfigBuilder setClientReconnectWindowTime(final int clientReconnectWindowTime) {
     this.clientReconnectWindowTime = clientReconnectWindowTime;
+    return this;
+  }
+
+  public ConfigBuilder setFailoverPriorityVoterCount(final int failoverPriorityVoterCount) {
+    this.failoverPriorityVoterCount = failoverPriorityVoterCount;
     return this;
   }
 
@@ -116,6 +123,13 @@ public class ConfigBuilder {
     String post =
         "    <client-reconnect-window>" + this.clientReconnectWindowTime + "</client-reconnect-window>\n"
         + "  </servers>\n"
+        + "  <failover-priority>\n"
+        + (failoverPriorityVoterCount == -1 ?
+            "    <availability/>\n" :
+            "    <consistency>\n" +
+            "      <voter count=\"" + failoverPriorityVoterCount + "\"/>\n" +
+            "    </consistency>\n")
+        + "  </failover-priority>\n"
         + "</tc-config>\n";
     return pre + services + postservices + properties  + postProperties + servers + post;
   }

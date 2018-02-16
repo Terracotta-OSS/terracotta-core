@@ -58,7 +58,7 @@ public class ReadyStripe {
                                                     String kitOriginDirectory, int serversToCreate, int heapInM,
                                                     int serverStartPort, int serverDebugPortStart, int serverStartNumber,
                                                     List<String> extraJarPaths, String namespaceFragment,
-                                                    String serviceFragment,
+                                                    String serviceFragment, int failoverPriorityVoterCount,
                                                     int clientReconnectWindowTime, Properties tcProperties,
                                                     Properties serverProperties, String logConfigExt)
       throws IOException, GalvanFailureException {
@@ -69,6 +69,7 @@ public class ReadyStripe {
     configBuilder.setNamespaceSnippet(namespaceFragment);
     configBuilder.setServiceSnippet(serviceFragment);
     configBuilder.setClientReconnectWindowTime(clientReconnectWindowTime);
+    configBuilder.setFailoverPriorityVoterCount(failoverPriorityVoterCount);
     configBuilder.addTcProperties(tcProperties);
     // Create the stripe installer.
     StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, kitOriginDirectory, serverInstallDirectory, extraJarPaths);
