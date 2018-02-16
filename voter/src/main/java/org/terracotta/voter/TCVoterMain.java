@@ -61,7 +61,7 @@ public class TCVoterMain {
     }
 
     if (commandLine.getOptions().length == 0) {
-      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s or -f provided");
+      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s or -f provided. Use the -h option for more details on the available options.");
     }
 
     if (commandLine.hasOption(SERVER) && commandLine.hasOption(CONFIG_FILE)) {

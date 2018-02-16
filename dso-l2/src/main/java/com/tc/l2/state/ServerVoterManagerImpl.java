@@ -67,7 +67,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   @Override
   public synchronized long registerVoter(String id) {
-    if (voters.containsKey(id)) {
+    if (!votingInProgress && voters.containsKey(id)) {
       //  already registered.  double register is not supported
       return HEARTBEAT_RESPONSE;
     }
