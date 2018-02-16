@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class TCVoterMain {
 
@@ -45,7 +46,7 @@ public class TCVoterMain {
 
   public TCVoter voter = new TCVoterImpl();
 
-  protected void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
+  public void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
     DefaultParser parser = new DefaultParser();
     Options voterOptions = voterOptions();
     CommandLine commandLine = parser.parse(voterOptions, args);
@@ -107,7 +108,7 @@ public class TCVoterMain {
   }
 
   protected void startVoter(String... hostPorts) {
-    new ActiveVoter(ID, hostPorts).start();
+    new ActiveVoter(ID, new CompletableFuture<>(), hostPorts).start();
   }
 
   protected void validateStripesLimit(String option, String[] args) throws ConfigurationSetupException {
