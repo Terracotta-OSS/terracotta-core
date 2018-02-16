@@ -15,14 +15,17 @@
  */
 package org.terracotta.testing.rules;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Properties;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /**
  *
@@ -52,4 +55,14 @@ public class BasicExternalClusterClassRuleIT {
       connection.close();
     }
   }
+
+
+  @Test
+  public void testClusterHostPorts() throws Exception {
+    String[] clusterHostPorts = CLUSTER.getClusterHostPorts();
+    assertThat(clusterHostPorts.length, is(1));
+    URI uri = new URI("tc://" + clusterHostPorts[0]);
+    assertThat(uri.getHost(), is("localhost"));
+  }
+
 }

@@ -29,6 +29,8 @@ public abstract class Cluster extends ExternalResource {
 
   public abstract URI getConnectionURI();
 
+  public abstract String[] getClusterHostPorts();
+
   public abstract Connection newConnection() throws ConnectionException;
 
   public abstract IClusterControl getClusterControl();
