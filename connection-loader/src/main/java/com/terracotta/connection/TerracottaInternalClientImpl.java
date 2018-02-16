@@ -52,7 +52,10 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     ClientBuilder clientBuilder = ClientBuilderFactory.get().create(props);
-    clientBuilder.setClientConnectionErrorListener(errorListener);
+// disconnecting because this can cause memory exhustion on reconnects.
+// TODO: only keep the last exception or limit the number of exceptions kept.  Also, the map should be cleared
+// once the DetailedConnectionException is thrown
+//    clientBuilder.setClientConnectionErrorListener(errorListener);
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(), clientBuilder, props);
   }
 
