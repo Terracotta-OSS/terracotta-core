@@ -15,6 +15,7 @@ public class BasicExternalClusterBuilder {
   private String namespaceFragment = "";
   private String serviceFragment = "";
   private int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
+  private int failoverPriorityVoterCount = ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
   private Properties tcProperties = new Properties();
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
@@ -72,6 +73,15 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
+  /**
+   * Zero or any positive value will tune the cluster for consistency and set the respective voter count as provided.
+   * A value of -1 will tune the cluster for availability. This is the default.
+   */
+  public BasicExternalClusterBuilder withFailoverPriorityVoterCount(final int failoverPriorityVoterCount) {
+    this.failoverPriorityVoterCount = failoverPriorityVoterCount;
+    return this;
+  }
+
   public BasicExternalClusterBuilder withTcProperties(Properties tcProperties) {
     this.tcProperties.putAll(tcProperties);
     return this;
@@ -99,6 +109,6 @@ public class BasicExternalClusterBuilder {
 
   public BasicExternalCluster build() {
     return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
-        clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt);
+        clientReconnectWindowTime, failoverPriorityVoterCount, tcProperties, systemProperties, logConfigExt);
   }
 }
