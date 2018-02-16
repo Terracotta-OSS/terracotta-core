@@ -44,6 +44,10 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
     return ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
   }
 
+  default int getFailoverPriorityVoterCount() {
+    return ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
+  }
+
   /**
    * @return A list of paths to JARs which must be copied to the server kit being used in the test.
    */
