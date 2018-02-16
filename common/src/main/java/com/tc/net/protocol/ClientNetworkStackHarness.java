@@ -95,7 +95,7 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
 //  to maintain the transport layer under the channel
         channel.setSendLayer(last);
         transport.initConnectionID(connection);
-        return cce.open(dest, transport);
+        return cce.open(dest, transport, channel);
       }
     });
     

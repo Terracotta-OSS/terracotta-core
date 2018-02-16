@@ -16,24 +16,27 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
+package com.terracotta.connection.api;
 
-package com.tc.net.protocol.transport;
+import org.terracotta.connection.ConnectionException;
 
-import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-/**
- * @author tim
- */
-public class TransportHandshakeException extends IOException {
-  TransportHandshakeException(String message) {
-    super(message);
+public class DetailedConnectionException extends ConnectionException {
+
+  private final Map<String, List<Exception>> connectionErrorMap;
+
+  public DetailedConnectionException(Throwable cause, Map<String, List<Exception>> errorMap) {
+    super(cause);
+    this.connectionErrorMap = errorMap;
   }
-  
-  TransportHandshakeException(Exception parent) {
-    super(parent);
-  }
 
-  TransportHandshakeException(String message, Exception parent) {
-    super(message, parent);
+  public Map<String, List<Exception>> getConnectionErrorMap() {
+    if (this.connectionErrorMap == null) {
+      return null;
+    }
+    return Collections.unmodifiableMap(connectionErrorMap);
   }
 }

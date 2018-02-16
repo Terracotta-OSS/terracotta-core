@@ -18,11 +18,11 @@
  */
 package com.tc.object;
 
+import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
 import com.tc.management.TCClient;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -65,5 +65,7 @@ public interface ClientBuilder {
                                                       ClientEntityManager entity);
 
   ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);
+
+  void setClientConnectionErrorListener(ClientConnectionErrorListener listener);
 
 }

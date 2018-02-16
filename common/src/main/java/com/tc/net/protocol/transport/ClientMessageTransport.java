@@ -323,7 +323,8 @@ public class ClientMessageTransport extends MessageTransportBase {
     } catch (InterruptedException e) {
       throw new TransportHandshakeException(e);
     } catch (TCExceptionResultException e) {
-      throw new TransportHandshakeException(e);
+      throw new TransportHandshakeException("Client was able to establish connection with server but handshake " +
+          "with server failed.", e);
     }
   }
 
