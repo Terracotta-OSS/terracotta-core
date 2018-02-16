@@ -110,7 +110,7 @@ public class RequestProcessor {
         : NoReplicationBroker.NOOP_WAITER;
     EntityRequest entityRequest =  new EntityRequest(eid, call, token, concurrencyKey);
     if (PLOGGER.isDebugEnabled()) {
-      PLOGGER.debug("SCHEDULING:" + payload.getDebugId() + " on " + eid + ":" + concurrencyKey);
+      PLOGGER.debug("SCHEDULING:{} {} on {} with concurrency:{} replicatedTo: {}",requestAction, payload.getDebugId(), eid, concurrencyKey, replicateTo);
     }
     if (inSync) {
       syncExecution.addToSink(entityRequest);
