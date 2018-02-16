@@ -77,7 +77,7 @@ public enum ServerEntityAction {
   /**
    * Ask an entity to synchronize itself to a passive.
    */
-  REQUEST_SYNC_ENTITY{
+  REQUEST_SYNC_ENTITY {
     @Override
     public boolean isReplicated() {
       return true;
@@ -158,7 +158,12 @@ public enum ServerEntityAction {
    * of the message or its intent, just information which might be required to
    * correctly order re-sends, after fail-over.
    */
-  ORDER_PLACEHOLDER_ONLY;
+  ORDER_PLACEHOLDER_ONLY {
+    @Override
+    public boolean isReplicated() {
+      return true;
+    }
+  };
 
   public boolean isLifecycle() {
     return false;
