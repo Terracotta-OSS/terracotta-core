@@ -112,12 +112,23 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
       endVoting(true, newMode);
       return true;
     }
+    if (voter.overrideVoteReceived()) {
+      CONSOLE.info("Action:{} allowed because override received", newMode);
+      endVoting(true, newMode);
+      return true;
+    }
+    if (mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
+//  only other servers can be considered in this case.  any registered
+//  external voters should not be considered because they were registered before 
+//  when there should have been no cluster wide active
+      CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
+      endVoting(allow, newMode);
+      return false;
+    }
+
     long start = System.currentTimeMillis();
     try {
-      if (voter.overrideVoteReceived()) {
-        allow = true;
-        CONSOLE.info("Action:" + newMode + " granted on override vote");
-      } else if (voter.getRegisteredVoters() + serverVotes < threshold) {
+      if (voter.getRegisteredVoters() + serverVotes < threshold) {
         blocked = true;
         CONSOLE.warn("Not enough registered voters.  Require override intervention or all members of the stripe to be connected for action " + newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
