@@ -57,9 +57,11 @@ public class ActiveVoter implements AutoCloseable {
 
   private final Thread voter;
   private final String id;
-  
-  public ActiveVoter(String id, String... hostPorts) {
-    this.voter = voterThread(hostPorts);
+
+  private volatile boolean active = false;
+
+  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
+    this.voter = voterThread(voterStatus, hostPorts);
     this.id = id;
   }
   
@@ -68,7 +70,7 @@ public class ActiveVoter implements AutoCloseable {
     return this;
   }
 
-  private Thread voterThread(String... hostPorts) {
+  private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
     LOGGER.info("Registering with stripe: {} ", Arrays.toString(hostPorts));
     return new Thread(() -> {
       ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
@@ -78,11 +80,20 @@ public class ActiveVoter implements AutoCloseable {
           // each generation needs a new registration ID so re-registers don't occur during an active vote
           //  find the active that this voter has successfully registered to
           ClientVoterManager currentActive = registerWithActive(id, executorService, voterManagers);
-          LOGGER.info("Registered the cluster. Current active: {}", currentActive.getTargetHostPort());
+          active = true;
+          LOGGER.info("Registered with the cluster of: {}. Current active: {}", Arrays.toString(hostPorts), currentActive.getTargetHostPort());
+          voterStatus.complete(new VoterStatus() {
+            @Override
+            public boolean isActive() {
+              return active;
+            }
+          });
           registerAndHeartbeat(executorService, currentActive, voterManagers);
+          active = false;
         }
       } catch (InterruptedException e) {
         LOGGER.warn("Voter daemon interrupted");
+        active = false;
         executorService.shutdownNow();
       }
     });

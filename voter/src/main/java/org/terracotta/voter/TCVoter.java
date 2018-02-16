@@ -18,15 +18,20 @@
  */
 package org.terracotta.voter;
 
+import java.util.concurrent.Future;
+
 public interface TCVoter {
 
   /**
-   * Register with this voter instance with a cluster
+   * Register this voter instance with a cluster.
    *
    * @param clusterName an identifier for the target cluster
    * @param hostPorts the host:port combination of all the servers in that stripe
+   *
+   * @return A Future that holds the registration status of the voter.
+   * This Future will complete once the registration succeeds.
    */
-  void register(String clusterName, String... hostPorts);
+  Future<VoterStatus> register(String clusterName, String... hostPorts);
 
   /**
    * Send an override vote to the server at the given host:port to force promote it to be an active.
