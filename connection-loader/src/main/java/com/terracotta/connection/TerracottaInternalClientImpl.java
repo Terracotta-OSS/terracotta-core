@@ -52,10 +52,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
     ClientBuilder clientBuilder = ClientBuilderFactory.get().create(props);
-// disconnecting because this can cause memory exhustion on reconnects.
-// TODO: only keep the last exception or limit the number of exceptions kept.  Also, the map should be cleared
-// once the DetailedConnectionException is thrown
-//    clientBuilder.setClientConnectionErrorListener(errorListener);
+    clientBuilder.setClientConnectionErrorListener(errorListener);
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(), clientBuilder, props);
   }
 
@@ -63,18 +60,32 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   public synchronized void init() throws DetailedConnectionException {
     if (isInitialized) { return; }
     DistributedObjectClient client = null;
+    //Attach the internal collector in the listener
+    errorListener.attachCollector();
     try {
-      client = clientCreator.create();
-    }catch (Exception e){
-      throw new DetailedConnectionException(e, errorListener.getErrors());
+      try {
+        client = clientCreator.create();
+      } catch (Exception e){
+        throw new DetailedConnectionException(e, errorListener.getErrors());
+      }
+      if (client != null) {
+        clientHandle = new ClientHandleImpl(client);
+        isInitialized = true;
+      } else {
+        TimeoutException e = new TimeoutException();
+        throw new DetailedConnectionException(e, errorListener.getErrors());
+      }
+    } finally {
+      /*
+      Remove the internal collector. if connection is made fine (i.e. clientCreator.create() returns non null), we do 
+      not to need to track the exceptions. If exception is thrown from invocation or clientCreator.create() is returned
+      null, then also internal collector should be detached. In both the cases, errorListener.getErrors() is called and
+      which effectively gives a copy of internal collector. After getting the copies, it makes sense to clean the 
+      internal collector. 
+       */
+      errorListener.removeCollector();
     }
-    if (client != null) {
-      clientHandle = new ClientHandleImpl(client);
-      isInitialized = true;
-    } else {
-      TimeoutException e = new TimeoutException();
-      throw new DetailedConnectionException(e, errorListener.getErrors());
-    }
+    
   }
 
   @Override

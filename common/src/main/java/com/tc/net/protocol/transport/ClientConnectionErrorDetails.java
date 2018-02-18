@@ -27,25 +27,29 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class ClientConnectionErrorDetails implements ClientConnectionErrorListener{
+public class ClientConnectionErrorDetails implements ClientConnectionErrorListener {
 
-  private final ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> exceptionMap
-      = new ConcurrentHashMap<>();
+  private volatile ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> exceptionMap;
 
   @Override
   public void onError(ConnectionInfo connInfo, Exception e) {
-    ConcurrentLinkedQueue<Exception> exceptionList = exceptionMap.get(connInfo);
-    if (exceptionList == null) {
-      exceptionList = new ConcurrentLinkedQueue<>();
-      exceptionMap.put(connInfo, exceptionList);
+    ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> internalExceptionCollector = exceptionMap;
+    if (internalExceptionCollector != null) {
+      /*
+      Effectively Keeping only the last exception for a given connection info. Keeping the internal data-structure as 
+      list only to support (future) use cases where we need to store last N (or All) exceptions for a given connection.
+       */
+      ConcurrentLinkedQueue<Exception> exceptionList = new ConcurrentLinkedQueue<>();
+      exceptionList.add(e);
+      internalExceptionCollector.put(connInfo, exceptionList);
     }
-    exceptionList.add(e);
   }
 
   public Map<String, List<Exception>> getErrors() {
     Map<String, List<Exception>> errorMessagesMap = new HashMap<>();
-    if (exceptionMap != null) {
-      for (Map.Entry<ConnectionInfo, ConcurrentLinkedQueue<Exception>> entry : exceptionMap.entrySet()) {
+    ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> internalExceptionCollector = exceptionMap;
+    if (internalExceptionCollector != null) {
+      for (Map.Entry<ConnectionInfo, ConcurrentLinkedQueue<Exception>> entry : internalExceptionCollector.entrySet()) {
         ConnectionInfo connInfo = entry.getKey();
         ConcurrentLinkedQueue<Exception> exceptionList = entry.getValue();
         Object[] errorObjects = exceptionList.toArray();
@@ -58,5 +62,13 @@ public class ClientConnectionErrorDetails implements ClientConnectionErrorListen
       }
     }
     return errorMessagesMap;
+  }
+  
+  public void attachCollector() {
+    exceptionMap =  new ConcurrentHashMap<>();
+  }
+  
+  public void removeCollector() {
+    exceptionMap = null;
   }
 }
