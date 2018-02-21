@@ -42,6 +42,8 @@ public class ClientStatePersistor {
   private final IPlatformPersistence storageManager;
   private final ConcurrentHashMap<ClientID, Boolean> clients;
   private final MutableSequence clientIDSequence;
+  
+  private final Set<ClientID> orphaned;
 
   @SuppressWarnings("unchecked")
   public ClientStatePersistor(IPlatformPersistence storageManager) {
@@ -58,6 +60,9 @@ public class ClientStatePersistor {
       throw new RuntimeException("Failure reading ClientStatePersistor data", e);
     }
     this.clients = clientsMap;
+    // orphaned clients are not supposed to reconnect on restart.  since we are repopulating 
+    // restart data, set aside the orphaned clients
+    this.orphaned = clients.entrySet().stream().filter(entry->!entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
     this.clientIDSequence = new Sequence(this.storageManager);
     Assert.assertNotNull(this.clients);
   }
@@ -67,7 +72,7 @@ public class ClientStatePersistor {
   }
 
   public Set<ClientID> loadOrphanClientIDs() {
-    return clients.entrySet().stream().filter(entry->!entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
+    return orphaned;
   }
   
   public Set<ClientID> loadPermanentClientIDs() {
@@ -75,19 +80,28 @@ public class ClientStatePersistor {
   }
   
   public Set<ClientID> loadAllClientIDs() {
-    return clients.entrySet().stream().map(entry->entry.getKey()).collect(Collectors.toSet());
+    return clients.entrySet().stream().filter(entry->!orphaned.contains(entry.getKey())).map(entry->entry.getKey()).collect(Collectors.toSet());
   }
 
   public boolean containsClient(ClientID id) {
     return clients.containsKey(id);
   }
+  
+  public void clearOrphanedConnections() {
+    //  orphaned connections no longer needed
+    orphaned.clear();
+  }
 
   public boolean saveClientState(ClientID channelID, ProductID product) {
-    if (clients.put(channelID, product.isPermanent()) == null) {
+    // if the client is in the orphaned set, do not add it to the saved list because 
+    // it should never connect again.  this can happen if the ConnectionIDFactory services
+    // a connection before the existing clients are loaded into the reconnect window
+    if (orphaned.contains(channelID)) {
+      return false;
+    } else {
+      clients.put(channelID, product.isPermanent());
       safeStoreClients();
       return true;
-    } else {
-      return false;
     }
   }
 

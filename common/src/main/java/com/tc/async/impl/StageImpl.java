@@ -21,7 +21,6 @@ package com.tc.async.impl;
 import org.slf4j.Logger;
 
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
@@ -34,7 +33,6 @@ import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.ArrayList;

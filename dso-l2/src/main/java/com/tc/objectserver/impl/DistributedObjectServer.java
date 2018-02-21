@@ -963,6 +963,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
           startActiveMode(pth, sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
+            //  clear the set of orphaned connections, they will not be needed any longer
+            persistor.getClientStatePersistor().clearOrphanedConnections();
           } catch (IOException ioe) {
             throw new RuntimeException(ioe);
           }

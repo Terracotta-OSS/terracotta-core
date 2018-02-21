@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 
 public interface ConnectionIDFactory {
