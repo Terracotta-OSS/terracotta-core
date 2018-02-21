@@ -81,30 +81,26 @@ public class TCVoterMain {
     }
   }
 
-  private void processServerArg(String[] stripes) throws ConfigurationSetupException {
+  protected void processServerArg(String[] stripes) throws ConfigurationSetupException {
     validateStripesLimit(SERVER, stripes);
-    for (String servers: stripes) {
-      String[] hostPorts = servers.split(",");
-      for (String hostPort : hostPorts) {
-        validateHostPort(hostPort);
-      }
-      startVoter(hostPorts);
+    String[] hostPorts = stripes[0].split(",");
+    for (String hostPort : hostPorts) {
+      validateHostPort(hostPort);
     }
+    startVoter(hostPorts);
   }
 
-  private void processConfigFileArg(String[] stripes) throws ConfigurationSetupException {
+  protected void processConfigFileArg(String[] stripes) throws ConfigurationSetupException {
     validateStripesLimit(CONFIG_FILE, stripes);
 
     TCConfigParserUtil parser = new TCConfigParserUtil();
-    for (String tcConfigPath : stripes) {
-      String[] hostPorts;
-      try {
-        hostPorts = parser.parseHostPorts(new FileInputStream(tcConfigPath));
-      } catch (SAXException | IOException e) {
-        throw new ConfigurationSetupException(e);
-      }
-      startVoter(hostPorts);
+    String[] hostPorts;
+    try {
+      hostPorts = parser.parseHostPorts(new FileInputStream(stripes[0]));
+    } catch (SAXException | IOException e) {
+      throw new ConfigurationSetupException(e);
     }
+    startVoter(hostPorts);
   }
 
   protected void startVoter(String... hostPorts) {
