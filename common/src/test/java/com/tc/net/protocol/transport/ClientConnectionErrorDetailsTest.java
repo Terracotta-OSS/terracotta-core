@@ -28,12 +28,14 @@ import java.util.Map;
 import static com.tc.util.Assert.assertEquals;
 import static com.tc.util.Assert.assertNotNull;
 import static com.tc.util.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 public class ClientConnectionErrorDetailsTest {
 
   @Test
-  public void testOnError(){
+  public void testOnError() {
     ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
+    errorDetails.attachCollector();
     ConnectionInfo connInfo = new ConnectionInfo("localhost",9510);
     Exception exception1 = new IOException("Test Exception1");
     errorDetails.onError(connInfo, exception1);
@@ -45,22 +47,27 @@ public class ClientConnectionErrorDetailsTest {
     assertNotNull(retMap);
     assertEquals(1,retMap.size());
     List<Exception> errorList = retMap.get(connInfo.toString());
-    assertEquals(2,errorList.size());
-    assertTrue(errorList.contains(exception1));
+    /*
+    Stores only the last exeption
+     */
+    assertEquals(1,errorList.size());
+    assertFalse(errorList.contains(exception1));
     assertTrue(errorList.contains(exception2));
   }
 
   @Test
-  public void testGetErrorWithNoError(){
+  public void testGetErrorWithNoError() {
     ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
+    errorDetails.attachCollector();
     Map<String, List<Exception>> retMap = errorDetails.getErrors();
     assertNotNull(retMap);
     assertTrue(retMap.isEmpty());
   }
 
   @Test
-  public void testGetError(){
+  public void testGetError() {
     ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
+    errorDetails.attachCollector();
     ConnectionInfo connInfo1 = new ConnectionInfo("localhost",9510);
     Exception exception1 = new IOException("Test Exception1");
     errorDetails.onError(connInfo1, exception1);
@@ -76,13 +83,38 @@ public class ClientConnectionErrorDetailsTest {
     assertEquals(2, retMap.size());
     List<Exception> exceptionList1 = retMap.get(connInfo1.toString());
 
-    assertEquals(2,exceptionList1.size());
-    assertTrue(exceptionList1.contains(exception1));
+    assertEquals(1,exceptionList1.size());
+    assertFalse(exceptionList1.contains(exception1));
     assertTrue(exceptionList1.contains(exception2));
 
     List<Exception> exceptionList2 = retMap.get(connInfo2.toString());
 
     assertEquals(1,exceptionList2.size());
     assertTrue(exceptionList2.contains(exception3));
+  }
+  
+  @Test
+  public void testDetatchCollector() {
+    ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
+    errorDetails.attachCollector();
+    ConnectionInfo connInfo = new ConnectionInfo("localhost",9510);
+    Exception exception1 = new IOException("Test Exception1");
+    errorDetails.onError(connInfo, exception1);
+
+    Map<String, List<Exception>> retMap = errorDetails.getErrors();
+    retMap.get(connInfo);
+    assertNotNull(retMap);
+    assertEquals(1,retMap.size());
+    List<Exception> errorList = retMap.get(connInfo.toString());
+    assertEquals(1,errorList.size());
+
+    errorDetails.removeCollector();
+    
+    /*
+    Collector is detached. Internal errors are not available
+     */
+    retMap = errorDetails.getErrors();
+    assertNotNull(retMap);
+    assertEquals(0,retMap.size());
   }
 }
