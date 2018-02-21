@@ -22,7 +22,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.tracing.Trace;
