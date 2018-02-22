@@ -31,6 +31,7 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
@@ -52,7 +53,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<ChannelEventListener>();
   private final ChannelStatus                 status      = new ChannelStatus();
   private final TCMessageFactory              msgFactory;
-  private final ProductID                     productId;
+  private ProductID                     productId;
   private final TCMessageRouter               router;
   private final TCMessageParser               parser;
   private final Logger logger;
@@ -170,6 +171,13 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   @Override
   public final void setSendLayer(NetworkLayer layer) {
     this.sendLayer = layer;
+    if (layer instanceof MessageTransport) {
+      ConnectionID connection = ((MessageTransport)layer).getConnectionId();
+      if (connection != null) {
+        ProductID product = ((MessageTransport)layer).getConnectionId().getProductId();
+        this.productId = product;
+      }
+    }
   }
 
   @Override

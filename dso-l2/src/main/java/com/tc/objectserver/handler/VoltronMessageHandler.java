@@ -30,6 +30,8 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,7 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
   private boolean activated = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(VoltronMessageHandler.class);
   private final AtomicInteger clientsConnected = new AtomicInteger();
+  private final boolean ALWAYS_DIRECT = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_SINGLE_THREAD, false);
 
   public VoltronMessageHandler(DSOChannelManager clients, boolean use_direct) {
     this.useDirect = use_direct;
@@ -66,16 +69,19 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
 
   @Override
   public void handleEvent(VoltronEntityMessage message) throws EventHandlerException {
-    if (useDirect) {
+    if (ALWAYS_DIRECT) {
+      if (!activated) {
+        DirectExecutionMode.activate(true);
+        activated = true;
+      }
+    } else if (useDirect) {
       // only use the fastpath if there is one client connected and nothing in the pipeline
       boolean fast = fastPath.size() < 2 && destPath.isEmpty() && requestProcessor.isEmpty() 
           && requestProcessorSync.isEmpty() && clientsConnected.get() == 1;
       if (fast != activated) {
         activated = fast;
         DirectExecutionMode.activate(activated);
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("switching to direct sink activated:" + activated + " with " + fastPath.size());
-        }
+        LOGGER.debug("switching to direct sink activated:{} with {}", activated , fastPath.size());
       }
     }
     if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
