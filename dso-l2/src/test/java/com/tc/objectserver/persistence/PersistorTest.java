@@ -115,15 +115,11 @@ public class PersistorTest {
     Set<ClientID> orphans = persistor.getClientStatePersistor().loadOrphanClientIDs();
     Set<ClientID> clients = persistor.getClientStatePersistor().loadPermanentClientIDs();
     Set<ClientID> all = persistor.getClientStatePersistor().loadAllClientIDs();
-    Assert.assertTrue(orphans.contains(new ClientID(2)));
-    Assert.assertTrue(orphans.contains(new ClientID(4)));
+
     Assert.assertTrue(clients.contains(new ClientID(1)));
     Assert.assertTrue(clients.contains(new ClientID(3)));
-    Assert.assertEquals(2, orphans.size());
+    Assert.assertEquals(0, orphans.size());
     Assert.assertEquals(2, clients.size());
-    Assert.assertEquals(2, all.size());
-    persistor.addClientState(new ClientID(4), ProductID.STRIPE);
-    all = persistor.getClientStatePersistor().loadAllClientIDs();
     Assert.assertEquals(2, all.size());
     persistor.addClientState(new ClientID(5), ProductID.STRIPE);
     all = persistor.getClientStatePersistor().loadAllClientIDs();

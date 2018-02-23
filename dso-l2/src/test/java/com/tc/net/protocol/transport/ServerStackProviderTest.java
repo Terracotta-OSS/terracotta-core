@@ -146,7 +146,7 @@ public class ServerStackProviderTest extends TCTestCase {
         return current;
       }
     });
-    ConnectionIDFactory factory = new ConnectionIDFactoryImpl(sequence, EnumSet.allOf(ProductID.class));
+    ConnectionIDFactory factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), sequence, EnumSet.allOf(ProductID.class));
     factory.activate(new StripeID("server1"), 3);
 
     ConnectionID connectionID1 = new ConnectionID("JVM", 1, "server1");
@@ -218,7 +218,7 @@ public class ServerStackProviderTest extends TCTestCase {
         return current;
       }
     });
-    ConnectionIDFactory factory = new ConnectionIDFactoryImpl(sequence, EnumSet.complementOf(EnumSet.of(ProductID.PERMANENT)));
+    ConnectionIDFactory factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), sequence, EnumSet.complementOf(EnumSet.of(ProductID.PERMANENT)));
     factory.activate(new StripeID("server1"), 3);
 
     ConnectionID connectionID1 = new ConnectionID("JVM", 1, "server1");

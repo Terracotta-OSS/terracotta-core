@@ -53,7 +53,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<ChannelEventListener>();
   private final ChannelStatus                 status      = new ChannelStatus();
   private final TCMessageFactory              msgFactory;
-  private ProductID                     productId;
+  private final ProductID                     productId;
   private final TCMessageRouter               router;
   private final TCMessageParser               parser;
   private final Logger logger;
@@ -171,13 +171,6 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   @Override
   public final void setSendLayer(NetworkLayer layer) {
     this.sendLayer = layer;
-    if (layer instanceof MessageTransport) {
-      ConnectionID connection = ((MessageTransport)layer).getConnectionId();
-      if (connection != null) {
-        ProductID product = ((MessageTransport)layer).getConnectionId().getProductId();
-        this.productId = product;
-      }
-    }
   }
 
   @Override
@@ -314,7 +307,10 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   @Override
   public ProductID getProductId() {
-    return productId;
+    if (this.sendLayer != null && this.sendLayer instanceof MessageTransport) {
+      return ((MessageTransport)this.sendLayer).getConnectionId().getProductId();
+    }
+    return this.productId;
   }
 
   private enum ChannelState {

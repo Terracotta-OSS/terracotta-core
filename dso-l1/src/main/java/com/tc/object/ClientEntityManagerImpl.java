@@ -86,8 +86,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     
   private final StageManager stages;
   
-  private final boolean reconnectable;
-
   private final ExecutorService endpointCloser = Executors.newWorkStealingPool();
 //  for testing
   private boolean wasBusy = false;
@@ -101,9 +99,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
-    this.stages = mgr;
-      
-    this.reconnectable = channel.getProductId().isReconnectEnabled();
+    this.stages = mgr;      
   }
   
   public boolean checkBusy() {
@@ -536,7 +532,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // Figure out the "trailing edge" of the current progress through the transaction stream.
     TransactionID oldestTransactionPending = transactionID;
     // if reconnectable, discover the oldest transaction still being waited for
-    if (reconnectable) {
+    if (this.channel.getProductId().isReconnectEnabled()) {
       for (TransactionID pendingID : this.inFlightMessages.keySet()) {
         if (oldestTransactionPending.compareTo(pendingID) > 0) {
           // pendingID is earlier than oldestTransactionPending.

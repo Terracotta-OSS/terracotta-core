@@ -25,7 +25,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.util.Assert;
@@ -38,12 +37,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
   private final MutableSequence                   connectionIDSequence;
-  private final NullConnectionIDFactoryImpl                        internalClients = new NullConnectionIDFactoryImpl();
+  private final ConnectionIDFactory                        internalClients;
   private StripeID                                stripe;
   private final Set<ProductID>                          supported;
   private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
 
-  public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore, Set<ProductID> supported) {
+  public ConnectionIDFactoryImpl(ConnectionIDFactory internals, ClientStatePersistor clientStateStore, Set<ProductID> supported) {
+    this.internalClients = internals;
     this.connectionIDSequence = clientStateStore.getConnectionIDSequence();
     this.supported = supported;
   }
