@@ -22,8 +22,10 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
-import java.lang.reflect.Constructor;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -86,37 +88,37 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
 
   private static class GeneratedMessageFactoryImpl implements GeneratedMessageFactory {
 
-    private final Constructor<? extends TCMessage> sendCstr;
-    private final Constructor<? extends TCMessage> recvCstr;
-
+    private final MethodHandle sendHdl;
+    private final MethodHandle recvHdl;
+    
     GeneratedMessageFactoryImpl(Class<? extends TCMessage> msgClass) {
-      sendCstr = findConstructor(msgClass, SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
+      sendHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
                                  MessageChannel.class, TCMessageType.class);
-      recvCstr = findConstructor(msgClass, SessionID.class, MessageMonitor.class, MessageChannel.class,
+      recvHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, MessageChannel.class,
                                  TCMessageHeader.class, TCByteBuffer[].class);
-
-      if (sendCstr == null && recvCstr == null) {
+      if (sendHdl == null && recvHdl == null) {
         // require at least one half of message construction to work
         throw new RuntimeException("No constructors available for " + msgClass);
       }
     }
 
-    private static Constructor<? extends TCMessage> findConstructor(Class<? extends TCMessage> msgClass, Class<?>... argTypes) {
+    private static MethodHandle findMethodHandle(Class<? extends TCMessage> msgClass, Class<?>... argTypes) {
       try {
-        return msgClass.getConstructor(argTypes);
+        MethodType type = MethodType.methodType(void.class, argTypes);
+        return MethodHandles.lookup().findConstructor(msgClass, type);
       } catch (Exception e) {
         return null;
       }
     }
-
+    
     @Override
     public TCMessage createMessage(SessionID sid, MessageMonitor monitor, TCByteBufferOutputStream output,
                                    MessageChannel channel, TCMessageType type) {
-      if (sendCstr == null) { throw new UnsupportedOperationException(); }
+      if (sendHdl == null) { throw new UnsupportedOperationException(); }
 
       try {
-        return sendCstr.newInstance(sid, monitor, output, channel, type);
-      } catch (Exception e) {
+        return (TCMessage)sendHdl.invoke(sid, monitor, output, channel, type);
+      } catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
@@ -124,11 +126,11 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     @Override
     public TCMessage createMessage(SessionID sid, MessageMonitor monitor, MessageChannel channel,
                                    TCMessageHeader msgHeader, TCByteBuffer[] data) {
-      if (recvCstr == null) { throw new UnsupportedOperationException(); }
+      if (recvHdl == null) { throw new UnsupportedOperationException(); }
 
       try {
-        return recvCstr.newInstance(sid, monitor, channel, msgHeader, data);
-      } catch (Exception e) {
+        return (TCMessage)recvHdl.invoke(sid, monitor, channel, msgHeader, data);
+      } catch (Throwable e) {
         throw new RuntimeException(e);
       }
     }
