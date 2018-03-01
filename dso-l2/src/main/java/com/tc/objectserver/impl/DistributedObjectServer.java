@@ -230,6 +230,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -542,15 +543,15 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300,
                                                                                                              true, 0L);
-
+    NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
-    this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore, capablities);
+    this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
 
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory);
     
-    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, this.connectionIdFactory, () -> {
+    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, infoConnections, () -> {
       StateManager stateMgr = l2Coordinator.getStateManager();
       // only provide an active name if this server is not active
       ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
@@ -963,8 +964,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
           startActiveMode(pth, sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
-            //  clear the set of orphaned connections, they will not be needed any longer
-            persistor.getClientStatePersistor().clearOrphanedConnections();
           } catch (IOException ioe) {
             throw new RuntimeException(ioe);
           }

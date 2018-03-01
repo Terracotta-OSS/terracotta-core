@@ -52,7 +52,6 @@ import static org.mockito.Mockito.when;
 
 
 /**
- * @author mscott
  */
 public class MultiStageQueueImplTest {
 

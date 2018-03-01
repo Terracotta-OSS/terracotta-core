@@ -702,7 +702,9 @@ public class DistributedObjectClient implements TCClient {
   private class ShutdownAction implements Runnable {
     @Override
     public void run() {
-      DSO_LOGGER.info("Running L1 VM shutdown hook");
+      if (channel != null && !channel.getProductId().isInternal()) {
+        DSO_LOGGER.info("Running L1 VM shutdown hook");
+      }
       shutdown(true, false);
     }
   }

@@ -68,10 +68,9 @@ public class Persistor implements PrettyPrintable {
   }
   
   public void addClientState(ClientID node, ProductID product) {
-    if (clientStatePersistor.saveClientState(node, product)) {
-      entityPersistor.addTrackingForClient(node);
-      transactionOrderPersistor.addTrackingForClient(node, product);
-    }
+    clientStatePersistor.saveClientState(node, product);
+    entityPersistor.addTrackingForClient(node);
+    transactionOrderPersistor.addTrackingForClient(node, product);
   }
   
   public void removeClientState(ClientID node) throws ClientNotFoundException {

@@ -248,12 +248,13 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
   }
 
   @Override
-  public void clear() {
+  public int clear() {
     int clearCount = 0;
     for (MultiSourceQueueImpl sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
     this.logger.info("Cleared " + clearCount);
+    return clearCount;
   }
 
   private static final class MultiSourceQueueImpl implements SourceQueue {

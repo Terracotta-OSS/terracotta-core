@@ -136,6 +136,11 @@ public class StateManagerImpl implements StateManager {
 //  now make sure elections are done
     elections.waitForElectionToFinish();
   }
+// for tests  
+  public void waitForElectionsToFinish() throws InterruptedException {
+//  now make sure elections are done
+    elections.waitForElectionToFinish();
+  }
 
   /*
    * XXX:: If ACTIVE went dead before any passive moved to STANDBY state, then the cluster is hung and there is no going
@@ -148,9 +153,7 @@ public class StateManagerImpl implements StateManager {
     // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
     // the election and wait for a zap.
     info("Starting election initial state:" + startState);
-    if (startState != null && startState != ServerMode.ACTIVE) {
-      info("Skipping election and waiting for the active to zap since this L2 did not go down as active.", true);
-    } else if (state == ServerMode.START || state == ServerMode.PASSIVE) {
+    if (state == ServerMode.START || state == ServerMode.PASSIVE) {
       runElection();
     } else {
       info("Ignoring Election request since not in right state: " + this.state);
@@ -177,7 +180,9 @@ public class StateManagerImpl implements StateManager {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-          if (clusterStatePersistor.isDBClean() && 
+          if (startState != null && startState != ServerMode.ACTIVE) {
+            info("Skipping election and waiting for the active to zap since this L2 did not go down as active.", true);
+          } else if (clusterStatePersistor.isDBClean() && 
               this.availabilityMgr.requestTransition(this.state, nodeid, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
             moveToActiveState();
           } else {
@@ -424,6 +429,9 @@ public class StateManagerImpl implements StateManager {
 // TODO: send a negative response so the active zaps this server.  This is a bad way to agree.  find a better way
         if (clusterMsg.getType() == L2StateMessage.ELECTION_WON_ALREADY) {
           sendNGResponse(clusterMsg.messageFrom(), clusterMsg);
+        } else if (clusterMsg.getType() == L2StateMessage.ELECTION_WON && startState == ServerMode.PASSIVE) {
+          clusterStatePersistor.setDBClean(false);
+          throw new TCServerRestartException("Resync passive to current active.  Restarting with dirty db"); 
         }
       }
     } else {

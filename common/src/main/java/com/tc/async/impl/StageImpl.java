@@ -168,7 +168,8 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public void clear() {
     boolean interrupted = Thread.interrupted();
-    this.stageQueue.clear();
+    int clearCount = this.stageQueue.clear();
+    inflight.addAndGet(-clearCount);
     for (WorkerThread wt : threads) {
       try {
         if (wt != null) {

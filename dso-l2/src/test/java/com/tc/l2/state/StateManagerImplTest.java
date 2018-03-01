@@ -129,8 +129,9 @@ public class StateManagerImplTest {
     }
   }
   
+    
   @Test
-  public void testInitialElection() throws Exception {
+  public void testInitialElectionDoesNotSetStandbyAsActive() throws Exception {
     Logger logger = mock(Logger.class);
     GroupManager grp = mock(GroupManager.class);
     
@@ -178,6 +179,59 @@ public class StateManagerImplTest {
     state.initializeAndStartElection();
     
     state.startElectionIfNecessary(mock(NodeID.class));
+    state.waitForElectionsToFinish();
+    Assert.assertTrue(state.getActiveNodeID().isNull());
+  }
+  
+  @Test
+  public void testInitialElection() throws Exception {
+    Logger logger = mock(Logger.class);
+    GroupManager grp = mock(GroupManager.class);
+    
+    Sink stageChangeSinkMock = mock(Sink.class);
+    StageManager stageManager = mock(StageManager.class);
+    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
+    ClusterStatePersistor statePersistor = mock(ClusterStatePersistor.class);
+    when(statePersistor.isDBClean()).thenReturn(Boolean.TRUE);
+
+    NodeID node = mock(NodeID.class);
+    when(grp.getLocalNodeID()).thenReturn(node);
+    when(grp.sendAllAndWaitForResponse(any())).thenReturn(new GroupResponse() {
+      @Override
+      public List getResponses() {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public GroupMessage getResponse(NodeID nodeID) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+    });
+    
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
+        .then((invoke)->{
+          Stage election = mock(Stage.class);
+          Sink electionSink = mock(Sink.class);
+          doAnswer((invoke2)-> {
+            try {
+              ((EventHandler)invoke.getArguments()[2]).handleEvent(invoke2.getArguments()[0]);
+            } catch (Throwable t) {
+              t.printStackTrace();
+            }
+            return null;
+          }).when(electionSink).addToSink(any());
+          when(election.getSink()).thenReturn(electionSink);
+          return election;
+        });
+    
+    ConsistencyManager mgr = mock(ConsistencyManager.class);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory, mgr, 
+          statePersistor);
+    state.initializeAndStartElection();
+    
+    state.startElectionIfNecessary(mock(NodeID.class));
+    state.waitForElectionsToFinish();
     Assert.assertEquals(node, state.getActiveNodeID());
   }
   

@@ -21,7 +21,7 @@ public interface StageQueue<EC> extends Sink<EC> {
   @Override
   String toString();
 
-  void clear();
+  int clear();
   
   Map<String, ?> getState();
   
