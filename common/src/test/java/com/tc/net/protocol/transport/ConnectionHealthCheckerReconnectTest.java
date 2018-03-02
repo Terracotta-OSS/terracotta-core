@@ -128,7 +128,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
                                                                                   });
 
     serverLsnr = serverComms.createListener(new TCSocketAddress(0), false,
-                                            new DefaultConnectionIdFactory());
+                                            new DefaultConnectionIdFactory(), (t)->true);
 
     serverLsnr.start(new HashSet<ClientID>());
 

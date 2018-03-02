@@ -248,7 +248,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                                                           messageTypeClassMapping, Collections.emptyMap(), bufferManagerFactory
     );
 
-    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory());
+    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory(), (t)->true);
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
 

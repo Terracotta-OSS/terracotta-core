@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 /**
  * Provides network stacks on the server side
@@ -66,6 +67,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final ReentrantLock                    licenseLock;
   private final String                           commsMgrName;
   private final NodeNameProvider                 activeProvider;
+  private final Predicate<MessageTransport>                validateTransport;
 
   // used only in test
   public ServerStackProvider(Set<ClientID> initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
@@ -74,12 +76,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
-    this(initialConnectionIDs, null, harnessFactory, channelFactory, messageTransportFactory,
+    this(initialConnectionIDs, null, (t)->true, harnessFactory, channelFactory, messageTransportFactory,
          handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock,
          CommunicationsManager.COMMSMGR_SERVER);
   }
 
-  public ServerStackProvider(Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validate, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -108,6 +110,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           transportListeners));
     }
     this.activeProvider = activeProvider;
+    this.validateTransport = validate;
   }
 
   @Override
@@ -374,6 +377,13 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         this.isHandshakeError = true;
         return;
       }
+      
+      if (!validateTransport.test(this.transport)) {
+        sendSynAck(connectionId, new TransportHandshakeErrorContext("connection not allowed", TransportHandshakeError.ERROR_NO_ACTIVE), 
+            syn.getSource(), isMaxConnectionReached);
+        this.isHandshakeError = true;
+        return;
+      }
       sendSynAck(transport.getConnectionId(), syn.getSource(), isMaxConnectionReached);
     }
 
@@ -412,6 +422,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           synAck = handshakeMessageFactory.createSynAck(connectionId, TransportHandshakeError.ERROR_NO_ACTIVE, "no active", 
                 source, isMaxConnectionsReached, maxConnections);
         }
+        this.isHandshakeError = true;
       } else {
         int callbackPort = source.getLocalAddress().getPort();
         synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections, callbackPort);

@@ -37,7 +37,7 @@ import javax.management.ObjectName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConsistencyManagerImpl implements ConsistencyManager {
+public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsListener {
   
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
@@ -50,27 +50,26 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
   private final Set<NodeID> passives = Collections.synchronizedSet(new HashSet<>());
   
-  public ConsistencyManagerImpl(GroupManager mgr, int knownPeers, int voters) {
+  public ConsistencyManagerImpl(int knownPeers, int voters) {
     try {
       this.peerServers = knownPeers;
       this.voter = new ServerVoterManagerImpl(voters);
-      mgr.registerForGroupEvents(new GroupEventsListener() {
-        @Override
-        public void nodeJoined(NodeID nodeID) {
-          activePeers.add(nodeID);
-        }
-
-        @Override
-        public void nodeLeft(NodeID nodeID) {
-          activePeers.remove(nodeID);
-        }
-      });
       initMBean();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  
+        
+  @Override
+  public void nodeJoined(NodeID nodeID) {
+    activePeers.add(nodeID);
+  }
+
+  @Override
+  public void nodeLeft(NodeID nodeID) {
+    activePeers.remove(nodeID);
+  }
+        
   private void initMBean() {
     try {
       ObjectName MBEAN_NAME = TerracottaManagement.createObjectName(null, "ConsistencyManager", TerracottaManagement.MBeanDomain.PUBLIC);

@@ -118,7 +118,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
     );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
-                                                             new DefaultConnectionIdFactory());
+                                                             new DefaultConnectionIdFactory(), (t)->true);
     listener.start(Collections.<ClientID>emptySet());
     int serverPort = listener.getBindPort();
 
@@ -182,7 +182,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
     );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
-                                                             new DefaultConnectionIdFactory());
+                                                             new DefaultConnectionIdFactory(), (t)->true);
     listener.start(Collections.<ClientID>emptySet());
     int serverPort = listener.getBindPort();
 

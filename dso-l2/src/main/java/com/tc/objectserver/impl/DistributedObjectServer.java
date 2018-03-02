@@ -546,10 +546,17 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
+    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
+    int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
+    ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(knownPeers, voteCount);
+    
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
-                                                                this.connectionIdFactory);
+                                                                this.connectionIdFactory, (t)->{
+                                                                  return consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
+                                                                      t.getConnectionId().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
+                                                                });
     
     this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, infoConnections, () -> {
       StateManager stateMgr = l2Coordinator.getStateManager();
@@ -669,12 +676,11 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
                                                                       bufferManagerFactory);
-
-    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
-    int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
-
-    ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(this.groupCommManager, knownPeers, voteCount);
         
+    if (consistencyMgr instanceof GroupEventsListener) {
+      this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
+    }
+    
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
