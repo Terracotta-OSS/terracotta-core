@@ -184,7 +184,13 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       CommThread ct = (CommThread)t;
       if (ct.isReader()) {
         try {
-          return ct.selector.selectedKeys().stream().anyMatch(key->key.isReadable());
+          return ct.selector.selectedKeys().stream().anyMatch(key->{
+            try {
+              return key.isValid() && key.isReadable();
+            } catch (CancelledKeyException ck) {
+              return false;
+            }
+          });
         } catch (ClosedSelectorException closed) {
           return false;
         }
