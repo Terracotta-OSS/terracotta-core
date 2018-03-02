@@ -60,20 +60,11 @@ public class ReplicationSender {
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
 
-  private final Collection<Consumer<NodeID>> failureListeners = new CopyOnWriteArrayList<>();
   private final Sink<Runnable> outgoing;
 
   public ReplicationSender(Stage<Runnable> outgoing, GroupManager<AbstractGroupMessage> group) {
     this.group = group;
     this.outgoing = outgoing.getSink();
-  }
-
-  public void addFailedToSendListener(Consumer<NodeID> failed) {
-    failureListeners.add(failed);
-  }
-  
-  private void notifySendFailure(NodeID node) {
-    failureListeners.forEach(c->c.accept(node));
   }
 
   public void removePassive(NodeID dest) {
@@ -347,7 +338,6 @@ public class ReplicationSender {
           long mid = this.batchContext.flushBatch();
         } catch (GroupException group) {
           logger.error("Exception flushing batch context", group);
-          notifySendFailure(target);
         }
       });
     }

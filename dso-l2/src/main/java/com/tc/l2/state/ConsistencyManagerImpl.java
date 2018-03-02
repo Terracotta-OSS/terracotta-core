@@ -130,7 +130,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     try {
       if (voter.getRegisteredVoters() + serverVotes < threshold) {
         blocked = true;
-        CONSOLE.warn("Not enough registered voters.  Require override intervention or all members of the stripe to be connected for action " + newMode);
+        CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", this.peerServers + 1 > threshold ? threshold : "all", newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
           //  servers connected + votes received

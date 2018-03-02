@@ -80,7 +80,6 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
-    this.replicationSender.addFailedToSendListener(this::removeWaiters);
   }
 
   @Override
