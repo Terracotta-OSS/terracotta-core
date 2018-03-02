@@ -442,7 +442,7 @@ public class DistributedObjectClient implements TCClient {
     if (this.channel != null) {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
-      if (!this.channel.getProductId().isInternal()) {
+      if (!this.channel.getProductId().isInternal() && this.channel.isConnected()) {
         DSO_LOGGER.info(infoMsg);
       }
     }
@@ -692,7 +692,7 @@ public class DistributedObjectClient implements TCClient {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
-      if (this.channel != null && !this.channel.getProductId().isInternal()) {
+      if (this.channel != null && !this.channel.getProductId().isInternal() && this.channel.isConnected()) {
         DSO_LOGGER.info("closing down Terracotta Connection hook=" + fromShutdownHook + " force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
       }
       shutdownClient(fromShutdownHook, forceImmediate);
