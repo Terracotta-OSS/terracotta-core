@@ -39,4 +39,17 @@ public class DetailedConnectionException extends ConnectionException {
     }
     return Collections.unmodifiableMap(connectionErrorMap);
   }
+  
+  public static String getDetailedMessage(Map<String, List<Exception>> errorMap) {
+    StringBuilder builder = new StringBuilder();
+    errorMap.forEach((k, v)-> {
+      if (!v.isEmpty()) {
+        builder.append(k);
+        builder.append('=');
+        builder.append(v.get(0).getMessage());
+        builder.append(';');
+      }
+    });
+    return builder.toString();
+  }
 }
