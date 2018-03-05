@@ -50,19 +50,21 @@ public class ActiveVoter implements AutoCloseable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveVoter.class);
 
-  private final static String ACTIVE_COORDINATOR   = "ACTIVE-COORDINATOR";
+  private final static String ACTIVE_COORDINATOR = "ACTIVE-COORDINATOR";
 
   private static final long HEARTBEAT_INTERVAL = 1000L;
   private static final long REG_RETRY_INTERVAL = 5000L;
 
   private final Thread voter;
   private final String id;
+  private final String[] servers;
 
   private volatile boolean active = false;
 
   public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
     this.voter = voterThread(voterStatus, hostPorts);
     this.id = id;
+    this.servers = hostPorts;
   }
   
   public ActiveVoter start() {
@@ -71,7 +73,6 @@ public class ActiveVoter implements AutoCloseable {
   }
 
   private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
-    LOGGER.info("Registering with stripe: {} ", Arrays.toString(hostPorts));
     return new Thread(() -> {
       ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
       List<ClientVoterManager> voterManagers = Stream.of(hostPorts).map(ClientVoterManagerImpl::new).collect(toList());
@@ -81,7 +82,7 @@ public class ActiveVoter implements AutoCloseable {
           //  find the active that this voter has successfully registered to
           ClientVoterManager currentActive = registerWithActive(id, executorService, voterManagers);
           active = true;
-          LOGGER.info("Registered with the cluster of: {}. Current active: {}", Arrays.toString(hostPorts), currentActive.getTargetHostPort());
+          LOGGER.info("{} registered with the active: {}", this, currentActive.getTargetHostPort());
           voterStatus.complete(new VoterStatus() {
             @Override
             public boolean isActive() {
@@ -92,7 +93,7 @@ public class ActiveVoter implements AutoCloseable {
           active = false;
         }
       } catch (InterruptedException e) {
-        LOGGER.warn("Voter daemon interrupted");
+        LOGGER.warn("{} interrupted", this);
         active = false;
         executorService.shutdownNow();
       }
@@ -105,7 +106,6 @@ public class ActiveVoter implements AutoCloseable {
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       voterManager.connect();
       if (!registrationLatch.isDone()) {
-        LOGGER.info("Trying to register with {}", voterManager.getTargetHostPort());
         try {
           String serverState = voterManager.getServerState();
           if (serverState.equals(ACTIVE_COORDINATOR)) {
@@ -121,7 +121,7 @@ public class ActiveVoter implements AutoCloseable {
       }
     }, 0, REG_RETRY_INTERVAL, TimeUnit.MILLISECONDS)).collect(Collectors.toList());
 
-    LOGGER.info("Waiting to get registered with the active");
+    LOGGER.info("{} waiting to get registered with the active", this);
     try {
       return registrationLatch.get();
     } catch (ExecutionException e) {
@@ -155,21 +155,21 @@ public class ActiveVoter implements AutoCloseable {
                     // owner of the vote, go ahead and vote
                   lastVotedElection = election;
                   long result = voterManager.vote(id, election);
-                  LOGGER.info("own the vote, voting {} {} {}", voterManager.getTargetHostPort(), election, result);
+                  LOGGER.info("Own the vote, voting for {} for term: {}, result: {}", voterManager.getTargetHostPort(), election, result);
                 } else if (owner.isConnected()) {
                   owner = voteOwner.get();
                   // ignore, back to heartbeating
-                  LOGGER.info("not the vote owner and the owner is still connected, rejecting the request for vote {} {}", voterManager.getTargetHostPort(), election);
+                  LOGGER.info("Not the vote owner and the owner is still connected, rejecting the vote request from {} for election term {}", voterManager.getTargetHostPort(), election);
                   // can never steal the vote back having voted in a previous vote tally
                 } else if (lastVotedElection == 0 && voteOwner.compareAndSet(owner, voterManager)) {
                   // stole ownership of the vote
                   lastVotedElection = election;
                   long result = voterManager.vote(id, election);
-                  LOGGER.info("stole the vote from {}, voting {} {} {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
+                  LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
                   owner = voterManager;
                 } else {
                   owner = voteOwner.get();
-                  LOGGER.info("failed steal the vote from {}, rejecting the request for vote {} {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election);
+                  LOGGER.info("Failed to steal the vote from {}, rejecting the vote request from {} for term {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election);
                   // failed to steal, back to heartbeating
                 }
               }
@@ -177,7 +177,7 @@ public class ActiveVoter implements AutoCloseable {
               TimeUnit.SECONDS.sleep(5);
             }
           } catch (TimeoutException to) {
-            LOGGER.warn("Heart-beating with {} timedout", voterManager.getTargetHostPort());
+            LOGGER.warn("Heart-beating with {} timed-out", voterManager.getTargetHostPort());
             voterManager.close();
           } catch (InterruptedException e) {
             LOGGER.warn("Heart-beating with {} stopped", voterManager.getTargetHostPort());
@@ -199,7 +199,7 @@ public class ActiveVoter implements AutoCloseable {
       } catch (TimeoutException to) {
         state = "Timeout";
       }
-      LOGGER.info(state + " " + tryCount);
+      LOGGER.debug("{} Vote owner state: {}, Try count: {}", this, state, tryCount);
       if (state.equals(ACTIVE_COORDINATOR)) {
       // expected that the vote owner is active
         TimeUnit.SECONDS.sleep(5);
@@ -255,18 +255,26 @@ public class ActiveVoter implements AutoCloseable {
     long beatResponse = HEARTBEAT_RESPONSE;
     while (voter.isConnected() && beatResponse == HEARTBEAT_RESPONSE) {
       TimeUnit.MILLISECONDS.sleep(HEARTBEAT_INTERVAL);
+      LOGGER.debug("Heart beating with {}", voter.getTargetHostPort());
       beatResponse = voter.heartbeat(id);
     }
+    LOGGER.info("Heartbeat broken. Response: {}", beatResponse);
     return beatResponse;
   }
 
   public void stop() {
+    LOGGER.info("Stopping {}", this);
     this.voter.interrupt();
   }
 
   @Override
   public void close() {
     stop();
+  }
+
+  @Override
+  public String toString() {
+    return "ActiveVoter{" + Arrays.toString(servers) + "}";
   }
 
   public static void main(String[] args) {

@@ -549,6 +549,14 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
+    if ((voteCount + knownPeers + 1) % 2 == 0) {
+      consoleLogger.warn("It is recommended to keep the total number of servers and external voters to be an odd number");
+    }
+
+    if (knownPeers % 2 == 0 && voteCount > 0) {
+      consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
+    }
+
     ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(knownPeers, voteCount);
     
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
