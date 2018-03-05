@@ -37,7 +37,7 @@ import javax.management.ObjectName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConsistencyManagerImpl implements ConsistencyManager {
+public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsListener {
   
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
@@ -50,27 +50,26 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
   private final Set<NodeID> passives = Collections.synchronizedSet(new HashSet<>());
   
-  public ConsistencyManagerImpl(GroupManager mgr, int knownPeers, int voters) {
+  public ConsistencyManagerImpl(int knownPeers, int voters) {
     try {
       this.peerServers = knownPeers;
       this.voter = new ServerVoterManagerImpl(voters);
-      mgr.registerForGroupEvents(new GroupEventsListener() {
-        @Override
-        public void nodeJoined(NodeID nodeID) {
-          activePeers.add(nodeID);
-        }
-
-        @Override
-        public void nodeLeft(NodeID nodeID) {
-          activePeers.remove(nodeID);
-        }
-      });
       initMBean();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  
+        
+  @Override
+  public void nodeJoined(NodeID nodeID) {
+    activePeers.add(nodeID);
+  }
+
+  @Override
+  public void nodeLeft(NodeID nodeID) {
+    activePeers.remove(nodeID);
+  }
+        
   private void initMBean() {
     try {
       ObjectName MBEAN_NAME = TerracottaManagement.createObjectName(null, "ConsistencyManager", TerracottaManagement.MBeanDomain.PUBLIC);
@@ -130,7 +129,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager {
     try {
       if (voter.getRegisteredVoters() + serverVotes < threshold) {
         blocked = true;
-        CONSOLE.warn("Not enough registered voters.  Require override intervention or all members of the stripe to be connected for action " + newMode);
+        CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", this.peerServers + 1 > threshold ? threshold : "all", newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
           //  servers connected + votes received

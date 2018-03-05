@@ -26,10 +26,9 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 public class CallbackZapServerNodeExceptionAdapter extends CallbackDirtyDatabaseCleanUpAdapter {
 
   private final Logger consoleLogger;
-  private String         consoleMessage = "This Terracotta server instance shut down because of a "
+  private String         consoleMessage = "This Terracotta server instance restarted because of a "
                                           + "conflict or communication failure with another Terracotta "
-                                          + "server instance. The database must be manually wiped before "
-                                          + "it can be started and allowed to rejoin the cluster.";
+                                          + "server instance.";
 
   public CallbackZapServerNodeExceptionAdapter(Logger logger, Logger consoleLogger,
                                                ClusterStatePersistor clusterStateStore) {

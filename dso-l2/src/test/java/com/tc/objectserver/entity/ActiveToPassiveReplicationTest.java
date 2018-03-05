@@ -85,6 +85,11 @@ public class ActiveToPassiveReplicationTest {
     it.start();
     ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
+    // make sure adding more waiters don't include removed passive
+    SyncReplicationActivity nowait = mock(SyncReplicationActivity.class);
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    ActivePassiveAckWaiter ack2 = replication.replicateActivity(nowait, Collections.singleton(passive));
+    Assert.assertTrue(ack2.isCompleted());
   }
   
   @After

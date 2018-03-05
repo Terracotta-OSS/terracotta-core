@@ -169,10 +169,10 @@ try {
             // But i don't give you back anything
             // as i am Dumb.
           }
-        }, null);
+        }, null, (t)->true);
       } else {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
-            new DefaultConnectionIdFactory());
+            new DefaultConnectionIdFactory(), (t)->true);
       }
       lsnr.start(new HashSet<ClientID>());
       connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
@@ -321,10 +321,10 @@ try {
                                            // But i don't give you back anything
                                            // as i am Dumb.
                                          }
-                                       }, null);
+                                       }, null, (t)->true);
     } else {
       rv = serverComms1.createListener(new TCSocketAddress(0), false,
-                                       new DefaultConnectionIdFactory());
+                                       new DefaultConnectionIdFactory(), (t)->true);
     }
 
     rv.start(new HashSet<ClientID>());

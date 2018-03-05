@@ -43,9 +43,9 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
-import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL2;
@@ -75,6 +75,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 /**
  * Communications manager for setting up listeners and creating client connections
@@ -308,13 +309,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
                                         ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider) {
-    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider);
+    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider, (t)->true);
   }
 
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,
-          ConnectionIDFactory connectionIdFactory) {
-    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, null);
+          ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation) {
+    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, null, validation);
   }
 
   /**
@@ -323,7 +324,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   NetworkListener createListener(TCSocketAddress addr,
                                          boolean transportDisconnectRemovesChannel,
                                          ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
-                                         WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider) {
+                                         WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider, Predicate<MessageTransport> validation) {
     if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
@@ -354,11 +355,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
     return new NetworkListenerImpl(addr, this, channelManager, msgFactory, reuseAddr,
-                                   connectionIdFactory, wireProtoMsgSnk, activeProvider);
+                                   connectionIdFactory, wireProtoMsgSnk, activeProvider, validation);
   }
 
   TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, ConnectionIDFactory connectionIdFactory,
+                                 boolean resueAddr, Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
@@ -393,7 +394,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
         return rv;
       }
     };
-    ServerStackProvider stackProvider = new ServerStackProvider(initialConnectionIDs, activeProvider, stackHarnessFactory,
+    ServerStackProvider stackProvider = new ServerStackProvider(initialConnectionIDs, activeProvider, validation, stackHarnessFactory,
                                                                 channelFactory, transportFactory,
                                                                 this.transportMessageFactory, connectionIdFactory,
                                                                 this.connectionPolicy,

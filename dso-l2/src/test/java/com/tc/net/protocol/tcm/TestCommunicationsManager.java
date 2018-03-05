@@ -21,11 +21,13 @@ package com.tc.net.protocol.tcm;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.ProductID;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class TestCommunicationsManager implements CommunicationsManager {
 
@@ -52,7 +54,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory) {
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validate) {
     throw new UnsupportedOperationException(); 
   }
 

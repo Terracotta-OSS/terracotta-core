@@ -65,7 +65,7 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testVoteThreshold() throws Exception {
     String voter = UUID.randomUUID().toString();
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(mock(GroupManager.class), 1, 1);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1, 1);
     JMXSubsystem caller = new JMXSubsystem();
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));

@@ -66,13 +66,13 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
       try {
         client = clientCreator.create();
       } catch (Exception e){
-        throw new DetailedConnectionException(e, errorListener.getErrors());
+        throw new DetailedConnectionException(new Exception(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()), e), errorListener.getErrors());
       }
       if (client != null) {
         clientHandle = new ClientHandleImpl(client);
         isInitialized = true;
       } else {
-        TimeoutException e = new TimeoutException();
+        TimeoutException e = new TimeoutException(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()));
         throw new DetailedConnectionException(e, errorListener.getErrors());
       }
     } finally {

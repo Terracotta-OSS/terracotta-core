@@ -83,7 +83,7 @@ public class LazyHandshakeTest extends TCTestCase {
                                                 new NullConnectionPolicy());
 
     listener = serverComms.createListener(new TCSocketAddress(0), true,
-                                          new DefaultConnectionIdFactory());
+                                          new DefaultConnectionIdFactory(), (t)->true);
 
     try {
       listener.start(new HashSet<ClientID>());

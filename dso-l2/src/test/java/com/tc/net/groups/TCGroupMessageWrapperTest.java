@@ -133,7 +133,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                                                     }
                                                                                   });
     NetworkListener lsnr = serverComms.createListener(new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
-                                                      new DefaultConnectionIdFactory());
+                                                      new DefaultConnectionIdFactory(), (t)->true);
 
     lsnr.start(new HashSet<>());
     return (lsnr);
