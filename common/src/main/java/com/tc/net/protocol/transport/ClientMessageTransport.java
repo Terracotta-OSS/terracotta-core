@@ -172,6 +172,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         case ERROR_NO_ACTIVE:
           if (this.getConnectionId().getProductId().isRedirectEnabled()) {
             throw new NoActiveException();
+          } else {
+            Assert.assertTrue(this.getConnectionId().getProductId().isInternal());
           }
           break;
         case ERROR_MAX_CONNECTION_EXCEED:
@@ -188,6 +190,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         case ERROR_REDIRECT_CONNECTION:
           if (this.getConnectionId().getProductId().isRedirectEnabled()) {
             throw new TransportRedirect(result.synAck.getErrorContext());
+          } else {
+            Assert.assertTrue(this.getConnectionId().getProductId().isInternal());
           }
           break;
         case ERROR_PRODUCT_NOT_SUPPORTED:
