@@ -272,6 +272,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       }
       if (!isHandshakeError) {
         this.transport.receiveTransportMessage(message);
+      } else {
+        throw new AssertionError("clients should not send messages after handshake error");
       }
     }
 
@@ -381,7 +383,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       if (!validateTransport.test(this.transport)) {
         sendSynAck(connectionId, new TransportHandshakeErrorContext("connection not allowed", TransportHandshakeError.ERROR_NO_ACTIVE), 
             syn.getSource(), isMaxConnectionReached);
-        this.isHandshakeError = true;
         return;
       }
       sendSynAck(transport.getConnectionId(), syn.getSource(), isMaxConnectionReached);
@@ -422,7 +423,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           synAck = handshakeMessageFactory.createSynAck(connectionId, TransportHandshakeError.ERROR_NO_ACTIVE, "no active", 
                 source, isMaxConnectionsReached, maxConnections);
         }
-        this.isHandshakeError = true;
       } else {
         int callbackPort = source.getLocalAddress().getPort();
         synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections, callbackPort);

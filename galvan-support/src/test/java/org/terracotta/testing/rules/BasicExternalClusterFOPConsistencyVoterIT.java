@@ -24,14 +24,13 @@ import org.terracotta.voter.VoterStatus;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class BasicExternalClusterFOPConsistencyVoterIT {
 
   @ClassRule
   public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2).withFailoverPriorityVoterCount(1).build();
 
-  @Test(expected = TimeoutException.class)
+  @Test
   public void testDirectConnection() throws Exception {
     CLUSTER.getClusterControl().waitForActive();
     CLUSTER.getClusterControl().waitForRunningPassivesInStandby();
@@ -49,7 +48,7 @@ public class BasicExternalClusterFOPConsistencyVoterIT {
         throw new RuntimeException(e);
       }
     });
-    connectionFuture.get(5, TimeUnit.SECONDS);
+    connectionFuture.get(10, TimeUnit.SECONDS);
   }
 
 }
