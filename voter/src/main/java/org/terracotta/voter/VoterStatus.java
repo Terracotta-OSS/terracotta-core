@@ -18,11 +18,17 @@
  */
 package org.terracotta.voter;
 
+import java.util.concurrent.TimeUnit;
+
 public interface VoterStatus {
 
   /**
    * @return true if this voter is registered with all stripes in the cluster at the moment.
    */
   boolean isActive();
+
+  void awaitRegistrationWithAll() throws InterruptedException;
+
+  void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException;
 
 }
