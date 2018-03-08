@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
@@ -75,12 +76,12 @@ public class ActiveVoter implements AutoCloseable {
   private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
     return new Thread(() -> {
       ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
+      CountDownLatch registrationLatch = new CountDownLatch(hostPorts.length);
       List<ClientVoterManager> voterManagers = Stream.of(hostPorts).map(ClientVoterManagerImpl::new).collect(toList());
       try {
         while (!Thread.currentThread().isInterrupted()) {
-          // each generation needs a new registration ID so re-registers don't occur during an active vote
-          //  find the active that this voter has successfully registered to
           ClientVoterManager currentActive = registerWithActive(id, executorService, voterManagers);
+
           active = true;
           LOGGER.info("{} registered with the active: {}", this, currentActive.getTargetHostPort());
           voterStatus.complete(new VoterStatus() {
@@ -88,8 +89,19 @@ public class ActiveVoter implements AutoCloseable {
             public boolean isActive() {
               return active;
             }
+
+            @Override
+            public void awaitRegistrationWithAll() throws InterruptedException {
+              registrationLatch.await();
+            }
+
+            @Override
+            public void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException {
+              registrationLatch.await(timeout, unit);
+            }
           });
-          registerAndHeartbeat(executorService, currentActive, voterManagers);
+
+          registerAndHeartbeat(executorService, currentActive, voterManagers, registrationLatch);
           active = false;
         }
       } catch (InterruptedException e) {
@@ -104,7 +116,11 @@ public class ActiveVoter implements AutoCloseable {
     CompletableFuture<ClientVoterManager> registrationLatch = new CompletableFuture<>();
 
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
-      voterManager.connect();
+      if (!voterManager.isConnected()) {
+        voterManager.connect();
+        LOGGER.info("Connected to {}", voterManager.getTargetHostPort());
+      }
+
       if (!registrationLatch.isDone()) {
         try {
           String serverState = voterManager.getServerState();
@@ -112,11 +128,14 @@ public class ActiveVoter implements AutoCloseable {
             long response = voterManager.registerVoter(id);
             if (response >= 0) {
               registrationLatch.complete(voterManager);
+            } else {
+              LOGGER.warn("Registration with {} failed. Retrying...", voterManager.getTargetHostPort());
             }
+          } else {
+            LOGGER.info("State of {}: {}. Continuing the search for an active server.", voterManager.getTargetHostPort(), serverState);
           }
         } catch (TimeoutException e) {
           voterManager.close();
-          voterManager.connect();
         }
       }
     }, 0, REG_RETRY_INTERVAL, TimeUnit.MILLISECONDS)).collect(Collectors.toList());
@@ -131,7 +150,8 @@ public class ActiveVoter implements AutoCloseable {
     }
   }
 
-  public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive, List<ClientVoterManager> voterManagers) throws InterruptedException {    
+  public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive,
+                                   List<ClientVoterManager> voterManagers, CountDownLatch registrationLatch) throws InterruptedException {
     AtomicReference<ClientVoterManager> voteOwner = new AtomicReference<>();
     //Try to connect and register with all the servers
     voteOwner.set(currentActive);
@@ -146,6 +166,8 @@ public class ActiveVoter implements AutoCloseable {
               voterManager.connect();
               // register as a voter, this should not take too long since have already established as voter on the active
               registerAsVoter(voterManager);
+              registrationLatch.countDown();
+
               // heartbeat with the server until a vote is requested
               while (voterManager.isConnected()) {
                 long election = heartbeat(voterManager);
@@ -157,7 +179,6 @@ public class ActiveVoter implements AutoCloseable {
                   long result = voterManager.vote(id, election);
                   LOGGER.info("Own the vote, voting for {} for term: {}, result: {}", voterManager.getTargetHostPort(), election, result);
                 } else if (owner.isConnected()) {
-                  owner = voteOwner.get();
                   // ignore, back to heartbeating
                   LOGGER.info("Not the vote owner and the owner is still connected, rejecting the vote request from {} for election term {}", voterManager.getTargetHostPort(), election);
                   // can never steal the vote back having voted in a previous vote tally
@@ -255,7 +276,7 @@ public class ActiveVoter implements AutoCloseable {
     long beatResponse = HEARTBEAT_RESPONSE;
     while (voter.isConnected() && beatResponse == HEARTBEAT_RESPONSE) {
       TimeUnit.MILLISECONDS.sleep(HEARTBEAT_INTERVAL);
-      LOGGER.debug("Heart beating with {}", voter.getTargetHostPort());
+      LOGGER.debug("Heartbeating with {}", voter.getTargetHostPort());
       beatResponse = voter.heartbeat(id);
     }
     LOGGER.info("Heartbeat broken. Response: {}", beatResponse);

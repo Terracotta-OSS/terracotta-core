@@ -36,8 +36,9 @@ public class BasicExternalClusterFOPConsistencyVoterIT {
     CLUSTER.getClusterControl().waitForRunningPassivesInStandby();
 
     TCVoter voter = new TCVoterImpl();
-    Future<VoterStatus> voterStatus = voter.register("MyCluster", CLUSTER.getClusterHostPorts());
-    voterStatus.get();
+    Future<VoterStatus> voterStatusFuture = voter.register("MyCluster", CLUSTER.getClusterHostPorts());
+    VoterStatus voterStatus = voterStatusFuture.get();
+    voterStatus.awaitRegistrationWithAll(10, TimeUnit.SECONDS);
 
     CLUSTER.getClusterControl().terminateActive();
 
