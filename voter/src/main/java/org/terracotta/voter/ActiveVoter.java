@@ -96,8 +96,10 @@ public class ActiveVoter implements AutoCloseable {
             }
 
             @Override
-            public void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException {
-              registrationLatch.await(timeout, unit);
+            public void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+              if (!registrationLatch.await(timeout, unit)) {
+                throw new TimeoutException("Registration timed out");
+              }
             }
           });
 

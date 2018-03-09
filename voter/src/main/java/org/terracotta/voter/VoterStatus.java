@@ -19,6 +19,7 @@
 package org.terracotta.voter;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public interface VoterStatus {
 
@@ -29,6 +30,6 @@ public interface VoterStatus {
 
   void awaitRegistrationWithAll() throws InterruptedException;
 
-  void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException;
+  void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 
 }
