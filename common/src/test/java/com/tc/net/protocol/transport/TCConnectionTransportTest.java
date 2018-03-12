@@ -52,7 +52,7 @@ import junit.framework.TestCase;
 /**
  * To Test Message Packup happening at the comms writer.
  */
-public class TCConnectionImplTest extends TestCase {
+public class TCConnectionTransportTest extends TestCase {
   private TCConnectionManager connMgr;
   private TCListener          server;
   private final AtomicLong    sentMessagesTotalLength  = new AtomicLong(0);

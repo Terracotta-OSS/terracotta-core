@@ -353,6 +353,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         closeWriteOnException(ioe);
         break;
       }
+      if (this.isClosePending() || this.isClosed()) {
+        logger.debug("stop write due to closed connection");
+        break;
+      }
       channelWritten += sent;
     }
     this.totalWrite.addAndGet(channelWritten);
@@ -609,7 +613,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return isClosed();
   }
 
-  private final Runnable createCloseCallback(final CountDownLatch latch) {
+  private Runnable createCloseCallback(final CountDownLatch latch) {
     final boolean fireClose = isConnected();
 
     return new Runnable() {
