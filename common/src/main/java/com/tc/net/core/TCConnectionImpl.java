@@ -185,6 +185,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     Assert.assertTrue(this.closed.isSet());
     this.transportEstablished.set(false);
     try {
+      if (this.bufferManager != null) {
+        this.bufferManager.close();
+      }
+    } catch (EOFException eof) {
+      logger.debug("closed", eof);
+    } catch (IOException ioe) {
+      logger.warn("failed to close buffer manager", ioe);
+    }
+    try {
       if (this.channel != null) {
         this.commWorker.cleanupChannel(this.channel, callback);
       } else {
