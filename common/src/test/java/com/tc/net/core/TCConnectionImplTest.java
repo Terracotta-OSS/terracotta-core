@@ -18,17 +18,23 @@
  */
 package com.tc.net.core;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.PortChooser;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.ByteBuffer;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import static junit.framework.TestCase.fail;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.mockito.Matchers.any;
@@ -78,6 +84,51 @@ public class TCConnectionImplTest {
     
     socket.close();
   }
-
   
+  @Test
+  public void testWriteEndsWhenClose() throws Exception {
+    int port = new PortChooser().chooseRandomPort();
+    ServerSocket socket = new ServerSocket(port);
+    final AtomicBoolean createManager = new AtomicBoolean(true);
+    TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
+    TCProtocolAdaptor adaptor = mock(TCProtocolAdaptor.class);
+    TCConnectionManagerImpl mgr = new TCConnectionManagerImpl();
+    final CoreNIOServices nioServiceThread = mock(CoreNIOServices.class);
+    SocketParams socketParams = new SocketParams();
+    BufferManagerFactory bufferManagerFactory = mock(BufferManagerFactory.class);
+    
+    BufferManager bufferManager = mock(BufferManager.class);
+    when(bufferManager.sendFromBuffer()).thenReturn(0);
+    when(bufferManager.forwardToWriteBuffer(any(ByteBuffer.class))).thenAnswer((i)->{
+      return ((ByteBuffer)i.getArguments()[0]).remaining();
+    });
+   
+    when(bufferManagerFactory.createBufferManager(any(SocketChannel.class), anyBoolean())).thenAnswer(invocationOnMock -> {
+      verify(nioServiceThread, never()).requestReadInterest(any(TCChannelReader.class), any(ScatteringByteChannel.class));
+      return bufferManager;
+    });
+    TCConnectionImpl conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, bufferManagerFactory);
+    TCSocketAddress addr = new TCSocketAddress("localhost", port);
+    conn.connect(addr, 0);
+        
+    TCNetworkMessage msg = mock(TCNetworkMessage.class);
+    when(msg.getEntireMessageData()).thenReturn(new TCByteBuffer[] {TCByteBufferFactory.wrap(new byte[512])});
+    when(msg.getDataLength()).thenReturn(512);
+    
+    conn.putMessage(msg);
+    
+    new Thread(()->sleepThenClose(conn)).start();
+    int w = conn.doWrite();
+    
+    Assert.assertEquals(0, w);
+  }
+
+  private void sleepThenClose(TCConnectionImpl conn) {
+    try {
+      TimeUnit.SECONDS.sleep(3);
+    } catch (InterruptedException ie) {
+      ie.printStackTrace();
+    }
+    conn.close(100);
+  }
 }
