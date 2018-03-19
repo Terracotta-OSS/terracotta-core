@@ -716,12 +716,19 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             logger.debug("selection key cancelled key@" + key.hashCode());
           } catch (Exception e) { // DEV-9369. Do not reconnect on fatal errors.
             logger.info("Unhandled exception occured on connection layer", e);
-            TCConnectionImpl conn = (TCConnectionImpl) key.attachment();
-            // TCConnectionManager will take care of closing and cleaning up resources
-            // key may not have an attachment yet.
-            if (conn != null) {
-              conn.fireErrorEvent(new RuntimeException(e), null);
+            Object attachment = key.attachment();
+            if (attachment instanceof TCConnectionImpl) {
+              TCConnectionImpl conn = (TCConnectionImpl) attachment;
+              // TCConnectionManager will take care of closing and cleaning up resources
+              // key may not have an attachment yet.
+              if (conn != null) {
+                conn.fireErrorEvent(new RuntimeException(e), null);
+              }
+            } else if (attachment instanceof TCListenerImpl) {
+              TCListenerImpl lsnr = (TCListenerImpl) key.attachment();
+              // just log
             }
+
           }
         } // for
       } // while (true)
