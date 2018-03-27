@@ -159,7 +159,7 @@ public class ClientConnectionEstablisher {
         LOGGER.debug("Connection attempt failed: ", noactive);
         // if there is no active, throw an IOException and let upper layers of 
         // the network stack handle the issue
-        throw new IOException(noactive);
+        if (!addresses.hasNext()) { throw new IOException(noactive); }
       } catch (TCTimeoutException e) {
         reporter.onError(info, e);
         info = null;
