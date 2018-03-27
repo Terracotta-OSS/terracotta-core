@@ -71,8 +71,10 @@ import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
+import com.tc.l2.ha.BlockTimeWeightGenerator;
 import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.ConnectionIDWeightGenerator;
+import com.tc.l2.ha.ConsistencyManagerWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -586,9 +588,12 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
     // At this point, we can create the weight generator factory we will use for elections and other inter-server consensus decisions.
     // Generators to produce:
-    // 1)  TransactionCountWeightGenerator - needs the TransactionOrderPersistor.
-    final TransactionCountWeightGenerator transactionCountWeightGenerator = new TransactionCountWeightGenerator(this.persistor.getTransactionOrderPersistor());
-    weightGeneratorFactory.add(transactionCountWeightGenerator);
+    // 1)  ConsistencyWeightGenerator - needs the ConsistencyManagerImpl if being used.
+    final ConsistencyManagerWeightGenerator consistency = new ConsistencyManagerWeightGenerator(()->l2Coordinator.getStateManager(), consistencyMgr);
+    weightGeneratorFactory.add(consistency);
+    // 1.5) ConsistencyBlockingTimeWeightGenerator - needs the ConsistencyManagerImpl if being used.
+    final BlockTimeWeightGenerator blocking = new BlockTimeWeightGenerator(consistencyMgr);
+    weightGeneratorFactory.add(blocking);
     // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
     final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(()->l2Coordinator.getStateManager(), channelManager);
     weightGeneratorFactory.add(connectedClientCountWeightGenerator);
