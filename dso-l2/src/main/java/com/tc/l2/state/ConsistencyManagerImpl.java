@@ -23,7 +23,6 @@ import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
-import com.tc.net.groups.GroupManager;
 import com.tc.util.Assert;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -46,6 +45,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private boolean blocked = false;
   private Set<Transition> actions = EnumSet.noneOf(Transition.class);
   private long voteTerm = 0;
+  private long blockedAt = Long.MAX_VALUE;
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
   private final Set<NodeID> passives = Collections.synchronizedSet(new HashSet<>());
@@ -58,6 +58,14 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+  
+  public synchronized long getVoteTerm() {
+    return voteTerm;
+  }
+  
+  public synchronized long getBlockingTimestamp() {
+    return blockedAt;
   }
         
   @Override
@@ -129,6 +137,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     try {
       if (voter.getRegisteredVoters() + serverVotes < threshold) {
         blocked = true;
+        blockedAt = System.currentTimeMillis();
         CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", this.peerServers + 1 > threshold ? threshold : "all", newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
@@ -181,6 +190,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
         Assert.assertEquals(voteTerm, voter.stopVoting());
         activeVote = false;
         blocked = false;
+        blockedAt = Long.MAX_VALUE;
         switch(moveTo) {
           case CONNECT_TO_ACTIVE:
           case MOVE_TO_ACTIVE:
@@ -198,11 +208,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return new ArrayList<>(actions);
   }
    
-  public boolean isVoting() {
+  public synchronized boolean isVoting() {
     return activeVote;
   }
   
-  public boolean isBlocked() {
+  public synchronized boolean isBlocked() {
     return blocked;
   }
   
