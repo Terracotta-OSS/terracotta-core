@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
 import com.tc.object.ClientBuilderFactory;
@@ -14,7 +15,9 @@ import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.client.TerracottaClientConfigParams;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -35,7 +38,7 @@ public class AbstractConnectionServiceTest {
   private ConnectionService connectionService;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     clientFactoryMock = mock(TerracottaInternalClientFactory.class);
     EndpointConnector endpointConnectorMock = mock(EndpointConnector.class);
     when(clientFactoryMock.createL1Client(any())).thenReturn(mock(TerracottaInternalClient.class));
@@ -66,10 +69,37 @@ public class AbstractConnectionServiceTest {
   }
 
   @Test
+  public void verifyPropertiesWithIterableBasedConnect() throws Exception {
+    ArgumentCaptor<TerracottaClientConfigParams> argumentCaptor = ArgumentCaptor.forClass(TerracottaClientConfigParams.class);
+    final String testProperty = "testProperty";
+    final String testPropertyValue = "testPropertyValue";
+    Properties connectionProperties = new Properties();
+    connectionProperties.put(testProperty, testPropertyValue);
+    InetSocketAddress server = InetSocketAddress.createUnresolved("localhost", 4000);
+    connectionService.connect(Collections.singletonList(server), connectionProperties);
+    verify(clientFactoryMock).createL1Client(argumentCaptor.capture());
+
+    TerracottaClientConfigParams terracottaClientConfigParams = argumentCaptor.getValue();
+    Properties genericProperties = terracottaClientConfigParams.getGenericProperties();
+    assertThat(genericProperties.get(ClientBuilderFactory.CLIENT_BUILDER_TYPE), notNullValue());
+    assertThat(genericProperties.get(testProperty), is(testPropertyValue));
+  }
+
+  @Test
   public void connectWithUnknownScheme() throws Exception {
     expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Unknown URI");
     connectionService.connect(URI.create("non-terracotta://localhost:4000"), new Properties());
+  }
+
+  @Test
+  public void connectWithUnknownTypeWithIterableBasedConnect() throws Exception {
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("Unknown connectionType");
+    Properties properties = new Properties();
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "unknown");
+    InetSocketAddress server = InetSocketAddress.createUnresolved("localhost", 4000);
+    connectionService.connect(Collections.singletonList(server), properties);
   }
 
   @Test

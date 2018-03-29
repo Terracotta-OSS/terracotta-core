@@ -2,6 +2,7 @@ package com.terracotta.connection.api;
 
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
 import com.tc.object.ClientBuilderFactory;
@@ -36,8 +37,14 @@ abstract class AbstractConnectionService implements ConnectionService {
     this.clientFactory = clientFactory;
   }
 
+  @Override
   public boolean handlesURI(URI uri) {
-    return scheme.equals(uri.getScheme());
+    return handlesConnectionType(uri.getScheme());
+  }
+
+  @Override
+  public boolean handlesConnectionType(String connectionType) {
+    return this.scheme.equals(connectionType);
   }
 
   @Override
@@ -71,6 +78,22 @@ abstract class AbstractConnectionService implements ConnectionService {
       clientConfig.addStripeMember(address);
     }
 
+    return createConnection(properties, clientConfig);
+  }
+
+  @Override
+  public final Connection connect(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+    String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, "terracotta");
+    if (!handlesConnectionType(connectionType)) {
+      throw new IllegalArgumentException("Unknown connectionType " + connectionType);
+    }
+
+    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams();
+    servers.forEach(clientConfig::addStripeMember);
+    return createConnection(properties, clientConfig);
+  }
+
+  private Connection createConnection(Properties properties, TerracottaClientConfigParams clientConfig) throws DetailedConnectionException {
     properties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.of(scheme));
     clientConfig.addGenericProperties(properties);
 
