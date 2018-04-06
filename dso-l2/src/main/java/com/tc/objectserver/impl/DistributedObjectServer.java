@@ -562,7 +562,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (t)->{
-                                                                  return consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
+                                                                  return t.getConnectionId().getProductId().isInternal() || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
                                                                       t.getConnectionId().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
     

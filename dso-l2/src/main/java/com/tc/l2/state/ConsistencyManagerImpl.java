@@ -87,10 +87,12 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       passives.add(sourceNode);
       Assert.assertEquals(mode, ServerMode.ACTIVE);
       //  adding a passive to an active is always OK
+      CONSOLE.info("Action:{} is always allowed", newMode);
       return true;
     }
     if (newMode == Transition.CONNECT_TO_ACTIVE) {
       endVoting(true, newMode);
+      CONSOLE.info("Action:{} is always allowed", newMode);
       return true;
     }
     if (newMode == Transition.REMOVE_PASSIVE) {
