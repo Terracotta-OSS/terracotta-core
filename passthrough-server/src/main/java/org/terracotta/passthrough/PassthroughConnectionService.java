@@ -18,6 +18,7 @@
  */
 package org.terracotta.passthrough;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.rmi.UnknownHostException;
 import java.util.Properties;
@@ -42,17 +43,31 @@ import org.terracotta.connection.ConnectionService;
  * is listed in "META-INF/services/org.terracotta.connection.ConnectionService".
  */
 public class PassthroughConnectionService implements ConnectionService {
-  private static final String SCHEME = "passthrough";
+  private static final String CONNECTION_TYPE = "passthrough";
 
   @Override
   public boolean handlesURI(URI uri) {
-    return SCHEME.equals(uri.getScheme());
+    return handlesConnectionType(uri.getScheme());
+  }
+
+  @Override
+  public boolean handlesConnectionType(String connectionType) {
+    return CONNECTION_TYPE.equals(connectionType);
   }
 
   @Override
   public Connection connect(URI uri, Properties properties) throws ConnectionException {
-    Connection connection = null;
-    String serverName = uri.getHost();
+    return getConnection(uri.getHost(), properties);
+  }
+
+  @Override
+  public Connection connect(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, CONNECTION_TYPE);
+    return getConnection(servers.iterator().next().getHostString(), properties);
+  }
+
+  private Connection getConnection(String serverName, Properties properties) throws ConnectionException {
+    Connection connection;
     PassthroughServer server = PassthroughServerRegistry.getSharedInstance().getServerForName(serverName);
     if (null != server) {
       String connectionName = properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME);
