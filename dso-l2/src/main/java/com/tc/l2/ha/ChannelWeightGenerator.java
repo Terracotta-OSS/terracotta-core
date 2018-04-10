@@ -44,8 +44,7 @@ public class ChannelWeightGenerator implements WeightGenerator {
       // return number of connected clients and are active
       MessageChannel[] connections = channelManager.getActiveChannels();
       for (MessageChannel c : connections) {
-        if (c.getProductId() != ProductID.DIAGNOSTIC &&
-            c.getProductId() != ProductID.INFORMATIONAL) {
+        if (!c.getProductId().isInternal()) {
           count += 1;
         }
       }

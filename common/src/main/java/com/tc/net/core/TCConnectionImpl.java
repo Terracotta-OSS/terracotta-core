@@ -185,6 +185,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     Assert.assertTrue(this.closed.isSet());
     this.transportEstablished.set(false);
     try {
+      if (this.bufferManager != null) {
+        this.bufferManager.close();
+      }
+    } catch (EOFException eof) {
+      logger.debug("closed", eof);
+    } catch (IOException ioe) {
+      logger.warn("failed to close buffer manager", ioe);
+    }
+    try {
       if (this.channel != null) {
         this.commWorker.cleanupChannel(this.channel, callback);
       } else {
@@ -351,6 +360,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         sent = bufferManager.sendFromBuffer();
       } catch (IOException ioe) {
         closeWriteOnException(ioe);
+        break;
+      }
+      if (this.isClosePending() || this.isClosed()) {
+        logger.debug("stop write due to closed connection");
         break;
       }
       channelWritten += sent;
@@ -609,7 +622,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return isClosed();
   }
 
-  private final Runnable createCloseCallback(final CountDownLatch latch) {
+  private Runnable createCloseCallback(final CountDownLatch latch) {
     final boolean fireClose = isConnected();
 
     return new Runnable() {

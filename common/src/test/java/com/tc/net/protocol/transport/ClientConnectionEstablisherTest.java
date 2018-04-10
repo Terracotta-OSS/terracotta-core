@@ -45,13 +45,19 @@ import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class ClientConnectionEstablisherTest {
   private ClientConnectionEstablisher         connEstablisher;
@@ -238,4 +244,21 @@ public class ClientConnectionEstablisherTest {
       Assert.fail(msg);
     }
   }
+  
+
+  @Test
+  public void test_client_tries_next_after_noActive() throws Exception {
+    Collection<ConnectionInfo> infos = new ArrayList<ConnectionInfo>();
+    infos.add(connInfo);
+    ConnectionInfo connInfo2 = mock(ConnectionInfo.class);
+    infos.add(connInfo2);
+    doThrow(new NoActiveException()).when(cmt).open(any(ConnectionInfo.class));
+    try {
+      spyConnEstablisher.open(infos, cmt, errorListener);
+    } catch (IOException ioe) {
+      assertTrue(ioe.getCause() instanceof NoActiveException);
+    }
+    verify(cmt).open(eq(connInfo));
+    verify(cmt).open(eq(connInfo2));
+  }  
 }

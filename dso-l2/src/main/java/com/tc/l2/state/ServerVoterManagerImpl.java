@@ -52,8 +52,12 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   ServerVoterManagerImpl(int voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
     super(ServerVoterManager.class, false);
     if (initMBean) {
-      ManagementFactory.getPlatformMBeanServer().registerMBean(this,
+      try {
+        ManagementFactory.getPlatformMBeanServer().registerMBean(this,
           TerracottaManagement.createObjectName(null, MBEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC));
+      } catch (Exception e) {
+        logger.warn("problem registering MBean", e);
+      }
     }
     this.voterLimit = voterLimit;
     this.timeSource = timeSource;
