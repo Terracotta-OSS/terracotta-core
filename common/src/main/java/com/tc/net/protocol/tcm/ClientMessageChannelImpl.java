@@ -97,7 +97,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
-      if (id.isValid()) {
+      if (!id.isNull()) {
  //  why are all these identifiers intermingled?
         long validID = id.toLong();
         this.channelID = new ChannelID(validID);
@@ -139,7 +139,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    if (transport.getConnectionId().isValid()) {
+    if (!transport.getConnectionId().isNull()) {
       long channelIdLong = transport.getConnectionId().getChannelID();
       this.channelID = new ChannelID(channelIdLong);
       setLocalNodeID(new ClientID(channelIdLong));

@@ -24,7 +24,7 @@ package com.tc.util;
  */
 public enum ProductID {
   DIAGNOSTIC(true, false, false, false), 
-  INFORMATIONAL(true, false, true, false), 
+  INFORMATIONAL(true, true, true, false), 
   STRIPE(false, true, true, false), 
   SERVER(false, false, true, false), 
   PERMANENT(false, true, true, true);
