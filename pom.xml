@@ -31,7 +31,7 @@
 
   <groupId>org.terracotta.internal</groupId>
   <artifactId>terracotta-core-root</artifactId>
-  <version>5.4-SNAPSHOT</version>
+  <version>5.5-SNAPSHOT</version>
   <name>terracotta-core-root</name>
   <packaging>pom</packaging>
 
@@ -41,8 +41,8 @@
     <tc-shader.version>1.2</tc-shader.version>
     <skip.deploy>false</skip.deploy>
 
-    <terracotta-apis.version>1.4.1-pre1</terracotta-apis.version>
-    <terracotta-configuration.version>10.4.1-pre1</terracotta-configuration.version>
+    <terracotta-apis.version>1.5.0-pre1</terracotta-apis.version>
+    <terracotta-configuration.version>10.5.0-pre1</terracotta-configuration.version>
     <galvan.version>1.4.1</galvan.version>
   </properties>
 
