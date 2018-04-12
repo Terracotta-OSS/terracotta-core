@@ -561,13 +561,13 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     // Incompatible version, higher weights. Close down the handshake, the other guy will zap himself.
     MessageChannel channel1 = mockMessageChannel();
-    tcGroupManager.receivedHandshake(mockHandshakeMessage(channel1, "4.3.1", new long [] { 4, 5 }));
+    tcGroupManager.receivedHandshake(mockHandshakeMessage(channel1, "5.3.1", new long [] { 4, 5 }));
     verify(channel1).close();
 
     // Incompatible version, lower weights. Zap yourself.
     MessageChannel channel2 = mockMessageChannel();
     try {
-      tcGroupManager.receivedHandshake(mockHandshakeMessage(channel2, "4.3.1", new long [] { 6, 1 }));
+      tcGroupManager.receivedHandshake(mockHandshakeMessage(channel2, "5.3.1", new long [] { 6, 1 }));
       fail("Should have zapped here due to low weights");
     } catch (TCShutdownServerException e) {
       // expected

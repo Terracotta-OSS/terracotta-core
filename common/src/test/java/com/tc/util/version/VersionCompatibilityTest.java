@@ -18,17 +18,17 @@
  */
 package com.tc.util.version;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class VersionCompatibilityTest extends TestCase {
+import static com.tc.util.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
-  private VersionCompatibility versionCompatibility;
+public class VersionCompatibilityTest {
 
-  @Override
-  protected void setUp() throws Exception {
-    this.versionCompatibility = new VersionCompatibility();
-  }
+  private final VersionCompatibility versionCompatibility = new VersionCompatibility();
 
+  @Test
   public void testNull() {
     try {
       versionCompatibility.isCompatibleClientServer(v("1.0.0"), null);
@@ -52,24 +52,28 @@ public class VersionCompatibilityTest extends TestCase {
     }
   }
 
-  public void testPersistenceCompatibleWithMinimum() throws Exception {
+  @Test
+  public void testPersistenceCompatibleWithMinimum() {
     assertTrue(versionCompatibility.isCompatibleServerPersistence(versionCompatibility.getMinimumCompatiblePersistence(),
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 1, 0)));
   }
 
-  public void testPersistenceIncompatibleWithLessThanMinimum() throws Exception {
+  @Test
+  public void testPersistenceIncompatibleWithLessThanMinimum() {
     assertFalse(versionCompatibility.isCompatibleServerPersistence(
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), -1, 0, 0),
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 1, 0)));
   }
 
-  public void testPersistenceCompatibleWithBetweenMinAndCurrent() throws Exception {
+  @Test
+  public void testPersistenceCompatibleWithBetweenMinAndCurrent() {
     assertTrue(versionCompatibility.isCompatibleServerPersistence(
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 1, 0),
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 2, 0)));
   }
 
-  public void testPersistenceCompatibleWithinMinor() throws Exception {
+  @Test
+  public void testPersistenceCompatibleWithinMinor() {
     assertTrue(versionCompatibility.isCompatibleServerPersistence(
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 0, 1),
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 0, 2)));
@@ -78,7 +82,8 @@ public class VersionCompatibilityTest extends TestCase {
         incrementedVersion(versionCompatibility.getMinimumCompatiblePersistence(), 0, 0, 1)));
   }
 
-  public void testPersistedSameMinorAsMinButLowerDot() throws Exception {
+  @Test
+  public void testPersistedSameMinorAsMinButLowerDot() {
     // Doesn't matter on .0's but check that the versions lower than the minimum are properly excluded.
     if (versionCompatibility.getMinimumCompatiblePersistence().micro() != 0) {
       assertFalse(versionCompatibility.isCompatibleServerPersistence(
@@ -93,58 +98,72 @@ public class VersionCompatibilityTest extends TestCase {
                        (base.micro() + microIncrement));
   }
 
+  @Test
   public void testSame() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.0.0")));
   }
 
+  @Test
   public void testMajorBump() {
     assertFalse(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("2.0.0")));
   }
 
+  @Test
   public void testMajorDrop() {
     assertFalse(versionCompatibility.isCompatibleClientServer(v("2.0.0"), v("1.0.0")));
   }
 
+  @Test
   public void testMinorBump() {
-    assertFalse(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.1.0")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.1.0")));
   }
 
+  @Test
   public void testMinorDrop() {
-    assertFalse(versionCompatibility.isCompatibleClientServer(v("1.1.0"), v("1.0.0")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.1.0"), v("1.0.0")));
   }
 
+  @Test
   public void testDotBump() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.0.1")));
   }
 
+  @Test
   public void testDotDrop() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1"), v("1.0.0")));
   }
 
+  @Test
   public void testPatchBump() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.2.25")));
   }
 
+  @Test
   public void testPatchDrop() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.0.25")));
   }
 
+  @Test
   public void testBuildBump() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.1.142")));
   }
 
+  @Test
   public void testBuildDrop() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.1.25")));
   }
 
+  @Test
   public void testSpecifierAdd() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134"), v("1.0.1.1.134_fix1")));
   }
 
+  @Test
   public void testSpecifierDrop() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1.1.134_fix1"), v("1.0.1.1.134")));
   }
 
+  @Test
   public void testSnapshots() {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0"), v("1.0.0-SNAPSHOT")));
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.0.1.34"), v("1.0.0-SNAPSHOT")));
@@ -158,9 +177,9 @@ public class VersionCompatibilityTest extends TestCase {
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1-SNAPSHOT"), v("1.0.0")));
     assertTrue(versionCompatibility.isCompatibleClientServer(v("1.0.1-SNAPSHOT"), v("1.0.0-SNAPSHOT")));
 
-    assertFalse(versionCompatibility.isCompatibleClientServer(v("1.1.0"), v("1.0.0-SNAPSHOT")));
-    assertFalse(versionCompatibility.isCompatibleClientServer(v("1.1.0-SNAPSHOT"), v("1.0.0")));
-    assertFalse(versionCompatibility.isCompatibleClientServer(v("1.1.0-SNAPSHOT"), v("1.0.0-SNAPSHOT")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.1.0"), v("1.0.0-SNAPSHOT")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.1.0-SNAPSHOT"), v("1.0.0")));
+    assertTrue(versionCompatibility.isCompatibleClientServer(v("1.1.0-SNAPSHOT"), v("1.0.0-SNAPSHOT")));
 
     assertFalse(versionCompatibility.isCompatibleClientServer(v("2.0.0"), v("1.0.0-SNAPSHOT")));
     assertFalse(versionCompatibility.isCompatibleClientServer(v("2.0.0-SNAPSHOT"), v("1.0.0")));

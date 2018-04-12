@@ -76,7 +76,7 @@ public class ClientHandshakeManagerTest {
   private TCProperties properties;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     initMocks(this);
     when(properties.getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK))
             .thenReturn(checkVersionCompatibility);
@@ -111,15 +111,14 @@ public class ClientHandshakeManagerTest {
 
   @Test
   public void testClientVersionIsNull() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay(null, "1.1.1.1",
+    checkCompatibilityIfConfiguredAndDifferenceEitherWay(null,
             NullPointerException.class);
   }
 
   private void checkCompatibilityIfConfiguredAndDifferenceEitherWay(String clientVersion,
-                                                                    String serverVersion,
                                                                     Class<? extends Throwable> exceptionClass) {
     expectErrorIfCheckingCompatibility(exceptionClass);
-    checkClientServerVersionCompatibility(clientVersion, serverVersion);
+    checkClientServerVersionCompatibility(clientVersion, "1.1.1.1");
     checkLoggedDifferenceIfNotCheckingCompatibility();
   }
 
@@ -148,20 +147,19 @@ public class ClientHandshakeManagerTest {
 
   @Test
   public void testClientVersionIsInvalid() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay("${version}", "1.1.1.1",
+    checkCompatibilityIfConfiguredAndDifferenceEitherWay("${version}",
             IllegalArgumentException.class);
   }
 
   @Test
   public void testMajorVersionsDifferent() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay("2.1.1.1", "1.1.1.1",
+    checkCompatibilityIfConfiguredAndDifferenceEitherWay("2.1.1.1",
             IllegalStateException.class);
   }
 
   @Test
   public void testMinorVersionsDifferent() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay("1.2.1.11", "1.1.1.1",
-            IllegalStateException.class);
+    checkDifferenceOnly("1.2.1.11", "1.1.1.1");
   }
 
   @Test

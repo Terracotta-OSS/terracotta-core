@@ -41,7 +41,7 @@ public class VersionCompatibility {
 
   private static boolean isCompatible(Version v1, Version v2) {
     if (v1 == null || v2 == null) { throw new NullPointerException(); }
-    return ((v1.major() == v2.major()) && (v1.minor() == v2.minor()));
+    return (v1.major() == v2.major());
   }
 
   public Version getMinimumCompatiblePersistence() {
