@@ -501,7 +501,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     //  if the DB was zapped, reset the flag until the server has finished sync
     persistor.getClusterStatePersistor().setDBClean(!wasZapped);
 
-    new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
+    new ServerPersistenceVersionChecker().checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
