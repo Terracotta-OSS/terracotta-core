@@ -356,14 +356,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section :  Version Settings
-   * version.compatibility.check - check version compatibility for client<->server and server<-> connections
-   * </code>
-   ********************************************************************************************************************/
-  public static final String VERSION_COMPATIBILITY_CHECK                                    = "version.compatibility.check";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section :  Some useful subcategories
    * </code>
    ********************************************************************************************************************/

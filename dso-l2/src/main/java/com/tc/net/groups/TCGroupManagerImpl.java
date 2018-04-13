@@ -1199,15 +1199,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       @Override
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
-        if (!new VersionCompatibility().isCompatibleServerServer(new Version(version), new Version(msg.getVersion()))) {
-          switchToState(STATE_FAILURE);
-          if (checkWeights(msg)) {
-            logger.error("Node " + peerNodeID + " has an incompatible version " + msg.getVersion());
-            return;
-          } else {
-            throw new TCShutdownServerException("Version incompatible with the rest of the cluster.");
-          }
-        }
         if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
           logger.warn("Drop connection from non-member node " + peerNodeID);
           switchToState(STATE_FAILURE);
