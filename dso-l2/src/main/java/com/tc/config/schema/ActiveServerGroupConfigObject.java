@@ -28,14 +28,11 @@ import java.util.Set;
 
 public class ActiveServerGroupConfigObject implements ActiveServerGroupConfig {
 
-  private final Servers s;
-
   private String              grpName;
   private final Set<String>   members;
 
   public ActiveServerGroupConfigObject(Servers s, L2ConfigurationSetupManagerImpl setupManager)
       throws ConfigurationSetupException {
-    this.s = s;
     members = new HashSet<>();
     for(Server server : s.getServer()) {
       members.add(server.getName());
@@ -71,10 +68,5 @@ public class ActiveServerGroupConfigObject implements ActiveServerGroupConfig {
   public static void createDefaultMirrorGroup(Servers servers) {
     //TODO fix this,
     //DO nothing
-  }
-
-  @Override
-  public Servers getBean() {
-    return s;
   }
 }
