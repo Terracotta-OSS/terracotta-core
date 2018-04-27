@@ -21,40 +21,21 @@ package com.tc.object.handshakemanager;
 import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.UUID;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.slf4j.Logger;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 
 /**
- * Testing method {@link ClientHandshakeManagerImpl#checkClientServerVersionCompatibility(java.lang.String)}
- * with different arguments and configurations.
+ * Testing method {@link ClientHandshakeManagerImpl#checkClientServerVersionCompatibility(java.lang.String)}.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(TCPropertiesImpl.class)
-@PowerMockRunnerDelegate(Parameterized.class)
 public class ClientHandshakeManagerTest {
 
   @Mock
@@ -72,35 +53,9 @@ public class ClientHandshakeManagerTest {
   @Mock
   private ClientHandshakeCallback entities;
 
-  @Mock
-  private TCProperties properties;
-
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     initMocks(this);
-    when(properties.getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK))
-            .thenReturn(checkVersionCompatibility);
-
-    PowerMockito.mockStatic(TCPropertiesImpl.class);
-    PowerMockito.when(TCPropertiesImpl.getProperties())
-            .thenReturn(properties);
-  }
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
-  @Parameterized.Parameters
-  public static Collection<Object[]> getCheckVersionCompatibilityPropertyValues() {
-    return Arrays.asList(new Object[][]{
-            {true},
-            {false}
-    });
-  }
-
-  private final boolean checkVersionCompatibility;
-
-  public ClientHandshakeManagerTest(boolean checkVersionCompatibility) {
-    this.checkVersionCompatibility = checkVersionCompatibility;
   }
 
   @Test
@@ -111,34 +66,18 @@ public class ClientHandshakeManagerTest {
 
   @Test
   public void testClientVersionIsNull() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay(null, "1.1.1.1",
-            NullPointerException.class);
+    checkThatDifferenceIsLogged(null, "1.1.1.1");
   }
 
-  private void checkCompatibilityIfConfiguredAndDifferenceEitherWay(String clientVersion,
-                                                                    String serverVersion,
-                                                                    Class<? extends Throwable> exceptionClass) {
-    expectErrorIfCheckingCompatibility(exceptionClass);
+  private void checkThatDifferenceIsLogged(String clientVersion, String serverVersion) {
     checkClientServerVersionCompatibility(clientVersion, serverVersion);
-    checkLoggedDifferenceIfNotCheckingCompatibility();
+    checkLoggedDifference(1);
   }
 
   private void checkClientServerVersionCompatibility(String clientVersion, String serverVersion) {
     ClientHandshakeManagerImpl manager = new ClientHandshakeManagerImpl(logger, chmf, sessionManager,
             clusterEventsGun, UUID.getUUID().toString(), "name", clientVersion, entities);
     manager.checkClientServerVersionCompatibility(serverVersion);
-  }
-
-  private void expectErrorIfCheckingCompatibility(Class<? extends Throwable> exceptionClass) {
-    if (checkVersionCompatibility) {
-      thrown.expect(exceptionClass);
-    }
-  }
-
-  private void checkLoggedDifferenceIfNotCheckingCompatibility() {
-    if (!checkVersionCompatibility) {
-      checkLoggedDifference(1);
-    }
   }
 
   private void checkLoggedDifference(int times) {
@@ -148,49 +87,44 @@ public class ClientHandshakeManagerTest {
 
   @Test
   public void testClientVersionIsInvalid() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay("${version}", "1.1.1.1",
-            IllegalArgumentException.class);
+    checkThatDifferenceIsLogged("${version}", "1.1.1.1"
+    );
   }
 
   @Test
   public void testMajorVersionsDifferent() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay("2.1.1.1", "1.1.1.1",
-            IllegalStateException.class);
+    checkThatDifferenceIsLogged("2.1.1.1", "1.1.1.1"
+    );
   }
 
   @Test
   public void testMinorVersionsDifferent() {
-    checkCompatibilityIfConfiguredAndDifferenceEitherWay("1.2.1.11", "1.1.1.1",
-            IllegalStateException.class);
+    checkThatDifferenceIsLogged("1.2.1.11", "1.1.1.1"
+    );
   }
 
   @Test
   public void testMicroVersionsDifferent() {
-    checkDifferenceOnly("1.1.2.1", "1.1.1.1");
-  }
-
-  private void checkDifferenceOnly(String clientVersion, String serverVersion) {
-    checkClientServerVersionCompatibility(clientVersion, serverVersion);
-    checkLoggedDifference(1);
+    checkThatDifferenceIsLogged("1.1.2.1", "1.1.1.1");
   }
 
   @Test
   public void testPatchDifferent() {
-    checkDifferenceOnly("1.1.1.2", "1.1.1.1");
+    checkThatDifferenceIsLogged("1.1.1.2", "1.1.1.1");
   }
 
   @Test
   public void testBuildDifferent() {
-    checkDifferenceOnly("1.1.1.1.10", "1.1.1.1.11");
+    checkThatDifferenceIsLogged("1.1.1.1.10", "1.1.1.1.11");
   }
 
   @Test
   public void testSpecifierDifferent() {
-    checkDifferenceOnly("1.1.1.1.10_fix1", "1.1.1.1.11");
+    checkThatDifferenceIsLogged("1.1.1.1.10_fix1", "1.1.1.1.11");
   }
 
   @Test
   public void testSnapshotDifferent() {
-    checkDifferenceOnly("1.1.1-SNAPSHOT", "1.1.1");
+    checkThatDifferenceIsLogged("1.1.1-SNAPSHOT", "1.1.1");
   }
 }

@@ -180,14 +180,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   protected void checkClientServerVersionCompatibility(String serverVersion) {
-    final boolean check = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
-
-    if (check && !new VersionCompatibility().isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion))) {
-      final String msg = "Client/Server versions are not compatible: Client Version: " + clientVersion + ", Server Version: "
-                         + serverVersion + ".  Terminating client now.";
-      LOGGER.error(msg);
-      throw new IllegalStateException(msg);
-    } else if (!Objects.equals(clientVersion, serverVersion)) {
+    if (!Objects.equals(clientVersion, serverVersion)) {
       String message = String.format("Client version %s is different from server version %s.",
               clientVersion, serverVersion);
       logger.info(message);

@@ -19,22 +19,19 @@
 
 package com.tc.objectserver.impl;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
-import com.tc.util.version.VersionCompatibility;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author tim
@@ -45,66 +42,69 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   private ClusterStatePersistor           clusterStatePersistor;
   private ServerPersistenceVersionChecker serverPersistenceVersionChecker;
   private ProductInfo                     productInfo;
-  private VersionCompatibility            versionCompatibility;
 
   @Override
   public void setUp() throws Exception {
     clusterStatePersistor = mock(ClusterStatePersistor.class);
     productInfo = mock(ProductInfo.class);
-    versionCompatibility = spy(new VersionCompatibility());
-    when(versionCompatibility.getMinimumCompatiblePersistence()).thenReturn(new Version("0.0.1"));
-    serverPersistenceVersionChecker = new ServerPersistenceVersionChecker(clusterStatePersistor, productInfo, versionCompatibility);
+    serverPersistenceVersionChecker = new ServerPersistenceVersionChecker(productInfo);
   }
 
-  public void testDotVersionBump() throws Exception {
+  public void testDotVersionBump() {
     persistedVersion("1.0.0");
     currentVersion("1.0.1");
     verifyUpdatedTo("1.0.1");
   }
 
-  public void testDotBumpToSnapshot() throws Exception {
+  public void testDotBumpToSnapshot() {
     persistedVersion("1.0.0");
     currentVersion("1.0.1-SNAPSHOT");
     verifyUpdatedTo("1.0.1-SNAPSHOT");
   }
 
-  public void testDotVersionDrop() throws Exception {
+  public void testDotVersionDrop() {
     currentVersion("1.0.0");
     persistedVersion("1.0.1");
     verifyNoUpdate();
   }
 
-  public void testMinorVersionBump() throws Exception {
+  public void testMinorVersionBump() {
     currentVersion("1.1.0");
     persistedVersion("1.0.0");
     verifyUpdatedTo("1.1.0");
   }
 
-  public void testMinorVersionDrop() throws Exception {
+  public void testMinorVersionDrop() {
     currentVersion("1.0.0");
     persistedVersion("1.1.0");
-    verifyExceptionAndNoUpdate();
+    verifyNoUpdate();
   }
 
-  public void testMajorVersionBump() throws Exception {
+  public void testMajorVersionDrop() {
+    currentVersion("1.0.0");
+    persistedVersion("2.0.0");
+    verifyNoUpdate();
+  }
+
+  public void testMajorVersionBump() {
     persistedVersion("1.0.0");
     currentVersion("2.0.0");
     verifyUpdatedTo("2.0.0");
   }
 
-  public void testInitializeVersion() throws Exception {
+  public void testInitializeVersion() {
     persistedVersion(null);
     currentVersion("1.0.0");
     verifyUpdatedTo("1.0.0");
   }
 
-  public void testUpdateDotVersion() throws Exception {
+  public void testUpdateDotVersion() {
     currentVersion("1.0.1");
     persistedVersion("1.0.0");
     verifyUpdatedTo("1.0.1");
   }
 
-  public void testDoNotOverwriteNewerVersion() throws Exception {
+  public void testDoNotOverwriteNewerVersion() {
     currentVersion("1.0.0");
     persistedVersion("1.0.1");
     verifyNoUpdate();
@@ -119,22 +119,12 @@ public class ServerPersistenceVersionCheckerTest extends TCTestCase {
   }
 
   private void verifyUpdatedTo(String v) {
-    serverPersistenceVersionChecker.checkAndSetVersion();
+    serverPersistenceVersionChecker.checkAndBumpPersistedVersion(clusterStatePersistor);
     verify(clusterStatePersistor).setVersion(new Version(v));
   }
 
   private void verifyNoUpdate() {
-    serverPersistenceVersionChecker.checkAndSetVersion();
-    verify(clusterStatePersistor, never()).setVersion(any(Version.class));
-  }
-
-  private void verifyExceptionAndNoUpdate() {
-    try {
-      serverPersistenceVersionChecker.checkAndSetVersion();
-      fail();
-    } catch (IllegalStateException e) {
-      // expected
-    }
+    serverPersistenceVersionChecker.checkAndBumpPersistedVersion(clusterStatePersistor);
     verify(clusterStatePersistor, never()).setVersion(any(Version.class));
   }
 }
