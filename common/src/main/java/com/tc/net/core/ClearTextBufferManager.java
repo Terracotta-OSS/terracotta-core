@@ -25,25 +25,23 @@ import org.slf4j.LoggerFactory;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
-import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
 
 /**
  * @author Ludovic Orban
  */
-class ClearTextBufferManager extends AbstractBufferManager {
-  private static final Logger logger         = LoggerFactory.getLogger(ClearTextBufferManager.class);
+public class ClearTextBufferManager extends AbstractBufferManager {
+  private static final Logger   logger         = LoggerFactory.getLogger(ClearTextBufferManager.class);
   private static final String   BUFFER_SIZE    = "clear.text.buffer.size";
   private static final int      BUFFER_SIZE_KB = Integer.getInteger(BUFFER_SIZE, 16) * 1024;
   private final SocketChannel   channel;
   private final ByteBuffer      sendBuffer     = ByteBuffer.allocate(BUFFER_SIZE_KB);
   private final ByteBuffer      recvBuffer     = ByteBuffer.allocate(BUFFER_SIZE_KB);
 
-  ClearTextBufferManager(SocketChannel channel) {
+  public ClearTextBufferManager(SocketChannel channel) {
     this.channel = channel;
     if (logger.isDebugEnabled()) {
-      logger.debug("ClearTextBufferManager " + BUFFER_SIZE + " " + BUFFER_SIZE_KB);
+      logger.debug(this.getClass().getName() + " " + BUFFER_SIZE + " " + BUFFER_SIZE_KB);
     }
   }
 
