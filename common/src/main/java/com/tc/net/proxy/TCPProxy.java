@@ -380,7 +380,7 @@ public class TCPProxy {
     final String[] endpointStrings = args[1].split(",");
     final InetSocketAddress[] endpoints = new InetSocketAddress[endpointStrings.length];
     for (int pos = 0; pos < endpointStrings.length; ++pos) {
-      final int separatorIdx = endpointStrings[pos].indexOf(":");
+      final int separatorIdx = endpointStrings[pos].lastIndexOf(":");
       endpoints[pos] = new InetSocketAddress(endpointStrings[pos].substring(0, separatorIdx), Integer
           .parseInt(endpointStrings[pos].substring(separatorIdx + 1)));
     }

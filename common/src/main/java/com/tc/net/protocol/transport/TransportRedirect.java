@@ -25,9 +25,9 @@ public class TransportRedirect extends TransportHandshakeException {
 
   public TransportRedirect(String activeHost) {
     super(activeHost);
-    int index = activeHost.indexOf(':');
+    int index = activeHost.lastIndexOf(':');
     hostname = activeHost.substring(0, index);
-    port = Integer.parseInt(activeHost.substring(index + 1));          
+    port = Integer.parseInt(activeHost.substring(index + 1));
     this.errorType = TransportHandshakeError.ERROR_REDIRECT_CONNECTION;
   }
 
