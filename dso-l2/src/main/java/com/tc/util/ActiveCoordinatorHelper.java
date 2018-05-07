@@ -23,50 +23,29 @@ import com.tc.config.schema.ActiveServerGroupConfigObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
 import java.util.Arrays;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 public class ActiveCoordinatorHelper {
   public static final String GROUP_NAME_PREFIX = "Tc-Group-";
 
-  public static ActiveServerGroupConfigObject[] generateGroupInfo(ActiveServerGroupConfigObject[] originalGroupInfos)
+  public static ActiveServerGroupConfigObject generateGroupInfo(ActiveServerGroupConfigObject originalGroupInfo)
       throws ConfigurationSetupException {
-    TreeMap<String, ActiveServerGroupConfigObject> candidateGroupNames = generateCandidateGroupNames(originalGroupInfos);
+    String candidateGroupName = generateCandidateGroupName(originalGroupInfo);
 
-    if (originalGroupInfos.length != candidateGroupNames.size()) { throw new ConfigurationSetupException(
-                                                                                                         "The group names specified are same "
-                                                                                                             + candidateGroupNames
-                                                                                                                 .keySet()); }
-    // Generate Group Info
-    ActiveServerGroupConfigObject[] groupInfos = new ActiveServerGroupConfigObject[originalGroupInfos.length];
-    int groupID = 0;
-    for (Entry<String, ActiveServerGroupConfigObject> entry : candidateGroupNames.entrySet()) {
-      ActiveServerGroupConfigObject groupInfo = entry.getValue();
-      if (groupNameNotSet(groupInfo)) {
-        groupInfo.setGroupName(GROUP_NAME_PREFIX + groupID);
-      }
-      groupInfos[groupID] = groupInfo;
-      groupID++;
-    }
-
-    return groupInfos;
+    originalGroupInfo.setGroupName(candidateGroupName);
+    
+    return originalGroupInfo;
   }
 
 
-  private static TreeMap<String, ActiveServerGroupConfigObject> generateCandidateGroupNames(ActiveServerGroupConfigObject[] asgcos) {
-    TreeMap<String, ActiveServerGroupConfigObject> groupNamesToGroup = new TreeMap<>();
-
-    for (ActiveServerGroupConfigObject asgco : asgcos) {
-      String groupName = null;
-      if (groupNameNotSet(asgco)) {
-        groupName = getGroupNameFrom(asgco.getMembers());
-      } else {
-        groupName = asgco.getGroupName();
-      }
-
-      groupNamesToGroup.put(groupName, asgco);
+  private static String generateCandidateGroupName(ActiveServerGroupConfigObject asgco) {
+    String groupName = null;
+    if (groupNameNotSet(asgco)) {
+      groupName = getGroupNameFrom(asgco.getMembers());
+    } else {
+      groupName = asgco.getGroupName();
     }
-    return groupNamesToGroup;
+    
+    return groupName;
   }
 
 

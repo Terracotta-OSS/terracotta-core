@@ -22,7 +22,5 @@ package com.tc.config.schema;
  * An interface implemented by all config objects.
  */
 public interface Config<T> {
-  
-  T getBean();
-  
+    
 }

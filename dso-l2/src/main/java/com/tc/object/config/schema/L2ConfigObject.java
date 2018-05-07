@@ -25,8 +25,8 @@ import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcConfig;
 
-import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.net.TCSocketAddress;
 
 import java.io.File;
 
@@ -50,7 +50,6 @@ public class L2ConfigObject implements L2Config {
   private final String serverName;
   private final String bind;
   private final int clientReconnectWindow;
-  private volatile boolean jmxEnabled;
 
   public L2ConfigObject(Server s, int clientReconnectWindow) {
     Server server = s;
@@ -65,18 +64,13 @@ public class L2ConfigObject implements L2Config {
     }
     this.serverName = server.getName();
     this.tsaPort = server.getTsaPort();
+    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(this.bind)) {
+      this.tsaPort.setBind(this.bind);
+    }
     this.tsaGroupPort = server.getTsaGroupPort();
-  }
-
-
-  @Override
-  public void setJmxEnabled(boolean b) {
-    this.jmxEnabled = b;
-  }
-
-  @Override
-  public boolean isJmxEnabled() {
-    return jmxEnabled;
+    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaGroupPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(this.bind)) {
+      this.tsaGroupPort.setBind(this.bind);
+    }
   }
 
   @Override
@@ -104,34 +98,7 @@ public class L2ConfigObject implements L2Config {
     return this.clientReconnectWindow;
   }
 
-  @Override
-  public String bind() {
-    return this.bind;
-  }
-
-  public static void initializeServers(TcConfig config, File directoryLoadedFrom) throws ConfigurationSetupException {
-
-    Servers servers = config.getServers();
-    ActiveServerGroupsConfigObject.initializeMirrorGroups(servers);
-  }
-
-  public static int computeJMXPortFromTSAPort(int tsaPort) {
-    int tempJmxPort = tsaPort + DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT;
-    return ((tempJmxPort <= MAX_PORTNUMBER) ? tempJmxPort : (tempJmxPort % MAX_PORTNUMBER) + MIN_PORTNUMBER);
-  }
-
-  public static int computeManagementPortFromTSAPort(int tsaPort) {
-    int tempPort = tsaPort + DEFAULT_MANAGEMENTPORT_OFFSET_FROM_TSAPORT;
-    return ((tempPort <= MAX_PORTNUMBER) ? tempPort : (tempPort % MAX_PORTNUMBER) + MIN_PORTNUMBER);
-  }
-
-
   public static Server[] getServers(Servers servers) {
     return servers.getServer().toArray(new Server[servers.getServer().size()]);
-  }
-
-  @Override
-  public Server getBean() {
-    return null;
   }
 }

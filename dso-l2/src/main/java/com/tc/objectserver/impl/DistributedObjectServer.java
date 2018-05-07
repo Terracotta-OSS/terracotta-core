@@ -358,7 +358,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
     try {
       MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
-      this.configSetupManager.commonl2Config().getBean().addStateTo(mappedStateCollector);
+      this.configSetupManager.commonl2Config().getTCConfiguration().addStateTo(mappedStateCollector);
       Map<String, Object> state = new HashMap<>();
       state.put("ExtendedConfigs", mappedStateCollector.getMap());
       prettyPrinter.println(state);
@@ -436,7 +436,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
 
     // Set up the ServiceRegistry.
-    TcConfiguration base = this.configSetupManager.commonl2Config().getBean();
+    TcConfiguration base = this.configSetupManager.commonl2Config().getTCConfiguration();
     PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier(), base);
     serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
@@ -548,7 +548,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
-    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getBean().getPlatformConfiguration());
+    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getTCConfiguration().getPlatformConfiguration());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if ((voteCount + knownPeers + 1) % 2 == 0) {
