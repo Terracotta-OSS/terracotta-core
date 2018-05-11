@@ -22,22 +22,34 @@ import java.util.Collection;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 
+import com.tc.object.config.schema.L2Config;
+
 /**
  * @author vmad
  */
 public class PlatformConfigurationImpl implements PlatformConfiguration {
 
-  private final String serverName;
+  private final L2Config l2Config;
   private final TcConfiguration config;
 
-  public PlatformConfigurationImpl(String serverName, TcConfiguration config) {
-    this.serverName = serverName;
+  public PlatformConfigurationImpl(L2Config l2Config, TcConfiguration config) {
+    this.l2Config = l2Config;
     this.config = config;
   }
 
   @Override
   public String getServerName() {
-    return this.serverName;
+    return l2Config.serverName();
+  }
+
+  @Override
+  public String getHost() {
+    return l2Config.host();
+  }
+
+  @Override
+  public int getTsaPort() {
+    return l2Config.tsaPort().getValue();
   }
 
   @Override
