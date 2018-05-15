@@ -422,13 +422,6 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
-    String serverName = this.configSetupManager.dsoL2Config().serverName();
-//  this is character replacement for windows platform file names.  This is probably a bogus way to 
-//  handle this.  Re-evaluate the way data directories are managed for 5.0 and fix this when a plan is
-//  devised
-    serverName = serverName.replace('.', '-');
-    serverName = serverName.replace(':', '$');
-
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final StageManager stageManager = this.seda.getStageManager();
 
@@ -437,7 +430,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
 
     // Set up the ServiceRegistry.
     TcConfiguration base = this.configSetupManager.commonl2Config().getTCConfiguration();
-    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.getL2Identifier(), base);
+    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.dsoL2Config(), base);
     serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
 
