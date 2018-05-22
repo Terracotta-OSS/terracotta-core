@@ -31,17 +31,29 @@ import org.terracotta.entity.PlatformConfiguration;
  * and also test concurrency strategy.
  */
 public class PassthroughPlatformConfiguration implements PlatformConfiguration {
+  private final int port;
   private final String serverName;
   private final Collection<Object> extendedConfigurationObjects;
   
-  public PassthroughPlatformConfiguration(String serverName, Collection<Object> extendedConfigurationObjects) {
+  public PassthroughPlatformConfiguration(String serverName, int port, Collection<Object> extendedConfigurationObjects) {
     this.serverName = serverName;
+    this.port = port;
     this.extendedConfigurationObjects = extendedConfigurationObjects;
   }
   
   @Override
   public String getServerName() {
     return this.serverName;
+  }
+
+  @Override
+  public String getHost() {
+    return this.serverName;
+  }
+
+  @Override
+  public int getTsaPort() {
+    return this.port;
   }
 
   @Override
