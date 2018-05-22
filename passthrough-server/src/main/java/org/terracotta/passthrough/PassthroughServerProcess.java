@@ -137,7 +137,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.serverName = serverName;
     this.bindPort = bindPort;
     this.groupPort = groupPort;
-    this.platformConfiguration = new PassthroughPlatformConfiguration(serverName, extendedConfigurationObjects);
+    this.platformConfiguration = new PassthroughPlatformConfiguration(serverName, bindPort, extendedConfigurationObjects);
     this.entityServices = new Vector<>();
     this.messageQueue = new Vector<>();
     this.activeEntities = (isActiveMode ? new LinkedHashMap<>() : null);
