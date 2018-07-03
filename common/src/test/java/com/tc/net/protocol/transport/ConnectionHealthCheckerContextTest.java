@@ -19,13 +19,13 @@
 
 package com.tc.net.protocol.transport;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +39,7 @@ public class ConnectionHealthCheckerContextTest {
   private TestConnectionHealthCheckerContext context;
   private MessageTransportBase messageTransport;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     messageTransport = mock(MessageTransportBase.class);
     msg = mock(HealthCheckerProbeMessage.class);
@@ -57,7 +57,7 @@ public class ConnectionHealthCheckerContextTest {
     when(msg.getTime()).thenReturn(10000L);
 
     context.receiveProbe(msg);
-    Assert.assertEquals(1, context.getDesyncCount());
+    assertEquals(1, context.getDesyncCount());
   }
 
   @Test
@@ -66,7 +66,7 @@ public class ConnectionHealthCheckerContextTest {
     when(msg.getTime()).thenReturn(System.currentTimeMillis() - 10000L);
 
     context.receiveProbe(msg);
-    Assert.assertEquals(0, context.getDesyncCount());
+    assertEquals(0, context.getDesyncCount());
   }
 
   private static class TestConnectionHealthCheckerContext extends ConnectionHealthCheckerContextImpl {

@@ -1,5 +1,9 @@
 package com.tc.l2.state;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -29,10 +33,6 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.util.PortChooser;
 import com.tc.util.State;
 import com.tc.util.concurrent.QueueFactory;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,16 +40,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 
 public class StateManagerImplTest {
 
@@ -64,7 +66,7 @@ public class StateManagerImplTest {
   private final StateManagerImpl[] stateManagers = new StateManagerImpl[NUM_OF_SERVERS];
 
   @SuppressWarnings("unchecked")
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     Logger tcLogger = mock(Logger.class);
     PortChooser pc = new PortChooser();
@@ -110,7 +112,7 @@ public class StateManagerImplTest {
       while (spin++ < 5 && 2 > groupManagers[i].getMembers().size()) {
         TimeUnit.SECONDS.sleep(2);
       }
-      Assert.assertEquals(2, groupManagers[i].getMembers().size());
+      assertEquals(2, groupManagers[i].getMembers().size());
     }
 
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
@@ -125,7 +127,7 @@ public class StateManagerImplTest {
 
     NodeID expectedActive = actives[0];
     for(int i = 1; i < NUM_OF_SERVERS; i++) {
-      Assert.assertEquals(expectedActive, actives[i]);
+      assertEquals(expectedActive, actives[i]);
     }
   }
   
@@ -180,7 +182,7 @@ public class StateManagerImplTest {
     
     state.startElectionIfNecessary(mock(NodeID.class));
     state.waitForElectionsToFinish();
-    Assert.assertTrue(state.getActiveNodeID().isNull());
+    assertTrue(state.getActiveNodeID().isNull());
   }
   
   @Test
@@ -232,7 +234,7 @@ public class StateManagerImplTest {
     
     state.startElectionIfNecessary(mock(NodeID.class));
     state.waitForElectionsToFinish();
-    Assert.assertEquals(node, state.getActiveNodeID());
+    assertEquals(node, state.getActiveNodeID());
   }
   
   @Test
@@ -249,20 +251,20 @@ public class StateManagerImplTest {
     while (spin++ < 5 && 1 > groupManagers[1].getMembers().size()) {
       TimeUnit.SECONDS.sleep(2);
     }
-    Assert.assertEquals(1, groupManagers[1].getMembers().size());
+    assertEquals(1, groupManagers[1].getMembers().size());
     stateManagers[1].initializeAndStartElection();
     stateManagers[1].waitForDeclaredActive();
-    Assert.assertEquals(active, stateManagers[1].getActiveNodeID());
+    assertEquals(active, stateManagers[1].getActiveNodeID());
 
     groupManagers[2].join(nodes[2], nodesStore);
     spin = 0;
     while (spin++ < 5 && 2 > groupManagers[2].getMembers().size()) {
       TimeUnit.SECONDS.sleep(2);
     }
-    Assert.assertEquals(2, groupManagers[2].getMembers().size());
+    assertEquals(2, groupManagers[2].getMembers().size());
     stateManagers[2].initializeAndStartElection();
     stateManagers[2].waitForDeclaredActive();
-    Assert.assertEquals(active, stateManagers[2].getActiveNodeID());
+    assertEquals(active, stateManagers[2].getActiveNodeID());
   }
 
   @Test
@@ -285,8 +287,8 @@ public class StateManagerImplTest {
     when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);
     StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stateChangeSink, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor);
     mgr.initializeAndStartElection();
-    Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
-    Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
+    assertEquals(ServerMode.START, mgr.getCurrentMode());
+    assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
     
     L2StateMessage sw = mock(L2StateMessage.class);
     when(sw.getType()).thenReturn(L2StateMessage.ABORT_ELECTION);
@@ -295,7 +297,7 @@ public class StateManagerImplTest {
 
     try {
       mgr.handleClusterStateMessage(sw);
-      Assert.fail();
+      fail();
     } catch (TCServerRestartException expected) {
       
     }

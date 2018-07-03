@@ -18,22 +18,31 @@
  */
 package com.tc.net.protocol.delivery;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.UUID;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Testing the basic functionality of OOO Send State Machine. More functional test at GuaranteedDeliveryProtocolTest
  */
-public class SendStateMachineTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class SendStateMachineTest {
 
+  @Test
   public void tests() throws Exception {
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedBlockingQueue<TCNetworkMessage>());
     final UUID sessionId = UUID.getUUID();

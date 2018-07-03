@@ -18,14 +18,23 @@
  */
 package com.tc.config.schema;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-public class L2InfoTest extends TCTestCase {
+import com.tc.test.TCExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+
+@ExtendWith(TCExtension.class)
+public class L2InfoTest {
 
   public L2InfoTest() {
     //
   }
 
+  @Test
   public void testEquals() {
     L2Info inst1 = new L2Info("primary", "localhost", 9520, 9510, null, 9530, 9540, null);
     L2Info inst2 = new L2Info("primary", "localhost", 9520, 9510, null, 9530, 9540, null);

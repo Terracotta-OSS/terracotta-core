@@ -18,27 +18,31 @@
  */
 package com.tc.l2.ha;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(TCExtension.class)
+public class TransactionCountWeightGeneratorTest {
 
-public class TransactionCountWeightGeneratorTest extends TCTestCase {
+  @Test
   public void testSimpleProgress() throws Exception {
     TransactionOrderPersistor mockPersistor = mock(TransactionOrderPersistor.class);
     TransactionCountWeightGenerator generator = new TransactionCountWeightGenerator(mockPersistor);
     
     when(mockPersistor.getReceivedTransactionCount()).thenReturn(0L);
-    Assert.assertTrue(0L == generator.getWeight());
+    assertTrue(0L == generator.getWeight());
     when(mockPersistor.getReceivedTransactionCount()).thenReturn(1L);
-    Assert.assertTrue(1L == generator.getWeight());
+    assertTrue(1L == generator.getWeight());
     when(mockPersistor.getReceivedTransactionCount()).thenReturn(4L);
-    Assert.assertTrue(4L == generator.getWeight());
+    assertTrue(4L == generator.getWeight());
     when(mockPersistor.getReceivedTransactionCount()).thenReturn(10L);
-    Assert.assertTrue(10L == generator.getWeight());
+    assertTrue(10L == generator.getWeight());
   }
 }

@@ -18,11 +18,15 @@
  */
 package com.tc.util;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 
 import java.util.Random;
 
-public class OidLongArrayTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class OidLongArrayTest {
   Random r = new Random();
   
   private OidLongArray bitSetTest(int arySize) {   
@@ -56,6 +60,7 @@ public class OidLongArrayTest extends TCTestCase {
   }
 
 
+  @Test
   public void testBitsOperations() {
     bitSetTest(4);
     bitSetTest(128);
@@ -63,7 +68,8 @@ public class OidLongArrayTest extends TCTestCase {
     bitClrTest(4);
     bitClrTest(128);
   }
-  
+
+  @Test
   public void testIsZero() {
     OidLongArray bits = bitClrTest(64);
     for(int i = 0; i < bits.length(); ++i) {
@@ -71,12 +77,14 @@ public class OidLongArrayTest extends TCTestCase {
     }
     Assert.assertTrue("Failed isZero", bits.isZero());
   }
-  
+
+  @Test
   public void testIsEnded() {
     OidLongArray bits = new OidLongArray(null, null);
     Assert.assertTrue("Failed isEnded", bits.isEnded());
   }
-  
+
+  @Test
   public void testCopyOutApplyIn() {
     long oid = 1000;
     int arySize = 128;
@@ -113,7 +121,8 @@ public class OidLongArrayTest extends TCTestCase {
                         expected == bits.get(offset+i));
     }
   }
-  
+
+  @Test
   public void testKeyToBytes() {
     long oid = 1000;
     OidLongArray bits = new OidLongArray(8, oid);

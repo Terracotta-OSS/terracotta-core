@@ -18,15 +18,15 @@
  */
 package com.tc.net.utils;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class L2UtilsTest {
   /**
@@ -37,14 +37,14 @@ public class L2UtilsTest {
     int processorCount = Runtime.getRuntime().availableProcessors();
     
     int commThreadCount = L2Utils.getOptimalCommWorkerThreads();
-    Assert.assertTrue(commThreadCount > 0);
+    assertTrue(commThreadCount > 0);
     // We currently bound the number of comm threads at 16 (may change in the future).
-    Assert.assertTrue((commThreadCount == processorCount) || (commThreadCount <= 16));
+    assertTrue((commThreadCount == processorCount) || (commThreadCount <= 16));
     
     int stageThreadCount = L2Utils.getOptimalStageWorkerThreads();
-    Assert.assertTrue(stageThreadCount > 0);
+    assertTrue(stageThreadCount > 0);
     // We currently bound the number of stage threads at 16 (may change in the future).
-    Assert.assertTrue((stageThreadCount == processorCount) || (stageThreadCount <= 16));
+    assertTrue((stageThreadCount == processorCount) || (stageThreadCount <= 16));
   }
 
   /**
@@ -59,8 +59,8 @@ public class L2UtilsTest {
     // WARNING:  setting L2_TCCOM_WORKERTHREADS and L2_SEDA_STAGE_WORKERTHREADS cannot be undone!
     properties.setProperty(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS, "" + (originalCommThreadCount + 1));
     properties.setProperty(TCPropertiesConsts.L2_SEDA_STAGE_WORKERTHREADS, "" + (originalStageThreadCount + 1));
-    Assert.assertTrue((originalCommThreadCount + 1) == L2Utils.getOptimalCommWorkerThreads());
-    Assert.assertTrue((originalStageThreadCount + 1) == L2Utils.getOptimalStageWorkerThreads());
+    assertTrue((originalCommThreadCount + 1) == L2Utils.getOptimalCommWorkerThreads());
+    assertTrue((originalStageThreadCount + 1) == L2Utils.getOptimalStageWorkerThreads());
   }
 
   @Test
@@ -74,18 +74,24 @@ public class L2UtilsTest {
     assertEquals(84, L2Utils.calculateOptimalThreadsCount(80, 30, 70, 0.75));
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void testShouldThrowIAEOnInvalidUtilization() {
-    L2Utils.calculateOptimalThreadsCount(4, 30, 70, 0.0);
+    Throwable t = assertThrows(AssertionError.class, ()-> {
+      L2Utils.calculateOptimalThreadsCount(4, 30, 70, 0.0);
+    });
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void testShouldThrowIAEOnInvalidCpusCount() {
-    L2Utils.calculateOptimalThreadsCount(0, 30, 70, 1.0);
+    Throwable t = assertThrows(AssertionError.class, ()-> {
+      L2Utils.calculateOptimalThreadsCount(0, 30, 70, 1.0);
+    });
   }
 
-  @Test(expected = AssertionError.class)
+  @Test
   public void testShouldThrowIAEOnInvalidCompute() {
-    L2Utils.calculateOptimalThreadsCount(4, 30, 0, 1.0);
+    Throwable t = assertThrows(AssertionError.class, ()-> {
+      L2Utils.calculateOptimalThreadsCount(4, 30, 0, 1.0);
+    });
   }
 }

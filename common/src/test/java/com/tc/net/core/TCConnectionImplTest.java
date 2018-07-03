@@ -18,6 +18,8 @@
  */
 package com.tc.net.core;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.TCSocketAddress;
@@ -26,6 +28,7 @@ import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.PortChooser;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
@@ -33,10 +36,9 @@ import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import static junit.framework.TestCase.fail;
-import org.junit.Assert;
-import org.junit.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -120,7 +122,7 @@ public class TCConnectionImplTest {
     new Thread(()->sleepThenClose(conn)).start();
     int w = conn.doWrite();
     
-    Assert.assertEquals(0, w);
+    assertEquals(0, w);
   }
   
   @Test

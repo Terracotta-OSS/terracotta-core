@@ -18,10 +18,11 @@
  */
 package com.tc.util;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class UtilHashTest extends TestCase {
+public class UtilHashTest {
 
+  @Test
   public void testHash() {
     int hashValue = Util.hash(new Integer(966330312), 10);
     Assert.assertTrue("Hashcode 966330312 return negative hash value " + hashValue, hashValue >= 0);

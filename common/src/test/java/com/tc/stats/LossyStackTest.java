@@ -18,11 +18,18 @@
  */
 package com.tc.stats;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class LossyStackTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+public class LossyStackTest {
 
   @SuppressWarnings("unused")
+  @Test
   public void testException() {
     try {
       new LossyStack<Object>(0);
@@ -39,6 +46,7 @@ public class LossyStackTest extends TestCase {
     }
   }
 
+  @Test
   public void test() {
     LossyStack<Integer> stack = new LossyStack<Integer>(5);
     assertEquals(0, stack.depth());

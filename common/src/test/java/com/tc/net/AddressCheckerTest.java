@@ -18,12 +18,16 @@
  */
 package com.tc.net;
 
+import org.junit.jupiter.api.Test;
+
 import java.net.InetAddress;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AddressCheckerTest extends TestCase {
+public class AddressCheckerTest {
 
+  @Test
   public void test() throws Exception {
     AddressChecker ac = new AddressChecker();
 

@@ -18,6 +18,17 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,42 +45,37 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.spy;
+
 
 /**
  *
  * @author mscott
  */
+@ExtendWith(TCExtension.class)
 public class ManagedServiceLoaderTest {
-  @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+
+  private TempDirectoryHelper tempDirectoryHelper;
 
   public ManagedServiceLoaderTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
   
@@ -84,7 +90,7 @@ public class ManagedServiceLoaderTest {
 
   @Test
   public void testOverrideAnnotation() throws Throwable {
-    File f = folder.newFolder();
+    File f = tempDirectoryHelper.getDirectory();
     File meta = new File(f, "META-INF/services");
     meta.mkdirs();
     File sfile = new File(meta, "com.tc.util.TestService");
@@ -92,7 +98,7 @@ public class ManagedServiceLoaderTest {
     w.append("com.tc.util.OverrideTestServiceImpl");
     w.close();
     writeClass(f, "com.tc.util.OverrideTestServiceImpl");
-    File zip = folder.newFile("test.jar");
+    File zip = tempDirectoryHelper.getFile("test.jar");
     File testApi = writeZip(zip, f);
     ZipFile zf = new java.util.zip.ZipFile(testApi);
     Enumeration<? extends ZipEntry> em = zf.entries();

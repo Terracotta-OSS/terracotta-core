@@ -1,10 +1,11 @@
 package org.terracotta.voter;
 
-import com.tc.config.schema.L2ConfigForL1;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import com.tc.config.schema.L2ConfigForL1;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
-import static org.junit.Assert.assertThat;
 
 public class TCConfigParserUtilTest {
 

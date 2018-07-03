@@ -18,6 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.LoggerFactory;
 
 import com.tc.lang.TCThreadGroup;
@@ -33,7 +37,7 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductID;
@@ -53,7 +57,8 @@ import java.util.HashSet;
  * @author Manoj
  */
 
-public class LazyHandshakeTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class LazyHandshakeTest {
 
   // proxy timeouts : one-way
   private static final long     PROXY_SYNACK_DELAY = ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT;
@@ -70,9 +75,8 @@ public class LazyHandshakeTest extends TCTestCase {
   private final ClientMessageChannel  channel[]          = new ClientMessageChannel[CLIENT_COUNT];
   private int                   currentClient      = 0;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
   }
 
   private void lazySetUp() {
@@ -109,11 +113,11 @@ public class LazyHandshakeTest extends TCTestCase {
                              (int) PROXY_SYNACK_DELAY);
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
+  @Test
   public void testLazyHandshake() {
     TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(this.getClass())));
     // imitating TCGroupManager implementation of StaticMemberDiscovery on handshake timeouts

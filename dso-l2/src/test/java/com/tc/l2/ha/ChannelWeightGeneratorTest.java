@@ -18,32 +18,33 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.l2.state.StateManager;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.tc.net.core.TCConnection;
+import com.tc.l2.state.StateManager;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.ProductID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
-public class ChannelWeightGeneratorTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class ChannelWeightGeneratorTest {
+  @Test
   public void testSimpleIncreaseDecrease() throws Exception {
     DSOChannelManager mockChannelManager = mock(DSOChannelManager.class);
     StateManager mockStateManager = mock(StateManager.class);
     ChannelWeightGenerator generator = new ChannelWeightGenerator(()->mockStateManager, mockChannelManager);
 
-    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 1, 1), generator.getWeight());
-    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 2, 1), generator.getWeight());
-    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 2, 1), generator.getWeight());
-    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 10, 2), generator.getWeight());
-    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 3, 0), generator.getWeight());
-    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 1, 1), generator.getWeight());
+    assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 1, 1), generator.getWeight());
+    assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 2, 1), generator.getWeight());
+    assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 2, 1), generator.getWeight());
+    assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 10, 2), generator.getWeight());
+    assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 3, 0), generator.getWeight());
+    assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 1, 1), generator.getWeight());
   }
   
   public int mockPlatform(StateManager state, DSOChannelManager dso, boolean active, int clients, int diagnostics) {

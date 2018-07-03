@@ -18,19 +18,19 @@
  */
 package com.tc.async.impl;
 
-import com.tc.async.api.EventHandler;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.concurrent.QueueFactory;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,13 +38,14 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
 
 /**
  * @author mscott
@@ -55,19 +56,19 @@ public class SingletonStageQueueImplTest {
   public SingletonStageQueueImplTest() {
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
   }
 

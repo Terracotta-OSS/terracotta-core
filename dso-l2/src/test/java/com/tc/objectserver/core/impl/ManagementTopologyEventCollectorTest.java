@@ -18,21 +18,24 @@
  */
 package com.tc.objectserver.core.impl;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.net.InetAddress;
-
-import com.tc.net.TCSocketAddress;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.AdditionalMatchers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.monitoring.IMonitoringProducer;
+import org.terracotta.monitoring.PlatformClientFetchedEntity;
+import org.terracotta.monitoring.PlatformConnectedClient;
+import org.terracotta.monitoring.PlatformEntity;
+import org.terracotta.monitoring.PlatformMonitoringConstants;
+import org.terracotta.monitoring.PlatformServer;
+import org.terracotta.monitoring.ServerState;
 
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -41,38 +44,38 @@ import com.tc.object.FetchID;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.UUID;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.mockito.AdditionalMatchers;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.monitoring.IMonitoringProducer;
-import org.terracotta.monitoring.PlatformClientFetchedEntity;
-import org.terracotta.monitoring.PlatformConnectedClient;
-import org.terracotta.monitoring.PlatformEntity;
-import org.terracotta.monitoring.PlatformServer;
-import org.terracotta.monitoring.ServerState;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.monitoring.PlatformMonitoringConstants;
 
 
 public class ManagementTopologyEventCollectorTest {
   private ManagementTopologyEventCollector collector;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     // We want to create a monitoring producer implementation which just ensures that all calls are balanced.
     this.collector = new ManagementTopologyEventCollector(new IMonitoringProducer() {
@@ -96,7 +99,7 @@ public class ManagementTopologyEventCollectorTest {
       @Override
       public void pushBestEffortsData(String name, Serializable data) {
         // Not part of test.
-        Assert.fail();
+        fail();
       }
       @Override
       public boolean removeNode(String[] parents, String name) {
@@ -138,7 +141,7 @@ public class ManagementTopologyEventCollectorTest {
       } catch (AssertionError e) {
         // Expected.
       }
-      Assert.assertFalse(didSucceed);
+      assertFalse(didSucceed);
     }
     // Now, disconnect.
     this.collector.clientDidDisconnect(client);
@@ -153,7 +156,7 @@ public class ManagementTopologyEventCollectorTest {
       } catch (AssertionError e) {
         // Expected.
       }
-      Assert.assertFalse(didSucceed);
+      assertFalse(didSucceed);
     }
   }
 
@@ -172,7 +175,7 @@ public class ManagementTopologyEventCollectorTest {
     } catch (AssertionError e) {
       // Expected.
     }
-    Assert.assertFalse(didSucceed);
+    assertFalse(didSucceed);
     
     // Create it as passive.
     this.collector.entityWasCreated(id, consumerID, isActive);
@@ -184,7 +187,7 @@ public class ManagementTopologyEventCollectorTest {
     } catch (AssertionError e) {
       // Expected.
     }
-    Assert.assertFalse(didSucceed);
+    assertFalse(didSucceed);
     long timestamp = System.currentTimeMillis();
     // Now, change state of the server to active.
     this.collector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, timestamp);
@@ -204,7 +207,7 @@ public class ManagementTopologyEventCollectorTest {
     } catch (AssertionError e) {
       // Expected.
     }
-    Assert.assertFalse(didSucceed);
+    assertFalse(didSucceed);
   }
 
   @Test
@@ -273,9 +276,9 @@ public class ManagementTopologyEventCollectorTest {
     // verify
     ArgumentCaptor<PlatformConnectedClient> argumentCaptor = ArgumentCaptor.forClass(PlatformConnectedClient.class);
     verify(monitoringProducer).addNode(any(), any(), argumentCaptor.capture());
-    Assert.assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
-    Assert.assertEquals(uuid, argumentCaptor.getValue().uuid);
-    Assert.assertEquals(name, argumentCaptor.getValue().name);
+    assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
+    assertEquals(uuid, argumentCaptor.getValue().uuid);
+    assertEquals(name, argumentCaptor.getValue().name);
   }
 
   @Test
@@ -303,7 +306,7 @@ public class ManagementTopologyEventCollectorTest {
     // verify
     ArgumentCaptor<PlatformClientFetchedEntity> argumentCaptor = ArgumentCaptor.forClass(PlatformClientFetchedEntity.class);
     verify(monitoringProducer).addNode(AdditionalMatchers.aryEq(PlatformMonitoringConstants.FETCHED_PATH), any(), argumentCaptor.capture());
-    Assert.assertEquals(new ClientDescriptorImpl(client, instance), argumentCaptor.getValue().clientDescriptor);
+    assertEquals(new ClientDescriptorImpl(client, instance), argumentCaptor.getValue().clientDescriptor);
   }
 
   @Test
@@ -374,13 +377,13 @@ public class ManagementTopologyEventCollectorTest {
     
     // Verify that they are still equal.
     // Note that we expect that the read fetched entity will NOT equal the original, until we null the clientDescriptor.
-    Assert.assertNotEquals(originalFetchedEntity, readFetchedEntity);
+    assertNotEquals(originalFetchedEntity, readFetchedEntity);
     originalFetchedEntity.clientDescriptor = null;
-    Assert.assertEquals(originalFetchedEntity, readFetchedEntity);
-    Assert.assertEquals(originalConnectedClient, readConnectedClient);
-    Assert.assertEquals(originalEntity, readEntity);
-    Assert.assertEquals(originalServer, readServer);
-    Assert.assertEquals(originalState, readState);
+    assertEquals(originalFetchedEntity, readFetchedEntity);
+    assertEquals(originalConnectedClient, readConnectedClient);
+    assertEquals(originalEntity, readEntity);
+    assertEquals(originalServer, readServer);
+    assertEquals(originalState, readState);
   }
   
   @Test
@@ -539,7 +542,7 @@ public class ManagementTopologyEventCollectorTest {
     public PathContainer(String[] path) {
       this.path = (null != path) ? path : new String[0];
       for (String oneName : path) {
-        Assert.assertNotNull(oneName);
+        assertNotNull(oneName);
       }
     }
     public boolean hasPrefix(PathContainer parentsContainer) {

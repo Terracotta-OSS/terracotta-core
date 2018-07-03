@@ -18,11 +18,16 @@
  */
 package com.tc.object.tx;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class WaitInvocationTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+
+public class WaitInvocationTest {
 
   @SuppressWarnings("unused")
+  @Test
   public void testCstrs() throws Exception {
     TimerSpec wait0 = new TimerSpec();
     assertEquals(TimerSpec.NO_ARGS, wait0.getSignature());

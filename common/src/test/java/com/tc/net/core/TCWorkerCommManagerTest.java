@@ -18,6 +18,11 @@
  */
 package com.tc.net.core;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,14 +57,14 @@ import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.CallableWaiter;
 import com.tc.util.PortChooser;
-import com.tc.util.concurrent.ThreadUtil;
-import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.ProductID;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -67,9 +72,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-import org.junit.Ignore;
 
-public class TCWorkerCommManagerTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class TCWorkerCommManagerTest {
   private static final int L1_RECONNECT_TIMEOUT = 15000;
   Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
   List<ClientMessageTransport> transports = new ArrayList<ClientMessageTransport>();
@@ -103,11 +108,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     return networkStackHarnessFactory;
   }
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
   }
 
+  @Test
   public void testReaderandWriterCommThread() throws Exception {
     // comms manager with 4 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
@@ -157,6 +162,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.stop(5000);
   }
 
+  @Test
   public void testWorkerCommDistributionAfterClose() throws Exception {
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
@@ -213,6 +219,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.stop(5000);
   }
 
+  @Test
   public void testWorkerCommDistributionAfterAddMoreWeight() throws Exception {
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
@@ -298,7 +305,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     return clientMsgCh;
   }
 
-  @Ignore("this test expects exact distribution semantics but the implementation is best efforts")
+  @Disabled("this test expects exact distribution semantics but the implementation is best efforts")
+  @Test
   public void testWorkerCommDistributionAfterReconnect() throws Exception {
     boolean ignored = true; // these old tests don't use annotations
     if (!ignored) {
@@ -511,9 +519,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     };
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
     for (ClientMessageTransport t : transports) {
       t.close();
     }

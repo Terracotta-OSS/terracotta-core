@@ -18,10 +18,9 @@
  */
 package com.tc.services;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.IEntityMessenger;
@@ -33,6 +32,7 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -53,7 +53,7 @@ public class EntityMessengerProviderTest {
 
   // Suppress warnings about mock assignments not having the right generics.
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     // Build the underlying components needed by the provider or common to tests.
     this.messageSink = mock(Sink.class);
@@ -77,7 +77,7 @@ public class EntityMessengerProviderTest {
     this.entityMessengerProvider.serverDidBecomeActive();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     this.timer.stop();
   }
@@ -85,7 +85,7 @@ public class EntityMessengerProviderTest {
   @Test
   public void testBuildServiceOnly() throws Exception {
     IEntityMessenger service = this.entityMessengerProvider.getService(this.consumerID, this.owningEntity, this.configuration);
-    Assert.assertNotNull(service);
+    assertNotNull(service);
   }
 
   @Test

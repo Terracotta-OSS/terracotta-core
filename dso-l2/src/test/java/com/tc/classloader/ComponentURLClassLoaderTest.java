@@ -18,19 +18,20 @@
  */
 package com.tc.classloader;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import static org.junit.Assert.*;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -40,26 +41,23 @@ import static org.mockito.Mockito.verify;
  */
 public class ComponentURLClassLoaderTest {
   
-  @Rule
-  public TemporaryFolder folder= new TemporaryFolder();
-  
   public ComponentURLClassLoaderTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
 
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
   

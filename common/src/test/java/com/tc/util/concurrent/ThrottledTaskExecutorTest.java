@@ -18,32 +18,40 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ThrottledTaskExecutorTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class ThrottledTaskExecutorTest {
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
   }
 
+  @Test
   public void testLinearExecute() {
     testBody(1, 5);
   }
 
+  @Test
   public void testDoubleExecute() {
     testBody(2, 5);
   }
 
+  @Test
   public void testManyExecute() {
     testBody(10, 5);
   }
 
+  @Test
   public void testManyExecuteExtended() {
     // add more tasks dynamically during the test run
   }

@@ -18,10 +18,15 @@
  */
 package com.tc.util.version;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class VersionRangeTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+public class VersionRangeTest {
+
+  @Test
   public void testExact() {
     VersionRange r = new VersionRange("1.0.0-SNAPSHOT");
     assertTrue(r.isMinInclusive());
@@ -30,6 +35,7 @@ public class VersionRangeTest extends TestCase {
     assertTrue(r.isMaxInclusive());
   }
 
+  @Test
   public void testExactPartial() {
     VersionRange r = new VersionRange("1.0");
     assertTrue(r.isMinInclusive());
@@ -38,6 +44,7 @@ public class VersionRangeTest extends TestCase {
     assertTrue(r.isMaxInclusive());
   }
 
+  @Test
   public void testRange() {
     VersionRange r = new VersionRange("[1.0.0-SNAPSHOT,1.1.0-SNAPSHOT)");
     assertTrue(r.isMinInclusive());
@@ -46,6 +53,7 @@ public class VersionRangeTest extends TestCase {
     assertFalse(r.isMaxInclusive());
   }
 
+  @Test
   public void testRange2() {
     VersionRange r = new VersionRange("(1.0.0-SNAPSHOT,1.1.0-SNAPSHOT]");
     assertFalse(r.isMinInclusive());
@@ -54,6 +62,7 @@ public class VersionRangeTest extends TestCase {
     assertTrue(r.isMaxInclusive());
   }
 
+  @Test
   public void testOpenMaxRange() {
     VersionRange r = new VersionRange("[1.0.0-SNAPSHOT,]");
     assertEquals("1.0.0-SNAPSHOT", r.getMinVersion());
@@ -69,6 +78,7 @@ public class VersionRangeTest extends TestCase {
     assertTrue(r.contains("99.0.0"));
   }
 
+  @Test
   public void testOpenMinRange() {
     VersionRange r = new VersionRange("[,1.0.0-SNAPSHOT]");
     assertEquals("1.0.0-SNAPSHOT", r.getMaxVersion());
@@ -82,6 +92,7 @@ public class VersionRangeTest extends TestCase {
     assertFalse(r.contains("1.0.0"));
   }
 
+  @Test
   public void testContainsMinInclusiveMaxExclusive() {
     VersionRange r = new VersionRange("[1.0.0,1.1.0)");
     assertFalse(r.contains("0.0.2"));
@@ -94,6 +105,7 @@ public class VersionRangeTest extends TestCase {
     assertFalse(r.contains("1.1.1"));
   }
 
+  @Test
   public void testContainsMinInclusiveMaxExclusiveSnapshot() {
     VersionRange r = new VersionRange("[1.0.0-SNAPSHOT,1.1.0-SNAPSHOT)");
     assertFalse(r.contains("0.0.2"));
@@ -105,6 +117,7 @@ public class VersionRangeTest extends TestCase {
     assertFalse(r.contains("1.1.1"));
   }
 
+  @Test
   public void testContainsMaxInclusiveMinExclusiveSnapshot() {
     VersionRange r = new VersionRange("(1.0.0-SNAPSHOT,1.1.0-SNAPSHOT]");
     assertFalse(r.contains("0.0.2"));

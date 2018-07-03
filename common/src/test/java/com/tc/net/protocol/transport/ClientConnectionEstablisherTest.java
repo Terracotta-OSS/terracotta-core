@@ -18,9 +18,8 @@
  */
 package com.tc.net.protocol.transport;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -49,7 +48,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -58,6 +62,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+
 
 public class ClientConnectionEstablisherTest {
   private ClientConnectionEstablisher         connEstablisher;
@@ -88,7 +93,7 @@ public class ClientConnectionEstablisherTest {
   @Mock
   private TCConnection                        connection;
 
-  @Before
+  @BeforeEach
   public void setup() throws Exception {
     MockitoAnnotations.initMocks(this);
     try {
@@ -112,7 +117,7 @@ public class ClientConnectionEstablisherTest {
     AsyncReconnect asyncReconnectBeforeReset = connEstablisher.getAsyncReconnectThread();
     connEstablisher.reset();
     AsyncReconnect asyncReconnectAfterReset = connEstablisher.getAsyncReconnectThread();
-    Assert.assertNotEquals(asyncReconnectBeforeReset, asyncReconnectAfterReset);
+    assertNotEquals(asyncReconnectBeforeReset, asyncReconnectAfterReset);
   }
 
   @Test
@@ -127,7 +132,7 @@ public class ClientConnectionEstablisherTest {
     boolean allowReconnectsBefore = connEstablisher.getAllowReconnects();
     connEstablisher.setAllowReconnects(true);
     connEstablisher.quitReconnectAttempts();
-    Assert.assertFalse(this.connEstablisher.getAllowReconnects());
+    assertFalse(this.connEstablisher.getAllowReconnects());
     connEstablisher.setAllowReconnects(allowReconnectsBefore);
   }
 
@@ -138,7 +143,7 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(cmt, errorListener);
     try {
       spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
-      Assert.fail();
+      fail();
     } catch (TCAssertionError e) {
       // ignore
     }
@@ -152,7 +157,7 @@ public class ClientConnectionEstablisherTest {
 
     spyConnEstablisher.setAllowReconnects(false);
     spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
-    Assert.assertTrue(spyConnEstablisher.getAllowReconnects());
+    assertTrue(spyConnEstablisher.getAllowReconnects());
   }
 
   @Test
@@ -225,7 +230,7 @@ public class ClientConnectionEstablisherTest {
     connEstablisher.disableReconnectThreadSpawn();
 
     connEstablisher.restoreConnection(cmt, sa, 0, watcher);
-    Assert.assertEquals(0, connEstablisher.connectionRequestQueueSize());
+    assertEquals(0, connEstablisher.connectionRequestQueueSize());
   }
 
   @Test
@@ -241,7 +246,7 @@ public class ClientConnectionEstablisherTest {
       if (re.getCause() instanceof UnknownHostException) {
         msg = "Got UnknownHostException,it should be ignored and we should keep trying reconnect";
       }
-      Assert.fail(msg);
+      fail(msg);
     }
   }
   

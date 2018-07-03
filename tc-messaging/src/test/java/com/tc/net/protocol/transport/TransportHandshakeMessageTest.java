@@ -18,19 +18,19 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.bytes.TCByteBuffer;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TransportHandshakeMessageTest {
 
   private TransportHandshakeMessage   message;
   private TransportMessageFactoryImpl factory;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     factory = new TransportMessageFactoryImpl();
   }

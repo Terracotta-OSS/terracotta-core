@@ -18,19 +18,21 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import junit.framework.TestCase;
 
 /**
  * Make sure that local hostname and basic networking for it are configured correctly.
  */
-public class NetworkSanityTest extends TestCase {
+public class NetworkSanityTest {
 
+  @Test
   public void testSanity() throws Exception {
     String host = InetAddress.getLocalHost().getHostName();
     InetAddress addr = InetAddress.getByName(host);

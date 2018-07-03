@@ -18,13 +18,11 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -68,19 +66,19 @@ import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
-import com.tc.util.State;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
-import org.mockito.Matchers;
+
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import org.terracotta.monitoring.IMonitoringProducer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class ProcessTransactionHandlerTest {
@@ -99,7 +97,7 @@ public class ProcessTransactionHandlerTest {
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     this.terracottaServiceProviderRegistry = mock(TerracottaServiceProviderRegistry.class);
     when(this.terracottaServiceProviderRegistry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
@@ -167,7 +165,7 @@ public class ProcessTransactionHandlerTest {
     loopbackSink.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     this.processTransactionHandler.getVoltronMessageHandler().destroy();
   }

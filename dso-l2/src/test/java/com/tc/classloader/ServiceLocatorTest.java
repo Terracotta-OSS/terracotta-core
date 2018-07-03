@@ -4,61 +4,63 @@
  */
 package com.tc.classloader;
 
-import static com.tc.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.tc.config.Directories;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
 import com.tc.util.ZipBuilder;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+
+import static com.tc.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
 /**
  *
  * @author mscott
  */
+@ExtendWith(TCExtension.class)
 public class ServiceLocatorTest {
-  
-  @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
-  
+
+  private TempDirectoryHelper tempDirectoryHelper;
+
+       
   public ServiceLocatorTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 
    @Test
    public void test() throws Exception {
-     File f = folder.newFolder();
+     File f = tempDirectoryHelper.getDirectory();
      File impl = new File(f, Directories.SERVER_PLUGIN_LIB_DIR);
      File meta = new File(impl, "META-INF/services");
      meta.mkdirs();
@@ -96,7 +98,7 @@ public class ServiceLocatorTest {
    
    @Test
    public void testURLsFromZip() throws Exception {
-     File base = folder.newFolder();
+     File base = tempDirectoryHelper.getDirectory();
      File test = new File(base, "test.jar");
      ZipBuilder zip = new ZipBuilder(test, false);
      zip.putEntry("META-INF/services/com.tc.classloader.TestInterface", "com.tc.classloader.TestInterfaceImpl".getBytes());
@@ -110,7 +112,7 @@ public class ServiceLocatorTest {
    
    @Test
    public void testURLsFromDir() throws Exception {
-     File base = folder.newFolder();
+     File base = tempDirectoryHelper.getDirectory();
      new File(base, "META-INF/services/").mkdirs();
      FileOutputStream meta = new FileOutputStream(new File(base, "META-INF/services/com.tc.classloader.TestInterface"));
      meta.write("com.tc.classloader.TestInterfaceImpl".getBytes());

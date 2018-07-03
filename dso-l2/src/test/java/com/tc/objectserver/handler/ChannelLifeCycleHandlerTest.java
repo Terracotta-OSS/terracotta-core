@@ -18,15 +18,10 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -39,7 +34,12 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
-import org.terracotta.monitoring.IMonitoringProducer;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 public class ChannelLifeCycleHandlerTest {
@@ -48,7 +48,7 @@ public class ChannelLifeCycleHandlerTest {
 
 
   @SuppressWarnings("unchecked")
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     StageManager stageManager = mock(StageManager.class);
     CommunicationsManager commsManager = mock(CommunicationsManager.class);
@@ -62,7 +62,7 @@ public class ChannelLifeCycleHandlerTest {
       mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     // Do nothing.
   }

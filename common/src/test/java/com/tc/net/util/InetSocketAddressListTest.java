@@ -18,25 +18,34 @@
  */
 package com.tc.net.util;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 
 import java.net.InetSocketAddress;
 
-public final class InetSocketAddressListTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@ExtendWith(TCExtension.class)
+public final class InetSocketAddressListTest {
 
   private InetSocketAddress[]   addresses;
   private InetSocketAddressList list;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
     addresses = new InetSocketAddress[] { new InetSocketAddress("localhost", 0),
         new InetSocketAddress("www.terracottatech.com", 80), new InetSocketAddress("15.0.0.1", 5) };
     list = new InetSocketAddressList(addresses);
-    super.setUp();
   }
 
   @SuppressWarnings("unused")
+  @Test
   public final void testConstructor() throws Exception {
     new InetSocketAddressList(new InetSocketAddress[0]);
     new InetSocketAddressList(addresses);
@@ -55,11 +64,13 @@ public final class InetSocketAddressListTest extends TCTestCase {
     }
   }
 
+  @Test
   public final void testToString() throws Exception {
     String toString = list.toString();
     assertTrue(toString.matches("^(?:[^:]+:\\p{Digit}+)(?:,[^:]+:\\p{Digit}+){2}$"));
   }
 
+  @Test
   public final void testParseAddresses() throws Exception {
     InetSocketAddress[] fromStringAddresses = InetSocketAddressList.parseAddresses(list.toString());
     assertEquals(addresses.length, fromStringAddresses.length);

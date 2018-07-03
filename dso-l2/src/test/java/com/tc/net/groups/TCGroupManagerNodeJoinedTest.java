@@ -18,6 +18,10 @@
  */
 package com.tc.net.groups;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +42,7 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.CallableWaiter;
 import com.tc.util.PortChooser;
@@ -54,8 +58,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-
-public class TCGroupManagerNodeJoinedTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class TCGroupManagerNodeJoinedTest {
 
   private final static String   LOCALHOST = "localhost";
   private static final Logger logger    = LoggerFactory.getLogger(TCGroupManagerNodeJoinedTest.class);
@@ -65,28 +69,30 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   private TestThrowableHandler throwableHandler;
   private MockStageManagerFactory stages;
 
-  @Override
+  @BeforeEach
   public void setUp() {
     throwableHandler = new TestThrowableHandler(logger);
     threadGroup = new TCThreadGroup(throwableHandler, "TCGroupManagerNodeJoinedTest");
     stages = new MockStageManagerFactory(logger, new ThreadGroup(threadGroup, "stage-managers"));
   }
 
-  @Override
-  protected void tcTestCaseTearDown(Throwable testException) throws Throwable {
-    super.tcTestCaseTearDown(testException);
+  @AfterEach
+  protected void tcTestCaseTearDown() throws Throwable {
     throwableHandler.throwIfNecessary();
     stages.shutdown();
   }
 
+  @Test
   public void testNodejoinedTwoServers() throws Exception {
     nodesSetupAndJoined(2);
   }
 
+  @Test
   public void testNoConnectionThreadLeak() throws Exception {
     nodesSetupAndJoined_DEV3101(2);
   }
 
+  @Test
   public void testNoConnectionThreadLeakOnL2Reconnect() throws Exception {
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
     nodesSetupAndJoined_DEV3101(2);
@@ -95,6 +101,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   }
 
   // Test for DEV-4870
+  @Test
   public void testNodeJoinAfterCloseMember() throws Exception {
     TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
     nodesSetupAndJoinedAfterCloseMember(2);
@@ -102,10 +109,12 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
         .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
   }
 
+  @Test
   public void testNodejoinedThreeServers() throws Exception {
     nodesSetupAndJoined(3);
   }
 
+  @Test
   public void testNodejoinedSixServers() throws Exception {
     nodesSetupAndJoined(6);
   }

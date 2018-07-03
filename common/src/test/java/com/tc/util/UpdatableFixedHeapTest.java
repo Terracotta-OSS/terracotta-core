@@ -1,7 +1,8 @@
 package com.tc.util;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.util.UpdatableFixedHeap.UpdatableWrapper;
-import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Random;

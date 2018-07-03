@@ -18,8 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
@@ -52,7 +52,7 @@ public class ServerEntityRequestImplTest {
   private TransactionID transactionID;
   private ClientID nodeID;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     requestAckMessage = mock(VoltronEntityReceivedResponse.class);
     responseMessage = mock(VoltronEntityAppliedResponse.class);

@@ -18,30 +18,30 @@
  */
 package com.tc.l2.msg;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
-
 import com.tc.util.State;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class L2StateMessageTest {
 
   private Enrollment     enrollment;
   private L2StateMessage l2StateMessage;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     enrollment = new Enrollment(new ServerID("30001", new byte[] { 54, -125, 34, -4 }), true, new long[] {0, 1});
     l2StateMessage = new L2StateMessage();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     enrollment = null;
     l2StateMessage = null;

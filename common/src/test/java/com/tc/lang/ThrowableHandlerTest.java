@@ -18,6 +18,7 @@
  */
 package com.tc.lang;
 
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import com.tc.logging.CallbackOnExitHandler;
@@ -26,12 +27,16 @@ import com.tc.logging.CallbackOnExitState;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class ThrowableHandlerTest extends TestCase {
+public class ThrowableHandlerTest {
 
   private boolean invokedCallback;
 
+  @Test
   public void testThrowableHandlerTest() {
     ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(ThrowableHandlerTest.class)) {
 
@@ -50,6 +55,7 @@ public class ThrowableHandlerTest extends TestCase {
     }
   }
 
+  @Test
   public void testImmediatelyExitOnOOME() {
     final AtomicInteger exitCode = new AtomicInteger(-1);
     final ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(ThrowableHandlerTest.class)) {
@@ -69,6 +75,7 @@ public class ThrowableHandlerTest extends TestCase {
     assertEquals(-1, exitCode.get());
   }
 
+  @Test
   public void testHandleJMXThreadServiceTermination() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
     ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {
@@ -82,6 +89,7 @@ public class ThrowableHandlerTest extends TestCase {
     assertFalse(exited.get());
   }
 
+  @Test
   public void testIsThreadGroupDestroyed() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
     ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {

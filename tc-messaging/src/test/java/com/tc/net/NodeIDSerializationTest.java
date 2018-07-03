@@ -18,14 +18,14 @@
  */
 package com.tc.net;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.util.UUID;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NodeIDSerializationTest {
 

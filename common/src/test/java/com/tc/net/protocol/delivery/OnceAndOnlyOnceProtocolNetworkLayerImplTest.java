@@ -18,15 +18,17 @@
  */
 package com.tc.net.protocol.delivery;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.UUID;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -41,15 +43,15 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImplTest {
   public OnceAndOnlyOnceProtocolNetworkLayerImplTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
     msgFactory = new OOOProtocolMessageFactory();
     msgParser = new OOOProtocolMessageParser(msgFactory);
@@ -105,7 +107,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImplTest {
     verify(send).close();
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 }

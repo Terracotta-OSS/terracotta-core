@@ -19,14 +19,14 @@
 
 package com.tc.util.concurrent;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.internal.util.collections.Sets;
 
-import static com.tc.util.Assert.assertFalse;
-import static com.tc.util.Assert.assertTrue;
-import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author tim

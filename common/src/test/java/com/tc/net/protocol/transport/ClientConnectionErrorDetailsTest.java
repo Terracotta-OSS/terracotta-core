@@ -18,17 +18,18 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.net.core.ConnectionInfo;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static com.tc.util.Assert.assertEquals;
-import static com.tc.util.Assert.assertNotNull;
-import static com.tc.util.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ClientConnectionErrorDetailsTest {
 
@@ -45,7 +46,7 @@ public class ClientConnectionErrorDetailsTest {
     Map<String, List<Exception>> retMap = errorDetails.getErrors();
     retMap.get(connInfo);
     assertNotNull(retMap);
-    assertEquals(1,retMap.size());
+    assertEquals(1,retMap.size(), "");
     List<Exception> errorList = retMap.get(connInfo.toString());
     /*
     Stores only the last exeption

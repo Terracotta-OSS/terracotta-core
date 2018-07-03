@@ -1,23 +1,19 @@
 package com.tc.object;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
+import org.junit.jupiter.api.Test;
 
 import com.terracotta.diagnostic.DiagnosticClientBuilder;
 
 import java.util.Properties;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StandardClientBuilderFactoryTest {
 
   private final StandardClientBuilderFactory standardClientBuilderFactory = new StandardClientBuilderFactory();
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void createStandardBuilder() throws Exception {
@@ -41,8 +37,11 @@ public class StandardClientBuilderFactoryTest {
   public void invalidConnectionType() throws Exception {
     Properties connectionProperties = new Properties();
     connectionProperties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, "invalid");
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Received invalid value");
-    standardClientBuilderFactory.create(connectionProperties);
+
+    Throwable t = assertThrows(IllegalArgumentException.class, ()-> {
+      standardClientBuilderFactory.create(connectionProperties);
+    });
+
+    assertThat(t.getMessage(), containsString("Received invalid value"));
   }
 }

@@ -1,5 +1,7 @@
 package com.tc.object.msg;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.io.TCByteBufferOutputStream;
@@ -10,10 +12,9 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import org.junit.Assert;
-import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -37,7 +38,7 @@ public class ClientHandshakeMessageImplTest {
         chm.addResendMessage(msg2);
         chm.addResendMessage(msg1);
 
-        Assert.assertThat("resend transactions are out of order", chm.getResendMessages().toArray(new ResendVoltronEntityMessage[3]),
+        assertThat("resend transactions are out of order", chm.getResendMessages().toArray(new ResendVoltronEntityMessage[3]),
                 equalTo(new ResendVoltronEntityMessage[] { msg1, msg2, msg3 }));
     }
 

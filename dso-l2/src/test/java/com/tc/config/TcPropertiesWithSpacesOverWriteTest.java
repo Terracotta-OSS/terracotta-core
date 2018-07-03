@@ -18,22 +18,30 @@
  */
 package com.tc.config;
 
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TCTestCase;
-import com.tc.util.Assert;
 import com.tc.properties.TCPropertiesConsts;
-import org.apache.commons.io.IOUtils;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
+import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class TcPropertiesWithSpacesOverWriteTest {
+
+  private TempDirectoryHelper tempDirectoryHelper;
   private File tcConfig = null;
 
+  @Test
   public void testOverWrite() throws Exception {
-    tcConfig = getTempFile("tc-config-testHaMode1.xml");
+    tcConfig = tempDirectoryHelper.getFile("tc-config-testHaMode1.xml");
     String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
         + "\n<tc-config xmlns=\"http://www.terracotta.org/config\">"
         + "<tc-properties>"

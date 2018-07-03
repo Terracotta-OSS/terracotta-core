@@ -18,22 +18,30 @@
  */
 package com.tc.config;
 
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.terracotta.config.TCConfigDefaults;
+
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
-import org.apache.commons.io.IOUtils;
-import org.terracotta.config.TCConfigDefaults;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class PortBindAddressTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class PortBindAddressTest {
+
+  private TempDirectoryHelper tempDirectoryHelper;
   private File tcConfig = null;
 
+  @Test
   public void testBindPort() {
     try {
-      tcConfig = getTempFile("tc-config-testHaMode1.xml");
+      tcConfig = tempDirectoryHelper.getFile("tc-config-testHaMode1.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc-config xmlns=\"http://www.terracotta.org/config\">"
                       + "\n<servers>"

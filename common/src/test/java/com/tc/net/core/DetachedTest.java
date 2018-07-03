@@ -19,20 +19,26 @@
 
 package com.tc.net.core;
 
-import com.tc.net.protocol.NullProtocolAdaptor;
-import com.tc.test.TCTestCase;
-import java.net.InetAddress;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import com.tc.net.protocol.NullProtocolAdaptor;
+import com.tc.test.TCExtension;
+
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class DetachedTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class DetachedTest {
 
   // see: DEV-7965
   @SuppressWarnings("resource")
+  @Test
   public void testReadAndWriteFromClosedPipeSocket() throws Throwable {
     // mock the socket and its channel
     SocketChannel socketChannel = mock(SocketChannel.class);

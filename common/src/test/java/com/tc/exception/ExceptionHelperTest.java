@@ -18,9 +18,14 @@
  */
 package com.tc.exception;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class ExceptionHelperTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+
+public class ExceptionHelperTest {
+
+  @Test
   public void test() {
     ExceptionHelperImpl helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());

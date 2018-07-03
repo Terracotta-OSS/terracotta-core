@@ -18,12 +18,9 @@
  */
 package com.tc.stats;
 
-import static org.mockito.Matchers.isA;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
@@ -56,7 +53,10 @@ import javax.management.MBeanServer;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
-import org.junit.Ignore;
+
+import static org.mockito.Matchers.isA;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MBeanRegTest {
 
@@ -66,7 +66,7 @@ public class MBeanRegTest {
   private MBeanServer       mbeanSvr;
   private final ClientID    clientId = new ClientID(0);
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     // Mocks
     ServerManagementContext smCtxt = Mockito.mock(ServerManagementContext.class, Mockito.RETURNS_MOCKS);
@@ -125,7 +125,8 @@ public class MBeanRegTest {
 
   }
 
-  @Test @Ignore // client tunneling is no longer valid
+  @Test
+  @Disabled // client tunneling is no longer valid
   public void testRemoveListenerOnDisconnect() throws Exception {
     channelMgrMbean.makeChannelActive(clientId);
     channelMgrMbean.closeAll(Collections.singletonList(clientId));

@@ -18,6 +18,10 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferOutputStream;
@@ -47,12 +51,10 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import junit.framework.TestCase;
-
 /**
  * To Test Message Packup happening at the comms writer.
  */
-public class TCConnectionTransportTest extends TestCase {
+public class TCConnectionTransportTest {
   private TCConnectionManager connMgr;
   private TCListener          server;
   private final AtomicLong    sentMessagesTotalLength  = new AtomicLong(0);
@@ -63,7 +65,7 @@ public class TCConnectionTransportTest extends TestCase {
 
   private final AtomicBoolean fullySent                = new AtomicBoolean(false);
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
     connMgr = new TCConnectionManagerImpl();
 
@@ -77,7 +79,7 @@ public class TCConnectionTransportTest extends TestCase {
     server = connMgr.createListener(new TCSocketAddress(5678), factory);
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
     connMgr.shutdown();
     server.stop();
@@ -85,6 +87,7 @@ public class TCConnectionTransportTest extends TestCase {
 
   Random r = new Random();
 
+  @Test
   public void testBasic() throws TCTimeoutException, IOException, InterruptedException, BrokenBarrierException {
     final TCConnection clientConn = connMgr.createConnection(new WireProtocolAdaptorImpl(new ClientWPMGSink()));
     clientConn.connect(new TCSocketAddress(server.getBindPort()), 3000);

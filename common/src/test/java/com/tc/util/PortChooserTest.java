@@ -18,17 +18,23 @@
  */
 package com.tc.util;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-public class PortChooserTest extends TCTestCase {
+import com.tc.test.TCExtension;
+
+@ExtendWith(TCExtension.class)
+public class PortChooserTest {
 
   private PortChooser portChooser;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
     this.portChooser = new PortChooser();
   }
 
+  @Test
   public void testChooseRandomPorts() {
     int numOfPorts = 100;
     int portNum = this.portChooser.chooseRandomPorts(numOfPorts);
@@ -38,6 +44,7 @@ public class PortChooserTest extends TCTestCase {
     }
   }
 
+  @Test
   public void testAll() {
     int portNum1 = this.portChooser.chooseRandomPort();
 

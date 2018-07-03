@@ -18,6 +18,10 @@
  */
 package com.tc.net.core;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
@@ -29,20 +33,20 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * TODO Jan 13, 2005: comment describing what this class is for.
  */
-public class TCConnectionManagerTest extends TestCase {
+public class TCConnectionManagerTest {
 
   private TCConnectionManager clientConnMgr;
   private TCConnectionManager serverConnMgr;
   private TCListener          lsnr;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     this.clientConnMgr = new TCConnectionManagerImpl();
     this.serverConnMgr = new TCConnectionManagerImpl();
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
@@ -53,12 +57,13 @@ public class TCConnectionManagerTest extends TestCase {
     });
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
     clientConnMgr.shutdown();
     serverConnMgr.shutdown();
   }
 
+  @Test
   public void testCreateConnection() throws Exception {
     assertEquals(0, clientConnMgr.getAllConnections().length);
 
@@ -89,6 +94,7 @@ public class TCConnectionManagerTest extends TestCase {
     assertEquals(0, clientConnMgr.getAllConnections().length);
   }
 
+  @Test
   public void testShutdown() {
     assertEquals(1, serverConnMgr.getAllListeners().length);
     assertEquals(0, clientConnMgr.getAllConnections().length);
@@ -109,12 +115,14 @@ public class TCConnectionManagerTest extends TestCase {
     clientConnMgr.shutdown();
   }
 
+  @Test
   public void testCreateListenerTCSocketAddressProtocolAdaptorFactory() {
     assertEquals(1, serverConnMgr.getAllListeners().length);
     this.lsnr.stop();
     assertEquals(0, serverConnMgr.getAllListeners().length);
   }
 
+  @Test
   public void testActiveClientConnections() throws Exception {
     assertEquals(0, clientConnMgr.getAllConnections().length);
 
@@ -190,6 +198,7 @@ public class TCConnectionManagerTest extends TestCase {
     assertEquals(0, serverConnMgr.getAllActiveConnections().length);
   }
 
+  @Test
   public void testInActiveClientConnections() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
     this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, new ClearTextBufferManagerFactory());

@@ -18,10 +18,20 @@
  */
 package com.tc.util.runtime;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+
+@ExtendWith(TCExtension.class)
 public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
 
+  @Test
   public void testThreadDump() throws Throwable {
     final int numThreads = 10;
     TraceThread[] threads = new TraceThread[numThreads];
@@ -52,6 +62,7 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
    * DEV-3897 changed the behavior for ThreadDumpUtilJdk16.getThreadDump and so we get the 
    * correct thread dump even in case when the Thread.getId() method id overridden. 
    */
+  @Test
   public void testBadThreadId() throws Throwable {
     final int numThreads = 10;
     TraceThread[] threads = new TraceThread[numThreads];

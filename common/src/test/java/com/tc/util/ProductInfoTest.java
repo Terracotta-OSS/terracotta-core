@@ -18,6 +18,8 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,11 +33,18 @@ import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 import java.util.Enumeration;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 
 @SuppressWarnings("resource")
-public class ProductInfoTest extends TestCase {
+public class ProductInfoTest {
 
+  @Test
   public void testNullCodeSource() throws Exception {
     URL[] urls = ((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs();
     ClassLoaderWithoutCodeSource loader = new ClassLoaderWithoutCodeSource(urls);
@@ -49,6 +58,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals(ProductInfo.getInstance().toString(), productInfo.toString());
   }
 
+  @Test
   public void testNullCodeSourceLocation() throws Exception {
     URL[] urls = ((URLClassLoader) ClassLoader.getSystemClassLoader()).getURLs();
     ClassLoaderWithoutCodeSource loader = new ClassLoaderWithoutCodeSource(urls);
@@ -62,6 +72,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals(ProductInfo.getInstance().toString(), productInfo.toString());
   }
 
+  @Test
   public void testOpenSourceEditionWithPatch() {
     try {
       InputStream buildData = ProductInfo.getData("TestBuildData.txt");
@@ -78,6 +89,7 @@ public class ProductInfoTest extends TestCase {
     }
   }
 
+  @Test
   public void testOpenSourceEditionWithoutPatch() {
     try {
       InputStream buildData = ProductInfo.getData("TestBuildData.txt");
@@ -106,6 +118,7 @@ public class ProductInfoTest extends TestCase {
     }
   }
 */
+
   private void verifyOpenSourceBuildData(ProductInfo info) {
     assertEquals("thebranch", info.buildBranch());
     assertEquals("20080616-130651 (Revision 12345 from thebranch)", info.buildID());

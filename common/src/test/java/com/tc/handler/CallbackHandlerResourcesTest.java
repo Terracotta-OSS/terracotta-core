@@ -18,20 +18,26 @@
  */
 package com.tc.handler;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 
 import java.util.ResourceBundle;
 
-public class CallbackHandlerResourcesTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class CallbackHandlerResourcesTest {
 
   private ResourceBundle resources;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
     this.resources = ResourceBundle.getBundle(getClass().getPackage().getName() + ".messages");
   }
 
+  @Test
   public void testResources() {
     Assert.assertTrue(CallbackHandlerResources.getDirtyDBAutodeleteAutoRestartZapMessage()
         .equals(this.resources.getObject("dirtydb.zap.autodelete.autorestart")));

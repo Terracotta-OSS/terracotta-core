@@ -18,18 +18,21 @@
  */
 package com.tc.object.msg;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.session.SessionID;
-import java.util.Collection;
-import org.junit.Assert;
-import org.junit.Test;
 
+import java.util.Collection;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 
@@ -44,7 +47,7 @@ public class ClientHandshakeMessageTest {
     EntityID entity1 = new EntityID("class", "entity 1");
     EntityID entity2 = new EntityID("class", "entity 2");
     EntityID entity3 = new EntityID("class", "entity 3");
-    Assert.assertNotEquals(entity1, entity2);
+    assertNotEquals(entity1, entity2);
     long entityVersion = 1;
     long instanceID = 0;
     byte[] extendedReconnectData1 = {};
@@ -53,7 +56,7 @@ public class ClientHandshakeMessageTest {
     ClientEntityReferenceContext ref1 = new ClientEntityReferenceContext(entity1, entityVersion, new ClientInstanceID(instanceID++), extendedReconnectData1);
     ClientEntityReferenceContext ref2 = new ClientEntityReferenceContext(entity2, entityVersion, new ClientInstanceID(instanceID++), extendedReconnectData2);
     ClientEntityReferenceContext ref3 = new ClientEntityReferenceContext(entity3, entityVersion, new ClientInstanceID(instanceID++), extendedReconnectData3);
-    Assert.assertNotEquals(ref1, ref2);
+    assertNotEquals(ref1, ref2);
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
     msg.dehydrate();
@@ -63,8 +66,8 @@ public class ClientHandshakeMessageTest {
                                                                          .getPayload());
     msg2.hydrate();
     Collection<ClientEntityReferenceContext> reconnectReferences = msg2.getReconnectReferences();
-    Assert.assertTrue(reconnectReferences.contains(ref1));
-    Assert.assertTrue(reconnectReferences.contains(ref2));
-    Assert.assertFalse(reconnectReferences.contains(ref3));
+    assertTrue(reconnectReferences.contains(ref1));
+    assertTrue(reconnectReferences.contains(ref2));
+    assertFalse(reconnectReferences.contains(ref3));
   }
 }

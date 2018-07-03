@@ -1,8 +1,6 @@
 package com.terracotta.connection.api;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import org.terracotta.connection.Connection;
 
 import com.terracotta.connection.EndpointConnector;
@@ -13,15 +11,13 @@ import java.net.URI;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class TerracottaConnectionServiceTest {
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void connect() throws Exception {
@@ -40,7 +36,9 @@ public class TerracottaConnectionServiceTest {
     when(clientFactoryMock.createL1Client(any())).thenReturn(mock(TerracottaInternalClient.class));
     TerracottaConnectionService terracottaConnectionService =
         new TerracottaConnectionService(mock(EndpointConnector.class), clientFactoryMock);
-    expectedException.expect(IllegalArgumentException.class);
-    terracottaConnectionService.connect(URI.create("non-terracotta://localhost:9410"), new Properties());
+
+    assertThrows(IllegalArgumentException.class, ()-> {
+      terracottaConnectionService.connect(URI.create("non-terracotta://localhost:9410"), new Properties());
+    });
   }
 }

@@ -18,12 +18,13 @@
  */
 package com.tc.l2.state;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.services.TestTimeSource;
-import org.junit.Test;
 
 import static com.tc.voter.VoterManager.INVALID_VOTER_RESPONSE;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
 
 public class ServerVoterManagerImplTest {
 

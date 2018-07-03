@@ -19,16 +19,18 @@
 package com.tc.lang;
 
 
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import junit.framework.TestCase;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 
-public class StartupHelperTest extends TestCase {
+public class StartupHelperTest {
 
+  @Test
   public void testException() throws Throwable {
     final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
 
@@ -62,6 +64,7 @@ public class StartupHelperTest extends TestCase {
     assertTrue(thrown == re);
   }
 
+  @Test
   public void testGroup() throws Throwable {
     final TCThreadGroup group = new TCThreadGroup(new ThrowableHandlerImpl(mock(Logger.class)));
 

@@ -19,23 +19,31 @@
 package com.tc.config;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class HaConfigTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class HaConfigTest {
+
+  private TempDirectoryHelper tempDirectoryHelper;
+
   private File tcConfig = null;
 
   @SuppressWarnings("unused")
+  @Test
   public void testBasicMakeAllNodes() {
     try {
-      tcConfig = getTempFile("tc-config-testFakeL2sName.xml");
+      tcConfig = tempDirectoryHelper.getFile("tc-config-testFakeL2sName.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc-config xmlns=\"http://www.terracotta.org/config\">" + "\n<servers>"
                       + "\n      <server name=\"server1\" />" + "\n</servers>" + "\n</tc-config>";

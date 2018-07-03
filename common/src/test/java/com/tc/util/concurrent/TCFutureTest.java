@@ -18,21 +18,25 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.util.TCTimeoutException;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
+import com.tc.util.TCTimeoutException;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test cases for TCFuture
  * 
  * @author teck
  */
-public class TCFutureTest extends TestCase {
+public class TCFutureTest {
 
+  @Test
   public void testTimeout() {
     testTimeout(new TCFuture());
 
@@ -58,6 +62,7 @@ public class TCFutureTest extends TestCase {
     }
   }
 
+  @Test
   public void testResultSet() {
     testResultSet(new TCFuture());
     Object lock = new Object();
@@ -65,7 +70,7 @@ public class TCFutureTest extends TestCase {
     testResultSet(f1);
   }
 
-  public void testResultSet(final TCFuture f1) {
+  private void testResultSet(final TCFuture f1) {
 
     final Object val = new Object();
 
@@ -93,6 +98,7 @@ public class TCFutureTest extends TestCase {
     }
   }
 
+  @Test
   public void testSetMulti() {
     testSetMulti(new TCFuture());
 
@@ -115,6 +121,7 @@ public class TCFutureTest extends TestCase {
     }
   }
 
+  @Test
   public void testSetAfterCancel() {
     testSetAfterCancel(new TCFuture());
 
@@ -130,6 +137,7 @@ public class TCFutureTest extends TestCase {
     f1.set(new Object());
   }
 
+  @Test
   public void testCancelAfterSet() {
     testCancelAfterSet(new TCFuture());
 
@@ -145,6 +153,7 @@ public class TCFutureTest extends TestCase {
     f1.cancel();
   }
 
+  @Test
   public void testCancel() {
     testCancel(new TCFuture());
     
@@ -176,6 +185,7 @@ public class TCFutureTest extends TestCase {
     f1.cancel();
   }
 
+  @Test
   public void testSetNull() throws Exception {
     testSetNull(new TCFuture());
     
@@ -188,6 +198,7 @@ public class TCFutureTest extends TestCase {
     assertTrue(f1.get(100) == null);
   }
 
+  @Test
   public void testSetNullException() {
     testSetNullException(new TCFuture());
     
@@ -204,6 +215,7 @@ public class TCFutureTest extends TestCase {
     }
   }
 
+  @Test
   public void testExceptionAfterSet() {
     testExceptionAfterSet(new TCFuture());
     
@@ -224,6 +236,7 @@ public class TCFutureTest extends TestCase {
     }
   }
 
+  @Test
   public void testExceptionAfterCancel() {
     testExceptionAfterCancel(new TCFuture());
     testExceptionAfterCancel(new TCFuture(new Object()));
@@ -238,6 +251,7 @@ public class TCFutureTest extends TestCase {
     f1.setException(t);
   }
 
+  @Test
   public void testExceptionResult() {
     testExceptionResult(new TCFuture());
     testExceptionResult(new TCFuture(new Object()));
@@ -260,6 +274,7 @@ public class TCFutureTest extends TestCase {
     }
   }
 
+  @Test
   public void testTimeoutDurationSimulatingSpuriousWakeup() {
     Object lock = new Object();
     final TCFuture future = new TCFuture(lock);

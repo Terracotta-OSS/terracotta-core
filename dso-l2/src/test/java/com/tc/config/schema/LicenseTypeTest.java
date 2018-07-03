@@ -18,16 +18,21 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.LicenseType;
-import com.tc.config.schema.LicenseType;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.test.EqualityChecker;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Unit test for {@link LicenseType}.
  */
-public class LicenseTypeTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class LicenseTypeTest {
 
+  @Test
   public void testAll() throws Exception {
     Object[] arr1 = new Object[] { LicenseType.TRIAL, LicenseType.PRODUCTION, LicenseType.NONE };
     Object[] arr2 = new Object[] { LicenseType.TRIAL, LicenseType.PRODUCTION, LicenseType.NONE };

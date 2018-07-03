@@ -18,7 +18,10 @@
  */
 package com.tc.io;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.io.TCFileUtils;
@@ -29,7 +32,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-public class EnsureWritableDirTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+
+@ExtendWith(TCExtension.class)
+public class EnsureWritableDirTest {
 
   private final Random random = new Random();
 
@@ -46,6 +56,7 @@ public class EnsureWritableDirTest extends TCTestCase {
   /**
    * Test: ensureWritableDir(null, ...) should throw NPE
    */
+  @Test
   public void testNullDir() throws Exception {
     boolean caughtNPE = false;
     try {
@@ -70,6 +81,7 @@ public class EnsureWritableDirTest extends TCTestCase {
   /**
    * Test: ensureWritableDir() of an existing, writable dir should succeed
    */
+  @Test
   public void testNormalDir() throws Exception {
     File tmpDir = createTmpDir();
     boolean result = TCFileUtils.ensureWritableDir(tmpDir, new EnsureWritableDirReporter() {
@@ -89,6 +101,7 @@ public class EnsureWritableDirTest extends TCTestCase {
   /**
    * Test: ensureWritableDir() of nonexisting dir that can be created should succeed
    */
+  @Test
   public void testNonExistentDir() throws Exception {
     File tmpDir = createTmpDir();
     File childDir = new File(tmpDir, "child");
@@ -112,6 +125,7 @@ public class EnsureWritableDirTest extends TCTestCase {
    * we're stuck with trying to delete a read-only dir, at the end of the test. Whether this works is system-dependent.
    * This test may not be able to run on all platforms.
    */
+  @Test
   public void testReadOnlyDir() throws Exception {
     File tmpDir = createTmpDir();
     int count = 0;
@@ -150,6 +164,7 @@ public class EnsureWritableDirTest extends TCTestCase {
    * function. As with {@link #testReadOnlyDir()}, this test is awkward because there's no way to make the directory be
    * writable again after making it read-only.
    */
+  @Test
   public void testReadOnlyParent() throws Exception {
     // On Windows, the read-only attribute of a directory is ignored except when deleting
     // the directory itself, so this test is inapplicable.
@@ -176,6 +191,7 @@ public class EnsureWritableDirTest extends TCTestCase {
   /**
    * Test: ensureWritableDir() of a non-directory file should fail and call appropriate reporter function.
    */
+  @Test
   public void testNonDirFile() throws Exception {
     File tmpDir = createTmpDir();
     File child = new File(tmpDir, "child.txt");

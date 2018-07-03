@@ -18,6 +18,16 @@
  */
 package com.tc.objectserver.handler;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.MessageCodec;
+
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
@@ -54,8 +64,8 @@ import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -63,25 +73,16 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Consumer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.MessageCodec;
 
 
 public class ReplicatedTransactionHandlerTest {
@@ -99,7 +100,7 @@ public class ReplicatedTransactionHandlerTest {
   private long rid = 0;
   
   @SuppressWarnings("unchecked")
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
@@ -442,7 +443,7 @@ public class ReplicatedTransactionHandlerTest {
     loopbackSink.addToSink(msg);
     return rid;
   }
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     this.rth.getEventHandler().destroy();
   }

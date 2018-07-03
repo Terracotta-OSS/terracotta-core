@@ -18,24 +18,27 @@
  */
 package com.tc.objectserver.persistence;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.terracotta.persistence.IPlatformPersistence;
+
 import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.persistence.IPlatformPersistence;
 
 /**
  *
@@ -45,19 +48,19 @@ public class PersistorTest {
   public PersistorTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 

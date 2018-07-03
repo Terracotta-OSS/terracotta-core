@@ -3,6 +3,11 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.net.core.TCConnection;
@@ -14,7 +19,7 @@ import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.objectserver.impl.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.ClientStatePersistor;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
@@ -26,12 +31,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-public class ServerStackProviderTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class ServerStackProviderTest {
 
   private ServerStackProvider            provider;
   private ConnectionPolicy           connectionPolicy;
@@ -40,17 +47,16 @@ public class ServerStackProviderTest extends TCTestCase {
     super();
   }
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     connectionPolicy = mock(ConnectionPolicy.class);
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
+  @Test
   public void testAttachAlreadyConnectedTransport() throws Exception {
     NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
         any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class))).then(
@@ -99,7 +105,8 @@ public class ServerStackProviderTest extends TCTestCase {
       // expected
     }
   }
-  
+
+  @Test
   public void testRebuildStack() throws Exception {
     NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
         any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class))).then(
@@ -172,6 +179,7 @@ public class ServerStackProviderTest extends TCTestCase {
   }
   
 
+  @Test
   public void testRebuildStackWithProductNegtiation() throws Exception {
     NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
         any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class))).then(

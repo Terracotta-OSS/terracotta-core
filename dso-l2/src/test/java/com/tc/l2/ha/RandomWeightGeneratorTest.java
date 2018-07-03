@@ -18,14 +18,19 @@
  */
 package com.tc.l2.ha;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
+
 import java.security.SecureRandom;
 
-import org.junit.Assert;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tc.test.TCTestCase;
+@ExtendWith(TCExtension.class)
+public class RandomWeightGeneratorTest {
 
-
-public class RandomWeightGeneratorTest extends TCTestCase {
+  @Test
   public void testUnlikelyCollision() throws Exception {
     // Assume that 3 different weights will each be unique.  While it is possible for this to collide, the odds against are
     // overwhelming and there seems to be no way to force deterministic values from SecureRandom, even with a seed.
@@ -35,8 +40,8 @@ public class RandomWeightGeneratorTest extends TCTestCase {
     long weight1 = generator.getWeight();
     long weight2 = generator.getWeight();
     long weight3 = generator.getWeight();
-    Assert.assertTrue(weight1 != weight2);
-    Assert.assertTrue(weight1 != weight3);
-    Assert.assertTrue(weight2 != weight3);
+    assertTrue(weight1 != weight2);
+    assertTrue(weight1 != weight3);
+    assertTrue(weight2 != weight3);
   }
 }

@@ -1,9 +1,7 @@
 package com.terracotta.connection.api;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionPropertyNames;
@@ -21,8 +19,10 @@ import java.util.Collections;
 import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -30,14 +30,11 @@ import static org.mockito.Mockito.when;
 
 public class AbstractConnectionServiceTest {
 
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
-
   private final String TEST_SCHEME = "terracotta";
   private TerracottaInternalClientFactory clientFactoryMock;
   private ConnectionService connectionService;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     clientFactoryMock = mock(TerracottaInternalClientFactory.class);
     EndpointConnector endpointConnectorMock = mock(EndpointConnector.class);
@@ -87,25 +84,29 @@ public class AbstractConnectionServiceTest {
 
   @Test
   public void connectWithUnknownScheme() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Unknown URI");
-    connectionService.connect(URI.create("non-terracotta://localhost:4000"), new Properties());
+    Throwable t = assertThrows(IllegalArgumentException.class, ()-> {
+      connectionService.connect(URI.create("non-terracotta://localhost:4000"), new Properties());
+    });
+    assertThat(t.getMessage(), containsString("Unknown URI"));
   }
 
   @Test
   public void connectWithUnknownTypeWithIterableBasedConnect() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Unknown connectionType");
-    Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "unknown");
-    InetSocketAddress server = InetSocketAddress.createUnresolved("localhost", 4000);
-    connectionService.connect(Collections.singletonList(server), properties);
+    Throwable t = assertThrows(IllegalArgumentException.class, ()-> {
+      Properties properties = new Properties();
+      properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "unknown");
+      InetSocketAddress server = InetSocketAddress.createUnresolved("localhost", 4000);
+      connectionService.connect(Collections.singletonList(server), properties);
+    });
+    assertThat(t.getMessage(), containsString("Unknown connectionType"));
   }
 
   @Test
   public void connectWithMalformedPort() throws Exception {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Unable to parse uri");
-    connectionService.connect(URI.create(TEST_SCHEME + "://localhost:4000,localhost:dd45"), new Properties());
+    Throwable t = assertThrows(IllegalArgumentException.class, ()-> {
+      connectionService.connect(URI.create(TEST_SCHEME + "://localhost:4000,localhost:dd45"), new Properties());
+    });
+
+    assertThat(t.getMessage(), containsString("Unable to parse uri"));
   }
 }

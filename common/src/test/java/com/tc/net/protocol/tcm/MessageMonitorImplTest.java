@@ -19,10 +19,12 @@
 package com.tc.net.protocol.tcm;
 
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class MessageMonitorImplTest extends TestCase {
-  
+
+public class MessageMonitorImplTest {
+
+  @Test
   public void tests() throws Exception {
     MessageMonitorImpl mm = new MessageMonitorImpl();
     mm.newIncomingMessage(new TestTCMessage());

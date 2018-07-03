@@ -19,27 +19,36 @@
 
 package com.tc.stats;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.CircularLossyQueue;
 
-public class CircularLossyQueueTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class CircularLossyQueueTest {
   public static final int                            SIZE = 30;
   public CircularLossyQueue<TimeStampedCounterValue> queue;
 
+  @Test
   public void testUnfilled() {
     checkAll(15);
   }
 
+  @Test
   public void testJustFull() {
     checkAll(SIZE);
   }
 
+  @Test
   public void testOverFilled() {
     checkAll(500);
   }
 
+  @Test
   public void testOrder() {
     LossyStack<TimeStampedCounterValue> lossyStack = new LossyStack<TimeStampedCounterValue>(SIZE);
 
@@ -84,6 +93,7 @@ public class CircularLossyQueueTest extends TCTestCase {
     }
   }
 
+  @Test
   public void testWithMultiThreaded() {
     Runnable runnable = new Runnable() {
       @Override
@@ -109,9 +119,8 @@ public class CircularLossyQueueTest extends TCTestCase {
     Assert.assertEquals(SIZE, queue.depth());
   }
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     queue = new CircularLossyQueue<TimeStampedCounterValue>(SIZE);
   }
 }

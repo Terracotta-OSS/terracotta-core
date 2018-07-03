@@ -18,17 +18,21 @@
  */
 package com.tc.net;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.net.EphemeralPorts.Range;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class EphemeralPortsTest extends TestCase {
 
+public class EphemeralPortsTest {
+
+  @Test
   public void test() {
     Range range = EphemeralPorts.getRange();
     System.out.println(range);
-    assertTrue("lower is " + range.getLower(), range.getLower() >= 1024);
-    assertTrue("upper is " + range.getUpper(), range.getUpper() <= 65535);
+    assertTrue(range.getLower() >= 1024, () -> "lower is " + range.getLower());
+    assertTrue(range.getUpper() <= 65535, () -> "upper is " + range.getUpper());
   }
 
 }

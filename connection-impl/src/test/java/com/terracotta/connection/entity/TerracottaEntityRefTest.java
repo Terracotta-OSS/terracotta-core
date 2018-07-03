@@ -19,17 +19,8 @@
 
 package com.terracotta.connection.entity;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.terracotta.connection.EndpointConnector;
-import com.terracotta.connection.EndpointConnectorImpl;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
@@ -41,19 +32,28 @@ import com.tc.object.ClientEntityManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
+import com.terracotta.connection.EndpointConnector;
+import com.terracotta.connection.EndpointConnectorImpl;
 
 import java.util.concurrent.atomic.AtomicLong;
-import org.mockito.Mockito;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 public class TerracottaEntityRefTest {
   private static final EndpointConnector CONNECTOR = spy(new EndpointConnectorImpl());
 
-  @Test
   /**
    * A VERY simple test to check that we can fetch an object and that the expected paths are called.
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
+  @Test
   public void testFetch() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
@@ -76,11 +76,11 @@ public class TerracottaEntityRefTest {
     // Note that we don't see the corresponding readUnlockEntity call since it is called by the EntityClientEndpoint, when closed, but that is just a mock.
   }
 
-  @Test
   /**
    * Test that tryDestroy interacts with the underlying systems as expected when it SUCCEEDED in getting the lock.
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
+  @Test
   public void testTryDestroySuccess() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
@@ -96,11 +96,11 @@ public class TerracottaEntityRefTest {
     Assert.assertTrue(didDestroy);
   }
 
-  @Test
   /**
    * Test that tryDestroy interacts with the underlying systems as expected when it FAILED in getting the lock.
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
+  @Test
   public void testTryDestroyFailure() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);

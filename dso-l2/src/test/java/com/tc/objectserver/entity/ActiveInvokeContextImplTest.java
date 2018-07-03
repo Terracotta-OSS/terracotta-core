@@ -1,17 +1,20 @@
 package com.tc.objectserver.entity;
 
+import org.junit.jupiter.api.Test;
+import org.terracotta.entity.ActiveInvokeChannel;
+import org.terracotta.entity.EntityResponse;
+
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
-import java.util.function.Consumer;
-import org.junit.Assert;
-import org.junit.Test;
 
+import java.util.function.Consumer;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import org.terracotta.entity.ActiveInvokeChannel;
-import org.terracotta.entity.EntityResponse;
 
 public class ActiveInvokeContextImplTest {
 
@@ -22,19 +25,19 @@ public class ActiveInvokeContextImplTest {
       1,
       1,
       2);
-    Assert.assertThat(ctx.isValidClientInformation(), is(true));
+    assertThat(ctx.isValidClientInformation(), is(true));
   }
 
   @Test
   public void testInvalid() {
     ActiveInvokeContextImpl ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, 1, 2);
-    Assert.assertThat(ctx.isValidClientInformation(), is(false));
+    assertThat(ctx.isValidClientInformation(), is(false));
     ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(), 1, -1, -1);
-    Assert.assertThat(ctx.isValidClientInformation(), is(false));
+    assertThat(ctx.isValidClientInformation(), is(false));
     ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, -1, 2);
-    Assert.assertThat(ctx.isValidClientInformation(), is(true));
+    assertThat(ctx.isValidClientInformation(), is(true));
     ctx = new ActiveInvokeContextImpl(new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(2)), 1, 1, -1);
-    Assert.assertThat(ctx.isValidClientInformation(), is(false));
+    assertThat(ctx.isValidClientInformation(), is(false));
   }
 
   @Test
@@ -54,7 +57,7 @@ public class ActiveInvokeContextImplTest {
     verify(close).run();
     try {
       chan.sendResponse(mock(EntityResponse.class));
-      Assert.fail();
+      fail();
     } catch (IllegalStateException state) {
       // expected
     }

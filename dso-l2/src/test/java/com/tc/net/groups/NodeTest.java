@@ -18,12 +18,17 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.groups.Node;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class NodeTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+
+
+public class NodeTest {
 
   @SuppressWarnings("unused")
+  @Test
   public void testCtor() {
     try {
       new Node(null, 1);
@@ -51,6 +56,7 @@ public class NodeTest extends TestCase {
     assertEquals(port, n.getPort());
   }
 
+  @Test
   public void testEqualsAndHashCode() {
     final String host = "host";
     final int port = 123;

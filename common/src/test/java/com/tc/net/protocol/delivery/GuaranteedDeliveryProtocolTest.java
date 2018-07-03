@@ -18,7 +18,8 @@
  */
 package com.tc.net.protocol.delivery;
 
-import static org.mockito.Mockito.mock;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -26,14 +27,19 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class GuaranteedDeliveryProtocolTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+
+@ExtendWith(TCExtension.class)
+public class GuaranteedDeliveryProtocolTest {
   BlockingQueue<TCNetworkMessage>     clientReceiveQueue;
   BlockingQueue<TCNetworkMessage>     serverReceiveQueue;
   private TestProtocolMessageDelivery clientDelivery;
@@ -60,11 +66,13 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
 
   }
 
+  @Test
   public void testDefault() throws Exception {
     setUp(new L1ReconnectConfigImpl());
     oooTest();
   }
 
+  @Test
   public void testErrorConfig() throws Exception {
     try {
       setUp(new L1ReconnectConfigImpl(true, 5000, 5000, 1, 1));
@@ -75,11 +83,13 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
     Assert.eval(false);
   }
 
+  @Test
   public void testAggressive() throws Exception {
     setUp(new L1ReconnectConfigImpl(true, 5000, 5000, 1, 2));
     oooTest();
   }
 
+  @Test
   public void testLethargic() throws Exception {
     setUp(new L1ReconnectConfigImpl(true, 5000, 5000, 100, 1000));
     oooTest();
@@ -247,6 +257,7 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
     clientDelivery.clear();
   }
 
+  @Test
   public void testTransportDisconnect() {
     setUp(new L1ReconnectConfigImpl());
     SendStateMachine sender = clientGdp.getSender();
@@ -278,6 +289,7 @@ public class GuaranteedDeliveryProtocolTest extends TCTestCase {
     assertTrue(receiver.isClean());
   }
 
+  @Test
   public void testSendWindowFull() {
     setUp(new L1ReconnectConfigImpl());
 

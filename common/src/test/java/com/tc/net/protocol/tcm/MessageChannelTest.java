@@ -18,6 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,15 +37,12 @@ import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
-import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -56,9 +56,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /*
  * This test really belongs in the TC Messaging module but it's dependencies
@@ -68,7 +73,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * This is a test case for MessageChannel. XXX: This test could use some work. It's not very coherent and uses sleeps.
  * --Orion 12/19/2005
  */
-public class MessageChannelTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class MessageChannelTest {
   static final int             ITERATIONS    = 100;
   static final int             WAIT_PERIOD   = 100;
   static final int             WAIT          = ITERATIONS * WAIT_PERIOD;
@@ -102,7 +108,6 @@ public class MessageChannelTest extends TCTestCase {
 
   protected void setUp(ProductID product, NetworkStackHarnessFactory clientStackHarnessFactory,
                        NetworkStackHarnessFactory serverStackHarnessFactory, boolean dumbServerSink) throws Exception {
-    super.setUp();
 try {
     clientWatcher = new MessageSendAndReceiveWatcher();
     serverWatcher = new MessageSendAndReceiveWatcher();
@@ -183,9 +188,8 @@ try {
     initListener(myClientSenderWatcher, myServerSenderWatcher, dumbServerSink, 0);
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
 
     final Throwable lastError = error.get();
     if (lastError != null) { throw new Exception(lastError); }
@@ -196,6 +200,7 @@ try {
     if (serverComms != null) serverComms.shutdown();
   }
 
+  @Test
   public void testAttachments() throws Exception {
     setUp(ProductID.STRIPE);
     try {
@@ -211,21 +216,22 @@ try {
     Object attachment = new Object();
     Object attachment2 = new Object();
     channel.addAttachment(key, attachment, false);
-    assertSame(attachment, channel.getAttachment(key));
+    Assert.assertSame(attachment, channel.getAttachment(key));
     channel.addAttachment(key, attachment, false);
-    assertSame(attachment, channel.getAttachment(key));
+    Assert.assertSame(attachment, channel.getAttachment(key));
 
     channel.addAttachment(key, attachment2, true);
-    assertSame(attachment2, channel.getAttachment(key));
+    Assert.assertSame(attachment2, channel.getAttachment(key));
 
     Object removed = channel.removeAttachment(key);
-    assertSame(attachment2, removed);
+    Assert.assertSame(attachment2, removed);
 
     removed = channel.removeAttachment(key);
     assertNull(removed);
     assertNull(channel.getAttachment(key));
   }
 
+  @Test
   public void testOpenRaceWithAutoReconnect() throws Exception {
     setUp(ProductID.STRIPE, false, true);
 
@@ -270,6 +276,7 @@ try {
     clientChannel = null;
   }
 
+  @Test
   public void testClientSwitchOver() throws Exception {
 
     clientWatcher = new MessageSendAndReceiveWatcher();
@@ -360,6 +367,7 @@ try {
         });
   }
 
+  @Test
   public void testAutomaticReconnect() throws Exception {
     setUp(ProductID.STRIPE, true);
     assertEquals(0, clientChannel.getConnectCount());
@@ -394,13 +402,15 @@ try {
     String msg = "expected: " + count + ", client sent: " + clientWatcher.sent() + ", client received: "
                  + clientWatcher.received() + ", server sent: " + serverWatcher.sent() + ", server received: "
                  + serverWatcher.received();
-
-    assertEquals(msg, count, clientWatcher.sent());
-    assertEquals(msg, count, clientWatcher.received());
-    assertEquals(msg, count, serverWatcher.sent());
-    assertEquals(msg, count, serverWatcher.received());
+    assertAll(msg,
+        () -> assertEquals(count, clientWatcher.sent()),
+        () -> assertEquals(count, clientWatcher.received()),
+        () -> assertEquals(count, serverWatcher.sent()),
+        () -> assertEquals(count, serverWatcher.received())
+        );
   }
 
+  @Test
   public void testManualReconnectAfterFailure() throws Exception {
     setUp(ProductID.SERVER);
 
@@ -430,6 +440,7 @@ try {
     assertTrue(clientChannel.isConnected());
   }
 
+  @Test
   public void testSendAfterDisconnect() throws Exception {
     setUp(ProductID.SERVER);
     clientChannel.open(connectTo);
@@ -444,6 +455,7 @@ try {
     ThreadUtil.reallySleep(5000);
   }
 
+  @Test
   public void testZeroMaxRetriesDoesntAutoreconnect() throws Exception {
     setUp(ProductID.SERVER);
     assertEquals(0, clientChannel.getConnectAttemptCount());
@@ -458,6 +470,7 @@ try {
     assertEquals(1, clientChannel.getConnectCount());
   }
 
+  @Test
   public void testNegativeMaxRetriesAlwaysReconnects() throws Exception {
     setUp(ProductID.STRIPE);
 
@@ -475,7 +488,7 @@ try {
     clientComms.getConnectionManager().closeAllConnections(5000);
     int count = clientChannel.getConnectAttemptCount();
     ThreadUtil.reallySleep(WAIT * 4);
-    assertTrue(clientChannel.getConnectAttemptCount() + " vs " + count, clientChannel.getConnectAttemptCount() > count);
+    assertTrue(clientChannel.getConnectAttemptCount() > count, () -> clientChannel.getConnectAttemptCount() + " vs " + count);
     assertEquals(1, clientChannel.getConnectCount());
   }
 
@@ -509,6 +522,7 @@ try {
   // }
   // }
 
+  @Test
   public void testGetStatus() throws Exception {
     setUp(ProductID.SERVER);
     clientChannel.open(connectTo);
@@ -517,6 +531,7 @@ try {
     assertTrue(clientChannel.isClosed());
   }
 
+  @Test
   public void testSend() throws Exception {
     setUp(ProductID.SERVER);
     clientChannel.open(connectTo);
@@ -529,6 +544,7 @@ try {
 
   }
 
+  @Test
   public void testSocketInfo() throws Exception {
     setUp(ProductID.SERVER);
 
