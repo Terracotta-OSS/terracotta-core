@@ -34,14 +34,14 @@ public class TimeoutTimerConfigAnnotationTest {
     try {
       Thread.sleep(1);
     } catch (InterruptedException e) {
-      Assertions.fail("Timeout timer thread must interrupt this test as it's execution takes longer than the threshold set using TimeoutTimerConfig annotation.");
+      Assertions.fail("Timeout timer thread should not interrupt this test as it's execution takes shorter period than the threshold set using TimeoutTimerConfig annotation.");
     }
   }
 
   @Test
   public void testTimeoutInterrupt() {
     try {
-      Thread.sleep(60000);
+      Thread.sleep(120000);
 
       Assertions.fail("Timeout timer thread must interrupt this test as it's execution takes longer than the threshold set using TimeoutTimerConfig annotation.");
     } catch (InterruptedException e) {

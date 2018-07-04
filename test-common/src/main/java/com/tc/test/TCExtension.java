@@ -26,7 +26,6 @@ import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
-import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.util.Banner;
@@ -51,8 +50,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
 import static com.tc.test.TimeoutTimerConfig.DEFAULT_DUMP_INTERVAL_IN_MILLIS;
 import static com.tc.test.TimeoutTimerConfig.DEFAULT_DUMP_THREADS_ON_TIMEOUT;
@@ -62,9 +59,7 @@ import static com.tc.test.TimeoutTimerConfig.DEFAULT_TIMEOUT_THRESHOLD_IN_MILLIS
 /**
  * TCExtension
  */
-public class TCExtension implements TestInstancePostProcessor, BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback, ExecutionCondition, TestExecutionExceptionHandler {
-
-  private static final ScriptEngine engine      = new ScriptEngineManager().getEngineByName("nashorn");
+public class TCExtension implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback, ExecutionCondition, TestExecutionExceptionHandler {
 
   private final Timer timeoutTimer              = new Timer("Timeout Thread", true);
   private TimerTask   timerTask;
@@ -78,50 +73,6 @@ public class TCExtension implements TestInstancePostProcessor, BeforeAllCallback
 
   private final AtomicReference<Throwable> beforeTimeoutException    = new AtomicReference<Throwable>(null);
 
-
-  @Override
-  public void postProcessTestInstance(Object testInstance, ExtensionContext extensionContext) throws Exception {
-
-    Arrays.stream(testInstance.getClass()
-        .getDeclaredFields())
-        .filter(field -> (field.getType().isAssignableFrom(TempDirectoryHelper.class)))
-        .findAny()
-        .ifPresent(field -> {
-          CleanDirectory cleanDirectory = field.getAnnotation(CleanDirectory.class);
-          boolean isCleanDirectory = true;
-          if(cleanDirectory != null) {
-            isCleanDirectory = cleanDirectory.value();
-          }
-
-          try {
-            Banner.infoBanner("Injecting " + testInstance.getClass().getSimpleName() + "#" + field.getName() + " with an instance of TempDirectoryHelper");
-            if(!Modifier.isPublic(field.getModifiers())) {
-                field.setAccessible(true);
-            }
-            field.set(testInstance, new TempDirectoryHelper(testInstance.getClass(), isCleanDirectory));
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            Banner.errorBanner("Could not inject " + testInstance.getClass().getSimpleName() + "#" + field.getName() +" with an instance of TempDirectoryHelper");
-          }
-        });
-
-    Arrays.stream(testInstance.getClass()
-        .getDeclaredFields())
-        .filter(field -> (field.getType().isAssignableFrom(DataDirectoryHelper.class)))
-        .findAny()
-        .ifPresent(field -> {
-          try {
-            Banner.infoBanner("Injecting " + testInstance.getClass().getSimpleName() + "#" + field.getName() + " with an instance of DataDirectoryHelper");
-            if(!Modifier.isPublic(field.getModifiers())) {
-                field.setAccessible(true);
-            }
-            field.set(testInstance, new DataDirectoryHelper(testInstance.getClass()));
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            Banner.errorBanner("Could not inject " + testInstance.getClass().getSimpleName() + "#" + field.getName() +" with an instance of DataDirectoryHelper");
-          }
-        });
-  }
 
   @Override
   public void beforeAll(ExtensionContext extensionContext) throws Exception {
@@ -178,7 +129,7 @@ public class TCExtension implements TestInstancePostProcessor, BeforeAllCallback
     Date allDisabledUntil = null;
     String disabledUntilString = extensionContext.getElement()
         .map(annotatedElement -> annotatedElement.getAnnotation(DisabledUntil.class))
-        .map(disabledUntil -> disabledUntil.value())
+        .map(DisabledUntil::value)
         .orElse(null);
     if("INDEFINITE".equalsIgnoreCase(disabledUntilString)) {
        allDisabledUntil = new Date(Long.MAX_VALUE);
@@ -299,7 +250,7 @@ public class TCExtension implements TestInstancePostProcessor, BeforeAllCallback
 
     final long delay = junitTimeout - timeoutThresholdInMillis;
 
-    Banner.infoBanner("Timeout task is scheduled to run in " + TimeUnit.MILLISECONDS.toMinutes(delay) + " minutes");
+    Banner.infoBanner("Timeout task is scheduled to run in " + TimeUnit.MILLISECONDS.toSeconds(delay) + " seconds");
 
     // cancel the old task
     if (timerTask != null) {
@@ -328,8 +279,8 @@ public class TCExtension implements TestInstancePostProcessor, BeforeAllCallback
 
   // called by timer thread (ie. NOT the main thread of test case)
   private void timeoutCallback(long elapsedTime, ExtensionContext extensionContext) {
-    Banner.errorBanner("TCTestCase timeout alarm going off after "
-                 + TimeUnit.MILLISECONDS.toMinutes(elapsedTime) + " minutes at " + new Date());
+    Banner.errorBanner("TCExtension timeout alarm going off after "
+                 + TimeUnit.MILLISECONDS.toSeconds(elapsedTime) + " seconds at " + new Date());
 
     // Invoke the method annotated by "DoDumpServerDetails" if it exists
     try {

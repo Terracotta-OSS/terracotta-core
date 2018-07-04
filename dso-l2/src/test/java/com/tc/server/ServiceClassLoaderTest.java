@@ -29,6 +29,7 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.classloader.ServiceLocator;
+import com.tc.test.DirectoryHelperExtension;
 import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.ZipBuilder;
@@ -49,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author mscott
  */
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class ServiceClassLoaderTest {
   
   private TempDirectoryHelper tempDirectoryHelper;

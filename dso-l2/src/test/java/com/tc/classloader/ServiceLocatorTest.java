@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.tc.config.Directories;
+import com.tc.test.DirectoryHelperExtension;
 import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
@@ -34,6 +35,7 @@ import static com.tc.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
  * @author mscott
  */
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class ServiceLocatorTest {
 
   private TempDirectoryHelper tempDirectoryHelper;

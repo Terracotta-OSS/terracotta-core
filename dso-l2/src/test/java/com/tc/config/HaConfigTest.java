@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.test.DirectoryHelperExtension;
 import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class HaConfigTest {
 
   private TempDirectoryHelper tempDirectoryHelper;
