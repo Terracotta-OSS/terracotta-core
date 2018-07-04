@@ -19,12 +19,14 @@
 package com.tc.test;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * TimeoutTimerConfigAnnotationTest
  */
+@Disabled
 @ExtendWith(TCExtension.class)
 @TimeoutTimerConfig(timeoutThresholdInMillis = 870000)
 public class TimeoutTimerConfigAnnotationTest {
