@@ -250,7 +250,7 @@ public class TCExtension implements BeforeAllCallback, AfterAllCallback, BeforeE
 
     final long delay = junitTimeout - timeoutThresholdInMillis;
 
-    Banner.infoBanner("Timeout task is scheduled to run in " + TimeUnit.MILLISECONDS.toMinutes(delay) + " minutes");
+    Banner.infoBanner("Timeout task is scheduled to run in " + TimeUnit.MILLISECONDS.toSeconds(delay) + " seconds");
 
     // cancel the old task
     if (timerTask != null) {
@@ -279,8 +279,8 @@ public class TCExtension implements BeforeAllCallback, AfterAllCallback, BeforeE
 
   // called by timer thread (ie. NOT the main thread of test case)
   private void timeoutCallback(long elapsedTime, ExtensionContext extensionContext) {
-    Banner.errorBanner("TCTestCase timeout alarm going off after "
-                 + TimeUnit.MILLISECONDS.toMinutes(elapsedTime) + " minutes at " + new Date());
+    Banner.errorBanner("TCExtension timeout alarm going off after "
+                 + TimeUnit.MILLISECONDS.toSeconds(elapsedTime) + " seconds at " + new Date());
 
     // Invoke the method annotated by "DoDumpServerDetails" if it exists
     try {
