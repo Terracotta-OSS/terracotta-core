@@ -29,6 +29,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 //@TimeBomb("2999-12-31", Vm.isIBM(), null)
 public class DirectoryHelpersDependencyInjectionTest {
 

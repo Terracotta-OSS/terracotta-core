@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
+import com.tc.test.DirectoryHelperExtension;
 import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.spy;
  * @author mscott
  */
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class ManagedServiceLoaderTest {
 
   private TempDirectoryHelper tempDirectoryHelper;

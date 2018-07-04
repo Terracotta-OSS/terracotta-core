@@ -26,6 +26,7 @@ import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.DirectoryHelperExtension;
 import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class TcPropertiesWithSpacesOverWriteTest {
 
   private TempDirectoryHelper tempDirectoryHelper;

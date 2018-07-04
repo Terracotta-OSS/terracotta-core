@@ -34,6 +34,7 @@ import org.terracotta.config.TcConfiguration;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
 import com.tc.object.config.schema.L2ConfigObject;
+import com.tc.test.DirectoryHelperExtension;
 import com.tc.test.TCExtension;
 import com.tc.test.TempDirectoryHelper;
 import com.tc.text.StringUtils;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 
 @ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class BaseConfigurationSetupManagerTest {
 
   private static final String DEFAULT_CONFIG_SPEC = "tc-config.xml";
