@@ -41,8 +41,8 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
    * this is for the server it needs a session ID
    */
   protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
-                                     ServerID serverID, ProductID productId) {
-    super(router, logger, msgFactory, new ClientID(sessionID.toLong()), productId);
+                                     ServerID serverID) {
+    super(router, logger, msgFactory, new ClientID(sessionID.toLong()));
     this.sessionID = sessionID;
     setLocalNodeID(serverID);
 

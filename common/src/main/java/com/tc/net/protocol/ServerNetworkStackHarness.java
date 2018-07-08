@@ -60,8 +60,7 @@ public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
     if (finalized.attemptSet()) {
       Assert.assertNotNull(this.transport);
       Assert.assertNotNull(this.channelFactory);
-      this.channel = channelFactory.createNewChannel(new ChannelID(this.transport.getConnectionId().getChannelID()),
-          transport.getConnectionId().getProductId());
+      this.channel = channelFactory.createNewChannel(new ChannelID(this.transport.getConnectionId().getChannelID()));
 
       connectStack();
     } else {

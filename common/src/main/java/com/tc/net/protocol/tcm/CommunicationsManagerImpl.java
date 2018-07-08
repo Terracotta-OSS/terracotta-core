@@ -332,8 +332,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
       @Override
-      public MessageChannelInternal createNewChannel(ChannelID id, ProductID prodId) {
-        return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID, prodId);
+      public MessageChannelInternal createNewChannel(ChannelID id) {
+        return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID);
       }
     };
 

@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -33,6 +32,7 @@ import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -52,7 +52,6 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<ChannelEventListener>();
   private final ChannelStatus                 status      = new ChannelStatus();
   private final TCMessageFactory              msgFactory;
-  private final ProductID                     productId;
   private final TCMessageRouter               router;
   private final TCMessageParser               parser;
   private final Logger logger;
@@ -61,12 +60,10 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   protected volatile NetworkLayer             sendLayer;
 
-  AbstractMessageChannel(TCMessageRouter router, Logger logger, TCMessageFactory msgFactory, NodeID remoteNodeID,
-                         ProductID productId) {
+  AbstractMessageChannel(TCMessageRouter router, Logger logger, TCMessageFactory msgFactory, NodeID remoteNodeID) {
     this.router = router;
     this.logger = logger;
     this.msgFactory = msgFactory;
-    this.productId = productId;
     this.parser = new TCMessageParser(this.msgFactory);
     this.remoteNodeID = remoteNodeID;
     // This is set after hand shake for the clients
@@ -306,7 +303,11 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   @Override
   public ProductID getProductId() {
-    return productId;
+    if (this.sendLayer instanceof MessageTransport) {
+      return ((MessageTransport)this.sendLayer).getConnectionId().getProductId();
+    } else {
+      return ProductID.PERMANENT;
+    }
   }
 
   private enum ChannelState {
