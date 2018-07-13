@@ -18,21 +18,18 @@
  */
 package org.terracotta.voter;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 public class TCVoterMainTest {
-
-  @Rule
-  public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testOverrideVote() throws Exception {
@@ -82,9 +79,10 @@ public class TCVoterMainTest {
 
     String[] args = new String[] {"-s", "foo:1234", "-s", "bar:2345"};
 
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Usage of multiple -s options not supported");
-    voterMain.processArgs(args);
+    Throwable t = assertThrows(ConfigurationSetupException.class, ()-> {
+      voterMain.processArgs(args);
+    });
+    assertThat(t.getMessage(), containsString("Usage of multiple -s options not supported"));
   }
 
   @Test
@@ -108,9 +106,10 @@ public class TCVoterMainTest {
 
     String[] args = new String[] {"-f", "foo", "-f", "bar"};
 
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Usage of multiple -f options not supported");
-    voterMain.processArgs(args);
+    Throwable t = assertThrows(ConfigurationSetupException.class, ()-> {
+      voterMain.processArgs(args);
+    });
+    assertThat(t.getMessage(), containsString("Usage of multiple -f options not supported"));
   }
 
   @Test
@@ -118,9 +117,10 @@ public class TCVoterMainTest {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[0];
 
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Neither the override option -o nor the regular options -s or -f provided");
-    voterMain.processArgs(args);
+    Throwable t = assertThrows(ConfigurationSetupException.class, ()-> {
+      voterMain.processArgs(args);
+    });
+    assertThat(t.getMessage(), containsString("Neither the override option -o nor the regular options -s or -f provided"));
   }
 
   @Test
@@ -128,9 +128,10 @@ public class TCVoterMainTest {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[] {"-s", "bar:1234", "-f", "baz"};
 
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Both -s and -f options provided. Use either one and not both together.");
-    voterMain.main(args);
+    Throwable t = assertThrows(ConfigurationSetupException.class, ()-> {
+      voterMain.processArgs(args);
+    });
+    assertThat(t.getMessage(), containsString("Both -s and -f options provided. Use either one and not both together."));
   }
 
   @Test
@@ -138,9 +139,10 @@ public class TCVoterMainTest {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[] {"-s", "bar:baz"};
 
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Invalid host:port combination provided");
-    voterMain.processArgs(args);
+    Throwable t = assertThrows(ConfigurationSetupException.class, ()-> {
+      voterMain.processArgs(args);
+    });
+    assertThat(t.getMessage(), containsString("Invalid host:port combination provided"));
   }
 
 }

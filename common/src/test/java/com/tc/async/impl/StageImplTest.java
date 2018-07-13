@@ -18,6 +18,16 @@
  */
 package com.tc.async.impl;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
@@ -25,15 +35,6 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.concurrent.QueueFactory;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Matchers;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,14 +43,17 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import org.junit.Assert;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+
+
 
 /**
  *
@@ -60,19 +64,19 @@ public class StageImplTest {
   public StageImplTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
   
@@ -122,12 +126,12 @@ public class StageImplTest {
     instance.getSink().addToSink(context);
     instance.getSink().addToSink(context);
     
-    Assert.assertEquals(4, instance.size());
+    assertEquals(4, instance.size());
     
     instance.clear();
     
-    Assert.assertEquals(0, instance.size());
-    Assert.assertTrue(instance.isEmpty());
+    assertEquals(0, instance.size());
+    assertTrue(instance.isEmpty());
   }
   
   @Test
@@ -157,12 +161,12 @@ public class StageImplTest {
     instance.getSink().addToSink(event);
     instance.getSink().addToSink(event);
     
-    Assert.assertEquals(4, instance.size());
+    assertEquals(4, instance.size());
     
     instance.clear();
     
-    Assert.assertEquals(0, instance.size());
-    Assert.assertTrue(instance.isEmpty());
+    assertEquals(0, instance.size());
+    assertTrue(instance.isEmpty());
   }
   
   private void testMultiContextFlush(int size) throws Exception {

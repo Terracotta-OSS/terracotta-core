@@ -18,6 +18,10 @@
  */
 package com.tc.net.groups;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.LoggerFactory;
+
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
@@ -37,13 +41,12 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.SessionID;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.PortChooser;
 import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.runtime.ThreadDump;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,14 +58,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
-
 //TODO: Fix this test to use something other than concrete message types (that incidentally no longer exist)
-public class TCGroupManagerImplTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class TCGroupManagerImplTest {
 
   private final static String      LOCALHOST      = "localhost";
 
@@ -123,6 +130,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
   }
 
+  @Test
   public void testBasicChannelOpenClose() throws Exception {
     setupGroups(2);
 
@@ -142,10 +150,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
     assertEquals(1, groups[1].size());
     TCGroupMember member1 = getMember(groups[0], 0);
     TCGroupMember member2 = getMember(groups[1], 0);
-    assertTrue("Expected  " + member1.getLocalNodeID() + " but got " + member2.getPeerNodeID(), member1
-        .getLocalNodeID().equals(member2.getPeerNodeID()));
-    assertTrue("Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID(), member1.getPeerNodeID()
-        .equals(member2.getLocalNodeID()));
+    assertTrue(member1.getLocalNodeID().equals(member2.getPeerNodeID()), ()-> "Expected  " + member1.getLocalNodeID() + " but got " + member2.getPeerNodeID());
+    assertTrue(member1.getPeerNodeID().equals(member2.getLocalNodeID()), ()-> "Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID());
 
     // close test
     member1.getChannel().close();
@@ -158,6 +164,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
+  @Test
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
 
@@ -206,6 +213,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   /*
    * Both open channel to each other, only one direction to keep
    */
+  @Test
   public void testResolveTwoWayConnection() throws Exception {
     setupGroups(2);
 
@@ -229,10 +237,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
     assertEquals(1, groups[1].size());
     TCGroupMember m0 = getMember(groups[0], 0);
     TCGroupMember m1 = getMember(groups[1], 0);
-    assertTrue("Expected  " + m0.getLocalNodeID() + " but got " + m1.getPeerNodeID(),
-               m0.getLocalNodeID().equals(m1.getPeerNodeID()));
-    assertTrue("Expected  " + m0.getPeerNodeID() + " but got " + m1.getLocalNodeID(),
-               m0.getPeerNodeID().equals(m1.getLocalNodeID()));
+    assertTrue(m0.getLocalNodeID().equals(m1.getPeerNodeID()), ()->"Expected  " + m0.getLocalNodeID() + " but got " + m1.getPeerNodeID());
+    assertTrue(m0.getPeerNodeID().equals(m1.getLocalNodeID()), ()->"Expected  " + m0.getPeerNodeID() + " but got " + m1.getLocalNodeID());
 
     tearGroups();
   }
@@ -401,6 +407,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
         .equals(o2.getMessageID()));
   }
 
+  @Test
   public void testSendToAndWait() throws Exception {
     int nGrp = 5;
     setupGroups(nGrp);
@@ -439,6 +446,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
+  @Test
   public void testSendAllAndWait() throws Exception {
     final int nGrp = 5;
     setupGroups(nGrp);
@@ -473,6 +481,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
+  @Test
   public void testZapNode() throws Exception {
     int nGrp = 2;
     MyGroupEventListener eventListeners[] = new MyGroupEventListener[nGrp];
@@ -643,6 +652,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   }
 
+  @Test
   public void testMessagesOrdering() throws Exception {
 
     int nGrp = 2;
@@ -708,7 +718,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     public GroupMessage getNextMessageFrom(NodeID nodeID) throws InterruptedException {
       MessagePackage pkg = poll();
-      assertNotNull("Failed to receive message from " + nodeID, pkg);
+      assertNotNull(pkg, ()->"Failed to receive message from " + nodeID);
       assertTrue(nodeID.equals(pkg.getNodeID()));
       return (pkg.getMessage());
     }

@@ -18,24 +18,31 @@
  */
 package com.tc.objectserver.persistence;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.terracotta.exception.EntityException;
+import org.terracotta.exception.EntityNotFoundException;
+
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
+
 import java.util.Collections;
 
-import org.junit.Assert;
-import org.terracotta.exception.EntityException;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+             
 
-import org.terracotta.exception.EntityNotFoundException;
-
-
-public class EntityPersistorTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class EntityPersistorTest {
   private NullPlatformPersistentStorage persistentStorage;
   private EntityPersistor entityPersistor;
   private ClientID client;
 
-  @Override
+  @BeforeEach
   public void setUp() {
     this.persistentStorage = new NullPlatformPersistentStorage();
     this.entityPersistor = new EntityPersistor(this.persistentStorage);
@@ -46,22 +53,23 @@ public class EntityPersistorTest extends TCTestCase {
   /**
    * Test that an empty persistor correctly returns as empty for all calls and can be cleared.
    */
+  @Test
   public void testQueryEmpty() throws EntityException {
     // This should be safe and do nothing.
     this.entityPersistor.clear();
     
     // We expect to get an empty collection.
-    Assert.assertTrue(0 == this.entityPersistor.loadEntityData().size());
+    assertTrue(0 == this.entityPersistor.loadEntityData().size());
     
     // The entity shouldn't be found (note that this call will write an entry to the journal).
     EntityID id = new EntityID("class name", "entity name");
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
     
     // Journal queries should also be safe, when empty.
     long createdTransactionID = 5;
-    Assert.assertFalse(this.entityPersistor.wasEntityCreatedInJournal(this.client, createdTransactionID));
+    assertFalse(this.entityPersistor.wasEntityCreatedInJournal(this.client, createdTransactionID));
     long destroyedTransactionID = 6;
-    Assert.assertFalse(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroyedTransactionID));
+    assertFalse(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroyedTransactionID));
     
     // We should also be able to remove tracking for this client.
     this.entityPersistor.removeTrackingForClient(this.client);
@@ -70,13 +78,14 @@ public class EntityPersistorTest extends TCTestCase {
   /**
    * Test that a basic create/destroy works and can then be queried.
    */
+  @Test
   public void testSimpleCreateDestroy() throws EntityException {
     EntityID id = new EntityID("class name", "entity name");
     long oldestTransactionOnClient = 1;
     
     // Query that it doesn't exist.
     long doesExistTransactionID = 2;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
     
     // Create the entity.
     long createTransactionID = 3;
@@ -87,7 +96,7 @@ public class EntityPersistorTest extends TCTestCase {
     
     // Query that it exists.
     long doesExist2TransactionID = 4;
-    Assert.assertTrue(this.entityPersistor.containsEntity(id));
+    assertTrue(this.entityPersistor.containsEntity(id));
     
     // Destroy the entity.
     long destroyTransactionID = 5;
@@ -95,19 +104,20 @@ public class EntityPersistorTest extends TCTestCase {
     
     // Query that it doesn't exist.
     long doesExist3TransactionID = 6;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
   }
 
   /**
    * Test that a basic create, reconfigure, destroy sequence works.
    */
+  @Test
   public void testSimpleCreateReconfigureDestroy() throws EntityException {
     EntityID id = new EntityID("class name", "entity name");
     long oldestTransactionOnClient = 1;
        
     // Query that it doesn't exist.
     long doesExistTransactionID = 2;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
     
     // Create the entity.
     long createTransactionID = 3;
@@ -127,12 +137,13 @@ public class EntityPersistorTest extends TCTestCase {
     
     // Query that it doesn't exist.
     long doesExist3TransactionID = 6;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
   }
 
   /**
    * Test that a sequence of create/destroy operations is correctly written into the journal such that re-sends get the same answer.
    */
+  @Test
   public void testCreateDestroyResend() throws EntityException {
     EntityID id = new EntityID("class name", "entity name");
     long oldestTransactionOnClient = 1;
@@ -142,32 +153,33 @@ public class EntityPersistorTest extends TCTestCase {
     
     // Create and destroy the entity, twice, checking existence at various points.
     long doesExist1 = 1;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
     long create1 = 2;
     this.entityPersistor.entityCreated(this.client, create1, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     long doesExist2 = 3;
-    Assert.assertTrue(this.entityPersistor.containsEntity(id));
+    assertTrue(this.entityPersistor.containsEntity(id));
     long destroy1 = 4;
     this.entityPersistor.entityDestroyed(this.client, destroy1, oldestTransactionOnClient, id);
     long doesExist3 = 5;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
     long create2 = 6;
     this.entityPersistor.entityCreated(this.client, create2, oldestTransactionOnClient, id, version, consumerID, true, configuration);
     long doesExist4 = 7;
-    Assert.assertTrue(this.entityPersistor.containsEntity(id));
+    assertTrue(this.entityPersistor.containsEntity(id));
     long destroy2 = 8;
     this.entityPersistor.entityDestroyed(this.client, destroy2, oldestTransactionOnClient, id);
     long doesExist5 = 9;
-    Assert.assertFalse(this.entityPersistor.containsEntity(id));
+    assertFalse(this.entityPersistor.containsEntity(id));
     
     // Observe that re-issuing these commands yields the same results, even if they would be interpreted differently, if not part of the journal.
-    Assert.assertTrue(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy2));
-    Assert.assertTrue(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy1));
+    assertTrue(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy2));
+    assertTrue(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy1));
   }
 
   /**
    * Test that old journal entries are cleared such that attempts to use retired transaction IDs fail.
    */
+  @Test
   public void testCreateDestroyClearJournal() throws EntityException {
     EntityID id = new EntityID("class name", "entity name");
     long version = 1;
@@ -188,13 +200,14 @@ public class EntityPersistorTest extends TCTestCase {
     this.entityPersistor.entityDestroyed(this.client, destroy2, oldestTransactionOnClient, id);
     
     // Verify that the older items are not known.
-    Assert.assertFalse(this.entityPersistor.wasEntityCreatedInJournal(this.client, create1));
-    Assert.assertFalse(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy1));
+    assertFalse(this.entityPersistor.wasEntityCreatedInJournal(this.client, create1));
+    assertFalse(this.entityPersistor.wasEntityDestroyedInJournal(this.client, destroy1));
   }
 
   /**
    * Test that a failed create still fails on re-send, even if it shouldn't fail if re-run as a fresh transaction.
    */
+  @Test
   public void testResentCreateFail() throws EntityException {
     EntityID id = new EntityID("class name", "entity name");
     long oldestTransactionOnClient = 1;
@@ -223,27 +236,29 @@ public class EntityPersistorTest extends TCTestCase {
     }
   }
   
+  @Test
   public void testOrphanedClientGC() throws Exception {
     this.entityPersistor.entityCreated(client, 1L, 0L, new EntityID("test", "test"), 1L, 1L, true, new byte[0]);
     this.entityPersistor.removeOrphanedClientsFromJournal(Collections.emptySet());
-    Assert.assertFalse(this.entityPersistor.wasEntityCreatedInJournal(client, 1L));
+    assertFalse(this.entityPersistor.wasEntityCreatedInJournal(client, 1L));
   }
   
+  @Test
   public void testPermanentEntityCreation() throws Exception {
     EntityID eid = new EntityID("test", "test");
     this.entityPersistor.entityCreatedNoJournal(eid, 1L, 1L, false, new byte[0]);
     this.entityPersistor.waitForPermanentEntityCreation(eid);
-    Assert.assertTrue(this.entityPersistor.containsEntity(eid));
+    assertTrue(this.entityPersistor.containsEntity(eid));
   }  
   
-  
+  @Test
   public void testPermanentEntityCreationFailed() throws Exception {
     EntityID eid = new EntityID("test", "test");
     this.entityPersistor.entityCreateFailed(eid, ClientID.NULL_ID, TransactionID.NULL_ID.toLong(), TransactionID.NULL_ID.toLong(), new EntityException("test", "test", "", new RuntimeException()) {
     });
     try {
       this.entityPersistor.waitForPermanentEntityCreation(eid);
-      Assert.fail();
+      fail();
     } catch (Exception e) {
       // expected
     }

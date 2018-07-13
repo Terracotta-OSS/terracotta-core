@@ -18,14 +18,16 @@
  */
 package com.tc.services;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+         
 
 public class SingleThreadedTimerTest {
   private static final long INTERVAL_MILLIS = 100;
@@ -34,14 +36,14 @@ public class SingleThreadedTimerTest {
   private SingleThreadedTimer timer;
 
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     this.source = new TestTimeSource(1);
     this.timer = new SingleThreadedTimer(this.source);
     this.timer.start();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     this.timer.stop();
   }
@@ -89,13 +91,13 @@ public class SingleThreadedTimerTest {
       public void run() {
         bool.set(true);
       }}, startTime);
-    Assert.assertTrue(id > 0);
+    assertTrue(id > 0);
     boolean didCancel = this.timer.cancel(id);
-    Assert.assertTrue(didCancel);
+    assertTrue(didCancel);
     // Advance, poke, and make sure it happens.
     this.source.passTime(INTERVAL_MILLIS);
     this.timer.poke();
-    Assert.assertFalse(bool.get());
+    assertFalse(bool.get());
   }
 
   @Test
@@ -103,12 +105,12 @@ public class SingleThreadedTimerTest {
     long startTime = this.source.currentTimeMillis() + INTERVAL_MILLIS;
     SelfDestructingRunnable runnable = new SelfDestructingRunnable();
     final long id = this.timer.addPeriodic(runnable, startTime, INTERVAL_MILLIS);
-    Assert.assertTrue(id > 0);
+    assertTrue(id > 0);
     runnable.setToCancel(this.timer, id);
     // Advance, poke, and make sure it happens.
     this.source.passTime(2 * INTERVAL_MILLIS);
     this.timer.poke();
-    Assert.assertTrue(1 == runnable.getCounter());
+    assertTrue(1 == runnable.getCounter());
   }
 
 
@@ -130,7 +132,7 @@ public class SingleThreadedTimerTest {
     public void run() {
       this.counter += 1;
       boolean didCancel = timer.cancel(id);
-      Assert.assertTrue(didCancel);
+      assertTrue(didCancel);
     }
   }
 }

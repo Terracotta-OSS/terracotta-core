@@ -18,6 +18,12 @@
  */
 package com.tc.net.core;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -41,24 +47,25 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductID;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.util.ProductID;
 
 import java.net.InetAddress;
 import java.util.Collections;
-import org.junit.Ignore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 // TODO: Fix test
-@Ignore
-public class OOOReconnectTimeoutTest extends TCTestCase {
+@Disabled
+@ExtendWith(TCExtension.class)
+public class OOOReconnectTimeoutTest {
   //
 
   Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
@@ -95,6 +102,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
 
   }
 
+  @Test
   public void testWorkerCommDistributionAfterReconnect() throws Exception {
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),

@@ -18,22 +18,34 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.test.TCTestCase;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.test.CleanDirectory;
+import com.tc.test.DirectoryHelperExtension;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
 import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class ConfigAutoChooseServerTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
+public class ConfigAutoChooseServerTest {
+
+  @CleanDirectory(false)
+  private TempDirectoryHelper tempDirectoryHelper;
+  
   private File tcConfig = null;
 
+  @Test
   public void testConfigAutoChooseThisL2() {
     try {
-      tcConfig = getTempFile("tc-config-test.xml");
+      tcConfig = tempDirectoryHelper.getFile("tc-config-test.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
                       + "\n<tc-config xmlns=\"http://www.terracotta.org/config\">" + "\n<servers>"
                       + "\n      <server name=\"server1\" host=\"%i\">"
@@ -79,10 +91,4 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
       throw Assert.failure("Can't create config file", e);
     }
   }
-
-  @Override
-  protected boolean cleanTempDir() {
-    return false;
-  }
-
 }

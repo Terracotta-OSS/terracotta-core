@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 /**
  * Utility class to retrieve the build information for the product.
  */
-public final class ProductInfo {
+public class ProductInfo {
   public static final String                ENTERPRISE                 = "Enterprise";
   public static final String                OPENSOURCE                 = "Opensource";
 

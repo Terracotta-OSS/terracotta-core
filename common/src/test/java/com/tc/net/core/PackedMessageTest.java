@@ -18,21 +18,27 @@
  */
 package com.tc.net.core;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
 import java.util.Random;
 
-import org.junit.Assert;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class PackedMessageTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class PackedMessageTest {
 
   private static final int MIN_SIZE_PER_BYTE_BUFFER   = 100;
   private static final int MAX_SIZE_PER_BYTE_BUFFER   = 1000;
   private static final int MIN_NUM_INPUT_BYTE_BUFFERS = 10;
   private static final int MAX_NUM_INPUT_BYTE_BUFFERS = 1000;
 
+  @Test
   public void testPackedMessage() {
 
     long seed = System.currentTimeMillis();
@@ -59,22 +65,26 @@ public class PackedMessageTest extends TCTestCase {
       TCByteBuffer buf = packedBuffers[i];
       final boolean last = i == packedBuffers.length - 1;
       if (last) {
-        Assert.assertTrue(TCByteBufferFactory.FIXED_BUFFER_SIZE >= buf.capacity());
+        assertTrue(TCByteBufferFactory.FIXED_BUFFER_SIZE >= buf.capacity());
       } else {
-        Assert.assertEquals(TCByteBufferFactory.FIXED_BUFFER_SIZE, buf.capacity());
+        assertEquals(TCByteBufferFactory.FIXED_BUFFER_SIZE, buf.capacity());
       }
       while (buf.hasRemaining()) {
-        Assert.assertEquals(payloadGenerator.nextByte(), buf.get());
+        assertEquals(payloadGenerator.nextByte(), buf.get());
         packedLength++;
       }
     }
     System.out.println("Input length: " + inputBuffersLength + ", packed length: " + packedLength);
     long numExpectedBlocks = packedLength / TCByteBufferFactory.FIXED_BUFFER_SIZE;
     if (packedLength % TCByteBufferFactory.FIXED_BUFFER_SIZE != 0) numExpectedBlocks++;
-    Assert.assertEquals(numExpectedBlocks, packedBuffers.length);
+    assertEquals(numExpectedBlocks, packedBuffers.length);
 
-    Assert.assertEquals("Packed count should be same - input length: " + inputBuffersLength + ", packed length: "
-                        + packedLength, inputBuffersLength, packedLength);
+    final long finalInputBuffersLength = inputBuffersLength;
+    final long finalPackedLength = packedLength;
+    assertEquals(inputBuffersLength, packedLength, () -> "Packed count should be same - input length: "
+                                                         + finalInputBuffersLength +
+                                                         ", packed length: "
+                                                         + finalPackedLength);
     System.out.println("Done with test");
   }
 

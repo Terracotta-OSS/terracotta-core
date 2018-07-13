@@ -18,14 +18,18 @@
  */
 package com.tc.stats.counter;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class CounterTest extends TestCase {
+public class CounterTest {
 
+  @Test
   public void testInitialValue() {
     Counter counter = new CounterImpl();
     assertEquals(0L, counter.getValue());
@@ -34,6 +38,7 @@ public class CounterTest extends TestCase {
     assertEquals(42L, counter.getValue());
   }
 
+  @Test
   public void testConcurrency() throws InterruptedException {
     final Counter counter = new CounterImpl();
     final AtomicLong local = new AtomicLong(0L);
@@ -96,7 +101,8 @@ public class CounterTest extends TestCase {
 
     assertEquals(local.get(), counter.getValue());
   }
-  
+
+  @Test
   public void test() {
     Counter counter = new CounterImpl();
     assertEquals(0L, counter.getValue());

@@ -18,21 +18,22 @@
  */
 package com.tc.services;
 
+import org.junit.jupiter.api.Test;
+import org.terracotta.entity.ActiveServerEntity;
+import org.terracotta.entity.EntityMessage;
+import org.terracotta.entity.ExplicitRetirementHandle;
+import org.terracotta.entity.MessageCodec;
+
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.RetirementManager;
-import org.junit.Test;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.ExplicitRetirementHandle;
-import org.terracotta.entity.MessageCodec;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ActiveServerEntity;
 
 
 public class EntityMessengerServiceTest {

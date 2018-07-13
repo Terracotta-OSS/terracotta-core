@@ -18,7 +18,7 @@
  */
 package com.tc.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test for {@link AbstractIdentifier}.

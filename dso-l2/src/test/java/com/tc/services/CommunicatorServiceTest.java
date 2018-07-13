@@ -19,8 +19,9 @@
 
 package com.tc.services;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.EntityMessage;
@@ -30,21 +31,12 @@ import org.terracotta.entity.MessageCodec;
 import com.tc.entity.ServerEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.Assert.fail;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -69,7 +61,7 @@ public class CommunicatorServiceTest {
   private ClientDescriptor clientDescriptor;
   private ClientMessageSender clientMessageSender;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     clientID = new ClientID(1);
     messageChannel = mock(MessageChannel.class);

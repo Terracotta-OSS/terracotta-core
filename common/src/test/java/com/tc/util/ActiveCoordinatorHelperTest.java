@@ -18,11 +18,16 @@
  */
 package com.tc.util;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-public class ActiveCoordinatorHelperTest extends TCTestCase {
+import com.tc.test.TCExtension;
+
+@ExtendWith(TCExtension.class)
+public class ActiveCoordinatorHelperTest {
   //TODO renable
 
+  @Test
   public void testName() throws Exception {
   }
 }

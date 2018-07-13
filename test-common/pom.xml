@@ -49,8 +49,9 @@
       <artifactId>tc-messaging</artifactId>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>
@@ -59,6 +60,11 @@
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-all</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.2.0</version>
     </dependency>
   </dependencies>
 </project>

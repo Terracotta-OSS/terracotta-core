@@ -18,27 +18,34 @@
  */
 package com.tc.objectserver.persistence;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
-
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.ProductID;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TransactionOrderPersistorTest extends TCTestCase {
+
+@ExtendWith(TCExtension.class)
+public class TransactionOrderPersistorTest {
   private NullPlatformPersistentStorage persistentStorage;
   private TransactionOrderPersistor orderPersistor;
   private ClientID client1;
   private ClientID client2;
 
-  @Override
+  @BeforeEach
   public void setUp() {
     this.persistentStorage = new NullPlatformPersistentStorage();
     this.orderPersistor = new TransactionOrderPersistor(this.persistentStorage, Collections.emptySet());
@@ -51,6 +58,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that the trivial case of usage works.
    */
+  @Test
   public void testOneClientNoExpiry() {
     TransactionID oldest = new TransactionID(1L);
     
@@ -64,6 +72,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that multiple clients basically work.
    */
+  @Test
   public void testTwoClientsNoExpiry() {
     TransactionID oldest = new TransactionID(1L);
     
@@ -78,6 +87,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that multiple clients basically work.
    */
+  @Test
   public void testTwoClientsQuickExpiry() {
     TransactionID previous = new TransactionID(1L);
     
@@ -93,6 +103,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that we throw an exception when "oldest" ID is null.
    */
+  @Test
   public void testOneClientFailsNull() {
     TransactionID oldest = null;
     
@@ -112,6 +123,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that we throw an exception when "oldest" ID is greater than the new one.
    */
+  @Test
   public void testOneClientFailsTooOld() {
     TransactionID oldest = new TransactionID(100);
     
@@ -131,6 +143,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that we throw an exception when one client provides the same transaction ID more than once.
    */
+  @Test
   public void testTwoClientsFailToReuse() {
     TransactionID previous = new TransactionID(1L);
     
@@ -155,6 +168,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that multiple clients work and one can disconnect part-way.
    */
+  @Test
   public void testTwoClientsNoExpiryOneDisconnect() {
     TransactionID oldest = new TransactionID(1L);
     
@@ -177,6 +191,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that multiple clients work and queries of where they exist in the global order show them correctly interleaved.
    */
+  @Test
   public void testTwoClientsInterleavedGlobally() {
     TransactionID oldest = new TransactionID(1L);
     
@@ -203,6 +218,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that an unknown transaction reports its global order index as -1.
    */
+  @Test
   public void testUnknownTransactionNoOrder() {
     TransactionID oldest = new TransactionID(1L);
     
@@ -218,6 +234,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
   /**
    * Test that the persistor can be cleared and we can continue.
    */
+  @Test
   public void testClearAndContinue() {
     TransactionID oldest = new TransactionID(1L);
     
@@ -247,6 +264,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     assertEquals(0, this.orderPersistor.getIndexToReplay(this.client1, newTransaction));
   }
 
+  @Test
   public void testSaveReloadEmpty() throws IOException {
     // Create the storage.
     NullPlatformPersistentStorage storage = new NullPlatformPersistentStorage();
@@ -256,6 +274,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     new TransactionOrderPersistor(storage, Collections.emptySet());
   }
 
+  @Test
   public void testSaveReloadSimple() throws IOException {
     ClientID client1 = new ClientID(1);
     ClientID client2 = new ClientID(2);
@@ -278,7 +297,8 @@ public class TransactionOrderPersistorTest extends TCTestCase {
       persistor.updateWithNewMessage(client2, transaction, oldest);
     }
   }
-  
+
+  @Test
   public void testStoringAllPerClient() throws Exception {
     ProductID[] products = new ProductID[] {ProductID.PERMANENT, ProductID.STRIPE, ProductID.SERVER, ProductID.DIAGNOSTIC};
     ClientID[] clients = new ClientID[] {new ClientID(3), new ClientID(4), new ClientID(5), new ClientID(6)};
@@ -338,6 +358,7 @@ public class TransactionOrderPersistorTest extends TCTestCase {
     }
   }
 
+  @Test
   public void testSaveReloadMultipleThreads() throws IOException, InterruptedException {
     TransactionID oldest = new TransactionID(1L);
 

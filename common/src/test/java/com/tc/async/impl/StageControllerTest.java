@@ -18,23 +18,27 @@
  */
 package com.tc.async.impl;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Stage;
 import com.tc.util.State;
 import com.tc.util.concurrent.SetOnceFlag;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.mockito.Matchers;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+
+
 
 /**
  *
@@ -44,19 +48,19 @@ public class StageControllerTest {
   public StageControllerTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
   /**
@@ -77,7 +81,7 @@ public class StageControllerTest {
     when(cxt.getStage(Matchers.eq("PRE"), Matchers.any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
-        Assert.assertFalse("PRE", didRun.isSet());
+        assertFalse(didRun.isSet(), () -> "PRE");
         return prestage;
       }
     });
@@ -86,7 +90,7 @@ public class StageControllerTest {
     when(cxt.getStage(Matchers.eq("POST"), Matchers.any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
-        Assert.assertTrue("POST", didRun.isSet());
+        assertTrue(didRun.isSet(), () -> "POST");
         return poststage;
       }
     });
@@ -95,7 +99,7 @@ public class StageControllerTest {
     when(cxt.getStage(Matchers.eq("INIT"), Matchers.any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
-        Assert.assertFalse("INIT", didRun.isSet());
+        assertFalse(didRun.isSet(), () -> "INIT");
         return i;
       }
     });
@@ -108,7 +112,7 @@ public class StageControllerTest {
     instance.addStageToState(test, "POST");
 
     instance.transition(cxt, init, test);
-    Assert.assertTrue(didRun.isSet());
+    assertTrue(didRun.isSet());
     verify(prestage).start(cxt);
     verify(poststage).start(cxt);
     verify(i).destroy();

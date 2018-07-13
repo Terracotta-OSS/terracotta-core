@@ -18,14 +18,22 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class MergableLinkedListTest extends TestCase {
 
+public class MergableLinkedListTest {
+
+  @Test
   public void testAddAll() {
 
     // initial list, assert correctness
@@ -78,6 +86,7 @@ public class MergableLinkedListTest extends TestCase {
 
   }
 
+  @Test
   public void testMergeToFront() {
 
     // initial list, assert correctness
@@ -126,6 +135,7 @@ public class MergableLinkedListTest extends TestCase {
 
   }
 
+  @Test
   public void testRemoveFirst() {
     MergableLinkedList<TestData> masterList = createMergableLinkedList(1, 2);
     assertEquals(2, masterList.size());
@@ -148,6 +158,7 @@ public class MergableLinkedListTest extends TestCase {
     }
   }
 
+  @Test
   public void testIsEmpty() {
     MergableLinkedList<TestData> emptyList = new MergableLinkedList<TestData>();
     assertTrue(emptyList.isEmpty());
@@ -156,6 +167,7 @@ public class MergableLinkedListTest extends TestCase {
     assertFalse(populatedList.isEmpty());
   }
 
+  @Test
   public void testAdd() {
     MergableLinkedList<TestData> list = new MergableLinkedList<TestData>();
     assertEquals(0, list.size());
@@ -182,6 +194,7 @@ public class MergableLinkedListTest extends TestCase {
     assertNull(data);
   }
 
+  @Test
   public void testClear() {
     MergableLinkedList<TestData> masterList = createMergableLinkedList(1, 2);
     assertEquals(2, masterList.size());

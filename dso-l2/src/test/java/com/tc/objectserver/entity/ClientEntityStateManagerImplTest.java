@@ -18,14 +18,14 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
@@ -35,12 +35,13 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.util.Assert;
-import static com.tc.util.Assert.assertEquals;
+
 import java.util.Collection;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -53,7 +54,7 @@ public class ClientEntityStateManagerImplTest {
   private StageManager stageManager;
 
   @SuppressWarnings("unchecked")
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     requestSink = mock(Sink.class);
     requestStage = mock(Stage.class);
@@ -98,7 +99,7 @@ public class ClientEntityStateManagerImplTest {
     clientEntityStateManager.addReference(new ClientDescriptorImpl(clientID, clientInstanceID), entityID);
     List<FetchID> list = clientEntityStateManager.clientDisconnected(clientID);
 
-    assertEquals(1, list.size());
+    assertEquals(1, list.size(), "");
     assertEquals(entityID, list.get(0));
   }
 

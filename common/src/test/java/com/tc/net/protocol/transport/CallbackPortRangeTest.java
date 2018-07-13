@@ -18,13 +18,17 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.Iterator;
 import java.util.Set;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class CallbackPortRangeTest extends TestCase {
+public class CallbackPortRangeTest {
 
+  @Test
   public void testRangeParse() {
     Set<Integer> ports = CallbackPortRange.expandRange("");
     assertEquals(0, ports.size());

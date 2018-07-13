@@ -18,8 +18,22 @@
  */
 package com.tc.server;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.terracotta.config.service.ServiceConfigParser;
+import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceProviderConfiguration;
+
 import com.tc.classloader.ServiceLocator;
+import com.tc.test.DirectoryHelperExtension;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
 import com.tc.util.ZipBuilder;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -28,49 +42,41 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
-import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderConfiguration;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+      
 /**
  *
  * @author mscott
  */
+@ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
 public class ServiceClassLoaderTest {
   
-  @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+  private TempDirectoryHelper tempDirectoryHelper;
 
   public ServiceClassLoaderTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 
    @Test
    public void testServiceLoading() throws Exception {
-     File base = folder.newFolder();
+     File base = tempDirectoryHelper.getDirectory();
      File test = new File(base, "test.jar");
      ZipBuilder zip = new ZipBuilder(test, false);
      zip.putEntry("META-INF/services/org.terracotta.config.service.ServiceConfigParser", "com.tc.server.TestServiceConfigParser".getBytes());
@@ -89,14 +95,14 @@ public class ServiceClassLoaderTest {
      ClassLoader baseLoader = new ServiceClassLoader(list);
      Class<? extends ServiceConfigParser> check = baseLoader.loadClass("com.tc.server.TestServiceConfigParser").asSubclass(ServiceConfigParser.class);
      ServiceConfigParser parser = check.newInstance();
-     Assert.assertTrue(parser.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(parser.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
+     assertTrue(parser.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
+     assertTrue(parser.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
      ServiceProviderConfiguration config = parser.parse(null, null);
-     Assert.assertTrue(config.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(config.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
+     assertTrue(config.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
+     assertTrue(config.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
      Class<? extends ServiceProvider> provider = config.getServiceProviderType();
-     Assert.assertTrue(provider.getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(provider.getClassLoader() == list.get(listIndexToTest).getClassLoader());
+     assertTrue(provider.getClassLoader() != ClassLoader.getSystemClassLoader());
+     assertTrue(provider.getClassLoader() == list.get(listIndexToTest).getClassLoader());
    }
 
    private byte[] resourceToBytes(String loc) throws IOException {

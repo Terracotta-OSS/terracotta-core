@@ -18,16 +18,23 @@
  */
 package com.tc.l2.ha;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(TCExtension.class)
+public class ConsistencyManagerWeightGeneratorTest {
 
-public class ConsistencyManagerWeightGeneratorTest extends TCTestCase {
+  @Test
   public void testSimplePassive() throws Exception {
     ConsistencyManagerImpl mgr = new ConsistencyManagerImpl(1, 1);
     ConsistencyManagerImpl spyMgr = spy(mgr);
@@ -39,6 +46,7 @@ public class ConsistencyManagerWeightGeneratorTest extends TCTestCase {
     assertTrue(gen.getWeight() == 0);
   }
   
+  @Test
   public void testActiveNotBlockedIsHeavierThanBlocked() throws Exception {
     ConsistencyManagerImpl mgr = new ConsistencyManagerImpl(1, 1);
     ConsistencyManagerImpl spyMgr = spy(mgr);

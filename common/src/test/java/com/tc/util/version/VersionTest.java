@@ -18,23 +18,28 @@
  */
 package com.tc.util.version;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class VersionTest extends TestCase {
+public class VersionTest {
 
   private void helpTestParse(String str, int major, int minor, int micro, int patch, int build, String specifier, String qualifier) {
     Version v = new Version(str);
-    assertEquals("major", major, v.major());
-    assertEquals("minor", minor, v.minor());
-    assertEquals("micro", micro, v.micro());
-    assertEquals("specifier", specifier, v.specifier());
-    assertEquals("qualifier", qualifier, v.qualifier());
+    assertEquals(major, v.major(), "major");
+    assertEquals(minor, v.minor(), "minor");
+    assertEquals(micro, v.micro(), "micro");
+    assertEquals(specifier, v.specifier(), "specifier");
+    assertEquals(qualifier, v.qualifier(), "qualifier");
   }
   
+  @Test
   public void testVersionParse() {
     helpTestParse("1", 1, 0, 0, 0, 0, null, null);
     helpTestParse("1.2", 1, 2, 0, 0, 0, null, null);
@@ -55,6 +60,7 @@ public class VersionTest extends TestCase {
     }
   }
   
+  @Test
   public void testVersionInvalid() {
     helpTestInvalid("foo");
     helpTestInvalid("1.1.1.SNAPSHOT");
@@ -69,7 +75,7 @@ public class VersionTest extends TestCase {
     int comparedBackwards = v2.compareTo(v1);
     
     if(compareDirection == 0) {
-      assertTrue("expected 0, got: " + compared, compared == 0);
+      assertTrue(compared == 0, ()->"expected 0, got: " + compared);
       assertTrue(comparedBackwards == 0);
     } else if(compareDirection < 0) {
       assertTrue(compared < 0);
@@ -79,7 +85,8 @@ public class VersionTest extends TestCase {
       assertTrue(comparedBackwards < 0);
     }
   }
-  
+
+  @Test
   public void testComparison() {
     helpTestCompare("1.0.0", "1.0.0", 0);
     helpTestCompare("1.0.0-SNAPSHOT", "1.0.0-SNAPSHOT", 0);
@@ -98,7 +105,8 @@ public class VersionTest extends TestCase {
     helpTestCompare("4.3.0", "4.3.0.0.1", -1);
     helpTestCompare("4.3.0.0.256", "4.4.0", -1);
   }
-  
+
+  @Test
   public void testSortList() {
     List<Version> stuff = new ArrayList<Version>();
     stuff.add(new Version("1.2.0")); 

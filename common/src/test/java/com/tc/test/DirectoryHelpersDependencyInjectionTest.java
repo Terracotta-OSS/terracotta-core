@@ -18,36 +18,51 @@
  */
 package com.tc.test;
 
-import com.tc.util.runtime.Vm;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 
-public class TCTestCaseTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  public TCTestCaseTest() {
-    if (Vm.isIBM()) {
-      disableTest();
-    }
+@ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
+//@TimeBomb("2999-12-31", Vm.isIBM(), null)
+public class DirectoryHelpersDependencyInjectionTest {
+
+  @CleanDirectory(true)
+  private TempDirectoryHelper tempDirectoryHelper;
+
+  private DataDirectoryHelper dataDirectoryHelper;
+
+  @Test
+  public void testDirectoryHelpersInjection() {
+
+    Assertions.assertAll("Directory Helpers are not injected by TCExtension",
+        () -> Assertions.assertNotNull(tempDirectoryHelper),
+        () -> Assertions.assertNotNull(dataDirectoryHelper)
+    );
   }
-
+  
+  @Test
   public void testHeapDump() throws IOException {
     assertEquals(0, getHprofs().length);
-    dumpHeap(getTempDirectory());
+    TCExtension.dumpHeap(tempDirectoryHelper.getDirectory());
     assertEquals(1, getHprofs().length);
-    dumpHeap(getTempDirectory());
+    TCExtension.dumpHeap(tempDirectoryHelper.getDirectory());
     assertEquals(2, getHprofs().length);
-    dumpHeap(getTempDirectory());
+    TCExtension.dumpHeap(tempDirectoryHelper.getDirectory());
   }
 
   private File[] getHprofs() throws IOException {
-    return getTempDirectory().listFiles(new FilenameFilter() {
+    return tempDirectoryHelper.getDirectory().listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
         return name.endsWith(".hprof");
       }
     });
   }
-
 }

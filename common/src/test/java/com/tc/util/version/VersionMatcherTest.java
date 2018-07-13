@@ -18,25 +18,33 @@
  */
 package com.tc.util.version;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
-public class VersionMatcherTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(TCExtension.class)
+public class VersionMatcherTest {
+
+  @Test
   public void testExactMatch() {
     VersionMatcher matcher = new VersionMatcher("3.0.0");
-    Assert.assertTrue(matcher.matches("3.0.0"));
+    assertTrue(matcher.matches("3.0.0"));
   }
 
+  @Test
   public void testExactMisMatch() {
     VersionMatcher matcher = new VersionMatcher("3.0.0");
-    Assert.assertFalse(matcher.matches("9.9.9"));
+    assertFalse(matcher.matches("9.9.9"));
   }
 
+  @Test
   public void testTcAny() {
     VersionMatcher matcher = new VersionMatcher("3.0.0");
-    Assert.assertTrue(matcher.matches("*"));
+    assertTrue(matcher.matches("*"));
   }
 
 }

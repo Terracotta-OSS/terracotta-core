@@ -46,6 +46,15 @@
     <galvan.version>1.4.1</galvan.version>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.2.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
   <modules>
     <module>build-parent</module>
     <module>build-data</module>

@@ -18,6 +18,9 @@
  */
 package com.tc.object;
 
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
@@ -35,16 +38,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
-import org.hamcrest.Matchers;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.exception.ConnectionClosedException;
 
 
-public class InFlightMessageTest extends TestCase {
-  
+public class InFlightMessageTest {
+
+  @Test
   public void testExceptionClose() throws Exception {
     Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
     VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
@@ -69,7 +72,8 @@ public class InFlightMessageTest extends TestCase {
       System.out.println("expected " + closed.toString());
     }
   }
-  
+
+  @Test
   public void testUninterruptability() throws Exception {
     Set<VoltronEntityMessage.Acks> acks = EnumSet.of(VoltronEntityMessage.Acks.RECEIVED);
     VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
@@ -100,7 +104,8 @@ public class InFlightMessageTest extends TestCase {
     t.join();
     assertThat(interruptCount.get(), Matchers.lessThan(3));
   }
-   
+
+  @Test
   public void testExceptionWaitForAcks() throws Exception {
     Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
     VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
@@ -120,7 +125,8 @@ public class InFlightMessageTest extends TestCase {
     t.join(3000);
     Assert.assertFalse(t.isAlive());
   }
-   
+
+  @Test
   public void testInterruptedGet() {
     // Create the message we will use in the test.
     NetworkVoltronEntityMessage mockedEntityMessage = mock(NetworkVoltronEntityMessage.class);

@@ -18,6 +18,8 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -25,10 +27,13 @@ import java.security.SecureRandom;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class TCMessageRouterTest extends TestCase {
+public class TCMessageRouterTest {
 
+  @Test
   public void testDefaultRoute() {
 
     try {
@@ -61,6 +66,7 @@ public class TCMessageRouterTest extends TestCase {
     assertNull(msg.get());
   }
 
+  @Test
   public void testRouteByType() {
     final AtomicReference<TCMessage> defmsg = new AtomicReference<TCMessage>(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
@@ -90,6 +96,7 @@ public class TCMessageRouterTest extends TestCase {
     assertSame(message, defmsg.get());
   }
 
+  @Test
   public void testConcurrency() throws Exception {
     final Random random = new SecureRandom();
     final AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);

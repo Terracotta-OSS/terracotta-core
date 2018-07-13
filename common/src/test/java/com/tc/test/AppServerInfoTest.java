@@ -18,10 +18,14 @@
  */
 package com.tc.test;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class AppServerInfoTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+public class AppServerInfoTest {
+
+  @Test
   public final void testParse() {
     AppServerInfo appServer = AppServerInfo.parse("tomcat-5.5.26");
     assertEquals("tomcat", appServer.getName());
@@ -51,6 +55,7 @@ public class AppServerInfoTest extends TestCase {
     assertNotNull(exception);
   }
 
+  @Test
   public final void testToString() {
     String nameAndVersion = "jboss-eap-6.1.0";
     assertEquals(nameAndVersion, AppServerInfo.parse(nameAndVersion).toString());

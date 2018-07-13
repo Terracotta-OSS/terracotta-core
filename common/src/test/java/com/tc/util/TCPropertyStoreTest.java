@@ -19,6 +19,8 @@
 package com.tc.util;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -27,16 +29,16 @@ import com.tc.util.properties.TCPropertyStore;
 import java.io.IOException;
 import java.io.InputStream;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class TCPropertyStoreTest extends TestCase {
+public class TCPropertyStoreTest {
 
   // This file resides in src.resource/com/tc/properties directory
   private static final String DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
   }
 
   private void loadDefaults(String propFile, TCPropertyStore propertyStore) {
@@ -51,6 +53,7 @@ public class TCPropertyStoreTest extends TestCase {
     }
   }
 
+  @Test
   public void testLoad() {
     TCPropertyStore propertyStore = new TCPropertyStore();
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE, propertyStore);
@@ -59,6 +62,7 @@ public class TCPropertyStoreTest extends TestCase {
     Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED.replace("e", "E")));
   }
 
+  @Test
   public void testTrim() {
     TCPropertyStore props = new TCPropertyStore();
     props.setProperty("tim1", "eck");
@@ -71,6 +75,7 @@ public class TCPropertyStoreTest extends TestCase {
     }
   }
 
+  @Test
   public void testUnset() {
     TCPropertyStore props = new TCPropertyStore();
     props.setProperty("a", "b");
@@ -79,6 +84,7 @@ public class TCPropertyStoreTest extends TestCase {
   }
 
 
+  @Test
   public void testOrder() {
     TCPropertyStore props = new TCPropertyStore();
 
@@ -92,6 +98,7 @@ public class TCPropertyStoreTest extends TestCase {
     }
   }
 
+  @Test
   public void testKeyCasePreserve() {
     TCPropertyStore props = new TCPropertyStore();
 
@@ -111,6 +118,7 @@ public class TCPropertyStoreTest extends TestCase {
     assertEquals("TiM", props.keysArray()[0]);
   }
 
+  @Test
   public void testSetAndGet() {
     TCPropertyStore propertyStore = new TCPropertyStore();
     propertyStore.setProperty("xyz", "abc");
@@ -120,6 +128,7 @@ public class TCPropertyStoreTest extends TestCase {
     Assert.assertEquals("def", propertyStore.getProperty("AbC"));
   }
 
+  @Test
   public void testPutAll() {
     TCPropertyStore propertyStore1 = new TCPropertyStore();
     TCPropertyStore propertyStore2 = new TCPropertyStore();

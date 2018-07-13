@@ -19,6 +19,12 @@
 
 package com.tc.objectserver.impl;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
 import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -27,14 +33,14 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.ClientStatePersistor;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
-import java.util.EnumSet;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
+import java.util.EnumSet;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,13 +48,14 @@ import static org.mockito.Mockito.when;
 /**
  * @author tim
  */
-public class ConnectionIDFactoryImplTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class ConnectionIDFactoryImplTest {
   private ConnectionIDFactoryImpl connectionIDFactory;
   private ClientStatePersistor persistor;
   private MutableSequence sequence;
   private ConnectionIDFactoryListener listener;
 
-  @Override
+  @BeforeEach
   public void setUp() throws Exception {
     sequence = createSequence();
     persistor = createPersistor(sequence);
@@ -58,6 +65,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     connectionIDFactory.registerForConnectionIDEvents(listener);
   }
 
+  @Test
   public void testNextID() throws Exception {
     nextChannelId(0);
     ConnectionID id = connectionIDFactory.populateConnectionID(idWith("Mr. Bogus", -1L));
@@ -66,11 +74,13 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     assertEquals("abc123", id.getServerID());
   }
 
+  @Test
   public void testCreateExistingID() throws Exception {
 //  implementation can no longer check existing
     connectionIDFactory.populateConnectionID(idWith("aaa", 0));
   }
 
+  @Test
   public void testRemoveId() throws Exception {
     connectionIDFactory.channelRemoved(channelWithId(0), true);
     verify(listener).connectionIDDestroyed(Mockito.any(ConnectionID.class));
@@ -79,7 +89,8 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   private void nextChannelId(long id) {
     when(sequence.next()).thenReturn(id);
   }
-  
+
+  @Test
   public void testProductNegotiation() {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
     StripeID sid = new StripeID("server1");
@@ -92,7 +103,8 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     Assert.assertEquals(ProductID.SERVER, cid.getProductId());
   }
   
-    
+
+  @Test
   public void testMismatchServerRejection() {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
     StripeID sid = new StripeID("server1");
@@ -104,7 +116,8 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     
     Assert.assertEquals(new ClientID(0), cid.getClientID());
   }
-  
+
+  @Test
   public void testProductRefusal() {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.noneOf(ProductID.class));
     factory.activate(StripeID.NULL_ID, 0);
@@ -115,7 +128,8 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     
     Assert.assertEquals(ConnectionID.NULL_ID, cid);
   }
-  
+
+  @Test
   public void testListenerGetsRightProductType() {
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getChannelID()).thenReturn(new ChannelID(1));

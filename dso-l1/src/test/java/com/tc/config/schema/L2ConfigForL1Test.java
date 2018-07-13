@@ -18,18 +18,24 @@
  */
 package com.tc.config.schema;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import com.tc.test.EqualityChecker;
-import com.tc.test.TCTestCase;
+
 import java.net.InetSocketAddress;
 import java.net.URI;
-import org.junit.Assert;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Unit test for {@link L2ConfigForL1}.
  */
-public class L2ConfigForL1Test extends TCTestCase {
+public class L2ConfigForL1Test {
 
   @SuppressWarnings("unused")
+  @Test
   public void testL2Data() throws Exception {
     try {
       new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved(null, 20));
@@ -59,13 +65,14 @@ public class L2ConfigForL1Test extends TCTestCase {
   }
 
   @SuppressWarnings("unused")
+  @Test
   public void testL2DefaultPort() throws Exception {
     URI uri = new URI("http://localhost");
     System.out.println(uri.getHost() +":" + uri.getPort());
     L2ConfigForL1.L2Data data = new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("localhost", 0));
-    Assert.assertEquals(L2ConfigForL1.DEFAULT_PORT, data.tsaPort());
+    Assertions.assertEquals(L2ConfigForL1.DEFAULT_PORT, data.tsaPort());
     data = new L2ConfigForL1.L2Data(InetSocketAddress.createUnresolved("localhost", 0));
-    Assert.assertEquals(L2ConfigForL1.DEFAULT_PORT, data.tsaPort());
+    Assertions.assertEquals(L2ConfigForL1.DEFAULT_PORT, data.tsaPort());
   }
 
 }

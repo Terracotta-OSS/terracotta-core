@@ -18,6 +18,10 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -31,33 +35,32 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * TODO: Document me
  * 
  * @author teck
  */
-public class NetworkListenerTest extends TestCase {
+public class NetworkListenerTest {
 
   CommunicationsManager commsMgr;
 
-  @Override
+  @BeforeEach
   public void setUp() throws Exception {
-    super.setUp();
     commsMgr = new CommunicationsManagerImpl("TestCommMgr", new NullMessageMonitor(),
                                              new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
   }
 
-  @Override
+  @AfterEach
   public void tearDown() throws Exception {
-    super.tearDown();
-
     if (commsMgr != null) {
       commsMgr.shutdown();
     }
   }
 
+  @Test
   public void testBindException() throws Exception {
     assertTrue(commsMgr.getAllListeners().length == 0);
 
@@ -91,6 +94,7 @@ public class NetworkListenerTest extends TestCase {
     assertTrue(commsMgr.getAllListeners().length == 0);
   }
 
+  @Test
   public void testMany() throws UnknownHostException, TCTimeoutException {
     assertTrue(commsMgr.getAllListeners().length == 0);
 

@@ -19,22 +19,25 @@
 package com.tc.services;
 
 
-import com.tc.objectserver.api.ManagedEntity;
-import org.junit.After;
-import org.junit.Before;
-import java.util.Arrays;
-import org.junit.Assert;
-import org.junit.Test;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 
+import com.tc.objectserver.api.ManagedEntity;
+
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+                 
 
 public class DelegatingServiceRegistryTest {
   DelegatingServiceRegistry registry;
@@ -44,7 +47,7 @@ public class DelegatingServiceRegistryTest {
   
   Class<?> fakeInterface = FakeInterface.class;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     provider1 = mock(ServiceProvider.class);   
     provider2 = mock(ServiceProvider.class);   
@@ -57,29 +60,34 @@ public class DelegatingServiceRegistryTest {
     this.registry = new DelegatingServiceRegistry(0, standard, new ImplementationProvidedServiceProvider[] {inside1});
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
 
 
   }
-  
-  @Test(expected=ServiceException.class)
+
+  @Test
   public void testMultipleServicesException() throws Exception {
-    when(provider2.getProvidedServiceTypes()).thenReturn(Arrays.asList(fakeInterface));
-    when(provider2.getService(anyLong(), any(ServiceConfiguration.class))).thenReturn(new FakeInterface() {});
-    this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class));
+    Throwable t = assertThrows(ServiceException.class, ()-> {
+      when(provider2.getProvidedServiceTypes()).thenReturn(Arrays.asList(fakeInterface));
+      when(provider2.getService(anyLong(), any(ServiceConfiguration.class))).thenReturn(new FakeInterface() {});
+      this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class));
+    });
   }
   
-  @Test(expected=ServiceException.class)
+  @Test
   public void testMultipleServicesInsideOutside() throws Exception {
-    when(inside1.getProvidedServiceTypes()).thenReturn(Arrays.asList(fakeInterface));
-    when(inside1.getService(anyLong(), any(ManagedEntity.class), any(ServiceConfiguration.class))).thenReturn(new FakeInterface() {});
-    this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class));
+    Throwable t = assertThrows(ServiceException.class, ()-> {
+      when(inside1.getProvidedServiceTypes()).thenReturn(Arrays.asList(fakeInterface));
+      when(inside1.getService(anyLong(), any(ManagedEntity.class), any(ServiceConfiguration.class))).thenReturn(new FakeInterface() {
+      });
+      this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class));
+    });
   }
   
   @Test
   public void testGetService() throws Exception {
-    Assert.assertNotNull(this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class)));
+    assertNotNull(this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class)));
   }
   
   interface FakeInterface {

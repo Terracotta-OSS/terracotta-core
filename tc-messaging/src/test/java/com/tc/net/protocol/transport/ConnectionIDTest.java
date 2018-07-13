@@ -18,17 +18,17 @@
  */
 package com.tc.net.protocol.transport;
 
-import java.io.IOException;
-import java.util.Arrays;
+import org.junit.jupiter.api.Test;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.util.ProductID;
 
-import org.junit.Test;
+import java.io.IOException;
+import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConnectionIDTest {
   

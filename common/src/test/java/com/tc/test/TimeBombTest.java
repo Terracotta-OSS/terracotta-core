@@ -19,11 +19,15 @@
 package com.tc.test;
 
 
-public class TimeBombTest extends TCTestCase {
-  public TimeBombTest() {
-    disableTest();
-  }
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
+@ExtendWith(TCExtension.class)
+@DisabledUntil("2999-12-31")
+public class TimeBombTest {
+  @Test
   public void testShouldNotRun() {
     fail("this test should not run");
   }

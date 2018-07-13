@@ -18,19 +18,20 @@
  */
 package com.tc.stats.counter.sampled;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Random;
 
-import org.junit.Assert;
-import junit.framework.TestCase;
-
-public class SampledCumulativeCounterTest extends TestCase {
+public class SampledCumulativeCounterTest {
 
   public static final Random rand = new Random(System.currentTimeMillis());
 
+  @Test
   public void testResetOnSampleCumulativeCounter() {
     System.out.println("Testing with resetOnSample: true");
     doTest(true);
@@ -58,6 +59,7 @@ public class SampledCumulativeCounterTest extends TestCase {
     manager.shutdown();
   }
 
+  @Test
   public void testContinuousIncDec() {
     CounterManager manager = new CounterManagerImpl();
     int initialValue = 5;
@@ -107,7 +109,7 @@ public class SampledCumulativeCounterTest extends TestCase {
 
   public static void assertEquals(long e, long a) {
     System.out.println("expected: " + e + " actual: " + a);
-    Assert.assertEquals(e, a);
+    Assertions.assertEquals(e, a);
   }
 
 }

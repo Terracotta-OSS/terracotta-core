@@ -18,12 +18,12 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.Assertions;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import org.junit.Assert;
 
 /**
  * Utilities for use in testing serialization.
@@ -58,12 +58,12 @@ public class SerializationTestUtil {
       Object restored = ois.readObject();
 
       if (checkEquals) {
-        Assert.assertEquals(o, restored);
-        Assert.assertEquals(restored, o);
+        Assertions.assertEquals(o, restored);
+        Assertions.assertEquals(restored, o);
 
-        Assert.assertEquals(o.hashCode(), restored.hashCode());
+        Assertions.assertEquals(o.hashCode(), restored.hashCode());
 
-        Assert.assertNotSame(o, restored);
+        Assertions.assertNotSame(o, restored);
       }
     }
   }

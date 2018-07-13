@@ -18,18 +18,20 @@
  */
 package com.tc.objectserver.entity;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.util.Assert;
+
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 /**
  *
@@ -41,21 +43,21 @@ public class ManagedEntitySyncInteropTest {
   public ManagedEntitySyncInteropTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
      service = Executors.newCachedThreadPool();
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
     service.shutdownNow();
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 

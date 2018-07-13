@@ -24,32 +24,30 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
-
-import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
-import com.tc.config.schema.setup.BaseConfigurationSetupManager;
-import com.tc.config.schema.setup.ConfigurationCreator;
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.ConfigurationSpec;
-import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
-import com.tc.config.schema.setup.StandardXMLFileConfigurationCreator;
-import com.tc.object.config.schema.L2ConfigObject;
-import com.tc.test.TCTestCase;
-import com.tc.text.StringUtils;
-import com.tc.util.Assert;
-
 import org.terracotta.config.TCConfigDefaults;
 import org.terracotta.config.TcConfiguration;
+
+import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
+import com.tc.object.config.schema.L2ConfigObject;
+import com.tc.test.DirectoryHelperExtension;
+import com.tc.test.TCExtension;
+import com.tc.test.TempDirectoryHelper;
+import com.tc.text.StringUtils;
+import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 
-public class BaseConfigurationSetupManagerTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+@ExtendWith(DirectoryHelperExtension.class)
+public class BaseConfigurationSetupManagerTest {
 
   private static final String DEFAULT_CONFIG_SPEC = "tc-config.xml";
   private static final String CONFIG_SPEC_ARGUMENT_NAME = "config";
@@ -58,8 +56,12 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
   private static final String DEFAULT_CONFIG_URI = "resource:///"
                                                    + BaseConfigurationSetupManagerTest.class.getPackage().getName().replace('.', '/') + "/"
                                                    + DEFAULT_CONFIG_PATH;
+
+  private TempDirectoryHelper tempDirectoryHelper;
+
   private File tcConfig = null;
 
+  @Test
   public void testServerDefaults1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "</server>" + "</servers>"
@@ -82,6 +84,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(server.getBind(), server.getTsaGroupPort().getBind());
   }
 
+  @Test
   public void testServerDefaults2() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<tsa-port>8513</tsa-port>"
@@ -113,6 +116,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   }
 
+  @Test
   public void testServerDefaults3() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
@@ -147,6 +151,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   }
 
+  @Test
   public void testServerDefaults4() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
@@ -179,6 +184,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(tsaGroupBind, server.getTsaGroupPort().getBind());
   }
 
+  @Test
   public void testServerDefaults5() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
@@ -229,6 +235,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   }
 
+  @Test
   public void testServerDirectoryDefaults() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + " </server>" + "</servers>"
@@ -257,6 +264,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(defaultPath, server.getLogs());
   }
 
+  @Test
   public void testServerDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
@@ -288,6 +296,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 //    }
   }
 
+  @Test
   public void testServerSubsitutedDirectoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
@@ -310,6 +319,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 //    Assert.assertEquals(System.getProperty("user.home"), tcConfiguration.getPlatformConfiguration().getServers().getServer().get(0).getDataBackup());
   }
 
+  @Test
   public void testDefaultDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc-config xmlns=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "</server>" + "</servers>"
@@ -359,9 +369,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     return configSetupMgr;
   }
 
-  @Override
   protected File getTempFile(String fileName) throws IOException {
-    return getTempDirectoryHelper().getFile(fileName);
+    return tempDirectoryHelper.getFile(fileName);
   }
 
   private synchronized void writeConfigFile(String fileContents) {

@@ -18,8 +18,11 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.async.api.Sink;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -28,8 +31,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class HydrateHandlerTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class HydrateHandlerTest {
 
+  @Test
   public void testHydrateException() throws Exception {
     HydrateHandler handler = new HydrateHandler();
 

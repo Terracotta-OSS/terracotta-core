@@ -18,6 +18,13 @@
  */
 package com.tc.objectserver.entity;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.io.TCByteBufferInput;
@@ -42,16 +49,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Matchers;
+
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 
 public class ReplicationSenderTest {
   NodeID node = mock(NodeID.class);
@@ -75,15 +76,15 @@ public class ReplicationSenderTest {
   public ReplicationSenderTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     when(stage.getSink()).thenReturn(sink);
     this.testSender = new ReplicationSender(stage, groupMgr);
@@ -142,7 +143,7 @@ public class ReplicationSenderTest {
     }
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
     
   }

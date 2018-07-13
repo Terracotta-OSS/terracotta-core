@@ -18,7 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.l2.msg.ReplicationMessageAck;
+import org.junit.jupiter.api.Test;
+
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
 import com.tc.util.Assert;
@@ -26,8 +27,6 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
 

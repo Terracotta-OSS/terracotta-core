@@ -18,10 +18,13 @@
  */
 package com.tc.stats.counter;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class BoundedCounterTest extends TestCase {
-  
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class BoundedCounterTest {
+
+  @Test
   public void testBasic() throws Exception {
     CounterManager counterManager = new CounterManagerImpl();
     Counter c = counterManager.createCounter(new BoundedCounterConfig(0L, -100, 100));

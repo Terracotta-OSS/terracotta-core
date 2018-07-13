@@ -18,6 +18,10 @@
  */
 package com.tc.net.groups;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.msg.L2StateMessage;
@@ -55,7 +59,9 @@ import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /*
  * This test really belongs in the TC Messaging module but it's dependencies
@@ -64,7 +70,7 @@ import junit.framework.TestCase;
 /*
  * Test case for TC-Group-Comm Tribes' GroupMessage sent via TCMessage
  */
-public class TCGroupMessageWrapperTest extends TestCase {
+public class TCGroupMessageWrapperTest {
 
   private final static String                     LOCALHOST      = "localhost";
   MessageMonitor                                  monitor        = new NullMessageMonitor();
@@ -78,9 +84,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
   private static final long                       timeout        = 1000;
   private final TimeUnit                          unit           = TimeUnit.MILLISECONDS;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), null,
                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
@@ -93,9 +98,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                 Collections.emptyMap());
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
     try {
       clientComms.getConnectionManager().closeAllConnections(5000);
 
@@ -177,11 +181,13 @@ public class TCGroupMessageWrapperTest extends TestCase {
     return (receivedMesg);
   }
 
+  @Test
   public void testClusterStateMessage() throws Exception {
     AbstractGroupMessage sendMesg = new ClusterStateMessage(ClusterStateMessage.OPERATION_SUCCESS, new MessageID(1000));
     sendGroupMessage(sendMesg);
   }
 
+  @Test
   public void testGroupZapNodeMessage() throws Exception {
     long weights[] = new long[] { 1, 23, 44, 78 };
     AbstractGroupMessage sendMesg = new GroupZapNodeMessage(GroupZapNodeMessage.ZAP_NODE_REQUEST,
@@ -189,6 +195,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     sendGroupMessage(sendMesg);
   }
 
+  @Test
   public void testL2StateMessage() throws Exception {
     long weights[] = new long[] { 1, 23, 44, 78 };
     Enrollment enroll = new Enrollment(makeNodeID("test"), true, weights);

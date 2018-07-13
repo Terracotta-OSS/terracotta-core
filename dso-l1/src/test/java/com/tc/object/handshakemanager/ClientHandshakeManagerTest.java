@@ -18,14 +18,15 @@
  */
 package com.tc.object.handshakemanager;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.slf4j.Logger;
+
 import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.slf4j.Logger;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
@@ -53,7 +54,7 @@ public class ClientHandshakeManagerTest {
   @Mock
   private ClientHandshakeCallback entities;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     initMocks(this);
   }

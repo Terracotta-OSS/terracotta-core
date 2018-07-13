@@ -18,21 +18,29 @@
  */
 package com.tc.net.protocol.delivery;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Testing the basic functionality of OOO Receive State Machine. More functional test at GuaranteedDeliveryProtocolTest
  */
 
-public class ReceiveStateMachineTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class ReceiveStateMachineTest {
 
+  @Test
   public void tests() throws Exception {
     BlockingQueue<TCNetworkMessage> receiveQueue = new LinkedBlockingQueue<TCNetworkMessage>();
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(receiveQueue);

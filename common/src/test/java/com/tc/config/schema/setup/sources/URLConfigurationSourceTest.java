@@ -18,6 +18,10 @@
  */
 package com.tc.config.schema.setup.sources;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.util.Assert;
 
 import java.io.BufferedWriter;
@@ -26,14 +30,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
-import junit.framework.TestCase;
 
-public class URLConfigurationSourceTest extends TestCase {
+public class URLConfigurationSourceTest {
 
   private URLConfigurationSource configSrc;
   private ServerSocket           server;
 
-  @Override
+  @BeforeEach
   public void setUp() throws Exception {
     this.server = new ServerSocket(0);
     Thread t = new Thread() {
@@ -57,6 +60,7 @@ public class URLConfigurationSourceTest extends TestCase {
                                                 + server.getLocalPort());
   }
 
+  @Test
   public void testGetInputStreamFailure() throws Exception {
     try {
       configSrc.getInputStream(1);
@@ -66,7 +70,7 @@ public class URLConfigurationSourceTest extends TestCase {
     }
   }
 
-  @Override
+  @AfterEach
   public void tearDown() throws Exception {
     server.close();
   }

@@ -18,44 +18,45 @@
  */
 package com.tc.objectserver.entity;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.terracotta.monitoring.IMonitoringProducer;
+
 import com.tc.async.api.Sink;
 import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
+
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import static java.util.Optional.empty;
-import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.mockito.Matchers;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doAnswer;
-import com.tc.objectserver.api.ManagementKeyCallback;
-import com.tc.objectserver.api.ResultCapture;
-import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import java.util.function.Consumer;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class EntityManagerImplTest {
@@ -66,7 +67,7 @@ public class EntityManagerImplTest {
   private long consumerID;
 
   @SuppressWarnings("unchecked")
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));

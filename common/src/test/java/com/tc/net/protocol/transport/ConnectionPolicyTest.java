@@ -18,14 +18,18 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.util.ProductID;
+import org.junit.jupiter.api.Test;
+
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ConnectionPolicyTest extends TestCase {
+public class ConnectionPolicyTest {
   private ConnectionPolicy policy;
 
+  @Test
   public void tests() throws Exception {
     policy = new ConnectionPolicyImpl(2);
 
@@ -109,6 +113,7 @@ public class ConnectionPolicyTest extends TestCase {
     Assert.assertFalse(client11);
   }
 
+  @Test
   public void testInternalClients() throws Exception {
     policy = new ConnectionPolicyImpl(1);
     assertTrue(policy.connectClient(new ConnectionID("foo", 1)));

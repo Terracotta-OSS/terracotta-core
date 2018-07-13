@@ -18,12 +18,17 @@
  */
 package com.tc.l2.ha;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ServerUptimeWeightGeneratorTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class ServerUptimeWeightGeneratorTest {
+
+  @Test
   public void testMonotonicTime() throws Exception {
     // Since we don't know the precision of System's millisecond clock, we can only ensure that the sequence is monotonic.
     ServerUptimeWeightGenerator generator = new ServerUptimeWeightGenerator();
@@ -33,7 +38,7 @@ public class ServerUptimeWeightGeneratorTest extends TCTestCase {
       // The sleep is added to spread the numbers a little but it will also slow the test to take at least 2 seconds.
       Thread.sleep(2);
       long next = generator.getWeight();
-      Assert.assertTrue(next >= previous);
+      assertTrue(next >= previous);
       previous = next;
     }
   }

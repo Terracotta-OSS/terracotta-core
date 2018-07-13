@@ -18,6 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +46,7 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductID;
 import com.tc.util.SequenceGenerator;
@@ -54,7 +57,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@ExtendWith(TCExtension.class)
+public class ConnectionHealthCheckerReconnectTest {
 
   CommunicationsManager                                   serverComms;
   CommunicationsManager                                   clientComms;
@@ -70,8 +78,6 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   private final LinkedBlockingQueue<ClientMessageChannel> channelQueue = new LinkedBlockingQueue<ClientMessageChannel>();
 
   protected void setUp(HealthCheckerConfig serverHCConf) throws Exception {
-    super.setUp();
-
     NetworkStackHarnessFactory networkStackHarnessFactory;
 
     serverMessageRouter = new TCMessageRouterImpl();
@@ -185,6 +191,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     return (exact_time + grace_time);
   }
 
+  @Test
   public void testL1DisconnectAndL1Reconnect() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test11", false);
     this.setUp(hcConfig);
@@ -234,6 +241,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     ThreadUtil.reallySleep(getMinSleepTimeToConirmDeath(hcConfig));
   }
 
+  @Test
   public void testL2CloseL1Reconnect() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test12", false);
     this.setUp(hcConfig);
@@ -297,9 +305,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     channelQueue.clear();
   }
 
-  @Override
+  @AfterEach
   public void tearDown() throws Exception {
-    super.tearDown();
     closeCommsMgr();
   }
 }

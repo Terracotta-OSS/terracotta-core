@@ -18,28 +18,10 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.async.api.Sink;
-import com.tc.net.ClientID;
-import com.tc.net.NodeID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityID;
-import com.tc.object.FetchID;
-import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.api.ManagementKeyCallback;
-import com.tc.objectserver.api.ResultCapture;
-import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
-import com.tc.objectserver.testentity.TestEntity;
-import com.tc.services.InternalServiceRegistry;
-import com.tc.util.Assert;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -59,6 +41,26 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.exception.EntityAlreadyExistsException;
+import org.terracotta.monitoring.IMonitoringProducer;
+
+import com.tc.async.api.Sink;
+import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityID;
+import com.tc.object.FetchID;
+import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
+import com.tc.objectserver.api.ServerEntityAction;
+import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
+import com.tc.objectserver.testentity.TestEntity;
+import com.tc.services.InternalServiceRegistry;
+import com.tc.util.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -75,6 +77,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -84,7 +87,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class ManagedEntityImplTest {
@@ -110,20 +112,20 @@ public class ManagedEntityImplTest {
   private ActiveInvokeContextImpl activeInvokeContext;
   private InvokeContextImpl passiveInvokeContext;
 
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     exec = Executors.newSingleThreadExecutor();
     pth = Executors.newSingleThreadExecutor();
   }
   
-  @AfterClass
+  @AfterAll
   public static void teardownClass() {
     exec.shutdown();
     pth.shutdown();
   }
 
   @SuppressWarnings("unchecked")
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     nodeID = mock(ClientID.class);
     entityID = new EntityID(TestEntity.class.getName(), "foo");
@@ -714,10 +716,12 @@ public class ManagedEntityImplTest {
     verify(loopback, times(3)).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
   }
 
-  @Test (expected = EntityUserException.class)
+  @Test
   public void testCodecException() throws Exception {
 // this test is no longer relevant, decode is done in the hydrate stage or process/replicated transaction handler
-    throw new EntityUserException("fake", new MessageCodecException("fake", new IOException()));
+    Throwable t = assertThrows(EntityUserException.class, ()-> {
+      throw new EntityUserException("fake", new MessageCodecException("fake", new IOException()));
+    });
   }
 
   @Test

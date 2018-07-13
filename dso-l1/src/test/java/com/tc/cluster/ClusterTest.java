@@ -18,6 +18,8 @@
  */
 package com.tc.cluster;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -25,10 +27,10 @@ import org.mockito.stubbing.Answer;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.cluster.ClusterInternal.ClusterEventType;
 import com.tc.net.ClientID;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.cluster.ClusterInternal.ClusterEventType;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -37,13 +39,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ClusterTest extends TestCase {
+public class ClusterTest  {
 
   private ClusterImpl cluster;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
     cluster = new ClusterImpl();
     Stage<ClusterInternalEventsContext> mockStage = Mockito.mock(Stage.class);
@@ -63,6 +68,7 @@ public class ClusterTest extends TestCase {
     cluster.init(mockStage);
   }
 
+  @Test
   public void testGetThisNode() {
     final ClientID thisNodeId = new ClientID(1);
     cluster.fireThisNodeJoined(thisNodeId, new ClientID[] { new ClientID(2) });
@@ -70,6 +76,7 @@ public class ClusterTest extends TestCase {
     assertEquals(thisNodeId.toString(), cluster.getCurrentNode().getId());
   }
 
+  @Test
   public void testGetNodes() {
     // 0
     Collection<Node> nodes = cluster.getClusterTopology().getNodes();
@@ -85,6 +92,7 @@ public class ClusterTest extends TestCase {
     assertEquals(thisNodeId.toString(), nodes.iterator().next().getId());
   }
 
+  @Test
   public void testThisNodeJoined() {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
@@ -121,6 +129,7 @@ public class ClusterTest extends TestCase {
     assertTrue(listener.getOccurredEvents().isEmpty());
   }
 
+  @Test
   public void testNodeIDCantChange() {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
@@ -142,6 +151,7 @@ public class ClusterTest extends TestCase {
     assertEquals(otherNodeId.toString(), cluster.getCurrentNode().getId());
   }
 
+  @Test
   public void testThisNodeLeft() {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };
@@ -168,6 +178,7 @@ public class ClusterTest extends TestCase {
     assertEquals("ClientID[1] LEFT", newListener.getOccurredEvents().get(0));
   }
 
+  @Test
   public void testNodeConnected() {
     // prime cluster
     final ClientID thisNodeId = new ClientID(1);
@@ -191,6 +202,7 @@ public class ClusterTest extends TestCase {
     assertEquals("ClientID[2] LEFT", listener.getOccurredEvents().get(0));
   }
 
+  @Test
   public void testAddSameListenerTwice() {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
@@ -210,6 +222,7 @@ public class ClusterTest extends TestCase {
     assertEquals("ClientID[1] LEFT", listener.getOccurredEvents().get(3));
   }
 
+  @Test
   public void testCallbackOnlyOnNewListener() {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
@@ -233,6 +246,7 @@ public class ClusterTest extends TestCase {
     assertEquals("ClientID[1] ENABLED", listener2.getOccurredEvents().get(1));
   }
 
+  @Test
   public void testClientExceptionSafety() {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodesCurrentlyInCluster = new ClientID[] { thisNodeId };
@@ -247,6 +261,7 @@ public class ClusterTest extends TestCase {
     cluster.fireThisNodeLeft();
   }
 
+  @Test
   public void testWaitUntilNodeJoinsCluster() {
     final ClientID thisNodeId = new ClientID(1);
 
@@ -266,13 +281,13 @@ public class ClusterTest extends TestCase {
     assertEquals(thisNodeId.toString(), cluster.getCurrentNode().getId());
 
     targetRunnable.waitUntilFinished();
-    assertTrue("waitUntilNodeJoinsCluster must return after node joins", targetRunnable.isFinished());
-    assertTrue("Waiting thread should return after approx. 2 secs (actual:" + targetRunnable.getElapsedTimeMillis()
-               + ")", targetRunnable.getElapsedTimeMillis() + 100 >= 2000);
-    assertEquals("DsoNode returned from waitUntilNodeJoinsCluster should be same as cluster.getCurrentNode",
-                 cluster.getCurrentNode(), targetRunnable.getNode());
+    assertTrue(targetRunnable.isFinished(), ()-> "waitUntilNodeJoinsCluster must return after node joins");
+    assertTrue(targetRunnable.getElapsedTimeMillis() + 100 >= 2000, ()->"Waiting thread should return after approx. 2 secs (actual:" + targetRunnable.getElapsedTimeMillis()
+                   + ")");
+    assertEquals(cluster.getCurrentNode(), targetRunnable.getNode(),()->"DsoNode returned from waitUntilNodeJoinsCluster should be same as cluster.getCurrentNode");
   }
 
+  @Test
   public void testOOBNotification() throws Exception {
     final ClientID thisNodeId = new ClientID(1);
     final ClientID[] nodeIds = new ClientID[] { thisNodeId };

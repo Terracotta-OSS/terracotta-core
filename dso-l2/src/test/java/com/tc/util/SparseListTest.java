@@ -18,10 +18,17 @@
  */
 package com.tc.util;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 
-public class SparseListTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class SparseListTest {
   public SparseListTest() {
   }
 

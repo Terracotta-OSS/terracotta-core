@@ -1,13 +1,14 @@
 package com.tc.objectserver.entity;
 
+import org.junit.jupiter.api.Test;
+import org.terracotta.entity.ClientSourceId;
+
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
-import org.junit.Assert;
-import org.junit.Test;
-import org.terracotta.entity.ClientSourceId;
 
 import java.io.IOException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class ClientSourceIdImplTest {
@@ -17,8 +18,8 @@ public class ClientSourceIdImplTest {
     ClientSourceIdImpl cs = new ClientSourceIdImpl(10);
     ClientDescriptorImpl cd1 = new ClientDescriptorImpl(new ClientID(10), new ClientInstanceID(100));
     ClientDescriptorImpl cd2 = new ClientDescriptorImpl(new ClientID(11), new ClientInstanceID(100));
-    Assert.assertThat(cs.matches(cd1), is(true));
-    Assert.assertThat(cs.matches(cd2), is(false));
+    assertThat(cs.matches(cd1), is(true));
+    assertThat(cs.matches(cd2), is(false));
   }
 
   @Test
@@ -27,17 +28,17 @@ public class ClientSourceIdImplTest {
     {
       ClientSourceIdImpl cs1 = new ClientSourceIdImpl(10);
       ClientSourceId cs2 = serializeDeserialize(cs1);
-      Assert.assertThat(cs1, is(cs2));
+      assertThat(cs1, is(cs2));
     }
     {
       ClientSourceIdImpl cs1 = new ClientSourceIdImpl();
       ClientSourceId cs2 = serializeDeserialize(cs1);
-      Assert.assertThat(cs1, is(cs2));
+      assertThat(cs1, is(cs2));
     }
     {
       ClientSourceIdImpl cs1 = new ClientSourceIdImpl(-10);
       ClientSourceId cs2 = serializeDeserialize(cs1);
-      Assert.assertThat(cs1, is(cs2));
+      assertThat(cs1, is(cs2));
     }
   }
 

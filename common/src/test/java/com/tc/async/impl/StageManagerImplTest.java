@@ -18,10 +18,11 @@
  */
 package com.tc.async.impl;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Stage;
@@ -29,12 +30,16 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.util.concurrent.QueueFactory;
 
-import junit.framework.TestCase;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+
+
 
 /**
  * @author steve
  */
-public class StageManagerImplTest extends TestCase {
+public class StageManagerImplTest {
   private static final Logger logging = LoggerFactory.getLogger(StageManagerImplTest.class);
   static {
     logging.info("I have to load this class for breaking circular dependency");
@@ -45,31 +50,19 @@ public class StageManagerImplTest extends TestCase {
   private StageManagerImpl multiThreadedStageManager;
   private TestEventHandler<TestMultiThreadedEventContext> multiThreadedTestEventHandler;
 
-  /**
-   * Constructor for StageManagerImplTest.
-   * 
-   * @param arg0
-   */
-  public StageManagerImplTest(String arg0) {
-    super(arg0);
-  }
-
-  public static void main(String[] args) {
-    //
-  }
 
   /*
    * @see TestCase#setUp()
    */
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
       stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory());
       testEventHandler = new TestEventHandler<>();
       multiThreadedStageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(StageManagerImpl.class))), new QueueFactory());
       multiThreadedTestEventHandler = new TestEventHandler<TestMultiThreadedEventContext>();
   }
 
+  @Test
   public void testStage() throws Exception {
     stageManager.createStage("testStage", TestEventContext.class, testEventHandler, 1, 3);
     Stage<TestEventContext> s = stageManager.getStage("testStage", TestEventContext.class);
@@ -88,6 +81,7 @@ public class StageManagerImplTest extends TestCase {
     stageManager.stopAll();
   }
 
+  @Test
   public void testMultiThreadedStage() throws Exception {
     stageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 30);
     Stage<TestMultiThreadedEventContext> s = stageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
@@ -114,6 +108,7 @@ public class StageManagerImplTest extends TestCase {
     stageManager.stopAll();
   }
 
+  @Test
   public void testMultiThreadedContext() throws Exception {
     multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 30);
     Stage<TestMultiThreadedEventContext> s = multiThreadedStageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
@@ -145,6 +140,7 @@ public class StageManagerImplTest extends TestCase {
     multiThreadedStageManager.stopAll();
   }
 
+  @Test
   public void testMultiThreadedContextExtended() throws Exception {
     multiThreadedStageManager.createStage("testStage2", TestMultiThreadedEventContext.class, multiThreadedTestEventHandler, 3, 10);
     Stage<TestMultiThreadedEventContext> s = multiThreadedStageManager.getStage("testStage2", TestMultiThreadedEventContext.class);
@@ -177,9 +173,8 @@ public class StageManagerImplTest extends TestCase {
   /*
    * @see TestCase#tearDown()
    */
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
   private static class TestEventContext {

@@ -18,23 +18,25 @@
  */
 package com.tc.services;
 
-import com.tc.objectserver.api.ManagedEntity;
-import com.tc.util.Assert;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
+
+import com.tc.objectserver.api.ManagedEntity;
+import com.tc.util.Assert;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -47,15 +49,15 @@ public class LocalMonitoringProducerTest {
   public LocalMonitoringProducerTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     TerracottaServiceProviderRegistry reg = mock(TerracottaServiceProviderRegistry.class);
     ISimpleTimer timer = mock(ISimpleTimer.class);
@@ -66,7 +68,7 @@ public class LocalMonitoringProducerTest {
     producer = new LocalMonitoringProducer(reg, server, timer);
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 

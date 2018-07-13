@@ -18,7 +18,7 @@
  */
 package com.tc.entity;
 
-import java.io.IOException;
+import org.junit.jupiter.api.Test;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.VoltronEntityMessage.Acks;
@@ -30,18 +30,16 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
-import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+
+import java.io.IOException;
 import java.util.EnumSet;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-
 
 /**
  * A simple test to ensure that the various use cases of this message type all serialize/deserialize correctly.

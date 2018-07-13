@@ -19,13 +19,15 @@
 
 package com.tc.config.schema.setup;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author vmad
@@ -40,9 +42,9 @@ public class ClientConfigurationSetupManagerFactoryTest {
     ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(InetSocketAddress.createUnresolved(HOST, PORT)));
     L1ConfigurationSetupManager l1ConfigurationSetupManager = clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
 
-    Assert.assertNotNull(l1ConfigurationSetupManager);
-    Assert.assertEquals(HOST, l1ConfigurationSetupManager.l2Config().l2Data()[0].host());
-    Assert.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[0].tsaPort());
+    Assertions.assertNotNull(l1ConfigurationSetupManager);
+    Assertions.assertEquals(HOST, l1ConfigurationSetupManager.l2Config().l2Data()[0].host());
+    Assertions.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[0].tsaPort());
   }
 
   @Test
@@ -53,17 +55,19 @@ public class ClientConfigurationSetupManagerFactoryTest {
     ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], stripeMemberUris);
     L1ConfigurationSetupManager l1ConfigurationSetupManager = clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
 
-    Assert.assertNotNull(l1ConfigurationSetupManager);
-    Assert.assertEquals(HOST, l1ConfigurationSetupManager.l2Config().l2Data()[0].host());
-    Assert.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[0].tsaPort());
+    Assertions.assertNotNull(l1ConfigurationSetupManager);
+    Assertions.assertEquals(HOST, l1ConfigurationSetupManager.l2Config().l2Data()[0].host());
+    Assertions.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[0].tsaPort());
 
-    Assert.assertEquals(HOST, l1ConfigurationSetupManager.l2Config().l2Data()[1].host());
-    Assert.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[1].tsaPort());
+    Assertions.assertEquals(HOST, l1ConfigurationSetupManager.l2Config().l2Data()[1].host());
+    Assertions.assertEquals(PORT, l1ConfigurationSetupManager.l2Config().l2Data()[1].tsaPort());
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void testGetL1TVSConfigurationSetupManagerFailure() throws Exception {
-    ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(InetSocketAddress.createUnresolved("local", -1)));
-    clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
+    assertThrows(IllegalArgumentException.class, ()-> {
+      ClientConfigurationSetupManagerFactory clientConfigurationSetupManagerFactory = new ClientConfigurationSetupManagerFactory(new String[0], Collections.singletonList(InetSocketAddress.createUnresolved("local", -1)));
+      clientConfigurationSetupManagerFactory.getL1TVSConfigurationSetupManager();
+    });
   }
 }

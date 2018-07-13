@@ -18,7 +18,8 @@
  */
 package com.tc.test;
 
-import org.junit.Assert;
+
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Contains a simple method that checks two arrays for equality. Checks that elements at the same index in both arrays
@@ -36,22 +37,26 @@ public class EqualityChecker {
     for (int i = 0; i < env1.length; ++i) {
       for (int j = 0; j < env2.length; ++j) {
         if (i == j) {
-          Assert.assertEquals(env1[i], env2[j]);
-          if (checkHashCode) Assert.assertEquals(env1[i].hashCode(), env2[j].hashCode());
+          Assertions.assertEquals(env1[i], env2[j]);
+          if (checkHashCode) Assertions.assertEquals(env1[i].hashCode(), env2[j].hashCode());
 
-          Assert.assertEquals(env1[i], env1[i]);
-          if (checkHashCode) Assert.assertEquals(env1[i].hashCode(), env1[j].hashCode());
+          Assertions.assertEquals(env1[i], env1[i]);
+          if (checkHashCode) Assertions.assertEquals(env1[i].hashCode(), env1[j].hashCode());
 
-          Assert.assertEquals(env2[i], env2[i]);
-          if (checkHashCode) Assert.assertEquals(env2[i].hashCode(), env2[j].hashCode());
+          Assertions.assertEquals(env2[i], env2[i]);
+          if (checkHashCode) Assertions.assertEquals(env2[i].hashCode(), env2[j].hashCode());
         } else {
-          Assert.assertFalse("Object in array #1 at position " + i
-                             + " is equal to the object in the same array at position " + j, env1[i].equals(env1[j]));
-          Assert
-              .assertFalse("Object in array #1 at position " + i + " is equal to object in array #2 at position " + j,
-                           env1[i].equals(env2[j]));
-          Assert.assertFalse("Object in array #2 at position " + i
-                             + " is equal to the object in the same array at position " + j, env2[i].equals(env2[j]));
+          int finalI1 = i;
+          int finalJ1 = j;
+          Assertions.assertFalse(env1[i].equals(env1[j]), () -> "Object in array #1 at position " + finalI1
+                                                                + " is equal to the object in the same array at position " + finalJ1);
+          int finalI2 = i;
+          int finalJ2 = j;
+          Assertions.assertFalse(env1[i].equals(env2[j]), ()->"Object in array #1 at position " + finalI1 + " is equal to object in array #2 at position " + finalJ2);
+          int finalI3 = i;
+          int finalJ3 = j;
+          Assertions.assertFalse(env2[i].equals(env2[j]), ()->"Object in array #2 at position " + finalI3
+                                       + " is equal to the object in the same array at position " + finalJ3);
         }
       }
     }

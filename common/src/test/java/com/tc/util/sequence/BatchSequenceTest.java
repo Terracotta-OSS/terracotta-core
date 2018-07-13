@@ -18,14 +18,19 @@
  */
 package com.tc.util.sequence;
 
+import org.junit.jupiter.api.Test;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class BatchSequenceTest extends TestCase {
 
+public class BatchSequenceTest {
+
+  @Test
   public void test() throws Exception {
     TestRemoteBatchIDProvider remote = new TestRemoteBatchIDProvider();
     final BatchSequence sequence = new BatchSequence(remote, 5);

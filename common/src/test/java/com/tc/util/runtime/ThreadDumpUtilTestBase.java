@@ -18,12 +18,10 @@
  */
 package com.tc.util.runtime;
 
-import com.tc.test.TCTestCase;
-
 /**
  * Base class for ThreadDumpUtil tests
  */
-public class ThreadDumpUtilTestBase extends TCTestCase {
+public class ThreadDumpUtilTestBase {
 
   /** shows up in stack trace of a thread waiting on ObserverGate.waiter() */
   protected static final String OBSERVER_GATE = "com.tc.util.runtime.ThreadDumpUtilTestBase$ObserverGate.waiter";

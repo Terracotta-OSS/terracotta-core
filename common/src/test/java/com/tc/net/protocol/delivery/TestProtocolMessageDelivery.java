@@ -24,6 +24,8 @@ import com.tc.util.Assert;
 
 import java.util.concurrent.BlockingQueue;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  *
  */
@@ -109,7 +111,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
       receivedQueue.put(((TestProtocolMessage) pm).msg);
     } catch (InterruptedException e) {
       e.printStackTrace();
-      org.junit.Assert.fail("yikes! " + e);
+      fail("yikes! " + e);
     }
 
   }

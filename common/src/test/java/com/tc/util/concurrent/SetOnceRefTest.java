@@ -18,15 +18,20 @@
  */
 package com.tc.util.concurrent;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * test cases for SetOnceRef
  * 
  * @author teck
  */
-public class SetOnceRefTest extends TestCase {
+public class SetOnceRefTest {
 
+  @Test
   public void testAllowsNull() {
     SetOnceRef<Object> ref = new SetOnceRef<Object>(false);
 
@@ -45,6 +50,7 @@ public class SetOnceRefTest extends TestCase {
     assertTrue(ref.get() == val);
   }
 
+  @Test
   public void testSetNull() {
     final SetOnceRef<Object> ref1 = new SetOnceRef<Object>(true);
     ref1.set(null);
@@ -54,6 +60,7 @@ public class SetOnceRefTest extends TestCase {
     assertTrue(ref2.get() == null);
   }
 
+  @Test
   public void testSetTwice() {
     final Object val1 = new Object();
     final Object val2 = new Object();
@@ -80,6 +87,7 @@ public class SetOnceRefTest extends TestCase {
     }
   }
 
+  @Test
   public void testGetMany() {
     final Object JUnitGetsMeHard = new Object();
     final SetOnceRef<Object> ref = new SetOnceRef<Object>(JUnitGetsMeHard);
@@ -89,6 +97,7 @@ public class SetOnceRefTest extends TestCase {
     }
   }
 
+  @Test
   public void testThreadAccess() throws InterruptedException {
     final Object val = new Object();
 

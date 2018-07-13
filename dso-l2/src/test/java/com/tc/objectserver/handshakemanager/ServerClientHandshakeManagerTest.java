@@ -18,13 +18,13 @@
  */
 package com.tc.objectserver.handshakemanager;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -41,8 +41,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -58,7 +58,7 @@ public class ServerClientHandshakeManagerTest {
   private Stage voltronStage;
   private Sink voltronSink;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     Logger logger = mock(Logger.class);
     this.channelManager = mock(DSOChannelManager.class);

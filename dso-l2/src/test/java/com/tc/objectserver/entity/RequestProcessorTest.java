@@ -18,6 +18,19 @@
  */
 package com.tc.objectserver.entity;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.entity.EntityMessage;
+
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
@@ -33,19 +46,13 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Matchers;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
@@ -55,30 +62,25 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.entity.EntityMessage;
-
 
 public class RequestProcessorTest {
   
   public RequestProcessorTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
   
@@ -91,7 +93,7 @@ public class RequestProcessorTest {
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(new HashMap<>());
     int minProcs = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.MIN_ENTITY_PROCESSOR_THREADS);
     when(mgr.createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean())).then(inv->{
-      Assert.assertThat((Integer)inv.getArguments()[3], greaterThanOrEqualTo(minProcs));
+      assertThat((Integer)inv.getArguments()[3], greaterThanOrEqualTo(minProcs));
       return mock(Stage.class);
     });
     RequestProcessor instance = new RequestProcessor(mgr, true);

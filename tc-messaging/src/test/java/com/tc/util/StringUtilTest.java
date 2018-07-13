@@ -18,11 +18,11 @@
  */
 package com.tc.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public final class StringUtilTest {
 
@@ -74,34 +74,34 @@ public final class StringUtilTest {
     // Test 1, all nulls
     String expected = StringUtil.NULL_STRING;
     String rv = StringUtil.toString((Object[]) null, null, null, null);
-    assertNotNull("StringUtil.toString(Object[],String,String,String) returned null", rv);
-    assertEquals("Returned string was not the same as expected", expected, rv);
+    assertNotNull(rv, "StringUtil.toString(Object[],String,String,String) returned null");
+    assertEquals(expected, rv, "Returned string was not the same as expected");
 
     // Test 2, objects with no formatting
     Object[] arr = new Object[] { "one", "two", "three" };
     expected = "onetwothree";
     rv = StringUtil.toString(arr, null, null, null);
-    assertNotNull("StringUtil.toString(Object[],String,String,String) returned null", rv);
-    assertEquals("Returned string was not the same as expected", expected, rv);
+    assertNotNull(rv, "StringUtil.toString(Object[],String,String,String) returned null");
+    assertEquals(expected, rv, "Returned string was not the same as expected");
 
     // Test 3, objects with some formatting
     expected = "[one:[two:[three";
     rv = StringUtil.toString(arr, ":", "[", null);
-    assertNotNull("StringUtil.toString(Object[],String,String,String) returned null", rv);
-    assertEquals("Returned string was not the same as expected", expected, rv);
+    assertNotNull(rv, "StringUtil.toString(Object[],String,String,String) returned null");
+    assertEquals(expected, rv, "Returned string was not the same as expected");
 
     // Test 4, objects with all formatting
     expected = "<one>,<two>,<three>";
     rv = StringUtil.toString(arr, ",", "<", ">");
     assertNotNull("StringUtil.toString(Object[],String,String,String) returned null", rv);
-    assertEquals("Returned string was not the same as expected", expected, rv);
+    assertEquals(expected, rv, "Returned string was not the same as expected");
 
     // Test 5, objects with all formatting and null elements
     arr = new Object[] { "one", null, null, "four" };
     expected = "<one>,<null>,<null>,<four>";
     rv = StringUtil.toString(arr, ",", "<", ">");
-    assertNotNull("StringUtil.toString(Object[],String,String,String) returned null", rv);
-    assertEquals("Returned string was not the same as expected", expected, rv);
+    assertNotNull(rv, "StringUtil.toString(Object[],String,String,String) returned null");
+    assertEquals(expected, rv, "Returned string was not the same as expected");
   }
 
   @Test

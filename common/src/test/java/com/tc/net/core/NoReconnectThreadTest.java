@@ -19,6 +19,11 @@
 package com.tc.net.core;
 
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -47,27 +52,29 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.PortChooser;
+import com.tc.util.ProductID;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.util.ProductID;
 
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@ExtendWith(TCExtension.class)
+public class NoReconnectThreadTest implements ChannelEventListener {
   private final int             L1_RECONNECT_TIMEOUT = 5000;
   private final AtomicInteger connections          = new AtomicInteger(0);
   private int baseAsyncThreads;
   
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     connections.set(0);
     baseAsyncThreads = getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
   }
@@ -101,6 +108,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     return clientMsgCh;
   }
 
+  @Test
   public void testConnectionEstablisherThreadExit() throws Exception {
 
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
@@ -166,6 +174,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
   }
 
+  @Test
   public void testConnectionEstablisherThreadExitAfterOOO() throws Exception {
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
                                                                          new NullMessageMonitor(),
@@ -243,9 +252,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     return count;
   }
 
-  @Override
+  @AfterEach
   protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
   @Override

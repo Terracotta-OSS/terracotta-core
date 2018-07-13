@@ -18,13 +18,19 @@
  */
 package com.tc.logging;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
-public class LossyTCLoggerTest extends TCTestCase {
 
+@ExtendWith(TCExtension.class)
+public class LossyTCLoggerTest {
+
+  @Test
   public void testCountBasedBlindLossyLogger() throws Exception {
     LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 3, LossyTCLoggerType.COUNT_BASED, false);
 
@@ -52,6 +58,7 @@ public class LossyTCLoggerTest extends TCTestCase {
     Assert.assertEquals(5, lossyLogger.getLogCount());
   }
 
+  @Test
   public void testCountBasedContentCheckLossyLogger() throws Exception {
     LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 3, LossyTCLoggerType.COUNT_BASED, true);
 
@@ -83,6 +90,7 @@ public class LossyTCLoggerTest extends TCTestCase {
     Assert.assertEquals(7, lossyLogger.getLogCount());
   }
 
+  @Test
   public synchronized void testTimeBasedBlindLossyLogger() throws Exception {
     LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 200, LossyTCLoggerType.TIME_BASED,
                                                   false);
@@ -114,6 +122,7 @@ public class LossyTCLoggerTest extends TCTestCase {
     Assert.assertEquals(4, lossyLogger.getLogCount());
   }
 
+  @Test
   public synchronized void testTimeBasedContentCheckLossyLogger() throws Exception {
     LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 200, LossyTCLoggerType.TIME_BASED, true);
 
@@ -148,6 +157,7 @@ public class LossyTCLoggerTest extends TCTestCase {
     Assert.assertEquals(7, lossyLogger.getLogCount());
   }
 
+  @Test
   public void testIsEnabledLoggingTimeBased() {
     LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 1000, LossyTCLoggerType.TIME_BASED,
                                                   false);
@@ -162,6 +172,7 @@ public class LossyTCLoggerTest extends TCTestCase {
     Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
   }
 
+  @Test
   public void testIsEnabledLoggingCountBased() {
     LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 5, LossyTCLoggerType.COUNT_BASED, false);
     Assert.assertTrue(lossyLogger.isLoggingEnabledNow());

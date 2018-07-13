@@ -18,6 +18,8 @@
  */
 package com.tc.async.impl;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,18 +35,18 @@ import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Assert;
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class TCNotRunningTest extends TestCase {
+
+
+public class TCNotRunningTest {
 
   private StageManagerImpl          stageManager;
   private TestHandler<TestEventContext>               testHandler;
   private TestCallbackOnExitHandler callbackOnExitHandler;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     debug("In setup");
     try {
       ThrowableHandler throwableHandler = new NonExitingThrowableHandler(LoggerFactory.getLogger(StageManagerImpl.class));
@@ -57,16 +59,18 @@ public class TCNotRunningTest extends TestCase {
     }
   }
 
+  @Test
   public void testDirect() {
     debug("Running direct test");
     Stage<TestEventContext> stage = stageManager.createStage("some-stage", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
     stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
-    Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
+    assertFalse(callbackOnExitHandler.exitCalled, () -> "Exit should not be called");
     debug("test complete");
   }
 
+  @Test
   public void testWrapped() {
     debug("Testing wrapped exception");
     testHandler.state = HandlerState.WRAPPED_EXCEPTION;
@@ -74,10 +78,11 @@ public class TCNotRunningTest extends TestCase {
     stage.start(new ConfigurationContextImpl(null));
     stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
-    Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
+    assertFalse(callbackOnExitHandler.exitCalled, () -> "Exit should not be called");
     debug("test complete");
   }
 
+  @Test
   public void testOtherException() {
     debug("Testing other exception");
     testHandler.state = HandlerState.OTHER_EXCEPTION;

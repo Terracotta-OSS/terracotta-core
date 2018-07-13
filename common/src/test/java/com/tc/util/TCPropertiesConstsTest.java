@@ -18,9 +18,13 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +34,8 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-public class TCPropertiesConstsTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class TCPropertiesConstsTest {
 
   // This file resides in src.resource/com/tc/properties directory
   private static final String      DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
@@ -38,7 +43,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
 
   private final Properties         props                      = new Properties();
 
-  @Override
+  @BeforeEach
   protected void setUp() {
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE);
 
@@ -72,6 +77,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
     }
   }
 
+  @Test
   public void testAllConstsDeclared() {
     Set<String> tcPropertiesConsts = new HashSet<String>();
     Field[] fields = TCPropertiesConsts.class.getDeclaredFields();

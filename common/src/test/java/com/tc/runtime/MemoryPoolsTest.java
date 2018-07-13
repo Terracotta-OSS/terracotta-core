@@ -18,18 +18,26 @@
  */
 package com.tc.runtime;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.util.List;
 
-public class MemoryPoolsTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@ExtendWith(TCExtension.class)
+public class MemoryPoolsTest {
 
   public MemoryPoolsTest() {
     //
   }
 
+  @Test
   public void testMemoryPools() throws Exception {
     List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
     for (MemoryPoolMXBean mpBean : pools) {

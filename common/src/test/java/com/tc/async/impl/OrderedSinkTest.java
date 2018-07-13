@@ -18,18 +18,26 @@
  */
 package com.tc.async.impl;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.LoggerFactory;
 
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.test.TCTestCase;
+import com.tc.test.TCExtension;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderedSinkTest extends TCTestCase {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith(TCExtension.class)
+public class OrderedSinkTest {
+
+  @Test
   public void testBasic() throws Exception {
     MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
     Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
@@ -61,6 +69,7 @@ public class OrderedSinkTest extends TCTestCase {
     assertFalse(failed);
   }
 
+  @Test
   public void testComplex() throws Exception {
     MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
     Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
@@ -93,7 +102,7 @@ public class OrderedSinkTest extends TCTestCase {
       } catch (InterruptedException e) {
         throw new AssertionError(e);
       }
-      assertEquals(id++, oc.getSequenceID());
+      Assertions.assertEquals((long)id++, oc.getSequenceID());
     }
     assertTrue(des.queue.isEmpty());
   }

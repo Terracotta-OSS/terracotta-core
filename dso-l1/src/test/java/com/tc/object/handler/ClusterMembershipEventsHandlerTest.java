@@ -19,14 +19,14 @@
 
 package com.tc.object.handler;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import com.tc.util.ProductID;
+import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClusterMembershipMessage;
-import com.tc.cluster.ClusterInternalEventsGun;
+import com.tc.util.ProductID;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -41,7 +41,7 @@ public class ClusterMembershipEventsHandlerTest {
   private ClusterInternalEventsGun clusterEventsGun;
   private ClientID clientID;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     clientID = new ClientID(1);
     clusterEventsGun = mock(ClusterInternalEventsGun.class);

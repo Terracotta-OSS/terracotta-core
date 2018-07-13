@@ -1,7 +1,8 @@
 package com.tc.stats;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -15,8 +16,7 @@ import java.net.Socket;
 
 import javax.management.MBeanServer;
 
-import static org.junit.Assert.*;
-import org.junit.Ignore;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,7 +24,7 @@ public class DSOTest {
 
   private DSO dso;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     ServerManagementContext serverManagementContext = mock(ServerManagementContext.class);
     when(serverManagementContext.getServerStats()).thenReturn(mock(GlobalServerStats.class));
@@ -34,7 +34,8 @@ public class DSOTest {
     dso = new DSO(serverManagementContext, mock(ServerConfigurationContext.class), mock(MBeanServer.class));
   }
 
-  @Test @Ignore("some enviroments don't like the socket stuff going on here")
+  @Test
+  @Disabled("some enviroments don't like the socket stuff going on here")
   public void testJMXRemote() throws Exception {
     PortChooser portChooser = new PortChooser();
     final int jmxRemotePort = portChooser.chooseRandomPort();

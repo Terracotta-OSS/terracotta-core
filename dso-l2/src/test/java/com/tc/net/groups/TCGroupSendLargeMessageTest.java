@@ -19,10 +19,14 @@
 
 package com.tc.net.groups;
 
-import com.tc.test.TCTestCase;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import com.tc.test.TCExtension;
 
 // TODO: Fix test to use test message type
-public class TCGroupSendLargeMessageTest extends TCTestCase {
+@ExtendWith(TCExtension.class)
+public class TCGroupSendLargeMessageTest {
 //  private final static String LOCALHOST   = "localhost";
 //  private static final long   millionOids = 1024 * 1024;
 //
@@ -30,7 +34,8 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     
   }
 //
-  
+
+  @Test
   public void testNothing() {
 //  make unit test framework happy
   }

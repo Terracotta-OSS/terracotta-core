@@ -18,14 +18,12 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.EventHandler;
-import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
-import com.tc.async.api.StageManager;
-import com.tc.entity.MessageCodecSupplier;
-import org.junit.Assert;
-import org.junit.Test;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -34,6 +32,12 @@ import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 
+import com.tc.async.api.EventHandler;
+import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
+import com.tc.async.api.StageManager;
+import com.tc.entity.MessageCodecSupplier;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
@@ -61,23 +65,19 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
-import org.hamcrest.Matchers;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
-import org.mockito.Mockito;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 
-public class ClientEntityManagerTest extends TestCase {
+public class ClientEntityManagerTest {
   private ClientMessageChannel channel;
   private ClientEntityManager manager;
   private StageManager stageMgr;
@@ -87,7 +87,7 @@ public class ClientEntityManagerTest extends TestCase {
   private EntityDescriptor descriptor;
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  @Override
+  @BeforeEach
   public void setUp() throws Exception {
     this.channel = mock(ClientMessageChannel.class);
     when(this.channel.getProductId()).thenReturn(ProductID.STRIPE);
@@ -116,12 +116,14 @@ public class ClientEntityManagerTest extends TestCase {
     this.instance = new ClientInstanceID(1);
     this.descriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(1), instance);
   }
- 
+
+  @Test
   public void testResponseSinkFlush() throws Exception {
     
   }
 
   // Test that a simple lookup will succeed.
+  @Test
   public void testSimpleLookupSuccess() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
@@ -146,6 +148,7 @@ public class ClientEntityManagerTest extends TestCase {
   }
   
   // Test to make sure we can still receive items without error after close, needed due to shutdown sequence
+  @Test
   public void testReceiveAfterClose() throws Exception {
     TransactionID tid = new TransactionID(1L);
     manager.shutdown(false);
@@ -156,6 +159,7 @@ public class ClientEntityManagerTest extends TestCase {
     // nothing should throw exception
   }  
 
+  @Test
   // Test that a simple lookup can fail.
   public void testSimpleLookupFailure() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
@@ -179,6 +183,7 @@ public class ClientEntityManagerTest extends TestCase {
     assertFalse(didFindEndpoint(fetcher));
   }
 
+  @Test
   // Test pause will block progress but it the lookup will complete (failing to find the entity) after unpause.
   public void testLookupStalledByPause() throws Exception {
     final EntityException resultException = new EntityNotFoundException(null, null);
@@ -207,7 +212,8 @@ public class ClientEntityManagerTest extends TestCase {
     // We expect that we couldn't find the entity.
     assertFalse(didFindEndpoint(fetcher));
   }
-  
+
+  @Test
   // Test fetch+release on success.
   public void testFetchReleaseOnSuccess() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
@@ -232,6 +238,7 @@ public class ClientEntityManagerTest extends TestCase {
     assertTrue(didFindEndpoint(fetcher));
   }
 
+  @Test
   // Test fetch+release on failure.
   public void testFetchReleaseOnFailure() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
@@ -265,6 +272,7 @@ public class ClientEntityManagerTest extends TestCase {
     assertFalse(didRelease);
   }
 
+  @Test
   public void testFetchandAsyncRelease() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
@@ -287,7 +295,7 @@ public class ClientEntityManagerTest extends TestCase {
     try {
       EntityClientEndpoint endpoint = fetcher.getResult();
     } catch (EntityNotFoundException not) {
-      Assert.fail();
+      fail();
     }
     
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
@@ -302,7 +310,8 @@ public class ClientEntityManagerTest extends TestCase {
     assertTrue(didRelease);
   }
   
-  
+
+  @Test
   public void testShutdownCausesReleaseException() throws Exception {
     // We will create a runnable which will attempt to fetch the entity.
     TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
@@ -325,7 +334,7 @@ public class ClientEntityManagerTest extends TestCase {
     try {
       EntityClientEndpoint endpoint = fetcher.getResult();
     } catch (EntityNotFoundException not) {
-      Assert.fail();
+      fail();
     }
     
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
@@ -341,7 +350,8 @@ public class ClientEntityManagerTest extends TestCase {
     }
     assertFalse(didRelease);
   }
-  
+
+  @Test
   // That that we can shut down while in a paused state without locking up.
   public void testShutdownWhilePaused() throws Exception {
     // We will create a runnable which will attempt to fetch the entity (and we will get this stuck in "WAITING" on pause).
@@ -380,7 +390,8 @@ public class ClientEntityManagerTest extends TestCase {
       fail();
     }
   }
-  
+
+  @Test
   public void testFullQueueTimesOut() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];
@@ -411,7 +422,7 @@ public class ClientEntityManagerTest extends TestCase {
         endpoint.beginInvoke().invokeWithTimeout(5, TimeUnit.SECONDS);
       }
       endpoint.beginInvoke().invokeWithTimeout(5, TimeUnit.SECONDS);
-      Assert.fail("Timeout expected");
+      fail("Timeout expected");
     } catch (TimeoutException to) {
       // expected
     } catch (Exception e) {
@@ -425,7 +436,8 @@ public class ClientEntityManagerTest extends TestCase {
        });
     }
   }
-    
+
+  @Test
   public void testInvokeWithTimeoutZeroWaitsForever() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];
@@ -476,7 +488,8 @@ public class ClientEntityManagerTest extends TestCase {
       throw e;
     } 
   }
-    
+
+  @Test
   public void testThreadInterruptsDontCauseSendIssues() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];
@@ -494,7 +507,7 @@ public class ClientEntityManagerTest extends TestCase {
     fetcher.join();
     try {
       EntityClientEndpoint endpoint = fetcher.getResult();
-      Assert.assertNotNull(endpoint);
+      assertNotNull(endpoint);
     } catch (Exception e) {
       e.printStackTrace();
       // not expected
@@ -502,6 +515,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
   }
 
+  @Test
   // Test that concurrent lookups of the same non-existent entity both fail in the expected way, raising no exceptions.
   public void testObjectNotFoundConcurrentLookup() throws Exception {
     // Configure the test to return the failure for this.
@@ -526,6 +540,7 @@ public class ClientEntityManagerTest extends TestCase {
     assertFalse(didFindEndpoint(fetcher2));
   }
 
+  @Test
   public void testPauseUnpause() {
     this.manager.pause();
     try {
@@ -568,7 +583,7 @@ public class ClientEntityManagerTest extends TestCase {
     long start = System.currentTimeMillis();
     try {
       result.getWithTimeout(1, TimeUnit.SECONDS);
-      Assert.fail();
+      fail();
     } catch (TimeoutException to) {
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(1000L));
       //  expected
@@ -576,7 +591,7 @@ public class ClientEntityManagerTest extends TestCase {
     start = System.currentTimeMillis();
     try {
       result.getWithTimeout(2, TimeUnit.SECONDS);
-      Assert.fail();
+      fail();
     } catch (TimeoutException to) {
       assertThat(System.currentTimeMillis() - start, Matchers.greaterThanOrEqualTo(2000L));
       //  expected
@@ -662,7 +677,7 @@ public class ClientEntityManagerTest extends TestCase {
         }
         this.result = this.manager.fetchEntity(entity, version, instance, mock(MessageCodec.class), mock(Runnable.class));
         if (this.interrupt) {
-          Assert.assertTrue(this.isInterrupted());
+          assertTrue(this.isInterrupted());
         }
       } catch (Exception t) {
         this.exception = t;
@@ -708,7 +723,7 @@ public class ClientEntityManagerTest extends TestCase {
       this.autoComplete = autoComplete;
     }
     public void explicitComplete(byte[] explicitResult, EntityException resultException) {
-      Assert.assertFalse(this.autoComplete);
+      assertFalse(this.autoComplete);
       if (null != explicitResult) {
         this.clientEntityManager.complete(this.transactionID, explicitResult);
       } else {
@@ -819,7 +834,7 @@ public class ClientEntityManagerTest extends TestCase {
     public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
             Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
-      Assert.assertNotNull(eid);
+      assertNotNull(eid);
       this.entityID = eid;
       this.descriptor = entityDescriptor;
       this.extendedData = extendedData;

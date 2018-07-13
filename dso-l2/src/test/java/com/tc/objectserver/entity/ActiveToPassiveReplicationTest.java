@@ -18,26 +18,29 @@
  */
 package com.tc.objectserver.entity;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManager.Transition;
+import com.tc.l2.state.ServerMode;
+import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
+
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import com.tc.l2.state.ConsistencyManager;
-import com.tc.l2.state.ConsistencyManager.Transition;
-import com.tc.l2.state.ServerMode;
-import com.tc.net.NodeID;
-import static org.mockito.Matchers.any;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -49,15 +52,15 @@ public class ActiveToPassiveReplicationTest {
   public ActiveToPassiveReplicationTest() {
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
   }
   
-  @AfterClass
+  @AfterAll
   public static void tearDownClass() {
   }
   
-  @Before
+  @BeforeEach
   public void setUp() {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
@@ -92,7 +95,7 @@ public class ActiveToPassiveReplicationTest {
     Assert.assertTrue(ack2.isCompleted());
   }
   
-  @After
+  @AfterEach
   public void tearDown() {
   }
 

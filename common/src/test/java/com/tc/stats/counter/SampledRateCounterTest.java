@@ -19,6 +19,8 @@
 package com.tc.stats.counter;
 
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
@@ -27,10 +29,12 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class SampledRateCounterTest extends TestCase {
+public class SampledRateCounterTest {
 
+  @Test
   public void testInitialValue() {
 
     SampledRateCounterConfig config = new SampledRateCounterConfig(1, 300, true);
@@ -43,6 +47,7 @@ public class SampledRateCounterTest extends TestCase {
     assertEquals(2L, counter.getValue());
   }
 
+  @Test
   public void testUnsupportedOperations() {
     SampledRateCounterConfig config = new SampledRateCounterConfig(1, 300, true);
 
@@ -112,6 +117,7 @@ public class SampledRateCounterTest extends TestCase {
 
   }
 
+  @Test
   public void testConcurrency() throws InterruptedException {
     SampledRateCounterConfig config = new SampledRateCounterConfig(1, 300, false);
 
@@ -184,6 +190,7 @@ public class SampledRateCounterTest extends TestCase {
     assertEquals(localVal, counter.getValue());
   }
 
+  @Test
   public void test() {
     SampledRateCounterConfig config = new SampledRateCounterConfig(1, 300, false);
     final SampledRateCounter counter = (SampledRateCounter) config.createCounter();

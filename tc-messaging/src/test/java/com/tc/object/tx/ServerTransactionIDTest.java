@@ -18,17 +18,17 @@
  */
 package com.tc.object.tx;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import org.junit.jupiter.api.Test;
 
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 
-import org.junit.Test;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class ServerTransactionIDTest {
 

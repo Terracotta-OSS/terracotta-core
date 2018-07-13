@@ -18,7 +18,13 @@
  */
 package com.tc.object;
 
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
+import org.terracotta.connection.ConnectionPropertyNames;
+
 import com.tc.cluster.ClusterImpl;
+import com.tc.cluster.ClusterInternal;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -35,22 +41,19 @@ import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductID;
-import com.tc.cluster.ClusterInternal;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import junit.framework.TestCase;
-import org.mockito.Mockito;
 
 import static com.tc.object.ClientBuilderFactory.CLIENT_BUILDER_TYPE;
 import static org.mockito.Mockito.when;
-import org.slf4j.LoggerFactory;
-import org.terracotta.connection.ConnectionPropertyNames;
 
 
-public class DistributedObjectClientTest extends TestCase {
-  
+public class DistributedObjectClientTest {
+
+  @Test
   public void testConnectionTimeout() throws Exception {
     L1ConfigurationSetupManager manager = new L1ConfigurationSetupManager() {
       @Override
@@ -118,7 +121,8 @@ public class DistributedObjectClientTest extends TestCase {
       }
     }
   }
-  
+
+  @Test
   public void testFatalError() throws Exception {
     L1ConfigurationSetupManager manager = new L1ConfigurationSetupManager() {
       @Override

@@ -1,7 +1,8 @@
 package com.tc.classloader;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.util.Assert;
-import org.junit.Test;
 
 import java.net.URL;
 import java.net.URLClassLoader;

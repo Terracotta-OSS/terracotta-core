@@ -19,29 +19,30 @@
 
 package com.tc.config;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-@Ignore("Temporary ignore due to current way tests are run in Jenkins")
+
+@Disabled("Temporary ignore due to current way tests are run in Jenkins")
 public class DirectoriesTest {
 
   private File testFolder;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     testFolder = File.createTempFile("test", "tmp").getParentFile();
     System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, testFolder.getAbsolutePath());
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     System.clearProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME);
   }

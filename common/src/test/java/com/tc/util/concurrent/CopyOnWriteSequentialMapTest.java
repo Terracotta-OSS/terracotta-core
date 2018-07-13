@@ -18,6 +18,8 @@
  */
 package com.tc.util.concurrent;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.util.concurrent.CopyOnWriteSequentialMap.TypedArrayFactory;
 
 import java.util.ArrayList;
@@ -30,11 +32,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class CopyOnWriteSequentialMapTest extends TestCase {
+public class CopyOnWriteSequentialMapTest {
 
+  @Test
   public void testBasic() throws Exception {
     CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     ArrayList al = new ArrayList();
@@ -91,6 +98,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
 
   }
 
+  @Test
   public void testSameValueMappedTo2Keys() throws Exception {
     CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     ArrayList al = new ArrayList();
@@ -117,6 +125,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
 
   }
 
+  @Test
   public void testBasicEntrySet() throws Exception {
     CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     cam.put(Integer.valueOf(10), "String value 10");
@@ -145,6 +154,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
     }
   }
 
+  @Test
   public void testBasicKeySet() throws Exception {
     CopyOnWriteSequentialMap cam = new CopyOnWriteSequentialMap();
     cam.put(Integer.valueOf(10), "String value 10");
@@ -170,6 +180,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
     assertEquals(0, count);
   }
 
+  @Test
   public void testTypedArrayFactory() throws Exception {
     CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>(new TypedArrayFactory() {
 
@@ -191,6 +202,7 @@ public class CopyOnWriteSequentialMapTest extends TestCase {
     assertTrue(s.isEmpty());
   }
 
+  @Test
   public void testConcurrentMod() {
     CopyOnWriteSequentialMap<Long, String> cam = new CopyOnWriteSequentialMap<Long, String>();
     cam.put(1l, "abc");

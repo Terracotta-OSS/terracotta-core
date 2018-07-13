@@ -18,13 +18,21 @@
  */
 package com.tc.async.impl;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.async.api.StageMonitor.Analysis;
 import com.tc.text.StringFormatter;
 import com.tc.util.concurrent.ThreadUtil;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class StageMonitorImplTest extends TestCase {
+
+
+
+public class StageMonitorImplTest {
+
+  @Test
   public void tests() throws Exception {
     StageMonitorImpl sm = new StageMonitorImpl("name", new StringFormatter());
 
@@ -50,6 +58,7 @@ public class StageMonitorImplTest extends TestCase {
     System.out.println(sm.dumpAndFlush());
   }
 
+  @Test
   public void testAnalyze() throws Exception {
     StageMonitorImpl sm = new StageMonitorImpl("name", new StringFormatter());
 
@@ -67,8 +76,8 @@ public class StageMonitorImplTest extends TestCase {
 
     assertEquals(Integer.valueOf(2), an.getEventCount());
     String elapsed = String.valueOf(an.getElapsedTime().longValue());
-    assertTrue(elapsed, an.getElapsedTime().longValue() >= 100);
-    assertTrue(elapsed, an.getElapsedTime().longValue() < 2500);
+    assertTrue(an.getElapsedTime().longValue() >= 100, () -> elapsed);
+    assertTrue(an.getElapsedTime().longValue() < 2500, () -> elapsed);
     assertEquals(Double.valueOf(1000 * an.getEventCount().doubleValue() / an.getElapsedTime().doubleValue()),
                  an.getEventsPerSecond());
     assertEquals(Integer.valueOf(10), an.getMinQueueDepth());

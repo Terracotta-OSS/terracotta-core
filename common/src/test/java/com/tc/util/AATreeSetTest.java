@@ -18,6 +18,8 @@
  */
 package com.tc.util;
 
+import org.junit.jupiter.api.Test;
+
 import com.tc.text.Banner;
 import com.tc.util.AATreeSet.Node;
 
@@ -30,10 +32,15 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AATreeSetTest extends TestCase {
+public class AATreeSetTest {
 
+  @Test
   public void testRandom() {
     List<Long> longs = populateRandomLongs(new ArrayList<Long>(), 1000);
 
@@ -60,6 +67,7 @@ public class AATreeSetTest extends TestCase {
 
   }
 
+  @Test
   public void testBasic() {
     Set<Long> t = new AATreeSet<Long>();
     t.add(Long.valueOf(25));
@@ -90,13 +98,15 @@ public class AATreeSetTest extends TestCase {
       // assert that iteration gives sorted result, since aatree behaves like a set, duplicates are eliminated and hence
       // we don't have to check for equality.
       if (prev != null) {
-        assertTrue("previous:" + prev + " current:" + curr, curr.compareTo(prev) > 0);
+        Long finalPrev = prev;
+        assertTrue(curr.compareTo(prev) > 0, () -> "previous:" + finalPrev + " current:" + curr);
       }
       prev = curr;
     }
 
   }
 
+  @Test
   public void testVeryBasic() {
     AATreeSet<Integer> aaTree = new AATreeSet<Integer>();
     boolean inserted = aaTree.add(Integer.valueOf(10));
@@ -129,6 +139,7 @@ public class AATreeSetTest extends TestCase {
   }
 
   // Test program; should print min and max and nothing else
+  @Test
   public void testMinMax() {
     AATreeSet<Integer> t = new AATreeSet<Integer>();
     final int NUMS = 400000;
@@ -145,22 +156,26 @@ public class AATreeSetTest extends TestCase {
 
     assertTrue(t.remove(t.last()));
     for (int i = 1; i < NUMS; i += 2) {
-      assertTrue("remove(" + i + ")", t.remove(Integer.valueOf(i)));
+      int finalI = i;
+      assertTrue(t.remove(Integer.valueOf(i)), ()-> "remove(" + finalI + ")");
     }
     assertTrue(t.remove(t.last()));
 
-    assertEquals("first()", 2, t.first().intValue());
-    assertEquals("last()", NUMS - 2, t.last().intValue());
+    assertEquals(2, t.first().intValue(), ()->"first()");
+    assertEquals(NUMS - 2, t.last().intValue(), ()->"last()");
 
     for (int i = 2; i < NUMS; i += 2) {
-      assertEquals("find(" + i + ")", Integer.valueOf(i), t.find(Integer.valueOf(i)));
+      int finalI = i;
+      assertEquals(Integer.valueOf(i), t.find(Integer.valueOf(i)), ()-> "find(" + finalI + ")");
     }
 
     for (int i = 1; i < NUMS; i += 2) {
-      assertEquals("find(" + i + ")", null, t.find(Integer.valueOf(i)));
+      int finalI = i;
+      assertEquals(null, t.find(Integer.valueOf(i)), ()-> "find(" + finalI + ")");
     }
   }
 
+  @Test
   public void testTailSetIteratorForRandomAATree() {
     System.err.println("TreeSet Creation");
     List<Long> longs = populateRandomLongs(new ArrayList<Long>(), 10001);
@@ -187,6 +202,7 @@ public class AATreeSetTest extends TestCase {
     }
   }
 
+  @Test
   public void testTailSetIteratorsForFixedAATree() {
 
     // 1 2 4 8 9 10 11 13 15 17 19 23 25 27 29 33 35 47 56
@@ -279,6 +295,7 @@ public class AATreeSetTest extends TestCase {
     return list;
   }
 
+  @Test
   public void testRemove() {
     AATreeSet<MyInt> aaTree = new AATreeSet<MyInt>();
     assertTrue(aaTree.add(new MyInt(5)));
@@ -319,6 +336,7 @@ public class AATreeSetTest extends TestCase {
     assertTrue(aaTree.isEmpty());
   }
 
+  @Test
   public void testTreeBalance() {
     SortedSet<Long> treeSet = new TreeSet<Long>();
     AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();

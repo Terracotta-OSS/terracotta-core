@@ -18,8 +18,8 @@
  */
 package com.tc.util.concurrent;
 
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -28,10 +28,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ThreadPreferenceExecutorTest extends TestCase {
+public class ThreadPreferenceExecutorTest {
 
+  @Test
   public void testBasic() {
     ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS,
                                                                  LoggerFactory.getLogger(ThreadPreferenceExecutorTest.class));
@@ -73,6 +74,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
     assertEquals(0, exec.getActiveThreadCount());
   }
 
+  @Test
   public void testThreadReuse() {
     ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS,
                                                                  LoggerFactory
