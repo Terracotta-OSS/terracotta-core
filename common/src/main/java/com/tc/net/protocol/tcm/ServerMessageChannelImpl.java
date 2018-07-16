@@ -64,12 +64,12 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info) {
-    throw new UnsupportedOperationException("Server channels don't support open()");
+  public ProductID getProductID() {
+    return getProductID(ProductID.PERMANENT);
   }
 
   @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] password) {
+  public NetworkStackID open(Collection<ConnectionInfo> info) {
     throw new UnsupportedOperationException("Server channels don't support open()");
   }
 

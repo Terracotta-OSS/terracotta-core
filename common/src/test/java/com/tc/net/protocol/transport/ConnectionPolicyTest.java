@@ -112,9 +112,9 @@ public class ConnectionPolicyTest extends TestCase {
   public void testInternalClients() throws Exception {
     policy = new ConnectionPolicyImpl(1);
     assertTrue(policy.connectClient(new ConnectionID("foo", 1)));
-    assertTrue(policy.isConnectAllowed(new ConnectionID("bar", 2, null, null, ProductID.DIAGNOSTIC)));
-    assertTrue(policy.connectClient(new ConnectionID("bar", 2, null, null, ProductID.DIAGNOSTIC)));
-    policy.clientDisconnected(new ConnectionID("foo", 4, null, null, ProductID.DIAGNOSTIC));
+    assertTrue(policy.isConnectAllowed(new ConnectionID("bar", 2, ProductID.DIAGNOSTIC)));
+    assertTrue(policy.connectClient(new ConnectionID("bar", 2, ProductID.DIAGNOSTIC)));
+    policy.clientDisconnected(new ConnectionID("foo", 4, ProductID.DIAGNOSTIC));
     assertFalse(policy.connectClient(new ConnectionID("baz", 3)));
     assertTrue(policy.connectClient(new ConnectionID("redirect", -2)));
   }

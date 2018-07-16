@@ -85,10 +85,10 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
     StripeID sid = new StripeID("server1");
     factory.activate(sid, 0);
-    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.PERMANENT));
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), ProductID.PERMANENT));
     
     Assert.assertEquals(ProductID.SERVER, cid.getProductId());
-    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.STRIPE));
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), ProductID.STRIPE));
     
     Assert.assertEquals(ProductID.SERVER, cid.getProductId());
   }
@@ -98,10 +98,10 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
     StripeID sid = new StripeID("server1");
     factory.activate(sid, 0);
-    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, new StripeID("server2").getName(), null, null, ProductID.PERMANENT));
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, new StripeID("server2").getName(), ProductID.PERMANENT));
     
     Assert.assertEquals(ConnectionID.NULL_ID, cid);
-    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.STRIPE));
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), ProductID.STRIPE));
     
     Assert.assertEquals(new ClientID(0), cid.getClientID());
   }
@@ -109,10 +109,10 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void testProductRefusal() {
     ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.noneOf(ProductID.class));
     factory.activate(StripeID.NULL_ID, 0);
-    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.PERMANENT));
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", ProductID.PERMANENT));
     
     Assert.assertEquals(ConnectionID.NULL_ID, cid);
-    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.STRIPE));
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", ProductID.STRIPE));
     
     Assert.assertEquals(ConnectionID.NULL_ID, cid);
   }

@@ -429,7 +429,6 @@ public class ClientMessageTransport extends MessageTransportBase {
     handleHandshakeError(result);
     initConnectionID(result.synAck.getConnectionId());
     sendAck();
-    getConnectionID().authenticated();
     log("Handshake is complete");
   }
 

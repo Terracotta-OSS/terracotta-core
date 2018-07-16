@@ -147,11 +147,6 @@ public class MockMessageChannel implements MessageChannelInternal {
   public NetworkStackID open(Collection<ConnectionInfo> info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
-    throw new UnsupportedOperationException();
-  }
   
   @SuppressWarnings("resource")
   @Override

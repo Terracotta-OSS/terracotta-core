@@ -135,11 +135,6 @@ public class TestMessageChannel implements MessageChannel {
     return null;
   }
 
-  @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] password) {
-    return null;
-  }
-
   public void notifyTransportConnected(MessageTransport transport) {
     return;
   }

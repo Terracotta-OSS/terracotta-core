@@ -72,7 +72,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     if (productId == null) {
       return ConnectionID.NULL_ID;
     }
-    ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), null, null, productId);
+    ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), productId);
     fireCreationEvent(rv);
     return rv;
   }
@@ -140,8 +140,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   @Override
   public void channelRemoved(MessageChannel channel, boolean wasActive)  {
     Assert.assertNotNull(stripe);
-    ChannelID channelID = channel.getChannelID();
-    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, channelID.toLong(), stripe.getName(),null , null, channel.getProductID()));
+    fireDestroyedEvent(channel.getConnectionID());
   }
 
   @Override

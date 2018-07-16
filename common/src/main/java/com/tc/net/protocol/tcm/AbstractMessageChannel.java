@@ -295,18 +295,21 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
     return (getChannelID() + ":" + getLocalAddress() + " <--> " + getRemoteAddress());
   }
 
-  @Override
-  public ProductID getProductID() {
+  protected ProductID getProductID(ProductID defaultID) {
     if (this.sendLayer != null) {
       return this.sendLayer.getConnectionID().getProductId();
     } else {
-      return ProductID.PERMANENT;
+      return defaultID;
     }
   }
 
   @Override
   public ConnectionID getConnectionID() {
-    return this.sendLayer.getConnectionID();
+    if (this.sendLayer != null) {
+      return this.sendLayer.getConnectionID();
+    } else {
+      return ConnectionID.NULL_ID;
+    }
   }
 
   @Override
