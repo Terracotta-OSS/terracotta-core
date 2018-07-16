@@ -116,10 +116,12 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   @Override
-  public void startVoting(long electionTerm) {
+  public void startVoting(long electionTerm, boolean cancelOverride) {
     this.electionTerm = electionTerm;
     votes.clear();
-    overrideVote = false;
+    if (cancelOverride) {
+        overrideVote = false;
+    }
     votingInProgress = true;
   }
 
@@ -183,7 +185,6 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   @Override
   public long stopVoting() {
     votingInProgress = false;
-    this.overrideVote = false;
     return this.electionTerm;
   }
 
