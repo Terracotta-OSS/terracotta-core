@@ -69,11 +69,6 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] password) {
-    throw new UnsupportedOperationException("Server channels don't support open()");
-  }
-
-  @Override
   public void reset() {
     throw new UnsupportedOperationException("Server channels don't support reset()");
   }

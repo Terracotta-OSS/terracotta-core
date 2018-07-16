@@ -80,19 +80,12 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public NetworkStackID open(Collection<ConnectionInfo> info) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    return open(info, null, null);
-  }
-
-  @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
-      MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
-      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
-                                                username, pw, productID);
+      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()), productID);
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
