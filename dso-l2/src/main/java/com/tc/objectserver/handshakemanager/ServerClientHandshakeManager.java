@@ -220,10 +220,13 @@ public class ServerClientHandshakeManager {
   }
 
   public void startReconnectWindow() {
-    String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
-                     + this.existingUnconnectedClients.size() + " clients to connect.";
-    if (this.existingUnconnectedClients.size() <= 10) {
-      message += " Unconnected Clients - " + this.existingUnconnectedClients;
+    String message;
+    synchronized (this) {
+      message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+                + this.existingUnconnectedClients.size() + " clients to connect.";
+      if (this.existingUnconnectedClients.size() <= 10) {
+        message += " Unconnected Clients - " + this.existingUnconnectedClients;
+      }
     }
     this.consoleLogger.info(message);
 

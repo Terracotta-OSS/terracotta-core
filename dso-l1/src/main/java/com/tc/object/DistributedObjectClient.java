@@ -336,7 +336,7 @@ public class DistributedObjectClient implements TCClient {
                                                                          this.clientHandshakeManager);
     // DO NOT create any stages after this call
     
-    String[] exclusion = this.channel.getProductId() == ProductID.DIAGNOSTIC ? 
+    String[] exclusion = this.channel.getProductID() == ProductID.DIAGNOSTIC ? 
     new String[] {
       ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
       ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,
@@ -442,7 +442,7 @@ public class DistributedObjectClient implements TCClient {
     if (this.channel != null) {
       final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
-      if (!this.channel.getProductId().isInternal() && this.channel.isConnected()) {
+      if (!this.channel.getProductID().isInternal() && this.channel.isConnected()) {
         DSO_LOGGER.info(infoMsg);
       }
     }
@@ -692,8 +692,8 @@ public class DistributedObjectClient implements TCClient {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
-      if (this.channel != null && !this.channel.getProductId().isInternal() && this.channel.isConnected()) {
-        DSO_LOGGER.info("closing down Terracotta Connection hook=" + fromShutdownHook + " force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
+      if (this.channel != null && !this.channel.getProductID().isInternal() && this.channel.isConnected()) {
+        DSO_LOGGER.info("shutting down Terracotta Client hook=" + fromShutdownHook + " force=" + forceImmediate);
       }
       shutdownClient(fromShutdownHook, forceImmediate);
     }

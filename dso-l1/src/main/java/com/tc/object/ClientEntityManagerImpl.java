@@ -98,8 +98,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.inFlightMessages = new ConcurrentHashMap<>();
     this.currentTransactionID = new AtomicLong();
     this.stateManager = new ClientEntityStateManager();
-    this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
-    this.stages = mgr;      
+    this.objectStoreMap = new ConcurrentHashMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>>(10240, 0.75f, 128);
+    this.stages = mgr;
+    
+    this.outbound = createSendStage();
+    
+    this.reconnectable = channel.getProductID().isReconnectEnabled();
   }
   
   public boolean checkBusy() {

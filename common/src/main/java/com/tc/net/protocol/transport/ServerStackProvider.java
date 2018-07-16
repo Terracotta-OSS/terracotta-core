@@ -107,7 +107,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       newStackHarness(clientID, messageTransportFactory.createNewTransport(
           createHandshakeErrorHandler(),
           handshakeMessageFactory,
-          transportListeners));
+          transportListeners)).finalizeStack();
     }
     this.activeProvider = activeProvider;
     this.validateTransport = validate;
@@ -144,11 +144,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           throw new RejectReconnectionException("Stack for " + connectionId +" not found.", connection.getRemoteAddress());
         }
         try {
-          boolean finalize = harness.getTransport().getConnectionId().isNull();
           harness.getTransport().initConnectionID(connectionId);
-          if (finalize) {
-            harness.finalizeStack();
-          }
+
           rv = harness.attachNewConnection(connection);
         } catch (IllegalReconnectException e) {
           logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + connection);
@@ -198,7 +195,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     /*
      * Even for temporary disconnects, we need to keep proper accounting. Otherwise, the same client reconnect may fail.
      */
-    this.connectionPolicy.clientDisconnected(transport.getConnectionId());
+    this.connectionPolicy.clientDisconnected(transport.getConnectionID());
   }
 
   private void close(ConnectionID connectionId) {
@@ -219,9 +216,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    */
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    close(transport.getConnectionId());
-    if (!transport.getConnectionId().isJvmIDNull()) this.connectionPolicy.clientDisconnected(transport
-        .getConnectionId());
+    close(transport.getConnectionID());
+    if (!transport.getConnectionID().isJvmIDNull()) this.connectionPolicy.clientDisconnected(transport
+        .getConnectionID());
   }
 
   @Override
@@ -350,16 +347,16 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           this.transport = messageTransportFactory.createNewTransport(syn.getSource(),
               createHandshakeErrorHandler(),
               handshakeMessageFactory, transportListeners);
-          this.transport.initConnectionID(transport.getConnectionId());
+          this.transport.initConnectionID(transport.getConnectionID());
         } else {
           transport = attachNewConnection(connectionId, syn.getSource());
-          isMaxConnectionReached = !connectionPolicy.connectClient(transport.getConnectionId());
+          isMaxConnectionReached = !connectionPolicy.connectClient(transport.getConnectionID());
         }
       } finally {
         licenseLock.unlock();
       }
 
-      connectionId = transport.getConnectionId();
+      connectionId = transport.getConnectionID();
       this.transport.setRemoteCallbackPort(syn.getCallbackPort());
       // now check that the client side stack and server side stack are both in sync
       short clientStackLayerFlags = syn.getStackLayerFlags();
@@ -385,7 +382,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
             syn.getSource(), isMaxConnectionReached);
         return;
       }
-      sendSynAck(transport.getConnectionId(), syn.getSource(), isMaxConnectionReached);
+      sendSynAck(transport.getConnectionID(), syn.getSource(), isMaxConnectionReached);
     }
 
     private boolean verifySyn(WireProtocolMessage message) {

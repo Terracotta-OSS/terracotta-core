@@ -130,7 +130,7 @@ public class SendStateMachine extends AbstractStateMachine {
           debugLog("received an old ack: " + ackedSeq + " current " + acked);
         }
       } else {
-        logger.info("SENDER-" + debugId + "-" + delivery.getConnectionId() + "; AckSeq: " + ackedSeq + " Acked: "
+        logger.info("SENDER-" + debugId + "-" + delivery.getConnectionID() + "; AckSeq: " + ackedSeq + " Acked: "
                     + acked);
 
         while (ackedSeq > acked) {
@@ -321,7 +321,7 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private void debugLog(String msg) {
-    if (debug) DebugUtil.trace("SENDER-" + debugId + "-" + delivery.getConnectionId() + " -> " + msg);
+    if (debug) DebugUtil.trace("SENDER-" + debugId + "-" + delivery.getConnectionID() + " -> " + msg);
   }
 
   // for testing purpose only

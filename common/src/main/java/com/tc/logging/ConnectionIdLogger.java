@@ -18,20 +18,21 @@
  */
 package com.tc.logging;
 
+import com.tc.net.protocol.NetworkLayer;
 import org.slf4j.Logger;
 
 public class ConnectionIdLogger extends BaseMessageDecoratorTCLogger {
 
-  private final ConnectionIDProvider cidp;
+  private final NetworkLayer cidp;
 
-  public ConnectionIdLogger(ConnectionIDProvider connectionIDProvider, Logger logger) {
+  public ConnectionIdLogger(NetworkLayer connectionIDProvider, Logger logger) {
     super(logger);
     this.cidp = connectionIDProvider;
   }
 
   @Override
   protected String decorate(Object msg) {
-    return cidp.getConnectionId() + ": " + msg;
+    return cidp.getConnectionID() + ": " + msg;
   }
 
 }

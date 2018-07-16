@@ -55,15 +55,17 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private int                             connectCount;
   private volatile ChannelID              channelID = ChannelID.NULL_ID;
   private final SessionProvider           sessionProvider;
+  private final ProductID                 product;
   private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
   private final List<ClientConnectionErrorListener> errorListeners = new CopyOnWriteArrayList<>();
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, ProductID productId) {
-    super(router, logger, msgFactory, StripeID.NULL_ID, productId);
+                                     SessionProvider sessionProvider, ProductID product) {
+    super(router, logger, msgFactory, StripeID.NULL_ID);
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider();
+    this.product = product;
   }
 
   @Override
@@ -93,7 +95,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
-                                                username, pw, getProductId());
+                                                username, pw, this.product);
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
@@ -139,8 +141,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    if (!transport.getConnectionId().isNull()) {
-      long channelIdLong = transport.getConnectionId().getChannelID();
+    if (transport.getConnectionID().isValid()) {
+      long channelIdLong = transport.getConnectionID().getChannelID();
       this.channelID = new ChannelID(channelIdLong);
       setLocalNodeID(new ClientID(channelIdLong));
       this.connectCount++;

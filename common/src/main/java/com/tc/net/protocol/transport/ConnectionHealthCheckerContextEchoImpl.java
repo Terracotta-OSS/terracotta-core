@@ -41,7 +41,7 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
   @Override
   public boolean receiveProbe(HealthCheckerProbeMessage message) {
     if (message.isPing()) {
-      HealthCheckerProbeMessage pingReplyMessage = this.messageFactory.createPingReply(transport.getConnectionId(),
+      HealthCheckerProbeMessage pingReplyMessage = this.messageFactory.createPingReply(transport.getConnectionID(),
                                                                                        transport.getConnection());
       try {
         this.transport.send(pingReplyMessage);

@@ -119,7 +119,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void testListenerGetsRightProductType() {
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getChannelID()).thenReturn(new ChannelID(1));
-    when(channel.getProductId()).thenReturn(ProductID.SERVER);
+    when(channel.getProductID()).thenReturn(ProductID.SERVER);
     connectionIDFactory.channelRemoved(channel, true);
     ArgumentCaptor<ConnectionID> cap = ArgumentCaptor.forClass(ConnectionID.class);
     verify(listener).connectionIDDestroyed(cap.capture());

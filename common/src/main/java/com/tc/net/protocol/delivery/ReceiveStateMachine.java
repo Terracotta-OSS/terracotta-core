@@ -130,7 +130,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   private void debugLog(String msg) {
     if (debug) {
-      DebugUtil.trace("Receiver-" + debugId + "-" + delivery.getConnectionId() + " -> " + msg);
+      DebugUtil.trace("Receiver-" + debugId + "-" + delivery.getConnectionID() + " -> " + msg);
     }
   }
 

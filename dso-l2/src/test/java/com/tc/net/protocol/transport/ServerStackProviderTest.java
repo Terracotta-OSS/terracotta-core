@@ -60,10 +60,10 @@ public class ServerStackProviderTest extends TCTestCase {
             }
         ).getMock();
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
-    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class), any(ProductID.class))).then(invoke->{
+    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
-      ProductID product = (ProductID)invoke.getArguments()[1];
-      when(channel.getProductId()).thenReturn(product);
+      ProductID product = ProductID.PERMANENT;
+      when(channel.getProductID()).thenReturn(product);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -109,10 +109,10 @@ public class ServerStackProviderTest extends TCTestCase {
             }
         ).getMock();
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
-    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class), any(ProductID.class))).then(invoke->{
+    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
-      ProductID product = (ProductID)invoke.getArguments()[1];
-      when(channel.getProductId()).thenReturn(product);
+      ProductID product = ProductID.PERMANENT;
+      when(channel.getProductID()).thenReturn(product);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -153,7 +153,7 @@ public class ServerStackProviderTest extends TCTestCase {
     ConnectionID connectionID2 = new ConnectionID("JVM", 2, "server1");
     Set<ClientID> rebuild = new HashSet<>();
     rebuild.add(connectionID1.getClientID());
-    
+    rebuild.add(connectionID2.getClientID());
 
     provider = new ServerStackProvider(rebuild, harnessFactory,
                                        serverMessageChannelFactory, messageTransportFactory, null, factory, connectionPolicy,
@@ -161,7 +161,8 @@ public class ServerStackProviderTest extends TCTestCase {
 
     TCConnection conn = mock(TCConnection.class);
     provider.attachNewConnection(connectionID1, conn);
-
+    
+    Assert.assertNotNull(provider.removeNetworkStack(connectionID2));
     // trying to attach a stack that wasn't rebuilt at startup should fail.
     try {
       provider.attachNewConnection(connectionID2, conn);
@@ -181,10 +182,10 @@ public class ServerStackProviderTest extends TCTestCase {
             }
         ).getMock();
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
-    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class), any(ProductID.class))).then(invoke->{
+    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
-      ProductID product = (ProductID)invoke.getArguments()[1];
-      when(channel.getProductId()).thenReturn(product);
+      ProductID product = ProductID.PERMANENT;
+      when(channel.getProductID()).thenReturn(product);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -237,7 +238,7 @@ public class ServerStackProviderTest extends TCTestCase {
     Assert.assertEquals(ProductID.PERMANENT, connectionID2.getProductId());
     Assert.assertEquals(1L, connectionID1.getChannelID());
     Assert.assertEquals(2L, connectionID2.getChannelID());
-    Assert.assertEquals(ProductID.STRIPE, transport.getConnectionId().getProductId());
+    Assert.assertEquals(ProductID.STRIPE, transport.getConnectionID().getProductId());
 
     // trying to attach a stack that wasn't rebuilt at startup should fail.
     try {

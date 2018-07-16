@@ -116,8 +116,8 @@ public class ServerMessageTransport extends MessageTransportBase {
   private void handleAck(TransportHandshakeMessage ack) {
     synchronized (status) {
       Assert.eval(status.isConnected());
-      Assert.eval("Wrong connection ID: [" + getConnectionId() + "] != [" + ack.getConnectionId() + "]",
-                  !getConnectionId().isValid() || getConnectionId().equals(ack.getConnectionId()));
+      Assert.eval("Wrong connection ID: [" + getConnectionID() + "] != [" + ack.getConnectionId() + "]",
+                  !getConnectionID().isValid() || getConnectionID().equals(ack.getConnectionId()));
       status.established();
       ack.getSource().setTransportEstablished();
     }
