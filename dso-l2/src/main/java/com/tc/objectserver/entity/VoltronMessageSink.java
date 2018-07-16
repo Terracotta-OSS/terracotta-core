@@ -20,33 +20,41 @@ package com.tc.objectserver.entity;
 
 import com.tc.entity.MessageCodecSupplier;
 import com.tc.async.api.Sink;
+import com.tc.async.api.Stage;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.core.TCComm;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.net.protocol.tcm.TCMessageSink;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
+import com.tc.util.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class VoltronMessageSink implements TCMessageSink {
-  private final Sink<VoltronEntityMessage> destSink;
-  private final Sink<HydrateContext> hydrateSink;
+public class VoltronMessageSink extends TCMessageHydrateSink<VoltronEntityMessage> {
   private final MessageCodecSupplier codecSupplier;
-  
+  private final Stage<HydrateContext> helper;
+  private final Sink<VoltronEntityMessage> dest;
+  private static final Logger LOGGER = LoggerFactory.getLogger(VoltronMessageSink.class);
 
-  public VoltronMessageSink(Sink<VoltronEntityMessage> destSink, Sink<HydrateContext> hydrateSink, MessageCodecSupplier codecSupplier) {
-    this.destSink = destSink;
-    this.hydrateSink = hydrateSink;
+  public VoltronMessageSink(Stage<HydrateContext> helper, Sink<VoltronEntityMessage> destSink, MessageCodecSupplier codecSupplier) {
+    super(destSink);
+    this.helper = helper;
     this.codecSupplier = codecSupplier;
+    this.dest = destSink;
   }
 
   @Override
   public void putMessage(TCMessage message) { 
     if (message instanceof NetworkVoltronEntityMessage) {
       ((NetworkVoltronEntityMessage)message).setMessageCodecSupplier(codecSupplier);
+      if (TCComm.hasPendingRead() || !helper.isEmpty()) {
+        helper.getSink().addToSink(new HydrateContext(message, this.dest));
+      } else {
+        super.putMessage(message);
+      }
+    } else {
+      Assert.fail();
     }
-    HydrateContext<VoltronEntityMessage> context = new HydrateContext<>(message, destSink);
-    hydrateSink.addMultiThreaded(context);
   }
-  
-    
-  
 }

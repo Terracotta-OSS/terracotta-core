@@ -48,7 +48,7 @@ import java.util.concurrent.Future;
  */
 public class TransactionOrderPersistor {
   private final IPlatformPersistence storageManager;
-  private Long receivedTransactionCount = new Long(0L);
+  private Long receivedTransactionCount = 0L;
     
   private List<ClientTransaction> globalList = null;
   private final Set<ClientID> permNodeIDs = new HashSet<>();
@@ -185,7 +185,7 @@ public class TransactionOrderPersistor {
     }
   }
   
-  private List<ClientTransaction> buildGlobalListIfNecessary() {
+  private synchronized List<ClientTransaction> buildGlobalListIfNecessary() {
     if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
       for (ClientID clientID : this.permNodeIDs) {
@@ -261,7 +261,7 @@ public class TransactionOrderPersistor {
     return this.receivedTransactionCount;
   }
   
-  public Map<String, Object> reportStateToMap(Map<String, Object> map) {
+  public synchronized Map<String, Object> reportStateToMap(Map<String, Object> map) {
     map.put("className", this.getClass().getName());
     map.put("receivedTransactions", getReceivedTransactionCount());
     if(this.permNodeIDs != null && storageManager != null) {

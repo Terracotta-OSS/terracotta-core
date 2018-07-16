@@ -19,7 +19,6 @@
 package com.tc.client;
 
 import com.tc.lang.TCThreadGroup;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.object.ClientBuilder;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.config.ClientConfig;
@@ -33,10 +32,9 @@ public class ClientFactory {
   public static DistributedObjectClient createClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                                      PreparedComponentsFromL2Connection connectionComponents,
                                                      ClusterInternal cluster,
-                                                     TCSecurityManager securityManager,
                                                      String uuid, String name) {
     return new DistributedObjectClient(config, builder, threadGroup, connectionComponents,
-        cluster, null,
+        cluster,
         uuid, name);
   }
 }

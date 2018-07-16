@@ -31,7 +31,6 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.io.ByteArrayOutputStream;
@@ -48,6 +47,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -69,14 +71,15 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
+  private final ConsistencyManager consistencyMgr;
 
-  public ActiveToPassiveReplication(ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
+    this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
     this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
-    this.replicationSender.addFailedToSendListener(this::removeWaiters);
   }
 
   @Override
@@ -119,6 +122,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  */
   private boolean prime(NodeID node) {
     if (!passiveNodes.contains(node)) {
+      if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
+        serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
+      }
       logger.debug("Starting message sequence on " + node);
       this.replicationSender.addPassive(node, SyncReplicationActivity.createStartMessage());
       return true;
@@ -142,39 +148,36 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * @param newNode
    */
   private void executePassiveSync(final NodeID newNode) {
-    passiveSyncPool.execute(new Runnable() {
-      @Override
-      public void run() {    
-        // start passive sync message
-        logger.debug("starting sync for " + newNode);
-        Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
-          @Override
-          public void accept(List<ManagedEntity> sortedEntities) {
-            // We want to create the array of activity data.
-            List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
-            for (ManagedEntity e : sortedEntities) {
-              SyncReplicationActivity.EntityCreationTuple data = e.startSync();
-              // null creation data means that the entity, while in the list of entities, is 
-              // not to be synced because it has been destroyed or not yet fully created and 
-              // initiated
-              if (data != null) {
-                tuplesForCreation.add(data);
-              }              
+    passiveSyncPool.execute(() -> {
+      // start passive sync message
+      logger.debug("starting sync for " + newNode);
+      Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
+        @Override
+        public void accept(List<ManagedEntity> sortedEntities) {
+          // We want to create the array of activity data.
+          List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
+          for (ManagedEntity e : sortedEntities) {
+            SyncReplicationActivity.EntityCreationTuple data = e.startSync();
+            // null creation data means that the entity, while in the list of entities, is
+            // not to be synced because it has been destroyed or not yet fully created and
+            // initiated
+            if (data != null) {
+              tuplesForCreation.add(data);              
             }
-            replicateActivity(SyncReplicationActivity.
-                    createStartSyncMessage(tuplesForCreation.
-                            toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(newNode)).waitForCompleted();
-          }}
-        );
-        for (ManagedEntity entity : e) {
-          logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
-          entity.sync(newNode);
-          logger.debug("ending sync for entity " + newNode + "/" + entity.getID());
-        }
-    //  passive sync done message.  causes passive to go into passive standby mode
-        logger.debug("ending sync " + newNode);
-        replicateActivity(SyncReplicationActivity.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
+          }
+          replicateActivity(SyncReplicationActivity.
+              createStartSyncMessage(tuplesForCreation.
+                  toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(newNode)).waitForCompleted();
+        }}
+      );
+      for (ManagedEntity entity : e) {
+        logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
+        entity.sync(newNode);
+        logger.debug("ending sync for entity " + newNode + "/" + entity.getID());
       }
+      //  passive sync done message.  causes passive to go into passive standby mode
+      logger.debug("ending sync " + newNode);
+      replicateActivity(SyncReplicationActivity.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
     });
   }
   
@@ -223,7 +226,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public Set<NodeID> passives() {
-    return passiveNodes;
+    return new HashSet<>(passiveNodes);
   }
 
   @Override
@@ -239,39 +242,45 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       //  command.
       boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
       for (NodeID node : copy) {
-        // This is a normal completion.
-        boolean didSend = false;
         if (!isLocalFlush) {
           // This isn't local-only so try to replicate.
-          didSend = this.replicationSender.replicateMessage(node, activity);
+          this.replicationSender.replicateMessage(node, activity, sent->{
+            if (!sent) {
+              // We didn't send so just ack complete, internally.
+              boolean isNormalComplete = true;
+              internalAckCompleted(activityID, node, null, isNormalComplete);
+            }
+          });
         }
-        if (!didSend) {
-          // We didn't send so just ack complete, internally.
-          boolean isNormalComplete = true;
-          internalAckCompleted(activityID, node, null, isNormalComplete);
-        }
+
       }
     }
     return waiter;
   }
 
-  public void removePassive(NodeID nodeID) {
+  private void removePassive(NodeID nodeID) {
+    passiveSyncPool.execute(()->{
+      while (!consistencyMgr.requestTransition(ServerMode.ACTIVE, nodeID, ConsistencyManager.Transition.REMOVE_PASSIVE)) {
+        try {
+          TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException ie) {
+          logger.info("interrupted while waiting for permission to remove node");
+        }
+      }
 // first remove it from the list of passive nodes so that anything sending new messages 
 // will have to remove it from the list of nodes to send to
-    passiveNodes.remove(nodeID);
+      passiveNodes.remove(nodeID);
 //  acknowledge all the messages for this node because it is gone, this may result in 
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
-    if (activated) {
-//  remove the passive node from the sender first.  nothing else is going out
+  //  remove the passive node from the sender first.  nothing else is going out
       this.replicationSender.removePassive(nodeID);
       removeWaiters(nodeID);
-    }
+    });
   }
   
-  private void removeWaiters(NodeID nodeID) {
-      // This is a an unexpected kind of completion.
-      boolean isNormalComplete = false;
-      waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
+  private void removeWaiters(NodeID nodeID) {      // This is a an unexpected kind of completion.
+    boolean isNormalComplete = false;
+    waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
   }
 
   @Override
@@ -284,7 +293,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public void nodeLeft(NodeID nodeID) {
-    removePassive(nodeID);
+    if (activated) {
+      removePassive(nodeID);
+    }
 //  standby nodes for tracking only.  no practical use
     synchronized(standByNodes) {
       standByNodes.remove(nodeID);

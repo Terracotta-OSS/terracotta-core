@@ -18,7 +18,6 @@
  */
 package com.tc.net.utils;
 
-import com.tc.bytes.TCByteBufferFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -39,10 +38,12 @@ public class L2Utils {
     // other performance bottlenecks within the application logic.
     // Note that this value is only the result of observations and reasonable behavior but may need to be tweaked, in the
     // future.
-    int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_COMM_THREADS);
+    int halfProcs = Runtime.getRuntime().availableProcessors() >> 1;
+    if (halfProcs == 0) halfProcs = 1;
+    int def = Math.min(halfProcs, MAX_DEFAULT_COMM_THREADS);
     return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS, def);
   }
-
+  
   public static int getOptimalStageWorkerThreads() {
     // We currently set the number of stage worker threads to the number of available processors.
     // This is further limited by MAX_DEFAULT_STAGE_THREADS to ensure that the number selected doesn't go so far as to

@@ -31,6 +31,11 @@ TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
 PLUGIN_LIB_DIR="${TC_SERVER_DIR}/plugins/lib"
 PLUGIN_API_DIR="${TC_SERVER_DIR}/plugins/api"
 
+# this will only happen if using sag installer
+if [ -r "${TC_SERVER_DIR}/bin/setenv.sh" ] ; then
+  . "${TC_SERVER_DIR}/bin/setenv.sh"
+fi
+
 if ! [ -d "${JAVA_HOME}" ]; then
   echo "$0: the JAVA_HOME environment variable is not defined correctly"
   exit 2
@@ -38,11 +43,11 @@ fi
 
 # Determine supported JVM args
 for JAVA_COMMAND_ARGS in \
-    "-d64 -server -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-server -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-client -XX:MaxDirectMemorySize=9223372036854775807" \
-    "-XX:MaxDirectMemorySize=9223372036854775807"
+    "-d64 -server -XX:MaxDirectMemorySize=1048576g" \
+    "-server -XX:MaxDirectMemorySize=1048576g" \
+    "-d64 -client  -XX:MaxDirectMemorySize=1048576g" \
+    "-client -XX:MaxDirectMemorySize=1048576g" \
+    "-XX:MaxDirectMemorySize=1048576g"
 do
     # accept the first one that works
     "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1 && break

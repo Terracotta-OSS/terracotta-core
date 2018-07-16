@@ -162,7 +162,7 @@ public class TCConnectionManagerTest extends TestCase {
     }
     
     conns = serverConnMgr.getAllConnections();
-    assertEquals(2, conns.length);
+    assertTrue(2 <= conns.length);
     
     for (TCConnection conn : conns) {
       conn.setTransportEstablished();
@@ -192,7 +192,7 @@ public class TCConnectionManagerTest extends TestCase {
 
   public void testInActiveClientConnections() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
-    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, null);
+    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, new ClearTextBufferManagerFactory());
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {

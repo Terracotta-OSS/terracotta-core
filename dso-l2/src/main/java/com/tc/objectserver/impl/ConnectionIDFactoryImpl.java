@@ -37,31 +37,34 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
 
   private final MutableSequence                   connectionIDSequence;
+  private final ConnectionIDFactory                        internalClients;
   private StripeID                                stripe;
   private final Set<ProductID>                          supported;
   private final List<ConnectionIDFactoryListener> listeners = new CopyOnWriteArrayList<>();
 
-  public ConnectionIDFactoryImpl(ClientStatePersistor clientStateStore, Set<ProductID> supported) {
+  public ConnectionIDFactoryImpl(ConnectionIDFactory internals, ClientStatePersistor clientStateStore, Set<ProductID> supported) {
+    this.internalClients = internals;
     this.connectionIDSequence = clientStateStore.getConnectionIDSequence();
     this.supported = supported;
   }
 
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
-    if (!new ChannelID(connectionID.getChannelID()).isValid()) {
+    // internal or redirect
+    if (connectionID.getProductId().isInternal() || this.stripe == null) {
+      return internalClients.populateConnectionID(connectionID);
+    } else if (!new ChannelID(connectionID.getChannelID()).isValid()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
+    } else if (!stripe.getName().equals(connectionID.getServerID())) {
+      return ConnectionID.NULL_ID;
     } else {
-      if (!stripe.getName().equals(connectionID.getServerID())) {
-        return ConnectionID.NULL_ID;
-      } else {
-        return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
-      }
+      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
     }
   }
 
   private ConnectionID nextConnectionId(String clientJvmID, ProductID productId) {
     return formConnectionId(clientJvmID, connectionIDSequence.next(), productId);
-  }
+    }
 
   private ConnectionID formConnectionId(String jvmID, long channelID, ProductID productId) {
     Assert.assertNotNull(stripe);

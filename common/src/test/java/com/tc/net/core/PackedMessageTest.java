@@ -24,7 +24,7 @@ import com.tc.test.TCTestCase;
 
 import java.util.Random;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class PackedMessageTest extends TCTestCase {
 

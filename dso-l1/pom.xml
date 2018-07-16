@@ -30,7 +30,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.3-SNAPSHOT</version>
+    <version>5.5-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
@@ -39,7 +39,7 @@
   <name>dso-l1</name>
 
   <properties>
-    <java.build.version>1.6</java.build.version>
+    <java.build.version>1.8</java.build.version>
   </properties>
   
   <dependencies>
@@ -84,6 +84,16 @@
       <groupId>org.terracotta.test</groupId>
       <artifactId>test-common</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

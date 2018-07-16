@@ -18,6 +18,7 @@
  */
 package com.tc.net.core;
 
+import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -25,6 +26,6 @@ import java.nio.channels.SocketChannel;
  */
 public interface BufferManagerFactory {
 
-  BufferManager createBufferManager(SocketChannel socketChannel, boolean client);
+  BufferManager createBufferManager(SocketChannel socketChannel, boolean client) throws IOException;
 
 }

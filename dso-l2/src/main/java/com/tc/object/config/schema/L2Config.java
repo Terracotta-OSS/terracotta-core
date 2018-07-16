@@ -42,10 +42,4 @@ public interface L2Config extends Config<Server> {
   String serverName();
 
   int clientReconnectWindow();
-
-  String bind();
-
-  boolean isJmxEnabled();
-
-  void setJmxEnabled(boolean b);
 }

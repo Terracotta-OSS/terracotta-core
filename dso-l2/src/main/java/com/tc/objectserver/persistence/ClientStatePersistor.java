@@ -42,7 +42,7 @@ public class ClientStatePersistor {
   private final IPlatformPersistence storageManager;
   private final ConcurrentHashMap<ClientID, Boolean> clients;
   private final MutableSequence clientIDSequence;
-
+  
   @SuppressWarnings("unchecked")
   public ClientStatePersistor(IPlatformPersistence storageManager) {
     this.storageManager = storageManager;
@@ -58,6 +58,8 @@ public class ClientStatePersistor {
       throw new RuntimeException("Failure reading ClientStatePersistor data", e);
     }
     this.clients = clientsMap;
+    // orphaned clients are not supposed to reconnect on restart.  since we are repopulating 
+    // restart data, set aside the orphaned clients
     this.clientIDSequence = new Sequence(this.storageManager);
     Assert.assertNotNull(this.clients);
   }
@@ -82,13 +84,12 @@ public class ClientStatePersistor {
     return clients.containsKey(id);
   }
 
-  public boolean saveClientState(ClientID channelID, ProductID product) {
-    if (clients.put(channelID, product.isPermanent()) == null) {
-      safeStoreClients();
-      return true;
-    } else {
-      return false;
-    }
+  public void saveClientState(ClientID channelID, ProductID product) {
+    // if the client is in the orphaned set, do not add it to the saved list because 
+    // it should never connect again.  this can happen if the ConnectionIDFactory services
+    // a connection before the existing clients are loaded into the reconnect window
+    clients.put(channelID, product.isPermanent());
+    safeStoreClients();
   }
 
   public void deleteClientState(ClientID id) throws ClientNotFoundException {

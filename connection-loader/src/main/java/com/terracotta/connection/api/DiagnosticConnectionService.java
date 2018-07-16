@@ -19,21 +19,9 @@
 
 package com.terracotta.connection.api;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.ConnectionService;
-
-import com.terracotta.connection.TerracottaConnection;
-import com.terracotta.connection.URLConfigUtil;
-import com.terracotta.connection.client.TerracottaClientConfigParams;
-import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
-import com.terracotta.diagnostic.DiagnosticClientImpl;
-
-import java.net.URI;
-import java.util.Properties;
-import java.util.concurrent.TimeoutException;
-
+import com.terracotta.connection.EndpointConnector;
+import com.terracotta.connection.TerracottaInternalClientFactory;
+import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
 
 /**
  * This connection service handles the cases of connecting to a single stripe:  one active and potentially multiple passives
@@ -41,51 +29,18 @@ import java.util.concurrent.TimeoutException;
  * This is possible because the underlying connection knows how to probe the stripe for active nodes on start-up or
  * fail-over.
  */
-public class DiagnosticConnectionService implements ConnectionService {
+public class DiagnosticConnectionService extends AbstractConnectionService {
   private static final String SCHEME = "diagnostic";
 
-  @Override
-  public boolean handlesURI(URI uri) {
-    return SCHEME.equals(uri.getScheme());
+  public DiagnosticConnectionService() {
+    super(SCHEME);
   }
 
-  @Override
-  public Connection connect(URI uri, Properties properties) throws ConnectionException {
-    if (!handlesURI(uri)) {
-      throw new IllegalArgumentException("Unknown URI " + uri);
-    }
+  public DiagnosticConnectionService(EndpointConnector endpointConnector) {
+    super(SCHEME, endpointConnector, new TerracottaInternalClientFactoryImpl());
+  }
 
-    // TODO: Make use of those properties
-    // TODO: hook in the connection listener
-
-    // We may be specifying a comma-delimited list of servers in the stripe so parse the URI with this possibility in mind.
-    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams();
-
-    clientConfig.addStripeMemberUri(uri.getHost() + ":" + uri.getPort());
-    clientConfig.addGenericProperties(properties);
-    TerracottaClientStripeConnectionConfig stripeConnectionConfig = new TerracottaClientStripeConnectionConfig();
-    
-    for (String memberUri : clientConfig.getStripeMemberUris()) {
-      String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
-      stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
-    }
-
-    final DiagnosticClientImpl client = new DiagnosticClientImpl(stripeConnectionConfig, properties);
-    try {
-      client.init();
-    } catch (TimeoutException exp) {
-      throw new ConnectionException(exp);
-    } catch (ConfigurationSetupException config) {
-      throw new ConnectionException(config);
-    } catch (InterruptedException ie) {
-      throw new ConnectionException(ie);
-    }
-    
-    return new TerracottaConnection(client.getClientEntityManager(), new Runnable() {
-        public void run() {
-          client.shutdown();
-          }
-        }
-      );
+  public DiagnosticConnectionService(EndpointConnector endpointConnector, TerracottaInternalClientFactory clientFactory) {
+    super(SCHEME, endpointConnector, clientFactory);
   }
 }

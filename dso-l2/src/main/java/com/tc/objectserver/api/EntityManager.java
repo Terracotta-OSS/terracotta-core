@@ -20,16 +20,17 @@
 package com.tc.objectserver.api;
 
 import com.tc.entity.MessageCodecSupplier;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.text.PrettyPrintable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import org.terracotta.entity.StateDumpable;
 import org.terracotta.exception.EntityException;
 
 public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
@@ -37,7 +38,7 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
   /**
    * The entity manager normally starts in a "passive" state but will be notified that it should become active when the server becomes active.
    */
-  void enterActiveState();
+  List<VoltronEntityMessage> enterActiveState();
 
   /**
    * Creates an non-existent entity
@@ -97,5 +98,5 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
    * 
    * @return the classloader used to create all entities
    */
-  ClassLoader getEntityLoader();
+  ServerEntityFactory getEntityLoader();
 }

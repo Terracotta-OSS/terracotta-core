@@ -39,6 +39,6 @@ public class PreparedComponentsFromL2Connection {
     for (L2Data l2 : l2s) {
       l2.setGroupId(0);
     }
-    return new ConnectionInfoConfig(l2s, config.getSecurityInfo());
+    return new ConnectionInfoConfig(l2s);
   }
 }

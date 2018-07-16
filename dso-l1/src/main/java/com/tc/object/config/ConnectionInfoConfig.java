@@ -23,10 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Arrays;
 
 /**
@@ -37,14 +34,10 @@ public class ConnectionInfoConfig {
   private final ConnectionInfo[] connectionInfos;
 
   public ConnectionInfoConfig(L2Data[] l2sData) {
-    this(l2sData, new SecurityInfo());
+    this.connectionInfos = createValueFrom(l2sData);
   }
 
-  public ConnectionInfoConfig(L2Data[] l2sData, SecurityInfo securityInfo) {
-    this.connectionInfos = createValueFrom(l2sData, securityInfo);
-  }
-
-  private ConnectionInfo[] createValueFrom(L2Data[] l2sData, SecurityInfo securityInfo) {
+  private ConnectionInfo[] createValueFrom(L2Data[] l2sData) {
     ConnectionInfo[] out;
 
     String serversProperty = System.getProperty("tc.server");
@@ -56,40 +49,47 @@ public class ConnectionInfoConfig {
 
       out = new ConnectionInfo[count];
       for (int i = 0; i < count; i++) {
-        String[] serverDesc = serverDescs[i].split(":");
-        String host = serverDesc.length > 0 ? serverDesc[0] : "localhost";
+        String serverDesc = serverDescs[i];
+        String host;
         int tsaPort = 9410;
+        if (serverDesc.startsWith("[")) {
+          if (!serverDesc.contains("]")) {
+            throw new IllegalArgumentException(String.format("A tc.server element contains an invalid host '%s'. "
+                    + "IPv6 address literals must be enclosed in '[' and ']' according to RFC 2732", serverDesc));
+          }
+          int end = serverDesc.indexOf("]");
+          host = serverDesc.substring(1, end);
+          String remainder = serverDesc.substring(end + 1);
+          if (!remainder.isEmpty() && remainder.charAt(0) == ':') {
+            String portString = remainder.substring(1);
+            try {
+              tsaPort = Integer.parseInt(portString);
+            } catch (NumberFormatException nfe) {
+              LOGGER.info("Cannot parse port for tc.server element '" + portString
+                          + "'; Using default of 9410.");
+            }
+          }
+        } else {
+          String[] parts = serverDesc.split(":");
 
-        if (serverDesc.length == 2) {
-          try {
-            tsaPort = Integer.parseInt(serverDesc[1]);
-          } catch (NumberFormatException nfe) {
-            LOGGER.info("Cannot parse port for tc.server element '" + serverDescs[i]
-                        + "'; Using default of 9410.");
+          host = parts.length > 0 ? parts[0] : "localhost";
+          if (parts.length == 2) {
+            try {
+              tsaPort = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException nfe) {
+              LOGGER.info("Cannot parse port for tc.server element '" + serverDescs[i]
+                          + "'; Using default of 9410.");
+            }
           }
         }
 
-        boolean secure = false;
-        String urlUsername = null;
-        int userSeparatorIndex = host.indexOf('@');
-        if (userSeparatorIndex > -1) {
-          secure = true;
-          urlUsername = host.substring(0, userSeparatorIndex);
-          try {
-            urlUsername = URLDecoder.decode(urlUsername, "UTF-8");
-          } catch (UnsupportedEncodingException uee) {
-            // cannot happen
-          }
-          host = host.substring(userSeparatorIndex + 1);
-        }
-
-        out[i] = new ConnectionInfo(host, tsaPort, new SecurityInfo(secure, urlUsername));
+        out[i] = new ConnectionInfo(host, tsaPort);
       }
     } else {
       out = new ConnectionInfo[l2sData.length];
 
       for (int i = 0; i < out.length; ++i) {
-        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].tsaPort(), l2sData[i].getGroupId(), securityInfo);
+        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].tsaPort(), l2sData[i].getGroupId());
       }
     }
 

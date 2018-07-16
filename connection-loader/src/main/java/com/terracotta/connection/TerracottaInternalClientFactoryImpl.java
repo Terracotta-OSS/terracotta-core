@@ -20,6 +20,7 @@ package com.terracotta.connection;
 
 import com.terracotta.connection.client.TerracottaClientConfigParams;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
+import java.net.InetSocketAddress;
 
 import java.util.Properties;
 
@@ -35,9 +36,8 @@ public class TerracottaInternalClientFactoryImpl implements TerracottaInternalCl
   public TerracottaInternalClient createL1Client(TerracottaClientConfigParams config) {
     // Translate the URIs for the stripe with the system properties and use that to create the stripe config.
     TerracottaClientStripeConnectionConfig stripeConnectionConfig = new TerracottaClientStripeConnectionConfig();
-    for (String memberUri : config.getStripeMemberUris()) {
-      String expandedMemberUri = URLConfigUtil.translateSystemProperties(memberUri);
-      stripeConnectionConfig.addStripeMemberUri(expandedMemberUri);
+    for (InetSocketAddress memberUri : config.getStripeMemberUris()) {
+      stripeConnectionConfig.addStripeMemberUri(memberUri);
     }
     return createClient(stripeConnectionConfig, config.getGenericProperties());
   }

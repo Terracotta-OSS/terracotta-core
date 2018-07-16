@@ -55,9 +55,8 @@ public class RequestReceiveHandler extends AbstractEventHandler<VoltronEntityRes
             } else {
               this.handler.complete(transactionID, appliedResponse.getSuccessValue());
             }
-            if (appliedResponse.alsoRetire()) {
-              this.handler.retired(transactionID);
-            }
+            // always retire single use messages
+            this.handler.retired(transactionID);
           }
           break;
         case RECEIVED:

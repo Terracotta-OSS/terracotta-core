@@ -22,7 +22,6 @@ import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.objectserver.handler.ReplicationSender;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -34,6 +33,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManager.Transition;
+import com.tc.l2.state.ServerMode;
+import com.tc.net.NodeID;
+import static org.mockito.Matchers.any;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -57,7 +61,9 @@ public class ActiveToPassiveReplicationTest {
   public void setUp() {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
-    replication = new ActiveToPassiveReplication(mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
+    ConsistencyManager cmgr = mock(ConsistencyManager.class);
+    when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    replication = new ActiveToPassiveReplication(cmgr, mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
   }
   
   @Test
@@ -79,6 +85,11 @@ public class ActiveToPassiveReplicationTest {
     it.start();
     ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
+    // make sure adding more waiters don't include removed passive
+    SyncReplicationActivity nowait = mock(SyncReplicationActivity.class);
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    ActivePassiveAckWaiter ack2 = replication.replicateActivity(nowait, Collections.singleton(passive));
+    Assert.assertTrue(ack2.isCompleted());
   }
   
   @After

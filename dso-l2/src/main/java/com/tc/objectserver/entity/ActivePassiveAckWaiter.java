@@ -44,9 +44,9 @@ public class ActivePassiveAckWaiter {
 
   public ActivePassiveAckWaiter(Set<NodeID> allPassiveNodes, PassiveReplicationBroker parent) {
     this.start =  Collections.unmodifiableSet(allPassiveNodes);
-    this.receivedPending =  new HashSet<NodeID>(allPassiveNodes);
-    this.completedPending =  new HashSet<NodeID>(allPassiveNodes);
-    this.receivedByComplete =  new HashSet<NodeID>();
+    this.receivedPending =  new HashSet<>(allPassiveNodes);
+    this.completedPending =  new HashSet<>(allPassiveNodes);
+    this.receivedByComplete =  new HashSet<>();
     this.results = new HashMap<>();
     this.parent = parent;
   }

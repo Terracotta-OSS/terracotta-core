@@ -18,6 +18,8 @@
  */
 package com.tc.net.core;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +109,16 @@ class TCCommImpl implements TCComm {
 
   public CoreNIOServices nioServiceThreadForNewListener() {
     return commThread;
+  }
+  
+  public Map<String, ?> getState() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("name", this.commThreadName);
+    map.put("threads", commThread.getState());
+    if (workerCommMgr != null) {
+      map.put("workers", workerCommMgr.getState());
+    }
+    return map;
   }
 
 }

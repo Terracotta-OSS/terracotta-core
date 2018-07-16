@@ -130,7 +130,7 @@ public class CommonL2ConfigObject implements CommonL2Config {
   }
 
   @Override
-  public TcConfiguration getBean() {
+  public TcConfiguration getTCConfiguration() {
     return this.conf;
   }
 }

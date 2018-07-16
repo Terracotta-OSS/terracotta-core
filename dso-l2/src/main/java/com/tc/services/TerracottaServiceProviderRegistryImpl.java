@@ -20,6 +20,8 @@ package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
 import com.tc.classloader.ServiceLocator;
+import com.tc.server.TCServerImpl;
+import com.tc.server.TCServerMain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,8 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -74,7 +78,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
   
   private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
-    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, loader);
+    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class, loader);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {
@@ -110,7 +114,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public DelegatingServiceRegistry subRegistry(long consumerID) {
-    this.hasCreatedSubRegistries = true;
+    if (consumerID > 0) {
+      this.hasCreatedSubRegistries = true;
+    }
     return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), implementationProvidedServiceProviders.toArray(new ImplementationProvidedServiceProvider[implementationProvidedServiceProviders.size()]));
   }
 
@@ -160,7 +166,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     List<Object> services = new ArrayList<>(serviceProviders.size());
     map.put("services", services);
@@ -170,7 +176,10 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         serviceProvider.addStateTo(dump.subStateDumpCollector(serviceProvider.getClass().getName()));
         services.add(dump.getMap());
       } catch (Throwable t) {
-        services.add("unable to collect state for " + serviceProvider.getClass().getName() + ":" +  t.getMessage());
+        StringWriter w = new StringWriter();
+        PrintWriter p = new PrintWriter(w);
+        t.printStackTrace(p);
+        services.add(w.toString());
       }
     }
 
@@ -180,10 +189,13 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         implementationProvidedServiceProvider.addStateTo(dump);
         services.add(dump.getMap());
       } catch (Throwable t) {
-        services.add("unable to collect state for " + implementationProvidedServiceProvider.getClass().getName() + ":" +  t.getMessage());
+        StringWriter w = new StringWriter();
+        PrintWriter p = new PrintWriter(w);
+        t.printStackTrace(p);
+        services.add(w.toString());
       }
     }
-    return out.println(map);
+    return map;
   }
 
 }

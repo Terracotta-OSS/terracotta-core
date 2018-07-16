@@ -41,9 +41,9 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
@@ -56,12 +56,11 @@ import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
-import com.tc.net.protocol.tcm.HydrateContext;
-import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -70,7 +69,6 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
-import com.tc.net.utils.L2Utils;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
@@ -82,7 +80,6 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.ProductInfo;
@@ -120,9 +117,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
   private final ReconnectConfig                             l2ReconnectConfig;
-
+  
+  private final int                                         serverCount;
+  
   private final String                                      version;
-  private final TCSecurityManager                           securityManager;
   private final ServerID                                    thisNodeID;
   private final int                                         groupPort;
   private final ConnectionPolicy                            connectionPolicy;
@@ -142,13 +140,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final boolean                                     isUseOOOLayer;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
+  private final BufferManagerFactory                        bufferManagerFactory;
 
   private CommunicationsManager                             communicationsManager;
   private NetworkListener                                   groupListener;
   private TCGroupMemberDiscovery                            discover;
   private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
                                                                                                                              logger);
-  private Stage<HydrateContext> hydrateStage;
   private Stage<TCGroupMessageWrapper> receiveGroupMessageStage;
   private Stage<TCGroupHandshakeMessage> handshakeMessageStage;
   private Stage<DiscoveryStateMachine> discoveryStage;
@@ -157,22 +155,24 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Node thisNode, NodesStore nodesStore, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, nodesStore, securityManager, weightGenerator);
+                            ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, nodesStore, weightGenerator, bufferManagerFactory);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
-                            TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
-    this.securityManager = securityManager;
+    this.bufferManagerFactory = bufferManagerFactory;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
 
     L2Config l2DSOConfig = configSetupManager.dsoL2Config();
+    serverCount = configSetupManager.allCurrentlyKnownServers().length - 2;  // minus 2 because we don't need to include local node and main selector can be used if only talking to one other server
 
     this.groupPort = l2DSOConfig.tsaGroupPort().getValue();
     this.weightGeneratorFactory = weightGenerator;
@@ -211,15 +211,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                            StageManager stageManager, TCSecurityManager securityManager, WeightGeneratorFactory weightGenerator) {
+                            StageManager stageManager, WeightGeneratorFactory weightGenerator) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
-    this.securityManager = securityManager;
+    this.bufferManagerFactory = new ClearTextBufferManagerFactory();
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
     this.version = getVersion();
     this.weightGeneratorFactory = weightGenerator;
+    this.serverCount = 0;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
   }
@@ -239,15 +240,15 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
                                                           new NullMessageMonitor(), messageRouter,
-                                                          networkStackHarnessFactory, this.connectionPolicy,
-                                                          L2Utils.getOptimalCommWorkerThreads(),
+                                                          networkStackHarnessFactory, this.connectionPolicy, 
+                                                          serverCount,
                                                           new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
-                                                          messageTypeClassMapping, Collections.emptyMap(),
-        securityManager);
+                                                          messageTypeClassMapping, Collections.emptyMap(), bufferManagerFactory
+    );
 
-    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory());
+    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory(), (t)->true);
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
 
@@ -264,7 +265,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   private void createTCGroupManagerStages() {
     int maxStageSize = 5000;
-    hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE, HydrateContext.class,new HydrateHandler(), 1, maxStageSize);
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
     discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize);
@@ -277,10 +277,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private void initMessageRouter(TCMessageRouter messageRouter) {
-    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
-                                   hydrateStage.getSink());
-    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
-                                   hydrateStage.getSink());
+    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, new TCMessageHydrateSink<>(receiveGroupMessageStage.getSink()));
+    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(handshakeMessageStage.getSink()));
   }
 
   /*
@@ -463,7 +461,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     TCGroupMember m = members.get(member.getPeerNodeID());
     if ((m != null) && (m.getChannel() == member.getChannel())) {
       membersRemove(member);
-      if (member.isJoinedEventFired()) fireNodeEvent(member, false);
+      if (member.isJoinedEventFired()) {
+        fireNodeEvent(member, false);
+      }
+      zappedSet.remove(member.getPeerNodeID());
       member.setJoinedEventFired(false);
       notifyAnyPendingRequests(member);
     }
@@ -591,8 +592,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return groupResponse;
   }
 
-  private void openChannel(ConnectionInfo info, ChannelEventListener listener, String username, char[] password)
-      throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
+  private void openChannel(ConnectionInfo info, ChannelEventListener listener)
+      throws TCTimeoutException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
     if (isStopped.get()) return;
@@ -610,25 +611,15 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ClientMessageChannel channel = communicationsManager.createClientChannel(ProductID.SERVER, sessionProvider, 10000 /*  timeout */);
 
     channel.addListener(listener);
-    channel.open(Collections.singleton(info), username, password);
+    channel.open(Collections.singleton(info));
 
     handshake(channel);
     return;
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
-      UnknownHostException, MaxConnectionsExceededException, IOException, CommStackMismatchException {
-    final String username = (securityManager == null) ? null : securityManager.getIntraL2Username();
-    final char[] password;
-    final SecurityInfo securityInfo;
-    if (isSecured()) {
-      securityInfo = new SecurityInfo(true, securityManager.getIntraL2Username());
-      password = securityManager.getPasswordForTC(securityInfo.getUsername(), hostname, port);
-    } else {
-      password = null;
-      securityInfo = new SecurityInfo();
-    }
-    openChannel(new ConnectionInfo(hostname, port, securityInfo), listener, username, password);
+      MaxConnectionsExceededException, IOException, CommStackMismatchException {
+    openChannel(new ConnectionInfo(hostname, port), listener);
   }
 
   private boolean isSecured() {
@@ -827,28 +818,26 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     Map<String, Object> channels = new LinkedHashMap<>();
+    map.put("communications", this.communicationsManager.getStateMap());
     map.put("channelMap", channels);
     for (Entry<MessageChannel, ServerID> entry : this.channelToNodeID.entrySet()) {
-      channels.put(entry.getKey().toString(), entry.getValue().toString());
+      channels.put(entry.getKey().toString(), entry.getValue());
     }
 
     Map<String, Object> memberReport = new LinkedHashMap<>();
     map.put("members", memberReport);
     for (Entry<ServerID, TCGroupMember> entry : this.members.entrySet()) {
-      memberReport.put(entry.getKey().toString(), entry.getValue().toString());
+      memberReport.put(entry.getKey().toString(), entry.getValue());
     }
 
-    List<String> zapped = new ArrayList<>(this.zappedSet.size());
+    List<Object> zapped = new ArrayList<>(this.zappedSet.size());
     map.put("zapped", zapped);
-    this.zappedSet.forEach(node->zapped.add(node.toString()));
-    
-    out.println(map);
-    
-    return out;
+    this.zappedSet.forEach(node->zapped.add(node));
+    return map;
   }
   
   private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {
@@ -1210,15 +1199,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       @Override
       public void execute(TCGroupHandshakeMessage msg) {
         setPeerNodeID(msg);
-        if (!new VersionCompatibility().isCompatibleServerServer(new Version(version), new Version(msg.getVersion()))) {
-          switchToState(STATE_FAILURE);
-          if (checkWeights(msg)) {
-            logger.error("Node " + peerNodeID + " has an incompatible version " + msg.getVersion());
-            return;
-          } else {
-            throw new TCShutdownServerException("Version incompatible with the rest of the cluster.");
-          }
-        }
         if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
           logger.warn("Drop connection from non-member node " + peerNodeID);
           switchToState(STATE_FAILURE);

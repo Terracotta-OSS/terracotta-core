@@ -49,4 +49,7 @@ public interface CommonL2Config extends Config<TcConfiguration> {
   String httpAuthenticationUserRealmFile();
 
   boolean isSecure();
+  
+  public TcConfiguration getTCConfiguration();
+
 }

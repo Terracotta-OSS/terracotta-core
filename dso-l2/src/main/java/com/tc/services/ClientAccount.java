@@ -19,48 +19,33 @@
 
 package com.tc.services;
 
-import com.tc.entity.ServerEntityMessage;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
 
-import java.util.HashMap;
-import java.util.Map;
 
 public class ClientAccount {
+  private final ClientID clientID;
+  private final ClientMessageSender sender;
   private final MessageChannel channel;
-  private final Map<Long, ResponseWaiter> waitingResponse = new HashMap<>();
   private volatile boolean open = true;
-  private long responseId = 0;
 
-  ClientAccount(MessageChannel channel) {
+  ClientAccount(ClientMessageSender sender, MessageChannel channel) {
+    this.sender = sender;
+    this.clientID = (ClientID)channel.getRemoteNodeID();
     this.channel = channel;
-  }
-
-  synchronized ResponseWaiter send(ClientInstanceID clientInstance, byte[] payload) {
-    ResponseWaiter responseWaiter = new ResponseWaiter();
-    if (!open) {
-      responseWaiter.done();
-    } else {
-      waitingResponse.put(responseId, responseWaiter);
-      ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
-      message.setMessage(clientInstance, payload, responseId++);
-      if (!message.send()) {
-        if (waitingResponse.remove(responseId, responseWaiter)) {
-          responseWaiter.done();
-        }
-      }
-    }
-    return responseWaiter;
   }
 
   synchronized void sendNoResponse(ClientInstanceID clientInstance, byte[] payload) {
     if (open) {
-      ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
-      message.setMessage(clientInstance, payload);
-      if (!message.send()) {
-//  message not delivered.  This call is only best efforts so ignore.        
-      }
+      this.sender.send(this.clientID, clientInstance, payload);
+    }
+  }
+
+  synchronized void sendInvokeMessage(TransactionID transaction, byte[] payload) {
+    if (open) {
+      this.sender.send(this.clientID, transaction, payload);
     }
   }
   /** 
@@ -77,18 +62,5 @@ public class ClientAccount {
       channel.close();
     }
     open = false;
-    for (ResponseWaiter responseWaiter : waitingResponse.values()) {
-      // Client closed, whether or not it received the message is not important anymore since it's gone.
-      responseWaiter.done();
-    }
-  }
-
-  synchronized void response(long responseId) {
-    if (open) {
-      ResponseWaiter responseWaiter = waitingResponse.remove(responseId);
-      if (responseWaiter != null) {
-        responseWaiter.done();
-      }
-    }
   }
 }

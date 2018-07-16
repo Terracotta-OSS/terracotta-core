@@ -139,14 +139,14 @@ public class ClusterStateImpl implements ClusterState {
   public void removeConnection(ConnectionID connectionID) {
     boolean removed = connections.remove(connectionID);
     if (!removed) {
-      logger.info("Connection ID not found, must be a failed reconnect : " + connectionID + " Current Connections count : " + connections.size());
+      logger.debug("Connection ID not found, must be a failed reconnect : " + connectionID + " Current Connections count : " + connections.size());
     }
     try {
       if (connectionID.getProductId().isReconnectEnabled()) {
         persistor.removeClientState(connectionID.getClientID());
       }
     } catch (ClientNotFoundException notfound) {
-      logger.info("not found", notfound);
+      logger.debug("not found", notfound);
     }
   }
 
@@ -181,7 +181,7 @@ public class ClusterStateImpl implements ClusterState {
     this.connections.forEach((c)->connects.add(c.toString()));
     state.put("connections", connects);
     state.put("nextChannelID", this.nextAvailChannelID);
-    state.put("currentState", this.currentState.toString());
-    state.put("stripeID", this.stripeID.toString());
+    state.put("currentState", this.currentState);
+    state.put("stripeID", this.stripeID);
   }
 }

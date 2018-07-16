@@ -48,7 +48,7 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
         + "\n</servers>"
         + "\n</tc-config>";
     writeConfigFile(config);
-    StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null, null);
+    StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null);
     factory.createL2TVSConfigurationSetupManager("server1", getClass().getClassLoader());
 
     TCProperties tcProps = TCPropertiesImpl.getProperties();

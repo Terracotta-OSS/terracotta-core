@@ -30,14 +30,15 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
+import com.tc.text.MapListPrettyPrint;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
+import java.util.ArrayList;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,10 +60,10 @@ public class StageManagerImpl implements StageManager {
   private TCLoggerProvider           loggerProvider;
   private final ThreadGroup          group;
   private String[]                   stageNames    = new String[] {};
-  private final QueueFactory<?> queueFactory;
+  private final QueueFactory queueFactory;
   private volatile boolean           started;
 
-  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory<?> queueFactory) {
+  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
     this.group = threadGroup;
     this.queueFactory = queueFactory;
@@ -106,16 +107,19 @@ public class StageManagerImpl implements StageManager {
   }
 
   @Override
-  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize) {
+  public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize) {
+    return this.createStage(name, verification, handler, threads, maxSize, false);
+  }
+
+  @Override
+  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize, boolean canBeDirect) {
     if (started) {
       throw new IllegalStateException("A new stage cannot be created, because StageManager is already started.");
     }
 
     int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
-    @SuppressWarnings("unchecked")
-    QueueFactory<ContextWrapper<EC>> queueFactory = (QueueFactory<ContextWrapper<EC>>) this.queueFactory;
-    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, handler, queueCount, group, queueFactory, capacity);
+    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, capacity, canBeDirect);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;
@@ -124,7 +128,6 @@ public class StageManagerImpl implements StageManager {
   private synchronized <EC> void addStage(String name, Stage<EC> s) {
     Object prev = stages.put(name, s);
     Assert.assertNull(prev);
-    s.getSink().enableStatsCollection(MONITOR);
     stageNames = stages.keySet().toArray(new String[stages.size()]);
     Arrays.sort(stageNames);
   }
@@ -161,7 +164,7 @@ public class StageManagerImpl implements StageManager {
     skipStages.add("cluster_events_stage");
     for (Stage<?> s : stages.values()) {
       if (!skipStages.contains(s.getName())) {
-        s.getSink().clear();
+        s.clear();
       }
     }
   }
@@ -179,21 +182,34 @@ public class StageManagerImpl implements StageManager {
     final Stats[] stats = new Stats[names.length];
 
     for (int i = 0; i < names.length; i++) {
-      stats[i] = stages.get(names[i]).getSink().getStats(MONITOR_DELAY);
+      Map<String, ?> data = stages.get(names[i]).getState();
+      stats[i] = new Stats() {
+        @Override
+        public String getDetails() {
+          MapListPrettyPrint pp = new MapListPrettyPrint();
+          pp.println(data);
+          return pp.toString();
+        }
+
+        @Override
+        public void logDetails(Logger statsLogger) {
+          statsLogger.info(getDetails());
+        }
+      };
     }
     return stats;
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    Map<String,Object> map = new LinkedHashMap<String,Object>();
+  public Map<String, ?> getStateMap() {
+    Map<String,Object> map = new LinkedHashMap<>();
     map.put("className", this.getClass().getName());
     map.put("monitor", MONITOR);
-    Map<String,Object> stageMap = new LinkedHashMap<String,Object>();
+    List<Object> list = new ArrayList<>(stages.size());
     for (Stage<?> stage : stages.values()) {
-      stageMap.put(stage.getName(), stage.getSink().size());
+      list.add(stage.getState());
     }
-    map.put("stages", stageMap);
-    return out.println(map);
+    map.put("stages", list);
+    return map;
   }
 }

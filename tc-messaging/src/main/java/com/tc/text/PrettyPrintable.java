@@ -18,7 +18,13 @@
  */
 package com.tc.text;
 
+import java.util.Map;
+
 public interface PrettyPrintable {
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out);
+  default PrettyPrinter prettyPrint(PrettyPrinter out) {
+    return out.println(getStateMap());
+  }
+  
+  public Map<String, ?> getStateMap();
 }

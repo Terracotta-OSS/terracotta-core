@@ -47,15 +47,6 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    */
   public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException;
 
-  /**
-   * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
-   * otherwise it'll drop the message on the floor.
-   *
-   * @param entityDescriptor the entity and instance to receive the message.
-   * @param message opaque message
-   */
-  void handleMessage(ClientInstanceID returnMessage, byte[] message);
-
   byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException;
   
   boolean destroyEntity(EntityID entityID, long version) throws EntityException;

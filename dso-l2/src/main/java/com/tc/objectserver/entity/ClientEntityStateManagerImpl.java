@@ -22,50 +22,71 @@ package com.tc.objectserver.entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.util.Assert;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 public class ClientEntityStateManagerImpl implements ClientEntityStateManager {
-  private final Map<ClientDescriptorImpl, EntityID> clientStates = new ConcurrentHashMap<>();
+  private final Map<ClientDescriptorImpl, FetchID> clientStates = new ConcurrentHashMap<>();
   private static final Logger logger    = LoggerFactory.getLogger(ClientEntityStateManagerImpl.class);
 
   public ClientEntityStateManagerImpl() {
   }
 
   @Override
-  public boolean addReference(ClientDescriptorImpl instance, EntityID eid) {
-    EntityID check = clientStates.put(instance, eid);
+  public boolean addReference(ClientDescriptorImpl instance, FetchID eid) {
+    Assert.assertFalse(instance.getClientInstanceID() == ClientInstanceID.NULL_ID);
+    FetchID check = clientStates.put(instance, eid);
     return Objects.isNull(check);
   }
 
   @Override
   public boolean removeReference(ClientDescriptorImpl descriptor) {
-    EntityID eid = clientStates.remove(descriptor);
+    Assert.assertFalse(descriptor.getClientInstanceID() == ClientInstanceID.NULL_ID);
+    FetchID eid = clientStates.remove(descriptor);
     return Objects.nonNull(eid);
   }
 
   @Override
-  public boolean verifyNoReferences(EntityID eid) {
+  public boolean verifyNoEntityReferences(FetchID eid) {
     return !clientStates.values().stream().anyMatch((led)->led.equals(eid));
   }
 
   @Override
-  public List<VoltronEntityMessage> clientDisconnected(ClientID client) {
-    ArrayList<VoltronEntityMessage> msgs = new ArrayList<>();
+  public boolean verifyNoClientReferences(ClientID eid) {
+    return !clientStates.keySet().stream().anyMatch((led)->led.getNodeID().equals(eid));
+  }
+  
+  @Override
+  public List<FetchID> clientDisconnected(ClientID client) {
+    return clientStates.entrySet().stream()
+        .filter(e->e.getKey().getNodeID().equals(client))
+        .map(e->e.getValue())
+        .distinct()
+        .collect(Collectors.toList());
+  }
+  
+  @Override
+  public List<EntityDescriptor> clientDisconnectedFromEntity(ClientID client, FetchID entity) {
+    return clientStates.entrySet().stream()
+        .filter(e->(e.getKey().getNodeID().equals(client) && e.getValue().equals(entity)))
+        .map(e->EntityDescriptor.createDescriptorForInvoke(e.getValue(), e.getKey().getClientInstanceID()))
+        .collect(Collectors.toList());
+  }
 
-    clientStates.entrySet().stream().filter(e->e.getKey().getNodeID().equals(client)).forEach(e->
-            //  don't care about version for release.  Is this OK?
-      msgs.add(new ReferenceMessage(client, false, EntityDescriptor.createDescriptorForFetch(e.getValue(), EntityDescriptor.INVALID_VERSION, e.getKey().getClientInstanceID()), null))
-    );
+  @Override
+  public Set<ClientID> clearClientReferences() {
+    Set<ClientID> msgs = clientStates.keySet().stream().map(ClientDescriptorImpl::getNodeID).distinct().collect(Collectors.toSet());
+    clientStates.clear();
     return msgs;
   }
 }

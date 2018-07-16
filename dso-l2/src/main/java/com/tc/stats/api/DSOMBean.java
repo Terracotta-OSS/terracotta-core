@@ -40,8 +40,6 @@ public interface DSOMBean extends Stats, TerracottaMBean {
 
   ObjectName[] getClients();
 
-  ClassInfo[] getClassInfo();
-
   Map<ObjectName, Long> getAllPendingTransactionsCount();
 
   long getPendingTransactionsCount();

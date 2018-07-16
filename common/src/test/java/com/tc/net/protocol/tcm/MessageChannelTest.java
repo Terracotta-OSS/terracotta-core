@@ -87,13 +87,6 @@ public class MessageChannelTest extends TCTestCase {
   AtomicReference<Throwable>   error         = new AtomicReference<Throwable>(null);
   SequenceGenerator            sq            = new SequenceGenerator();
 
-  // Disabled until MNK-3330
-  public MessageChannelTest() {
-    if (Os.isWindows() && Vm.isJDK17()) {
-      timebombTest("2033-01-30");
-    }
-  }
-
   protected void setUp(ProductID product) throws Exception {
     setUp(product, false);
   }
@@ -176,10 +169,10 @@ try {
             // But i don't give you back anything
             // as i am Dumb.
           }
-        }, null);
+        }, null, (t)->true);
       } else {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
-            new DefaultConnectionIdFactory());
+            new DefaultConnectionIdFactory(), (t)->true);
       }
       lsnr.start(new HashSet<ClientID>());
       connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
@@ -328,10 +321,10 @@ try {
                                            // But i don't give you back anything
                                            // as i am Dumb.
                                          }
-                                       }, null);
+                                       }, null, (t)->true);
     } else {
       rv = serverComms1.createListener(new TCSocketAddress(0), false,
-                                       new DefaultConnectionIdFactory());
+                                       new DefaultConnectionIdFactory(), (t)->true);
     }
 
     rv.start(new HashSet<ClientID>());

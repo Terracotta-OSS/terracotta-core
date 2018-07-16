@@ -18,32 +18,35 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
-import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.exception.EntityException;
 
 
 public class PlatformEntity implements ManagedEntity {
   public static EntityID PLATFORM_ID = new EntityID("platform", "root");
+  public static FetchID PLATFORM_FETCH_ID = new FetchID(0L);
   public static long VERSION = 1L;
+  private final Sink<VoltronEntityMessage> messageSelf;
   public final RequestProcessor processor;
   private boolean isActive;
 
-  public PlatformEntity(RequestProcessor processor) {
+  public PlatformEntity(Sink<VoltronEntityMessage>messageSelf, RequestProcessor processor) {
     this.processor = processor;
+    this.messageSelf = messageSelf;
     // We always start in the passive state.
     this.isActive = false;
   }
@@ -59,16 +62,10 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Runnable received, Consumer<byte[]> complete, Consumer<EntityException> exception) {
+  public void addRequestMessage(ServerEntityRequest request, MessagePayload payload, ResultCapture capture) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    ActivePassiveAckWaiter waiter = processor.scheduleRequest(PLATFORM_ID, VERSION, FetchID.NULL_ID, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
-    return new SimpleCompletion() {
-      @Override
-      public void waitForCompletion() {
-        waiter.waitForCompleted();
-      }
-    };
+    processor.scheduleRequest(false, PLATFORM_ID, VERSION, PLATFORM_FETCH_ID, request, payload, (w)-> {capture.complete(payload.getRawPayload());}, false, payload.getConcurrency());    
   }
 
   @Override
@@ -109,9 +106,10 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void promoteEntity() {
+  public Runnable promoteEntity() {
     // Set us to active mode.
     this.isActive = true;
+    return  null;
   }
 
   @Override
@@ -145,13 +143,8 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void setSuccessfulCreateListener(CreateListener listener) {
+  public void addLifecycleListener(LifecycleListener listener) {
     // Not expected on this entity.
     Assert.assertFalse(true);
-  }
-
-  @Override
-  public void notifyDestroyed(ClientSourceId sourceid) {
-
   }
 }

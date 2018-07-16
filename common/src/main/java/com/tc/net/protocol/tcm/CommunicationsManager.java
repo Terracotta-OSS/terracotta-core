@@ -21,14 +21,17 @@ package com.tc.net.protocol.tcm;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.ProductID;
+import java.util.function.Predicate;
 
 /**
  * CommsMgr provides Listener and Channel endpoints for exchanging <code>TCMessage</code> type messages
  */
-public interface CommunicationsManager {
+public interface CommunicationsManager extends PrettyPrintable {
 
   static final String COMMSMGR_GROUPS = "L2_L2";
   static final String COMMSMGR_SERVER = "L2_L1";
@@ -54,8 +57,8 @@ public interface CommunicationsManager {
   public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout);
     
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
-                                        ConnectionIDFactory connectionIdFactory);
+                                        ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation);
 
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
-                                        NodeNameProvider activeNameProvider);
+                                        ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider);
 }

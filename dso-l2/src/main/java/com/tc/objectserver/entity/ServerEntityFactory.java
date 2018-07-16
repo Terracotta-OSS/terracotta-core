@@ -41,28 +41,27 @@ package com.tc.objectserver.entity;
 import com.tc.classloader.PermanentEntity;
 import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.objectserver.impl.PermanentEntityParser;
+import com.tc.object.EntityID;
+
 import java.util.ArrayList;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.EntityServerService;
 
 import java.util.List;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.exception.EntityNotFoundException;
 
 /**
  * @author twu
  */
 public class ServerEntityFactory {
-  public static <T extends EntityServerService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws ClassNotFoundException {
-    return getService(typeName, Thread.currentThread().getContextClassLoader());
+  private final ServiceLocator locator;
+  
+  public ServerEntityFactory(ServiceLocator loader) {
+    this.locator = loader;
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends EntityServerService<? extends EntityMessage, ? extends EntityResponse>> T getService(String typeName, ClassLoader classLoader) throws ClassNotFoundException {
-    List<Class<? extends EntityServerService>> serviceLoader = ServiceLocator.getImplementations(EntityServerService.class, classLoader);
+  public <T extends EntityServerService<? extends ActiveServerEntity, ? extends PassiveServerEntity>> T getService(String typeName) throws ClassNotFoundException {
+    List<Class<? extends EntityServerService>> serviceLoader = locator.getImplementations(EntityServerService.class);
     for (Class<? extends EntityServerService> serverService : serviceLoader) {
       try {
         EntityServerService instance = serverService.newInstance();
@@ -78,20 +77,30 @@ public class ServerEntityFactory {
   }
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static List<VoltronEntityMessage> getAnnotatedEntities(ClassLoader classLoader) {
+  public List<VoltronEntityMessage> getAnnotatedEntities() {
     List<VoltronEntityMessage> msgs = new ArrayList<>();
-    List<Class<? extends EntityServerService>> serviceLoader = ServiceLocator.getImplementations(EntityServerService.class, classLoader);
+    List<Class<? extends EntityServerService>> serviceLoader = this.locator.getImplementations(EntityServerService.class);
     for (Class<? extends EntityServerService> serverService : serviceLoader) {
         if (serverService.isAnnotationPresent(PermanentEntity.class)) {
-          PermanentEntity pe = serverService.getAnnotation(PermanentEntity.class);
-          String type = pe.type();
-          String[] names = pe.names();
-          int version = pe.version();
-          for (String name : names) {
-            msgs.add(PermanentEntityParser.createMessage(type, name, version, new byte[0]));
+          PermanentEntity[] pe = serverService.getAnnotationsByType(PermanentEntity.class);
+          for (PermanentEntity p : pe) {
+            String type = p.type();
+            String[] names = p.names();
+            String single = p.name();
+            int version = p.version();
+            if (single != null && single.length() > 0) {
+              msgs.add(createMessage(type, single, version, new byte[0]));
+            }
+            for (String name : names) {
+              msgs.add(createMessage(type, name, version, new byte[0]));
+            }
           }
         }
     }
     return msgs;
   }  
+
+  public static VoltronEntityMessage createMessage(String type, String name, int version, byte[] data) {
+    return new CreateSystemEntityMessage(new EntityID(type, name),version, data);
+  }
 }

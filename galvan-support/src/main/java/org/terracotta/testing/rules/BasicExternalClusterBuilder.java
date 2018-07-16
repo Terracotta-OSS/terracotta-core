@@ -14,9 +14,10 @@ public class BasicExternalClusterBuilder {
   private List<File> serverJars = Collections.emptyList();
   private String namespaceFragment = "";
   private String serviceFragment = "";
-  private String entityFragment = "";
   private int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
+  private int failoverPriorityVoterCount = ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
   private Properties tcProperties = new Properties();
+  private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
 
 
@@ -67,16 +68,17 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
-  public BasicExternalClusterBuilder withEntityFragment(final String entityFragment) {
-    if (entityFragment == null) {
-      throw new NullPointerException("Entity fragment must be non-null");
-    }
-    this.entityFragment = entityFragment;
+  public BasicExternalClusterBuilder withClientReconnectWindowTime(final int clientReconnectWindowTime) {
+    this.clientReconnectWindowTime = clientReconnectWindowTime;
     return this;
   }
 
-  public BasicExternalClusterBuilder withClientReconnectWindowTime(final int clientReconnectWindowTime) {
-    this.clientReconnectWindowTime = clientReconnectWindowTime;
+  /**
+   * Zero or any positive value will tune the cluster for consistency and set the respective voter count as provided.
+   * A value of -1 will tune the cluster for availability. This is the default.
+   */
+  public BasicExternalClusterBuilder withFailoverPriorityVoterCount(final int failoverPriorityVoterCount) {
+    this.failoverPriorityVoterCount = failoverPriorityVoterCount;
     return this;
   }
 
@@ -90,13 +92,23 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
+  public BasicExternalClusterBuilder withSystemProperties(Properties props) {
+    this.systemProperties.putAll(props);
+    return this;
+  }
+
+  public BasicExternalClusterBuilder withSystemProperty(String key, String value) {
+    this.systemProperties.put(key, value);
+    return this;
+  }
+  
   public BasicExternalClusterBuilder logConfigExtensionResourceName(String logConfigExt) {
     this.logConfigExt = logConfigExt;
     return this;
   }
 
   public BasicExternalCluster build() {
-    return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment, entityFragment,
-        clientReconnectWindowTime, tcProperties, logConfigExt);
+    return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
+        clientReconnectWindowTime, failoverPriorityVoterCount, tcProperties, systemProperties, logConfigExt);
   }
 }

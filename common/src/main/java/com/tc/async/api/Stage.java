@@ -18,7 +18,7 @@
  */
 package com.tc.async.api;
 
-import com.tc.text.PrettyPrintable;
+import java.util.Map;
 
 /**
  * @author steve
@@ -37,4 +37,11 @@ public interface Stage<EC> {
     
   public String getName();
 
+  public void clear();
+  
+  public boolean isEmpty();
+  
+  public int size();
+  
+  public Map<String, ?> getState();
 }

@@ -18,9 +18,8 @@
  */
 package com.terracotta.connection;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.ClientEntityManager;
-import java.util.concurrent.TimeoutException;
+import com.terracotta.connection.api.DetailedConnectionException;
 
 
 public interface TerracottaInternalClient {
@@ -28,7 +27,7 @@ public interface TerracottaInternalClient {
   /**
    * Initialize the client. This will start the client to connect to the L2.
    */
-  void init() throws TimeoutException, InterruptedException, ConfigurationSetupException;
+  void init() throws DetailedConnectionException;
 
   /**
    * Shuts down the client

@@ -23,11 +23,9 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.net.NIOWorkarounds;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.WireProtocolGroupMessageImpl;
@@ -40,7 +38,6 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.SetOnceRef;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -51,20 +48,19 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLHandshakeException;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -90,7 +86,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final TCConnectionManagerImpl         parent;
   private final TCConnectionEventCaller         eventCaller                 = new TCConnectionEventCaller(logger);
   private final AtomicLong                      lastDataWriteTime           = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder                      messagesWritten           = new LongAdder();
   private final AtomicLong                      lastDataReceiveTime         = new AtomicLong(System.currentTimeMillis());
+  private final LongAdder                      messagesRead           = new LongAdder();
   private final AtomicLong                      connectTime                 = new AtomicLong(NO_CONNECT_TIME);
   private final List<TCConnectionEventListener> eventListeners              = new CopyOnWriteArrayList<TCConnectionEventListener>();
   private final TCProtocolAdaptor               protocolAdaptor;
@@ -125,17 +123,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     logger.debug("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
   }
 
-  // for creating unconnected client connections
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
                    TCConnectionManagerImpl managerJDK14, CoreNIOServices nioServiceThread,
-                   SocketParams socketParams, TCSecurityManager securityManager) {
-    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, securityManager);
+                   SocketParams socketParams, BufferManagerFactory bufferManagerFactory) {
+    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, bufferManagerFactory);
   }
 
   TCConnectionImpl(TCConnectionEventListener listener, TCProtocolAdaptor adaptor, SocketChannel ch,
                    TCConnectionManagerImpl parent, CoreNIOServices nioServiceThread,
-                   SocketParams socketParams, TCSecurityManager securityManager) {
-
+                   SocketParams socketParams, BufferManagerFactory bufferManagerFactory) {
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
 
@@ -148,11 +144,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.channel = ch;
 
-    if (securityManager != null) {
-      this.bufferManagerFactory = securityManager.getBufferManagerFactory();
-    } else {
-      this.bufferManagerFactory = new ClearTextBufferManagerFactory();
-    }
+    this.bufferManagerFactory = bufferManagerFactory;
 
     if (ch != null) {
       socketParams.applySocketParams(ch.socket());
@@ -164,6 +156,26 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.socketParams = socketParams;
     this.commWorker = nioServiceThread;
   }
+  
+  @Override
+  public Map<String, ?> getState() {
+    Map<String, Object> state = new LinkedHashMap<>();
+    state.put("localAddress", this.getLocalAddress());
+    state.put("remoteAddress", this.getRemoteAddress());
+    state.put("totalRead", this.totalRead.get());
+    state.put("totalWrite", this.totalWrite.get());
+    state.put("connectTime", new Date(this.getConnectTime()));
+    state.put("receiveIdleTime", this.getIdleReceiveTime());
+    state.put("idleTime", this.getIdleTime());
+    state.put("messageWritten", this.messagesWritten.longValue());
+    state.put("messageRead", this.messagesRead.longValue());
+    state.put("worker", commWorker.getName());
+    state.put("closed", isClosed());
+    state.put("connected", isConnected());
+    state.put("closePending", isClosePending());
+    state.put("transportConnected", isTransportEstablished());
+    return state;
+  }
 
   public void setCommWorker(CoreNIOServices worker) {
     this.commWorker = worker;
@@ -172,6 +184,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private void closeImpl(Runnable callback) {
     Assert.assertTrue(this.closed.isSet());
     this.transportEstablished.set(false);
+    try {
+      if (this.bufferManager != null) {
+        this.bufferManager.close();
+      }
+    } catch (EOFException eof) {
+      logger.debug("closed", eof);
+    } catch (IOException ioe) {
+      logger.warn("failed to close buffer manager", ioe);
+    }
     try {
       if (this.channel != null) {
         this.commWorker.cleanupChannel(this.channel, callback);
@@ -197,6 +218,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   protected void finishConnect() throws IOException {
     Assert.assertNotNull("channel", this.channel);
+    Assert.assertNotNull("commWorker", this.commWorker);
     installBufferManager();
     recordSocketAddress(this.channel.socket());
     setConnected(true);
@@ -211,25 +233,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         newSocket = createChannel();
         newSocket.configureBlocking(true);
         newSocket.socket().connect(inetAddr, timeout);
+        newSocket.configureBlocking(false);
         break;
       } catch (final SocketTimeoutException ste) {
         Assert.eval(this.commWorker != null);
         this.commWorker.cleanupChannel(newSocket, null);
         throw new TCTimeoutException("Timeout of " + timeout + "ms occured connecting to " + addr, ste);
-      } catch (final ClosedSelectorException cse) {
-        if (NIOWorkarounds.connectWorkaround(cse)) {
-          logger.warn("Retrying connect to " + addr + ", attempt " + i);
-          ThreadUtil.reallySleep(500);
-          continue;
-        }
-        throw cse;
       }
     }
-
     this.channel = newSocket;
-    newSocket.configureBlocking(false);
-    Assert.eval(this.commWorker != null);
-    this.commWorker.requestReadInterest(this, newSocket);
   }
   
   private void installBufferManager() throws IOException {
@@ -295,10 +307,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private int doReadInternal() throws IOException {
     try {
       bufferManager.recvToBuffer();
-    } catch (SSLException ssle) {
-      logger.error("SSL error: " + ssle);
-      closeReadOnException(ssle);
-      return 0;
     } catch (IOException ioe) {
       closeReadOnException(ioe);
       return 0;
@@ -317,6 +325,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     } while (read != 0);
 
     this.totalRead.addAndGet(totalBytesReadFromBuffer);
+    this.messagesRead.increment();
     return totalBytesReadFromBuffer;
   }
 
@@ -349,17 +358,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       int sent;
       try {
         sent = bufferManager.sendFromBuffer();
-      } catch (SSLHandshakeException she) {
-        logger
-            .error("SSL handshake error: unable to find valid certification path to requested target, closing connection.");
-        closeWriteOnException(she);
-        break;
-      } catch (SSLException ssle) {
-        logger.error("SSL error: " + ssle);
-        closeWriteOnException(ssle);
-        break;
       } catch (IOException ioe) {
         closeWriteOnException(ioe);
+        break;
+      }
+      if (this.isClosePending() || this.isClosed()) {
+        logger.debug("stop write due to closed connection");
         break;
       }
       channelWritten += sent;
@@ -594,6 +598,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public final void asynchClose() {
     if (this.closed.attemptSet()) {
       closeImpl(createCloseCallback(null));
+    } else {
+      this.parent.removeConnection(this);
     }
   }
 
@@ -616,7 +622,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return isClosed();
   }
 
-  private final Runnable createCloseCallback(final CountDownLatch latch) {
+  private Runnable createCloseCallback(final CountDownLatch latch) {
     final boolean fireClose = isConnected();
 
     return new Runnable() {
@@ -724,6 +730,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                                                                                        "Connection closed or already connected"); }
     connectImpl(addr, timeout);
     finishConnect();
+    Assert.assertNotNull(this.commWorker);
+    Assert.assertNotNull(this.bufferManager);
+    this.commWorker.requestReadInterest(this, this.channel);
   }
 
   @Override
@@ -743,28 +752,36 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   @Override
   public final void putMessage(TCNetworkMessage message) {
     this.lastDataWriteTime.set(System.currentTimeMillis());
-
+    this.messagesWritten.increment();
     putMessageImpl(message);
   }
 
   @Override
   public final TCSocketAddress getLocalAddress() {
-    return this.localSocketAddress.get();
+    if (this.localSocketAddress.isSet()) {
+      return this.localSocketAddress.get();
+    } else {
+      return null;
+    }
   }
 
   @Override
   public final TCSocketAddress getRemoteAddress() {
-    return this.remoteSocketAddress.get();
+    if (this.remoteSocketAddress.isSet()) {
+      return this.remoteSocketAddress.get();
+    } else {
+      return null;
+    }
   }
 
-  private final void setConnected(boolean connected) {
+  private void setConnected(boolean connected) {
     if (connected) {
       this.connectTime.set(System.currentTimeMillis());
     }
     this.connected.set(connected);
   }
 
-  private final void recordSocketAddress(Socket socket) throws IOException {
+  private void recordSocketAddress(Socket socket) throws IOException {
     if (socket != null) {
       final InetAddress localAddress = socket.getLocalAddress();
       final InetAddress remoteAddress = socket.getInetAddress();
@@ -900,8 +917,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         }
         this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
       } else {
-        if (logger.isInfoEnabled()) {
+        if (!isClosed()) {
           logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
+        } else if  (logger.isDebugEnabled()) {
+          logger.debug("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
         }
 
         this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
@@ -929,7 +948,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
           logger.info("error writing to channel " + this.channel.toString() + ": " + ioe.getMessage());
         }
 
-        if (NIOWorkarounds.windowsWritevWorkaround(ioe)) { return; }
         this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
       }
     }

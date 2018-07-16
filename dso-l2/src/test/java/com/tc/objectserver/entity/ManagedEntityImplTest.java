@@ -20,17 +20,18 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.api.ServerEntityResponse;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
@@ -44,7 +45,6 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.terracotta.entity.ActiveServerEntity;
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
@@ -84,6 +84,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class ManagedEntityImplTest {
@@ -98,9 +99,10 @@ public class ManagedEntityImplTest {
   private ActiveServerEntity<EntityMessage, EntityResponse> activeServerEntity;
   private PassiveServerEntity<EntityMessage, EntityResponse> passiveServerEntity;
   private Sink             executionSink;
+  private Sink             messageSelf;
   private RequestProcessor requestMulti;
   private ClientEntityStateManager clientEntityStateManager;
-  private ITopologyEventCollector eventCollector;
+  private ManagementTopologyEventCollector eventCollector;
   private ClientID nodeID;
   private ClientDescriptorImpl clientDescriptor;
   private static ExecutorService exec;
@@ -134,7 +136,7 @@ public class ManagedEntityImplTest {
     
     Mockito.doAnswer((invocation) -> {
       TestingResponse helper = mockResponse();
-      invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), null, helper::complete, helper::failure));
+      invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), helper));
       return null;
     }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
     
@@ -150,21 +152,22 @@ public class ManagedEntityImplTest {
       System.out.println(invoke.getArguments()[0]);
       exec.submit((Runnable)invoke.getArguments()[0]);
       return null;
-    }).when(executionSink).addMultiThreaded(Matchers.any());
+    }).when(executionSink).addToSink(Matchers.any());
     
     activeServerEntity = mock(ActiveServerEntity.class);
     passiveServerEntity = mock(PassiveServerEntity.class);
     serverEntityService = getServerEntityService(this.activeServerEntity, this.passiveServerEntity);
     clientEntityStateManager = mock(ClientEntityStateManager.class);
-    when(clientEntityStateManager.addReference(any(ClientDescriptorImpl.class), any(EntityID.class))).thenReturn(Boolean.TRUE);
+    messageSelf = mock(Sink.class);
+    when(clientEntityStateManager.addReference(any(ClientDescriptorImpl.class), any(FetchID.class))).thenReturn(Boolean.TRUE);
     when(clientEntityStateManager.removeReference(any(ClientDescriptorImpl.class))).thenReturn(Boolean.TRUE);
-    eventCollector = mock(ITopologyEventCollector.class);
+    eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     // We will start this in a passive state, as the general test case.
     boolean isInActiveState = false;
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, isInActiveState, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, isInActiveState, true);
     clientDescriptor = new ClientDescriptorImpl(nodeID, clientInstanceID);
-    activeInvokeContext=new ActiveInvokeContextImpl(clientDescriptor, 1, 1);
-    passiveInvokeContext=new InvokeContextImpl(new ClientSourceIdImpl(nodeID.toLong()), 1, 1);
+    activeInvokeContext=new ActiveInvokeContextImpl(clientDescriptor, 1, 1, 1);
+    passiveInvokeContext=new InvokeContextImpl(new ClientSourceIdImpl(nodeID.toLong()), 1, 1, 1);
     invokeOnTransactionHandler(()->Thread.currentThread().setName(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE));
   }
   
@@ -201,7 +204,7 @@ public class ManagedEntityImplTest {
 
       @Override
       public Set<Integer> getKeysForSynchronization() {
-        return Collections.emptySet();
+        return Collections.singleton(1);
       }
     });
     when(entityService.getMessageCodec()).thenReturn(new MessageCodec<EntityMessage, EntityResponse>() {
@@ -235,9 +238,9 @@ public class ManagedEntityImplTest {
     TestingResponse response = mockResponse();
     String config = "foo";
     MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     promote();
 
     // first create a passive entity and then promote
@@ -245,7 +248,7 @@ public class ManagedEntityImplTest {
     TestingResponse response2 = mockResponse();
     String config2 = "foo2";
     MessagePayload arg2 = mockReconfigurePayload(config2);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request2, arg2, null, response2::complete, response2::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request2, arg2, response2));
     response2.waitFor();
     verify(response2).complete(Mockito.any());
     
@@ -261,9 +264,9 @@ public class ManagedEntityImplTest {
     TestingResponse response = mockResponse();
     String config = "foo";
     MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     promote();
 
     activeServerEntity.notifyDestroyed(new ClientSourceIdImpl(10));
@@ -273,7 +276,7 @@ public class ManagedEntityImplTest {
     ServerEntityRequest passiveInvoke = mockExecutionInvokeRequest(ExecutionStrategy.Location.PASSIVE);
     MessagePayload loc = mockLocationPayload(ExecutionStrategy.Location.PASSIVE);
     TestingResponse piResp = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, null, piResp::complete, piResp::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, piResp));
     piResp.waitFor();
 
     passiveServerEntity.notifyDestroyed(new ClientSourceIdImpl(10));
@@ -284,20 +287,20 @@ public class ManagedEntityImplTest {
   @Test 
   public void testPromotePermanentEntity() throws Exception {
     // first create a passive entity and then promote
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, false);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, false);
     ServerEntityRequest request = mockCreateEntityRequest();
     TestingResponse response = mockResponse();
     String config = "foo";
     MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     promote();
 
     ServerEntityRequest request2 = mockDestroyEntityRequest();
     TestingResponse response2 = mockResponse();
     MessagePayload arg2 = mockInvokePayload();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request2, arg2, null, response2::complete, response2::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request2, arg2, response2));
     response2.waitFor();
     verify(response2).failure(Mockito.any());
   }
@@ -309,14 +312,14 @@ public class ManagedEntityImplTest {
     TestingResponse response = mockResponse();
     String config = "foo";
     MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
 //  test passive execution
     ServerEntityRequest passiveInvoke = mockExecutionInvokeRequest(ExecutionStrategy.Location.PASSIVE);
     MessagePayload loc = mockLocationPayload(ExecutionStrategy.Location.PASSIVE);
     TestingResponse piResp = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, null, piResp::complete, piResp::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(passiveInvoke, loc, piResp));
     piResp.waitFor();
     verify(passiveServerEntity).invokePassive(eq(passiveInvokeContext), any(EntityMessage.class));
     
@@ -326,14 +329,14 @@ public class ManagedEntityImplTest {
     ServerEntityRequest activeNoop = mockExecutionInvokeRequest(ExecutionStrategy.Location.PASSIVE);
     MessagePayload anoLoc = mockLocationPayload(ExecutionStrategy.Location.PASSIVE);
     TestingResponse anoResp = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(activeNoop, anoLoc, null, anoResp::complete, anoResp::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(activeNoop, anoLoc, anoResp));
     anoResp.waitFor();
     verify(activeServerEntity, Mockito.never()).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
     
     ServerEntityRequest active = mockExecutionInvokeRequest(ExecutionStrategy.Location.ACTIVE);
     MessagePayload activeLoc = mockLocationPayload(ExecutionStrategy.Location.ACTIVE);
     TestingResponse aResp = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(active, activeLoc, null, aResp::complete, aResp::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(active, activeLoc, aResp));
     aResp.waitFor();
     verify(activeServerEntity).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
   }  
@@ -345,9 +348,9 @@ public class ManagedEntityImplTest {
     TestingResponse response = mockResponse();
     String config = "foo";
     MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
     invokeOnTransactionHandler(()->{try {managedEntity.promoteEntity();} catch (ConfigurationException ce) {throw new RuntimeException(ce);}});
     
     // We expected to see this as a result of the promotion.
@@ -357,9 +360,9 @@ public class ManagedEntityImplTest {
   @Test
   public void testNoop() throws Exception {
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
-    verify(response).complete(Matchers.any());
+    verify(response).complete();
   }
 
   @Test
@@ -368,10 +371,10 @@ public class ManagedEntityImplTest {
     ServerEntityRequest request = mockCreateEntityRequest();
     TestingResponse response = mockResponse();
     MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
     verify(serverEntityService).createPassiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg.getRawPayload()));
-    verify(response).complete(Mockito.any());
+    verify(response).complete();
   }
 
   @Test
@@ -379,8 +382,8 @@ public class ManagedEntityImplTest {
     ServerEntityRequest request = mockCreateEntityRequest();
     TestingResponse response = mockResponse();
 
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), null,  null, null));
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), null));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), response));
     response.waitFor();
     verify(response).failure(any(EntityAlreadyExistsException.class));
     // No retire on passive.
@@ -393,8 +396,8 @@ public class ManagedEntityImplTest {
     promote();
 // We want to pretend that we are the expected thread.
     ServerEntityRequest request = mockCreateEntityRequest();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), null, null, null));
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), response));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), response));
     response.waitFor();
     verify(response).failure(any(EntityAlreadyExistsException.class));
     verify(response, never()).complete();
@@ -408,9 +411,9 @@ public class ManagedEntityImplTest {
     
     ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest request = mockGetRequest(requester);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockInvokePayload(), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockInvokePayload(), response));
     response.waitFor();
-    verify(clientEntityStateManager, never()).addReference(any(ClientDescriptorImpl.class), any(EntityID.class));
+    verify(clientEntityStateManager, never()).addReference(any(ClientDescriptorImpl.class), any(FetchID.class));
     verify(response).failure(Mockito.any());
   }
 
@@ -419,15 +422,15 @@ public class ManagedEntityImplTest {
     TestingResponse response = mockResponse();
     MessagePayload config = mockCreatePayload("foo");
     TestingResponse resp = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), config, null, resp::complete, resp::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), config, resp));
     resp.waitFor();
     promote();
 
     ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest request = mockGetRequest(requester);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockInvokePayload(),null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockInvokePayload(),response));
     response.waitFor();
-    verify(clientEntityStateManager).addReference(requester, entityID);
+    verify(clientEntityStateManager).addReference(requester, new FetchID(consumerID));
     ArgumentCaptor<byte[]> data = ArgumentCaptor.forClass(byte[].class);
     verify(response).complete(data.capture());
     byte[] raw = data.getValue();
@@ -494,9 +497,9 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true);
     TestingResponse resp = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, resp::complete, resp::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), resp));
     resp.waitFor();
         
     promote();
@@ -506,7 +509,7 @@ public class ManagedEntityImplTest {
       (new
                                                                                                       EntityResponse() {});
     ServerEntityRequest invokeRequest = mockInvokeRequest();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(invokeRequest, mockInvokePayload(), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(invokeRequest, mockInvokePayload(), response));
     response.waitFor();
     verify(activeServerEntity).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
     verify(response).complete(returnValue);
@@ -559,8 +562,8 @@ public class ManagedEntityImplTest {
         return Collections.singleton(1);
       }
     });
-    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
+    managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true);
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
     
     promote();
@@ -571,23 +574,22 @@ public class ManagedEntityImplTest {
     CyclicBarrier barrier = new CyclicBarrier(2);
 
     when(activeServerEntity.invokeActive(eq(activeInvokeContext), any(EntityMessage.class))).then(
-      (InvocationOnMock
-                                                                                             invocation) -> {
-      barrier.await();
-      return new EntityResponse() {};
-    });
+      (InvocationOnMock invocation) -> {
+        barrier.await();
+        return new EntityResponse() {};
+      });
 
     TestingResponse fin = mockResponse();
     TestingResponse helper = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(deferInvoke, mockInvokePayload(), null, helper::complete, helper::failure));
-    invokeOnTransactionHandler(()->{System.out.println(mgmtInvoke); managedEntity.addRequestMessage(mgmtInvoke, mockInvokePayload(), null, fin::complete, fin::failure);});
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(deferInvoke, mockInvokePayload(), helper));
+    invokeOnTransactionHandler(()->{System.out.println(mgmtInvoke); managedEntity.addRequestMessage(mgmtInvoke, mockInvokePayload(), fin);});
     barrier.await();
     barrier.await();
     fin.waitFor();
     
     verify(loopback, times(1)).completed(Matchers.any(), Matchers.any(FetchID.class), Matchers.any());
     verify(activeServerEntity, times(2)).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
-    verify(response, times(1)).complete(any());
+    verify(response, times(1)).complete();
     verify(fin, times(1)).complete(any());
   }
   
@@ -646,8 +648,8 @@ public class ManagedEntityImplTest {
     when(this.serverEntityService.getConcurrencyStrategy(any(byte[].class))).thenReturn(basic);
     when(this.serverEntityService.getMessageCodec()).thenReturn(codec);
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, requestMulti, serverEntityService, false, true));
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity = new ManagedEntityImpl(entityID, version, consumerID, loopback, serviceRegistry, clientEntityStateManager, eventCollector, messageSelf, requestMulti, serverEntityService, false, true));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
 
     promote();
@@ -665,24 +667,26 @@ public class ManagedEntityImplTest {
           queued.add((Integer)request.getSchedulingKey());
         }
         return null;
-    }).when(executionSink).addMultiThreaded(Matchers.any());
+    }).when(executionSink).addToSink(Matchers.any());
 
     Mockito.doAnswer(invocation->{
         TestingResponse resp = mockResponse();
-        managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), null, resp::complete, resp::failure);
+        managedEntity.addRequestMessage(mockLocalFlushRequest(), MessagePayload.emptyPayload(), resp);
         return mock(RequestProcessor.EntityRequest.class);
       }).when(loopback).completed(Mockito.any(EntityID.class), Mockito.any(FetchID.class), Mockito.any(ServerEntityAction.class));
     
     invokeOnTransactionHandler(()->{EntityMessage cstring = mock(EntityMessage.class);
+      TestingResponse resp = mockResponse();
       when(cstring.toString()).thenReturn(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY));
-      managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring, true), null, null, null);
+      managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring, true), resp);
     });
     for (int x=1;x<=24;x++) {
       int key = (x == 12) ? ConcurrencyStrategy.MANAGEMENT_KEY : x;
       invokeOnTransactionHandler(()->{
+        TestingResponse resp = mockResponse();
         EntityMessage cstring = mock(EntityMessage.class);
         when(cstring.toString()).thenReturn(Integer.toString(key));
-        managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(key).getBytes(), cstring, true), null, null, null);
+        managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(key).getBytes(), cstring, true), resp);
       });
     }
 //  only thing in the queue should be the MGMT action    
@@ -720,9 +724,9 @@ public class ManagedEntityImplTest {
   public void testGetAndReleaseActive() throws Exception {
     // Create the entity.
     TestingResponse response1 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response1::complete, response1::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response1));
     response1.waitFor();
-    verify(response1).complete(Mockito.any());
+    verify(response1).complete();
     
     // Get and release are only relevant on the active.
     promote();
@@ -731,7 +735,7 @@ public class ManagedEntityImplTest {
     ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest getRequest = mockGetRequest(requester);
     TestingResponse response2 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(getRequest,  mockInvokePayload(), null, response2::complete, response2::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(getRequest,  mockInvokePayload(), response2));
     response2.waitFor();
     verify(activeServerEntity).connected(eq(requester));
     verify(response2).complete(Mockito.any());
@@ -739,10 +743,10 @@ public class ManagedEntityImplTest {
     // Run the RELEASE and verify that disconnected() call was received by the entity.
     ServerEntityRequest releaseRequest = mockReleaseRequest(requester);
     TestingResponse response3 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), null, response3::complete, response3::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), response3));
     response3.waitFor();
     verify(activeServerEntity).disconnected(eq(requester));
-    verify(response3).complete(Mockito.any());
+    verify(response3).complete();
   }
 
   
@@ -752,9 +756,9 @@ public class ManagedEntityImplTest {
     Assert.assertFalse(managedEntity.isActive());
     TestingResponse response1 = mockResponse();
     ServerEntityRequest createRequest = mockCreateEntityRequest();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(createRequest, MessagePayload.emptyPayload(), null, response1::complete, response1::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(createRequest, MessagePayload.emptyPayload(), response1));
     response1.waitFor();
-    verify(response1).complete(Mockito.any());
+    verify(response1).complete();
     // Verify that it was created as a passive.
     verify(passiveServerEntity).createNew();
     verify(activeServerEntity, never()).createNew();
@@ -766,7 +770,7 @@ public class ManagedEntityImplTest {
     // Verify that we fail to create it again.
     ServerEntityRequest failedCreateRequest = mockCreateEntityRequest();
     TestingResponse response2 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(failedCreateRequest, MessagePayload.emptyPayload(), null, response2::complete, response2::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(failedCreateRequest, MessagePayload.emptyPayload(), response2));
     response2.waitFor();
     verify(response2).failure(any(EntityAlreadyExistsException.class));
     verify(response2, never()).complete(Mockito.any());
@@ -775,7 +779,7 @@ public class ManagedEntityImplTest {
     ClientDescriptorImpl requester = new ClientDescriptorImpl(new com.tc.net.ClientID(0), new ClientInstanceID(1));
     ServerEntityRequest getRequest = mockGetRequest(requester);
     TestingResponse response3 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(getRequest, MessagePayload.emptyPayload(), null, response3::complete, response3::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(getRequest, MessagePayload.emptyPayload(), response3));
     response3.waitFor();
     verify(activeServerEntity).connected(eq(requester));
     verify(response3).complete(Mockito.any());
@@ -783,21 +787,33 @@ public class ManagedEntityImplTest {
     // Run the RELEASE and verify that disconnected() call was received by the entity.
     ServerEntityRequest releaseRequest = mockReleaseRequest(requester);
     TestingResponse response4 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), null, response4::complete, response4::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(releaseRequest, MessagePayload.emptyPayload(), response4));
     response4.waitFor();
     verify(activeServerEntity).disconnected(eq(requester));
-    verify(response4).complete(Mockito.any());
+    verify(response4).complete();
   }
 
   @Test
+  public void testSyncOrder() throws Exception {
+    managedEntity.promoteEntity();
+    managedEntity.startSync();
+    verify(activeServerEntity, never()).prepareKeyForSynchronizeOnPassive(any(), eq(1));
+    Mockito.doAnswer((inv)->{
+      verify(activeServerEntity).prepareKeyForSynchronizeOnPassive(any(), eq(1));
+      return null;
+    }).when(activeServerEntity).synchronizeKeyToPassive(any(), eq(1));
+    managedEntity.sync(mock(NodeID.class));
+  }
+  
+  @Test
   public void testDestroy() throws Exception {
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
     promote();
-    when(clientEntityStateManager.verifyNoReferences(Mockito.any())).thenReturn(Boolean.TRUE);
+    when(clientEntityStateManager.verifyNoEntityReferences(Mockito.any())).thenReturn(Boolean.TRUE);
     TestingResponse response2 = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY), MessagePayload.emptyPayload(), null, response2::complete, response2::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockRequestForAction(ServerEntityAction.DESTROY_ENTITY), MessagePayload.emptyPayload(), response2));
     response2.waitFor();
     verify(activeServerEntity).destroy();
   }
@@ -806,13 +822,19 @@ public class ManagedEntityImplTest {
   public void testCreateListener() throws Exception {
     // We will set this flag from inside the listener.
     final boolean[] indirectFlag = new boolean[1];
-    managedEntity.setSuccessfulCreateListener(new ManagedEntity.CreateListener(){
+    managedEntity.addLifecycleListener(new ManagedEntity.LifecycleListener(){
       @Override
-      public void entityCreationSucceeded(ManagedEntity sender) {
+      public void entityCreated(ManagedEntity sender) {
         indirectFlag[0] = true;
-      }});
+      }
+
+      @Override
+      public void entityDestroyed(ManagedEntity sender) {
+
+      }
+    });
     TestingResponse response = mockResponse();
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), null, response::complete, response::failure));
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), MessagePayload.emptyPayload(), response));
     response.waitFor();
     
     Assert.assertTrue(indirectFlag[0]);
@@ -935,7 +957,7 @@ public class ManagedEntityImplTest {
     return baos.toByteArray();
   }
   
-  public interface TestingResponse extends ServerEntityResponse {
+  public interface TestingResponse extends ResultCapture {
 
     void waitFor();
   

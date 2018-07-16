@@ -18,18 +18,17 @@
  */
 package com.terracotta.connection;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.net.core.SecurityInfo;
+import com.tc.object.ClientBuilder;
+import com.tc.object.ClientBuilderFactory;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
-import com.tc.object.StandardClientBuilder;
-import com.tc.util.ProductID;
+import com.tc.net.protocol.transport.ClientConnectionErrorDetails;
+import com.terracotta.connection.api.DetailedConnectionException;
 import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.connection.ConnectionPropertyNames;
 
 
 public class TerracottaInternalClientImpl implements TerracottaInternalClient {
@@ -38,6 +37,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   private final DistributedObjectClientFactory clientCreator;
+  private final ClientConnectionErrorDetails errorListener = new ClientConnectionErrorDetails();
   private volatile ClientHandle       clientHandle;
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
@@ -51,35 +51,41 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    boolean noreconnect = Boolean.valueOf(props.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT, "false"));  
-    String typeName = props.getProperty(ConnectionPropertyNames.CONNECTION_TYPE);  
-    ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
-    try {
-      if (typeName != null) {
-        product = ProductID.valueOf(typeName);
-      }
-    } catch (IllegalArgumentException arg) {
-      // do nothing, just stick with the default
-    }
-
-    return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(),
-         new StandardClientBuilder(product), 
-         null,  // no security features
-         new SecurityInfo(false, null),  // no security info
-         props);
+    ClientBuilder clientBuilder = ClientBuilderFactory.get().create(props);
+    clientBuilder.setClientConnectionErrorListener(errorListener);
+    return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(), clientBuilder, props);
   }
 
   @Override
-  public synchronized void init() throws TimeoutException, InterruptedException, ConfigurationSetupException {
+  public synchronized void init() throws DetailedConnectionException {
     if (isInitialized) { return; }
-
-    DistributedObjectClient client = clientCreator.create();
-    if (client != null) {
-      clientHandle = new ClientHandleImpl(client);
-      isInitialized = true;
-    } else {
-      throw new TimeoutException();
+    DistributedObjectClient client = null;
+    //Attach the internal collector in the listener
+    errorListener.attachCollector();
+    try {
+      try {
+        client = clientCreator.create();
+      } catch (Exception e){
+        throw new DetailedConnectionException(new Exception(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()), e), errorListener.getErrors());
+      }
+      if (client != null) {
+        clientHandle = new ClientHandleImpl(client);
+        isInitialized = true;
+      } else {
+        TimeoutException e = new TimeoutException(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()));
+        throw new DetailedConnectionException(e, errorListener.getErrors());
+      }
+    } finally {
+      /*
+      Remove the internal collector. if connection is made fine (i.e. clientCreator.create() returns non null), we do 
+      not to need to track the exceptions. If exception is thrown from invocation or clientCreator.create() is returned
+      null, then also internal collector should be detached. In both the cases, errorListener.getErrors() is called and
+      which effectively gives a copy of internal collector. After getting the copies, it makes sense to clean the 
+      internal collector. 
+       */
+      errorListener.removeCollector();
     }
+    
   }
 
   @Override

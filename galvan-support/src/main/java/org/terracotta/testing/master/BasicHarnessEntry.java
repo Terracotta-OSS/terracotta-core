@@ -46,9 +46,9 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     stripeConfiguration.extraJarPaths = harnessOptions.extraJarPaths;
     stripeConfiguration.namespaceFragment = harnessOptions.namespaceFragment;
     stripeConfiguration.serviceFragment = harnessOptions.serviceFragment;
-    stripeConfiguration.entityFragment = harnessOptions.entityFragment;
     stripeConfiguration.clientReconnectWindowTime = harnessOptions.clientReconnectWindowTime;
     stripeConfiguration.tcProperties = harnessOptions.tcProperties;
+    stripeConfiguration.logConfigExtension = "logback-ext.xml";
     // This is the simple case of a single-stripe so we don't need to wrap or decode anything.
     stripeConfiguration.stripeName = "stripe" + 0;
     
@@ -76,6 +76,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     clientsConfiguration.setupClientDebugPort = debugOptions.setupClientDebugPort;
     clientsConfiguration.destroyClientDebugPort = debugOptions.destroyClientDebugPort;
     clientsConfiguration.testClientDebugPortStart = debugOptions.testClientDebugPortStart;
+    clientsConfiguration.failOnLog = harnessOptions.failOnLog;
     CommonIdioms.installAndRunClients(interlock, stateManager, verboseManager, clientsConfiguration, processControl);
     // NOTE:  waitForFinish() throws GalvanFailureException on failure.
     try {

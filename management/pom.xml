@@ -30,7 +30,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.3-SNAPSHOT</version>
+    <version>5.5-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
@@ -39,7 +39,7 @@
   <name>management</name>
 
   <properties>  
-    <java.build.version>1.6</java.build.version>
+    <java.build.version>1.8</java.build.version>
   </properties>
   
   <dependencies>

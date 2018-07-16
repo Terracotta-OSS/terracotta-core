@@ -7,12 +7,14 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
+import com.tc.exception.TCServerRestartException;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessage;
@@ -41,9 +43,11 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -66,7 +70,8 @@ public class StateManagerImplTest {
     PortChooser pc = new PortChooser();
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
-
+    ConsistencyManager mgr = mock(ConsistencyManager.class);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       int port = pc.chooseRandom2Port();
       ports[i] = port;
@@ -75,9 +80,11 @@ public class StateManagerImplTest {
       nodeSet.add(nodes[i]);
       Sink<StateChangedEvent> stageChangeSinkMock = mock(Sink.class);
       ClusterStatePersistor clusterStatePersistorMock = mock(ClusterStatePersistor.class);
-      stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory<>());
-      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], null, weightGeneratorFactory);
-      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageChangeSinkMock, stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory,
+      when(clusterStatePersistorMock.isDBClean()).thenReturn(Boolean.TRUE);
+      stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
+      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], weightGeneratorFactory);
+
+      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageChangeSinkMock, stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mgr, 
         clusterStatePersistorMock);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
@@ -122,8 +129,9 @@ public class StateManagerImplTest {
     }
   }
   
+    
   @Test
-  public void testInitialElection() throws Exception {
+  public void testInitialElectionDoesNotSetStandbyAsActive() throws Exception {
     Logger logger = mock(Logger.class);
     GroupManager grp = mock(GroupManager.class);
     
@@ -131,6 +139,7 @@ public class StateManagerImplTest {
     StageManager stageManager = mock(StageManager.class);
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     ClusterStatePersistor statePersistor = mock(ClusterStatePersistor.class);
+    when(statePersistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(statePersistor.getInitialState()).thenReturn(new State("PASSIVE-STANDBY"));
 
     NodeID node = mock(NodeID.class);
@@ -158,16 +167,71 @@ public class StateManagerImplTest {
               t.printStackTrace();
             }
             return null;
-          }).when(electionSink).addSingleThreaded(any());
+          }).when(electionSink).addToSink(any());
           when(election.getSink()).thenReturn(electionSink);
           return election;
         });
     
-    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory,
+    ConsistencyManager mgr = mock(ConsistencyManager.class);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory, mgr, 
           statePersistor);
     state.initializeAndStartElection();
     
     state.startElectionIfNecessary(mock(NodeID.class));
+    state.waitForElectionsToFinish();
+    Assert.assertTrue(state.getActiveNodeID().isNull());
+  }
+  
+  @Test
+  public void testInitialElection() throws Exception {
+    Logger logger = mock(Logger.class);
+    GroupManager grp = mock(GroupManager.class);
+    
+    Sink stageChangeSinkMock = mock(Sink.class);
+    StageManager stageManager = mock(StageManager.class);
+    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
+    ClusterStatePersistor statePersistor = mock(ClusterStatePersistor.class);
+    when(statePersistor.isDBClean()).thenReturn(Boolean.TRUE);
+
+    NodeID node = mock(NodeID.class);
+    when(grp.getLocalNodeID()).thenReturn(node);
+    when(grp.sendAllAndWaitForResponse(any())).thenReturn(new GroupResponse() {
+      @Override
+      public List getResponses() {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public GroupMessage getResponse(NodeID nodeID) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+    });
+    
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
+        .then((invoke)->{
+          Stage election = mock(Stage.class);
+          Sink electionSink = mock(Sink.class);
+          doAnswer((invoke2)-> {
+            try {
+              ((EventHandler)invoke.getArguments()[2]).handleEvent(invoke2.getArguments()[0]);
+            } catch (Throwable t) {
+              t.printStackTrace();
+            }
+            return null;
+          }).when(electionSink).addToSink(any());
+          when(election.getSink()).thenReturn(electionSink);
+          return election;
+        });
+    
+    ConsistencyManager mgr = mock(ConsistencyManager.class);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    StateManagerImpl state = new StateManagerImpl(logger, grp, stageChangeSinkMock, stageManager, 1, 5, weightGeneratorFactory, mgr, 
+          statePersistor);
+    state.initializeAndStartElection();
+    
+    state.startElectionIfNecessary(mock(NodeID.class));
+    state.waitForElectionsToFinish();
     Assert.assertEquals(node, state.getActiveNodeID());
   }
   
@@ -201,5 +265,41 @@ public class StateManagerImplTest {
     Assert.assertEquals(active, stateManagers[2].getActiveNodeID());
   }
 
+  @Test
+  public void testStateConversion() {
+    ServerMode mode = StateManager.convert(StateManager.ACTIVE_COORDINATOR);
+    com.tc.util.Assert.assertEquals(ServerMode.ACTIVE, mode);
+  }
+  
+  @Test
+  public void testZapAndSync() {
+    Logger tcLogger = mock(Logger.class);
+    GroupManager groupManager = mock(GroupManager.class);
+    Sink stateChangeSink = mock(Sink.class);
+    StageManager stageMgr = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
+    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
+    ConsistencyManager availabilityMgr = mock(ConsistencyManager.class);
+    when(availabilityMgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    ClusterStatePersistor persistor = mock(ClusterStatePersistor.class);
+    when(persistor.isDBClean()).thenReturn(Boolean.TRUE);
+    when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);
+    StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stateChangeSink, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor);
+    mgr.initializeAndStartElection();
+    Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
+    Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
+    
+    L2StateMessage sw = mock(L2StateMessage.class);
+    when(sw.getType()).thenReturn(L2StateMessage.ABORT_ELECTION);
+    when(sw.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);
+    when(sw.getEnrollment()).thenReturn(mock(Enrollment.class));
 
+    try {
+      mgr.handleClusterStateMessage(sw);
+      Assert.fail();
+    } catch (TCServerRestartException expected) {
+      
+    }
+    
+    verify(persistor).setDBClean(eq(Boolean.FALSE));
+  }
 }

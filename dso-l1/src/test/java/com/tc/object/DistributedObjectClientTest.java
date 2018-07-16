@@ -26,7 +26,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.management.TCClient;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.config.ClientConfigImpl;
@@ -39,12 +38,15 @@ import com.tc.util.ProductID;
 import com.tc.cluster.ClusterInternal;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
+
+import static com.tc.object.ClientBuilderFactory.CLIENT_BUILDER_TYPE;
 import static org.mockito.Mockito.when;
 import org.slf4j.LoggerFactory;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 
 public class DistributedObjectClientTest extends TestCase {
@@ -82,13 +84,6 @@ public class DistributedObjectClientTest extends TestCase {
       }
 
       @Override
-      public SecurityInfo getSecurityInfo() {
-        SecurityInfo si = Mockito.mock(SecurityInfo.class);
-        Mockito.when(si.isSecure()).thenReturn(Boolean.FALSE);
-        return si;
-      }
-      
-      @Override
       public Map<String, String> getOverrideTCProperties() {
         return Collections.<String, String>emptyMap();
       }
@@ -100,7 +95,11 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup, l2connection, cluster);
+    Properties connectionProperties = new Properties();
+    connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
+    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup,
+                                                                 l2connection, cluster, connectionProperties);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();
@@ -108,7 +107,7 @@ public class DistributedObjectClientTest extends TestCase {
     Assert.assertFalse(connected);
     client.shutdown();
     Assert.assertTrue(threadGroup.activeCount() == 0);
-    Assert.assertTrue(System.currentTimeMillis() - start < 11000);
+    Assert.assertTrue(System.currentTimeMillis() - start, System.currentTimeMillis() - start < 15000);
     int count = Thread.activeCount();
     System.out.println("active threads:" + count);
     Thread[] t = new Thread[count];
@@ -153,13 +152,6 @@ public class DistributedObjectClientTest extends TestCase {
       }
 
       @Override
-      public SecurityInfo getSecurityInfo() {
-        SecurityInfo si = Mockito.mock(SecurityInfo.class);
-        Mockito.when(si.isSecure()).thenReturn(Boolean.FALSE);
-        return si;
-      }
-      
-      @Override
       public Map<String, String> getOverrideTCProperties() {
         return Collections.<String, String>emptyMap();
       }
@@ -171,12 +163,14 @@ public class DistributedObjectClientTest extends TestCase {
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
-    ClientBuilder builder = new StandardClientBuilder(ProductID.PERMANENT) {
+    Properties connectionProperties = new Properties();
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
+    ClientBuilder builder = new StandardClientBuilder(connectionProperties) {
       @Override
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
         try {
-          Mockito.when(channel.open(Mockito.anyCollection(), Matchers.anyString(), Matchers.any(char[].class))).thenThrow(new RuntimeException("bad connection"));
+          Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));
         } catch (Exception exp) {
           
         }
@@ -185,7 +179,7 @@ public class DistributedObjectClientTest extends TestCase {
       }
     };
     
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null, null);
+    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();

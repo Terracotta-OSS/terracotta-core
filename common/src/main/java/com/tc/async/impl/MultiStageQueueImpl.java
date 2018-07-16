@@ -18,41 +18,30 @@
  */
 package com.tc.async.impl;
 
-import org.slf4j.Logger;
-
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.async.impl.AbstractStageQueueImpl.HandledContext;
-import com.tc.async.impl.AbstractStageQueueImpl.NullStageQueueStatsCollector;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.tc.async.impl.AbstractStageQueueImpl.DirectExecuteContext;
-import static com.tc.async.impl.AbstractStageQueueImpl.SourceQueue;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollector;
-import static com.tc.async.impl.AbstractStageQueueImpl.StageQueueStatsCollectorImpl;
+import java.util.function.Consumer;
 
 /**
  * This StageQueueImpl represents the sink and gives a handle to the source. We are internally just using a queue
  * since our queues are locally processed. This class can be replaced with a distributed queue to enable processing
  * across process boundaries.
  */
-public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
+public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends AbstractStageQueueImpl<EC> {
 
   static final String FINDSTRATEGY_PROPNAME = "tc.stagequeueimpl.findstrategy";
 
 
-  private static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
+  static final ShortestFindStrategy SHORTEST_FIND_STRATEGY;
 
   static {
     ShortestFindStrategy strat = ShortestFindStrategy.PARTITION;
@@ -63,6 +52,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     SHORTEST_FIND_STRATEGY = strat;
   }
 
+
   static enum ShortestFindStrategy {
     BRUTE,
     PARTITION
@@ -71,9 +61,10 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private final boolean moduloAnd;
   private final int moduleMask;
   private final int PARTITION_SHIFT;
-  private final MultiSourceQueueImpl<ContextWrapper<EC>>[] sourceQueues;
+  final int PARTITION_MAX_MASK;
+  private final MultiSourceQueueImpl[] sourceQueues;
   private volatile int fcheck = 0;  // used to start the shortest queue search
-  private AtomicInteger partitionHand =new AtomicInteger(0);
+  AtomicInteger partitionHand =new AtomicInteger(0);
 
   /**
    * The Constructor.
@@ -86,11 +77,13 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
    */
   @SuppressWarnings("unchecked")
   MultiStageQueueImpl(int queueCount,
-                      QueueFactory<ContextWrapper<EC>> queueFactory,
+                      QueueFactory queueFactory,
+                      Class<EC> type, 
+                      EventCreator<EC> creator,
                       TCLoggerProvider loggerProvider,
                       String stageName,
                       int queueSize) {
-    super(loggerProvider, stageName);
+    super(loggerProvider, stageName, creator);
     Assert.eval(queueCount > 0);
 
     if (queueCount >= 8) {
@@ -98,14 +91,13 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     } else {
       PARTITION_SHIFT = 1;
     }
-
+    PARTITION_MAX_MASK = (1 << (31 - PARTITION_SHIFT)) - 1;
     this.sourceQueues = new MultiSourceQueueImpl[queueCount];
-    createWorkerQueues(queueCount, queueFactory, queueSize, stageName);
+    createWorkerQueues(queueCount, queueFactory, type, queueSize, stageName);
 
-    int sz=sourceQueues.length;
-    if (Integer.bitCount(sz) == 1) {
+    if (Integer.bitCount(queueCount) == 1) {
       this.moduloAnd = true;
-      this.moduleMask = sz - 1;
+      this.moduleMask = queueCount - 1;
     } else {
       this.moduloAnd = false;
       this.moduleMask = 0;
@@ -136,111 +128,51 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
   }
 
-  private void createWorkerQueues(int queueCount, QueueFactory<ContextWrapper<EC>> queueFactory, int queueSize, String stage) {
-    StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
-    BlockingQueue<ContextWrapper<EC>> q = null;
-
+  private void createWorkerQueues(int queueCount, QueueFactory queueFactory, Class<EC> type, int queueSize, String stage) {
     if (queueSize != Integer.MAX_VALUE) {
       queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
     }
     Assert.eval(queueSize > 0);
 
     for (int i = 0; i < queueCount; i++) {
-      q = queueFactory.createInstance(queueSize);
-      this.sourceQueues[i] = new MultiSourceQueueImpl<ContextWrapper<EC>>(q, i, statsCollector);
+      this.sourceQueues[i] = new MultiSourceQueueImpl(queueFactory.createInstance(type, queueSize), v->this.fcheck = v, i);
     }
   }
 
   @Override
-  public Source<ContextWrapper<EC>> getSource(int index) {
+  public Source getSource(int index) {
     return (index < 0 || index >= this.sourceQueues.length) ? null : this.sourceQueues[index];
   }
 
   @Override
-  public void addSingleThreaded(EC context) {
+  public void addToSink(EC context) {
     Assert.assertNotNull(context);
-    Assert.assertFalse(context instanceof MultiThreadedEventContext);
     if (isClosed()) {
       throw new IllegalStateException("closed");
     }
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);
     }
-
-    boolean interrupted = Thread.interrupted();
-    ContextWrapper<EC> wrapper = new HandledContext<EC>(context);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[0].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
+    Event event = createEvent(context);
+    if (event != null) {
+      // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
+      boolean interrupted = Thread.interrupted();
+      int index = getSourceQueueFor(context);
+      Event wrapper = (context.flush()) ? new FlushingHandledContext(event, index) : event;
+      try {
+        while (true) {
+          try {
+            this.sourceQueues[index].put(wrapper);
+            break;
+          } catch (InterruptedException e) {
+            this.logger.debug("StageQueue Add: " + e);
+            interrupted = true;
+          }
         }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  @Override
-  public void addMultiThreaded(EC context) {
-    Assert.assertNotNull(context);
-    Assert.assertTrue(context instanceof MultiThreadedEventContext);
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    if (this.logger.isDebugEnabled()) {
-      this.logger.debug("Added:" + context + " to:" + this.stageName);
-    }
-
-    // NOTE:  We don't currently consult the predicate for multi-threaded events (the only implementation always returns true, in any case).
-    boolean interrupted = Thread.interrupted();
-    MultiThreadedEventContext cxt = (MultiThreadedEventContext) context;
-    int index = getSourceQueueFor(cxt);
-    ContextWrapper<EC> wrapper = (cxt.flush()) ? new FlushingHandledContext(context, index) : new HandledContext<EC>(
-      context);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[index].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
         }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    if (isClosed()) {
-      throw new IllegalStateException("closed");
-    }
-    ContextWrapper<EC> wrapper = new DirectExecuteContext<EC>(specialized);
-    boolean interrupted = Thread.interrupted();
-    int index = getSourceQueueFor(specialized);
-    try {
-      while (true) {
-        try {
-          this.sourceQueues[index].put(wrapper);
-          break;
-        } catch (InterruptedException e) {
-          this.logger.debug("StageQueue Add: " + e);
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
       }
     }
   }
@@ -249,7 +181,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   private int findShortestQueueIndex() {
     switch (SHORTEST_FIND_STRATEGY) {
       case PARTITION: {
-        int offset = moduloQueueCount(partitionHand.getAndIncrement() << PARTITION_SHIFT);
+        int offset = moduloQueueCount(nextPartition() << PARTITION_SHIFT);
         int min = Integer.MAX_VALUE;
         int can = -1;
         for (int i = 0; i < (1 << PARTITION_SHIFT); i++) {
@@ -269,7 +201,7 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
         // special case where context can go to any queue, pick the shortest
         for (int x = 0; x < this.sourceQueues.length; x++) {
           int index = moduloQueueCount(pointer + x);
-          MultiSourceQueueImpl<ContextWrapper<EC>> impl = this.sourceQueues[index];
+          MultiSourceQueueImpl impl = this.sourceQueues[index];
           if (impl.isEmpty()) {
             return index;
           } else {
@@ -287,134 +219,59 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     throw new IllegalStateException();
   }
 
-  private int getSourceQueueFor(MultiThreadedEventContext context) {
-    Object schedulingKey = context.getSchedulingKey();
+  private int nextPartition() {
+    int p = partitionHand.get();
+    int newP = (p + 1) & PARTITION_MAX_MASK;
+    while(!partitionHand.compareAndSet(p, newP)) {
+      p = partitionHand.get();
+      newP = (p + 1) & PARTITION_MAX_MASK;
+    } return newP;
+  }
+
+  private int getSourceQueueFor(EC context) {
+    EC multi = context;
+    Object schedulingKey = multi.getSchedulingKey();
     if (null == schedulingKey) {
       return findShortestQueueIndex();
     } else {
-      int index = hashCodeToArrayIndex(schedulingKey.hashCode(), this.sourceQueues.length);
-      return index;
+      return hashCodeToArrayIndex(schedulingKey.hashCode(), this.sourceQueues.length);
     }
   }
 
   private int hashCodeToArrayIndex(int hashcode, int arrayLength) {
     return Math.abs(hashcode % arrayLength);
   }
-
-  // Used for testing
-  @Override
-  public int size() {
-    int totalQueueSize = 0;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
-      totalQueueSize += sourceQueue.size();
-    }
-    return totalQueueSize;
-  }
-
+  
   @Override
   public String toString() {
     return "StageQueue(" + this.stageName + ")";
   }
 
   @Override
-  public void clear() {
+  public int clear() {
     int clearCount = 0;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> sourceQueue : this.sourceQueues) {
+    for (MultiSourceQueueImpl sourceQueue : this.sourceQueues) {
       clearCount += sourceQueue.clear();
     }
     this.logger.info("Cleared " + clearCount);
+    return clearCount;
   }
 
-  /*********************************************************************************************************************
-   * Monitorable Interface
-   * @param enable
-   */
+  private static final class MultiSourceQueueImpl implements SourceQueue {
 
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    StageQueueStatsCollector collector = null;
-    for (MultiSourceQueueImpl<ContextWrapper<EC>> src : this.sourceQueues) {
-      String name = this.stageName + "[" + src.getSourceName() + "]";
-      if (collector == null || !collector.getName().equals(name)) {
-        collector = (enable) ? new StageQueueStatsCollectorImpl(name) : new NullStageQueueStatsCollector(name);
-      }
-      src.setStatsCollector(collector);
-    }
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    // Since all source queues have the same collector, the first reference is passed.
-    if (this.sourceQueues.length == 1 ) {
-      return this.sourceQueues[0].getStatsCollector();
-    } else {
-      return new Stats() {
-
-        @Override
-        public String getDetails() {
-          StringBuilder build = new StringBuilder();
-          StageQueueStatsCollector stats = null;
-          for (MultiSourceQueueImpl<ContextWrapper<EC>> impl : sourceQueues) {
-            StageQueueStatsCollector current = impl.getStatsCollector();
-            if (stats != current) {
-              if (stats != null) build.append('\n');
-              build.append(current.getDetails());
-            }
-            stats = current;
-          }
-          return build.toString();
-        }
-
-        @Override
-        public void logDetails(Logger statsLogger) {
-          statsLogger.info(getDetails());
-        }
-      };
-    }
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return getStats(frequency);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    // Since all source queues have the same collector, the first reference is used.
-    return this.sourceQueues[0].getStatsCollector() instanceof StageQueueStatsCollectorImpl;
-  }
-
-  @Override
-  public void resetStats() {
-    // Since all source queues have the same collector, the first reference is used.
-    this.sourceQueues[0].getStatsCollector().reset();
-  }
-
-  private final class MultiSourceQueueImpl<W> implements SourceQueue<W> {
-
-    private final BlockingQueue<W> queue;
+    private final Consumer<Integer> hint;
+    private final BlockingQueue<Event> queue;
     private final int                      sourceIndex;
-    private volatile StageQueueStatsCollector statsCollector;
 
-    public MultiSourceQueueImpl(BlockingQueue<W> queue, int sourceIndex, StageQueueStatsCollector statsCollector) {
+    public MultiSourceQueueImpl(BlockingQueue<Event> queue, Consumer<Integer> hint, int sourceIndex) {
       this.queue = queue;
+      this.hint = hint;
       this.sourceIndex = sourceIndex;
-      this.statsCollector = statsCollector;
     }
 
     @Override
     public String toString() {
       return "SourceQueueImpl{" + sourceIndex + "size=" + queue.size() + '}';
-    }
-
-    @Override
-    public StageQueueStatsCollector getStatsCollector() {
-      return this.statsCollector;
-    }
-
-    @Override
-    public void setStatsCollector(StageQueueStatsCollector collector) {
-      this.statsCollector = collector;
     }
 
     // XXX: poor man's clear.
@@ -437,24 +294,22 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
 
     @Override
-    public W poll(long timeout) throws InterruptedException {
-      W rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+    public Event poll(long timeout) throws InterruptedException {
+      Event rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       if (rv != null) {
-        this.statsCollector.contextRemoved();
         if (queue.isEmpty()) {
           // set the empty index for shortest queue in hopes of catching it on the first try
-          fcheck = this.sourceIndex;
+          hint.accept(this.sourceIndex);
         }
       } else {
-        fcheck = this.sourceIndex;
+        hint.accept(this.sourceIndex);
       }
       return rv;
     }
 
     @Override
-    public void put(W context) throws InterruptedException {
+    public void put(Event context) throws InterruptedException {
       this.queue.put(context);
-      this.statsCollector.contextAdded();
     }
 
     @Override
@@ -469,20 +324,19 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
 
   }
 
-  private class FlushingHandledContext<T extends EC> implements ContextWrapper<EC> {
-    private final EC context;
+  private class FlushingHandledContext<T extends EC> extends HandledEvent<EC> {
     private final int offset;
     private int executionCount = 0;
-    public FlushingHandledContext(EC context, int offset) {
-      this.context = context;
+    public FlushingHandledContext(Event context, int offset) {
+      super(context);
       this.offset = offset;
     }
-
+    
     @Override
-    public void runWithHandler(EventHandler<EC> handler) throws EventHandlerException {
+    public void call() throws EventHandlerException {
       if (++executionCount == sourceQueues.length) {
 //  been through all the queues.  execute now.
-        handler.handleEvent(this.context);
+        super.call();
       } else {
 //  move to next queue
         boolean interrupted = false;
@@ -502,14 +356,6 @@ public class MultiStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
           }
         }
       }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (context.getClass().isInstance(obj)) {
-        return context.equals(obj);
-      }
-      return super.equals(obj);
     }
   }
 }

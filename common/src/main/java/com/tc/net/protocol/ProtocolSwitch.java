@@ -87,7 +87,7 @@ public class ProtocolSwitch implements TCProtocolAdaptor {
           } catch (IOException e) {
             throw new TCProtocolException(e);
           }
-          httpSink.addSingleThreaded(new HttpConnectionContext(socket, buf));
+          httpSink.addToSink(new HttpConnectionContext(socket, buf));
           return;
         } else {
           protocol = PROTOCOL_NOT_HTTP;

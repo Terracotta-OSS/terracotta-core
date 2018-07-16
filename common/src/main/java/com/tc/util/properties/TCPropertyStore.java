@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public class TCPropertyStore {
-  private final Map<Key, String> props = new LinkedHashMap<Key, String>();
+  private final Map<Key, String> props = new LinkedHashMap();
 
   public synchronized boolean containsKey(String key) {
     return props.containsKey(new Key(key));
@@ -36,7 +36,10 @@ public class TCPropertyStore {
 
     // do put and remove so that a replaced mapping will retain the new Key object
     props.remove(k);
-    props.put(k, value.trim());
+    // setting the value to null effectively unset the key
+    if(value != null) {
+      props.put(k, value.trim());
+    }
   }
 
   public synchronized String getProperty(String key) {

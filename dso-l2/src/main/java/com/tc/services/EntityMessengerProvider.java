@@ -29,6 +29,8 @@ import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import java.util.Optional;
+import java.util.function.Function;
 
 
 /**
@@ -36,14 +38,11 @@ import com.tc.util.Assert;
  * These messages are fed into the general VoltronEntityMessage sink, provided by the server implementation.
  */
 public class EntityMessengerProvider implements ImplementationProvidedServiceProvider {
-  private final ISimpleTimer timer;
   private Sink<VoltronEntityMessage> messageSink;
   private boolean serverIsActive;
 
-  public EntityMessengerProvider(ISimpleTimer timer) {
-    Assert.assertNotNull(timer);
-    
-    this.timer = timer;
+  public EntityMessengerProvider() {
+
   }
 
   @Override
@@ -57,8 +56,12 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
       boolean waitForReceived = true;
       if (configuration instanceof EntityMessengerConfiguration) {
         waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
+      } else if (configuration instanceof Function) {
+        waitForReceived = (Boolean)((Function)configuration).apply("PASSIVE_CONFIRMATION");
       }
-      service = configuration.getServiceType().cast(new EntityMessengerService(this.timer, this.messageSink, owningEntity, waitForReceived));
+      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, Optional.ofNullable(waitForReceived).orElse(false));
+      owningEntity.addLifecycleListener(es);
+      service = configuration.getServiceType().cast(es);
     }
     return service;
   }

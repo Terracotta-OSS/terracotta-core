@@ -18,6 +18,9 @@
  */
 package com.tc.util.version;
 
+/**
+ * Version compatibility check is currently disabled.
+ */
 public class VersionCompatibility {
   private static final Version MINIMUM_COMPATIBLE_PERSISTENCE = new Version("4.1.2");
 

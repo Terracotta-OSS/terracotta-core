@@ -60,12 +60,12 @@ public class GroupEventsDispatchHandler extends AbstractEventHandler<GroupEvent>
 
     @Override
     public void nodeJoined(NodeID nodeID) {
-      sink.addSingleThreaded(new GroupEvent(nodeID, true));
+      sink.addToSink(new GroupEvent(nodeID, true));
     }
 
     @Override
     public void nodeLeft(NodeID nodeID) {
-      sink.addSingleThreaded(new GroupEvent(nodeID, false));
+      sink.addToSink(new GroupEvent(nodeID, false));
     }
   }
 }

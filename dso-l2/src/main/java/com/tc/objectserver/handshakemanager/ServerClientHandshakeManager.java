@@ -18,7 +18,7 @@
  */
 package com.tc.objectserver.handshakemanager;
 
-import com.tc.async.api.StageManager;
+import com.tc.async.api.Sink;
 
 import org.slf4j.Logger;
 import org.terracotta.exception.EntityException;
@@ -27,19 +27,14 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
@@ -65,26 +60,25 @@ public class ServerClientHandshakeManager {
   static final int                       RECONNECT_WARN_INTERVAL           = 15000;
 
   private State                          state                             = State.INIT;
-  private List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
+  private final List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
 
   private final Timer                    timer;
   private final ReconnectTimerTask       reconnectTimerTask;
-  private final StageManager             stageManager;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
   private final Logger logger;
   private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
   private final Logger consoleLogger;
+  private final Sink<VoltronEntityMessage> voltron;
 
   public ServerClientHandshakeManager(Logger logger, DSOChannelManager channelManager,
-                                      StageManager stageManager, 
-                                      Timer timer, long reconnectTimeout,
+                                      Timer timer, long reconnectTimeout,Sink<VoltronEntityMessage> voltron,
                                       Logger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.stageManager = stageManager;
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
+    this.voltron = voltron;
     this.consoleLogger = consoleLogger;
     this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
   }
@@ -202,7 +196,7 @@ public class ServerClientHandshakeManager {
     notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
+    voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
   }
   
   public void notifyComplete() {

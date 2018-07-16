@@ -19,42 +19,35 @@
 package com.tc.net.core;
 
 import com.tc.util.Assert;
+import java.net.InetSocketAddress;
 
 public class ConnectionInfo implements java.io.Serializable {
 
   public static final ConnectionInfo[] EMPTY_ARRAY = new ConnectionInfo[0];
-  private final String                 hostname;
-  private final int                    port;
+  private final InetSocketAddress                 address;
   private final int                    server;
-  private final SecurityInfo           securityInfo;
 
   public ConnectionInfo(String hostname, int port) {
-    this(hostname, port, new SecurityInfo());
-  }
-
-  public ConnectionInfo(String hostname, int port, SecurityInfo securityInfo) {
-    this(hostname, port, 0, securityInfo);
+    this(hostname, port, 0);
   }
 
   public ConnectionInfo(String hostname, int port, int server) {
-    this(hostname, port, server, new SecurityInfo());
-  }
-  
-  public ConnectionInfo(String hostname, int port, int server, SecurityInfo securityInfo) {
     Assert.assertNotNull(hostname);
     Assert.assertTrue(port >= 0);
-    this.hostname = hostname;
-    this.port = port;
+    this.address = InetSocketAddress.createUnresolved(hostname, port);
     this.server = server;
-    this.securityInfo = securityInfo;
+  }
+  
+  public InetSocketAddress getAddress() {
+    return this.address;
   }
 
   public String getHostname() {
-    return hostname;
+    return this.address.getHostString();
   }
 
   public int getPort() {
-    return port;
+    return this.address.getPort();
   }
   
   public int getServer() {
@@ -66,7 +59,7 @@ public class ConnectionInfo implements java.io.Serializable {
     if (o == this) return true;
     if (o instanceof ConnectionInfo) {
       ConnectionInfo other = (ConnectionInfo) o;
-      return this.hostname.equals(other.getHostname()) && this.port == other.getPort();
+      return this.address.equals(other.getAddress());
     }
     return false;
   }
@@ -76,14 +69,9 @@ public class ConnectionInfo implements java.io.Serializable {
     return toString().hashCode();
   }
 
-  private String s;
-
   @Override
   public String toString() {
-    return (s == null ? (s = hostname + ":" + port) : s);
+    return this.address.toString();
   }
 
-  public SecurityInfo getSecurityInfo() {
-    return securityInfo;
-  }
 }

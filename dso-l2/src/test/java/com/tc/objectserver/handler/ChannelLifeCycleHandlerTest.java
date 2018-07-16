@@ -24,8 +24,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.tc.objectserver.api.EntityManager;
-import com.tc.objectserver.api.ManagedEntity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,16 +31,15 @@ import org.junit.Test;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class ChannelLifeCycleHandlerTest {
@@ -57,14 +54,12 @@ public class ChannelLifeCycleHandlerTest {
     CommunicationsManager commsManager = mock(CommunicationsManager.class);
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     this.eventCollector = mock(ITopologyEventCollector.class);
-    ServerConfigurationContext context = mock(ServerConfigurationContext.class);
     Stage<HydrateContext> stage = mock(Stage.class);
-    EntityManager entityManager=mock(EntityManager.class);
-                                     when(stage.getSink()).thenReturn(mock(Sink.class));
+    when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
     this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager,
-                                               entityManager,
-                                               mock(ClientEntityStateManager.class), mock(StateManager.class), mock(ManagementTopologyEventCollector.class));
+      mock(ClientEntityStateManager.class), 
+      mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
   }
 
   @After

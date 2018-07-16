@@ -18,16 +18,15 @@
  */
 package com.tc.async.impl;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
-import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
@@ -36,11 +35,8 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -84,18 +80,18 @@ public class SingletonStageQueueImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.anyObject(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[0]);
+        BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>((Integer) invocation.getArguments()[1]);
         cxts.add(queue);
         return queue;
       }
 
     });
-    StageQueue<Object> instance = new SingletonStageQueueImpl(context, logger, "mock", 16);
+    StageQueue<Object> instance = new SingletonStageQueueImpl(context, Object.class, (e)->()->{}, logger, "mock", 16);
     assertEquals(cxts.size(), 1);
     for (int x = 0; x < cxts.size(); x++) {
       assertNotNull(instance.getSource(index));
@@ -105,7 +101,7 @@ public class SingletonStageQueueImplTest {
     MultiThreadedEventContext context1 = mock(MultiThreadedEventContext.class);
     when(context1.getSchedulingKey()).thenReturn(null);
     System.out.println("test add");
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     boolean found = false;
     for (Queue<Object> q : cxts) {
       if (q.poll() != null) {
@@ -115,7 +111,7 @@ public class SingletonStageQueueImplTest {
     assertTrue(found);
     System.out.println("test even distribution with no key");
     for (int x = 0; x < 2; x++) {
-      instance.addMultiThreaded(context1);
+      instance.addToSink(context1);
     }
     for (Queue<Object> q : cxts) {
       assertThat(q.size(), org.hamcrest.Matchers.lessThanOrEqualTo(2));
@@ -124,21 +120,21 @@ public class SingletonStageQueueImplTest {
 
     System.out.println("test specific queue");
     when(context1.getSchedulingKey()).thenReturn(1);
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     //  everything should hash to 0
     for (int x = 0; x < cxts.size(); x++) {
       if (x != 0) {
         assertTrue(cxts.get(x).isEmpty());
       } else {
-        assertEquals(cxts.get(x).poll(), context1);
+        assertNotNull(cxts.get(x).poll());
       }
     }
 
     int rand = (int) (Math.random() * Integer.MAX_VALUE);
     when(context1.getSchedulingKey()).thenReturn(rand);
-    instance.addMultiThreaded(context1);
+    instance.addToSink(context1);
     //  tests specific implementation.  test expectation
-    assertEquals(cxts.get(rand % cxts.size()).poll(), context1);
+    assertNotNull(cxts.get(rand % cxts.size()).poll());
   }
 
 }

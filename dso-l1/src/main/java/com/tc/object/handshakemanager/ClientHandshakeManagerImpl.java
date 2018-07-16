@@ -34,6 +34,8 @@ import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
 import com.tc.cluster.ClusterInternalEventsGun;
 
+import java.util.Objects;
+
 /**
  * This class has been changed to be heavily synchronized. This is in attempt to 
  * address a rare bug where handshake is not initiated properly because the state 
@@ -92,7 +94,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public boolean isShutdown() {
+  public synchronized boolean isShutdown() {
     return isShutdown;
   }
 
@@ -133,9 +135,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public synchronized void disconnected() {
     // We ignore the disconnected call if we are shutting down.
     if (!checkShutdown()) {
-      boolean isPaused = changeToPaused();
-
-      if (isPaused) {
+      boolean wasRunning = changeToPaused();
+        
+      if (wasRunning) {
       // A thread might be waiting for us to change whether or not we are disconnected.
         notifyAll();
         pauseCallbacks();
@@ -147,9 +149,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public synchronized void connected() {
-    this.logger.debug("Connected: Unpausing from " + getState());
-    if (getState() != State.PAUSED) {
-      this.logger.warn("Ignoring unpause while " + getState());
+    this.logger.debug("Connected: Unpausing from " + this.state);
+    if (this.state != State.PAUSED) {
+      this.logger.warn("Ignoring unpause while " + this.state);
     } else if (!checkShutdown()) {
       // drop handshaking if shutting down
       initiateHandshake();
@@ -164,8 +166,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   protected synchronized void acknowledgeHandshake(ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
     this.logger.debug("Received Handshake ack");
-    if (getState() != State.STARTING) {
-      this.logger.warn("Ignoring handshake acknowledgement while " + getState());
+    if (this.state != State.STARTING) {
+      this.logger.warn("Ignoring handshake acknowledgement while " + this.state);
     } else {
       checkClientServerVersionCompatibility(serverVersion);
 
@@ -178,13 +180,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   protected void checkClientServerVersionCompatibility(String serverVersion) {
-    final boolean check = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
-
-    if (check && !new VersionCompatibility().isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion))) {
-      final String msg = "Client/Server versions are not compatible: Client Version: " + clientVersion + ", Server Version: "
-                         + serverVersion + ".  Terminating client now.";
-      LOGGER.error(msg);
-      throw new IllegalStateException(msg);
+    if (!Objects.equals(clientVersion, serverVersion)) {
+      String message = String.format("Client version %s is different from server version %s.",
+              clientVersion, serverVersion);
+      logger.info(message);
     }
   }
 
@@ -210,7 +209,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   public synchronized void waitForHandshake() {
     boolean isInterrupted = false;
     try {
-      while (this.disconnected && !this.isShutdown()) {
+      while (this.disconnected && !this.isShutdown) {
         try {
           wait();
         } catch (InterruptedException e) {
@@ -229,11 +228,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     boolean didChangeToPaused = false;
     if (old != State.PAUSED) {
       this.state = State.PAUSED;
-      didChangeToPaused = true;
 
       this.logger.debug("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
 
       if (old == State.RUNNING) {
+        didChangeToPaused = true;
         this.disconnected = true;
       }
 
@@ -252,9 +251,5 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     state = State.RUNNING;
 
     this.disconnected = false;
-  }
-
-  private State getState() {
-    return this.state;
   }
 }

@@ -42,6 +42,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyInt;
@@ -85,12 +86,12 @@ public class StageImplTest {
   @Test
   public void testRapidTeardown() throws Exception {
     TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance()).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
-    when(context.createInstance(anyInt())).thenReturn(new ArrayBlockingQueue<ContextWrapper<Object>>(16));
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any())).thenReturn(new ArrayBlockingQueue<>(16));
+    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, 1, null, context, 16);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
     instance.destroy();
     verify(handler, never()).destroy();
     
@@ -103,6 +104,65 @@ public class StageImplTest {
     instance.destroy();
     verify(handler).destroy();
     
+  }
+  
+  @Test
+  public void testSingletonClear() throws Exception {
+    TCLoggerProvider logger = new DefaultLoggerProvider();
+    QueueFactory context = mock(QueueFactory.class);
+    ArrayBlockingQueue queue = new ArrayBlockingQueue<>(16);
+    when(context.createInstance(Matchers.any())).thenReturn(queue);
+    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(queue);
+    EventHandler handler = mock(EventHandler.class);
+
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
+    Object event = new Object();
+    instance.getSink().addToSink(context);
+    instance.getSink().addToSink(context);
+    instance.getSink().addToSink(context);
+    instance.getSink().addToSink(context);
+    
+    Assert.assertEquals(4, instance.size());
+    
+    instance.clear();
+    
+    Assert.assertEquals(0, instance.size());
+    Assert.assertTrue(instance.isEmpty());
+  }
+  
+  @Test
+  public void testMultipleClear() throws Exception {
+    TCLoggerProvider logger = new DefaultLoggerProvider();
+    QueueFactory context = mock(QueueFactory.class);
+    ArrayBlockingQueue queue = new ArrayBlockingQueue<>(16);
+    when(context.createInstance(Matchers.any())).thenReturn(queue);
+    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(queue);
+    EventHandler handler = mock(EventHandler.class);
+
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, 16, false);
+    MultiThreadedEventContext event = new MultiThreadedEventContext() {
+      @Override
+      public Object getSchedulingKey() {
+        return null;
+      }
+
+      @Override
+      public boolean flush() {
+        return false;
+      }
+
+    };
+    instance.getSink().addToSink(event);
+    instance.getSink().addToSink(event);
+    instance.getSink().addToSink(event);
+    instance.getSink().addToSink(event);
+    
+    Assert.assertEquals(4, instance.size());
+    
+    instance.clear();
+    
+    Assert.assertEquals(0, instance.size());
+    Assert.assertTrue(instance.isEmpty());
   }
   
   private void testMultiContextFlush(int size) throws Exception {
@@ -128,31 +188,32 @@ public class StageImplTest {
       public void initializeContext(ConfigurationContext context) { }
     };
     
-    QueueFactory<ContextWrapper<Object>> context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    QueueFactory context = mock(QueueFactory.class);
+    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
 //  spy each call to put of the queue to make sure each queue is getting hit.
-        BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[0]));
+        BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[1]));
         cxts.add(queue);
         return queue;
       }
     
     });
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", handler, size, null, context, 16);
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, 16, false);
     assertEquals(cxts.size(), size);
     instance.start(null);
     
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.flush()).thenReturn(Boolean.TRUE);
+    when(cxt.getSchedulingKey()).thenReturn(1);
     
-    instance.getSink().addMultiThreaded(cxt);
+    instance.getSink().addToSink(cxt);
     if (size > 1) {
       // if size is one, this will not be called.
       verify(cxt).getSchedulingKey();
+      verify(cxt).flush();
     }
-    verify(cxt).flush();
 
     barrier.await();
     for (BlockingQueue q : cxts) {

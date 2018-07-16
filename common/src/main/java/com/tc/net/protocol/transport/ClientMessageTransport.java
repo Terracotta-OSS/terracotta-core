@@ -30,7 +30,6 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -62,15 +61,13 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final int                         timeout;
-  private final TCSecurityManager           securityManager;
-  private ConnectionInfo                    connectionInfo;
 
   public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout) {
     this(clientConnectionEstablisher, handshakeErrorHandler, messageFactory, wireProtocolAdaptorFactory, callbackPort, timeout,
-         ReconnectionRejectedHandlerL1.SINGLETON, null);
+         ReconnectionRejectedHandlerL1.SINGLETON);
   }
 
   /**
@@ -81,15 +78,13 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory,
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout,
-                                ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                TCSecurityManager securityManager) {
+                                ReconnectionRejectedHandler reconnectionRejectedHandler) {
 
     super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, LoggerFactory.getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;
     this.timeout = timeout;
-    this.securityManager = securityManager;
   }
 
   /**
@@ -177,6 +172,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         case ERROR_NO_ACTIVE:
           if (this.getProductID().isRedirectEnabled()) {
             throw new NoActiveException();
+          } else {
+            Assert.assertTrue(this.getConnectionId().getProductId().isInternal());
           }
           break;
         case ERROR_MAX_CONNECTION_EXCEED:
@@ -193,6 +190,8 @@ public class ClientMessageTransport extends MessageTransportBase {
         case ERROR_REDIRECT_CONNECTION:
           if (this.getProductID().isRedirectEnabled()) {
             throw new TransportRedirect(result.synAck.getErrorContext());
+          } else {
+            Assert.assertTrue(this.getConnectionId().getProductId().isInternal());
           }
           break;
         case ERROR_PRODUCT_NOT_SUPPORTED:
@@ -328,7 +327,8 @@ public class ClientMessageTransport extends MessageTransportBase {
     } catch (InterruptedException e) {
       throw new TransportHandshakeException(e);
     } catch (TCExceptionResultException e) {
-      throw new TransportHandshakeException(e);
+      throw new TransportHandshakeException("Client was able to establish connection with server but handshake " +
+          "with server failed.", e);
     }
   }
 

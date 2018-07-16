@@ -109,7 +109,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
       receivedQueue.put(((TestProtocolMessage) pm).msg);
     } catch (InterruptedException e) {
       e.printStackTrace();
-      junit.framework.Assert.fail("yikes! " + e);
+      org.junit.Assert.fail("yikes! " + e);
     }
 
   }

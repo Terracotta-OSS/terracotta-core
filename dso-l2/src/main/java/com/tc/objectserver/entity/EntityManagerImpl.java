@@ -18,7 +18,11 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.classloader.ServiceLocator;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.TCShutdownServerException;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 
 import org.slf4j.Logger;
@@ -32,9 +36,7 @@ import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +55,9 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.LinkedHashMap;
 
 
@@ -62,12 +67,13 @@ public class EntityManagerImpl implements EntityManager {
   private final ConcurrentMap<FetchID, ManagedEntity> entityIndex = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
-  private final ClassLoader creationLoader;
+  private final ServerEntityFactory creationLoader;
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
-  private final ITopologyEventCollector eventCollector;
+  private final ManagementTopologyEventCollector eventCollector;
   
   private final ManagementKeyCallback flushLocalPipeline;
+  private Sink<VoltronEntityMessage> messageSelf;
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
@@ -89,32 +95,36 @@ public class EntityManagerImpl implements EntityManager {
 
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
-      ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
-      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline) {
+      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector, 
+      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
     this.processorPipeline = processor;
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
-    this.creationLoader = Thread.currentThread().getContextClassLoader();
+    this.creationLoader = new ServerEntityFactory(locator);
     this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
-    entities.put(platform.getID(), new FetchID(0L));
-    entityIndex.put(new FetchID(0L), platform);
+    entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
+    entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
+  }
+  
+  public void setMessageSink(Sink<VoltronEntityMessage> sink) {
+    this.messageSelf = sink;
   }
 
   private ManagedEntity createPlatformEntity() {
-    return new PlatformEntity(processorPipeline);
+    return new PlatformEntity(messageSelf, processorPipeline);
   }
 
   @Override
-  public ClassLoader getEntityLoader() {
+  public ServerEntityFactory getEntityLoader() {
     return this.creationLoader;
   }
 
   @Override
-  public void enterActiveState() {
+  public List<VoltronEntityMessage> enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
     //  locking the snapshotting until full active is achieved 
@@ -129,10 +139,13 @@ public class EntityManagerImpl implements EntityManager {
       //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
       // issue-439: We need to sort these entities, ascending by consumerID.
       List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
+      List<VoltronEntityMessage> reconnectDone = new ArrayList<>(this.entityIndex.size());
       Collections.sort(sortingList, this.consumerIdSorter);
       for (ManagedEntity entity : sortingList) {
         try {
-          entity.promoteEntity();
+            reconnectDone.add(new LocalPipelineFlushMessage(
+              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID), 
+              entity.promoteEntity()));
         } catch (ConfigurationException ce) {
           String errMsg = "failure to promote entity: " + entity.getID();
           LOGGER.error(errMsg, ce);
@@ -141,6 +154,7 @@ public class EntityManagerImpl implements EntityManager {
       }
   //  only enter active state after all the entities have promoted to active
       processorPipeline.enterActiveState();
+      return reconnectDone;
     } finally {
       snapshotLock.release();
     }
@@ -158,7 +172,7 @@ public class EntityManagerImpl implements EntityManager {
       
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, processorPipeline, service, shouldCreateActiveEntities, canDelete));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete));
 
       return temp;
     } finally {
@@ -175,7 +189,7 @@ public class EntityManagerImpl implements EntityManager {
     Object checkNull = entities.put(entityID, set);
     Assert.assertNull(checkNull); //  must be null, nothing should be competing
     ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, 
-          serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, 
+          serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
           processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
     
     checkNull = entityIndex.put(set, temp);
@@ -274,7 +288,7 @@ public class EntityManagerImpl implements EntityManager {
     EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(typeName);
     if (service == null) {
       try {
-        service = ServerEntityFactory.getService(typeName, this.creationLoader);
+        service = (EntityServerService)this.creationLoader.getService(typeName);
       } catch (ClassNotFoundException notfound) {
         throw new EntityNotProvidedException(typeName, entityID.getEntityName());
       }
@@ -296,6 +310,7 @@ public class EntityManagerImpl implements EntityManager {
   
   @Override
   public void resetReferences() {
+    clientEntityStateManager.clearClientReferences();
     for (ManagedEntity me : entityIndex.values()) {
       me.resetReferences(0);
     }
@@ -316,7 +331,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public Map<String, ?> getStateMap() {
     Map<String, Object> entityMap = new LinkedHashMap<>();
     Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
     entityMap.put("className", this.getClass().getName());
@@ -324,7 +339,7 @@ public class EntityManagerImpl implements EntityManager {
     List<Map<String, Object>> entities  = new ArrayList<>(entityIndex.size());
     entityMap.put("entities", entities);
     entityIndex.values().forEach(entity->entities.add(entity.getState()));
-    return out.println(entityMap);
+    return entityMap;
   }
 }
 

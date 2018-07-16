@@ -29,6 +29,7 @@ import com.tc.net.StripeID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
@@ -43,6 +44,8 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
@@ -55,6 +58,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private final ProductID                 product;
   private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
+  private final List<ClientConnectionErrorListener> errorListeners = new CopyOnWriteArrayList<>();
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
                                      SessionProvider sessionProvider, ProductID product) {
@@ -95,7 +99,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
-      if (id.isValid()) {
+      if (!id.isNull()) {
  //  why are all these identifiers intermingled?
         long validID = id.toLong();
         this.channelID = new ChannelID(validID);
@@ -191,5 +195,20 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
 
     return Integer.parseInt(vmName.substring(0, index));
+  }
+
+  @Override
+  public void addClientConnectionErrorListener(ClientConnectionErrorListener errorListener) {
+    errorListeners.add(errorListener);
+  }
+
+  @Override
+  public void removeClientConnectionErrorListener(ClientConnectionErrorListener errorListener) {
+    errorListeners.remove(errorListener);
+  }
+
+  @Override
+  public void onError(ConnectionInfo connInfo, Exception e) {
+    errorListeners.forEach(l->l.onError(connInfo, e));
   }
 }

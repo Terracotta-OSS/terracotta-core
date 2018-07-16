@@ -18,10 +18,9 @@
  */
 package com.tc.management.beans;
 
-import com.tc.l2.state.StateManager;
-import com.tc.util.State;
+import com.tc.l2.state.ServerMode;
+import java.util.EnumMap;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class StateChangeNotificationInfo {
@@ -40,29 +39,29 @@ public class StateChangeNotificationInfo {
       "jmx.terracotta.L2.recovering"                };
 
 
-  private static final Map<String, String[]>             map;
+  private static final Map<ServerMode, String[]>             map;
   static {
-    map = new HashMap<>();
-    map.put(StateManager.ACTIVE_COORDINATOR.getName(), ACTIVE_INFO);
-    map.put(StateManager.PASSIVE_STANDBY.getName(), PASSIVE_STANDBY_INFO);
-    map.put(StateManager.PASSIVE_UNINITIALIZED.getName(), PASSIVE_UNINIT_INFO);
-    map.put(StateManager.START_STATE.getName(), START_INFO);
-    map.put(StateManager.STOP_STATE.getName(), STOP_INFO);
-    map.put(StateManager.RECOVERING.getName(), RECOVERING_INFO);
+    map = new EnumMap<>(ServerMode.class);
+    map.put(ServerMode.ACTIVE, ACTIVE_INFO);
+    map.put(ServerMode.PASSIVE, PASSIVE_STANDBY_INFO);
+    map.put(ServerMode.UNINITIALIZED, PASSIVE_UNINIT_INFO);
+    map.put(ServerMode.START, START_INFO);
+    map.put(ServerMode.STOP, STOP_INFO);
+    map.put(ServerMode.RECOVERING, RECOVERING_INFO);
   }
 
-  public String getMsg(State state) {
-    String[] info = map.get(state.getName());
+  public String getMsg(ServerMode state) {
+    String[] info = map.get(state);
     return info[0];
   }
 
-  public String getAttributeName(State state) {
-    String[] info = map.get(state.getName());
+  public String getAttributeName(ServerMode state) {
+    String[] info = map.get(state);
     return info[1];
   }
 
-  public String getAttributeType(State state) {
-    String[] info = map.get(state.getName());
+  public String getAttributeType(ServerMode state) {
+    String[] info = map.get(state);
     return info[2];
   }
 

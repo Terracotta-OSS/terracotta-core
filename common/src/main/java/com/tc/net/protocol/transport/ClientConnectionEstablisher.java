@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
-import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
@@ -120,19 +119,22 @@ public class ClientConnectionEstablisher {
    * @throws CommStackMismatchException
    * @throws MaxConnectionsExceededException
    */
-  public NetworkStackID open(Collection<ConnectionInfo> info, ClientMessageTransport cmt) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
+  public NetworkStackID open(Collection<ConnectionInfo> info, ClientMessageTransport cmt, ClientConnectionErrorListener reporter) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
+    Assert.assertNotNull(cmt);
+    Assert.assertNotNull(reporter);
+    Assert.assertNotNull(info);
     synchronized (this.asyncReconnecting) {
       if (info != null) {
         connAddressProvider.addAll(info);
       }
       Assert.eval("Can't call open() while asynch reconnect occurring", !this.asyncReconnecting.get());
       this.allowReconnects.set(true);
-      return connectTryAllOnce(cmt);
+      return connectTryAllOnce(cmt, reporter);
     }
   }
 
-  NetworkStackID connectTryAllOnce(ClientMessageTransport cmt) throws TCTimeoutException, IOException,
+  NetworkStackID connectTryAllOnce(ClientMessageTransport cmt, ClientConnectionErrorListener reporter) throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     final Iterator<ConnectionInfo> addresses = new ArrayList<ConnectionInfo>(this.connAddressProvider).iterator();
     Assert.assertFalse(cmt.isConnected());
@@ -145,21 +147,25 @@ public class ClientConnectionEstablisher {
       try {
         return cmt.open(info);
       } catch (TransportRedirect redirect) {
-        ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), info.getSecurityInfo());
+        ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort());
+        reporter.onError(info, redirect);
         info = null;
         if (this.connAddressProvider.add(add)) {
           info = add;
         }
       } catch (NoActiveException noactive) {
+        reporter.onError(info, noactive);
         info = null;
         LOGGER.debug("Connection attempt failed: ", noactive);
         // if there is no active, throw an IOException and let upper layers of 
         // the network stack handle the issue
-        throw new IOException(noactive);
+        if (!addresses.hasNext()) { throw new IOException(noactive); }
       } catch (TCTimeoutException e) {
+        reporter.onError(info, e);
         info = null;
         if (!addresses.hasNext()) { throw e; }
       } catch (IOException e) {
+        reporter.onError(info, e);
         info = null;
         if (!addresses.hasNext()) { throw e; }
       }
@@ -236,7 +242,7 @@ public class ClientConnectionEstablisher {
             cmt.reopen(target);
             connected = cmt.getConnectionID().isValid();        
           } catch (TransportRedirect redirect) {
-            ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), target.getSecurityInfo());
+            ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort());
             target = null;
             if (this.connAddressProvider.add(add)) {
               target = add;

@@ -18,105 +18,100 @@
  */
 package com.tc.objectserver.handler;
 
-import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.InBandMoveToNextSink;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.l2.msg.ReplicationMessage;
-import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
+import com.tc.object.FetchID;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ClientEntityStateManager;
-import com.tc.objectserver.entity.ClientSourceIdImpl;
+import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.util.ProductID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.entity.ClientSourceId;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
-  private final StateManager                coordinator;
   private final ClientEntityStateManager      clientEvents;
+  private final ProcessTransactionHandler   pth;
   private final ManagementTopologyEventCollector collector;
   
   private final Set<ClientID>  knownClients = new HashSet<>();
 
   private static final Logger logger = LoggerFactory.getLogger(ChannelLifeCycleHandler.class);
-  private final Sink<HydrateContext> hydrateSink;
-  private final Sink<VoltronEntityMessage> processTransactionSink;
-  private final Sink<ReplicationMessage> replicatedTransactionSink;
-  private final Sink<Runnable> requestProcessorSink;
-  private final EntityManager entityManager;
+  private final Sink<VoltronEntityMessage> voltronSink;
 
   public ChannelLifeCycleHandler(CommunicationsManager commsManager,
                                  StageManager stageManager,
                                  DSOChannelManager channelManager,
-                                 EntityManager entityManager,
                                  ClientEntityStateManager chain,
-                                 StateManager coordinator,
+                                 ProcessTransactionHandler handler,
                                  ManagementTopologyEventCollector collector) {
     this.commsManager = commsManager;
-    this.entityManager=entityManager;
     this.channelMgr = channelManager;
-    this.coordinator = coordinator;
     this.clientEvents = chain;
     this.collector = collector;
-    hydrateSink = stageManager.getStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, HydrateContext.class).getSink();
-    processTransactionSink = stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink();
-    replicatedTransactionSink = stageManager.getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class).getSink();
-    requestProcessorSink = stageManager.getStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, Runnable.class).getSink();
+    this.pth = handler;
+    this.voltronSink = stageManager.getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
   }
 
   /**
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(NodeID nodeID, ProductID productId, boolean wasActive) {
+  private void nodeDisconnected(NodeID nodeID, ProductID productId) {
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
       // Broadcast locally (chain) and remotely this message if active
-      if (coordinator.isActiveCoordinator()) {
-        broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
-        // by here, all the messages from the client have been processed, so if any 
-        // entities are still referenced, they need to be released with this synthetic 
-        // message.  There is an ordering hack here to let the collector know what releases
-        // are coming so the collector can present releases before final disconnect
-        List<VoltronEntityMessage> msg = clientEvents.clientDisconnected(clientID);
-        if (!msg.isEmpty()) {
-          collector.expectedReleases(clientID, msg.stream().map(m->m.getEntityDescriptor()).collect(Collectors.toList()));
-          msg.forEach(m->processTransactionSink.addSingleThreaded(m));
-        }
-        if (wasActive) {
-          notifyClientRemoved(clientID);
-        }
-      }
+      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
+      // send a disconnection message to the platform entity to initiate the disconnection sequence, this flushes the PTH 
+      // of any possible fetches there
+      voltronSink.addToSink(createDisconnectMessage(clientID));
     }
+
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
       logger.info(": Received transport disconnect.  Shutting down client " + nodeID);
     }
+  }
+  
+  private VoltronEntityMessage createDisconnectMessage(ClientID clientID) {
+    return new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(PlatformEntity.PLATFORM_FETCH_ID, ClientInstanceID.NULL_ID), ()-> {
+//  now the pth is flushed, check that there are no pending removes in the managed entities
+      if (pth.removeClient(clientID)) {
+    // no fetches, safe to remove the client
+          notifyEnitiesOfDisconnect(clientID);
+        } else {
+    // there are fetches in the managed entity, not safe to remove the client, recursion
+          voltronSink.addToSink(createDisconnectMessage(clientID));
+        }
+      });
+  }
+  
+  private void notifyEnitiesOfDisconnect(ClientID clientID) {
+    List<FetchID> msg = clientEvents.clientDisconnected(clientID);
+    collector.expectedDisconnects(clientID, msg);
+    msg.forEach(m->voltronSink.addToSink(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), null)));
+    notifyClientRemoved(clientID);
   }
 
   private void nodeConnected(NodeID nodeID, ProductID productId) {
@@ -124,9 +119,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
       // Broadcast locally (chain) and remotely this message if active
-      if (coordinator.isActiveCoordinator()) {
-        broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
-      }
+      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
     }
   }
 
@@ -159,9 +152,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
  //  brand new member, broadcast the change if active
     clientCreated(clientID, channel.getProductID());
  //  client is connecting to the active
-    if (coordinator.isActiveCoordinator()) {
-      notifyClientAdded(channel, clientID);
-    }
+    notifyClientAdded(channel, clientID);
   }
   
   private void notifyClientAdded(MessageChannel channel, ClientID clientID) {
@@ -174,7 +165,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private void notifyClientRemoved(ClientID clientID) {
     synchronized (knownClients) {
       if (knownClients.contains(clientID)) {
-        collector.clientDidDisconnect(clientID);
+//        collector.clientDidDisconnect(clientID);
         knownClients.remove(clientID);
       }
     }
@@ -185,29 +176,9 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   }
   
   public void clientDropped(ClientID clientID, ProductID product, boolean wasActive) {
-    // Note that the remote node ID always refers to a client, in this path.
-    // We want all the messages in the system from this client to reach its destinations before processing this request.
-    // esp. hydrate stage and process transaction stage. This goo is for that.
-    NodeID inBandSchedulerKey = clientID;
-    SpecializedEventContext sec = new SpecializedEventContext() {
-      @Override
-      public void execute() throws EventHandlerException {
-        requestProcessorSink.addMultiThreaded(new FlushThenDisconnect(clientID, product, wasActive));
-      }
-
-      @Override
-      public Object getSchedulingKey() {
-        return 0;
-      }
-
-      @Override
-      public boolean flush() {
-        return true;
-      }
-    };
-    
-    InBandMoveToNextSink context3 = new InBandMoveToNextSink(null, sec, coordinator.isActiveCoordinator() ? processTransactionSink : replicatedTransactionSink, inBandSchedulerKey, false);  // threaded on client nodeid so no need to flush
-    hydrateSink.addSpecialized(context3);
+    if (wasActive) {
+      nodeDisconnected(clientID, product);
+    }
   }
 /**
  * Again, channel disconnection is oddly connected.  A channel disconnect can come as
@@ -230,37 +201,4 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     // before an attempt is made to remove references.
     clientDropped(clientID, product, wasActive);
   }  
-  
-  private class FlushThenDisconnect implements MultiThreadedEventContext, Runnable {
-    
-    private final ClientID clientID;
-    private final ProductID product;
-    private final boolean wasActive;
-
-    public FlushThenDisconnect(ClientID client, ProductID product, boolean wasActive) {
-      this.clientID = client;
-      this.product = product;
-      this.wasActive = wasActive;
-    }
-
-    @Override
-    public Object getSchedulingKey() {
-      return 0;
-    }
-
-    @Override
-    public boolean flush() {
-      return true;
-    }
-
-    @Override
-    public void run() {
-      nodeDisconnected(clientID, product, wasActive);
-      ClientSourceId sid = new ClientSourceIdImpl(clientID.toLong());
-      // notify entities.
-      entityManager.snapshot(null).stream().forEach((me) -> {
-        me.notifyDestroyed(sid);
-      });
-    }
-  }
 }

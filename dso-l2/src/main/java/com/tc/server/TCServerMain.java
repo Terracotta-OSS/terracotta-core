@@ -57,14 +57,14 @@ public class TCServerMain {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
 
       ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
-                                                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2, null);
+                                                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2);
 
       ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
       Thread.currentThread().setContextClassLoader(systemLoader);
 
 //  set this as the context loader for creation of all the infrastructure at bootstrap time.
 
-      setup = factory.createL2TVSConfigurationSetupManager(null, new ServiceClassLoader(ServiceLocator.getImplementations(ServiceConfigParser.class, systemLoader)));
+      setup = factory.createL2TVSConfigurationSetupManager(null, systemLoader);
 
       TCLogbackLogging.redirectLogging(setup.commonl2Config().logsPath().getCanonicalPath());
 
@@ -99,6 +99,11 @@ public class TCServerMain {
     if (info.isPatched()) {
       String longPatchString = info.toLongPatchString();
       LOGGER.info(longPatchString);
+    }
+
+    String versionMessage = info.versionMessage();
+    if (!versionMessage.isEmpty()) {
+      LOGGER.info(versionMessage);
     }
   }
 

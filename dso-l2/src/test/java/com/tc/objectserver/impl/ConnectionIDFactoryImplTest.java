@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
+import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -51,7 +52,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void setUp() throws Exception {
     sequence = createSequence();
     persistor = createPersistor(sequence);
-    connectionIDFactory = new ConnectionIDFactoryImpl(persistor, EnumSet.allOf(ProductID.class));
+    connectionIDFactory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.allOf(ProductID.class));
     listener = mock(ConnectionIDFactoryListener.class);
     connectionIDFactory.activate(new StripeID("abc123"), 0);
     connectionIDFactory.registerForConnectionIDEvents(listener);
@@ -80,7 +81,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
   
   public void testProductNegotiation() {
-    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
     StripeID sid = new StripeID("server1");
     factory.activate(sid, 0);
     ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), null, null, ProductID.PERMANENT));
@@ -93,7 +94,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   
     
   public void testMismatchServerRejection() {
-    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
     StripeID sid = new StripeID("server1");
     factory.activate(sid, 0);
     ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, new StripeID("server2").getName(), null, null, ProductID.PERMANENT));
@@ -105,7 +106,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
   
   public void testProductRefusal() {
-    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(persistor, EnumSet.noneOf(ProductID.class));
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.noneOf(ProductID.class));
     factory.activate(StripeID.NULL_ID, 0);
     ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", null, null, ProductID.PERMANENT));
     

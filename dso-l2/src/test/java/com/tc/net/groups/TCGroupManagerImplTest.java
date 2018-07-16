@@ -18,44 +18,34 @@
  */
 package com.tc.net.groups;
 
-import org.slf4j.LoggerFactory;
-
-import com.tc.async.api.StageManager;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
-import com.tc.exception.TCShutdownServerException;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.RandomWeightGenerator;
-import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
-import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.SessionID;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDump;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,12 +55,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.mockito.Answers.RETURNS_MOCKS;
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 
@@ -106,7 +92,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);
@@ -169,57 +155,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
       System.err.println("XXX " + member2 + "; size: " + groups[1].size());
     }
 
-    tearGroups();
-  }
-
-  public void testCallbackPort() throws Exception {
-    setupGroups(2);
-
-    int proxyPort = new PortChooser().chooseRandomPort();
-    TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), groupPorts[1], 0, false, null);
-    proxy.start();
-
-    groups[0].setDiscover(new NullTCGroupMemberDiscovery());
-    groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    Set<Node> nodeSet = new HashSet<>();
-    Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-    groups[0].join(nodes[0], nodeStore);
-    groups[1].join(nodes[1], nodeStore);
-    // open test
-    groups[0].openChannel(LOCALHOST, proxyPort, new NullChannelEventListener());
-
-    Thread.sleep(2000);
-
-    assertEquals(1, groups[0].size());
-    assertEquals(1, groups[1].size());
-    TCGroupMember member1 = getMember(groups[0], 0);
-    TCGroupMember member2 = getMember(groups[1], 0);
-    assertTrue("Expected  " + member1.getLocalNodeID() + " but got " + member2.getPeerNodeID(), member1
-        .getLocalNodeID().equals(member2.getPeerNodeID()));
-    assertTrue("Expected  " + member1.getPeerNodeID() + " but got " + member2.getLocalNodeID(), member1.getPeerNodeID()
-        .equals(member2.getLocalNodeID()));
-
-    proxy.setDelay(Integer.MAX_VALUE);
-
-    long minTimeToSayDead = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_IDLETIME)
-                            + (TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_INTERVAL) * TCPropertiesImpl
-                                .getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_PROBES));
-    // giving more buffer time, to catch problem if any
-    minTimeToSayDead += (3 * TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_IDLETIME));
-
-    // HC will not say the other end is DEAD as the callback port from the client TCGroupMgr is available
-    System.out.println("Sleeping for min time " + minTimeToSayDead);
-    ThreadUtil.reallySleep(minTimeToSayDead);
-    System.out.println("checking the client state");
-    assertEquals(1, groups[1].size());
-
-    // eventually after full probe, the node has to goto DEAD state
-    while (groups[1].size() != 0) {
-      System.out.println(".");
-      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_INTERVAL)
-                             * TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_HEALTHCHECK_L1_PING_PROBES));
-    }
     tearGroups();
   }
 
@@ -582,54 +517,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
     assertEquals(zaps1, zaps2);
 
     tearGroups();
-  }
-
-  public void testVersionCompatibilityCheck() throws Exception {
-    PortChooser portChooser = new PortChooser();
-    WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
-    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
-          @Override
-          public long getWeight() {
-            return 5;
-          }
-        });
-    weightGeneratorFactory.add(new WeightGeneratorFactory.WeightGenerator() {
-      @Override
-      public long getWeight() {
-        return 6;
-      }
-    });
-    TCGroupManagerImpl tcGroupManager = spy(new TCGroupManagerImpl(new NullConnectionPolicy(), "localhost",
-        portChooser.chooseRandomPort(), portChooser.chooseRandomPort(),
-        mock(StageManager.class, RETURNS_MOCKS.get()), mock(TCSecurityManager.class), weightGeneratorFactory) {
-      @Override
-      protected String getVersion() {
-        return "4.2.0";
-      }
-    });
-    TCGroupMemberDiscovery discovery = mock(TCGroupMemberDiscovery.class);
-    when(discovery.isValidClusterNode(any(NodeID.class))).thenReturn(true);
-    tcGroupManager.setDiscover(discovery);
-
-    // Incompatible version, higher weights. Close down the handshake, the other guy will zap himself.
-    MessageChannel channel1 = mockMessageChannel();
-    tcGroupManager.receivedHandshake(mockHandshakeMessage(channel1, "4.3.1", new long [] { 4, 5 }));
-    verify(channel1).close();
-
-    // Incompatible version, lower weights. Zap yourself.
-    MessageChannel channel2 = mockMessageChannel();
-    try {
-      tcGroupManager.receivedHandshake(mockHandshakeMessage(channel2, "4.3.1", new long [] { 6, 1 }));
-      fail("Should have zapped here due to low weights");
-    } catch (TCShutdownServerException e) {
-      // expected
-      verify(channel2).close();
-    }
-
-    // Compatible version, everything should be fine
-    MessageChannel channel3 = mockMessageChannel();
-    tcGroupManager.receivedHandshake(mockHandshakeMessage(channel3, "4.2.1", new long[] { Long.MAX_VALUE, Long.MAX_VALUE}));
-    verify(channel3, never()).close();
   }
 
   private TCGroupHandshakeMessage mockHandshakeMessage(MessageChannel messageChannel, String version, long[] weights) {

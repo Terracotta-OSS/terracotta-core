@@ -54,7 +54,7 @@ public class PortBindAddressTest extends TCTestCase {
                       + "\n</servers>"
                       + "\n</tc-config>";
       writeConfigFile(config);
-      StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null, null);
+      StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(new String[]{"-f", tcConfig.getAbsolutePath()}, null);
       L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager("server1", getClass().getClassLoader());
       Assert.assertEquals("127.8.9.0", configSetupMgr.dsoL2Config().tsaPort().getBind());
       Assert.assertEquals("127.8.9.2", configSetupMgr.dsoL2Config().tsaGroupPort().getBind());

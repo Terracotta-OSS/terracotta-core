@@ -24,6 +24,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.ConnectionShutdownException;
 import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class TerracottaConnection implements Connection {
   private final ClientEntityManager entityManager;
+  private final EntityClientServiceFactory factory = new EntityClientServiceFactory();
   private final EndpointConnector endpointConnector;
   private final Runnable shutdown;
   private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> cachedEntityServices = new ConcurrentHashMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>>();
@@ -69,7 +71,7 @@ public class TerracottaConnection implements Connection {
     @SuppressWarnings("unchecked")
     EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U>) cachedEntityServices.get(entityClass);
     if (service == null) {
-      service = EntityClientServiceFactory.creationServiceForType(entityClass, TerracottaConnection.class.getClassLoader());
+      service = factory.creationServiceForType(entityClass);
       if (null != service) {
         @SuppressWarnings("unchecked")
         EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U> tmp = (EntityClientService<T, ?, ? extends EntityMessage, ? extends EntityResponse, U>) cachedEntityServices.putIfAbsent(entityClass, service);
@@ -88,7 +90,7 @@ public class TerracottaConnection implements Connection {
 
   private void checkShutdown() {
     if (isShutdown) {
-      throw new IllegalStateException("Already shut down");
+      throw new ConnectionShutdownException("Already shut down");
     }
   }
 

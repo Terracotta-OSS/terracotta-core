@@ -51,11 +51,6 @@ public abstract class MultiProcessGalvanTest extends BasicHarnessTest implements
   }
 
   @Override
-  public String getEntityConfigXMLSnippet() {
-    return "";
-  }
-
-  @Override
   public String getTestClassName() {
     return this.getClass().getCanonicalName();
   }

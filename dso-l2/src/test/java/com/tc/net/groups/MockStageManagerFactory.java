@@ -74,17 +74,7 @@ public class MockStageManagerFactory {
             }
           });
           return null;
-        }).when(sink).addSingleThreaded(Matchers.any());
-        
-        doAnswer((invoke2)->{
-          service.submit(()->{
-            try {
-              ev.handleEvent(invoke2.getArguments()[0]);
-            } catch (EventHandlerException e) {
-            }
-          });
-          return null;
-        }).when(sink).addMultiThreaded(Matchers.any());
+        }).when(sink).addToSink(Matchers.any());
         
         when(stage.getSink()).thenReturn(sink);
         created.put(stageName, stage);

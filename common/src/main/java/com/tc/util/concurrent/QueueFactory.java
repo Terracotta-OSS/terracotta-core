@@ -20,15 +20,15 @@ package com.tc.util.concurrent;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import com.tc.async.impl.Event;
 
-public class QueueFactory<E> {
+public class QueueFactory {
 
-  public BlockingQueue<E> createInstance() {
-    return new LinkedBlockingQueue<E>();
+  public <E> BlockingQueue<Event> createInstance(Class<E> type) {
+    return new LinkedBlockingQueue<>();
   }
 
-  public BlockingQueue<E> createInstance(int capacity) {
-    return new LinkedBlockingQueue<E>(capacity);
+  public <E> BlockingQueue<Event> createInstance(Class<E> type, int capacity) {
+    return new LinkedBlockingQueue<>(capacity);
   }
-
 }

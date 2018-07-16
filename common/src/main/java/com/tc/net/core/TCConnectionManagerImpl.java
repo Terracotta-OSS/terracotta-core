@@ -27,7 +27,6 @@ import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
@@ -41,8 +40,11 @@ import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The {@link TCConnectionManager} implementation.
@@ -63,25 +65,34 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
-  private final TCSecurityManager       securityManager;
+  private final BufferManagerFactory    bufferManagerFactory;
 
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"), null);
+    this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"), new ClearTextBufferManagerFactory());
   }
 
-  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig,
-                                 TCSecurityManager securityManager) {
-    this.securityManager = securityManager;
+  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig, BufferManagerFactory bufferManagerFactory) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
     this.healthCheckerConfig = healthCheckerConfig;
+    this.bufferManagerFactory = bufferManagerFactory;
     this.comm = new TCCommImpl(name, workerCommCount, socketParams);
     this.comm.start();
   }
+  
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> state = new LinkedHashMap<>();
+    synchronized(connections) {
+      state.put("connections", connections.stream().map(connection->connection.getState()).collect(Collectors.toList()));
+    }
+    state.put("processors", comm.getState());
+    return state;
+  }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, securityManager);
+    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, bufferManagerFactory);
   }
 
   @SuppressWarnings("resource")
@@ -106,7 +117,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
     CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
 
-    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, bufferManagerFactory);
 
     commThread.registerListener(rv, ssc);
 
@@ -286,10 +297,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     public final void errorEvent(TCConnectionErrorEvent event) {
       try {
         final Throwable err = event.getException();
-
         if (err != null) {
           if (err instanceof IOException) {
-            if (logger.isInfoEnabled()) {
+            if (!event.getSource().isClosed()) {
               logger.info("error event on connection " + event.getSource() + ": " + err.getMessage());
             } else if (logger.isDebugEnabled()) {
               logger.debug("error event on connection " + event.getSource() + ": " + err.getMessage(), err);

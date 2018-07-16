@@ -32,7 +32,13 @@ public class Trace {
   }
 
   public void log(String message) {
-    LOGGER.trace("[trace - {}] {} - {}", id, componentName, message);
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("[trace - {}] {} - {}", id, componentName, message);
+    }
+  }
+  
+  public static boolean isTraceEnabled() {
+    return LOGGER.isTraceEnabled();
   }
 
   public void start() {
@@ -45,14 +51,12 @@ public class Trace {
 
   public void end() {
     if (LOGGER.isTraceEnabled()) {
-    LOGGER.trace("[trace - {}] end trace for componentName - {}, elapsed {} ns", id, componentName, System.nanoTime() - startTime);
+      LOGGER.trace("[trace - {}] end trace for componentName - {}, elapsed {} ns", id, componentName, System.nanoTime() - startTime);
       if(parent != null) {
         ACTIVE_TRACE.set(parent);
       } else {
         ACTIVE_TRACE.remove();
       }
-    } else{
-      ACTIVE_TRACE.remove();
     }
   }
 
@@ -61,6 +65,9 @@ public class Trace {
   }
 
   public static Trace activeTrace() {
+    if (!LOGGER.isTraceEnabled()) {
+      return DUMMY;
+    }
     Trace trace = ACTIVE_TRACE.get();
     return trace != null ? trace : DUMMY;
   }

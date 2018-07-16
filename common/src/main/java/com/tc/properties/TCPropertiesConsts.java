@@ -48,7 +48,10 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String ENTITY_PROCESSOR_THREADS                                    = "server.entity.processor.threads";
+  public static final String MIN_ENTITY_PROCESSOR_THREADS                                    = "server.entity.processor.minthreads";
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
+  public static final String L2_SEDA_STAGE_DISABLE_DIRECT_SINKS                                    = "l2.seda.stage.sink.disable.direct";
+  public static final String L2_SEDA_STAGE_SINGLE_THREAD                                    = "l2.seda.stage.single.thread";
   String L2_TCCOM_WORKERTHREADS                                                          = "l2.tccom.workerthreads";
   String L2_SEDA_STAGE_WORKERTHREADS                                                     = "l2.seda.stage.workerthreads";
 
@@ -125,7 +128,6 @@ public interface TCPropertiesConsts {
   public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE                 = "l1.transactionmanager.strings.compress.minSize";
   
   public static final String CLIENT_MAX_PENDING_REQUESTS                                    = "client.requests.pending.max";
-  public static final String CLIENT_MAX_SENT_REQUESTS                                       = "client.requests.sent.max";
 
   public static final String TC_TRANSPORT_HANDSHAKE_TIMEOUT                                 = "tc.transport.handshake.timeout";
   public static final String TC_CONFIG_SOURCEGET_TIMEOUT                                    = "tc.config.getFromSource.timeout";
@@ -279,16 +281,6 @@ public interface TCPropertiesConsts {
    *                         successful socket connects
    * </code>
    ********************************************************************************************************************/
-  public static final String L2_HEALTHCHECK_L1_PING_ENABLED                                 = "l2.healthcheck.l1.ping.enabled";
-  public static final String L2_HEALTHCHECK_L1_PING_IDLETIME                                = "l2.healthcheck.l1.ping.idletime";
-  public static final String L2_HEALTHCHECK_L1_PING_INTERVAL                                = "l2.healthcheck.l1.ping.interval";
-  public static final String L2_HEALTHCHECK_L1_PING_PROBES                                  = "l2.healthcheck.l1.ping.probes";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT                              = "l2.healthcheck.l1.socketConnect";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_TIMEOUT                      = "l2.healthcheck.l1.socketConnectTimeout";
-  public static final String L2_HEALTHCHECK_L1_SOCKECT_CONNECT_COUNT                        = "l2.healthcheck.l1.socketConnectCount";
-  public static final String L2_HEALTHCHECK_L1_CHECK_TIME_ENABLED                           = "l2.healthcheck.l1.checkTime.enabled";
-  public static final String L2_HEALTHCHECK_L1_CHECK_TIME_INTERVAL                          = "l2.healthcheck.l1.checkTime.interval";
-  public static final String L2_HEALTHCHECK_L1_CHECK_TIME_THRESHOLD                         = "l2.healthcheck.l1.checkTime.threshold";
 
   public static final String L2_HEALTHCHECK_L2_PING_ENABLED                                 = "l2.healthcheck.l2.ping.enabled";
   public static final String L2_HEALTHCHECK_L2_PING_IDLETIME                                = "l2.healthcheck.l2.ping.idletime";
@@ -301,8 +293,6 @@ public interface TCPropertiesConsts {
   public static final String L2_HEALTHCHECK_L2_CHECK_TIME_INTERVAL                          = "l2.healthcheck.l2.checkTime.interval";
   public static final String L2_HEALTHCHECK_L2_CHECK_TIME_THRESHOLD                         = "l2.healthcheck.l2.checkTime.threshold";
 
-  public static final String L1_HEALTHCHECK_L2_BIND_ADDRESS                                 = "l1.healthcheck.l2.bindAddress";
-  public static final String L1_HEALTHCHECK_L2_BIND_PORT                                    = "l1.healthcheck.l2.bindPort";
   public static final String L1_HEALTHCHECK_L2_PING_ENABLED                                 = "l1.healthcheck.l2.ping.enabled";
   public static final String L1_HEALTHCHECK_L2_PING_IDLETIME                                = "l1.healthcheck.l2.ping.idletime";
   public static final String L1_HEALTHCHECK_L2_PING_INTERVAL                                = "l1.healthcheck.l2.ping.interval";
@@ -366,14 +356,6 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * Section :  Version Settings
-   * version.compatibility.check - check version compatibility for client<->server and server<-> connections
-   * </code>
-   ********************************************************************************************************************/
-  public static final String VERSION_COMPATIBILITY_CHECK                                    = "version.compatibility.check";
-
-  /*********************************************************************************************************************
-   * <code>
    * Section :  Some useful subcategories
    * </code>
    ********************************************************************************************************************/
@@ -391,9 +373,10 @@ public interface TCPropertiesConsts {
       ENTITY_PROCESSOR_THREADS,
       L2_TCCOM_WORKERTHREADS,
       L2_SEDA_STAGE_WORKERTHREADS,
+      L2_SEDA_STAGE_DISABLE_DIRECT_SINKS,
+      L2_SEDA_STAGE_SINGLE_THREAD,
       L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
       CLIENT_MAX_PENDING_REQUESTS,
-      CLIENT_MAX_SENT_REQUESTS,
       L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS,
       L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS
   };
