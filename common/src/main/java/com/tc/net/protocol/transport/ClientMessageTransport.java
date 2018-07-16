@@ -128,9 +128,9 @@ public class ClientMessageTransport extends MessageTransportBase {
         connection.close(100);
         throw e;
       }
-      Assert.eval(!getConnectionId().isNull());
+      Assert.eval(!getConnectionID().isNull());
       this.isOpen.set(true);
-      NetworkStackID nid = new NetworkStackID(getConnectionId().getChannelID());
+      NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
       this.wasOpened = true;
       this.isOpening.set(false);
       return (nid);
@@ -162,7 +162,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   @Override
   public void reset() {
     synchronized (this.isOpen) {
-      getLogger().info("Resetting connection " + getConnectionId());
+      getLogger().info("Resetting connection " + getConnectionID());
       this.disconnect();
       this.isOpen.set(false);
       this.status.reset();
@@ -175,7 +175,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     if (result.hasErrorContext()) {
       switch (result.getError()) {
         case ERROR_NO_ACTIVE:
-          if (this.getConnectionId().getProductId().isRedirectEnabled()) {
+          if (this.getProductID().isRedirectEnabled()) {
             throw new NoActiveException();
           }
           break;
@@ -191,7 +191,7 @@ public class ClientMessageTransport extends MessageTransportBase {
           throw new ReconnectionRejectedException(
                                                   "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
         case ERROR_REDIRECT_CONNECTION:
-          if (this.getConnectionId().getProductId().isRedirectEnabled()) {
+          if (this.getProductID().isRedirectEnabled()) {
             throw new TransportRedirect(result.synAck.getErrorContext());
           }
           break;
@@ -270,9 +270,9 @@ public class ClientMessageTransport extends MessageTransportBase {
         }
       }
 
-      if (!getConnectionId().isNewConnection() && getConnectionId().isValid()) {
+      if (!getConnectionID().isNewConnection() && getConnectionID().isValid()) {
         // This is a reconnect
-        Assert.eval(!synAck.getConnectionId().isValid() || getConnectionId().equals(synAck.getConnectionId()));
+        Assert.eval(!synAck.getConnectionId().isValid() || getConnectionID().equals(synAck.getConnectionId()));
       }
       getConnection().setTransportEstablished();
       setSynAckResult(synAck);
@@ -341,13 +341,13 @@ public class ClientMessageTransport extends MessageTransportBase {
       this.waitForSynAckResult = targetFuture;
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
-      if (getConnectionId().isSecured() && getConnectionId().getPassword() == null) {
+      if (getConnectionID().isSecured() && getConnectionID().getPassword() == null) {
         // Re-init the password
-        getConnectionId().setPassword(securityManager.getPasswordForTC(getConnectionId().getUsername(),
+        getConnectionID().setPassword(securityManager.getPasswordForTC(getConnectionID().getUsername(),
                                                                   connectionInfo.getHostname(),
                                                                   connectionInfo.getPort()));
       }
-      TransportHandshakeMessage syn = this.messageFactory.createSyn(getConnectionId(), getConnection(),
+      TransportHandshakeMessage syn = this.messageFactory.createSyn(getConnectionID(), getConnection(),
                                                                     stackLayerFlags, this.callbackPort);
       // send syn message
       try {
@@ -368,7 +368,7 @@ public class ClientMessageTransport extends MessageTransportBase {
         throw new TransportHandshakeException("Transport is not " + MessageTransportState.STATE_SYN_SENT
                                               + ". Status: " + status);
       }
-      TransportHandshakeMessage ack = this.messageFactory.createAck(getConnectionId(), getConnection());
+      TransportHandshakeMessage ack = this.messageFactory.createAck(getConnectionID(), getConnection());
       // send ack message
       try {
         this.sendToConnection(ack);
@@ -435,7 +435,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     handleHandshakeError(result);
     initConnectionID(result.synAck.getConnectionId());
     sendAck();
-    getConnectionId().authenticated();
+    getConnectionID().authenticated();
     log("Handshake is complete");
   }
 

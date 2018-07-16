@@ -63,7 +63,7 @@ public class ServerStackProviderTest extends TCTestCase {
     when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
       ProductID product = ProductID.PERMANENT;
-      when(channel.getProductId()).thenReturn(product);
+      when(channel.getProductID()).thenReturn(product);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -112,7 +112,7 @@ public class ServerStackProviderTest extends TCTestCase {
     when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
       ProductID product = ProductID.PERMANENT;
-      when(channel.getProductId()).thenReturn(product);
+      when(channel.getProductID()).thenReturn(product);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -185,7 +185,7 @@ public class ServerStackProviderTest extends TCTestCase {
     when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
       ProductID product = ProductID.PERMANENT;
-      when(channel.getProductId()).thenReturn(product);
+      when(channel.getProductID()).thenReturn(product);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -238,7 +238,7 @@ public class ServerStackProviderTest extends TCTestCase {
     Assert.assertEquals(ProductID.PERMANENT, connectionID2.getProductId());
     Assert.assertEquals(1L, connectionID1.getChannelID());
     Assert.assertEquals(2L, connectionID2.getChannelID());
-    Assert.assertEquals(ProductID.STRIPE, transport.getConnectionId().getProductId());
+    Assert.assertEquals(ProductID.STRIPE, transport.getConnectionID().getProductId());
 
     // trying to attach a stack that wasn't rebuilt at startup should fail.
     try {

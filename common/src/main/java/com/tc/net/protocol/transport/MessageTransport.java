@@ -32,8 +32,6 @@ import java.util.List;
 public interface MessageTransport extends NetworkLayer {
 
   public static final int CONNWEIGHT_TX_HANDSHAKED = 1;
-
-  public ConnectionID getConnectionId();
   
   public void addTransportListener(MessageTransportListener listener);
 

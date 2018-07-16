@@ -180,7 +180,7 @@ public class DistributedObjectClientTest extends TestCase {
         } catch (Exception exp) {
           
         }
-        when(channel.getProductId()).thenReturn(ProductID.PERMANENT);
+        when(channel.getProductID()).thenReturn(ProductID.PERMANENT);
         return channel;
       }
     };

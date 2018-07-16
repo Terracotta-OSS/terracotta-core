@@ -117,7 +117,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     
     this.outbound = createSendStage();
     
-    this.reconnectable = channel.getProductId().isReconnectEnabled();
+    this.reconnectable = channel.getProductID().isReconnectEnabled();
   }
   
   public boolean checkBusy() {

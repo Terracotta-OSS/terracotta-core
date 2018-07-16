@@ -179,7 +179,7 @@ public class ClientConnectionEstablisher {
                                                                    LossyTCLoggerType.TIME_BASED, true);
 
       boolean connected = cmt.isConnected();
-      if (!cmt.getConnectionId().getProductId().isReconnectEnabled() && !isReconnectBetweenL2s()) {
+      if (!cmt.getProductID().isReconnectEnabled() && !isReconnectBetweenL2s()) {
         cmt.getLogger().info("Got reconnect request for ClientMessageTransport that does not support it.  skipping");
         return;
       }
@@ -234,7 +234,7 @@ public class ClientConnectionEstablisher {
               cmt.getLogger().info("Reconnect attempt " + i + " to " + target);
             }
             cmt.reopen(target);
-            connected = cmt.getConnectionId().isValid();        
+            connected = cmt.getConnectionID().isValid();        
           } catch (TransportRedirect redirect) {
             ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort(), target.getSecurityInfo());
             target = null;
@@ -362,7 +362,7 @@ public class ClientConnectionEstablisher {
   }
 
   public void asyncReconnect(ClientMessageTransport cmt) {
-    if (cmt.getConnectionId().isValid()) {
+    if (cmt.getConnectionID().isValid()) {
       putConnectionRequest(ConnectionRequest.newReconnectRequest(cmt));
     }
   }

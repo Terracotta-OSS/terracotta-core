@@ -30,6 +30,7 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
@@ -302,12 +303,22 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public ProductID getProductId() {
-    if (this.sendLayer instanceof MessageTransport) {
-      return ((MessageTransport)this.sendLayer).getConnectionId().getProductId();
+  public ProductID getProductID() {
+    if (this.sendLayer != null) {
+      return this.sendLayer.getProductID();
     } else {
       return ProductID.PERMANENT;
     }
+  }
+
+  @Override
+  public ConnectionID getConnectionID() {
+    return this.sendLayer.getConnectionID();
+  }
+
+  @Override
+  public ChannelID getChannelID() {
+    return new ChannelID(this.sendLayer.getConnectionID().getChannelID());
   }
 
   private enum ChannelState {

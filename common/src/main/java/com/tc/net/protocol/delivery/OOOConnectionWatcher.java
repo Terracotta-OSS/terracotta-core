@@ -91,6 +91,6 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
   }
 
   private static void log(MessageTransport transport, String msg) {
-    if (debug) DebugUtil.trace("OOOConnectionWatcher-CLIENT-" + transport.getConnectionId() + " -> " + msg);
+    if (debug) DebugUtil.trace("OOOConnectionWatcher-CLIENT-" + transport.getConnectionID() + " -> " + msg);
   }
 }
