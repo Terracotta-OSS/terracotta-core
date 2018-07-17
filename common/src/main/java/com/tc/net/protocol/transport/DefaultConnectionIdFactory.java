@@ -41,11 +41,11 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   }
 
   private synchronized ConnectionID nextConnectionId(String clientJvmID, ProductID product) {
-    return new ConnectionID(clientJvmID, sequence++, serverID, null, null, product);
+    return new ConnectionID(clientJvmID, sequence++, serverID, product);
   }
 
   private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID product) {
-    return new ConnectionID(clientJvmID, channelID, serverID, null, null, product);
+    return new ConnectionID(clientJvmID, channelID, serverID, product);
   }
 
   @Override

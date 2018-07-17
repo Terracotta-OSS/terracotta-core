@@ -532,7 +532,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // Figure out the "trailing edge" of the current progress through the transaction stream.
     TransactionID oldestTransactionPending = transactionID;
     // if reconnectable, discover the oldest transaction still being waited for
-    if (this.channel.getProductId().isReconnectEnabled()) {
+    if (this.channel.getProductID().isReconnectEnabled()) {
       for (TransactionID pendingID : this.inFlightMessages.keySet()) {
         if (oldestTransactionPending.compareTo(pendingID) > 0) {
           // pendingID is earlier than oldestTransactionPending.

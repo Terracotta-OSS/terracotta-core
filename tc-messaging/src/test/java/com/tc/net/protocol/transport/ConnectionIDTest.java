@@ -34,25 +34,25 @@ public class ConnectionIDTest {
   
   @Test
   public void testSerializeFullyPopulated() throws Exception {
-    ConnectionID id = new ConnectionID("abcd", 1, "abcd", "abcd", "abcd".toCharArray(), ProductID.STRIPE);
+    ConnectionID id = new ConnectionID("abcd", 1, "abcd", ProductID.STRIPE);
     checkSerializeDeserialize(id);
   }
 
   @Test
   public void testSerializeEmptyPassword() throws Exception {
-    ConnectionID id = new ConnectionID("abcd", 1, "abcd", "abcd", null, ProductID.DIAGNOSTIC);
+    ConnectionID id = new ConnectionID("abcd", 1, "abcd", ProductID.DIAGNOSTIC);
     checkSerializeDeserialize(id);
   }
 
   @Test
   public void testSerializeEmptyUsername() throws Exception {
-    ConnectionID id = new ConnectionID("abcd", 1, "abcd", null, "abcd".toCharArray(), ProductID.DIAGNOSTIC);
+    ConnectionID id = new ConnectionID("abcd", 1, "abcd", ProductID.DIAGNOSTIC);
     checkSerializeDeserialize(id);
   }
 
   @Test
   public void testNoCredentials() throws Exception {
-    ConnectionID id = new ConnectionID("abcd", 1, "abcd", null, null, ProductID.DIAGNOSTIC);
+    ConnectionID id = new ConnectionID("abcd", 1, "abcd", ProductID.DIAGNOSTIC);
     checkSerializeDeserialize(id);
   }
 
@@ -69,8 +69,6 @@ public class ConnectionIDTest {
     assertEquals(expected.getJvmID(), actual.getJvmID());
     assertEquals(expected.getChannelID(), actual.getChannelID());
     assertEquals(expected.getServerID(), actual.getServerID());
-    assertEquals(expected.getUsername(), actual.getUsername());
-    assertTrue(Arrays.equals(expected.getPassword(), actual.getPassword()));
     assertEquals(expected.getProductId(), actual.getProductId());
   }
 }

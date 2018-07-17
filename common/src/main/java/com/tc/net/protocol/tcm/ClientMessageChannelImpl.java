@@ -25,8 +25,10 @@ import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.StripeID;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ClientConnectionErrorListener;
@@ -53,7 +55,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   private int                             connectAttemptCount;
   private int                             connectCount;
-  private volatile ChannelID              channelID = ChannelID.NULL_ID;
+  private final ProductID                 productID;
   private final SessionProvider           sessionProvider;
   private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
@@ -61,7 +63,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
                                      SessionProvider sessionProvider, ProductID productId) {
-    super(router, logger, msgFactory, StripeID.NULL_ID, productId);
+    super(router, logger, msgFactory);
+    this.productID = productId;
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider();
   }
@@ -81,26 +84,18 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public NetworkStackID open(Collection<ConnectionInfo> info) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    return open(info, null, null);
-  }
-
-  @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
-      MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
-      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
-                                                username, pw, getProductId());
+      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()), productID);
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
       if (!id.isNull()) {
  //  why are all these identifiers intermingled?
         long validID = id.toLong();
-        this.channelID = new ChannelID(validID);
         setLocalNodeID(new ClientID(validID));
       }
       this.channelSessionID = this.sessionProvider.getSessionID();
@@ -110,10 +105,20 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
+  public NodeID getRemoteNodeID() {
+    return ServerID.NULL_ID;
+  }
+
+  @Override
+  public ProductID getProductID() {
+    return getProductID(productID);
+  }
+
+  @Override
   public ChannelID getChannelID() {
     final ChannelStatus status = getStatus();
     synchronized (status) {
-      return this.channelID;
+      return new ChannelID(this.sendLayer.getConnectionID().getChannelID());
     }
   }
 
@@ -139,9 +144,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    if (!transport.getConnectionId().isNull()) {
-      long channelIdLong = transport.getConnectionId().getChannelID();
-      this.channelID = new ChannelID(channelIdLong);
+    if (!transport.getConnectionID().isNull()) {
+      long channelIdLong = transport.getConnectionID().getChannelID();
       setLocalNodeID(new ClientID(channelIdLong));
       this.connectCount++;
     }

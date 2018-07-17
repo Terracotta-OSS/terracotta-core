@@ -225,7 +225,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   public synchronized void checkTime() {
     if (currentState.equals(START) || currentState.equals(ALIVE)) {
       try {
-        sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionId(), transport.getConnection()));
+        sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionID(), transport.getConnection()));
       } catch (IOException ioe) {
         logger.warn("probe problem", ioe);
       }
@@ -256,7 +256,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
           logger.debug("Sending PING Probe to IDLE " + remoteNodeDesc);
         }
         try {
-          sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
+          sendProbeMessage(this.messageFactory.createPing(transport.getConnectionID(), transport.getConnection()));
         } catch (IOException ioe) {
           logger.warn("probe problem", ioe);
           return false;
@@ -308,7 +308,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     if (message.isPing()) {
       // Echo back but no change in this health checker state
       try {
-        sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionId(), transport.getConnection()));
+        sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionID(), transport.getConnection()));
       } catch (IOException ioe) {
         logger.warn("probe problem", ioe);
         return false;
