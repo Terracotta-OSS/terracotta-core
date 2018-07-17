@@ -119,11 +119,6 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public NodeID getRemoteNodeID() {
-    return this.getConnectionID().getClientID();
-  }
-
-  @Override
   public TCMessage createMessage(TCMessageType type) {
     TCMessage rv = this.msgFactory.createMessage(this, type);
     // TODO: set default channel specific information in the TC message header

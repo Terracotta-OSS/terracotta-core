@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.util.ProductID;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
@@ -35,15 +36,15 @@ import java.util.Collection;
  */
 public class ServerMessageChannelImpl extends AbstractMessageChannel implements ServerMessageChannel {
   private static final Logger logger = LoggerFactory.getLogger(ServerMessageChannel.class);
-  private final ChannelID       sessionID;
+  private final ChannelID       channel;
 
   /**
    * this is for the server it needs a session ID
    */
-  protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
-                                     ServerID serverID, ProductID productId) {
+  protected ServerMessageChannelImpl(ChannelID channel, TCMessageRouter router, TCMessageFactory msgFactory,
+                                     ServerID serverID) {
     super(router, logger, msgFactory);
-    this.sessionID = sessionID;
+    this.channel = channel;
     setLocalNodeID(serverID);
 
     // server message channels should always be open initially
@@ -54,7 +55,12 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public ChannelID getChannelID() {
-    return sessionID;
+    return channel;
+  }
+
+  @Override
+  public NodeID getRemoteNodeID() {
+    return getConnectionID().getClientID();
   }
 
   @Override
