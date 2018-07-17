@@ -96,7 +96,7 @@ public class ClientChannelEventController {
 
     @Override
     public void notifyChannelEvent(ChannelEvent event) {
-      if (!event.getChannel().getProductId().isInternal()) {
+      if (!event.getChannel().getProductID().isInternal()) {
         LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
                       + CallStackTrace.getCallStack());
       }

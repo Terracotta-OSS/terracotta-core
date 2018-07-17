@@ -53,23 +53,18 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<ChannelEventListener>();
   private final ChannelStatus                 status      = new ChannelStatus();
   private final TCMessageFactory              msgFactory;
-  private final ProductID                     productId;
   private final TCMessageRouter               router;
   private final TCMessageParser               parser;
   private final Logger logger;
-  private final NodeID                        remoteNodeID;
   private volatile NodeID                     localNodeID;
 
   protected volatile NetworkLayer             sendLayer;
 
-  AbstractMessageChannel(TCMessageRouter router, Logger logger, TCMessageFactory msgFactory, NodeID remoteNodeID,
-                         ProductID productId) {
+  AbstractMessageChannel(TCMessageRouter router, Logger logger, TCMessageFactory msgFactory) {
     this.router = router;
     this.logger = logger;
     this.msgFactory = msgFactory;
-    this.productId = productId;
     this.parser = new TCMessageParser(this.msgFactory);
-    this.remoteNodeID = remoteNodeID;
     // This is set after hand shake for the clients
     this.localNodeID = ClientID.NULL_ID;
   }
@@ -126,7 +121,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   @Override
   public NodeID getRemoteNodeID() {
-    return remoteNodeID;
+    return this.getConnectionID().getClientID();
   }
 
   @Override
@@ -306,11 +301,22 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public ProductID getProductId() {
-    if (this.sendLayer != null && this.sendLayer instanceof MessageTransport) {
-      return ((MessageTransport)this.sendLayer).getConnectionId().getProductId();
+  public ProductID getProductID() {
+    if (this.sendLayer != null) {
+      return this.sendLayer.getConnectionID().getProductId();
+    } else {
+      return ProductID.PERMANENT;
     }
-    return this.productId;
+  }
+
+  @Override
+  public ConnectionID getConnectionID() {
+    return this.sendLayer.getConnectionID();
+  }
+
+  @Override
+  public ChannelID getChannelID() {
+    return new ChannelID(getConnectionID().getChannelID());
   }
 
   private enum ChannelState {

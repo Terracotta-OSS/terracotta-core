@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
+import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
@@ -118,8 +119,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   
   public void testListenerGetsRightProductType() {
     MessageChannel channel = mock(MessageChannel.class);
-    when(channel.getChannelID()).thenReturn(new ChannelID(1));
-    when(channel.getProductId()).thenReturn(ProductID.SERVER);
+    when(channel.getConnectionID()).thenReturn(new ConnectionID(JvmIDUtil.getJvmID(), 1L, ProductID.SERVER));
     connectionIDFactory.channelRemoved(channel, true);
     ArgumentCaptor<ConnectionID> cap = ArgumentCaptor.forClass(ConnectionID.class);
     verify(listener).connectionIDDestroyed(cap.capture());

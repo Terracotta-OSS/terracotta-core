@@ -40,6 +40,7 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.CallStackTrace;
 import com.tc.util.DebugUtil;
+import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 
@@ -144,7 +145,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       }
 
       if (!channelConnected.get()) {
-        logger.warn("Drop stale message " + msg.getHeader().toString() + " from " + sendLayer.getConnectionId());
+        logger.warn("Drop stale message " + msg.getHeader().toString() + " from " + sendLayer.getConnectionID());
         return;
       }
 
@@ -183,7 +184,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         if (debug) {
           debugLog("A DIFF-session client is trying to connect - request OOO Reset");
         }
-        logger.info("Requesting OOO reset for different session client " + getConnectionId());
+        logger.info("Requesting OOO reset for different session client " + getConnectionID());
 
         long localAck = delivery.getReceiver().getReceived();
         sendMessage(createHandshakeReplyFailMessage(localAck));
@@ -271,7 +272,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       channelConnected.set(true);
       receiveLayer.notifyTransportConnected(this);
     } else {
-      debugLog("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId()
+      debugLog("OOOLayer-" + debugId + "-" + sendLayer.getConnectionID()
                + " -> not firing Tx connected event to channel");
     }
     reconnectMode.set(false);
@@ -279,7 +280,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   private void debugLog(String msg) {
     if (debug) {
-      DebugUtil.trace("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId() + " -> " + msg);
+      DebugUtil.trace("OOOLayer-" + debugId + "-" + sendLayer.getConnectionID() + " -> " + msg);
     }
   }
 
@@ -478,10 +479,15 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   @Override
-  public ConnectionID getConnectionId() {
-    return sendLayer != null ? sendLayer.getConnectionId() : null;
+  public ConnectionID getConnectionID() {
+    return sendLayer != null ? sendLayer.getConnectionID() : null;
   }
 
+  @Override
+  public ProductID getProductID() {
+    return sendLayer != null ? sendLayer.getProductID(): null;
+  }
+  
   @Override
   public TCSocketAddress getLocalAddress() {
     return sendLayer.getLocalAddress();

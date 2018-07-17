@@ -112,6 +112,6 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
   }
 
   private static void log(MessageTransport transport, String msg) {
-    if (debug) DebugUtil.trace("OOOTimer-SERVER-" + transport.getConnectionId() + " -> " + msg);
+    if (debug) DebugUtil.trace("OOOTimer-SERVER-" + transport.getConnectionID() + " -> " + msg);
   }
 }

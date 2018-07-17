@@ -51,11 +51,11 @@ public class ChannelWeightGeneratorTest extends TCTestCase {
     MessageChannel[] channels = new MessageChannel[clients + diagnostics];
     for (int x=0;x<clients;x++) {
       channels[x] = mock(MessageChannel.class);
-      when(channels[x].getProductId()).thenReturn(ProductID.STRIPE);
+      when(channels[x].getProductID()).thenReturn(ProductID.STRIPE);
     }
     for (int x=clients;x<clients + diagnostics;x++) {
       channels[x] = mock(MessageChannel.class);
-      when(channels[x].getProductId()).thenReturn(ProductID.DIAGNOSTIC);
+      when(channels[x].getProductID()).thenReturn(ProductID.DIAGNOSTIC);
     }
     when(dso.getActiveChannels()).thenReturn(channels);
     return (active) ? clients : 0;

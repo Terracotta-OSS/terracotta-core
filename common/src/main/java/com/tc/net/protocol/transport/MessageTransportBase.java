@@ -31,6 +31,7 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 import java.io.IOException;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,10 +82,15 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public final ConnectionID getConnectionId() {
+  public final ConnectionID getConnectionID() {
     return this.connectionId;
   }
 
+  @Override
+  public ProductID getProductID() {
+    return this.connectionId.getProductId();
+  }
+  
   @Override
   public final void setReceiveLayer(NetworkLayer layer) {
     this.receiveLayer = layer;
@@ -405,7 +411,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
   
   void log(String msg) {
-    if (!getConnectionId().getProductId().isInternal()) {
+    if (!getProductID().isInternal()) {
       getLogger().info(msg);
     } else {
       getLogger().debug(msg);

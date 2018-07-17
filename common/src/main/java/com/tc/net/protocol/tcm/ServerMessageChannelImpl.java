@@ -42,7 +42,7 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
    */
   protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
                                      ServerID serverID, ProductID productId) {
-    super(router, logger, msgFactory, new ClientID(sessionID.toLong()), productId);
+    super(router, logger, msgFactory);
     this.sessionID = sessionID;
     setLocalNodeID(serverID);
 

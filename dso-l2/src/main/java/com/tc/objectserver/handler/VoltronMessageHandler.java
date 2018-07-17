@@ -53,14 +53,14 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
     clients.addEventListener(new DSOChannelManagerEventListener() {
       @Override
       public void channelCreated(MessageChannel channel) {
-        if (!channel.getProductId().isInternal()) {
+        if (!channel.getProductID().isInternal()) {
           clientsConnected.incrementAndGet();
         }
       }
 
       @Override
       public void channelRemoved(MessageChannel channel, boolean wasActive) {
-        if (!channel.getProductId().isInternal()) {
+        if (!channel.getProductID().isInternal()) {
           clientsConnected.decrementAndGet();
         }
       }

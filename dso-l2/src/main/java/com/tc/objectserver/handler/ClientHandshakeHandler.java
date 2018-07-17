@@ -54,7 +54,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     try {
-      if (clientMsg.getChannel().getProductId() == ProductID.DIAGNOSTIC) {
+      if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
       } else if (stateManager.isActiveCoordinator()) {
         if (consistencyMgr.requestTransition(stateManager.getCurrentMode(), clientMsg.getSourceNodeID(), ConsistencyManager.Transition.ADD_CLIENT)) {
