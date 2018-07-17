@@ -20,7 +20,6 @@ package com.tc.net.protocol.transport;
 
 import org.slf4j.Logger;
 
-import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.ConnectionIdLogger;
 import com.tc.net.protocol.NetworkLayer;
 
@@ -28,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class AbstractMessageTransport implements MessageTransport, ConnectionIDProvider {
+public abstract class AbstractMessageTransport implements MessageTransport {
 
   private static final int           DISCONNECTED          = 1;
   private static final int           FORCED_DISCONNECT     = 2;

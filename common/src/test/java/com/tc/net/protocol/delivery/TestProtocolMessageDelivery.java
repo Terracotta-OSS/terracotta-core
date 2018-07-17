@@ -115,7 +115,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
   }
 
   @Override
-  public ConnectionID getConnectionId() {
+  public ConnectionID getConnectionID() {
     return null;
   }
 

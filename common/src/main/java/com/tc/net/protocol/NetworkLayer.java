@@ -23,6 +23,8 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -93,4 +95,7 @@ public interface NetworkLayer {
 
   public TCSocketAddress getLocalAddress();
 
+  public ProductID getProductID();
+  
+  public ConnectionID getConnectionID();
 }

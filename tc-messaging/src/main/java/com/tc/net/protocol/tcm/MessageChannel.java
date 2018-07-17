@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.util.ProductID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -26,6 +25,8 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ import java.util.Collection;
  * 
  * @author teck
  */
-public interface MessageChannel extends ChannelIDProvider {
+public interface MessageChannel {
 
   public TCSocketAddress getLocalAddress();
 
@@ -81,8 +82,6 @@ public interface MessageChannel extends ChannelIDProvider {
 
   public NetworkStackID open(Collection<ConnectionInfo> info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
-  public NetworkStackID open(Collection<ConnectionInfo> info, String username, char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
-
   public void close();
   
   public NodeID getLocalNodeID();
@@ -90,6 +89,10 @@ public interface MessageChannel extends ChannelIDProvider {
   public void setLocalNodeID(NodeID source);
   
   public NodeID getRemoteNodeID();
-
-  public ProductID getProductId();
+  
+  public ProductID getProductID();
+  
+  public ConnectionID getConnectionID();
+  
+  public ChannelID getChannelID();
 }

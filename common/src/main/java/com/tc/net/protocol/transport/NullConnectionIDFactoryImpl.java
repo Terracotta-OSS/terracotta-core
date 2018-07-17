@@ -46,7 +46,7 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
       default:
         requested = ProductID.INFORMATIONAL;
     }
-    ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet(), null, null, requested);
+    ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet(), requested);
     Assert.assertTrue(!connection.isValid());
     return connection;
   }

@@ -89,7 +89,7 @@ public class ConnectionInfoConfig {
       out = new ConnectionInfo[l2sData.length];
 
       for (int i = 0; i < out.length; ++i) {
-        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].tsaPort(), l2sData[i].getGroupId());
+        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].tsaPort());
       }
     }
 

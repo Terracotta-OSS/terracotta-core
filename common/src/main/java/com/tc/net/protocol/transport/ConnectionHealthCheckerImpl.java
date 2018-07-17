@@ -99,7 +99,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
                     + "] CLOSED. Health Monitoring for this node is now disabled.");
       } else {
-        logger.info("Connection " + transport.getConnectionId() + " CLOSED. Health Monitor for this node is disabled.");
+        logger.info("Connection " + transport.getConnectionID() + " CLOSED. Health Monitor for this node is disabled.");
       }
     }
   }
@@ -124,7 +124,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
                     + "] DISCONNECTED. Health Monitoring for this node is now disabled.");
       } else {
-        logger.info("Connection " + transport.getConnectionId()
+        logger.info("Connection " + transport.getConnectionID()
                     + " DISCONNECTED. Health Monitor for this node is disabled.");
       }
     }
@@ -172,11 +172,11 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     private void addConnection(MessageTransport transport) {
       MessageTransportBase mtb = (MessageTransportBase) transport;
       mtb.setHealthCheckerContext(getHealthCheckerContext(mtb, config, connectionManager));
-      connectionMap.put(transport.getConnectionId(), mtb);
+      connectionMap.put(transport.getConnectionID(), mtb);
     }
 
     private boolean removeConnection(MessageTransport transport) {
-      return (connectionMap.remove(transport.getConnectionId())) != null;
+      return (connectionMap.remove(transport.getConnectionID())) != null;
     }
 
     protected ConnectionHealthCheckerContext getHealthCheckerContext(MessageTransportBase transport,
@@ -221,7 +221,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
             if (!connContext.probeIfAlive()) {
               // Connection is dead. Disconnect the transport.
-              logger.error("Declared connection dead " + mtb.getConnectionId() + " idle time "
+              logger.error("Declared connection dead " + mtb.getConnectionID() + " idle time "
                            + conn.getIdleReceiveTime() + "ms");
               mtb.disconnect();
               connectionIterator.remove();

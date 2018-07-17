@@ -35,10 +35,7 @@ public class ConnectionID {
   private final String             serverID;
   private final String             jvmID;
   private final Exception          initEx;
-  private final String             username;
   private final ProductID          productId;
-
-  private volatile char[]          password;
 
   private static final String      NULL_SERVER_ID = "ffffffffffffffffffffffffffffffff";
   public static final String       NULL_JVM_ID    = "ffffffffffffffffffffffffffffffffffffffffffffffff";
@@ -49,14 +46,10 @@ public class ConnectionID {
   private static final char        SEP            = '.';
 
   public ConnectionID(String jvmID, long channelID, String serverID) {
-    this(jvmID, channelID, serverID, null, null, null);
+    this(jvmID, channelID, serverID, null);
   }
 
-  public ConnectionID(String jvmID, long channelID, String serverID, String username, String password) {
-    this(jvmID, channelID, serverID, username, password == null ? null : password.toCharArray(), null);
-  }
-
-  public ConnectionID(String jvmID, long channelID, String serverID, String username, char[] password, ProductID productId) {
+  public ConnectionID(String jvmID, long channelID, String serverID, ProductID productId) {
     this.jvmID = jvmID;
     this.channelID = channelID;
     this.serverID = serverID;
@@ -66,8 +59,6 @@ public class ConnectionID {
     } else {
       initEx = null;
     }
-    this.username = username;
-    this.password = password;
 
     if (productId == null) {
       this.productId = DEFAULT_PRODUCT_ID;
@@ -76,16 +67,8 @@ public class ConnectionID {
     }
   }
 
-  public void authenticated() {
-    this.password = null;
-  }
-
-  public void setPassword(char[] password) {
-    this.password = password;
-  }
-
-  public ConnectionID(String jvmID, long channelID, String username, char[] password, ProductID productId) {
-    this(jvmID, channelID, NULL_SERVER_ID, username, password, productId);
+  public ConnectionID(String jvmID, long channelID, ProductID productId) {
+    this(jvmID, channelID, NULL_SERVER_ID, productId);
   }
 
   public ConnectionID(String jvmID, long channelID) {
@@ -94,7 +77,7 @@ public class ConnectionID {
 
   @Override
   public String toString() {
-    return "ConnectionID" + (isSecured() ? ".secured(" : "(") + getID() + ")[" + "]";
+    return "ConnectionID(" + getID() + ")";
   }
 
   public boolean isNull() {
@@ -153,22 +136,8 @@ public class ConnectionID {
   }
 
   public String getID() {
-    return getID(false);
-  }
-
-  public String getID(boolean withCredentials) {
-    StringBuilder sb = new StringBuilder(withCredentials ? 128 : 64);
+    StringBuilder sb = new StringBuilder(64);
     sb.append(this.channelID).append(SEP).append(this.serverID).append(SEP).append(this.jvmID).append(SEP).append(productId);
-    if (withCredentials) {
-      sb.append(SEP);
-      if(username != null) {
-        sb.append(username.replace(DOT, DOT_PLACEHOLDER));
-      }
-      sb.append(SEP);
-      if(password != null) {
-        sb.append(password);
-      }
-    }
     return sb.toString();
   }
 
@@ -177,14 +146,8 @@ public class ConnectionID {
     out.writeString(serverID);
     out.writeString(jvmID);
     out.writeString(productId.name());
-    out.writeBoolean(username != null);
-    if (username != null) {
-      out.writeString(username);
-    }
-    out.writeBoolean(password != null);
-    if (password != null) {
-      out.writeString(String.valueOf(password));
-    }
+    out.writeBoolean(false);  // legacy username
+    out.writeBoolean(false);  //  legacy password
   }
 
   public static ConnectionID readFrom(TCDataInput in) throws IOException {
@@ -195,24 +158,12 @@ public class ConnectionID {
     String username = null;
     char[] password = null;
     if (in.readBoolean()) {
-      username = in.readString();
+      throw new AssertionError();
     }
     if (in.readBoolean()) {
-      password = in.readString().toCharArray();
+      throw new AssertionError();
     }
-    return new ConnectionID(jvmID, channelID, serverID, username, password, productId);
-  }
-
-  public String getUsername() {
-    return username;
-  }
-
-  public char[] getPassword() {
-    return password;
-  }
-
-  public boolean isSecured() {
-    return username != null;
+    return new ConnectionID(jvmID, channelID, serverID, productId);
   }
 
   public ProductID getProductId() {
@@ -224,6 +175,6 @@ public class ConnectionID {
   }
   
   public ConnectionID changeProductId(ProductID product) {
-    return new ConnectionID(jvmID, channelID, serverID, username, password, product);
+    return new ConnectionID(jvmID, channelID, serverID, product);
   }
 }
