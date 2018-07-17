@@ -373,21 +373,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         this.isHandshakeError = true;
         return;
       }
-      Principal principal = null;
-      if (connectionId.isSecured()) {
-        if (securityManager == null) {
-          logger.error("Security is enabled here on the server, but we didn't get credentials on the handshake!");
-          this.isHandshakeError = true;
-          return;
-        } else {
-          if ((principal = securityManager.authenticate(connectionId.getUsername(), connectionId.getPassword())) == null) {
-            logger.error("Authentication failed for user " + connectionId.getUsername()
-                         + " with pw (" + connectionId.getPassword().length + "): " + new String(connectionId.getPassword()));
-            this.isHandshakeError = true;
-            return;
-          }
-        }
-      }
       sendSynAck(transport.getConnectionID(), syn.getSource(), isMaxConnectionReached);
     }
 

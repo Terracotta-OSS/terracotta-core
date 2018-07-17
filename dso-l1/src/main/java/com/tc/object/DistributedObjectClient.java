@@ -445,7 +445,7 @@ public class DistributedObjectClient implements TCClient {
             pw = null;
             username = null;
           }
-          this.channel.open(infos, username, pw);
+          this.channel.open(infos);
           DSO_LOGGER.debug("Channel open");
           break;
         } catch (final TCTimeoutException tcte) {
@@ -744,6 +744,3 @@ public class DistributedObjectClient implements TCClient {
     }
   }
 }
-      if (channel != null && !channel.getProductID().isInternal()) {
-        DSO_LOGGER.info("Running L1 VM shutdown hook");
-      }

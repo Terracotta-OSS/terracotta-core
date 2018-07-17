@@ -19,6 +19,7 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.util.Assert;
 
@@ -33,7 +34,6 @@ public class ChannelWeightGenerator implements WeightGenerator {
   @Override
   public long getWeight() {
     int count = 0;
-    if (stateManager.get().isActiveCoordinator()) {
       // return number of connected clients and are active
       MessageChannel[] connections = channelManager.getActiveChannels();
       for (MessageChannel c : connections) {
@@ -41,7 +41,6 @@ public class ChannelWeightGenerator implements WeightGenerator {
           count += 1;
         }
       }
-    }
     return count;
   }
 

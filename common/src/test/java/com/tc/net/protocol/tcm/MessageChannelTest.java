@@ -40,6 +40,8 @@ import com.tc.util.ProductID;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
+import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.ConnectException;

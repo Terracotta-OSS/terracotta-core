@@ -610,7 +610,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ClientMessageChannel channel = communicationsManager.createClientChannel(ProductID.SERVER, sessionProvider, 10000 /*  timeout */);
 
     channel.addListener(listener);
-    channel.open(Collections.singleton(info), username, password);
+    channel.open(Collections.singleton(info));
 
     handshake(channel);
     return;

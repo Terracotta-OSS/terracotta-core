@@ -176,7 +176,7 @@ public class DistributedObjectClientTest extends TestCase {
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
         try {
-          Mockito.when(channel.open(Mockito.anyCollection(), Matchers.anyString(), Matchers.any(char[].class))).thenThrow(new RuntimeException("bad connection"));
+          Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));
         } catch (Exception exp) {
           
         }
