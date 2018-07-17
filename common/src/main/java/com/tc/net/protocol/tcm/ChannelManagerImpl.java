@@ -52,8 +52,8 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   }
 
   @Override
-  public MessageChannelInternal createNewChannel(ChannelID id, ProductID productId) {
-    MessageChannelInternal channel = channelFactory.createNewChannel(id, productId);
+  public MessageChannelInternal createNewChannel(ChannelID id) {
+    MessageChannelInternal channel = channelFactory.createNewChannel(id);
     synchronized (this) {
       channels.put(channel.getChannelID(), channel);
       channel.addListener(this);

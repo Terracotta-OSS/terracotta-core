@@ -25,6 +25,8 @@ import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.StripeID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
@@ -107,6 +109,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       channelOpened();
       return id;
     }
+  }
+
+  @Override
+  public NodeID getRemoteNodeID() {
+    return ServerID.NULL_ID;
   }
 
   @Override

@@ -60,9 +60,9 @@ public class ServerStackProviderTest extends TCTestCase {
             }
         ).getMock();
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
-    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class), any(ProductID.class))).then(invoke->{
+    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
-      ProductID product = (ProductID)invoke.getArguments()[1];
+      ProductID product = ProductID.PERMANENT;
       when(channel.getProductID()).thenReturn(product);
       return channel;
     });
@@ -109,9 +109,9 @@ public class ServerStackProviderTest extends TCTestCase {
             }
         ).getMock();
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
-    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class), any(ProductID.class))).then(invoke->{
+    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
-      ProductID product = (ProductID)invoke.getArguments()[1];
+      ProductID product = ProductID.PERMANENT;
       when(channel.getProductID()).thenReturn(product);
       return channel;
     });
@@ -181,9 +181,9 @@ public class ServerStackProviderTest extends TCTestCase {
             }
         ).getMock();
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
-    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class), any(ProductID.class))).then(invoke->{
+    when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
-      ProductID product = (ProductID)invoke.getArguments()[1];
+      ProductID product = ProductID.PERMANENT;
       when(channel.getProductID()).thenReturn(product);
       return channel;
     });
