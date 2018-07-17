@@ -353,10 +353,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     out.writeLong(identifier.toLong());
   }
 
-  public ChannelID getChannelID() {
-    return channel.getChannelID();
-  }
-
   @Override
   public MessageChannel getChannel() {
     return channel;

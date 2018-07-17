@@ -137,7 +137,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
       MessageChannel[] channels = channelMgr.getActiveChannels();
       for (MessageChannel channel : channels) {
         // only broadcast to clients that are not internal
-        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(clientID) && !channel.getProductId().isInternal()) {
+        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(clientID) && !channel.getProductID().isInternal()) {
           ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
               .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
           cmm.initialize(eventType, clientID, productId);
@@ -157,7 +157,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   public void channelCreated(MessageChannel channel) {
     ClientID clientID = (ClientID)channel.getRemoteNodeID();
  //  brand new member, broadcast the change if active
-    clientCreated(clientID, channel.getProductId());
+    clientCreated(clientID, channel.getProductID());
  //  client is connecting to the active
     if (coordinator.isActiveCoordinator()) {
       notifyClientAdded(channel, clientID);
@@ -221,7 +221,7 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   public void channelRemoved(MessageChannel channel, boolean wasActive) {
     // Note that the remote node ID always refers to a client, in this path.
     ClientID clientID = (ClientID) channel.getRemoteNodeID();
-    ProductID product = channel.getProductId();
+    ProductID product = channel.getProductID();
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. 
     // this will only get fired on the active as this is a client removal.

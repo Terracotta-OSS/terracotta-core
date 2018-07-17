@@ -36,7 +36,7 @@ public class ChannelEventImpl implements ChannelEvent {
   @Override
   public String toString() {
     String msg = getClass().getName() + "@" + System.identityHashCode(this) + "[type = " + this.type + ", timestamp = "
-           + timestamp + ", channel  = " + channel + " product  : " + channel.getProductId();
+           + timestamp + ", channel  = " + channel + " product  : " + channel.getProductID();
     NodeID remote = channel.getRemoteNodeID();
     if (!remote.isNull()) {
       msg += " remote node  : " + channel.getRemoteNodeID();

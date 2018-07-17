@@ -32,8 +32,17 @@ public class ChannelWeightGenerator implements WeightGenerator {
 
   @Override
   public long getWeight() {
-    // return number of connected clients and are active
-    return channelManager.getAllActiveClientConnections().length;
+    int count = 0;
+    if (stateManager.get().isActiveCoordinator()) {
+      // return number of connected clients and are active
+      MessageChannel[] connections = channelManager.getActiveChannels();
+      for (MessageChannel c : connections) {
+        if (!c.getProductID().isInternal()) {
+          count += 1;
+        }
+      }
+    }
+    return count;
   }
 
 }

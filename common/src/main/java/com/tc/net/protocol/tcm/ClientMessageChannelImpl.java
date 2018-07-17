@@ -50,14 +50,15 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   private int                             connectAttemptCount;
   private int                             connectCount;
-  private volatile ChannelID              channelID = ChannelID.NULL_ID;
+  private final ProductID                 productID;
   private final SessionProvider           sessionProvider;
   private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
                                      SessionProvider sessionProvider, ProductID productId) {
-    super(router, logger, msgFactory, StripeID.NULL_ID, productId);
+    super(router, logger, msgFactory);
+    this.productID = productId;
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider();
   }
@@ -89,14 +90,13 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
-                                                username, pw, getProductId());
+                                                username, pw, productID);
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
       if (id.isValid()) {
  //  why are all these identifiers intermingled?
         long validID = id.toLong();
-        this.channelID = new ChannelID(validID);
         setLocalNodeID(new ClientID(validID));
       }
       this.channelSessionID = this.sessionProvider.getSessionID();
@@ -109,7 +109,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public ChannelID getChannelID() {
     final ChannelStatus status = getStatus();
     synchronized (status) {
-      return this.channelID;
+      return new ChannelID(this.sendLayer.getConnectionID().getChannelID());
     }
   }
 
@@ -135,9 +135,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    if (transport.getConnectionId().isValid()) {
-      long channelIdLong = transport.getConnectionId().getChannelID();
-      this.channelID = new ChannelID(channelIdLong);
+    if (!transport.getConnectionID().isNull()) {
+      long channelIdLong = transport.getConnectionID().getChannelID();
       setLocalNodeID(new ClientID(channelIdLong));
       this.connectCount++;
     }

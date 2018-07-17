@@ -31,18 +31,29 @@ import static org.mockito.Mockito.when;
 public class ChannelWeightGeneratorTest extends TCTestCase {
   public void testSimpleIncreaseDecrease() throws Exception {
     DSOChannelManager mockChannelManager = mock(DSOChannelManager.class);
-    ChannelWeightGenerator generator = new ChannelWeightGenerator(mockChannelManager);
-    
-    TCConnection[] zeroConnections = new TCConnection[0];
-    TCConnection[] oneConnection = new TCConnection[1];
-    TCConnection[] twoConnections = new TCConnection[2];
-    when(mockChannelManager.getAllActiveClientConnections()).thenReturn(zeroConnections);
-    Assert.assertTrue(0L == generator.getWeight());
-    when(mockChannelManager.getAllActiveClientConnections()).thenReturn(oneConnection);
-    Assert.assertTrue(1L == generator.getWeight());
-    when(mockChannelManager.getAllActiveClientConnections()).thenReturn(twoConnections);
-    Assert.assertTrue(2L == generator.getWeight());
-    when(mockChannelManager.getAllActiveClientConnections()).thenReturn(oneConnection);
-    Assert.assertTrue(1L == generator.getWeight());
+    StateManager mockStateManager = mock(StateManager.class);
+    ChannelWeightGenerator generator = new ChannelWeightGenerator(()->mockStateManager, mockChannelManager);
+
+    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 1, 1), generator.getWeight());
+    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 2, 1), generator.getWeight());
+    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 2, 1), generator.getWeight());
+    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 10, 2), generator.getWeight());
+    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 3, 0), generator.getWeight());
+    Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, true, 1, 1), generator.getWeight());
+  }
+  
+  public int mockPlatform(StateManager state, DSOChannelManager dso, boolean active, int clients, int diagnostics) {
+    when(state.isActiveCoordinator()).thenReturn(active);
+    MessageChannel[] channels = new MessageChannel[clients + diagnostics];
+    for (int x=0;x<clients;x++) {
+      channels[x] = mock(MessageChannel.class);
+      when(channels[x].getProductID()).thenReturn(ProductID.STRIPE);
+    }
+    for (int x=clients;x<clients + diagnostics;x++) {
+      channels[x] = mock(MessageChannel.class);
+      when(channels[x].getProductID()).thenReturn(ProductID.DIAGNOSTIC);
+    }
+    when(dso.getActiveChannels()).thenReturn(channels);
+    return (active) ? clients : 0;
   }
 }

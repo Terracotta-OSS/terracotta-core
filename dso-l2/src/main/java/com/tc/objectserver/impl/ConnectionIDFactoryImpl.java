@@ -138,7 +138,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   public void channelRemoved(MessageChannel channel, boolean wasActive)  {
     Assert.assertNotNull(stripe);
     ChannelID channelID = channel.getChannelID();
-    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, channelID.toLong(), stripe.getName(),null , null, channel.getProductId()));
+    fireDestroyedEvent(new ConnectionID(ConnectionID.NULL_JVM_ID, channelID.toLong(), stripe.getName(),null , null, channel.getProductID()));
   }
 
   @Override

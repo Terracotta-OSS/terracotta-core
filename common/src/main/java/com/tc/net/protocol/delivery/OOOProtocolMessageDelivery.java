@@ -37,6 +37,6 @@ public interface OOOProtocolMessageDelivery {
 
   public OOOProtocolMessage createProtocolMessage(long sent, TCNetworkMessage msg);
 
-  public ConnectionID getConnectionId();
+  public ConnectionID getConnectionID();
 
 }
