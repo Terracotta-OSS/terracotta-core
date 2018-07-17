@@ -80,7 +80,6 @@ import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
-import com.tc.l2.ha.TransactionCountWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
@@ -693,7 +692,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
-    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
+    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, getDiagnosticsHandler(platformServiceRegistry));
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
@@ -823,16 +822,28 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   }
 
   private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {
-    BufferManagerFactory bufferManagerFactory = null;
-    try {
-      bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
-    } catch (ServiceException e) {
-      Assert.fail("Multiple BufferManagerFactory implementations found!");
-    }
+    BufferManagerFactory bufferManagerFactory = lookupService(platformRegistry, BufferManagerFactory.class);
     if (bufferManagerFactory == null) {
       bufferManagerFactory = new ClearTextBufferManagerFactory();
     }
     return bufferManagerFactory;
+  }
+
+  private DiagnosticsHandler getDiagnosticsHandler(ServiceRegistry platformRegistry) {
+    DiagnosticsHandler diagnosticsHandler = lookupService(platformRegistry, DiagnosticsHandler.class);
+    if (diagnosticsHandler == null) {
+      diagnosticsHandler = new DiagnosticsHandler();
+    }
+    return diagnosticsHandler;
+  }
+
+  private <T> T lookupService(ServiceRegistry platformRegistry, Class<T> tClass) {
+    try {
+      return platformRegistry.getService(new BasicServiceConfiguration<>(tClass));
+    } catch (ServiceException e) {
+      Assert.fail("Multiple " + tClass.getSimpleName() + " implementations found!");
+    }
+    return null;
   }
 
   private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {

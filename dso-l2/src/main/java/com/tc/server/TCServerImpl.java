@@ -327,7 +327,12 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   public State getState() {
     return this.serverState.getState();
   }
-  
+
+  @Override
+  public byte[] getClusterState(Charset charset) {
+    return this.dsoServer.getClusterState(charset);
+  }
+
   @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
