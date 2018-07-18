@@ -9,15 +9,20 @@ import org.terracotta.monitoring.PlatformService;
  */
 public class PassthroughPlatformService implements PlatformService {
 
-    private final PassthroughDumper passthroughDumper;
+    private final PassthroughServer passthroughServer;
 
-    public PassthroughPlatformService(PassthroughDumper passthroughDumper) {
-        this.passthroughDumper = passthroughDumper;
+    public PassthroughPlatformService(PassthroughServer passthroughServer) {
+        this.passthroughServer = passthroughServer;
     }
 
     @Override
     public void dumpPlatformState() {
-        passthroughDumper.dump();
+        passthroughServer.dump();
+    }
+
+    @Override
+    public void stopPlatform() {
+        passthroughServer.stop();
     }
 
     @Override
