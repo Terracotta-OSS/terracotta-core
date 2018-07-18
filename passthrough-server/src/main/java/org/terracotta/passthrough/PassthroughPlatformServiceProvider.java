@@ -11,8 +11,8 @@ import java.util.Set;
 public class PassthroughPlatformServiceProvider implements PassthroughImplementationProvidedServiceProvider {
     private final PassthroughPlatformService passthroughPlatformService;
 
-    public PassthroughPlatformServiceProvider(PassthroughDumper passthroughDumper) {
-        this.passthroughPlatformService = new PassthroughPlatformService(passthroughDumper);
+    public PassthroughPlatformServiceProvider(PassthroughServer passthroughServer) {
+        this.passthroughPlatformService = new PassthroughPlatformService(passthroughServer);
     }
 
 
