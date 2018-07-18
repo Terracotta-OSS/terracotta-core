@@ -432,7 +432,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     TcConfiguration base = this.configSetupManager.commonl2Config().getTCConfiguration();
     PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.dsoL2Config(), base);
     serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
-    serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(this));
+    serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
     this.serviceRegistry.registerImplementationProvided(messengerProvider);
