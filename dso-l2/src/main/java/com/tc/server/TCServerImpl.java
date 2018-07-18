@@ -180,15 +180,9 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
     }
   }
 
-  /**
-   * I realize this is wrong, since the server can still be starting but we'll have to deal with the whole stopping
-   * issue later, and there's the TCStop feature which should be removed.
-   */
   @Override
   public void stop() {
-    // XXX: This is part of the now-deprecated JMX 4.x Management interface called from TCServerInfo.
-    // TODO:  Remove the com.tc.mangement.beans package and then this method.
-    throw new UnsupportedOperationException("Management can no longer request a server shutdown");
+    Runtime.getRuntime().exit(0);
   }
 
   @Override

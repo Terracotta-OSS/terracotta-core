@@ -89,7 +89,7 @@ public class DiagnosticsHandler implements TCMessageSink {
           result = "".getBytes(set);
           break;
         case "forceTerminateServer":
-          Runtime.getRuntime().exit(0);
+          TCServerMain.getServer().stop();
           // never used, server is dead
           result = "".getBytes(set);
           break;

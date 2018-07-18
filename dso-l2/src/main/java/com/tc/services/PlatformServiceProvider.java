@@ -18,8 +18,9 @@
  */
 package com.tc.services;
 
-import com.tc.management.beans.TCDumper;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.server.TCServer;
+
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.monitoring.PlatformService;
@@ -32,8 +33,8 @@ public class PlatformServiceProvider implements ImplementationProvidedServicePro
 
     private final PlatformServiceImpl platformService;
 
-    public PlatformServiceProvider(TCDumper tcDumper) {
-        this.platformService = new PlatformServiceImpl(tcDumper);
+    public PlatformServiceProvider(TCServer tcServer) {
+        this.platformService = new PlatformServiceImpl(tcServer);
     }
 
 
