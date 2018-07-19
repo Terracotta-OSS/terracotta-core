@@ -24,6 +24,8 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.util.State;
 
+import java.nio.charset.Charset;
+
 
 public interface TCServer extends StateChangeListener {
   String[] processArguments();
@@ -43,8 +45,10 @@ public interface TCServer extends StateChangeListener {
   boolean isPassiveStandby();
   
   boolean isReconnectWindow();
-    
+
   State getState();
+
+  byte[] getClusterState(Charset charset);
 
   long getStartTime();
 

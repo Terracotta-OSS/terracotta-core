@@ -44,11 +44,9 @@ import java.util.Arrays;
 public class DiagnosticsHandler implements TCMessageSink {
   
   private final static Logger logger = LoggerFactory.getLogger(DiagnosticsHandler.class);
-  private final DistributedObjectServer server;
   private final JMXSubsystem subsystem;
 
-  public DiagnosticsHandler(DistributedObjectServer server) {
-    this.server = server;
+  public DiagnosticsHandler() {
     this.subsystem = new JMXSubsystem();
   }
   
@@ -65,14 +63,14 @@ public class DiagnosticsHandler implements TCMessageSink {
     byte[] data = msg.getExtendedData();
     String raw = new String(data, set);
     String[] cmd = raw.split(" ");
-    byte[] result = null;
+    byte[] result;
     try {
       switch (cmd[0]) {
         case "getState":
-          result = server.getContext().getL2Coordinator().getStateManager().getCurrentMode().getName().getBytes(set);
+          result = TCServerMain.getServer().getState().toString().getBytes(set);
           break;
         case "getClusterState":
-          result = server.getClusterState(set);
+          result = TCServerMain.getServer().getClusterState(set);
           break;
         case "getConfig":
           result = TCServerMain.getServer().getConfig().getBytes(set);
