@@ -389,7 +389,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
 
     private void sendSynAck(ConnectionID connectionId, TCConnection source, boolean isMaxConnectionReached) {
-      source.addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
       sendSynAck(connectionId, null, source, isMaxConnectionReached);
     }
 
@@ -422,6 +421,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       } else {
         int callbackPort = source.getLocalAddress().getPort();
         synAck = handshakeMessageFactory.createSynAck(connectionId, source, isMaxConnectionsReached, maxConnections, callbackPort);
+        source.setTransportEstablished();
       }
       sendMessage(synAck);
     }

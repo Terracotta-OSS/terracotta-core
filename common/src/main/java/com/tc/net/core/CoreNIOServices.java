@@ -46,7 +46,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -54,8 +53,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The communication thread. Creates {@link Selector selector}, registers {@link SocketChannel} to the selector and does
@@ -74,10 +74,9 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   private final SetOnceFlag                    stopRequested = new SetOnceFlag();
 
   // maintains weight of all L1 Connections which is handled by this WorkerComm
-  private final HashMap<TCConnection, Integer> managedConnectionsMap;
-  private int                                  clientWeights;
-  private boolean                              isSelectedForWeighting;
-  private final List<TCListener>               listeners     = new ArrayList<TCListener>();
+  private final AtomicInteger                                  clientWeights = new AtomicInteger();
+  private final AtomicBoolean                              isSelectedForWeighting = new AtomicBoolean();
+  private final List<TCListener>               listeners     = new ArrayList<>();
   private String                               listenerString;
 
   private static enum COMM_THREAD_MODE {
@@ -88,7 +87,6 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     this.commThreadName = commThreadName;
     this.workerCommMgr = workerCommManager;
     this.socketParams = socketParams;
-    this.managedConnectionsMap = new HashMap<TCConnection, Integer>();
     this.readerComm = new CommThread(COMM_THREAD_MODE.NIO_READER);
     this.writerComm = new CommThread(COMM_THREAD_MODE.NIO_WRITER);
   }
@@ -203,34 +201,31 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     boolean retVal = false;
 // if incoming is passed in, the current search is the one that set the flag
 // so it is ok to assert the below is true
-    Assert.assertTrue(incoming == null || incoming.isSelectedForWeighting);
+    Assert.assertTrue(incoming == null || incoming.isSelectedForWeighting.get());
     
-    synchronized (managedConnectionsMap) {
-      if (!isSelectedForWeighting) {
-        if (incoming == null || incoming.clientWeights > this.clientWeights) {
-          this.isSelectedForWeighting = true;
-          retVal = true;
-        }
+    if (isSelectedForWeighting.compareAndSet(false, true)) {
+      if (incoming == null || incoming.clientWeights.get() > this.clientWeights.get()) {
+        retVal = true;
       }
     }
 //  if trading, unset the previous selected
-    if (retVal && incoming != null) {
-      incoming.deselectForWeighting();
+    if (retVal) {
+      if (incoming != null) {
+        incoming.deselectForWeighting();
+      }
+    } else {
+      deselectForWeighting();
     }
 
     return retVal;
   }
   
   private void deselectForWeighting() {
-    synchronized (managedConnectionsMap) {
-      isSelectedForWeighting = false;
-    }
+    isSelectedForWeighting.set(false);
   }
 
   int getWeight() {
-    synchronized (managedConnectionsMap) {
-      return this.clientWeights;
-    }
+    return this.clientWeights.get();
   }
 
   protected CommThread getReaderComm() {
@@ -250,46 +245,27 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
    * @param addWeightBy : upgrade weight of connection
    * @param channel : SocketChannel for the passed in connection
    */
-  public void addWeight(TCConnectionImpl connection, int addWeightBy, SocketChannel channel) {
-
-    synchronized (managedConnectionsMap) {
-      // this connection is already handled by a WorkerComm
-      if (this.managedConnectionsMap.containsKey(connection)) {
-        this.clientWeights += addWeightBy;
-        this.managedConnectionsMap.put(connection, this.managedConnectionsMap.get(connection) + addWeightBy);
-        return;
-      }
-    }
-
+  public void addConnection(TCConnectionImpl connection, SocketChannel channel) {
     // MainComm Thread
     if (workerCommMgr == null) { return; }
 
     readerComm.unregister(channel);
     final CoreNIOServices workerComm = workerCommMgr.getNextWorkerComm();
     connection.setCommWorker(workerComm);
-    workerComm.addConnection(connection, addWeightBy);
+    workerComm.addConnection(connection);
     workerComm.requestReadWriteInterest(connection, channel);
   }
 
-  private void addConnection(TCConnectionImpl connection, int initialWeight) {
-    synchronized (managedConnectionsMap) {
-      Assert.eval(!managedConnectionsMap.containsKey(connection));
-      managedConnectionsMap.put(connection, initialWeight);
-      this.clientWeights += initialWeight;
-      this.isSelectedForWeighting = false;
-      connection.addListener(this);
-    }
+  private void addConnection(TCConnectionImpl connection) {
+    this.clientWeights.incrementAndGet();
+    deselectForWeighting();
+    connection.addListener(this);
   }
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    synchronized (managedConnectionsMap) {
-      Assert.eval(managedConnectionsMap.containsKey(event.getSource()));
-      int closedCientWeight = managedConnectionsMap.get(event.getSource());
-      this.clientWeights -= closedCientWeight;
-      managedConnectionsMap.remove(event.getSource());
+      this.clientWeights.decrementAndGet();
       event.getSource().removeListener(this);
-    }
   }
 
   @Override
@@ -309,9 +285,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   @Override
   public String toString() {
-    synchronized (this.managedConnectionsMap) {
-      return "[" + this.commThreadName + ", FD, wt:" + this.clientWeights + "]";
-    }
+    return "[" + this.commThreadName + ", FD, wt:" + this.clientWeights + "]";
   }
   
   public String getName() {
@@ -457,19 +431,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
     void unregister(final SelectableChannel channel) {
       if (Thread.currentThread() != this) {
-        final CountDownLatch latch = new CountDownLatch(1);
-        this.addSelectorTask(new Runnable() {
-          @Override
-          public void run() {
-            CommThread.this.unregister(channel);
-            latch.countDown();
-          }
-        });
-        try {
-          latch.await();
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
+        throw new AssertionError("must unregister from reader thread");
       } else {
         SelectionKey key = null;
         key = channel.keyFor(this.selector);

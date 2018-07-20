@@ -334,7 +334,6 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   private TCFuture sendSyn() {
     TCFuture targetFuture = new TCFuture(this.status);
-    getConnection().addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
     synchronized (this.status) {
       if (this.status.isEstablished() || this.status.isSynSent()) { throw new AssertionError(" ERROR !!! "
                                                                                              + this.status); }
@@ -369,7 +368,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       } catch (IOException ioe) {
         throw new TransportHandshakeException(ioe);
       }
-      this.status.established();
+      status.established();
     }
     fireTransportConnectedEvent();
   }

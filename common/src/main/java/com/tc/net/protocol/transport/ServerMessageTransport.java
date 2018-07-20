@@ -119,7 +119,6 @@ public class ServerMessageTransport extends MessageTransportBase {
       Assert.eval("Wrong connection ID: [" + getConnectionID() + "] != [" + ack.getConnectionId() + "]",
                   !getConnectionID().isValid() || getConnectionID().equals(ack.getConnectionId()));
       status.established();
-      ack.getSource().setTransportEstablished();
     }
   }
 

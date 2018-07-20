@@ -209,9 +209,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
    */
   @Override
   public boolean isConnected() {
-    synchronized (status) {
-      return ((getConnection() != null) && getConnection().isConnected() && this.status.isEstablished());
-    }
+    return ((getConnection() != null) && getConnection().isTransportEstablished());
   }
 
   @Override
