@@ -21,22 +21,26 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 
 import com.tc.util.Assert;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class MessageTransportStatus {
+  private final MessageTransportState initial;
   private MessageTransportState state;
   private final Logger logger;
+  private volatile boolean isEstablished = false;
 
   MessageTransportStatus(MessageTransportState initialState, Logger logger) {
+    this.initial = initialState;
     this.state = initialState;
     this.logger = logger;
   }
 
   void reset() {
-    stateChange(MessageTransportState.STATE_START);
+    stateChange(initial);
   }
 
   private synchronized void stateChange(MessageTransportState newState) {
-
+    isEstablished = false;
     if (logger.isDebugEnabled()) {
       logger.debug("Changing from " + state.toString() + " to " + newState.toString());
     }
@@ -79,6 +83,9 @@ class MessageTransportStatus {
   }
   
   private synchronized boolean checkState(MessageTransportState check) {
+    if (check == MessageTransportState.STATE_ESTABLISHED && state == MessageTransportState.STATE_ESTABLISHED) {
+      isEstablished = true;
+    }
     return this.state.equals(check);
   }
 
@@ -86,6 +93,10 @@ class MessageTransportStatus {
     return checkState(MessageTransportState.STATE_START);
   }
 
+  boolean isStartOpen() {
+    return checkState(MessageTransportState.STATE_START_OPEN);
+  }
+  
   boolean isRestart() {
     return checkState(MessageTransportState.STATE_RESTART);
   }
@@ -95,7 +106,11 @@ class MessageTransportStatus {
   }
 
   boolean isEstablished() {
-    return checkState(MessageTransportState.STATE_ESTABLISHED);
+    if (isEstablished) {
+      return true;
+    } else {
+      return checkState(MessageTransportState.STATE_ESTABLISHED);
+    }
   }
   
   boolean isDisconnected() {
@@ -113,10 +128,13 @@ class MessageTransportStatus {
   synchronized boolean isEnd() {
     return checkState(MessageTransportState.STATE_END);
   }
+  
+  synchronized boolean isOpen() {
+    return this.state.isOpen();
+  }
 
   @Override
   public String toString() {
     return state.toString();
   }
-
 }

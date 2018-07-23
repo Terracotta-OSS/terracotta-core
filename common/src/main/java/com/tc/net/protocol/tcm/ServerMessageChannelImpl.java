@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.util.ProductID;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
+import com.tc.util.Assert;
 import java.util.Collection;
 
 /**
@@ -55,7 +55,12 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public ChannelID getChannelID() {
-    return channel;
+    if (this.isConnected()) {
+      Assert.assertEquals(super.getChannelID(), channel);
+      return channel;
+    } else {
+      return channel;
+    }
   }
 
   @Override

@@ -149,7 +149,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       }
       fireChannelCreatedEvent(channel);
     } catch (NoSuchChannelException nsce) {
-      logger.warn("Not sending handshake message to disconnected client: " + clientID);
+      logger.warn("Not sending handshake message to disconnected client: " + clientID, nsce);
     }
   }
 

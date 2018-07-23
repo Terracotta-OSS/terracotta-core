@@ -80,7 +80,7 @@ public class ClientMessageTransport extends MessageTransportBase {
                                 WireProtocolAdaptorFactory wireProtocolAdaptorFactory, int callbackPort, int timeout,
                                 ReconnectionRejectedHandler reconnectionRejectedHandler) {
 
-    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, false, LoggerFactory.getLogger(ClientMessageTransport.class));
+    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, LoggerFactory.getLogger(ClientMessageTransport.class));
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
     this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;
@@ -102,34 +102,31 @@ public class ClientMessageTransport extends MessageTransportBase {
     // comms thread which means that the handshake messages can't be sent.
     // The state machine here needs to be rationalized.
     this.isOpening.set(true);
-    synchronized (this.isOpen) {
-      Assert.eval("can't open an already open transport", !this.isOpen.get());
-      Assert.eval("can't open an already connected transport", !this.isConnected());
-
-      TCSocketAddress socket = new TCSocketAddress(info);
-      TCConnection connection = connect(socket);
-      try {
-        openConnection(connection);
-      } catch (CommStackMismatchException e) {
-        connection.close(100);
-        throw e;
-      } catch (MaxConnectionsExceededException e) {
-        connection.close(100);
-        throw e;
-      } catch (TCTimeoutException e) {
-        connection.close(100);
-        throw e;
-      } catch (TransportHandshakeException e) {
-        connection.close(100);
-        throw e;
-      }
-      Assert.eval(!getConnectionID().isNull());
-      this.isOpen.set(true);
-      NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
-      this.wasOpened = true;
-      this.isOpening.set(false);
-      return (nid);
+    Assert.eval("can't open an already open transport", !this.status.isOpen());
+    Assert.eval("can't open an already connected transport", !this.isConnected());
+    TCSocketAddress socket = new TCSocketAddress(info);
+    TCConnection connection = connect(socket);
+    try {
+      openConnection(connection);
+    } catch (CommStackMismatchException e) {
+      connection.close(100);
+      throw e;
+    } catch (MaxConnectionsExceededException e) {
+      connection.close(100);
+      throw e;
+    } catch (TCTimeoutException e) {
+      connection.close(100);
+      throw e;
+    } catch (TransportHandshakeException e) {
+      connection.close(100);
+      throw e;
     }
+    Assert.eval(!getConnectionID().isNull());
+    Assert.eval(this.status.toString(), this.status.isEstablished());
+    NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
+    this.wasOpened = true;
+    this.isOpening.set(false);
+    return (nid);
   }
   /**
    * Tries to make a connection. This is a blocking call.
@@ -156,10 +153,9 @@ public class ClientMessageTransport extends MessageTransportBase {
   
   @Override
   public void reset() {
-    synchronized (this.isOpen) {
+    synchronized (this.status) {
       getLogger().info("Resetting connection " + getConnectionID());
       this.disconnect();
-      this.isOpen.set(false);
       this.status.reset();
       clearConnection();
     }
@@ -216,39 +212,48 @@ public class ClientMessageTransport extends MessageTransportBase {
    * Returns true if the MessageTransport was ever in an open state.
    */
   public boolean wasOpened() {
-    synchronized (isOpen) {
+    synchronized (this.status) {
       return this.wasOpened;
     }
   }
 
   public boolean isNotOpen() {
-    return !this.isOpening.get() && !this.isOpen.get();
+    synchronized(this.status) {
+      return !this.isOpening.get() && !this.status.isOpen();
+    }
   }
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    if (isNotOpen()) { return; }
+    if (isNotOpen()) { 
+      return; 
+    }
     super.closeEvent(event);
     setSynAckResult(new IOException("connection closed"));
   }
 
   @Override
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
-    synchronized (this.status) {
-      if (this.status.isSynSent()) {
-        handleSynAck(message);
-        message.recycle();
-        return;
-      }
-
-      if (!this.status.isEstablished()) {
-        this.getLogger().debug("Ignoring the message received for an Un-Established Connection; " + message.getSource()
-                         + "; " + message);
-        message.recycle();
-        return;
+    boolean receive = false;
+    if (status.isEstablished()) {
+      receive = true;
+    } else {
+      synchronized (status) {
+        if (this.status.isSynSent()) {
+          handleSynAck(message);
+          message.recycle();
+        } else if (!this.status.isEstablished()) {
+          this.getLogger().debug("Ignoring the message received for an Un-Established Connection; " + message.getSource()
+                     + "; " + message);
+          message.recycle();
+        } else {
+          receive = true;
+        }
       }
     }
-    super.receiveToReceiveLayer(message);
+    if (receive) {
+      super.receiveToReceiveLayer(message);
+    }
   }
 
   private void handleSynAck(WireProtocolMessage message) {

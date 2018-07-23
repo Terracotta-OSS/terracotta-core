@@ -104,10 +104,13 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.commsMgrName = commsMgrName;
     for (final ClientID clientID : initialConnectionIDs) {
       logger.info("Preparing comms stack for previously connected client: " + clientID);
-      newStackHarness(clientID, messageTransportFactory.createNewTransport(
+      MessageTransport transport = messageTransportFactory.createNewTransport(
           createHandshakeErrorHandler(),
           handshakeMessageFactory,
-          transportListeners)).finalizeStack();
+          transportListeners);
+      //  create a fake connection id for use until the real transport connection is made
+      transport.initConnectionID(new ConnectionID(JvmIDUtil.getJvmID(), clientID.toLong()));
+      newStackHarness(clientID, transport).finalizeStack();
     }
     this.activeProvider = activeProvider;
     this.validateTransport = validate;
@@ -199,9 +202,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
   private void close(ConnectionID connectionId) {
     NetworkStackHarness harness = removeNetworkStack(connectionId);
-    if (harness == null) { throw new AssertionError(
-                                                    "Receive a transport closed event for a transport that isn't in the map :"
-                                                        + connectionId); }
+    if (harness == null) { 
+      throw new AssertionError("Receive a transport closed event for a transport that isn't in the map :"
+                                                        + connectionId); 
+    }
   }
 
   @Override

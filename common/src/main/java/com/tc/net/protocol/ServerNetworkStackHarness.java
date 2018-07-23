@@ -60,8 +60,7 @@ public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
     if (finalized.attemptSet()) {
       Assert.assertNotNull(this.transport);
       Assert.assertNotNull(this.channelFactory);
-      this.channel = channelFactory.createNewChannel(new ChannelID(this.transport.getConnectionID().getChannelID()));
-
+      this.channel = channelFactory.createNewChannel(new ChannelID(transport.getConnectionID().getChannelID()));
       connectStack();
     } else {
       throw Assert.failure("Attempt to finalize an already finalized stack");

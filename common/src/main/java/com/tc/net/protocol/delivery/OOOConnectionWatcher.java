@@ -67,9 +67,15 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
     oooLayer.connectionRestoreFailed();
 
     // restore failed - try reconnect
-    cce.asyncReconnect(cmt);
+    if (transport.getProductID().isReconnectEnabled()) {
+      cce.asyncReconnect(cmt);
+    }
     // forcedDisconnect flag is not in above layer. So, defaulting to false
-    oooLayer.notifyTransportDisconnected(transport, false);
+    if (oooLayer.isClosed()) {
+      cce.reset();
+    } else {
+      oooLayer.notifyTransportDisconnected(transport, false);
+    }
   }
 
   @Override

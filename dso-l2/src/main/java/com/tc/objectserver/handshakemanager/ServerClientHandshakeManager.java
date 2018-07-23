@@ -93,12 +93,14 @@ public class ServerClientHandshakeManager {
 
   public void notifyClientConnect(ClientHandshakeMessage handshake, EntityManager entityManager, ProcessTransactionHandler transactionHandler) throws ClientHandshakeException {
     final ClientID clientID = (ClientID) handshake.getSourceNodeID();
+    long save = clientID.toLong();
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
           new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
-
+      this.logger.info("confirming client handshake for " + state + " " + save + " " + clientID);
       if (this.state == State.STARTED) {
+        Assert.assertEquals(save, clientID.toLong());
         // This is a normal connection handshake, from a new client connecting once the server is up and running.
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {

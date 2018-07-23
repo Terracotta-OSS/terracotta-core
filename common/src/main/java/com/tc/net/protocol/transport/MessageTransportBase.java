@@ -34,7 +34,6 @@ import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import java.io.IOException;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -46,7 +45,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private ConnectionID                           connectionId           = new ConnectionID(JvmIDUtil.getJvmID(),
                                                                                              ChannelID.NULL_ID.toLong());
   protected final MessageTransportStatus           status;
-  protected final AtomicBoolean                    isOpen;
   protected final TransportHandshakeMessageFactory messageFactory;
   private final TransportHandshakeErrorHandler     handshakeErrorHandler;
   private NetworkLayer                             receiveLayer;
@@ -59,12 +57,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
-                                 TransportHandshakeMessageFactory messageFactory, boolean isOpen, Logger logger) {
+                                 TransportHandshakeMessageFactory messageFactory, Logger logger) {
 
     super(logger);
     this.handshakeErrorHandler = handshakeErrorHandler;
     this.messageFactory = messageFactory;
-    this.isOpen = new AtomicBoolean(isOpen);
     this.status = new MessageTransportStatus(initialState, logger);
   }
 
@@ -154,33 +151,27 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   private void terminate(boolean disconnect) {
-    synchronized (isOpen) {
-      if (!isOpen.get()) {
+    synchronized (this.status) {
+      if (!status.isOpen() || status.isClosed() || status.isDisconnected()) {
         // see DEV-659: we used to throw an assertion error here if already closed
         getLogger().debug("Can only close an open connection");
         return;
       }
       if (disconnect) {
-        synchronized (status) {
-          if (!this.status.isEnd()) this.status.disconnect();
-        }
+        if (!this.status.isEnd()) this.status.disconnect();
         // Dont fire any events here. Anyway asynchClose is triggered below and we are expected to receive a closeEvent
         // and upon which we open up the OOO Reconnect window
       } else {
-        synchronized (status) {
-          if (!this.status.isEnd()) this.status.closed();
-        }
-        isOpen.set(false);
+        if (!this.status.isEnd()) this.status.closed();
       }
     }
+      
     if (!disconnect) {
       fireTransportClosedEvent();
     }
 
-    synchronized (status) {
-      if (connection != null && !this.connection.isClosed()) {
-        this.connection.asynchClose();
-      }
+    if (connection != null && !this.connection.isClosed()) {
+      this.connection.asynchClose();
     }
   }
 
