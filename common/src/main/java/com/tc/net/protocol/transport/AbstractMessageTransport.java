@@ -150,9 +150,4 @@ public abstract class AbstractMessageTransport implements MessageTransport {
     }
     return currentLayer.toString();
   }
-
-  @Override
-  public void initConnectionID(ConnectionID cid) {
-    throw new UnsupportedOperationException();
-  }
 }

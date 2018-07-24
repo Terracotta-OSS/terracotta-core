@@ -28,7 +28,6 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ClientConnectionErrorListener;

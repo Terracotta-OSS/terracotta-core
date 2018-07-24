@@ -297,6 +297,9 @@ try {
       clientChannel.open(Arrays.asList(new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort())));
     } catch (TCTimeoutException e) {
       Assert.eval("This is not suppose to happen", false);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      throw t;
     }
     Assert.eval(clientChannel.isConnected());
   }

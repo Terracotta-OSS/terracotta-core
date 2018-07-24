@@ -742,7 +742,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     public void retired() {
       this.waiter.get().waitForCompleted();
       if (!getNodeID().isNull()) {
-        Assert.assertTrue(sent.isSet());
+        Assert.assertTrue(sent.isSet() || failure.isSet());
         addSequentially(getNodeID(), addTo -> addTo.addRetired(InvokeHandler.this.getTransaction()));
       }
       MonitoringEventCreator.finish();

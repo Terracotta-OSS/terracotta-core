@@ -22,6 +22,7 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.GlobalServerStats;
+import com.tc.objectserver.core.api.Guardian;
 
 public class ServerManagementContext {
 
@@ -29,14 +30,16 @@ public class ServerManagementContext {
   private final GlobalServerStats          serverStats;
   private final ChannelStats                  channelStats;
   private final ConnectionPolicy              connectionPolicy;
+  private final Guardian           guardian;
 
   public ServerManagementContext(DSOChannelManagerMBean channelMgr,
                                  GlobalServerStats serverStats, ChannelStats channelStats,
-                                 ConnectionPolicy connectionPolicy) {
+                                 ConnectionPolicy connectionPolicy, Guardian guard) {
     this.channelMgr = channelMgr;
     this.serverStats = serverStats;
     this.channelStats = channelStats;
     this.connectionPolicy = connectionPolicy;
+    this.guardian = guard;
   }
 
   public DSOChannelManagerMBean getChannelManager() {
@@ -53,5 +56,9 @@ public class ServerManagementContext {
   
   public ConnectionPolicy getConnectionPolicy() {
     return this.connectionPolicy;
+  }
+  
+  public Guardian getOperationGuardian() {
+    return this.guardian;
   }
 }

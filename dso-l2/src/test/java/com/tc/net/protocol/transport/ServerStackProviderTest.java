@@ -64,6 +64,7 @@ public class ServerStackProviderTest extends TCTestCase {
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
       ProductID product = ProductID.PERMANENT;
       when(channel.getProductID()).thenReturn(product);
+      when(channel.getChannelID()).thenReturn((ChannelID)invoke.getArguments()[0]);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -113,6 +114,7 @@ public class ServerStackProviderTest extends TCTestCase {
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
       ProductID product = ProductID.PERMANENT;
       when(channel.getProductID()).thenReturn(product);
+      when(channel.getChannelID()).thenReturn((ChannelID)invoke.getArguments()[0]);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
@@ -185,6 +187,7 @@ public class ServerStackProviderTest extends TCTestCase {
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
       ProductID product = ProductID.PERMANENT;
       when(channel.getProductID()).thenReturn(product);
+      when(channel.getChannelID()).thenReturn((ChannelID)invoke.getArguments()[0]);
       return channel;
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);

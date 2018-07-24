@@ -35,11 +35,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.mockito.Matchers;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -85,6 +88,14 @@ public class MockStageManagerFactory {
         .then((invoke)->{
           return created.get(invoke.getArguments()[0].toString());
         });
+    
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        shutdown();
+        return null;
+      }
+    }).when(stages).stopAll();
     return stages;
   }
   

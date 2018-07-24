@@ -364,6 +364,9 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   private void shutdown(TCGroupManagerImpl[] groupMgr, int start, int end) {
     for (int i = start; i < end; ++i) {
       try {
+        for (TCGroupMember member : groupMgr[i].getMembers()) {
+          member.close();
+        }
         groupMgr[i].stop(1000);
       } catch (Exception ex) {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);

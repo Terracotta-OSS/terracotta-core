@@ -87,8 +87,6 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
-import com.tc.util.version.Version;
-import com.tc.util.version.VersionCompatibility;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -347,6 +345,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 //  FOR TESTING ONLY
   public void stop(long timeout) throws TCTimeoutException {
+    for (ServerID sid : members.keySet()) {
+      closeMember(sid);
+    }
     isStopped.set(true);
     stageManager.stopAll();
     discover.stop(timeout);
@@ -608,7 +609,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
-    ClientMessageChannel channel = communicationsManager.createClientChannel(ProductID.SERVER, sessionProvider, 10000 /*  timeout */);
+//    ProductID product = (this.isUseOOOLayer) ? ProductID.STRIPE : ProductID.SERVER;
+    ProductID product = ProductID.SERVER;
+    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 10000 /*  timeout */);
 
     channel.addListener(listener);
     channel.open(Collections.singleton(info));

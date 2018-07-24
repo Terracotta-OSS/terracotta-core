@@ -1051,14 +1051,15 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       return packedUpMessageByteBuffers;
     }
   }
-
-  @Override
-  public void addWeight(int addWeightBy) {
-    this.commWorker.addWeight(this, addWeightBy, this.channel);
+  
+  // for testing
+  void addWeight(int addWeightBy) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void setTransportEstablished() {
+    this.commWorker.addConnection(this, this.channel);
     this.transportEstablished.set(true);
   }
 

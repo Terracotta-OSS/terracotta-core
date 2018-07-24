@@ -83,7 +83,7 @@ public class ServerMessageTransportTest {
     transport.initConnectionID(id);
     transport.addTransportListener(checker);
 
-    Assert.assertTrue(transport.status.isStart());
+    Assert.assertTrue(transport.status.isStartOpen());
     
     TCConnectionEvent event = new TCConnectionEvent(connection);
     transport.connectEvent(event);
@@ -107,7 +107,7 @@ public class ServerMessageTransportTest {
     for (TCConnectionEventListener trigger : listeners) {
       trigger.closeEvent(event);
     }
-    
+        
     transport.disconnect();
     
     Assert.assertTrue(transport.status.isDisconnected());
