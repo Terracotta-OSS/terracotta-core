@@ -236,6 +236,7 @@ import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import com.tc.objectserver.core.api.Guardian;
 
 
 /**
@@ -811,7 +812,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats,
-                                                         connectionPolicy);
+                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry));
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -820,6 +821,22 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     this.l2Coordinator.start();
     startDiagnosticListener();
     setLoggerOnExit();
+  }
+  
+  private Guardian getOperationGuardian(ServiceRegistry platformRegistry) {
+    try {
+      Guardian userProvided = platformRegistry.getService(new BasicServiceConfiguration<>(Guardian.class));
+      return (o, p)->{
+        try {
+          return userProvided == null || userProvided.validate(o, p);
+        } catch (Throwable t) {
+          logger.warn("guardian failed", t);
+          return false;
+        }
+      };  
+    } catch (ServiceException e) {
+      throw new AssertionError("Multiple Guardian implementations found!", e);
+    }
   }
 
   private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {

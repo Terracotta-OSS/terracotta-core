@@ -63,11 +63,13 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
+import com.tc.objectserver.core.api.Guardian;
 
 
 public class TCServerImpl extends SEDA implements TCServer, StateChangeListener {
@@ -80,6 +82,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   private volatile long                     activateTime                                 = -1;
 
   protected DistributedObjectServer         dsoServer;
+  private Guardian           guardian = (o, p)->true;
 
   private final Object                      stateLock                                    = new Object();
   private ServerMode           serverState                                  = ServerMode.START;
@@ -182,7 +185,9 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void stop() {
-    Runtime.getRuntime().exit(0);
+    if (this.guardian.validate(Guardian.Op.SERVER_EXIT, createGuardContext("stop"))) {
+      Runtime.getRuntime().exit(0);
+    }
   }
 
   @Override
@@ -203,12 +208,16 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public boolean canShutdown() {
+    boolean properState = false;
+    
     synchronized (this.stateLock) {
-      return serverState == ServerMode.PASSIVE ||
+      properState = serverState == ServerMode.PASSIVE ||
        serverState == ServerMode.ACTIVE || 
        serverState == ServerMode.UNINITIALIZED ||
        serverState == ServerMode.SYNCING;
     }
+    
+    return this.guardian.validate(Guardian.Op.SERVER_EXIT, createGuardContext("shutdown")) && properState;
   }
 
   @Override
@@ -393,7 +402,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void dump() {
-    if (this.dsoServer != null) {
+    if (guardian.validate(Guardian.Op.SERVER_DUMP, createGuardContext("dump")) && this.dsoServer != null) {
       this.dsoServer.dump();
     }
   }
@@ -402,6 +411,8 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
       NotCompliantMBeanException, NullPointerException {
 
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
+    Guardian delegate = mgmtContext.getOperationGuardian();
+    Assert.assertNotNull(this.guardian);
     ServerConfigurationContext configContext = this.dsoServer.getContext();
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     registerDSOMBeans(mgmtContext, configContext, dumper, mBeanServer);
@@ -463,7 +474,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void dumpClusterState() {
-    if (this.dsoServer != null) {
+    if (guardian.validate(Guardian.Op.SERVER_DUMP, createGuardContext("dumpClusterState")) && this.dsoServer != null) {
       this.dsoServer.dumpClusterState();
     }
   }
@@ -479,4 +490,10 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
       this.serverState = StateManager.convert(sce.getCurrentState());
     }
   } 
+  
+  private Properties createGuardContext(String callName) {
+    Properties props = new Properties();
+    props.setProperty("methodName", callName);
+    return props;
+  }
 }
