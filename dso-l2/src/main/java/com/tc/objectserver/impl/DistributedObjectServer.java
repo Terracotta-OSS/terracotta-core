@@ -80,7 +80,6 @@ import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
-import com.tc.l2.ha.TransactionCountWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
@@ -98,10 +97,6 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.ThreadDumpHandler;
-import com.tc.management.TerracottaManagement;
-import com.tc.management.beans.L2DumperMBean;
-import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
@@ -217,7 +212,6 @@ import com.tc.text.MapListPrettyPrint;
 import com.tc.util.ProductCapabilities;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductID;
-import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
@@ -242,7 +236,7 @@ import com.tc.objectserver.core.api.Guardian;
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements TCDumper, ServerConnectionValidator {
+public class DistributedObjectServer implements ServerConnectionValidator {
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
@@ -351,8 +345,8 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
   }
 
-  @Override
-  public void dump() {
+  public void dumpOnExit() {
+    // this is on exit so do not guard
     TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
   }
 
@@ -376,7 +370,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
 
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler());
-    threadGroup.addCallbackOnExitDefaultHandler((state) -> dump());
+    threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
       consoleLogger.error("Restarting server: " + state.getThrowable().getMessage());
       state.setRestartNeeded();
@@ -1193,15 +1187,5 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
   // for tests only
   public CommunicationsManager getCommunicationsManager() {
     return communicationsManager;
-  }
-
-  public void dumpClusterState() {
-    try {
-      L2DumperMBean mbean = (L2DumperMBean) TerracottaManagement.findMBean(L2MBeanNames.DUMPER, L2DumperMBean.class, ManagementFactory.getPlatformMBeanServer());
-      mbean.dumpClusterState();
-    } catch (Exception e) {
-      logger.warn("Could not take Cluster dump, hence taking server dump only");
-      dump();
-    }
   }
 }

@@ -28,6 +28,8 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
+import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.server.TCServerMain;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -72,7 +74,11 @@ public class DiagnosticsHandler implements TCMessageSink {
           result = server.getContext().getL2Coordinator().getStateManager().getCurrentMode().getName().getBytes(set);
           break;
         case "getClusterState":
-          result = server.getClusterState(set);
+          if (this.server.getManagementContext().getOperationGuardian().validate(Guardian.Op.SERVER_DUMP, GuardianContext.createGuardContext("shutdown"))) {
+            result = server.getClusterState(set);
+          } else {
+            result = "NOT PERMITTED".getBytes(set);
+          }
           break;
         case "getConfig":
           result = TCServerMain.getServer().getConfig().getBytes(set);

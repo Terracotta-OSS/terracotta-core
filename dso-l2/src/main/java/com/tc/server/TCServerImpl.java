@@ -40,7 +40,6 @@ import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -63,13 +62,13 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.core.api.GuardianContext;
 
 
 public class TCServerImpl extends SEDA implements TCServer, StateChangeListener {
@@ -185,8 +184,10 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void stop() {
-    if (this.guardian.validate(Guardian.Op.SERVER_EXIT, createGuardContext("stop"))) {
+    if (this.guardian.validate(Guardian.Op.SERVER_EXIT, GuardianContext.createGuardContext("stop"))) {
       Runtime.getRuntime().exit(0);
+    } else {
+      logger.info("stop operation not allowed by guardian");
     }
   }
 
@@ -216,8 +217,11 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
        serverState == ServerMode.UNINITIALIZED ||
        serverState == ServerMode.SYNCING;
     }
-    
-    return this.guardian.validate(Guardian.Op.SERVER_EXIT, createGuardContext("shutdown")) && properState;
+    boolean permitted = this.guardian.validate(Guardian.Op.SERVER_EXIT, GuardianContext.createGuardContext("shutdown"));
+    if (!permitted) {
+      logger.info("shutdown operation not permitted by guardian");
+    }
+    return permitted && properState;
   }
 
   @Override
@@ -402,33 +406,35 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void dump() {
-    if (guardian.validate(Guardian.Op.SERVER_DUMP, createGuardContext("dump")) && this.dsoServer != null) {
-      this.dsoServer.dump();
+    if (this.guardian.validate(Guardian.Op.SERVER_DUMP, GuardianContext.createGuardContext("dump"))) {
+      TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
+    } else {
+      logger.info("dump operation not permitted by guardian");
     }
   }
 
-  private void registerDSOServer(TCDumper dumper) throws InstanceAlreadyExistsException, MBeanRegistrationException,
+  private void registerDSOServer(DistributedObjectServer dumper) throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException, NullPointerException {
 
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
-    Guardian delegate = mgmtContext.getOperationGuardian();
+    this.guardian = mgmtContext.getOperationGuardian();
     Assert.assertNotNull(this.guardian);
     ServerConfigurationContext configContext = this.dsoServer.getContext();
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     registerDSOMBeans(mgmtContext, configContext, dumper, mBeanServer);
   }
   
-  protected void registerServerMBeans(TCDumper tcDumper, MBeanServer mBeanServer) 
+  protected void registerServerMBeans(DistributedObjectServer tcDumper, MBeanServer mBeanServer) 
       throws NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
     mBeanServer.registerMBean(new TCServerInfo(this), L2MBeanNames.TC_SERVER_INFO);
-    mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
+    mBeanServer.registerMBean(new L2Dumper(this, mBeanServer), L2MBeanNames.DUMPER);
   }
   
   protected void unregisterServerMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
     mbs.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mbs.unregisterMBean(L2MBeanNames.DUMPER);
   }
-  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext, TCDumper tcDumper,
+  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext, DistributedObjectServer tcDumper,
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
     DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer);
@@ -473,13 +479,6 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   }
 
   @Override
-  public void dumpClusterState() {
-    if (guardian.validate(Guardian.Op.SERVER_DUMP, createGuardContext("dumpClusterState")) && this.dsoServer != null) {
-      this.dsoServer.dumpClusterState();
-    }
-  }
-
-  @Override
   public String getResourceState() {
     return "";
   }
@@ -490,10 +489,4 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
       this.serverState = StateManager.convert(sce.getCurrentState());
     }
   } 
-  
-  private Properties createGuardContext(String callName) {
-    Properties props = new Properties();
-    props.setProperty("methodName", callName);
-    return props;
-  }
 }
