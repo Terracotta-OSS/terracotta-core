@@ -262,7 +262,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   @Override
   public void connectEvent(TCConnectionEvent event) {
     status.connected();
-    return;
   }
 
   @Override

@@ -26,6 +26,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
 import java.util.Collection;
 
@@ -81,6 +82,18 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public void reset() {
     throw new UnsupportedOperationException("Server channels don't support reset()");
+  }
+
+  @Override
+  public void notifyTransportClosed(MessageTransport transport) {
+    removeAttachment("transportInfo");
+    super.notifyTransportClosed(transport); 
+  }
+
+  @Override
+  public void notifyTransportConnected(MessageTransport transport) {
+    addAttachment("transportInfo", transport.toString(), true);
+    super.notifyTransportConnected(transport); 
   }
 
 }
