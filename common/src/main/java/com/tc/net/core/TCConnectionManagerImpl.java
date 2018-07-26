@@ -274,7 +274,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return connEvents;
   }
 
-  private final void checkShutdown() {
+  private void checkShutdown() {
     if (shutdown.isSet()) { throw new IllegalStateException("connection manager shutdown"); }
   }
 

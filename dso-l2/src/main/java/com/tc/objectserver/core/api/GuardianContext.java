@@ -16,8 +16,17 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.management.beans;
+package com.tc.objectserver.core.api;
 
-public interface TCDumper {
-  void dump();
+import java.util.Properties;
+
+/**
+ *
+ */
+public class GuardianContext {
+  public static Properties createGuardContext(String callName) {
+    Properties props = new Properties();
+    props.setProperty("methodName", callName);
+    return props;
+  }
 }

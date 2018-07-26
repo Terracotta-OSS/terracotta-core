@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
+import com.tc.server.TCServerImpl;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -44,11 +45,11 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   private int                   threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
   private long                  threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
 
-  private final TCDumper        dumper;
+  private final TCServerImpl        dumper;
 
   private final MBeanServer     mbs;
 
-  public L2Dumper(TCDumper dumper, MBeanServer mbs) throws NotCompliantMBeanException {
+  public L2Dumper(TCServerImpl dumper, MBeanServer mbs) throws NotCompliantMBeanException {
     super(L2DumperMBean.class, false);
     this.dumper = dumper;
     this.mbs = mbs;

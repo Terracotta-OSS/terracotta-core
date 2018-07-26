@@ -504,7 +504,6 @@ public class DistributedObjectClient implements TCClient {
     return printer.toString();
   }
 
-  @Override
   public void dump() {
     DSO_LOGGER.info(getClientState());
   }

@@ -152,8 +152,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   private void terminate(boolean disconnect) {
     synchronized (this.status) {
-      if (!status.isOpen() || status.isClosed() || status.isDisconnected()) {
-        // see DEV-659: we used to throw an assertion error here if already closed
+      if (status.isEnd()) {
         getLogger().debug("Can only close an open connection");
         return;
       }
@@ -165,9 +164,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         if (!this.status.isEnd()) this.status.closed();
       }
     }
-      
+
     if (!disconnect) {
       fireTransportClosedEvent();
+      this.status.end();
     }
 
     if (connection != null && !this.connection.isClosed()) {
@@ -282,7 +282,9 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       synchronized (status) {
         getLogger().debug("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
         if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
-          if (status.isDisconnected()) forcedDisconnect = true;
+          if (status.isDisconnected()) {
+            forcedDisconnect = true;
+          }
           status.reset();
         } else {
           status.reset();
@@ -296,6 +298,8 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       } else {
         fireTransportDisconnectedEvent();
       }
+    } else {
+        getLogger().debug("NOT SAME CONNECTION");
     }
   }
 

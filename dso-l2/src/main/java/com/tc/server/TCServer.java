@@ -76,8 +76,6 @@ public interface TCServer extends StateChangeListener {
 
   void dump();
 
-  void dumpClusterState();
-
   void reloadConfiguration() throws ConfigurationSetupException;
 
   String getResourceState();

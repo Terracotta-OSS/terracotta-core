@@ -18,9 +18,7 @@
  */
 package com.tc.management;
 
-import com.tc.management.beans.TCDumper;
-
-public interface TCClient extends TCDumper {
+public interface TCClient {
 
   public String[] processArguments();
 
