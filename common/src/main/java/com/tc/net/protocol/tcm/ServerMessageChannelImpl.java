@@ -38,7 +38,6 @@ import java.util.Collection;
 public class ServerMessageChannelImpl extends AbstractMessageChannel implements ServerMessageChannel {
   private static final Logger logger = LoggerFactory.getLogger(ServerMessageChannel.class);
   private final ChannelID       channel;
-
   /**
    * this is for the server it needs a session ID
    */
@@ -86,13 +85,13 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    removeAttachment("transportInfo");
+    removeAttachment(TRANSPORT_INFO);
     super.notifyTransportClosed(transport); 
   }
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    addAttachment("transportInfo", transport.toString(), true);
+    addAttachment(TRANSPORT_INFO, transport.getStateMap(), true);
     super.notifyTransportConnected(transport); 
   }
 

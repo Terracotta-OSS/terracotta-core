@@ -34,6 +34,7 @@ import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageImpl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -174,6 +175,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     state.put("connected", isConnected());
     state.put("closePending", isClosePending());
     state.put("transportConnected", isTransportEstablished());
+    if (bufferManager instanceof PrettyPrintable) {
+      state.put("buffer", ((PrettyPrintable)this.bufferManager).getStateMap());
+    } else {
+      state.put("buffer", this.bufferManager.toString());
+    }
     return state;
   }
 

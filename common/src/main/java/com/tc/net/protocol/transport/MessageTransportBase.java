@@ -411,4 +411,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   }
 
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("connection", this.getConnection().getState());
+    map.put("id", connectionId.toString());
+    return map;
+  }
 }

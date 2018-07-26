@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
@@ -68,7 +69,9 @@ public class DiagnosticsHandler implements TCMessageSink {
     String raw = new String(data, set);
     String[] cmd = raw.split(" ");
     byte[] result = null;
+    ChannelID channelID = message.getChannel().getChannelID();
     try {
+      GuardianContext.setCurrentChannelID(channelID);
       switch (cmd[0]) {
         case "getState":
           result = server.getContext().getL2Coordinator().getStateManager().getCurrentMode().getName().getBytes(set);
@@ -143,6 +146,8 @@ public class DiagnosticsHandler implements TCMessageSink {
       t.printStackTrace(pw);
       resp.setResponse(msg.getTransactionID(), out.toByteArray());
       resp.send();
+    } finally {
+      GuardianContext.clearCurrentChannelID(channelID);
     }
   }
 }
