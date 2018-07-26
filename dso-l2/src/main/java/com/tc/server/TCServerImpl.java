@@ -217,20 +217,20 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
        serverState == ServerMode.UNINITIALIZED ||
        serverState == ServerMode.SYNCING;
     }
-    boolean permitted = this.guardian.validate(Guardian.Op.SERVER_EXIT, GuardianContext.createGuardContext("shutdown"));
-    if (!permitted) {
-      logger.info("shutdown operation not permitted by guardian");
-    }
-    return permitted && properState;
+    return properState;
   }
 
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
-      setState(ServerMode.STOP);
-      consoleLogger.info("Server exiting...");
-      notifyShutdown();
-      Runtime.getRuntime().exit(0);
+      if (this.guardian.validate(Guardian.Op.SERVER_EXIT, GuardianContext.createGuardContext("shutdown"))) {
+        setState(ServerMode.STOP);
+        consoleLogger.info("Server exiting...");
+        notifyShutdown();
+        Runtime.getRuntime().exit(0);
+      } else {
+        logger.info("shutdown operation not permitted by guardian");
+      }
     } else {
       logger.warn("Server in incorrect state (" + serverState.getName() + ") to be shutdown.");
     }
