@@ -33,6 +33,8 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -155,19 +157,17 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       if (status.isEnd()) {
         getLogger().debug("Can only close an open connection");
         return;
-      }
-      if (disconnect) {
-        if (!this.status.isEnd()) this.status.disconnect();
+      } else if (disconnect) {
+        this.status.disconnect();
         // Dont fire any events here. Anyway asynchClose is triggered below and we are expected to receive a closeEvent
         // and upon which we open up the OOO Reconnect window
       } else {
-        if (!this.status.isEnd()) this.status.closed();
+        this.status.end();
       }
-    }
-
+    }    
+    
     if (!disconnect) {
       fireTransportClosedEvent();
-      this.status.end();
     }
 
     if (connection != null && !this.connection.isClosed()) {
@@ -280,14 +280,17 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       boolean forcedDisconnect = false;
       synchronized (status) {
         getLogger().debug("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
-        if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
+        if (status.isEnd()) {
+          return;
+          // do nothing, connection is already finished
+        } else if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
           if (status.isDisconnected()) {
             forcedDisconnect = true;
           }
           status.reset();
         } else {
           status.reset();
-          getLogger().debug("closing down connection - " + event);
+          getLogger().debug("closing down connection - " + event + " - " + status);
           return;
         }
       }
