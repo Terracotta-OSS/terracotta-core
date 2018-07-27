@@ -140,4 +140,8 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   }
 
+  @Override
+  public String toString() {
+    return "ServerMessageTransport{connection=" + getConnection() + '}';
+  }
 }

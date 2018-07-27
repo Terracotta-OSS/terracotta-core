@@ -22,6 +22,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.text.PrettyPrintable;
 import java.io.IOException;
 
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * Interface for message transport layer-- the connection-side endcap to the message communications stack.
  */
-public interface MessageTransport extends NetworkLayer {
+public interface MessageTransport extends NetworkLayer, PrettyPrintable {
 
   public static final int CONNWEIGHT_TX_HANDSHAKED = 1;
   

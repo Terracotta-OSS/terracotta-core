@@ -46,6 +46,7 @@ import com.tc.util.UUID;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -578,5 +579,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   // for testing
   public NetworkLayer getSendLayer() {
     return this.sendLayer;
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    return this.sendLayer.getStateMap();
   }
 }

@@ -231,6 +231,7 @@ import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.core.api.GuardianContext;
 
 
 /**
@@ -806,7 +807,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats,
-                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry));
+                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, channelManager));
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -817,9 +818,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     setLoggerOnExit();
   }
   
-  private Guardian getOperationGuardian(ServiceRegistry platformRegistry) {
+  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, DSOChannelManager mgr) {
     try {
       Guardian userProvided = platformRegistry.getService(new BasicServiceConfiguration<>(Guardian.class));
+      if (userProvided != null) {
+        mgr.addEventListener(new GuardianContext());
+      }
       return (o, p)->{
         try {
           return userProvided == null || userProvided.validate(o, p);

@@ -41,8 +41,10 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -552,6 +554,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }  
     response.received(); // call received locally
     
+    GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     Lock read = reconnectAccessLock.readLock();
       try {
         read.lock();
@@ -588,6 +591,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         throw new RuntimeException(e);
       } finally {
         read.unlock();
+        GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
       }
       trace.end();
   }

@@ -26,6 +26,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.util.Assert;
 import java.util.Collection;
 
@@ -37,7 +38,6 @@ import java.util.Collection;
 public class ServerMessageChannelImpl extends AbstractMessageChannel implements ServerMessageChannel {
   private static final Logger logger = LoggerFactory.getLogger(ServerMessageChannel.class);
   private final ChannelID       channel;
-
   /**
    * this is for the server it needs a session ID
    */
@@ -81,6 +81,18 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public void reset() {
     throw new UnsupportedOperationException("Server channels don't support reset()");
+  }
+
+  @Override
+  public void notifyTransportClosed(MessageTransport transport) {
+    removeAttachment(TRANSPORT_INFO);
+    super.notifyTransportClosed(transport); 
+  }
+
+  @Override
+  public void notifyTransportConnected(MessageTransport transport) {
+    addAttachment(TRANSPORT_INFO, transport.getStateMap(), true);
+    super.notifyTransportConnected(transport); 
   }
 
 }
