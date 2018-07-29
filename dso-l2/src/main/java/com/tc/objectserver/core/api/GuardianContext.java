@@ -19,9 +19,9 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.ServerMessageChannel;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import java.util.Map;
@@ -33,7 +33,7 @@ import java.util.function.Function;
 /**
  *
  */
-public class GuardianContext  implements DSOChannelManagerEventListener {
+public class GuardianContext  implements ChannelManagerEventListener {
   private static final ConcurrentHashMap<ChannelID, MessageChannel> CONTEXT = new ConcurrentHashMap<>();
   private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>();  
   
@@ -56,7 +56,7 @@ public class GuardianContext  implements DSOChannelManagerEventListener {
       if (v instanceof Map) {
         translateMaptoProperty(props, root + "." + k, (Map<String, Object>)v);
       } else {
-        props.put(k, String.valueOf(v));
+        props.put(root + "." + k, String.valueOf(v));
       }
     });
   }
@@ -67,7 +67,7 @@ public class GuardianContext  implements DSOChannelManagerEventListener {
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel, boolean wasActive) {
+  public void channelRemoved(MessageChannel channel) {
     CONTEXT.remove(channel.getChannelID());
   }
   
