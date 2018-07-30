@@ -151,6 +151,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   public void disconnect() {
     terminate(true);
   }
+  
+  protected boolean resetIfNotEnd() {
+    return this.status.resetIfNotEnd();
+  }
 
   private void terminate(boolean disconnect) {
     synchronized (this.status) {

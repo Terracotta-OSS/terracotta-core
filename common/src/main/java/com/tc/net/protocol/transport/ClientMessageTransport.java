@@ -153,12 +153,10 @@ public class ClientMessageTransport extends MessageTransportBase {
   
   @Override
   public void reset() {
-    synchronized (this.status) {
-      getLogger().info("Resetting connection " + getConnectionID());
-      this.disconnect();
-      this.status.reset();
-      clearConnection();
-    }
+    getLogger().info("Resetting connection " + getConnectionID());
+    this.disconnect();
+    clearConnection();
+    resetIfNotEnd();
   }
 
   private void handleHandshakeError(HandshakeResult result) throws TransportHandshakeException, MaxConnectionsExceededException,
@@ -205,7 +203,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     this.removeTransportListeners();
     clearConnection();
     this.addTransportListeners(tl);
-    this.status.reset();
+    resetIfNotEnd();
   }
 
   /**
@@ -386,13 +384,13 @@ public class ClientMessageTransport extends MessageTransportBase {
         handshakeConnection();
       } catch (TCTimeoutException e) {
         clearConnection();
-        this.status.reset();
+        resetIfNotEnd();
         throw e;
       } catch (ReconnectionRejectedException e) {
         throw new TCRuntimeException("Should not happen here: " + e);
       } catch (TransportHandshakeException e) {
         clearConnection();
-        this.status.reset();
+        resetIfNotEnd();
         throw e;
       }
     } else {
@@ -421,7 +419,7 @@ public class ClientMessageTransport extends MessageTransportBase {
         handshakeConnection();
       } catch (Exception t) {
         connection.close(100);
-        this.status.reset();
+        resetIfNotEnd();
         throw t;
       }
     }
