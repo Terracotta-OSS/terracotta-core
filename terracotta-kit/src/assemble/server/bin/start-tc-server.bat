@@ -33,7 +33,9 @@ exit /b 0
 :start
 setlocal enabledelayedexpansion enableextensions
 
-set TC_SERVER_DIR=%~d0%~p0..
+pushd "%~d0%~p0.."
+set TC_SERVER_DIR=%CD%
+popd
 set TC_SERVER_DIR="%TC_SERVER_DIR:"=%"
 set PLUGIN_LIB_DIR=%TC_SERVER_DIR%\plugins\lib
 set PLUGIN_API_DIR=%TC_SERVER_DIR%\plugins\api
