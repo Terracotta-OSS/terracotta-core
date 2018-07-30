@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 
 import com.tc.util.Assert;
-import java.util.concurrent.atomic.AtomicInteger;
 
 class MessageTransportStatus {
   private final MessageTransportState initial;
@@ -123,6 +122,15 @@ class MessageTransportStatus {
   
   boolean isConnected() {
     return checkState(MessageTransportState.STATE_CONNECTED);
+  }
+  
+  synchronized boolean resetIfNotEnd() {
+    if (!checkState(MessageTransportState.STATE_END)) {
+      reset();
+      return true;
+    } else {
+      return false;
+    }
   }
 
   synchronized boolean isEnd() {

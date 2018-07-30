@@ -807,7 +807,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats,
-                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, channelManager));
+                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, this.l1Listener.getChannelManager(), this.l1Diagnostics.getChannelManager()));
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -818,11 +818,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     setLoggerOnExit();
   }
   
-  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, DSOChannelManager mgr) {
+  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ChannelManager mgr, ChannelManager diagnostics) {
     try {
       Guardian userProvided = platformRegistry.getService(new BasicServiceConfiguration<>(Guardian.class));
       if (userProvided != null) {
-        mgr.addEventListener(new GuardianContext());
+        GuardianContext listener = new GuardianContext();
+        mgr.addEventListener(listener);
+        diagnostics.addEventListener(listener);
       }
       return (o, p)->{
         try {
