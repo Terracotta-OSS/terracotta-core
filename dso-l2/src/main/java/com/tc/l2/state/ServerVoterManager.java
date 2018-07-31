@@ -33,7 +33,7 @@ public interface ServerVoterManager extends VoterManagerMBean {
    *
    * @param electionTerm current election term
    */
-  void startVoting(long electionTerm);
+  void startVoting(long electionTerm, boolean cancelOverride);
 
   /**
    *

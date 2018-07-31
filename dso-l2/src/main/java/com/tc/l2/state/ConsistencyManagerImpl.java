@@ -176,7 +176,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private synchronized int activateVoting(ServerMode mode, Transition moveTo) {
     if (!activeVote) {
       activeVote = true;
-      voter.startVoting(++voteTerm);
+      voter.startVoting(++voteTerm, moveTo != Transition.ADD_CLIENT);
     }
     actions.add(moveTo);
     if (mode != ServerMode.ACTIVE) {

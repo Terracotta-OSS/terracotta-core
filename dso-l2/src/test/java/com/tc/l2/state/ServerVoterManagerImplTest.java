@@ -67,7 +67,7 @@ public class ServerVoterManagerImplTest {
   @Test
   public void testRegisterVoterFailsWhenVotingInProgress() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
-    manager.startVoting(5L);
+    manager.startVoting(5L, true);
     assertThat(manager.registerVoter("foo"), is(-1L));
     manager.stopVoting();
     assertThat(manager.registerVoter("foo"), is(5L));
@@ -92,7 +92,7 @@ public class ServerVoterManagerImplTest {
   public void testHeartbeatDuringElection() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     manager.voters.put("foo", 1L);
-    manager.startVoting(5L);
+    manager.startVoting(5L, true);
     assertThat(manager.heartbeat("foo"), is(5L));
   }
 
@@ -102,7 +102,7 @@ public class ServerVoterManagerImplTest {
     manager.voters.put("foo", 1L);
     manager.voters.put("bar", 1L);
     manager.voters.put("baz", 1L);
-    manager.startVoting(5L);
+    manager.startVoting(5L, true);
     assertThat(manager.vote("foo", 5L), is(0L));
     assertThat(manager.vote("bar", 5L), is(0L));
     assertThat(manager.getVoteCount(), is(2));
@@ -112,7 +112,7 @@ public class ServerVoterManagerImplTest {
   public void testVoteFromInvalidClientIgnored() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     manager.voters.put("foo", 1L);
-    manager.startVoting(5L);
+    manager.startVoting(5L, true);
     assertThat(manager.vote("bar", 5L), is(INVALID_VOTER_RESPONSE));
     assertThat(manager.getVoteCount(), is(0));
   }
@@ -121,7 +121,7 @@ public class ServerVoterManagerImplTest {
   public void testDuplicateVotesNotCounted() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     manager.voters.put("foo", 1L);
-    manager.startVoting(5L);
+    manager.startVoting(5L, true);
     assertThat(manager.vote("foo", 5L), is(0L));
     assertThat(manager.vote("foo", 5L), is(0L));  //duplicate
     assertThat(manager.getVoteCount(), is(1));
@@ -138,7 +138,7 @@ public class ServerVoterManagerImplTest {
   @Test
   public void testOverrideVote() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
-    manager.startVoting(5L);
+    manager.startVoting(5L, true);
     assertThat(manager.overrideVote("foo"), is(true));
     assertThat(manager.overrideVoteReceived(), is(true));
   }
