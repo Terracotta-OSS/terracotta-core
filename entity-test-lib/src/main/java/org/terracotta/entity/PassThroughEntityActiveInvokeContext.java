@@ -1,5 +1,7 @@
 package org.terracotta.entity;
 
+import java.util.Properties;
+
 public class PassThroughEntityActiveInvokeContext<R extends EntityResponse> extends PassThroughEntityInvokeContext implements
   ActiveInvokeContext<R> {
   private final ClientDescriptor descriptor;
@@ -22,4 +24,10 @@ public class PassThroughEntityActiveInvokeContext<R extends EntityResponse> exte
     return new PassThroughEntityActiveInvokeChannel<>(monitor);
   }
 
+  @Override
+  public Properties getClientSourceProperties() {
+    Properties props = new Properties();
+    props.setProperty("clientID", String.valueOf(descriptor.getSourceId()));
+    return props;
+  }
 }

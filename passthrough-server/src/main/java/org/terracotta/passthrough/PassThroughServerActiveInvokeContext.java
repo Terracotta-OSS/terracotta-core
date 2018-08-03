@@ -1,5 +1,6 @@
 package org.terracotta.passthrough;
 
+import java.util.Properties;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ClientDescriptor;
@@ -62,5 +63,12 @@ public class PassThroughServerActiveInvokeContext<M extends EntityMessage, R ext
         monitor.close();
       }
     };
+  }
+
+  @Override
+  public Properties getClientSourceProperties() {
+    Properties props = new Properties();
+    props.setProperty("clientID", String.valueOf(descriptor.getSourceId()));
+    return props;
   }
 }
