@@ -23,6 +23,7 @@ import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -32,11 +33,13 @@ import com.tc.object.FetchID;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
+import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,14 +47,16 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 
-public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
+public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener, ChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
   private final ClientEntityStateManager      clientEvents;
   private final ProcessTransactionHandler   pth;
   private final ManagementTopologyEventCollector collector;
+  private boolean guardian = false;
   
   private final Set<ClientID>  knownClients = new HashSet<>();
 
@@ -110,8 +115,17 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private void notifyEnitiesOfDisconnect(ClientID clientID) {
     List<FetchID> msg = clientEvents.clientDisconnected(clientID);
     collector.expectedDisconnects(clientID, msg);
-    msg.forEach(m->voltronSink.addToSink(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), null)));
-    notifyClientRemoved(clientID);
+    if (msg.isEmpty()) {
+      notifyClientRemoved(clientID);
+    } else {
+      CountDownLatch latch = new CountDownLatch(msg.size());
+      msg.forEach(m->voltronSink.addToSink(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), ()->{
+        latch.countDown();
+        if (latch.getCount() == 0) {
+          notifyClientRemoved(clientID);
+        }
+      })));
+    }
   }
 
   private void nodeConnected(NodeID nodeID, ProductID productId) {
@@ -149,10 +163,18 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   @Override
   public void channelCreated(MessageChannel channel) {
     ClientID clientID = (ClientID)channel.getRemoteNodeID();
- //  brand new member, broadcast the change if active
-    clientCreated(clientID, channel.getProductID());
- //  client is connecting to the active
-    notifyClientAdded(channel, clientID);
+    if (this.channelMgr.isActiveID(clientID)) {
+   //  brand new member, broadcast the change if active
+      nodeConnected(clientID, channel.getProductID());
+   //  client is connecting to the active
+      notifyClientAdded(channel, clientID);
+    } else {
+      Assert.assertFalse(channel.getChannelID().isValid());
+      Assert.assertTrue(channel.getProductID().isInternal());
+    }
+    if (this.guardian) {
+      GuardianContext.channelCreated(channel);
+    }
   }
   
   private void notifyClientAdded(MessageChannel channel, ClientID clientID) {
@@ -165,19 +187,11 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
   private void notifyClientRemoved(ClientID clientID) {
     synchronized (knownClients) {
       if (knownClients.contains(clientID)) {
-//        collector.clientDidDisconnect(clientID);
+        if (this.guardian) {
+          GuardianContext.clientRemoved(clientID);
+        }
         knownClients.remove(clientID);
       }
-    }
-  }
-  
-  public void clientCreated(ClientID client, ProductID product) {
-    nodeConnected(client, product);
-  }
-  
-  public void clientDropped(ClientID clientID, ProductID product, boolean wasActive) {
-    if (wasActive) {
-      nodeDisconnected(clientID, product);
     }
   }
 /**
@@ -199,6 +213,19 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener {
     // the chain is hydrate stage -> process transaction handler -> request processor (flushed) -> deliver event to 
     // disconnect node.  This is done so that all messages issued by the client have fully run their course 
     // before an attempt is made to remove references.
-    clientDropped(clientID, product, wasActive);
+    if (wasActive) {
+      nodeDisconnected(clientID, product);
+    } else if (this.guardian) {
+      GuardianContext.channelRemoved(channel);
+    }
   }  
+
+  @Override
+  public void channelRemoved(MessageChannel channel) {
+    channelRemoved(channel, false);
+  }
+  
+  public void activateGuardian() {
+    this.guardian = true;
+  }
 }

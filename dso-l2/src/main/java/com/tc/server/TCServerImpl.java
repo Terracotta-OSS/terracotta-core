@@ -81,7 +81,6 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   private volatile long                     activateTime                                 = -1;
 
   protected DistributedObjectServer         dsoServer;
-  private Guardian           guardian = (o, p)->true;
 
   private final Object                      stateLock                                    = new Object();
   private ServerMode           serverState                                  = ServerMode.START;
@@ -184,7 +183,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void stop() {
-    if (this.guardian.validate(Guardian.Op.SERVER_EXIT, GuardianContext.createGuardContext("stop"))) {
+    if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "stop")) {
       Runtime.getRuntime().exit(0);
     } else {
       logger.info("stop operation not allowed by guardian");
@@ -223,7 +222,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
-      if (this.guardian.validate(Guardian.Op.SERVER_EXIT, GuardianContext.createGuardContext("shutdown"))) {
+      if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "shutdown")) {
         setState(ServerMode.STOP);
         consoleLogger.info("Server exiting...");
         notifyShutdown();
@@ -406,7 +405,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void dump() {
-    if (this.guardian.validate(Guardian.Op.SERVER_DUMP, GuardianContext.createGuardContext("dump"))) {
+    if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "dump")) {
       TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
     } else {
       logger.info("dump operation not permitted by guardian");
@@ -417,8 +416,6 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
       NotCompliantMBeanException, NullPointerException {
 
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
-    this.guardian = mgmtContext.getOperationGuardian();
-    Assert.assertNotNull(this.guardian);
     ServerConfigurationContext configContext = this.dsoServer.getContext();
     MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
     registerDSOMBeans(mgmtContext, configContext, dumper, mBeanServer);

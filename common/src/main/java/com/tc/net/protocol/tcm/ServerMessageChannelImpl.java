@@ -85,13 +85,15 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    removeAttachment(TRANSPORT_INFO);
+//  don't bother removing attachment, it will be replaced on reconnect and we could use the info 
+//  even if the transport is closed
+//    removeAttachment(TRANSPORT_INFO);
     super.notifyTransportClosed(transport); 
   }
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    addAttachment(TRANSPORT_INFO, transport.getStateMap(), true);
+    addAttachment(TRANSPORT_INFO, transport, true);
     super.notifyTransportConnected(transport); 
   }
 

@@ -18,40 +18,49 @@
  */
 package com.tc.objectserver.core.api;
 
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.ServerMessageChannel;
+import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
+import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.server.TCServer;
+import com.tc.server.TCServerImpl;
+import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 /**
  *
  */
-public class GuardianContext  implements ChannelManagerEventListener {
+public class GuardianContext {
   private static final ConcurrentHashMap<ChannelID, MessageChannel> CONTEXT = new ConcurrentHashMap<>();
-  private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>();  
+  private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>(); 
   
-  public static Properties createGuardContext(String callName) {
+  private static Properties createGuardContext(String callName) {
+    return createGuardContext(callName, CONTEXT.get(CURRENTID.get()));
+  }
+  
+  private static Properties createGuardContext(String callName, MessageChannel c) {
     Properties props = new Properties();
-    props.setProperty("methodName", callName);
-    Optional.ofNullable(CURRENTID.get()).ifPresent(cid->{
-      props.setProperty("channelID", cid.toString());
-      MessageChannel c = CONTEXT.get(cid);
-      if (c != null) {
-        props.setProperty(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, String.valueOf(c.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)));
-        translateMaptoProperty(props, ServerMessageChannel.TRANSPORT_INFO, (Map<String, Object>)c.getAttachment(ServerMessageChannel.TRANSPORT_INFO));
+    if (callName != null) {
+      props.setProperty("id", callName);
+    }
+    if (c != null) {
+      props.setProperty(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, String.valueOf(c.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)));
+      MessageTransport transport = (MessageTransport)c.getAttachment(ServerMessageChannel.TRANSPORT_INFO);
+      if (transport != null) {
+        translateMaptoProperty(props, ServerMessageChannel.TRANSPORT_INFO, transport.getStateMap());
       }
-    });
+    }
     return props;
   }
   
-  private static void translateMaptoProperty(Properties props, String root, Map<String, Object> map) {
+  private static void translateMaptoProperty(Properties props, String root, Map<String, ?> map) {
     map.forEach((k, v) -> {
       if (v instanceof Map) {
         translateMaptoProperty(props, root + "." + k, (Map<String, Object>)v);
@@ -61,14 +70,16 @@ public class GuardianContext  implements ChannelManagerEventListener {
     });
   }
 
-  @Override
-  public void channelCreated(MessageChannel channel) {
+  public static void channelCreated(MessageChannel channel) {
     CONTEXT.put(channel.getChannelID(), channel);
   }
 
-  @Override
-  public void channelRemoved(MessageChannel channel) {
+  public static void channelRemoved(MessageChannel channel) {
     CONTEXT.remove(channel.getChannelID());
+  }
+  
+  public static void clientRemoved(ClientID removed) {
+    CONTEXT.remove(removed.getChannelID());
   }
   
   public static boolean attach(String name, Object data) {
@@ -81,14 +92,6 @@ public class GuardianContext  implements ChannelManagerEventListener {
     }
   }
   
-  public static MessageChannel getCurrentMessageChannel() {
-    return CONTEXT.get(CURRENTID.get());
-  }
-
-  public static Properties inquireContext(Function<MessageChannel, Properties> converter) {
-    return converter.apply(CONTEXT.get(CURRENTID.get()));
-  }
-  
   public static void setCurrentChannelID(ChannelID cid) {
     CURRENTID.set(cid);
   }
@@ -97,5 +100,31 @@ public class GuardianContext  implements ChannelManagerEventListener {
     ChannelID current = CURRENTID.get();
     Assert.assertEquals(cid, current);
     CURRENTID.remove();
+  }
+  
+  public static Properties getCurrentChannelProperties() {
+    return createGuardContext("context");
+  }
+  
+  private static Guardian getOperationGuardian() {
+    TCServer server = TCServerMain.getServer();
+    if (server != null) {
+      DistributedObjectServer dso = ((TCServerImpl)server).getDSOServer();
+      if (dso != null) {
+        ServerManagementContext cxt = dso.getManagementContext();
+        if (cxt != null) {
+          return cxt.getOperationGuardian();
+        }
+      }
+    }
+    return (o, p)->true;
+  }
+  
+  public static boolean validate(Guardian.Op op, String id) {
+    return getOperationGuardian().validate(op, createGuardContext(id));
+  }
+  
+  public static boolean validate(Guardian.Op op, String id, MessageChannel channel) {
+    return getOperationGuardian().validate(op, createGuardContext(id, channel));
   }
 }

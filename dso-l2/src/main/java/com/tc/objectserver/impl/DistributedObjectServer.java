@@ -231,7 +231,6 @@ import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import com.tc.objectserver.core.api.Guardian;
-import com.tc.objectserver.core.api.GuardianContext;
 
 
 /**
@@ -715,8 +714,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
-                                                                                        clientEntityStateManager, processTransactionHandler, eventCollector);
+                                                                                        clientEntityStateManager, 
+                                                                                        processTransactionHandler, eventCollector);
     channelManager.addEventListener(channelLifeCycleHandler);
+    this.l1Diagnostics.getChannelManager().addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
                                                                   stageManager, state,
@@ -807,7 +808,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats,
-                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, this.l1Listener.getChannelManager(), this.l1Diagnostics.getChannelManager()));
+                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, this.l1Listener.getChannelManager(), this.l1Diagnostics.getChannelManager(), channelLifeCycleHandler));
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -818,20 +819,29 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     setLoggerOnExit();
   }
   
-  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ChannelManager mgr, ChannelManager diagnostics) {
+  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ChannelManager mgr, ChannelManager diagnostics, ChannelLifeCycleHandler handler) {
     try {
       Guardian userProvided = platformRegistry.getService(new BasicServiceConfiguration<>(Guardian.class));
       if (userProvided != null) {
-        GuardianContext listener = new GuardianContext();
-        mgr.addEventListener(listener);
-        diagnostics.addEventListener(listener);
+        handler.activateGuardian();
       }
       return (o, p)->{
         try {
-          return userProvided == null || userProvided.validate(o, p);
+          boolean real = userProvided == null || userProvided.validate(o, p);
+          switch (o) {
+            case SERVER_DUMP:
+            case SERVER_EXIT:
+            case CONNECT_CLIENT:
+                break;
+            default:
+          // always return true as we can't handle split decisions between passives and 
+          // actives yet.
+              real = true;
+          }
+          return real;
         } catch (Throwable t) {
           logger.warn("guardian failed", t);
-          return false;
+          return true;
         }
       };  
     } catch (ServiceException e) {
