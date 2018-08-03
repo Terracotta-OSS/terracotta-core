@@ -37,7 +37,6 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
 
@@ -59,12 +58,11 @@ public interface ServerBuilder extends PostInit {
                                                               int maxStageSize, ChannelManager genericChannelManager);
 
   L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
-                                      StageManager stageManager, StateManager stateMgr,
+                                      StateManager stateMgr,
                                       GroupManager<AbstractGroupMessage> groupCommsManager,
                                       Persistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
-                                      L2ConfigurationSetupManager configurationSetupManager,
-                                      StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm);
+                                      StripeIDStateManager stripeStateManager);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
 }

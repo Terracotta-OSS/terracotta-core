@@ -43,7 +43,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
@@ -93,15 +92,14 @@ public class StandardServerBuilder implements ServerBuilder {
 
   @Override
   public L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
-                                             StageManager stageManager, StateManager stateMgr, 
+                                             StateManager stateMgr, 
                                              GroupManager<AbstractGroupMessage> groupCommsManager,
                                              Persistor persistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
-                                             L2ConfigurationSetupManager configurationSetupManager,
-                                             StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm) {
-    return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
+                                             StripeIDStateManager stripeStateManager) {
+    return new L2HACoordinator(consoleLogger, server, stateMgr, 
         groupCommsManager, persistor,
-        weightGeneratorFactory, configurationSetupManager, stripeStateManager, clm);
+        weightGeneratorFactory, stripeStateManager);
   }
 
   @Override

@@ -50,7 +50,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 
-public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener, ChannelManagerEventListener {
+public class ClientChannelLifeCycleHandler implements DSOChannelManagerEventListener, ChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
   private final ClientEntityStateManager      clientEvents;
@@ -60,10 +60,10 @@ public class ChannelLifeCycleHandler implements DSOChannelManagerEventListener, 
   
   private final Set<ClientID>  knownClients = new HashSet<>();
 
-  private static final Logger logger = LoggerFactory.getLogger(ChannelLifeCycleHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(ClientChannelLifeCycleHandler.class);
   private final Sink<VoltronEntityMessage> voltronSink;
 
-  public ChannelLifeCycleHandler(CommunicationsManager commsManager,
+  public ClientChannelLifeCycleHandler(CommunicationsManager commsManager,
                                  StageManager stageManager,
                                  DSOChannelManager channelManager,
                                  ClientEntityStateManager chain,

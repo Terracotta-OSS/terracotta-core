@@ -28,6 +28,8 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.objectserver.api.EntityManager;
+import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -53,7 +55,11 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
 
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
+    String cid = clientMsg.getClientVersion() + ":" + clientMsg.getName() + ":" + clientMsg.getUUID() + ":" + clientMsg.getClientPID();
     try {
+      if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
+        this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
+      }
       if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
       } else if (stateManager.isActiveCoordinator()) {

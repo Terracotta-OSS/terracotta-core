@@ -42,7 +42,12 @@ public class GuardianContext {
   private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>(); 
   
   private static Properties createGuardContext(String callName) {
-    return createGuardContext(callName, CONTEXT.get(CURRENTID.get()));
+    ChannelID cid = CURRENTID.get();
+    if (cid != null) {
+      return createGuardContext(callName, CONTEXT.get(cid));
+    } else {
+      return new Properties();
+    }
   }
   
   private static Properties createGuardContext(String callName, MessageChannel c) {

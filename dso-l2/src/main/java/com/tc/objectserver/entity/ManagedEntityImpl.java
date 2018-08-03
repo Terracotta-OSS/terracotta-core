@@ -41,10 +41,10 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -463,24 +463,41 @@ public class ManagedEntityImpl implements ManagedEntity {
     trace.start();
     Lock read = reconnectAccessLock.readLock();
     logger.info("Client:" + request.getNodeID() + ":" + request.getClientInstance() + " Invoking lifecycle " + request.getAction() + " on " + getID() + ":" + this.fetchID);
+    GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     read.lock();
     try {
       switch (request.getAction()) {
         case CREATE_ENTITY:
-          createEntity(resp, payload.getRawPayload());
+          if (!GuardianContext.validate(Guardian.Op.ENTITY_CREATE, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
+            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+          } else {
+            createEntity(resp, payload.getRawPayload());
+          }
           break;
         case FETCH_ENTITY:
-          getEntity(request, resp, payload.getRawPayload());
+          if (!GuardianContext.validate(Guardian.Op.ENTITY_FETCH, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
+            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+          } else {
+            getEntity(request, resp, payload.getRawPayload());
+          }
           break;
         case RELEASE_ENTITY:
           releaseEntity(request, resp);
           break;
         case RECONFIGURE_ENTITY:
-          reconfigureEntity(resp, payload.getRawPayload());
+           if (!GuardianContext.validate(Guardian.Op.ENTITY_RECONFIGURE, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
+            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+          } else {
+             reconfigureEntity(resp, payload.getRawPayload());
+           }
           break;
         case DESTROY_ENTITY:
 //  all request queues are flushed because this action is on the MGMT_KEY
-          destroyEntity(request, resp);
+          if (!GuardianContext.validate(Guardian.Op.ENTITY_DESTROY, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
+            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+          } else {
+            destroyEntity(request, resp);
+          }
           break;
         case RECEIVE_SYNC_CREATE_ENTITY:
           // Update our reference count.
@@ -520,6 +537,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       throw wrapper;
     } finally {
       read.unlock();
+      GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
       if (this.isInActiveState) {
         interop.finishLifecycle();
       }
@@ -556,44 +574,44 @@ public class ManagedEntityImpl implements ManagedEntity {
     
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
     Lock read = reconnectAccessLock.readLock();
-      try {
-        read.lock();
-        if (logger.isDebugEnabled()) {
-          logger.debug(request.getAction() + " on " + getID() + "/" + concurrencyKey + " with " + message);
-        }
-        switch (request.getAction()) {
-          case INVOKE_ACTION:
-            Optional.ofNullable(decodeMessage(message, response))
-                .ifPresent(em->performAction(request, em , response, concurrencyKey));
-            break;
-          case REQUEST_SYNC_ENTITY:
-            performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
-            break;
-          case RECEIVE_SYNC_ENTITY_KEY_START:
-            receiveSyncEntityKeyStart(response, concurrencyKey);
-            break;
-          case RECEIVE_SYNC_ENTITY_KEY_END:
-            receiveSyncEntityKeyEnd(response, concurrencyKey);
-            break;
-          case RECEIVE_SYNC_PAYLOAD:
-            receiveSyncEntityPayload(response, message);
-            break;
-          case LOCAL_FLUSH:
-          case LOCAL_FLUSH_AND_SYNC:
-          case ORDER_PLACEHOLDER_ONLY:
-            // These types are all for message order - none of them come in through this invoke path.
-            throw new IllegalArgumentException("Flow-only request observed in invoke path: " + request);
-          default:
-            throw new IllegalArgumentException("Unknown request " + request);
-        }
-      } catch (Exception e) {
-        logger.error("caught exception during invoke ", e);
-        throw new RuntimeException(e);
-      } finally {
-        read.unlock();
-        GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
+    try {
+      read.lock();
+      if (logger.isDebugEnabled()) {
+        logger.debug(request.getAction() + " on " + getID() + "/" + concurrencyKey + " with " + message);
       }
-      trace.end();
+      switch (request.getAction()) {
+        case INVOKE_ACTION:
+          Optional.ofNullable(decodeMessage(message, response))
+              .ifPresent(em->performAction(request, em , response, concurrencyKey));
+          break;
+        case REQUEST_SYNC_ENTITY:
+          performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
+          break;
+        case RECEIVE_SYNC_ENTITY_KEY_START:
+          receiveSyncEntityKeyStart(response, concurrencyKey);
+          break;
+        case RECEIVE_SYNC_ENTITY_KEY_END:
+          receiveSyncEntityKeyEnd(response, concurrencyKey);
+          break;
+        case RECEIVE_SYNC_PAYLOAD:
+          receiveSyncEntityPayload(response, message);
+          break;
+        case LOCAL_FLUSH:
+        case LOCAL_FLUSH_AND_SYNC:
+        case ORDER_PLACEHOLDER_ONLY:
+          // These types are all for message order - none of them come in through this invoke path.
+          throw new IllegalArgumentException("Flow-only request observed in invoke path: " + request);
+        default:
+          throw new IllegalArgumentException("Unknown request " + request);
+      }
+    } catch (Exception e) {
+      logger.error("caught exception during invoke ", e);
+      throw new RuntimeException(e);
+    } finally {
+      read.unlock();
+      GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
+    }
+    trace.end();
   }
   
   private void receiveSyncCreateEntity(ResultCapture response, byte[] constructor) {

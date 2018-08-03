@@ -147,7 +147,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.entity.ActiveToPassiveReplication;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
+import com.tc.objectserver.handler.ClientChannelLifeCycleHandler;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -712,7 +712,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
     
-    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
+    final ClientChannelLifeCycleHandler channelLifeCycleHandler = new ClientChannelLifeCycleHandler(this.communicationsManager,
                                                                                         stageManager, channelManager,
                                                                                         clientEntityStateManager, 
                                                                                         processTransactionHandler, eventCollector);
@@ -720,13 +720,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.l1Diagnostics.getChannelManager().addEventListener(channelLifeCycleHandler);
     
     this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, 
-                                                                  stageManager, state,
+                                                                  state,
                                                                   this.groupCommManager,
                                                                   this.persistor,
                                                                   this.globalWeightGeneratorFactory,
-                                                                  this.configSetupManager,
-                                                                  this.stripeIDStateManager,
-                                                                  channelLifeCycleHandler);
+                                                                  this.stripeIDStateManager);
 
     connectServerStateToReplicatedState(processTransactionHandler, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
@@ -819,7 +817,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     setLoggerOnExit();
   }
   
-  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ChannelManager mgr, ChannelManager diagnostics, ChannelLifeCycleHandler handler) {
+  private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ChannelManager mgr, ChannelManager diagnostics, ClientChannelLifeCycleHandler handler) {
     try {
       Guardian userProvided = platformRegistry.getService(new BasicServiceConfiguration<>(Guardian.class));
       if (userProvided != null) {
