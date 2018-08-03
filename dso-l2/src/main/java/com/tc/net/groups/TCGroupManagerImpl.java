@@ -617,16 +617,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     channel.open(Collections.singleton(info));
 
     handshake(channel);
-    return;
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       MaxConnectionsExceededException, IOException, CommStackMismatchException {
     openChannel(new ConnectionInfo(hostname, port), listener);
-  }
-
-  private boolean isSecured() {
-    return false;
   }
 
   /*

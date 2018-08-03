@@ -183,19 +183,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       }
       msg.initState(state);
       state.syncSequenceState();
-      sendChannelLifeCycleEventsIfNecessary(msg);
       sendOKResponse(fromNode, msg);
-    }
-  }
-
-  private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
-    if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
-      // Not really needed, but just in case
-      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientCreated(nodeID, msg.getConnectionID().getProductId());
-    } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
-      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientDropped(nodeID, msg.getConnectionID().getProductId(), false);
     }
   }
 

@@ -27,14 +27,11 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.util.LinkedList;
-import java.util.List;
 
 public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
   protected MessageTransport                transport;
   protected MessageChannelInternal          channel;
   private final ServerMessageChannelFactory channelFactory;
-  private final List<NetworkLayer>          intermediate = new LinkedList<NetworkLayer>();
   private final SetOnceFlag                 finalized = new SetOnceFlag();
 
   public ServerNetworkStackHarness(ServerMessageChannelFactory channelFactory, MessageTransport transport) {

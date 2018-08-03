@@ -30,7 +30,6 @@ import com.tc.util.ProductInfo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.service.ServiceConfigParser;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
