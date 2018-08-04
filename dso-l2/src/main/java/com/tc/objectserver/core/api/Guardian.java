@@ -25,9 +25,26 @@ import java.util.Properties;
  */
 public interface Guardian {
   public enum Op {
+    // these entity operations cannout be validated, they are only here 
+    // for logging purposes. a false return on validation will not be honored
+    ENTITY_CREATE,
+    ENTITY_FETCH,
+    ENTITY_RECONFIGURE,
+    ENTITY_DESTROY,
+    // false return on these operations will result in a refusal of the network connection
+    CONNECT_SERVER,
+    CONNECT_CLIENT,
+    
     SERVER_DUMP,
     SERVER_EXIT
   };
-  
+  /**
+   * Validate that an operation can proceed based on property context.  
+   * @param op the operation attempted
+   * @param context properties associated with the operation
+   * @return false if the operation should not proceed, true to allow.  (NOTE: only some operations
+   *   honor this return. Entity operations currently will not honor this flag. Any exception thrown 
+   *   from a guardian will be logged and the operation will be allowed to proceed.
+   */
   boolean validate(Op op, Properties context);
 }

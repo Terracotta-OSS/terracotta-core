@@ -42,8 +42,8 @@ import com.tc.objectserver.entity.ClientEntityStateManager;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 
-public class ChannelLifeCycleHandlerTest {
-  private ChannelLifeCycleHandler handler;
+public class ClientChannelLifeCycleHandlerTest {
+  private ClientChannelLifeCycleHandler handler;
   private ITopologyEventCollector eventCollector;
 
 
@@ -57,7 +57,7 @@ public class ChannelLifeCycleHandlerTest {
     Stage<HydrateContext> stage = mock(Stage.class);
     when(stage.getSink()).thenReturn(mock(Sink.class));
     when(stageManager.getStage(any(String.class), (Class<HydrateContext>)any(Class.class))).thenReturn(stage);
-    this.handler = new ChannelLifeCycleHandler(commsManager, stageManager, channelManager,
+    this.handler = new ClientChannelLifeCycleHandler(commsManager, stageManager, channelManager,
       mock(ClientEntityStateManager.class), 
       mock(ProcessTransactionHandler.class), new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)));
   }

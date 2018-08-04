@@ -1,5 +1,8 @@
 package com.tc.objectserver.entity;
 
+import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.core.api.GuardianContext;
+import java.util.Properties;
 import java.util.function.Consumer;
 import org.terracotta.entity.ActiveInvokeChannel;
 import org.terracotta.entity.ActiveInvokeContext;
@@ -41,5 +44,9 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
       open.run();
       return new ActiveInvokeChannelImpl<>(messages, exception, retire);
     }
+  }
+  
+  public Properties getClientSourceProperties() {
+    return GuardianContext.getCurrentChannelProperties();
   }
 }

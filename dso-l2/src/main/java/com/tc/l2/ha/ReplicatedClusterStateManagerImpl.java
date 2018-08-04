@@ -25,7 +25,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.state.StateManager;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -35,7 +34,6 @@ import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.ArrayList;
@@ -53,19 +51,16 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
   private final StateManager    stateManager;
-  private final ChannelLifeCycleHandler clm;
 
   private boolean               isActive = false;
 
   private final Collection<NodeID>    others = new HashSet<>();
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
-                                           ClusterState clusterState, ConnectionIDFactory factory,
-                                           ChannelLifeCycleHandler clm) {
+                                           ClusterState clusterState, ConnectionIDFactory factory) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.state = clusterState;
-    this.clm = clm;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
     factory.registerForConnectionIDEvents(this);
   }
@@ -183,19 +178,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       }
       msg.initState(state);
       state.syncSequenceState();
-      sendChannelLifeCycleEventsIfNecessary(msg);
       sendOKResponse(fromNode, msg);
-    }
-  }
-
-  private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
-    if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
-      // Not really needed, but just in case
-      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientCreated(nodeID, msg.getConnectionID().getProductId());
-    } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
-      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientDropped(nodeID, msg.getConnectionID().getProductId(), false);
     }
   }
 

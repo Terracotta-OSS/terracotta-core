@@ -21,8 +21,6 @@ package com.tc.l2.ha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.async.api.StageManager;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.state.StateManager;
@@ -31,10 +29,8 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -52,29 +48,24 @@ public class L2HACoordinator implements L2Coordinator {
   private final StateManager                                      stateManager;
   private ReplicatedClusterStateManager                     rClusterStateMgr;
 
-  private final L2ConfigurationSetupManager                 configSetupManager;
-
   public L2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
-                         StageManager stageManager, StateManager stateManager, 
+                         StateManager stateManager, 
                          GroupManager<AbstractGroupMessage> groupCommsManager,
                          Persistor persistor,
                          WeightGeneratorFactory weightGeneratorFactory,
-                         L2ConfigurationSetupManager configurationSetupManager,
-                         StripeIDStateManager stripeIDStateManager, 
-                         ChannelLifeCycleHandler clm) {
+                         StripeIDStateManager stripeIDStateManager) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.stateManager = stateManager;
-    this.configSetupManager = configurationSetupManager;
 
-    init(stageManager, persistor,
-        weightGeneratorFactory, stripeIDStateManager, clm);
+    init(persistor,
+        weightGeneratorFactory, stripeIDStateManager);
   }
 
-  private void init(StageManager stageManager, Persistor persistor,
+  private void init(Persistor persistor,
                     WeightGeneratorFactory weightGeneratorFactory,
-                    StripeIDStateManager stripeIDStateManager, ChannelLifeCycleHandler clm) {
+                    StripeIDStateManager stripeIDStateManager) {
     final ClusterState clusterState = new ClusterStateImpl(persistor, this.server.getConnectionIdFactory(),
                                                        stripeIDStateManager);
 
@@ -89,8 +80,7 @@ public class L2HACoordinator implements L2Coordinator {
                                                                   this.groupManager,
                                                                   this.stateManager,
                                                                   clusterState,
-                                                                  this.server.getConnectionIdFactory(),
-                                                                  clm);
+                                                                  this.server.getConnectionIdFactory());
     
   }
 

@@ -29,7 +29,6 @@ import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.TopologyChangeListener;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
-import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
@@ -72,6 +71,8 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.object.config.schema.L2Config;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
+import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ReceiveGroupMessageHandler;
 import com.tc.objectserver.handler.TCGroupHandshakeMessageHandler;
@@ -385,6 +386,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private boolean tryAddMember(TCGroupMember member) {
+    if (!GuardianContext.validate(Guardian.Op.CONNECT_SERVER, "add:" + member.getPeerNodeID(), member.getChannel())) {
+      return false;
+    }
     if (isStopped.get()) {
       closeMember(member);
       return false;
@@ -609,7 +613,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
-//    ProductID product = (this.isUseOOOLayer) ? ProductID.STRIPE : ProductID.SERVER;
     ProductID product = ProductID.SERVER;
     ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 10000 /*  timeout */);
 
@@ -617,16 +620,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     channel.open(Collections.singleton(info));
 
     handshake(channel);
-    return;
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       MaxConnectionsExceededException, IOException, CommStackMismatchException {
     openChannel(new ConnectionInfo(hostname, port), listener);
-  }
-
-  private boolean isSecured() {
-    return false;
   }
 
   /*
