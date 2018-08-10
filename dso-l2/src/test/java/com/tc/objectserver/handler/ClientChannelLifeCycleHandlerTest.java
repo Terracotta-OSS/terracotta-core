@@ -76,7 +76,7 @@ public class ClientChannelLifeCycleHandlerTest {
     when(fakeChannel.getRemoteNodeID()).thenReturn(mock(ClientID.class));
     // But a null local address.
     when(fakeChannel.getLocalAddress()).thenReturn(null);
-    this.handler.channelRemoved(fakeChannel, false);
+    this.handler.channelRemoved(fakeChannel);
     // We expect NOT to receive the disconnect event in the event collector.
     //  this test is no longer relevant but leave it as harmless
     verify(this.eventCollector, never()).clientDidDisconnect(any(ClientID.class));

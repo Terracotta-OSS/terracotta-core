@@ -19,10 +19,10 @@
 package com.tc.objectserver.impl;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.stats.StatsConfig;
 import com.tc.stats.counter.BoundedCounterConfig;
@@ -35,7 +35,7 @@ import com.tc.util.Events;
  * A helper class to make accessing channel specific stats objects a little easier. This class is sorta yucky and
  * definitely will need to evolve
  */
-public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventListener {
+public class ChannelStatsImpl implements ChannelStats, ChannelManagerEventListener {
 
   private static final StatsConfig[] STATS_CONFIG = new StatsConfig[] {
       new StatsConfig(READ_RATE, new SampledCounterConfig(1, 300, true, 0L)),
@@ -80,7 +80,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel, boolean wasActive) {
+  public void channelRemoved(MessageChannel channel) {
     for (StatsConfig config : STATS_CONFIG) {
       Counter counter = (Counter) channel.removeAttachment(config.getStatsName());
       if (counter != null) {

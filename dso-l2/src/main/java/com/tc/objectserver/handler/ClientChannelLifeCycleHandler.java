@@ -32,7 +32,6 @@ import com.tc.object.EntityDescriptor;
 import com.tc.object.FetchID;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
@@ -50,7 +49,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 
-public class ClientChannelLifeCycleHandler implements DSOChannelManagerEventListener, ChannelManagerEventListener {
+public class ClientChannelLifeCycleHandler implements ChannelManagerEventListener {
   private final CommunicationsManager   commsManager;
   private final DSOChannelManager       channelMgr;
   private final ClientEntityStateManager      clientEvents;
@@ -169,8 +168,11 @@ public class ClientChannelLifeCycleHandler implements DSOChannelManagerEventList
    //  client is connecting to the active
       notifyClientAdded(channel, clientID);
     } else {
-      Assert.assertFalse(channel.getChannelID().isValid());
-      Assert.assertTrue(channel.getProductID().isInternal());
+      //  well, either the client already died and is not active or this is an internal 
+      //  connection
+      if (!channel.getChannelID().isValid()) {
+        Assert.assertTrue(channel.getProductID() == ProductID.DIAGNOSTIC);
+      }
     }
     if (this.guardian) {
       GuardianContext.channelCreated(channel);
@@ -202,8 +204,7 @@ public class ClientChannelLifeCycleHandler implements DSOChannelManagerEventList
  * @param channel
  * @param wasActive 
  */
-  @Override
-  public void channelRemoved(MessageChannel channel, boolean wasActive) {
+  private void channelRemoved(MessageChannel channel, boolean wasActive) {
     // Note that the remote node ID always refers to a client, in this path.
     ClientID clientID = (ClientID) channel.getRemoteNodeID();
     ProductID product = channel.getProductID();
@@ -222,7 +223,7 @@ public class ClientChannelLifeCycleHandler implements DSOChannelManagerEventList
 
   @Override
   public void channelRemoved(MessageChannel channel) {
-    channelRemoved(channel, false);
+    channelRemoved(channel, this.channelMgr.isActiveID(channel.getRemoteNodeID()));
   }
   
   public void activateGuardian() {

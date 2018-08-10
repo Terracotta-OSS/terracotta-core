@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.util.ProductID;
 import com.tc.util.Assert;
 
 import java.util.HashSet;

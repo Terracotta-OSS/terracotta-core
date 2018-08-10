@@ -19,10 +19,11 @@
 package com.tc.services;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import com.tc.util.ProductID;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +35,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.StateDumpCollector;
 
 
-public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
+public class CommunicatorService implements ImplementationProvidedServiceProvider, ChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
   private final ClientMessageSender sender;
   private boolean serverIsActive;
@@ -52,11 +53,13 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
 
   @Override
   public void channelCreated(MessageChannel channel) {
-    clientAccounts.put(channel.getRemoteNodeID(), new ClientAccount(sender, channel));
+    if (channel.getProductID() != ProductID.DIAGNOSTIC) {
+      clientAccounts.put(channel.getRemoteNodeID(), new ClientAccount(sender, channel));
+    }
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel, boolean wasActive) {
+  public void channelRemoved(MessageChannel channel) {
     ClientAccount clientAccount = clientAccounts.remove(channel.getRemoteNodeID());
     if (clientAccount != null) {
       clientAccount.close();

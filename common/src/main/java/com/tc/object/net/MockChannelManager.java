@@ -22,6 +22,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 import java.util.Collection;
@@ -72,7 +73,7 @@ public class MockChannelManager implements DSOChannelManager {
   }
 
   @Override
-  public void addEventListener(DSOChannelManagerEventListener listener) {
+  public void addEventListener(ChannelManagerEventListener listener) {
     throw new UnsupportedOperationException();
   }
 
