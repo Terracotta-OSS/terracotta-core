@@ -21,11 +21,11 @@ package com.tc.objectserver.impl;
 import com.tc.net.StripeID;
 import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.util.Assert;
 import com.tc.util.sequence.MutableSequence;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelManagerEventListener {
+public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelManagerEventListener {
 
   private final MutableSequence                   connectionIDSequence;
   private final ConnectionIDFactory                        internalClients;
@@ -138,7 +138,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
   }
 
   @Override
-  public void channelRemoved(MessageChannel channel, boolean wasActive)  {
+  public void channelRemoved(MessageChannel channel)  {
     Assert.assertNotNull(stripe);
     fireDestroyedEvent(channel.getConnectionID());
   }

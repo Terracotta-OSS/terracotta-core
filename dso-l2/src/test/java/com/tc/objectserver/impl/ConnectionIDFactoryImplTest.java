@@ -73,7 +73,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
 
   public void testRemoveId() throws Exception {
-    connectionIDFactory.channelRemoved(channelWithId(0), true);
+    connectionIDFactory.channelRemoved(channelWithId(0));
     verify(listener).connectionIDDestroyed(Mockito.any(ConnectionID.class));
   }
 
@@ -120,7 +120,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   public void testListenerGetsRightProductType() {
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getConnectionID()).thenReturn(new ConnectionID(JvmIDUtil.getJvmID(), 1L, ProductID.SERVER));
-    connectionIDFactory.channelRemoved(channel, true);
+    connectionIDFactory.channelRemoved(channel);
     ArgumentCaptor<ConnectionID> cap = ArgumentCaptor.forClass(ConnectionID.class);
     verify(listener).connectionIDDestroyed(cap.capture());
     Assert.assertEquals(ProductID.SERVER, cap.getValue().getProductId());

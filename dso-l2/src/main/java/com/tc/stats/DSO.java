@@ -22,10 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.management.TerracottaManagement;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -365,15 +365,19 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getWriteOperationRate();
   }
 
-  private class ChannelManagerListener implements DSOChannelManagerEventListener {
+  private class ChannelManagerListener implements ChannelManagerEventListener {
     @Override
     public void channelCreated(MessageChannel channel) {
-      addClientMBean(channel);
+      if (!channel.getProductID().isInternal()) {
+        addClientMBean(channel);
+      }
     }
 
     @Override
-    public void channelRemoved(MessageChannel channel, boolean wasActive) {
-      removeClientMBean(channel);
+    public void channelRemoved(MessageChannel channel) {
+      if (!channel.getProductID().isInternal()) {
+        removeClientMBean(channel);
+      }
     }
   }
 

@@ -34,6 +34,7 @@ import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
+import com.tc.util.ProductID;
 import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.util.Collection;
@@ -58,7 +59,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
                                                                                         }
                                                                                       });
   
-  private final List<DSOChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<DSOChannelManagerEventListener>();
+  private final List<ChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<>();
 
   private final ChannelManager       genericChannelManager;
   private final TCConnectionManager  connectionManager;
@@ -182,7 +183,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   @Override
-  public void addEventListener(DSOChannelManagerEventListener listener) {
+  public void addEventListener(ChannelManagerEventListener listener) {
     if (listener == null) { throw new NullPointerException("listener cannot be be null"); }
     eventListeners.add(listener);
   }
@@ -198,15 +199,14 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   private void fireChannelCreatedEvent(MessageChannel channel) {
-    for (DSOChannelManagerEventListener eventListener : eventListeners) {
+    for (ChannelManagerEventListener eventListener : eventListeners) {
       eventListener.channelCreated(channel);
     }
   }
 
   private void fireChannelRemovedEvent(MessageChannel channel) {
-    boolean isActive = isActiveID(channel.getRemoteNodeID());
-    for (DSOChannelManagerEventListener eventListener : eventListeners) {
-      eventListener.channelRemoved(channel, isActive);
+    for (ChannelManagerEventListener eventListener : eventListeners) {
+      eventListener.channelRemoved(channel);
     }
   }
 
@@ -214,7 +214,11 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
     @Override
     public void channelCreated(MessageChannel channel) {
-      // nothing
+      if (channel.getProductID() == ProductID.DIAGNOSTIC) {
+        fireChannelCreatedEvent(channel);
+      } else {
+        // wait for the channel to go active
+      }
     }
 
     @Override

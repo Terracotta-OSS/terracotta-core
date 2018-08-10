@@ -26,12 +26,13 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.ProductID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,17 +51,17 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
 
   public VoltronMessageHandler(DSOChannelManager clients, boolean use_direct) {
     this.useDirect = use_direct;
-    clients.addEventListener(new DSOChannelManagerEventListener() {
+    clients.addEventListener(new ChannelManagerEventListener() {
       @Override
       public void channelCreated(MessageChannel channel) {
-        if (!channel.getProductID().isInternal()) {
+        if (channel.getProductID() != ProductID.DIAGNOSTIC) {
           clientsConnected.incrementAndGet();
         }
       }
 
       @Override
-      public void channelRemoved(MessageChannel channel, boolean wasActive) {
-        if (!channel.getProductID().isInternal()) {
+      public void channelRemoved(MessageChannel channel) {
+        if (channel.getProductID() != ProductID.DIAGNOSTIC) {
           clientsConnected.decrementAndGet();
         }
       }
