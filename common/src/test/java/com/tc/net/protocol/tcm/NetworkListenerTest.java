@@ -18,9 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -65,14 +65,14 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), true, cidf, (t)->true);
 
     try {
-      lsnr.start(Collections.<ClientID>emptySet());
+      lsnr.start(Collections.<ConnectionID>emptySet());
     } catch (IOException ioe) {
       fail(ioe.getMessage());
     }
 
     NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf, (t)->true);
     try {
-      lsnr2.start(Collections.<ClientID>emptySet());
+      lsnr2.start(Collections.<ConnectionID>emptySet());
       // NOTE (issue-529):  When running on Windows, in a pre-Java7u25 JVM, this bind succeeds.
       if (isWindows() && isJava6()) {
         System.err.println("WARNING:  bind success due to lack of SO_EXCLUSIVEADDRUSE - ignoring test failure");
@@ -102,7 +102,7 @@ public class NetworkListenerTest extends TestCase {
           .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory(), (t)->true);
 
       try {
-        lsnr.start(Collections.<ClientID>emptySet());
+        lsnr.start(Collections.<ConnectionID>emptySet());
         listeners[i] = lsnr;
       } catch (IOException ioe) {
         fail(ioe.getMessage());

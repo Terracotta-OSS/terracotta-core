@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.util.ProductID;
-import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.Constants;
@@ -39,6 +38,7 @@ import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
@@ -359,7 +359,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
+                                 boolean resueAddr, Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {
