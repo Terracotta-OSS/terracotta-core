@@ -61,15 +61,6 @@ public class ClusterStatePersistor {
     return s == null ? StripeID.NULL_ID : new StripeID(s);
   }
 
-  public void setThisStripeID(StripeID stripeID) {
-    putAndStore(STRIPE_ID_KEY, stripeID.getName());
-  }
-
-  public StripeID getThisStripeID() {
-    String s = map.get(STRIPE_ID_KEY);
-    return s == null ? StripeID.NULL_ID : new StripeID(s);
-  }
-
   public State getInitialState() {
     return initialState;
   }

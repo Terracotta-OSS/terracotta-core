@@ -80,7 +80,6 @@ import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
-import com.tc.l2.ha.TransactionCountWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
@@ -104,7 +103,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -229,13 +227,16 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.stream.Collectors;
 
 
 /**
@@ -974,12 +975,14 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
-        final Set<ClientID> existingConnections = new HashSet<>(persistor.getClientStatePersistor().loadAllClientIDs());
+        final Set<ClientID> existingClients = new HashSet<>(persistor.getClientStatePersistor().loadAllClientIDs());
 //  must do this because the replicated state when it comes to clients, may not include all the references 
 //  to clients that were in the midst of cleaning up after disconnection.  
-        existingConnections.addAll(clients.clearClientReferences());
+        existingClients.addAll(clients.clearClientReferences());
         if (sce.movedToActive()) {
-          getContext().getClientHandshakeManager().setStarting(existingConnections);
+          Set<ConnectionID> existingConnections = existingClients.stream()
+              .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
+          getContext().getClientHandshakeManager().setStarting(existingClients);
           startActiveMode(pth, sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
@@ -1086,7 +1089,7 @@ public class DistributedObjectServer implements TCDumper, ServerConnectionValida
     }
   }
 
-  public void startL1Listener(Set<ClientID> existingConnections) throws IOException {
+  public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
     try {
       this.l1Diagnostics.stop(0L);
     } catch (TCTimeoutException to) {

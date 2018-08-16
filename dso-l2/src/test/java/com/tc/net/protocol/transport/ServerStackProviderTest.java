@@ -151,8 +151,8 @@ public class ServerStackProviderTest extends TCTestCase {
 
     ConnectionID connectionID1 = new ConnectionID("JVM", 1, "server1");
     ConnectionID connectionID2 = new ConnectionID("JVM", 2, "server1");
-    Set<ClientID> rebuild = new HashSet<>();
-    rebuild.add(connectionID1.getClientID());
+    Set<ConnectionID> rebuild = new HashSet<>();
+    rebuild.add(connectionID1);
     
 
     provider = new ServerStackProvider(rebuild, harnessFactory,
@@ -224,8 +224,8 @@ public class ServerStackProviderTest extends TCTestCase {
     ConnectionID connectionID1 = new ConnectionID("JVM", 1, "server1");
     ConnectionID connectionID2 = new ConnectionID("JVM", 2, "server1");
 
-    Set<ClientID> rebuild = new HashSet<>();
-    rebuild.add(connectionID1.getClientID());
+    Set<ConnectionID> rebuild = new HashSet<>();
+    rebuild.add(connectionID1);
 
     provider = new ServerStackProvider(rebuild, harnessFactory,
                                        serverMessageChannelFactory, messageTransportFactory, null, factory, connectionPolicy,

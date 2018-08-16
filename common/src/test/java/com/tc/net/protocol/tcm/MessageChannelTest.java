@@ -21,12 +21,12 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -171,7 +171,7 @@ try {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
             new DefaultConnectionIdFactory(), (t)->true);
       }
-      lsnr.start(new HashSet<ClientID>());
+      lsnr.start(new HashSet<ConnectionID>());
       connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
   }
 
@@ -324,7 +324,7 @@ try {
                                        new DefaultConnectionIdFactory(), (t)->true);
     }
 
-    rv.start(new HashSet<ClientID>());
+    rv.start(new HashSet<ConnectionID>());
     return rv;
   }
 
