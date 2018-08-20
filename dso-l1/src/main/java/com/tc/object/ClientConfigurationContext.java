@@ -29,7 +29,6 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLIENT_COORDINATION_STAGE                   = "client_coordination_stage";
   public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
-  public static final String             VOLTRON_ENTITY_RESPONSE_STAGE                      = "request_ack_stage";
   public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
 
   public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);

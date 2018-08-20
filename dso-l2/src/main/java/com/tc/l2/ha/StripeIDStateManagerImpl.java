@@ -42,10 +42,11 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager {
   }
 
   private int loadStripeIDFromDB() {
-    StripeID id = clusterStatePersistor.getStripeID();
-    return id.isNull() ? 1 : 0;
+    stripeID = clusterStatePersistor.getStripeID();
+    return stripeID.isNull() ? 1 : 0;
   }
   
+  @Override
   public StripeID getStripeID() {
     return stripeID;
   }
@@ -61,8 +62,8 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager {
   }
 
   @Override
-  public boolean verifyOrSaveStripeID(StripeID stripeID, boolean overwrite) {
-    if (stripeID.isNull()) {
+  public boolean verifyOrSaveStripeID(StripeID newID, boolean overwrite) {
+    if (newID.isNull()) {
       logger.warn("Ignore null StripeID");
       return false;
     }
@@ -70,11 +71,11 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager {
     StripeID oldID = this.stripeID;
 
     if (overwrite || oldID.isNull()) {
-      putToStore(stripeID);
+      putToStore(newID);
       if (oldID.isNull()) unKnownIDCount.decrementAndGet();
-      logger.debug("Collected " + stripeID + " count: " + unKnownIDCount.get());
-
-      notifyLocalStripeIDReady(stripeID);
+      logger.debug("Collected " + newID + " count: " + unKnownIDCount.get());
+      stripeID = newID;
+      notifyLocalStripeIDReady(newID);
     } else {
       if (!oldID.equals(stripeID)) {
         logger.error("Mismatch StripeID " + oldID + " with " + stripeID);

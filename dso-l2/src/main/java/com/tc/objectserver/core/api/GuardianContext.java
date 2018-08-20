@@ -44,7 +44,9 @@ public class GuardianContext {
   private static Properties createGuardContext(String callName) {
     ChannelID cid = CURRENTID.get();
     if (cid != null) {
-      return createGuardContext(callName, CONTEXT.get(cid));
+      Properties props =  createGuardContext(callName, CONTEXT.get(cid));
+      props.setProperty("clientID", Long.toString(cid.toLong()));
+      return props;
     } else {
       return new Properties();
     }
@@ -57,6 +59,7 @@ public class GuardianContext {
     }
     if (c != null) {
       props.setProperty(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, String.valueOf(c.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)));
+      props.setProperty("product", c.getProductID().name());
       MessageTransport transport = (MessageTransport)c.getAttachment(ServerMessageChannel.TRANSPORT_INFO);
       if (transport != null) {
         translateMaptoProperty(props, ServerMessageChannel.TRANSPORT_INFO, transport.getStateMap());

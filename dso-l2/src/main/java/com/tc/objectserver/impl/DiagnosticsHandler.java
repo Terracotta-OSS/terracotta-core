@@ -77,7 +77,7 @@ public class DiagnosticsHandler implements TCMessageSink {
           result = server.getContext().getL2Coordinator().getStateManager().getCurrentMode().getName().getBytes(set);
           break;
         case "getClusterState":
-          if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "shutdown")) {
+          if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "getClusterState")) {
             result = server.getClusterState(set);
           } else {
             result = "NOT PERMITTED".getBytes(set);

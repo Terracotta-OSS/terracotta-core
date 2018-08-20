@@ -170,9 +170,6 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     } else {
       //  well, either the client already died and is not active or this is an internal 
       //  connection
-      if (!channel.getChannelID().isValid()) {
-        Assert.assertTrue(channel.getProductID() == ProductID.DIAGNOSTIC);
-      }
     }
     if (this.guardian) {
       GuardianContext.channelCreated(channel);

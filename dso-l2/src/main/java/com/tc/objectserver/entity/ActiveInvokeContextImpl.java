@@ -46,6 +46,7 @@ public class ActiveInvokeContextImpl<R extends EntityResponse> extends InvokeCon
     }
   }
   
+  @Override
   public Properties getClientSourceProperties() {
     return GuardianContext.getCurrentChannelProperties();
   }

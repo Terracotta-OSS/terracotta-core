@@ -108,8 +108,13 @@ public class ActiveVoter implements AutoCloseable {
         }
       } catch (InterruptedException e) {
         LOGGER.warn("{} interrupted", this);
-        active = false;
-        executorService.shutdownNow();
+      }
+      active = false;
+      executorService.shutdownNow();
+      try {
+        executorService.awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException ie) {
+        LOGGER.warn("{} interrupted", this);
       }
     });
   }

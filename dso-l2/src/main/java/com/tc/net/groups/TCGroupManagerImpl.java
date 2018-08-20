@@ -34,7 +34,6 @@ import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -63,6 +62,7 @@ import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -421,7 +421,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     discover.setupNodes(thisNode, nodesStore.getAllNodes());
     discover.start();
     try {
-      groupListener.start(new HashSet<ClientID>());
+      groupListener.start(new HashSet<ConnectionID>());
     } catch (IOException e) {
       throw new GroupException(e);
     }
