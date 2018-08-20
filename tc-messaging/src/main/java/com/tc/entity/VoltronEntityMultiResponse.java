@@ -22,8 +22,6 @@ package com.tc.entity;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
-import java.util.List;
-import java.util.Map;
 
 
 /**
