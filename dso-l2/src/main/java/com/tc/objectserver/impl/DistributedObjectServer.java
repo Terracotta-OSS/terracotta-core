@@ -554,7 +554,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (t)->{
-                                                                  return t.getConnectionID().getProductId().isInternal() || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
+                                                                  return t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
     

@@ -63,11 +63,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
       if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
       } else if (stateManager.isActiveCoordinator()) {
-        if (consistencyMgr.requestTransition(stateManager.getCurrentMode(), clientMsg.getSourceNodeID(), ConsistencyManager.Transition.ADD_CLIENT)) {
-          this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
-        } else {
-          this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
-        }
+        this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
       } else {
         this.handshakeManager.notifyClientRefused(clientMsg, "do not handshake with passive");
       }
