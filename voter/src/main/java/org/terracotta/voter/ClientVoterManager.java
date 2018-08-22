@@ -20,6 +20,8 @@ package org.terracotta.voter;
 
 import com.tc.voter.VoterManager;
 
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 public interface ClientVoterManager extends VoterManager {
@@ -34,7 +36,7 @@ public interface ClientVoterManager extends VoterManager {
   /**
    * Establish a connection with the server at the given host and port
    */
-  void connect();
+  void connect(Optional<Properties> connectionProps);
 
   /**
    *
