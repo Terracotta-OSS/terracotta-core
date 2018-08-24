@@ -32,6 +32,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -43,8 +45,6 @@ public class TCVoterMain {
   protected static final String CONFIG_FILE = "f";
 
   private static final String ID = UUID.randomUUID().toString();
-
-  public TCVoter voter = new TCVoterImpl();
 
   public void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
     DefaultParser parser = new DefaultParser();
@@ -68,29 +68,34 @@ public class TCVoterMain {
       throw new ConfigurationSetupException("Both -s and -f options provided. Use either one and not both together.");
     }
 
+    Optional<Properties> connectionProps = getConnectionProperties(commandLine);
     if (commandLine.hasOption(SERVER)) {
-      processServerArg(commandLine.getOptionValues(SERVER));
+      processServerArg(connectionProps, commandLine.getOptionValues(SERVER));
     } else if (commandLine.hasOption(CONFIG_FILE)) {
-      processConfigFileArg(commandLine.getOptionValues(CONFIG_FILE));
+      processConfigFileArg(connectionProps, commandLine.getOptionValues(CONFIG_FILE));
     } else if (commandLine.hasOption(OVERRIDE)) {
       String hostPort = commandLine.getOptionValue(OVERRIDE);
       validateHostPort(hostPort);
-      voter.overrideVote(hostPort);
+      getVoter(connectionProps).overrideVote(hostPort);
     } else {
       throw new AssertionError("This should not happen");
     }
   }
 
-  protected void processServerArg(String[] stripes) throws ConfigurationSetupException {
+  protected Optional<Properties> getConnectionProperties(CommandLine commandLine) {
+    return Optional.empty();
+  }
+
+  protected void processServerArg(Optional<Properties> connectionProps, String[] stripes) throws ConfigurationSetupException {
     validateStripesLimit(SERVER, stripes);
     String[] hostPorts = stripes[0].split(",");
     for (String hostPort : hostPorts) {
       validateHostPort(hostPort);
     }
-    startVoter(hostPorts);
+    startVoter(connectionProps, hostPorts);
   }
 
-  protected void processConfigFileArg(String[] stripes) throws ConfigurationSetupException {
+  protected void processConfigFileArg(Optional<Properties> connectionProps, String[] stripes) throws ConfigurationSetupException {
     validateStripesLimit(CONFIG_FILE, stripes);
 
     TCConfigParserUtil parser = new TCConfigParserUtil();
@@ -100,11 +105,15 @@ public class TCVoterMain {
     } catch (SAXException | IOException e) {
       throw new ConfigurationSetupException(e);
     }
-    startVoter(hostPorts);
+    startVoter(connectionProps, hostPorts);
   }
 
-  protected void startVoter(String... hostPorts) {
-    new ActiveVoter(ID, new CompletableFuture<>(), hostPorts).start();
+  protected TCVoter getVoter(Optional<Properties> connectionProps) {
+    return new TCVoterImpl();
+  }
+
+  protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
+    new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
   }
 
   protected void validateStripesLimit(String option, String[] args) throws ConfigurationSetupException {
@@ -113,7 +122,7 @@ public class TCVoterMain {
     }
   }
 
-  private Options voterOptions() {
+  protected Options voterOptions() {
     return new Options()
         .addOption(Option.builder(HELP).desc("Help").hasArg(false).build())
         .addOption(Option.builder(OVERRIDE).desc("Override vote").hasArg().argName("host:port").build())

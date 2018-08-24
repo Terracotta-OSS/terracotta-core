@@ -18,12 +18,12 @@
  */
 package org.terracotta.voter;
 
-import com.terracotta.connection.api.DiagnosticConnectionService;
 import com.terracotta.diagnostic.Diagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
+import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
@@ -31,6 +31,7 @@ import org.terracotta.exception.EntityVersionMismatchException;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
@@ -41,8 +42,6 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientVoterManagerImpl.class);
 
   public static final String REQUEST_TIMEOUT = "Request Timeout";
-
-  private static final DiagnosticConnectionService CONNECTION_SERVICE = new DiagnosticConnectionService();
 
   private final String hostPort;
   private Connection connection;
@@ -58,11 +57,11 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   }
 
   @Override
-  public void connect() {
+  public void connect(Optional<Properties> connectionProps) {
     URI uri = URI.create("diagnostic://" + hostPort);
-    Properties properties = new Properties();
+    Properties properties = connectionProps.orElse(new Properties());
     try {
-      Connection temp = CONNECTION_SERVICE.connect(uri, properties);
+      Connection temp = ConnectionFactory.connect(uri, properties);
       synchronized (this) {
         if (connection != null) {
           connection.close();

@@ -18,11 +18,15 @@
  */
 package org.terracotta.voter;
 
+import org.apache.commons.cli.CommandLine;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+
+import java.util.Optional;
+import java.util.Properties;
 
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.junit.Assert.assertThat;
@@ -36,9 +40,13 @@ public class TCVoterMainTest {
 
   @Test
   public void testOverrideVote() throws Exception {
-    TCVoterMain voterMain = new TCVoterMain();
     TCVoter voter = mock(TCVoter.class);
-    voterMain.voter = voter;
+    TCVoterMain voterMain = new TCVoterMain() {
+      @Override
+      protected TCVoter getVoter(Optional<Properties> connectionProps) {
+        return voter;
+      }
+    };
 
     String overrideTarget = "foo:1234";
     String[] args = new String[] {"-o", overrideTarget};
@@ -52,7 +60,7 @@ public class TCVoterMainTest {
     String hostPort = "foo:1234";
     TCVoterMain voterMain = new TCVoterMain() {
       @Override
-      protected void startVoter(String... hostPorts) {
+      protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort));
       }
     };
@@ -67,7 +75,7 @@ public class TCVoterMainTest {
     String hostPort2 = "bar:2345";
     TCVoterMain voterMain = new TCVoterMain() {
       @Override
-      protected void startVoter(String... hostPorts) {
+      protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
       }
     };
@@ -93,7 +101,7 @@ public class TCVoterMainTest {
     String hostPort2 = "bar:2345";
     TCVoterMain voterMain = new TCVoterMain() {
       @Override
-      protected void startVoter(String... hostPorts) {
+      protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
       }
     };
