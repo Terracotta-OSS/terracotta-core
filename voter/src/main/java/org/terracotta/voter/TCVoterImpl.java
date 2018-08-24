@@ -21,24 +21,14 @@ package org.terracotta.voter;
 import com.tc.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static java.util.stream.Collectors.toList;
 
 public class TCVoterImpl implements TCVoter {
 
@@ -51,10 +41,14 @@ public class TCVoterImpl implements TCVoter {
     LOGGER.info("Voter ID: {}", id);
   }
 
+  protected Optional<Properties> getConnectionProperties() {
+    return Optional.empty();
+  }
+
   @Override
   public boolean overrideVote(String hostPort) {
     ClientVoterManager voterManager = new ClientVoterManagerImpl(hostPort);
-    voterManager.connect();
+    voterManager.connect(getConnectionProperties());
     boolean override;
     try {
       override = voterManager.overrideVote(id);
@@ -74,7 +68,7 @@ public class TCVoterImpl implements TCVoter {
   @Override
   public Future<VoterStatus> register(String clusterName, String... hostPorts) {
     CompletableFuture<VoterStatus> voterStatusFuture = new CompletableFuture<>();
-    ActiveVoter activeVoter = new ActiveVoter(id, voterStatusFuture, hostPorts);
+    ActiveVoter activeVoter = new ActiveVoter(id, voterStatusFuture, getConnectionProperties(), hostPorts);
     if (registeredClusters.putIfAbsent(clusterName, activeVoter) != null) {
       throw new RuntimeException("Another cluster is already registered with the name: " + clusterName);
     }

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,8 +63,8 @@ public class ActiveVoter implements AutoCloseable {
 
   private volatile boolean active = false;
 
-  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
-    this.voter = voterThread(voterStatus, hostPorts);
+  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
+    this.voter = voterThread(voterStatus, connectionProps, hostPorts);
     this.id = id;
     this.servers = hostPorts;
   }
@@ -73,14 +74,14 @@ public class ActiveVoter implements AutoCloseable {
     return this;
   }
 
-  private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, String... hostPorts) {
+  private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
     return new Thread(() -> {
       ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
       CountDownLatch registrationLatch = new CountDownLatch(hostPorts.length);
       List<ClientVoterManager> voterManagers = Stream.of(hostPorts).map(ClientVoterManagerImpl::new).collect(toList());
       try {
         while (!Thread.currentThread().isInterrupted()) {
-          ClientVoterManager currentActive = registerWithActive(id, executorService, voterManagers);
+          ClientVoterManager currentActive = registerWithActive(id, executorService, voterManagers, connectionProps);
 
           active = true;
           LOGGER.info("{} registered with the active: {}", this, currentActive.getTargetHostPort());
@@ -103,7 +104,7 @@ public class ActiveVoter implements AutoCloseable {
             }
           });
 
-          registerAndHeartbeat(executorService, currentActive, voterManagers, registrationLatch);
+          registerAndHeartbeat(executorService, currentActive, voterManagers, connectionProps, registrationLatch);
           active = false;
         }
       } catch (InterruptedException e) {
@@ -119,12 +120,13 @@ public class ActiveVoter implements AutoCloseable {
     });
   }
 
-  ClientVoterManager registerWithActive(String id, ScheduledExecutorService executorService, List<ClientVoterManager> voterManagers) throws InterruptedException {
+  ClientVoterManager registerWithActive(String id, ScheduledExecutorService executorService,
+                                        List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps) throws InterruptedException {
     CompletableFuture<ClientVoterManager> registrationLatch = new CompletableFuture<>();
 
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       if (!voterManager.isConnected()) {
-        voterManager.connect();
+        voterManager.connect(connectionProps);
         LOGGER.info("Connected to {}", voterManager.getTargetHostPort());
       }
 
@@ -158,7 +160,8 @@ public class ActiveVoter implements AutoCloseable {
   }
 
   public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive,
-                                   List<ClientVoterManager> voterManagers, CountDownLatch registrationLatch) throws InterruptedException {
+                                   List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps,
+                                   CountDownLatch registrationLatch) throws InterruptedException {
     AtomicReference<ClientVoterManager> voteOwner = new AtomicReference<>();
     //Try to connect and register with all the servers
     voteOwner.set(currentActive);
@@ -170,7 +173,7 @@ public class ActiveVoter implements AutoCloseable {
             if (owner.isConnected() && owner.getServerState().equals(ACTIVE_COORDINATOR)) {
               long lastVotedElection = 0;
               // if the current vote owner is the active, allowed to reconnect
-              voterManager.connect();
+              voterManager.connect(connectionProps);
               // register as a voter, this should not take too long since have already established as voter on the active
               registerAsVoter(voterManager);
               registrationLatch.countDown();
