@@ -107,7 +107,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       newStackHarness(clientID, messageTransportFactory.createNewTransport(
           createHandshakeErrorHandler(),
           handshakeMessageFactory,
-          transportListeners)).finalizeStack();
+          transportListeners));
     }
     this.activeProvider = activeProvider;
     this.validateTransport = validate;
@@ -144,7 +144,11 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           throw new RejectReconnectionException("Stack for " + connectionId +" not found.", connection.getRemoteAddress());
         }
         try {
+          boolean finalize = harness.getTransport().getConnectionID().isNull();
           harness.getTransport().initConnectionID(connectionId);
+          if (finalize) {
+            harness.finalizeStack();
+          }
           rv = harness.attachNewConnection(connection);
         } catch (IllegalReconnectException e) {
           logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + connection);
