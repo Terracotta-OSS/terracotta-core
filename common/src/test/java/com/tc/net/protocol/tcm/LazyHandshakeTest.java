@@ -22,13 +22,13 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ClientMessageTransport;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
@@ -86,7 +86,7 @@ public class LazyHandshakeTest extends TCTestCase {
                                           new DefaultConnectionIdFactory(), (t)->true);
 
     try {
-      listener.start(new HashSet<ClientID>());
+      listener.start(new HashSet<ConnectionID>());
     } catch (Exception e) {
       System.out.println("lsnr Excep");
     }

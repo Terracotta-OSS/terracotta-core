@@ -48,14 +48,12 @@ public class ClusterStateImpl implements ClusterState {
   private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<ConnectionID>());
   private long                                      nextAvailChannelID     = -1;
   private State                                     currentState;
-  private StripeID                                  stripeID;
 
   public ClusterStateImpl(Persistor persistor, 
                           ConnectionIDFactory connectionIdFactory, StripeIDStateManager stripeIDStateManager) {
     this.persistor = persistor;
     this.connectionIdFactory = connectionIdFactory;
     this.stripeIDStateManager = stripeIDStateManager;
-    this.stripeID = persistor.getClusterStatePersistor().getThisStripeID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
   }
 
@@ -80,7 +78,7 @@ public class ClusterStateImpl implements ClusterState {
   public void syncActiveState() {
 // activate the connection id factory so that it can be used to create connection ids
 // this happens for active only
-    connectionIdFactory.activate(stripeID, nextAvailChannelID);
+    connectionIdFactory.activate(stripeIDStateManager.getStripeID(), nextAvailChannelID);
   }
 
   @Override
@@ -89,28 +87,22 @@ public class ClusterStateImpl implements ClusterState {
 
   @Override
   public StripeID getStripeID() {
-    return stripeID;
+    return stripeIDStateManager.getStripeID();
   }
 
-  public boolean isStripeIDNull() {
-    return stripeID.isNull();
+  private boolean isStripeIDNull() {
+    return stripeIDStateManager.getStripeID().isNull();
   }
 
   @Override
   public void setStripeID(String uid) {
-    if (!isStripeIDNull() && !stripeID.getName().equals(uid)) {
-      logger.error("StripeID doesnt match !! Mine : " + stripeID + " Active sent clusterID as : " + uid);
-      throw new ClusterIDMissmatchException(stripeID.getName(), uid);
+    if (!isStripeIDNull() && !stripeIDStateManager.getStripeID().getName().equals(uid)) {
+      logger.error("StripeID doesnt match !! Mine : " + stripeIDStateManager.getStripeID() + " Active sent clusterID as : " + uid);
+      throw new ClusterIDMissmatchException(stripeIDStateManager.getStripeID().getName(), uid);
     }
-    stripeID = new StripeID(uid);
-    syncStripeIDToDB();
 
     // notify stripeIDStateManager
-    stripeIDStateManager.verifyOrSaveStripeID(stripeID, true);
-  }
-
-  private void syncStripeIDToDB() {
-    persistor.getClusterStatePersistor().setThisStripeID(stripeID);
+    stripeIDStateManager.verifyOrSaveStripeID(new StripeID(uid), true);
   }
 
   @Override
@@ -170,7 +162,7 @@ public class ClusterStateImpl implements ClusterState {
     strBuilder.append("Connections [ ").append(this.connections).append(" ]");
     strBuilder.append(" nextAvailChannelID: ").append(this.nextAvailChannelID);
     strBuilder.append(" currentState: ").append(this.currentState);
-    strBuilder.append(" stripeID: ").append(this.stripeID);
+    strBuilder.append(" stripeID: ").append(stripeIDStateManager.getStripeID());
     strBuilder.append(" ]");
     return strBuilder.toString();
   }
@@ -182,6 +174,6 @@ public class ClusterStateImpl implements ClusterState {
     state.put("connections", connects);
     state.put("nextChannelID", this.nextAvailChannelID);
     state.put("currentState", this.currentState);
-    state.put("stripeID", this.stripeID);
+    state.put("stripeID", stripeIDStateManager.getStripeID());
   }
 }

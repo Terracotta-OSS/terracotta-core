@@ -40,6 +40,7 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -119,7 +120,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory(), (t)->true);
-    listener.start(Collections.<ClientID>emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();
@@ -183,7 +184,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory(), (t)->true);
-    listener.start(Collections.<ClientID>emptySet());
+    listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
     int proxyPort = new PortChooser().chooseRandomPort();

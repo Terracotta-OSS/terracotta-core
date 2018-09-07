@@ -70,7 +70,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final Predicate<MessageTransport>                validateTransport;
 
   // used only in test
-  public ServerStackProvider(Set<ClientID> initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -81,7 +81,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
          CommunicationsManager.COMMSMGR_SERVER);
   }
 
-  public ServerStackProvider(Set<ClientID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validate, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validate, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -102,12 +102,15 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     Assert.assertNotNull(licenseLock);
     this.licenseLock = licenseLock;
     this.commsMgrName = commsMgrName;
-    for (final ClientID clientID : initialConnectionIDs) {
-      logger.info("Preparing comms stack for previously connected client: " + clientID);
-      newStackHarness(clientID, messageTransportFactory.createNewTransport(
+    for (final ConnectionID client : initialConnectionIDs) {
+      logger.info("Preparing comms stack for previously connected client: " + client);
+      MessageTransport transport = messageTransportFactory.createNewTransport(
           createHandshakeErrorHandler(),
           handshakeMessageFactory,
-          transportListeners)).finalizeStack();
+          transportListeners);
+      //  create a fake connection id for use until the real transport connection is made
+      transport.initConnectionID(client);
+      newStackHarness(client.getClientID(), transport).finalizeStack();
     }
     this.activeProvider = activeProvider;
     this.validateTransport = validate;
