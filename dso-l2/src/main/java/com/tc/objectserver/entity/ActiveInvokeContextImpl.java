@@ -1,6 +1,5 @@
 package com.tc.objectserver.entity;
 
-import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
 import java.util.Properties;
 import java.util.function.Consumer;

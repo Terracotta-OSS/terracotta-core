@@ -196,7 +196,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     nodesStore.registerForTopologyChange(this);
   }
 
-  protected String getVersion() {
+  protected final String getVersion() {
     return ProductInfo.getInstance().version();
   }
 
@@ -672,7 +672,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return Collections.unmodifiableCollection(members.values());
   }
 //  FOR TESTING ONLY
-  public void setDiscover(TCGroupMemberDiscovery discover) {
+  public final void setDiscover(TCGroupMemberDiscovery discover) {
     this.discover = discover;
   }
 

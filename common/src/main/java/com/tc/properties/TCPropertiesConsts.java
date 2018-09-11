@@ -166,6 +166,7 @@ public interface TCPropertiesConsts {
   public static final String L2_L1RECONNECT_SENDQUEUE_CAP                                   = "l2.l1reconnect.sendqueue.cap";
   public static final String L2_L1RECONNECT_MAX_DELAYEDACKS                                 = "l2.l1reconnect.maxDelayedAcks";
   public static final String L2_L1RECONNECT_SEND_WINDOW                                     = "l2.l1reconnect.sendWindow";
+  public static final String L2_L1REDIRECT_ENABLED                                          = "l2.l1redirect.enabled";
 
   /*********************************************************************************************************************
    * <code>
