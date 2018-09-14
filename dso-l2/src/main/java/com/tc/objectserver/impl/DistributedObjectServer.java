@@ -504,7 +504,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
 
     final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
-    final int stageWorkerThreadCount = L2Utils.getOptimalStageWorkerThreads();
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     final boolean useOOOLayer = this.l1ReconnectConfig.getReconnectEnabled();
@@ -558,11 +557,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
     
+    boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
     this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, infoConnections, () -> {
       StateManager stateMgr = l2Coordinator.getStateManager();
       // only provide an active name if this server is not active
       ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
-      if (!server1.isNull()) {
+      if (enabled && !server1.isNull()) {
         return server1.getName();
       }
       return null;

@@ -30,14 +30,12 @@ import com.tc.object.FetchID;
 import com.tc.objectserver.handler.GroupMessageBatchContext;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -144,10 +142,8 @@ public class ReplicationSender {
     private SyncReplicationActivity.ActivityType lastSent;
 
     private final GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity> batchContext;
-    private final NodeID  target;
     
     public SyncState(NodeID target) {  
-      this.target = target;
       this.batchContext = new GroupMessageBatchContext<>(ReplicationMessage::createActivityContainer, group, target, maximumBatchSize, idealMessagesInFlight, (node)->flushBatch());  
     }
     
