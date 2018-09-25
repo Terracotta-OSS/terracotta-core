@@ -24,8 +24,8 @@ pool:
 steps:
 - script: |
         ls -a ~/.*
-        ls -a ~/.m2/*
-        cat ~/.m2/toolchains.xml
+        which java
+        cat /etc/*elease*
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
