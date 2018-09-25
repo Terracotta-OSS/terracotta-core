@@ -22,6 +22,10 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 steps:
+- script: |
+        ls -a ~/.*
+        ls -a ~/.m2/*
+        cat ~/.m2/toolchains.xml
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
