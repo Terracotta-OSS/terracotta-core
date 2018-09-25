@@ -26,6 +26,8 @@ steps:
         ls -a ~/.*
         which java
         cat /etc/*elease*
+        dpkg -l | grep java
+        dpkg -l | grep jdk
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
