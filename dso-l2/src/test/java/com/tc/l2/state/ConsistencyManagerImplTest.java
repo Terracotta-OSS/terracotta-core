@@ -19,7 +19,6 @@
 package com.tc.l2.state;
 
 import com.tc.net.NodeID;
-import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.Assert;
 import java.util.UUID;
@@ -124,4 +123,15 @@ public class ConsistencyManagerImplTest {
     Assert.assertEquals(2, ConsistencyManager.parseVoteCount(conf));
 
   }  
+  
+  @Test
+  public void testAddClientIsNotPersistent() throws Exception {
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1, 1);
+    long cterm = impl.getVotingTerm();
+    boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
+    Assert.assertFalse(granted);
+    Assert.assertFalse(impl.isVoting());
+    Assert.assertFalse(impl.isBlocked());
+    Assert.assertEquals(cterm, impl.getVotingTerm());
+  }
 }

@@ -44,7 +44,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private boolean activeVote = false;
   private boolean blocked = false;
   private Set<Transition> actions = EnumSet.noneOf(Transition.class);
-  private long voteTerm = 0;
+  private long voteTerm = 1;
   private long blockedAt = Long.MAX_VALUE;
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
@@ -58,10 +58,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-  
-  public synchronized long getVoteTerm() {
-    return voteTerm;
   }
   
   public synchronized long getBlockingTimestamp() {
@@ -176,7 +172,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private synchronized int activateVoting(ServerMode mode, Transition moveTo) {
     if (!activeVote) {
       activeVote = true;
-      voter.startVoting(++voteTerm, moveTo != Transition.ADD_CLIENT);
+      boolean stateTransition = moveTo != Transition.ADD_CLIENT;
+      if (stateTransition) {
+        voteTerm += 1;
+      }
+      voter.startVoting(voteTerm, stateTransition);
     }
     actions.add(moveTo);
     if (mode != ServerMode.ACTIVE) {
@@ -188,11 +188,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   private synchronized void endVoting(boolean allowed, Transition moveTo) {
     if (activeVote) {
-      if (allowed) {
-        Assert.assertEquals(voteTerm, voter.stopVoting());
-        activeVote = false;
-        blocked = false;
-        blockedAt = Long.MAX_VALUE;
+      if (allowed || moveTo == Transition.ADD_CLIENT) {
         switch(moveTo) {
           case CONNECT_TO_ACTIVE:
           case MOVE_TO_ACTIVE:
@@ -201,6 +197,12 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
             break;
           default:
             actions.remove(moveTo);
+        }
+        if (actions.isEmpty()) {
+          Assert.assertEquals(voteTerm, voter.stopVoting());
+          activeVote = false;
+          blocked = false;
+          blockedAt = Long.MAX_VALUE;
         }
       }
     }
@@ -217,7 +219,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public synchronized boolean isBlocked() {
     return blocked;
   }
-  
+    
+  long getVotingTerm() {
+    return voteTerm;
+  }    
+    
   public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements com.tc.l2.state.ConsistencyMBean {
 
     public ConsistencyMBeanImpl() throws Exception {
@@ -238,9 +244,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     @Override
     public Collection<Transition> requestedActions() {
       return getActions();
-    }
-    
-    
+    }        
 
     @Override
     public void reset() {

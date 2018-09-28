@@ -26,7 +26,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 
 import com.tc.entity.ResendVoltronEntityMessage;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -71,7 +74,9 @@ public class ServerClientHandshakeManagerTest {
     voltronSink = mock(Sink.class);
     when(voltronStage.getSink()).thenReturn(voltronSink);
     when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, timer, reconnectTimeout, voltronSink, consoleLogger);
+    ConsistencyManager consistency = mock(ConsistencyManager.class);
+    when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), any(ConsistencyManager.Transition.class))).thenReturn(Boolean.TRUE);
+    this.manager = new ServerClientHandshakeManager(logger, consistency, this.channelManager, timer, reconnectTimeout, voltronSink, consoleLogger);
   }
 
   @Test

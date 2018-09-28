@@ -553,7 +553,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (t)->{
-                                                                  return t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
+                                                                  return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
     
@@ -786,7 +786,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
                                                                                                  LoggerFactory
                                                                                                      .getLogger(ServerClientHandshakeManager.class),
-                                                                                                 channelManager,
+                                                                                                consistencyMgr,  
+                                                                                                channelManager,
                                                                                                  new Timer(
                                                                                                            "Reconnect timer",
                                                                                                            true),
