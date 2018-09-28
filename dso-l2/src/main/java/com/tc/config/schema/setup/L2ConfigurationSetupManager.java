@@ -42,8 +42,6 @@ public interface L2ConfigurationSetupManager {
 
   InputStream rawConfigFile();
 
-  InputStream effectiveConfigFile();
-
   String[] allCurrentlyKnownServers();
 
   String getL2Identifier();
