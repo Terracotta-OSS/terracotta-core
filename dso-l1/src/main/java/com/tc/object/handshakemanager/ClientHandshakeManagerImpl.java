@@ -26,12 +26,8 @@ import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Util;
-import com.tc.util.version.Version;
-import com.tc.util.version.VersionCompatibility;
 import com.tc.cluster.ClusterInternalEventsGun;
 
 import java.util.Objects;
