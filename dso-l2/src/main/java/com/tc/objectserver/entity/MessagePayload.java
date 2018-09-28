@@ -104,6 +104,9 @@ public class MessagePayload {
     } catch (MessageCodecException ce) {
       exception = ce;
       throw exception;
+    } catch (Exception e) {
+      exception = new MessageCodecException("error decoding message", e);
+      throw exception;
     }
   }
   
