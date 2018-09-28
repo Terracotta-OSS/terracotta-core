@@ -21,7 +21,6 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 steps:
-steps:
 - bash: |
    curl https://raw.githubusercontent.com/Terracotta-OSS/cloud-tools/b6014694564e403b0af886a8da8c8331214e8c7c/azure/init.sh | sh      
   displayName: 'Bash Script'
