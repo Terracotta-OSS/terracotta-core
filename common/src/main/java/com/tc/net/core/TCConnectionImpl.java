@@ -697,7 +697,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     buf.append(" [").append(this.totalRead.get()).append(" read, ").append(this.totalWrite.get()).append(" write]");
 
-    buf.append("buffer=").append(this.bufferManager);
+    buf.append(" buffer=").append(this.bufferManager);
 
     return buf.toString();
   }
