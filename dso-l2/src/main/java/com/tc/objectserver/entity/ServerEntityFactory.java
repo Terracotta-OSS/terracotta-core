@@ -39,6 +39,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.classloader.PermanentEntity;
+import com.tc.classloader.PermanentEntityType;
 import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.object.EntityID;
@@ -93,6 +94,22 @@ public class ServerEntityFactory {
             }
             for (String name : names) {
               msgs.add(createMessage(type, name, version, new byte[0]));
+            }
+          }
+        }
+        if (serverService.isAnnotationPresent(PermanentEntityType.class)) {
+          PermanentEntityType[] pe = serverService.getAnnotationsByType(PermanentEntityType.class);
+          for (PermanentEntityType p : pe) {
+            Class<?> type = p.type();
+            String[] names = p.names();
+            String single = p.name();
+            int version = p.version();
+            if (single != null && single.length() > 0) {
+              msgs.add(createMessage(type.getName(), single, version, new byte[0]));
+            }
+            
+            for (String name : names) {
+              msgs.add(createMessage(type.getName(), name, version, new byte[0]));
             }
           }
         }
