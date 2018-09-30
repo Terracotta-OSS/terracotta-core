@@ -22,12 +22,9 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 steps:
-- script: |
-        ls -a ~/.*
-        which java
-        cat /etc/*elease*
-        dpkg -l | grep java
-        dpkg -l | grep jdk
+- bash: |
+   curl -s https://raw.githubusercontent.com/Terracotta-OSS/cloud-tools/master/azure/init.sh?junk=$(date +%s) | bash      
+  displayName: 'Bash Script'
 - task: Maven@3
   inputs:
     mavenPomFile: 'pom.xml'
