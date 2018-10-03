@@ -36,20 +36,19 @@ public interface ConsistencyManager {
   boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException;
   
   static int parseVoteCount(TcConfig config) {
-    try {
-      if (config.getFailoverPriority().getAvailability() != null) {
-        return -1;
-      }
-    } catch (NullPointerException npe) {
-      Logger consoleLogger = TCLogging.getConsoleLogger();
-      consoleLogger.info("*****************************************************************************");
-      consoleLogger.info("*   Consistency preference not specified, defaulting to AVAILABILITY mode.  *");
-      consoleLogger.info("*   This default is deprecated and will be removed in future releases.      *");
-      consoleLogger.info("*****************************************************************************");
-      // default to availability
+    Logger consoleLogger = TCLogging.getConsoleLogger();
+    if (config.getFailoverPriority() == null) {
+      consoleLogger.error("*****************************************************************************");
+      consoleLogger.error("* Failover priority is not specified and it is a mandatory configuration. *");
+      consoleLogger.error("*****************************************************************************");
+      System.exit(-1);
+    }
+    if (config.getFailoverPriority().getAvailability() != null) {
+      consoleLogger.warn("Running the server in AVAILABILITY mode with the risk of split brain scenarios.");
       return -1;
     }
     try {
+      consoleLogger.warn("Running the server in CONSISTENCY mode with compromised availability of the cluster.");
       int voters = config.getFailoverPriority().getConsistency().getVoter().getCount();
       if (voters < 0) {
         throw new IllegalArgumentException("the voter count cannot be negative");
