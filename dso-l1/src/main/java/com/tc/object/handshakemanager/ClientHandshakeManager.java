@@ -57,9 +57,8 @@ public interface ClientHandshakeManager {
   /**
    * Called to start a shutdown operation.
    * 
-   * @param fromShutdownHook True if the request was from a VM shutdown hook, false if it was from an internal code path.
    */
-  public void shutdown(boolean fromShutdownHook);
+  public void shutdown();
 
   /**
    * @return True if shutdown(boolean) has been called.  False, otherwise.

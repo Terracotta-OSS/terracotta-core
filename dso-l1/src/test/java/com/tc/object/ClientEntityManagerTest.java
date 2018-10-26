@@ -148,7 +148,7 @@ public class ClientEntityManagerTest extends TestCase {
   // Test to make sure we can still receive items without error after close, needed due to shutdown sequence
   public void testReceiveAfterClose() throws Exception {
     TransactionID tid = new TransactionID(1L);
-    manager.shutdown(false);
+    manager.shutdown();
     manager.complete(tid);
     manager.failed(tid, new EntityException(this.entityID.getClassName(), this.entityID.getEntityName(), "", null) {});
     manager.received(tid);
@@ -329,8 +329,8 @@ public class ClientEntityManagerTest extends TestCase {
     }
     
     // Now, release it and expect to see the exception thrown, directly (since we are accessing the manager, directly).
-    boolean didRelease = false;
-    this.manager.shutdown(false);
+    boolean didRelease;
+    this.manager.shutdown();
     try {
       Future<Void> released = fetcher.release();
       released.get();
@@ -365,7 +365,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     
     // Now, shut down the manager.
-    this.manager.shutdown(false);
+    this.manager.shutdown();
     // Join on the waiter thread since the shutdown should have released it to fail in the expected way.
     fetcher.join();
     

@@ -129,8 +129,6 @@ import java.util.concurrent.TimeUnit;
 public class DistributedObjectClient implements TCClient {
 
   protected static final Logger DSO_LOGGER = LoggerFactory.getLogger(DistributedObjectClient.class);
-
-  private static final String                        L1VMShutdownHookName                = "L1 VM Shutdown Hook";
   
   private final ClientBuilder                        clientBuilder;
   private final ClientConfig                         config;
@@ -151,8 +149,6 @@ public class DistributedObjectClient implements TCClient {
   private final String                               name;
 
   private ClientShutdownManager                      shutdownManager;
-
-  private final Thread                               shutdownAction;
 
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
   private final SetOnceFlag                          connectionMade                       = new SetOnceFlag();
@@ -182,8 +178,6 @@ public class DistributedObjectClient implements TCClient {
     this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
-    this.shutdownAction = new Thread(new ShutdownAction(), L1VMShutdownHookName);
-    Runtime.getRuntime().addShutdownHook(this.shutdownAction);
     
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA<Void> seda = new SEDA<Void>(threadGroup);
@@ -537,7 +531,7 @@ public class DistributedObjectClient implements TCClient {
   }
 
   public void shutdown() {
-    shutdown(false, false);
+    shutdown(false);
   }
 
   void shutdownResources() {
@@ -693,42 +687,25 @@ public class DistributedObjectClient implements TCClient {
     return this.cluster;
   }
 
-  private void shutdownClient(boolean fromShutdownHook, boolean forceImmediate) {
+  private void shutdownClient(boolean forceImmediate) {
     if (this.shutdownManager != null) {
       try {
-        this.shutdownManager.execute(fromShutdownHook, forceImmediate);
+        this.shutdownManager.execute(forceImmediate);
       } finally {
-        // If we're not being called as a result of the shutdown hook, de-register the hook
-        if (Thread.currentThread() != this.shutdownAction) {
-          try {
-            Runtime.getRuntime().removeShutdownHook(this.shutdownAction);
-          } catch (final Exception e) {
-            // ignore
-          }
-        }
+        
       }
     }
   }
 
-  private void shutdown(boolean fromShutdownHook, boolean forceImmediate) {
+  private void shutdown(boolean forceImmediate) {
     if (clientStopped.attemptSet()) {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
       if (this.channel != null && !this.channel.getProductID().isInternal() && this.channel.isConnected()) {
-        DSO_LOGGER.info("closing down Terracotta Connection hook=" + fromShutdownHook + " force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
+        DSO_LOGGER.info("closing down Terracotta Connection force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
       }
-      shutdownClient(fromShutdownHook, forceImmediate);
-    }
-  }
-
-  private class ShutdownAction implements Runnable {
-    @Override
-    public void run() {
-      if (channel != null && !channel.getProductID().isInternal()) {
-        DSO_LOGGER.info("Running L1 VM shutdown hook");
-      }
-      shutdown(true, false);
+      shutdownClient(forceImmediate);
     }
   }
 }

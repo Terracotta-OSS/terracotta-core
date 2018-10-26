@@ -82,7 +82,7 @@ public class ClientChannelEventController {
   private void requestDisconnect() {
     clientHandshakeManager.fireNodeError();
     //Shutdown instead of disconnect as now it should go into disconnected state
-    clientHandshakeManager.shutdown(false);
+    clientHandshakeManager.shutdown();
     LOGGER.error("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
   }
 
