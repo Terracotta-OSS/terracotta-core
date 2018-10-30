@@ -63,6 +63,8 @@ public class ClientVoterManagerImplTest {
   @Test
   public void testVote() throws TimeoutException {
     when(diagnostics.invokeWithArg(MBEAN_NAME, "vote", "foo:123")).thenReturn("123");
+    when(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", "foo:123")).thenReturn("123");
+    manager.heartbeat("foo:123");
     assertThat(manager.vote("foo", 123L), is(123L));
   }
 
@@ -75,6 +77,8 @@ public class ClientVoterManagerImplTest {
   @Test(expected = TimeoutException.class)
   public void testVoteTimeout() throws TimeoutException {
     when(diagnostics.invokeWithArg(MBEAN_NAME, "vote", "foo:123")).thenReturn(REQUEST_TIMEOUT);
+    when(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", "foo:123")).thenReturn("123");
+    manager.heartbeat("foo:123");
     manager.vote("foo", 123L);
   }
 

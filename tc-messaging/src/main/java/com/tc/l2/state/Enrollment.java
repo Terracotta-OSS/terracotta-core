@@ -145,5 +145,9 @@ public class Enrollment implements TCSerializable<Enrollment> {
     sb.append(" ]");
     return sb.toString();
   }
+  
+  public long[] getWeights() {
+    return weights;
+  }
 
 }

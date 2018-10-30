@@ -75,6 +75,7 @@ import com.tc.l2.ha.BlockTimeWeightGenerator;
 import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.ConnectionIDWeightGenerator;
 import com.tc.l2.ha.ConsistencyManagerWeightGenerator;
+import com.tc.l2.ha.GenerationWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -225,8 +226,6 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
-import com.tc.net.protocol.tcm.TCMessageSink;
-import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
@@ -601,6 +600,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // 6)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom());
     weightGeneratorFactory.add(randomWeightGenerator);
+    // 7)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
+    final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
+    weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
     this.globalWeightGeneratorFactory = weightGeneratorFactory;
     

@@ -205,7 +205,46 @@ public class ActiveVoter implements AutoCloseable {
                 }
               }
             } else {
-              TimeUnit.SECONDS.sleep(5);
+            //  unable to register
+              if (voterManager == owner) {
+            // the vote was re-registered on the active, this is not allowed, voting cycle 
+            // must start over
+                if (voteOwner.compareAndSet(owner, null)) {
+                  voterManager.deregisterVoter(id);
+                }
+              }
+              voterManager.close();
+            }
+
+            // heartbeat with the server until a vote is requested
+            while (voterManager.isConnected()) {
+              long election = heartbeat(voterManager);
+              if (election < 0) {
+                voterManager.close();
+              } else if (owner == voterManager) {
+                  // owner of the vote, go ahead and vote
+                lastVotedElection = election;
+                long result = voterManager.vote(id, election);
+                LOGGER.info("Own the vote, voting for {} for term: {}, result: {}", voterManager.getTargetHostPort(), election, result);
+              } else if (owner.isConnected()) {
+                // ignore, back to heartbeating
+                LOGGER.info("Not the vote owner and the owner is still connected, rejecting the vote request from {} for election term {}", voterManager.getTargetHostPort(), election);
+                if (owner.isVoting()) {
+                // if the owner is voting, this voter must zombie, cannot vote in this generation
+                  voterManager.zombie();
+                }
+                // can never steal the vote back having voted in a previous vote tally
+              } else if (lastVotedElection < election && voteOwner.compareAndSet(owner, voterManager)) {
+                // stole ownership of the vote
+                owner.zombie();
+                long result = voterManager.vote(id, election);
+                LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
+                break;
+              } else {
+                LOGGER.info("Failed to steal the vote from {}, rejecting the vote request from {} for term {}, last voted election: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, lastVotedElection);
+                break;
+                // failed to steal, back to heartbeating
+              }
             }
           } catch (TimeoutException to) {
             LOGGER.warn("Heart-beating with {} timed-out", voterManager.getTargetHostPort());
@@ -272,13 +311,6 @@ public class ActiveVoter implements AutoCloseable {
       return vm.isConnected() && vm.getServerState().equals(ACTIVE_COORDINATOR);
     } catch (TimeoutException to) {
       return false;
-    }
-  }
-  
-  private void registerAsVoter(ClientVoterManager voterManager) throws TimeoutException, InterruptedException {
-    while (voterManager.registerVoter(id) < 0) {
-      TimeUnit.MILLISECONDS.sleep(REG_RETRY_INTERVAL);
-      LOGGER.info("Retrying voter registration {}", voterManager.getTargetHostPort());
     }
   }
   

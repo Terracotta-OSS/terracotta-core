@@ -73,6 +73,14 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public void nodeLeft(NodeID nodeID) {
     activePeers.remove(nodeID);
   }
+  
+  public long getCurrentTerm() {
+    return voteTerm;
+  }
+  
+  public void setCurrentTerm(long term) {
+    voteTerm = term;
+  }
         
   private void initMBean() {
     try {
@@ -143,8 +151,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     long start = System.currentTimeMillis();
     try {
       if (voter.getRegisteredVoters() + serverVotes < threshold) {
-        blocked = true;
-        blockedAt = System.currentTimeMillis();
         CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", this.peerServers + 1 > threshold ? threshold : "all", newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
@@ -180,8 +186,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   private synchronized int activateVoting(ServerMode mode, Transition moveTo) {
     if (!activeVote) {
+      blocked = true;
+      blockedAt = System.currentTimeMillis();
       activeVote = true;
-      boolean stateTransition = moveTo != Transition.ADD_CLIENT;
+      boolean stateTransition = moveTo.isStateTransition();
       if (stateTransition) {
         voteTerm += 1;
       }
@@ -197,7 +205,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   private synchronized void endVoting(boolean allowed, Transition moveTo) {
     if (activeVote) {
-      if (allowed || moveTo == Transition.ADD_CLIENT) {
+      if (allowed || !moveTo.isStateTransition()) {
         switch(moveTo) {
           case CONNECT_TO_ACTIVE:
           case MOVE_TO_ACTIVE:

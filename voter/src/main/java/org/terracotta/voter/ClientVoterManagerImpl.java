@@ -85,7 +85,19 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   @Override
   public long heartbeat(String id) throws TimeoutException {
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", id));
-    return Long.parseLong(result);
+    long nr = Long.parseLong(result);
+    if (nr <= 0) {
+      voting = false;
+    } else {
+      if (!voting && generation == -1) {
+        //  already zombied for this generation, cannot vote, just heartbeat
+        return 0;
+      } else {
+        voting = true;
+        generation = nr;
+      }
+    }
+    return nr;
   }
 
   @Override
@@ -143,5 +155,17 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public synchronized boolean isConnected() {
     return this.connection != null;
   }
+  
+  @Override
+  public boolean isVoting() {
+    return voting;
+  }
+  
+  @Override
+  public void zombie() {
+    LOGGER.debug("Zombied {}", getTargetHostPort());
+    voting = false;
+    generation = -1;
+  }  
 
 }
