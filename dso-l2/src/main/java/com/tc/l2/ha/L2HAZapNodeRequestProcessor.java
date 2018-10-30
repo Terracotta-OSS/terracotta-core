@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
@@ -55,23 +56,33 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   private final GroupManager                  groupManager;
   private final List<ZapEventListener>        listeners                     = new CopyOnWriteArrayList<>();
   private final ClusterStatePersistor         clusterStatePersistor;
+  private final ConsistencyManager            consistencyMgr;
 
   public L2HAZapNodeRequestProcessor(Logger consoleLogger, StateManager stateManager, GroupManager groupManager,
-                                     WeightGeneratorFactory factory, ClusterStatePersistor clusterStatePersistor) {
+                                     WeightGeneratorFactory factory, ClusterStatePersistor clusterStatePersistor, ConsistencyManager consistency) {
     this.consoleLogger = consoleLogger;
     this.stateManager = stateManager;
     this.groupManager = groupManager;
     this.factory = factory;
     this.clusterStatePersistor = clusterStatePersistor;
+    this.consistencyMgr = consistency;
   }
 
   @Override
   public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason) {
     assertOnType(zapNodeType, reason);
-    if (stateManager.isActiveCoordinator()
-        || (zapNodeType == COMMUNICATION_TO_ACTIVE_ERROR && nodeID.equals(stateManager.getActiveNodeID()))) {
-      consoleLogger.warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
+    if (zapNodeType == COMMUNICATION_TO_ACTIVE_ERROR && nodeID.equals(stateManager.getActiveNodeID())) {
+      consoleLogger.warn("Requesting active node to quit : " + getFormatedError(nodeID, zapNodeType));
       return true;
+    }
+    if (stateManager.isActiveCoordinator()) {
+      if (consistencyMgr.requestTransition(stateManager.getCurrentMode(), nodeID, ConsistencyManager.Transition.ZAP_NODE)) {
+        consoleLogger.warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
+        return true;
+      } else {
+        logger.warn("Not allowing to Zap " + nodeID + " since server does not have consistency votes");
+        return false;
+      }
     } else {
       logger.warn("Not allowing to Zap " + nodeID + " since not in " + StateManager.ACTIVE_COORDINATOR);
       return false;

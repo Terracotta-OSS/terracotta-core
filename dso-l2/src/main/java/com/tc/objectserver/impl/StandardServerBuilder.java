@@ -30,6 +30,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
 import com.tc.net.core.BufferManagerFactory;
@@ -96,10 +97,11 @@ public class StandardServerBuilder implements ServerBuilder {
                                              GroupManager<AbstractGroupMessage> groupCommsManager,
                                              Persistor persistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
-                                             StripeIDStateManager stripeStateManager) {
+                                             StripeIDStateManager stripeStateManager,
+                                             ConsistencyManager consistencyMgr) {
     return new L2HACoordinator(consoleLogger, server, stateMgr, 
         groupCommsManager, persistor,
-        weightGeneratorFactory, stripeStateManager);
+        weightGeneratorFactory, stripeStateManager, consistencyMgr);
   }
 
   @Override

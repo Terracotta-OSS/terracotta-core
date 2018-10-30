@@ -26,6 +26,7 @@ import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ServerID;
 import com.tc.net.core.BufferManagerFactory;
@@ -62,7 +63,8 @@ public interface ServerBuilder extends PostInit {
                                       GroupManager<AbstractGroupMessage> groupCommsManager,
                                       Persistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
-                                      StripeIDStateManager stripeStateManager);
+                                      StripeIDStateManager stripeStateManager,
+                                      ConsistencyManager consistency);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
 }

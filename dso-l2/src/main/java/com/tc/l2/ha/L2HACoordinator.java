@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -53,19 +54,21 @@ public class L2HACoordinator implements L2Coordinator {
                          GroupManager<AbstractGroupMessage> groupCommsManager,
                          Persistor persistor,
                          WeightGeneratorFactory weightGeneratorFactory,
-                         StripeIDStateManager stripeIDStateManager) {
+                         StripeIDStateManager stripeIDStateManager,
+                         ConsistencyManager consistencyMgr
+                         ) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.stateManager = stateManager;
-
+    
     init(persistor,
-        weightGeneratorFactory, stripeIDStateManager);
+        weightGeneratorFactory, stripeIDStateManager, consistencyMgr);
   }
 
   private void init(Persistor persistor,
                     WeightGeneratorFactory weightGeneratorFactory,
-                    StripeIDStateManager stripeIDStateManager) {
+                    StripeIDStateManager stripeIDStateManager, ConsistencyManager consistencyMgr) {
     final ClusterState clusterState = new ClusterStateImpl(persistor, this.server.getConnectionIdFactory(),
                                                        stripeIDStateManager);
 
@@ -73,7 +76,8 @@ public class L2HACoordinator implements L2Coordinator {
                                                                                      this.stateManager,
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
-                                                                                     persistor.getClusterStatePersistor());
+                                                                                     persistor.getClusterStatePersistor(),
+                                                                                     consistencyMgr);
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(

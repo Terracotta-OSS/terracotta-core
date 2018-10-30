@@ -730,7 +730,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                   this.groupCommManager,
                                                                   this.persistor,
                                                                   this.globalWeightGeneratorFactory,
-                                                                  this.stripeIDStateManager);
+                                                                  this.stripeIDStateManager,
+                                                                  consistencyMgr);
 
     connectServerStateToReplicatedState(processTransactionHandler, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
