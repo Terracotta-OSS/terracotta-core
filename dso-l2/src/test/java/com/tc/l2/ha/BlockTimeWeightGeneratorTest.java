@@ -40,6 +40,7 @@ public class BlockTimeWeightGeneratorTest extends TCTestCase {
 
     BlockTimeWeightGenerator gen = new BlockTimeWeightGenerator(spyMgr);
     long value = System.currentTimeMillis() - 1000;
+    when(spyMgr.isBlocked()).thenReturn(true);
     when(spyMgr.getBlockingTimestamp()).thenReturn(value);
     assertTrue(gen.getWeight() < 0);
   }
@@ -48,6 +49,7 @@ public class BlockTimeWeightGeneratorTest extends TCTestCase {
   public void testCompareBlocked() throws Exception {
     ConsistencyManagerImpl mgr = new ConsistencyManagerImpl(1, 1);
     ConsistencyManagerImpl spyMgr = spy(mgr);
+    when(spyMgr.isBlocked()).thenReturn(true);
 
     BlockTimeWeightGenerator gen = new BlockTimeWeightGenerator(spyMgr);
     when(spyMgr.getBlockingTimestamp()).thenReturn(System.currentTimeMillis() - 100000);

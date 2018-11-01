@@ -38,7 +38,7 @@ public class BlockTimeWeightGenerator implements WeightGenerator {
     // availability (zero)
     // blocking consistency witht the shortest about of blocking time (least negative number)
     if (consistency != null) {
-      return consistency.getBlockingTimestamp() - currentTime;
+      return consistency.isBlocked() ? consistency.getBlockingTimestamp() - currentTime : Long.MAX_VALUE;
     } else {
       return 0L; // always return zero in availability mode
     }

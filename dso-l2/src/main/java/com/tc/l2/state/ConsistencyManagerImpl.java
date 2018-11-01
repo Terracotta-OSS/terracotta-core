@@ -108,8 +108,25 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       Assert.assertEquals(mode, ServerMode.ACTIVE);
     }
     boolean allow = false;
+    
+    if (mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
+//  only other servers can be considered in this case.  Only go active 
+//  if all servers are present.  any registered
+//  external voters should not be considered because they were registered before 
+//  when there should have been no cluster wide active
+      if (this.activePeers.size() == peerServers || voter.overrideVoteReceived()) {
+        CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
+        allow = true;
+      } else {
+        CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
+        allow = false;
+      } 
+      return allow;
+    }
+        
     // activate voting to lock the voting members and return the number of server votes
     int serverVotes = activateVoting(mode, newMode);
+
     int threshold = voteThreshold(mode);
     if (serverVotes >= threshold || serverVotes == this.peerServers) {
     // if the threshold is achieved with just servers or all the servers are visible, transition is granted
@@ -121,14 +138,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       CONSOLE.info("Action:{} allowed because override received", newMode);
       endVoting(true, newMode);
       return true;
-    }
-    if (mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
-//  only other servers can be considered in this case.  any registered
-//  external voters should not be considered because they were registered before 
-//  when there should have been no cluster wide active
-      CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
-      endVoting(allow, newMode);
-      return false;
     }
 
     long start = System.currentTimeMillis();
