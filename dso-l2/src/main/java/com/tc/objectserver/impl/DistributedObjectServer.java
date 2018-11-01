@@ -225,6 +225,8 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.tcm.TCMessageSink;
+import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
@@ -687,10 +689,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
+    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this), 1, 1);
     
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
-    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
+    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, m -> diagStage.getSink().addToSink(m));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
