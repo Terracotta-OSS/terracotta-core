@@ -196,7 +196,9 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       voter.startVoting(voteTerm, stateTransition);
     }
     actions.add(moveTo);
-    if (mode != ServerMode.ACTIVE) {
+    //  for zapping, only need to count the servers connected since they are 
+    //  presumably participating in election
+    if (mode != ServerMode.ACTIVE || moveTo == Transition.ZAP_NODE) {
       return this.activePeers.size();
     } else {
       return this.passives.size();

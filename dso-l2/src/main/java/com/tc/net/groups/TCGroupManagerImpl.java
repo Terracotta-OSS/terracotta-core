@@ -798,7 +798,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (m == null) {
       logger.warn("Ignoring Zap node request since Member is null");
     } else if (!zapNodeRequestProcessor.acceptOutgoingZapNodeRequest(nodeID, type, reason)) {
-      logger.warn("Ignoreing Zap node request since " + zapNodeRequestProcessor + " asked us to : " + nodeID
+      logger.warn("Ignoring Zap node request since " + zapNodeRequestProcessor + " asked us to : " + nodeID
                   + " type = " + type + " reason = " + reason);
     } else {
       long weights[] = zapNodeRequestProcessor.getCurrentNodeWeights();
