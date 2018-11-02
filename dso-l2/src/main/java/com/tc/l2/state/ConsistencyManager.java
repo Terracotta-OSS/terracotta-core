@@ -28,9 +28,24 @@ public interface ConsistencyManager {
   public enum Transition {
     MOVE_TO_ACTIVE,
     CONNECT_TO_ACTIVE,
-    ADD_CLIENT,
+    ADD_CLIENT {
+      @Override
+      boolean isStateTransition() {
+        return false;
+      }
+    },
     REMOVE_PASSIVE,
-    ADD_PASSIVE
+    ADD_PASSIVE,
+    ZAP_NODE {
+      @Override
+      boolean isStateTransition() {
+        return false;
+      }
+    };
+    
+    boolean isStateTransition() {
+      return true;
+    }
   }
 
   boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException;

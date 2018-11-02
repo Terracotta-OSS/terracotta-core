@@ -25,6 +25,8 @@ import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -49,6 +51,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 
 public class ServerClientHandshakeManager {
@@ -66,12 +69,13 @@ public class ServerClientHandshakeManager {
   private final ReconnectTimerTask       reconnectTimerTask;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
+  private final ConsistencyManager       consistency;
   private final Logger logger;
   private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
   private final Logger consoleLogger;
   private final Sink<VoltronEntityMessage> voltron;
 
-  public ServerClientHandshakeManager(Logger logger, DSOChannelManager channelManager,
+  public ServerClientHandshakeManager(Logger logger, ConsistencyManager consistency, DSOChannelManager channelManager,
                                       Timer timer, long reconnectTimeout,Sink<VoltronEntityMessage> voltron,
                                       Logger consoleLogger) {
     this.logger = logger;
@@ -81,6 +85,7 @@ public class ServerClientHandshakeManager {
     this.voltron = voltron;
     this.consoleLogger = consoleLogger;
     this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
+    this.consistency = consistency;
   }
 
   public synchronized boolean isStarting() {
@@ -189,6 +194,14 @@ public class ServerClientHandshakeManager {
   // Should be called from within the sync block
   private void start() {
     final Set<NodeID> cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
+    while (!cids.isEmpty() && !this.consistency.requestTransition(ServerMode.ACTIVE, ClientID.NULL_ID, ConsistencyManager.Transition.ADD_CLIENT)) {
+      consoleLogger.info("request to add reconnect clients has been rejected, will try again in 5 seconds");
+      try {
+        TimeUnit.SECONDS.sleep(5);
+      } catch (InterruptedException i) {
+        throw new RuntimeException(i);
+      }
+    }
     // It is important to start all the managers before sending the ack to the clients
     for (NodeID nid : cids) {
       final ClientID clientID = (ClientID) nid;

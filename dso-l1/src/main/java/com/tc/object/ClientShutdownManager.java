@@ -69,35 +69,21 @@ public class ClientShutdownManager {
     }
   }
 
-  public void execute(boolean fromShutdownHook, boolean forceImmediate) {
+  public void execute(boolean forceImmediate) {
     executeBeforeShutdownHooks();
 
-    closeLocalWork(fromShutdownHook, forceImmediate);
-
-    if (!fromShutdownHook) {
-      shutdown();
-    } else {
-      // for case of reconnect enabled to send out good bye message at channel close
-      if (channel != null) {
-        try {
-          channel.close();
-        } catch (Throwable t) {
-          logger.error("Error closing channel", t);
-        }
-      }
-    }
+    closeLocalWork(forceImmediate);
+    shutdown();
   }
 
-  private void closeLocalWork(boolean fromShutdownHook, boolean forceImmediate) {
+  private void closeLocalWork(boolean forceImmediate) {
 
     // stop handshaking while shutting down
-    handshakeManager.shutdown(fromShutdownHook);
-
-    boolean immediate = forceImmediate || isImmediate();
+    handshakeManager.shutdown();
 
     ClientEntityManager entityMgr = this.client.getEntityManager();
     if (entityMgr != null) {
-      entityMgr.shutdown(fromShutdownHook);
+      entityMgr.shutdown();
     }
   }
 

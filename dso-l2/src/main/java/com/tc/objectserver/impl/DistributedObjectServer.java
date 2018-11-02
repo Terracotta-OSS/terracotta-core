@@ -75,6 +75,7 @@ import com.tc.l2.ha.BlockTimeWeightGenerator;
 import com.tc.l2.ha.ChannelWeightGenerator;
 import com.tc.l2.ha.ConnectionIDWeightGenerator;
 import com.tc.l2.ha.ConsistencyManagerWeightGenerator;
+import com.tc.l2.ha.GenerationWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -553,7 +554,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (t)->{
-                                                                  return t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
+                                                                  return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
     
@@ -599,6 +600,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // 6)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom());
     weightGeneratorFactory.add(randomWeightGenerator);
+    // 7)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
+    final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
+    weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
     this.globalWeightGeneratorFactory = weightGeneratorFactory;
     
@@ -687,10 +691,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
     
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
+    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this), 1, 1);
     
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
-    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, new DiagnosticsHandler(this));    
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
+    messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, m -> diagStage.getSink().addToSink(m));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
@@ -726,7 +732,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                   this.groupCommManager,
                                                                   this.persistor,
                                                                   this.globalWeightGeneratorFactory,
-                                                                  this.stripeIDStateManager);
+                                                                  this.stripeIDStateManager,
+                                                                  consistencyMgr);
 
     connectServerStateToReplicatedState(processTransactionHandler, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
@@ -786,7 +793,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
                                                                                                  LoggerFactory
                                                                                                      .getLogger(ServerClientHandshakeManager.class),
-                                                                                                 channelManager,
+                                                                                                consistencyMgr,  
+                                                                                                channelManager,
                                                                                                  new Timer(
                                                                                                            "Reconnect timer",
                                                                                                            true),

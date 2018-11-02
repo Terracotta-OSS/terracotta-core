@@ -46,6 +46,9 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   private final String hostPort;
   private Connection connection;
   Diagnostics diagnostics;
+  
+  private volatile boolean voting = false;
+  private volatile long generation = 0;
 
   public ClientVoterManagerImpl(String hostPort) {
     this.hostPort = hostPort;
@@ -58,6 +61,9 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   @Override
   public void connect(Optional<Properties> connectionProps) {
+    if (connection != null) {
+      return;
+    }
     URI uri = URI.create("diagnostic://" + hostPort);
     Properties properties = connectionProps.orElse(new Properties());
     try {
@@ -70,6 +76,7 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
         EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1L, "root");;
         this.diagnostics = ref.fetchEntity(properties);        
       }
+      LOGGER.info("Connected to {}", hostPort);
     } catch (IOException | ConnectionException | EntityNotProvidedException | EntityNotFoundException | EntityVersionMismatchException e) {
       throw new RuntimeException("Unable to connect to " + hostPort, e);
     }
@@ -77,19 +84,35 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   @Override
   public long registerVoter(String id) throws TimeoutException {
-    String result = null;
-    result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "registerVoter", id));
-    return Long.parseLong(result);
+    String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "registerVoter", id));
+    long nr = Long.parseLong(result);
+    return nr;
   }
 
   @Override
   public long heartbeat(String id) throws TimeoutException {
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", id));
-    return Long.parseLong(result);
+    long nr = Long.parseLong(result);
+    if (nr <= 0) {
+      voting = false;
+      generation = 0;
+    } else {
+      if (!voting && generation == nr) {
+        //  already zombied for this generation, cannot vote, just heartbeat
+        return 0;
+      } else {
+        voting = true;
+        generation = nr;
+      }
+    }
+    return nr;
   }
 
   @Override
   public long vote(String id, long term) throws TimeoutException {
+    if (!voting) {
+      return -1;
+    }
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "vote", id + ":" + term));
     return Long.parseLong(result);
   }
@@ -131,6 +154,7 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     try {
       if (this.connection != null) {
         this.connection.close();
+        LOGGER.info("Connection closed to {}", hostPort);
       }
     } catch (IOException e) {
       LOGGER.error("Failed to close the connection: {}", connection);
@@ -143,5 +167,20 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public synchronized boolean isConnected() {
     return this.connection != null;
   }
+  
+  @Override
+  public boolean isVoting() {
+    return voting;
+  }
+  
+  @Override
+  public void zombie() {
+    LOGGER.debug("Zombied {} for generation {}", getTargetHostPort(), generation);
+    voting = false;
+  }  
 
+  @Override
+  public String toString() {
+    return "ClientVoterManagerImpl{" + "hostPort=" + hostPort + ", connection=" + connection + '}';
+  }
 }

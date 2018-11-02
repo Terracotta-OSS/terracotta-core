@@ -138,7 +138,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public void shutdown(boolean fromShutdownHook) {
+  public void shutdown() {
 
   }
 

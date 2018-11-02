@@ -44,7 +44,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private boolean activeVote = false;
   private boolean blocked = false;
   private Set<Transition> actions = EnumSet.noneOf(Transition.class);
-  private long voteTerm = 0;
+  private long voteTerm = 1;
   private long blockedAt = Long.MAX_VALUE;
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
@@ -60,10 +60,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     }
   }
   
-  public synchronized long getVoteTerm() {
-    return voteTerm;
-  }
-  
   public synchronized long getBlockingTimestamp() {
     return blockedAt;
   }
@@ -76,6 +72,14 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   @Override
   public void nodeLeft(NodeID nodeID) {
     activePeers.remove(nodeID);
+  }
+  
+  public long getCurrentTerm() {
+    return voteTerm;
+  }
+  
+  public void setCurrentTerm(long term) {
+    voteTerm = term;
   }
         
   private void initMBean() {
@@ -112,8 +116,25 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       Assert.assertEquals(mode, ServerMode.ACTIVE);
     }
     boolean allow = false;
+    
+    if (mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
+//  only other servers can be considered in this case.  Only go active 
+//  if all servers are present.  any registered
+//  external voters should not be considered because they were registered before 
+//  when there should have been no cluster wide active
+      if (this.activePeers.size() == peerServers || voter.overrideVoteReceived()) {
+        CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
+        allow = true;
+      } else {
+        CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
+        allow = false;
+      } 
+      return allow;
+    }
+        
     // activate voting to lock the voting members and return the number of server votes
     int serverVotes = activateVoting(mode, newMode);
+
     int threshold = voteThreshold(mode);
     if (serverVotes >= threshold || serverVotes == this.peerServers) {
     // if the threshold is achieved with just servers or all the servers are visible, transition is granted
@@ -126,20 +147,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
       endVoting(true, newMode);
       return true;
     }
-    if (mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
-//  only other servers can be considered in this case.  any registered
-//  external voters should not be considered because they were registered before 
-//  when there should have been no cluster wide active
-      CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
-      endVoting(allow, newMode);
-      return false;
-    }
 
     long start = System.currentTimeMillis();
     try {
       if (voter.getRegisteredVoters() + serverVotes < threshold) {
-        blocked = true;
-        blockedAt = System.currentTimeMillis();
         CONSOLE.warn("Not enough registered voters.  Require override intervention or {} members of the stripe to be connected for action {}", this.peerServers + 1 > threshold ? threshold : "all", newMode);
       } else while (!allow && System.currentTimeMillis() - start < ServerVoterManagerImpl.VOTEBEAT_TIMEOUT) {
         try {
@@ -175,8 +186,14 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   private synchronized int activateVoting(ServerMode mode, Transition moveTo) {
     if (!activeVote) {
+      blocked = true;
+      blockedAt = System.currentTimeMillis();
       activeVote = true;
-      voter.startVoting(++voteTerm, moveTo != Transition.ADD_CLIENT);
+      boolean stateTransition = moveTo.isStateTransition();
+      if (stateTransition) {
+        voteTerm += 1;
+      }
+      voter.startVoting(voteTerm, stateTransition);
     }
     actions.add(moveTo);
     if (mode != ServerMode.ACTIVE) {
@@ -188,11 +205,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   private synchronized void endVoting(boolean allowed, Transition moveTo) {
     if (activeVote) {
-      if (allowed) {
-        Assert.assertEquals(voteTerm, voter.stopVoting());
-        activeVote = false;
-        blocked = false;
-        blockedAt = Long.MAX_VALUE;
+      if (allowed || !moveTo.isStateTransition()) {
         switch(moveTo) {
           case CONNECT_TO_ACTIVE:
           case MOVE_TO_ACTIVE:
@@ -201,6 +214,12 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
             break;
           default:
             actions.remove(moveTo);
+        }
+        if (actions.isEmpty()) {
+          Assert.assertEquals(voteTerm, voter.stopVoting());
+          activeVote = false;
+          blocked = false;
+          blockedAt = Long.MAX_VALUE;
         }
       }
     }
@@ -217,7 +236,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public synchronized boolean isBlocked() {
     return blocked;
   }
-  
+    
+  long getVotingTerm() {
+    return voteTerm;
+  }    
+    
   public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements com.tc.l2.state.ConsistencyMBean {
 
     public ConsistencyMBeanImpl() throws Exception {
@@ -238,9 +261,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     @Override
     public Collection<Transition> requestedActions() {
       return getActions();
-    }
-    
-    
+    }        
 
     @Override
     public void reset() {

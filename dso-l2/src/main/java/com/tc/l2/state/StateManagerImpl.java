@@ -257,6 +257,18 @@ public class StateManagerImpl implements StateManager {
 
   private synchronized void moveToPassiveReady(Enrollment winningEnrollment) {
     electionMgr.reset(winningEnrollment);
+    if (availabilityMgr instanceof ConsistencyManagerImpl) {
+      long[] weights = winningEnrollment.getWeights();
+      //  if the weight sizes are the same, we can assume that the generators 
+      //  were the same on both ends.  The last one is the current term of the 
+      //  winning election
+      if (weights.length == weightsFactory.size()) {
+        long term = weights[weights.length -1];
+        if (term > 0) {
+          ((ConsistencyManagerImpl)availabilityMgr).setCurrentTerm(term);
+        }
+      }
+    }
     logger.info("moving to passive ready " + state + " " + winningEnrollment);
     switch (state) {
       case START:

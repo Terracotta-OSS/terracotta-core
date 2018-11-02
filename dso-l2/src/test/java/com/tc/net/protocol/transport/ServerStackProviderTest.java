@@ -3,7 +3,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.ClientID;
 import com.tc.net.StripeID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.NetworkStackHarnessFactory;

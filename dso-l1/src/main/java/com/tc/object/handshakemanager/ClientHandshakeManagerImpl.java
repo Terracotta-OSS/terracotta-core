@@ -83,10 +83,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public synchronized void shutdown(boolean fromShutdownHook) {
+  public synchronized void shutdown() {
     isShutdown = true;
     notifyAll();
-    shutdownCallbacks(fromShutdownHook);
+    shutdownCallbacks();
   }
 
   @Override
@@ -183,10 +183,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     }
   }
 
-  private void shutdownCallbacks(boolean fromShutdownHook) {
+  private void shutdownCallbacks() {
     // Now that the handshake manager has concluded that it is entering into a shutdown state, anyone else wishing to use it
     // needs to be notified that they cannot.
-    this.callBacks.shutdown(fromShutdownHook);
+    this.callBacks.shutdown();
   }
 
   private void pauseCallbacks() {

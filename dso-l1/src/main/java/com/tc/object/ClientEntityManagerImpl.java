@@ -349,7 +349,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public void shutdown(boolean fromShutdownHook) {
+  public void shutdown() {
     synchronized (this) {
       if (this.stateManager.isShutdown()) {
         return;

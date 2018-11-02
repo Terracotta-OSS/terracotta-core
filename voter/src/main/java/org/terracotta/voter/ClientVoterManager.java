@@ -47,6 +47,7 @@ public interface ClientVoterManager extends VoterManager {
   /**
    *
    * @return the configuration of the server that this voter is connected to.
+   * @throws java.util.concurrent.TimeoutException
    */
   String getServerConfig() throws TimeoutException;
 
@@ -55,6 +56,9 @@ public interface ClientVoterManager extends VoterManager {
    */
   void close();
   
+  boolean isVoting();
+  
+  void zombie();
   
   boolean isConnected();
 }

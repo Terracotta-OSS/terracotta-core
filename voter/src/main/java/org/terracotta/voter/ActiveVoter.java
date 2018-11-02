@@ -25,14 +25,15 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import static com.tc.voter.VoterManager.HEARTBEAT_RESPONSE;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -77,7 +78,8 @@ public class ActiveVoter implements AutoCloseable {
   private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
     return new Thread(() -> {
       ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
-      CountDownLatch registrationLatch = new CountDownLatch(hostPorts.length);
+      Set<String> registrationLatch = new HashSet<>();
+      registrationLatch.addAll(Arrays.asList(hostPorts));
       List<ClientVoterManager> voterManagers = Stream.of(hostPorts).map(ClientVoterManagerImpl::new).collect(toList());
       try {
         while (!Thread.currentThread().isInterrupted()) {
@@ -93,13 +95,25 @@ public class ActiveVoter implements AutoCloseable {
 
             @Override
             public void awaitRegistrationWithAll() throws InterruptedException {
-              registrationLatch.await();
+              synchronized(registrationLatch) {
+                while (!registrationLatch.isEmpty()) {
+                  registrationLatch.wait();
+                }
+              }
             }
 
             @Override
             public void awaitRegistrationWithAll(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-              if (!registrationLatch.await(timeout, unit)) {
-                throw new TimeoutException("Registration timed out");
+              long current = System.currentTimeMillis();
+              long finish = current + unit.toMillis(timeout);
+              synchronized(registrationLatch) {
+                while (!registrationLatch.isEmpty()) {
+                  current = System.currentTimeMillis();
+                  if (System.currentTimeMillis() >= finish) {
+                    throw new TimeoutException("Registration timed out");
+                  }
+                  registrationLatch.wait(finish - current);
+                }
               }
             }
           });
@@ -127,7 +141,6 @@ public class ActiveVoter implements AutoCloseable {
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       if (!voterManager.isConnected()) {
         voterManager.connect(connectionProps);
-        LOGGER.info("Connected to {}", voterManager.getTargetHostPort());
       }
 
       if (!registrationLatch.isDone()) {
@@ -138,7 +151,7 @@ public class ActiveVoter implements AutoCloseable {
             if (response >= 0) {
               registrationLatch.complete(voterManager);
             } else {
-              LOGGER.warn("Registration with {} failed. Retrying...", voterManager.getTargetHostPort());
+              LOGGER.warn("Registration with {} in state {} failed. Retrying...", voterManager.getTargetHostPort(), voterManager.getServerState());
             }
           } else {
             LOGGER.info("State of {}: {}. Continuing the search for an active server.", voterManager.getTargetHostPort(), serverState);
@@ -161,7 +174,7 @@ public class ActiveVoter implements AutoCloseable {
 
   public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive,
                                    List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps,
-                                   CountDownLatch registrationLatch) throws InterruptedException {
+                                   Set<String> registrationLatch) throws InterruptedException {
     AtomicReference<ClientVoterManager> voteOwner = new AtomicReference<>();
     //Try to connect and register with all the servers
     voteOwner.set(currentActive);
@@ -170,42 +183,84 @@ public class ActiveVoter implements AutoCloseable {
         ClientVoterManager owner = voteOwner.get();
         while (owner != null) {          
           try {
-            if (owner.isConnected() && owner.getServerState().equals(ACTIVE_COORDINATOR)) {
-              long lastVotedElection = 0;
-              // if the current vote owner is the active, allowed to reconnect
-              voterManager.connect(connectionProps);
-              // register as a voter, this should not take too long since have already established as voter on the active
-              registerAsVoter(voterManager);
-              registrationLatch.countDown();
-
-              // heartbeat with the server until a vote is requested
-              while (voterManager.isConnected()) {
-                long election = heartbeat(voterManager);
-                if (election < 0) {
+            voterManager.connect(connectionProps);
+            long lastVotedElection = 0;
+            // if the current vote owner is the active, allowed to reconnect
+            long registration = voterManager.registerVoter(id);
+            LOGGER.debug("Registration {} for {}", registration, voterManager);
+            if (registration > 0) {
+              if (voterManager == owner) {
+            // the vote was re-registered on the active, this is not allowed, voting cycle 
+            // must start over
+                if (voteOwner.compareAndSet(owner, null)) {
+                  voterManager.deregisterVoter(id);
+                }
+                voterManager.close();
+              } else {
+                if (owner.isVoting()) {
+                  voterManager.deregisterVoter(id);
                   voterManager.close();
-                } else if (owner == voterManager) {
-                    // owner of the vote, go ahead and vote
-                  lastVotedElection = election;
-                  long result = voterManager.vote(id, election);
-                  LOGGER.info("Own the vote, voting for {} for term: {}, result: {}", voterManager.getTargetHostPort(), election, result);
-                } else if (owner.isConnected()) {
-                  // ignore, back to heartbeating
-                  LOGGER.info("Not the vote owner and the owner is still connected, rejecting the vote request from {} for election term {}", voterManager.getTargetHostPort(), election);
-                  // can never steal the vote back having voted in a previous vote tally
-                } else if (lastVotedElection == 0 && voteOwner.compareAndSet(owner, voterManager)) {
-                  // stole ownership of the vote
-                  lastVotedElection = election;
-                  long result = voterManager.vote(id, election);
-                  LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
-                  owner = voterManager;
                 } else {
-                  owner = voteOwner.get();
-                  LOGGER.info("Failed to steal the vote from {}, rejecting the vote request from {} for term {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election);
-                  // failed to steal, back to heartbeating
+                  synchronized(registrationLatch) {
+                    registrationLatch.remove(voterManager.getTargetHostPort());
+                    if (registrationLatch.isEmpty()) {
+                      registrationLatch.notifyAll();
+                    }
+                  }
                 }
               }
+            } else if (registration == 0) {
+              synchronized(registrationLatch) {
+                registrationLatch.remove(voterManager.getTargetHostPort());
+                if (registrationLatch.isEmpty()) {
+                  registrationLatch.notifyAll();
+                }
+              }
+              //  everything is good, continue to operate  
             } else {
-              TimeUnit.SECONDS.sleep(5);
+            //  unable to register
+              if (voterManager == owner) {
+            // the vote was re-registered on the active, this is not allowed, voting cycle 
+            // must start over
+                if (voteOwner.compareAndSet(owner, null)) {
+                  voterManager.deregisterVoter(id);
+                }
+              }
+              voterManager.close();
+            }
+
+            // heartbeat with the server until a vote is requested
+            while (voterManager.isConnected()) {
+              long election = heartbeat(voterManager);
+              if (election < 0) {
+                voterManager.close();
+              } else if (owner == voterManager) {
+                  // owner of the vote, go ahead and vote
+                if (lastVotedElection > election) {
+                  LOGGER.warn("{} term revoted last voted: {} current: {}", voterManager.getTargetHostPort(), lastVotedElection, election);
+                }
+                lastVotedElection = election;
+                long result = voterManager.vote(id, election);
+                LOGGER.info("Own the vote, voting for {} for term: {}, result: {}", voterManager.getTargetHostPort(), election, result);
+              } else if (owner.isConnected()) {
+                // ignore, back to heartbeating
+                LOGGER.info("Not the vote owner and the owner is still connected, rejecting the vote request from {} for election term {}", voterManager.getTargetHostPort(), election);
+                if (owner.isVoting()) {
+                // if the owner is voting, this voter must zombie, cannot vote in this generation
+                  voterManager.zombie();
+                }
+                // can never steal the vote back having voted in a previous vote tally
+              } else if (lastVotedElection < election && voteOwner.compareAndSet(owner, voterManager)) {
+                // stole ownership of the vote
+                owner.zombie();
+                long result = voterManager.vote(id, election);
+                LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
+                break;
+              } else {
+                LOGGER.info("Failed to steal the vote from {}, rejecting the vote request from {} for term {}, last voted election: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, lastVotedElection);
+                break;
+                // failed to steal, back to heartbeating
+              }
             }
           } catch (TimeoutException to) {
             LOGGER.warn("Heart-beating with {} timed-out", voterManager.getTargetHostPort());
@@ -213,8 +268,12 @@ public class ActiveVoter implements AutoCloseable {
           } catch (InterruptedException e) {
             LOGGER.warn("Heart-beating with {} stopped", voterManager.getTargetHostPort());
             voterManager.close();            
+          } catch (RuntimeException run) {
+            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort());
+            voterManager.close(); 
           }
           owner = voteOwner.get();
+          LOGGER.info("owner is " + owner);
         }
       } finally {
         voterManager.close();
@@ -224,13 +283,16 @@ public class ActiveVoter implements AutoCloseable {
     int tryCount = 0;
     String state;
     while (tryCount < 10) {
-      ClientVoterManager voter = voteOwner.get();
+      ClientVoterManager vm = voteOwner.get();
+      if (vm == null) {
+        break;
+      }
       try {
-        state = voter.isConnected() ? voteOwner.get().getServerState() : "Not Connected";
+        state = vm.isConnected() ? voteOwner.get().getServerState() : "Not Connected";
       } catch (TimeoutException to) {
         state = "Timeout";
       }
-      LOGGER.debug("{} Vote owner state: {}, Try count: {}", this, state, tryCount);
+      LOGGER.info("{} Vote owner state: {}, Try count: {}", this, state, tryCount);
       if (state.equals(ACTIVE_COORDINATOR)) {
       // expected that the vote owner is active
         TimeUnit.SECONDS.sleep(5);
@@ -244,7 +306,7 @@ public class ActiveVoter implements AutoCloseable {
       } else {
       // unknown state, try again shortly, vote should be stolen soon
         Optional<ClientVoterManager> om = voterManagers.stream().filter(ActiveVoter::isActive).findFirst();
-        om.ifPresent(target->voteOwner.compareAndSet(voter, target));
+        om.ifPresent(target->voteOwner.compareAndSet(vm, target));
         if (!om.isPresent()) {
           sleepFor10();
         }
@@ -272,13 +334,6 @@ public class ActiveVoter implements AutoCloseable {
       return vm.isConnected() && vm.getServerState().equals(ACTIVE_COORDINATOR);
     } catch (TimeoutException to) {
       return false;
-    }
-  }
-  
-  private void registerAsVoter(ClientVoterManager voterManager) throws TimeoutException, InterruptedException {
-    while (voterManager.registerVoter(id) < 0) {
-      TimeUnit.MILLISECONDS.sleep(REG_RETRY_INTERVAL);
-      LOGGER.info("Retrying voter registration {}", voterManager.getTargetHostPort());
     }
   }
   

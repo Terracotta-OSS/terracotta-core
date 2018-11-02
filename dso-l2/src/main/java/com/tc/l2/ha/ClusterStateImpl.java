@@ -78,6 +78,9 @@ public class ClusterStateImpl implements ClusterState {
   public void syncActiveState() {
 // activate the connection id factory so that it can be used to create connection ids
 // this happens for active only
+// when going active, start the next available ID+10 so that on restarts with persistent state, 
+// this active is picked via the additional election weightings
+    setNextAvailableChannelID(nextAvailChannelID + 10);
     connectionIdFactory.activate(stripeIDStateManager.getStripeID(), nextAvailChannelID);
   }
 

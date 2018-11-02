@@ -42,10 +42,19 @@ public class WeightGeneratorFactory {
   
   public synchronized long[] generateMaxWeightSequence() {
     long weights[] = new long[generators.size()];
-    for (int i = 0; i < weights.length; i++) {
-      weights[i] = Long.MAX_VALUE;
+    for (int i=0;i<generators.size();i++) {
+      // generation weight generator is for information sharing only
+      if (generators.get(i) instanceof GenerationWeightGenerator) {
+        weights[i] = generators.get(i).getWeight();
+      } else {
+        weights[i] = Long.MAX_VALUE;
+      }
     }
     return weights;
+  }
+  
+  public int size() {
+    return generators.size();
   }
 
   /**

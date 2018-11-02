@@ -35,16 +35,10 @@ import com.tc.server.ServiceClassLoader;
 import com.tc.util.Assert;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
-import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
-import org.terracotta.config.TcProperties;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -359,37 +353,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
       return new ByteArrayInputStream(text.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException uee) {
       throw Assert.failure("This shouldn't be possible", uee);
-    }
-  }
-
-  @Override
-  public InputStream effectiveConfigFile() {
-    // This MUST piece together the configuration from our currently-active
-    // bean repositories. If we just read the
-    // actual config file we got on startup, we'd be sending out, well, the
-    // config we got on startup -- which might be
-    // quite different from our current config, if an L1 came in and
-    // overrode our config. This effective config will
-    // also contain the effects of parameter substitution for server
-    // elements
-
-    TcConfig config = new TcConfig();
-
-    TcProperties tcProperties = this.tcPropertiesRepository();
-    Servers servers = this.serversBeanRepository();
-
-    if (servers != null) config.setServers(servers);
-    if (tcProperties != null) config.setTcProperties(tcProperties);
-
-    try {
-      JAXBContext jaxbContext = JAXBContext.newInstance(TcConfig.class);      
-      StringWriter sw = new StringWriter();
-      Marshaller marshaller = jaxbContext.createMarshaller();
-      marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-      marshaller.marshal(config, sw);      
-      return new ByteArrayInputStream(sw.toString().getBytes("UTF-8"));
-    } catch (JAXBException | UnsupportedEncodingException e) {
-      throw Assert.failure("This shouldn't be possible", e);
     }
   }
 
