@@ -59,10 +59,18 @@ public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[
   @Override
   public void ackDelivered(Acks ack) {
     if (monitor instanceof AckMonitor) {
-      ((AckMonitor)monitor).ackDelivered(ack);
+      deliverAck((AckMonitor)monitor, ack);
     }
   }
-
+  
+  private void deliverAck(AckMonitor check, Acks ack) {
+    if (executor != null) {
+      executor.execute(()->check.ackDelivered(ack));
+    } else {
+      check.ackDelivered(ack);
+    }
+  }
+  
   @Override
   public void close() {
     monitor.close();
