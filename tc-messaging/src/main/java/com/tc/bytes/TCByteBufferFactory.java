@@ -21,10 +21,6 @@ package com.tc.bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 /**
  * TCByteBuffer source that hides JDK dependencies and that can pool instances. Instance pooling is likely to be a good
  * idea for fixed size buffers and definitely a good idea for java direct buffers (since their allocation/deallocation
@@ -39,9 +35,7 @@ public class TCByteBufferFactory {
   private static final TCByteBuffer[]      EMPTY_BB_ARRAY          = new TCByteBuffer[0];
   private static final TCByteBuffer        ZERO_BYTE_BUFFER        = TCByteBufferImpl.wrap(new byte[0]);
   private static final Logger logger = LoggerFactory.getLogger(TCByteBufferFactory.class);
-  
-  private static final Set<ThreadGroup> handledGroups = Collections.newSetFromMap(new WeakHashMap<ThreadGroup, Boolean>());
-  
+    
   private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
     try {
       TCByteBuffer rv = new TCByteBufferImpl(capacity, direct, null);
@@ -80,10 +74,6 @@ public class TCByteBufferFactory {
 
   private static TCByteBuffer createNewInstance(boolean direct, int bufferSize) {
     return createNewInstance(direct, bufferSize, 0, 1);
-  }
-
-  public static void registerThreadGroup(ThreadGroup group) {
-    handledGroups.add(group);
   }
   
   /**
