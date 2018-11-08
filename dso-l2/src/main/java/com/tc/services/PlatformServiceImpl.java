@@ -18,6 +18,8 @@
  */
 package com.tc.services;
 
+import com.tc.lang.ServerExitStatus;
+import com.tc.logging.TCLogging;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import java.io.InputStream;
@@ -42,6 +44,17 @@ public class PlatformServiceImpl implements PlatformService {
     @Override
     public void stopPlatform() {
         tcServer.stop();
+    }
+
+    @Override
+    public long uptime() {
+      return System.currentTimeMillis() - tcServer.getStartTime();
+    }
+
+    @Override
+    public void fatalError(String description) {
+      TCLogging.getConsoleLogger().error("A fatal error occurred: " + description);
+      System.exit(ServerExitStatus.EXITCODE_FATAL_ERROR);
     }
 
     @Override
