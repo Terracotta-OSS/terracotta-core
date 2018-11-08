@@ -54,7 +54,7 @@ public class InFlightMessageTest extends TestCase {
       public void run() {
         try {
           TimeUnit.SECONDS.sleep(1);
-          inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException("test")));
+          inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException(true, "test")));
         } catch (InterruptedException ie) {
           
         }
@@ -115,7 +115,7 @@ public class InFlightMessageTest extends TestCase {
     t.start();
     
     TimeUnit.SECONDS.sleep(1);
-    inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException("test")));
+    inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException(true, "test")));
 
     t.join(3000);
     Assert.assertFalse(t.isAlive());

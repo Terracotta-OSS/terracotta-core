@@ -148,6 +148,10 @@ public class InFlightMessage {
     return this.getCanComplete;
   }
 
+  public synchronized boolean isSent() {
+    return this.isSent;
+  }
+  
   public synchronized byte[] get() throws InterruptedException, EntityException {
     try {
       return getWithTimeout(0, TimeUnit.MILLISECONDS);

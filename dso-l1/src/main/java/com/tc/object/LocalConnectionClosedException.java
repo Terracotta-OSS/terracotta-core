@@ -27,13 +27,13 @@ public class LocalConnectionClosedException extends ConnectionClosedException {
   
   private final EntityID entityID;
   
-  public LocalConnectionClosedException(EntityID eid, String description, Throwable cause) {
-    super(description, cause);
+  public LocalConnectionClosedException(boolean wasSent, EntityID eid, String description, Throwable cause) {
+    super(wasSent, description, cause);
     this.entityID = eid;
   }
   
-  public LocalConnectionClosedException(EntityID eid, ConnectionClosedException cause) {
-    super(cause.getDescription(), cause);
+  public LocalConnectionClosedException(boolean wasSent, EntityID eid, ConnectionClosedException cause) {
+    super(wasSent, cause.getDescription(), cause);
     this.entityID = eid;
   }
   
