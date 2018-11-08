@@ -109,6 +109,7 @@ import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -604,6 +605,7 @@ public class DistributedObjectClient implements TCClient {
           Thread threadGroupCleanerThread = new Thread(this.threadGroup.getParent(),
                                                        new TCThreadGroupCleanerRunnable(threadGroup),
                                                        "TCThreadGroup last chance cleaner thread");
+          logger.warn(ThreadDumpUtil.getThreadDump());
           threadGroupCleanerThread.setDaemon(true);
           threadGroupCleanerThread.start();
           logger.warn("Spawning TCThreadGroup last chance cleaner thread");
@@ -667,6 +669,7 @@ public class DistributedObjectClient implements TCClient {
     public void run() {
       while (threadGroup.activeCount() > 0) {
         for (Thread liveThread : getLiveThreads(threadGroup)) {
+          liveThread.dumpStack();
           liveThread.interrupt();
         }
         try {
