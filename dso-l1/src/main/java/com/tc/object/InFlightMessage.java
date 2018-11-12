@@ -80,6 +80,10 @@ public class InFlightMessage {
     this.isDeferred = isDeferred;
   }
 
+  public EntityID getEntityID() {
+    return eid;
+  }
+
   /**
    * Used when populating the reconnect handshake.
    */

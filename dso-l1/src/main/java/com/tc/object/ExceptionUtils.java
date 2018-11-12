@@ -62,7 +62,7 @@ public class ExceptionUtils {
     if (wrappedException instanceof PermanentEntityException) {
       throw new PermanentEntityException(entityType, enityName, wrappedException);
     } else if (wrappedException instanceof ConnectionClosedException) {
-      throw new LocalConnectionClosedException(((ConnectionClosedException)wrappedException).messageWasNotSent(), eid, wrappedException.getDescription(), wrappedException);
+      throw wrappedException;
     } else if (wrappedException instanceof EntityServerUncaughtException) {
       throw new EntityServerUncaughtException(entityType, enityName, wrappedException.getDescription(), wrappedException);
     } else {

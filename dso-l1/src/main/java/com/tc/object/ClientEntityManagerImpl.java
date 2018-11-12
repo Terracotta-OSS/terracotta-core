@@ -380,7 +380,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private void throwClosedExceptionOnMessage(InFlightMessage msg, String description) {
     msg.received();
     // Synthesize the disconnect runtime exception for this message.
-    msg.setResult(null, new VoltronWrapperException(new ConnectionClosedException(msg.isSent(), description)));
+    msg.setResult(null, new VoltronWrapperException(new ConnectionClosedException(msg.getEntityID().getClassName(), msg.getEntityID().getEntityName(), description, msg.isSent(), null)));
     msg.retired();
   }
 
