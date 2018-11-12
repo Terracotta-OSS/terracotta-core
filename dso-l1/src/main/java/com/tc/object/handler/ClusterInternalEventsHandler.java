@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.cluster.ClusterEventsNotifier;
 import com.tc.cluster.ClusterInternalEventsContext;
 

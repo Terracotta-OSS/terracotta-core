@@ -38,7 +38,6 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
-import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

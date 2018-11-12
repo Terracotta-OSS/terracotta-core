@@ -18,7 +18,6 @@
  */
 package com.tc.object.config;
 
-import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.util.Assert;

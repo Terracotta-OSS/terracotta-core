@@ -20,7 +20,6 @@ package com.tc.object.msg;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.TCMessage;
 
 import java.util.Set;
 

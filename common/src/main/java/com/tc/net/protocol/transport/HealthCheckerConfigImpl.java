@@ -20,7 +20,6 @@ package com.tc.net.protocol.transport;
 
 import com.tc.properties.TCProperties;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**

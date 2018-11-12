@@ -68,9 +68,7 @@ import com.tc.objectserver.persistence.TransactionOrderPersistor;
 import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
-import com.tc.util.State;
 
 import java.util.Collections;
 import java.util.LinkedList;

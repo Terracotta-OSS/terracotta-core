@@ -19,7 +19,6 @@
 package com.tc.config.schema;
 
 import com.tc.config.schema.LicenseType;
-import com.tc.config.schema.LicenseType;
 import com.tc.test.EqualityChecker;
 import com.tc.test.TCTestCase;
 

@@ -18,7 +18,6 @@
  */
 package org.terracotta.voter;
 
-import org.apache.commons.cli.CommandLine;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

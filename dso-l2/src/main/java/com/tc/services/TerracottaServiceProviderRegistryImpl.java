@@ -19,8 +19,6 @@
 package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
-import com.tc.classloader.ServiceLocator;
-import com.tc.server.TCServerImpl;
 import com.tc.server.TCServerMain;
 
 import org.slf4j.Logger;
@@ -31,7 +29,6 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.io.PrintWriter;
 import java.io.StringWriter;

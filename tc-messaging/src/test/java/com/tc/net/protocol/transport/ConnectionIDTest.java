@@ -19,7 +19,6 @@
 package com.tc.net.protocol.transport;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
@@ -28,7 +27,6 @@ import com.tc.util.ProductID;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ConnectionIDTest {
   

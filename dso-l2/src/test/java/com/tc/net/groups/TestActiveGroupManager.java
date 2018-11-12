@@ -22,7 +22,6 @@ import com.tc.async.api.Sink;
 import com.tc.config.NodesStore;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 import java.util.Collections;

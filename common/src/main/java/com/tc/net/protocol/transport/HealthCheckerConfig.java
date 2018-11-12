@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import java.util.Set;
-
 public interface HealthCheckerConfig {
 
   // HC - HealthChecker

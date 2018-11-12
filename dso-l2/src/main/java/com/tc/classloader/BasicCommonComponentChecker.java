@@ -1,7 +1,6 @@
 package com.tc.classloader;
 
 import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  * @author vmad

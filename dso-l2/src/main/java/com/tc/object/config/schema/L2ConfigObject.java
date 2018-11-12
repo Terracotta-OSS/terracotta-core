@@ -23,12 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
-import org.terracotta.config.TcConfig;
-
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.net.TCSocketAddress;
 
-import java.io.File;
 
 
 /**

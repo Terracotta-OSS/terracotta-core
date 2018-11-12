@@ -22,7 +22,6 @@ import com.tc.text.PrettyPrintable;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.StateDumpable;
 
 
 /**

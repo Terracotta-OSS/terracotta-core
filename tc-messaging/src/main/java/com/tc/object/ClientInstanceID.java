@@ -22,7 +22,6 @@ package com.tc.object;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.io.Serializable;
