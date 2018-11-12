@@ -113,6 +113,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>system-rules</artifactId>
+      <version>1.18.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
     </dependency>

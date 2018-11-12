@@ -26,9 +26,12 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.TcConfig;
@@ -38,7 +41,10 @@ import org.terracotta.config.Voter;
  *
  */
 public class ConsistencyManagerImplTest {
-  
+
+  @Rule
+  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+
   public ConsistencyManagerImplTest() {
   }
   
@@ -103,10 +109,6 @@ public class ConsistencyManagerImplTest {
     
     Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
     
-    when(conf.getFailoverPriority()).thenReturn(null);
-    // default consistency with no voters
-    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
-    
     when(conf.getFailoverPriority()).thenReturn(fail);
     
     Consistency c = mock(Consistency.class);
@@ -122,7 +124,7 @@ public class ConsistencyManagerImplTest {
     
     Assert.assertEquals(2, ConsistencyManager.parseVoteCount(conf));
 
-  }  
+  }
   
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
@@ -134,4 +136,12 @@ public class ConsistencyManagerImplTest {
     Assert.assertFalse(impl.isBlocked());
     Assert.assertEquals(cterm, impl.getVotingTerm());
   }
+
+  @Test
+  public void testVoteConfigMandatory() throws Exception {
+    TcConfig conf = mock(TcConfig.class);
+    exit.expectSystemExitWithStatus(-1);
+    ConsistencyManager.parseVoteCount(conf);
+  }
+
 }
