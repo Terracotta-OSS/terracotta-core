@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.async.api.Sink;
 import java.util.EnumMap;
 
 import java.util.Map;

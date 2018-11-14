@@ -18,8 +18,6 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
 
 import java.util.AbstractSet;

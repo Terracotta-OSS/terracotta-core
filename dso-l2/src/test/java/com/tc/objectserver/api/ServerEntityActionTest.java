@@ -20,7 +20,6 @@ package com.tc.objectserver.api;
 
 import com.tc.util.Assert;
 import java.util.EnumSet;
-import java.util.Set;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

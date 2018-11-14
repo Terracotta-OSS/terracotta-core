@@ -18,11 +18,8 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;

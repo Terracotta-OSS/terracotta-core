@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
-
 /**
  * Interface for TC message routers
  * 

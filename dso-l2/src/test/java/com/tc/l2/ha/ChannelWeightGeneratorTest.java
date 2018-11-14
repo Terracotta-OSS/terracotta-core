@@ -21,9 +21,7 @@ package com.tc.l2.ha;
 import com.tc.l2.state.StateManager;
 import org.junit.Assert;
 
-import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.ProductID;

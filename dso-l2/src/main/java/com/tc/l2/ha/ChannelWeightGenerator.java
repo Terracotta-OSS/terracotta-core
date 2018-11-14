@@ -23,7 +23,6 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
 import java.util.function.Supplier;
 
 public class ChannelWeightGenerator implements WeightGenerator {

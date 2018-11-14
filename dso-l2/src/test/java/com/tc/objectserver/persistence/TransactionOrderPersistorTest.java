@@ -25,7 +25,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.ProductID;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

@@ -19,7 +19,6 @@
 package com.tc.net.core;
 
 
-import com.tc.net.ClientID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackHarnessFactory;

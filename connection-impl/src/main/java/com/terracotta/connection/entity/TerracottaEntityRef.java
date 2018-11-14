@@ -29,7 +29,6 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.EntityAlreadyExistsException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.exception.EntityException;

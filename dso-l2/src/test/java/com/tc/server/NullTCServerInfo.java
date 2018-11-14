@@ -22,7 +22,6 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.objectserver.api.BackupManager;
 
 import java.util.Map;
 

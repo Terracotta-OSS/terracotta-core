@@ -80,6 +80,10 @@ public class InFlightMessage {
     this.isDeferred = isDeferred;
   }
 
+  public EntityID getEntityID() {
+    return eid;
+  }
+
   /**
    * Used when populating the reconnect handshake.
    */
@@ -148,6 +152,10 @@ public class InFlightMessage {
     return this.getCanComplete;
   }
 
+  public synchronized boolean isSent() {
+    return this.isSent;
+  }
+  
   public synchronized byte[] get() throws InterruptedException, EntityException {
     try {
       return getWithTimeout(0, TimeUnit.MILLISECONDS);

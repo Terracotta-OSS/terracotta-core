@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.net.TCSocketAddress;
-
 /**
  * Thrown by Stack providers when a connecting product is not supported by the server
  */

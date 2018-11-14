@@ -18,7 +18,6 @@
  */
 package com.tc.async.impl;
 
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;

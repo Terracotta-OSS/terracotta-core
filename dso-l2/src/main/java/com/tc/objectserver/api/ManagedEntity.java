@@ -26,7 +26,6 @@ import com.tc.object.EntityID;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.Map;
-import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;

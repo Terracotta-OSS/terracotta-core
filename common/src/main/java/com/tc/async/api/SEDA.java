@@ -19,7 +19,6 @@
 package com.tc.async.api;
 
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.bytes.TCByteBufferFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.util.concurrent.QueueFactory;
 
@@ -35,7 +34,6 @@ public class SEDA<EC> {
   public SEDA(TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
     this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
-    TCByteBufferFactory.registerThreadGroup(threadGroup);
   }
 
   public StageManager getStageManager() {

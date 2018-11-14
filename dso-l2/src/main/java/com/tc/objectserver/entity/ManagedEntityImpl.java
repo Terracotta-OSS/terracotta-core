@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.Sink;
+import com.tc.classloader.TemporaryEntity;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
@@ -118,6 +119,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  for destroy, passives need to reference count to understand if entity is deletable
   private int clientReferenceCount = 0;
   private final boolean canDelete;
+  private boolean isTemp;
   private volatile boolean isDestroyed;
   // We only track a single CreateListener since it is intended to be the EntityMessengerService attached to this.
   private final List<LifecycleListener> createListener = new CopyOnWriteArrayList<>();
@@ -791,7 +793,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         
     notifyEntityCreated();
     this.isDestroyed = false;
-
+    if (this.factory.getClass().isAnnotationPresent(TemporaryEntity.class)) {
+      this.isTemp = true;
+    }
     eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
     response.complete();
   }
@@ -1008,6 +1012,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         this.activeServerEntity.disconnected(clientInstance);
         // Fire the event that the client released the entity.
         this.eventCollector.clientDidReleaseEntity(clientID, this.id, this.consumerID, request.getClientInstance());
+        if (isTemp && clientReferenceCount == 0) {
+          this.messageSelf.addToSink(new DestroyMessage(EntityDescriptor.createDescriptorForLifecycle(id, version)));
+        }
       } else {
 //  clientEntityStateManager is only tracking knowledge of clients on passives
 //  it is allowed to be unexact due to passive failover and reference counts 

@@ -18,9 +18,6 @@
  */
 package com.tc.objectserver.storage.api;
 
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
-
 /**
  * Additional Offheap Stats which can be accessed vis JMX beans. These methods are not exposed in OffheapStats as they
  * can affect performance and don't want users like dev-consoles to invoke them frequently.

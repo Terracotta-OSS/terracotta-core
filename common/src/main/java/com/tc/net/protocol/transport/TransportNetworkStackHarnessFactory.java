@@ -19,7 +19,6 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.net.protocol.ClientNetworkStackHarness;
-import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.ServerNetworkStackHarness;
 import com.tc.net.protocol.tcm.ClientMessageChannel;

@@ -181,7 +181,7 @@ public class ActiveVoter implements AutoCloseable {
     List<Future<?>> futures = voterManagers.stream().map(voterManager -> executorService.submit(() -> {
       try {
         ClientVoterManager owner = voteOwner.get();
-        while (owner != null) {          
+        while (owner != null && !executorService.isShutdown()) {          
           try {
             voterManager.connect(connectionProps);
             long lastVotedElection = 0;

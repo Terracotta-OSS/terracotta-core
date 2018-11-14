@@ -37,7 +37,6 @@ import com.tc.stats.counter.sampled.SampledCounter;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;

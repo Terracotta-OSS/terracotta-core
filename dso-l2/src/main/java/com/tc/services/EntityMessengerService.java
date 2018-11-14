@@ -27,6 +27,7 @@ import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
+import com.tc.objectserver.entity.DestroyMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 import org.terracotta.entity.EntityMessage;
@@ -39,7 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityException;
 
@@ -55,6 +55,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   private final RetirementManager retirementManager;
   private final MessageCodec<M, R> codec;
   private final EntityDescriptor fakeDescriptor;
+  private final EntityDescriptor lifecycleDescriptor;
   private final ConcurrentHashMap<ExplicitRetirementHandle, Handle> retirementHandles = new ConcurrentHashMap<>();
 
   @SuppressWarnings("unchecked")
@@ -75,6 +76,12 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     Assert.assertNotNull(codec);
 
     this.fakeDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(owningEntity.getConsumerID()),ClientInstanceID.NULL_ID);
+    this.lifecycleDescriptor = EntityDescriptor.createDescriptorForLifecycle(owningEntity.getID(), owningEntity.getVersion());
+  }
+
+  @Override
+  public void deleteSelf() {
+    this.messageSink.addToSink(new DestroyMessage(lifecycleDescriptor));
   }
 
   @Override

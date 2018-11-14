@@ -23,7 +23,6 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.session.SessionID;
 import java.util.Collection;

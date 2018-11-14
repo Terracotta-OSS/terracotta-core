@@ -19,9 +19,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
-import com.tc.async.api.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +33,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.server.TCServerMain;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;

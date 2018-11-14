@@ -25,9 +25,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
-import com.tc.services.LocalMonitoringProducer;
 import com.tc.util.State;
 
 

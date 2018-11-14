@@ -19,7 +19,6 @@
 package com.tc.async.impl;
 
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;

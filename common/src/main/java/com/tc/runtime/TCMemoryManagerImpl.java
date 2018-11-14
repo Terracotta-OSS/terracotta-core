@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
-import com.tc.util.runtime.Os;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;

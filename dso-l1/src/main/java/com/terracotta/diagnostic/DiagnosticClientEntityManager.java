@@ -32,7 +32,6 @@ import com.tc.object.InFlightMessage;
 import com.tc.object.InFlightMonitor;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.TransactionID;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Map;

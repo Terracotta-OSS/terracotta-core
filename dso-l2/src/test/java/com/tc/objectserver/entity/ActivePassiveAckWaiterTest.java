@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
 import com.tc.util.Assert;
