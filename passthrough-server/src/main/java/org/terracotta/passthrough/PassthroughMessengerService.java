@@ -33,6 +33,7 @@ import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvid
 
 import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.exception.EntityException;
 
 
 public class PassthroughMessengerService implements IEntityMessenger<EntityMessage, EntityResponse>, EntityContainerListener {
@@ -55,6 +56,15 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
     // need to register for notifications that the entity has been created.
     if (null == this.entityContainer.getEntity()) {
       this.entityContainer.notifyOnEntitySet(this);
+    }
+  }
+
+  @Override
+  public void destroySelf() {
+    try {
+      this.passthroughServerProcess.destroy(entityClassName, entityName);
+    } catch (EntityException ee) {
+    // ignore
     }
   }
 
