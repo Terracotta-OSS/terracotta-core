@@ -80,7 +80,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   }
 
   @Override
-  public void deleteSelf() {
+  public void destroySelf() {
     this.messageSink.addToSink(new DestroyMessage(lifecycleDescriptor));
   }
 
