@@ -29,6 +29,16 @@ public class PassthroughPlatformService implements PlatformService {
     public InputStream getPlatformConfiguration() {
       return new ByteArrayInputStream(new byte[0]);
     }
+
+  @Override
+  public void fatalError(String string) {
+    passthroughServer.stop();
+  }
+
+  @Override
+  public long uptime() {
+    return 0L;
+  }
     
     
 }
