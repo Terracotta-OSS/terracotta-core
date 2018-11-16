@@ -66,14 +66,12 @@ public class EntityExistenceHelpers {
   public static void recordDestroyEntity(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, EntityException exception) {
     // We can't have a null client, transaction, or oldest transaction when an entity is destroyed - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
-    Assert.assertFalse(clientID.isNull());
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
     long transactionID = transactionIDObject.toLong();
       // There is no record of this, so give it a try.
     long oldestTransactionOnClient = oldestTransactionOnClientObject.toLong();
-    
-      // Record the success.
+
     if (exception == null) {
       entityPersistor.entityDestroyed(clientID, transactionID, oldestTransactionOnClient, entityID);
     } else {
