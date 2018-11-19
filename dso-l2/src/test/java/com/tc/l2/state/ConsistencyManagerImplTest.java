@@ -21,6 +21,8 @@ package com.tc.l2.state;
 import com.tc.net.NodeID;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.Assert;
+
+import java.util.List;
 import java.util.UUID;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -34,6 +36,7 @@ import static org.mockito.Mockito.when;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
+import org.terracotta.config.Servers;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.Voter;
 
@@ -101,7 +104,12 @@ public class ConsistencyManagerImplTest {
   
   @Test
   public void testVoteConfig() throws Exception {
+    List serverList = mock(List.class);
+    when(serverList.size()).thenReturn(2);
+    Servers servers = mock(Servers.class);
+    when(servers.getServer()).thenReturn(serverList);
     TcConfig conf = mock(TcConfig.class);
+    when(conf.getServers()).thenReturn(servers);
     FailoverPriority fail = mock(FailoverPriority.class);
     String avail = "Availability";
     when(fail.getAvailability()).thenReturn(avail);
@@ -138,10 +146,26 @@ public class ConsistencyManagerImplTest {
   }
 
   @Test
-  public void testVoteConfigMandatory() throws Exception {
+  public void testVoteConfigMandatoryForMultiNode() throws Exception {
+    List serverList = mock(List.class);
+    when(serverList.size()).thenReturn(2);
+    Servers servers = mock(Servers.class);
+    when(servers.getServer()).thenReturn(serverList);
     TcConfig conf = mock(TcConfig.class);
+    when(conf.getServers()).thenReturn(servers);
     exit.expectSystemExitWithStatus(-1);
     ConsistencyManager.parseVoteCount(conf);
+  }
+
+  @Test
+  public void testVoteConfigNotMandatoryForSingleNode() throws Exception {
+    List serverList = mock(List.class);
+    when(serverList.size()).thenReturn(1);
+    Servers servers = mock(Servers.class);
+    when(servers.getServer()).thenReturn(serverList);
+    TcConfig conf = mock(TcConfig.class);
+    when(conf.getServers()).thenReturn(servers);
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
   }
 
 }

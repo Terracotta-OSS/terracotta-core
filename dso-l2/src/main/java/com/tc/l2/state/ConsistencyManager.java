@@ -52,6 +52,9 @@ public interface ConsistencyManager {
   
   static int parseVoteCount(TcConfig config) {
     Logger consoleLogger = TCLogging.getConsoleLogger();
+    if (config.getServers().getServer().size() == 1) {
+      return -1;
+    }
     if (config.getFailoverPriority() == null) {
       consoleLogger.error("*****************************************************************************");
       consoleLogger.error("* Failover priority is not specified and it is a mandatory configuration. *");
