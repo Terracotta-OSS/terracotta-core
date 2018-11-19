@@ -541,7 +541,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getTCConfiguration().getPlatformConfiguration());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
-    if ((voteCount + knownPeers + 1) % 2 == 0) {
+    if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
       consoleLogger.warn("It is recommended to keep the total number of servers and external voters to be an odd number");
     }
 
