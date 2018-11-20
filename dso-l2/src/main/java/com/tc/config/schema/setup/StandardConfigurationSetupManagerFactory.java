@@ -48,6 +48,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
 
   private final String[] args;
   private final String defaultL2Identifier;
+  private final boolean safeMode;
   private final ConfigurationSpec configurationSpec;
 
   public static enum ConfigMode {
@@ -91,6 +92,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                    System.getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
                                                    configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
+    this.safeMode = commandLine.hasOption('s');
   }
 
   private String getDefaultL2Identifier(CommandLine commandLine) {
@@ -157,6 +159,10 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       l2NameOption.setRequired(false);
       l2NameOption.setArgName("l2-name");
       options.addOption(l2NameOption);
+
+      Option safeModeOption = new Option("s", "safe", false, "to start the server in safe mode");
+      safeModeOption.setRequired(false);
+      options.addOption(safeModeOption);
     } else {
       configFileOption.setRequired(true);
       options.addOption(configFileOption);
@@ -173,7 +179,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     ConfigurationCreator configurationCreator;
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory);
 
-    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, loader);
+    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, loader, safeMode);
   }
 
   public String[] getArguments() {

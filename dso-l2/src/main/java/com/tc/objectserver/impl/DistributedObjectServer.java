@@ -217,6 +217,7 @@ import java.nio.charset.Charset;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.BasicServiceConfiguration;
@@ -276,6 +277,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
+
+  private final CountDownLatch safeMode = new CountDownLatch(1);
 
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
@@ -820,10 +823,28 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 
+    startDiagnosticListener();
+
+    if (configSetupManager.safeModeStartup()) {
+      try {
+        consoleLogger.warn("Waiting in suspended mode");
+        safeMode.await();
+      } catch (InterruptedException e) {
+        throw new RuntimeException("Startup interrupted while waiting in safe mode");
+      }
+    }
+
     startGroupManagers();
     this.l2Coordinator.start();
-    startDiagnosticListener();
     setLoggerOnExit();
+  }
+
+  boolean inSafeMode() {
+    return safeMode.getCount() == 1;
+  }
+
+  public void resumeFromSafeMode() {
+    safeMode.countDown();
   }
   
   private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ClientChannelLifeCycleHandler handler) {
@@ -1213,4 +1234,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   public CommunicationsManager getCommunicationsManager() {
     return communicationsManager;
   }
+
+  public Persistor getPersistor() {
+    return persistor;
+  }
+
 }

@@ -34,6 +34,7 @@ import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.server.TCServerMain;
+import com.tc.util.State;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 import java.io.ByteArrayOutputStream;
@@ -86,6 +87,21 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
       switch (cmd[0]) {
         case "getState":
           result = server.getContext().getL2Coordinator().getStateManager().getCurrentMode().getName().getBytes(set);
+          break;
+        case "getInitialState":
+          State initialState = server.getPersistor().getClusterStatePersistor().getInitialState();
+          result = initialState != null ? initialState.getName().getBytes(set) : "".getBytes(set);
+          break;
+        case "inSafeMode":
+          result = Boolean.toString(server.inSafeMode()).getBytes(set);
+          break;
+        case "resumeFromSafeMode":
+          if (server.inSafeMode()) {
+            server.resumeFromSafeMode();
+            result = "true".getBytes(set);
+          } else {
+            result = "false".getBytes(set);
+          }
           break;
         case "getClusterState":
           if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "getClusterState")) {

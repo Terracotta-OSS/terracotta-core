@@ -23,9 +23,15 @@ import org.terracotta.connection.entity.Entity;
 
 public interface Diagnostics extends Entity {
   String getState();
+
+  String getInitialState();
+
+  String inSafeMode();
+
+  String resumeFromSafeMode();
   
   String getClusterState();  
-  
+
   String getConfig();
 
   String getProcessArguments();
