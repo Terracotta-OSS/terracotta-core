@@ -23,6 +23,8 @@ import com.tc.net.NodeID;
 import org.slf4j.Logger;
 import org.terracotta.config.TcConfig;
 
+import java.util.Collection;
+
 public interface ConsistencyManager {
   
   public enum Transition {
@@ -49,6 +51,12 @@ public interface ConsistencyManager {
   }
 
   boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException;
+
+  boolean lastTransitionSuspended();
+
+  void allowLastTransition();
+
+  Collection<Transition> requestedActions();
   
   static int parseVoteCount(TcConfig config) {
     Logger consoleLogger = TCLogging.getConsoleLogger();

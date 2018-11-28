@@ -19,12 +19,9 @@
 package com.tc.l2.state;
 
 import com.tc.logging.TCLogging;
-import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.TerracottaManagement;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.util.Assert;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,7 +29,8 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import javax.management.ObjectName;
+import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +47,11 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
   private final Set<NodeID> passives = Collections.synchronizedSet(new HashSet<>());
-  
+
   public ConsistencyManagerImpl(int knownPeers, int voters) {
     try {
       this.peerServers = knownPeers;
       this.voter = new ServerVoterManagerImpl(voters);
-      initMBean();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -82,15 +79,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     voteTerm = term;
   }
         
-  private void initMBean() {
-    try {
-      ObjectName MBEAN_NAME = TerracottaManagement.createObjectName(null, "ConsistencyManager", TerracottaManagement.MBeanDomain.PUBLIC);
-      ManagementFactory.getPlatformMBeanServer().registerMBean(new ConsistencyMBeanImpl(), MBEAN_NAME);
-    } catch (Exception e) {
-      LOGGER.warn("Consistency MBean not initialized", e);
-    }
-  }
-
   @Override
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
     if (newMode == Transition.ADD_PASSIVE) {
@@ -117,21 +105,6 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     }
     boolean allow = false;
     
-    if (mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
-//  only other servers can be considered in this case.  Only go active 
-//  if all servers are present.  any registered
-//  external voters should not be considered because they were registered before 
-//  when there should have been no cluster wide active
-      if (this.activePeers.size() == peerServers || voter.overrideVoteReceived()) {
-        CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
-        allow = true;
-      } else {
-        CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
-        allow = false;
-      } 
-      return allow;
-    }
-        
     // activate voting to lock the voting members and return the number of server votes
     int serverVotes = activateVoting(mode, newMode);
 
@@ -171,7 +144,26 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     }
     return allow;
   }
-  
+
+  @Override
+  public boolean lastTransitionSuspended() {
+    return blocked;
+  }
+
+  @Override
+  public void allowLastTransition() {
+    try {
+      this.voter.overrideVote("external");
+    } catch (TimeoutException e) {
+      // Won't happen since this call is within the server
+    }
+  }
+
+  @Override
+  public Collection<Transition> requestedActions() {
+    return Collections.unmodifiableSet(actions);
+  }
+
   private int voteThreshold(ServerMode mode) {
     //  peer servers plus extra votes plus self is the total votes available
     int voteCount = peerServers + voter.getVoterLimit() + 1;
@@ -238,36 +230,9 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public synchronized boolean isBlocked() {
     return blocked;
   }
-    
+
   long getVotingTerm() {
     return voteTerm;
-  }    
-    
-  public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements com.tc.l2.state.ConsistencyMBean {
-
-    public ConsistencyMBeanImpl() throws Exception {
-      super(ConsistencyMBean.class, false);
-    }
-    
-    @Override
-    public boolean isBlocked() {
-      return blocked;
-    }
-    
-    
-    @Override
-    public boolean isStuck() {
-      return activeVote ;
-    }    
-
-    @Override
-    public Collection<Transition> requestedActions() {
-      return getActions();
-    }        
-
-    @Override
-    public void reset() {
-      //
-    }
   }
+
 }

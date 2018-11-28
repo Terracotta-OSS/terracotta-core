@@ -21,6 +21,8 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import com.tc.l2.state.AvailabilityManagerImpl;
+import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
@@ -549,7 +551,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
     }
 
-    ConsistencyManager consistencyMgr = (voteCount < 0 || knownPeers == 0) ? (a, b, c)->true : new ConsistencyManagerImpl(knownPeers, voteCount);
+    boolean safeStartup = voteCount < 0 ? configSetupManager.safeModeStartup() : true;
+    ConsistencyManager consistencyMgr = new SafeStartupManagerImpl(safeStartup, knownPeers,
+        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount));
     
     final String dsoBind = l2DSOConfig.tsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
@@ -825,7 +829,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     startDiagnosticListener();
     setLoggerOnExit();
   }
-  
+
   private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ClientChannelLifeCycleHandler handler) {
     try {
       Guardian userProvided = platformRegistry.getService(new BasicServiceConfiguration<>(Guardian.class));
@@ -1213,4 +1217,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   public CommunicationsManager getCommunicationsManager() {
     return communicationsManager;
   }
+
+  public Persistor getPersistor() {
+    return persistor;
+  }
+
 }

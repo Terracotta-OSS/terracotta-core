@@ -16,34 +16,31 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.diagnostic;
+package com.tc.l2.state;
 
-import org.terracotta.connection.entity.Entity;
+import com.tc.net.NodeID;
 
+import java.util.Collection;
+import java.util.Collections;
 
-public interface Diagnostics extends Entity {
-  String getState();
+public class AvailabilityManagerImpl implements ConsistencyManager {
+  @Override
+  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
+    return true;
+  }
 
-  String getInitialState();
+  @Override
+  public boolean lastTransitionSuspended() {
+    return false;
+  }
 
-  String getClusterState();
+  @Override
+  public void allowLastTransition() {
+    //
+  }
 
-  String getConfig();
-
-  String getProcessArguments();
-
-  String getThreadDump();
-
-  String terminateServer();
-
-  String forceTerminateServer();  
-  
-  String get(String name, String attribute);
- 
-  String set(String name, String attribute, String arg);
-  
-  String invoke(String name, String cmd);
-
-  String invokeWithArg(String name, String cmd, String arg);
-
+  @Override
+  public Collection<Transition> requestedActions() {
+    return Collections.emptySet();
+  }
 }

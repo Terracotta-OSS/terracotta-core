@@ -23,6 +23,9 @@ import java.util.Collection;
 
 
 public interface ConsistencyMBean {
+
+  String CONSISTENCY_BEAN_NAME = "ConsistencyManager";
+
   /**
    * a server is stuck when a restricted action is requested and there are not
    * enough registered voters to grant access.  The only way to release such a
@@ -43,4 +46,9 @@ public interface ConsistencyMBean {
    * @return the list of transitions requested.
    */
   Collection<Transition> requestedActions();
+
+  /**
+   * Forcibly allow a requested transition action
+   */
+  void allowRequestedTransition();
 }
