@@ -21,6 +21,8 @@ package com.tc.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.monitoring.PlatformService.RestartMode;
+import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
 import com.tc.config.schema.ActiveServerGroupConfig;
@@ -33,6 +35,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
+import com.tc.lang.ServerExitStatus;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
@@ -109,10 +112,11 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
     this.configurationSetupManager = manager;
   }
   
-  public synchronized void setState(ServerMode state) {
+  public void setState(ServerMode state) {
     if (!validateState(state)) { throw new AssertionError("Unrecognized server state: [" + state.getName() + "]"); }
-
-    serverState = state;
+    synchronized (this.stateLock) {
+      serverState = state;
+    }
   }
 
   private boolean validateState(ServerMode state) {
@@ -183,10 +187,39 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public void stop() {
-    if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "stop")) {
-      Runtime.getRuntime().exit(0);
+    stop(RestartMode.STOP_ONLY);
+  }
+
+  @Override
+  public void stopIfPassive(RestartMode restartMode) throws PlatformStopException {
+    synchronized (this.stateLock) {
+      if (ServerMode.PASSIVE_STATES.contains(serverState)) {
+        stop(restartMode);
+      } else {
+        throw new UnexpectedStateException("Server is not in passive state, current state: " + serverState);
+      }
+    }
+  }
+
+  @Override
+  public void stopIfActive(RestartMode restartMode) throws PlatformStopException {
+    synchronized (this.stateLock) {
+      if (serverState == ServerMode.ACTIVE) {
+        stop(restartMode);
+      } else {
+        throw new UnexpectedStateException("Server is not in active state, current state: " + serverState);
+      }
+    }
+  }
+
+  @Override
+  public void stop(RestartMode restartMode) {
+    if (restartMode == RestartMode.STOP_ONLY) {
+      exitWithStatus(0);
+    } else if (restartMode == RestartMode.STOP_AND_RESTART) {
+      exitWithStatus(ServerExitStatus.EXITCODE_RESTART_REQUEST);
     } else {
-      logger.info("stop operation not allowed by guardian");
+      throw new IllegalArgumentException("Unknown RestartMode: " + restartMode);
     }
   }
 
@@ -485,5 +518,13 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
     synchronized (this.stateLock) {
       this.serverState = StateManager.convert(sce.getCurrentState());
     }
-  } 
+  }
+
+  private void exitWithStatus(int status) {
+    if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "stop")) {
+      Runtime.getRuntime().exit(status);
+    } else {
+      logger.info("stop operation not allowed by guardian");
+    }
+  }
 }
