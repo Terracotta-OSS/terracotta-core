@@ -52,13 +52,13 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     this.safeMode = safeMode;
     this.peerServers = peerServers;
     this.consistencyManager = consistencyManager;
-    initMBean(consistencyManager);
+    initMBean();
   }
 
-  private void initMBean(ConsistencyManager consistencyManager) {
+  private void initMBean() {
     try {
       ObjectName mbeanName = TerracottaManagement.createObjectName(null, CONSISTENCY_BEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC);
-      ManagementFactory.getPlatformMBeanServer().registerMBean(new ConsistencyMBeanImpl(consistencyManager), mbeanName);
+      ManagementFactory.getPlatformMBeanServer().registerMBean(new ConsistencyMBeanImpl(this), mbeanName);
     } catch (Exception e) {
       LOGGER.warn("SafeMode MBean not initialized", e);
     }
@@ -95,10 +95,10 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   @Override
   public synchronized void allowLastTransition() {
     if (suspended) {
-      CONSOLE.info("Override received to allow the last requested transition");
+      LOGGER.info("External intervention to allow the last requested transition");
       this.allowTransition = true;
     } else {
-      CONSOLE.info("Ignoring the override to allow the requested transition as the server is not in suspended state");
+      this.consistencyManager.allowLastTransition();
     }
   }
 
