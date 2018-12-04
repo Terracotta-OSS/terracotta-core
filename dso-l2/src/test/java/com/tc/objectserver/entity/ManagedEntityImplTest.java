@@ -19,6 +19,8 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.entity.ServerEntityMessage;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
@@ -795,6 +797,10 @@ public class ManagedEntityImplTest {
 
   @Test
   public void testSyncOrder() throws Exception {
+    Mockito.doAnswer((m)->{
+      ((Runnable)m.getArguments()[0]).run();
+      return null;
+    }).when(messageSelf).addToSink(any(VoltronEntityMessage.class));
     managedEntity.promoteEntity();
     managedEntity.startSync();
     verify(activeServerEntity, never()).prepareKeyForSynchronizeOnPassive(any(), eq(1));

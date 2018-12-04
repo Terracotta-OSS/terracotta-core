@@ -1083,18 +1083,13 @@ public class ManagedEntityImpl implements ManagedEntity {
         executor.scheduleSync(SyncReplicationActivity.createEndEntityMessage(id, version, fetchID), passive).waitForCompleted();
       }
     } finally {
-      BarrierCompletion syncComplete = new BarrierCompletion();
-      this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, 
-        new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false), 
-        MessagePayload.emptyPayload(), 
-        (w)-> { 
+      //  flush the sync pipeline and switch back to main pipeline.
+      messageSelf.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(new FetchID(getConsumerID()), ClientInstanceID.NULL_ID), 
+        ()-> { 
           Assert.assertTrue(this.isInActiveState);
           interop.syncFinished();
-          syncComplete.complete();
-        }, true, ConcurrencyStrategy.MANAGEMENT_KEY);
-      //  wait for completed above waits for acknowledgment from the passive
-      //  waitForCompletion below waits for completion of the local request processor
-      syncComplete.waitForCompletion();
+        })
+      );
     }
   }  
 
