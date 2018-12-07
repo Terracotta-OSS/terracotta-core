@@ -128,7 +128,7 @@ public class ServerProcess {
    * 
    * @throws FileNotFoundException The logs couldn't be created since the server's working directory is missing.
    */
-  public void start() throws FileNotFoundException {
+  public void start(boolean unsafe) throws FileNotFoundException {
     UUID token = enter();
     try {
     // First thing we need to do is make sure that we aren't already running.
@@ -156,10 +156,16 @@ public class ServerProcess {
     
     // Get the command to invoke the script.
     String startScript = getStartScriptCommand();
-    
+
+    String[] command;
+    if (unsafe) {
+      command = new String[]{startScript, "-u", "-n", this.serverName, this.eyeCatcher};
+    } else {
+      command = new String[]{startScript, "-n", this.serverName, this.eyeCatcher};
+    }
     // Start the inferior process.
     AnyProcess process = AnyProcess.newBuilder()
-        .command(startScript, "-n", this.serverName, this.eyeCatcher)
+        .command(command)
         .workingDir(this.serverWorkingDirectory)
         .env("JAVA_HOME", javaHome)
         .env("JAVA_OPTS", javaArguments)
