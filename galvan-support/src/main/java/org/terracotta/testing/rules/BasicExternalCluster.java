@@ -112,15 +112,15 @@ class BasicExternalCluster extends Cluster {
 
   public void manualStart(String displayName) throws Throwable {
     this.displayName = displayName;
-    internalStart();
+    internalStart(false);
   }
 
   @Override
   protected void before() throws Throwable {
-    internalStart();
+    internalStart(false);
   }
   
-  private void internalStart() throws Throwable {
+  private void internalStart(boolean force) throws Throwable {
     VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
     VerboseLogger fileHelpersLogger = new VerboseLogger(null, null);
     VerboseLogger clientLogger = null;
@@ -149,7 +149,7 @@ class BasicExternalCluster extends Cluster {
     cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
         serverInstallDirectory.getAbsolutePath(), testParentDirectory.getAbsolutePath(), stripeSize, heapInM, serverPort,
         serverDebugStartPort, 0, serverJarPaths, namespaceFragment, serviceFragment,
-        failoverPriorityVoterCount, clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt);
+        failoverPriorityVoterCount, clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt, force);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
     // than the framework, and the framework waits for the finish so that it can terminate the clients/servers if any of
@@ -256,6 +256,11 @@ class BasicExternalCluster extends Cluster {
       @Override
       public void waitForRunningPassivesInStandby() throws Exception {
         cluster.stripeControl.waitForRunningPassivesInStandby();
+      }
+
+      @Override
+      public void safeStartOneServer() throws Exception {
+        cluster.stripeControl.safeStartOneServer();
       }
 
       @Override

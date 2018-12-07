@@ -551,7 +551,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
     }
 
-    boolean safeStartup = voteCount < 0 ? configSetupManager.safeModeStartup() : true;
+    boolean safeStartup = knownPeers > 0 && configSetupManager.safeModeStartup();
     ConsistencyManager consistencyMgr = new SafeStartupManagerImpl(safeStartup, knownPeers,
         (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount));
     
