@@ -18,6 +18,9 @@
  */
 package com.tc.server;
 
+import org.terracotta.monitoring.PlatformService.RestartMode;
+import org.terracotta.monitoring.PlatformStopException;
+
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -31,6 +34,12 @@ public interface TCServer extends StateChangeListener {
   void start() throws Exception;
 
   void stop();
+
+  void stop(RestartMode restartMode);
+
+  void stopIfPassive(RestartMode restartMode) throws PlatformStopException;
+
+  void stopIfActive(RestartMode restartMode) throws PlatformStopException;
 
   boolean isStarted();
 

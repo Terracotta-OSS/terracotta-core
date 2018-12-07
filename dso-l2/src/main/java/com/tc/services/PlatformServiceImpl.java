@@ -24,6 +24,7 @@ import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import java.io.InputStream;
 import org.terracotta.monitoring.PlatformService;
+import org.terracotta.monitoring.PlatformStopException;
 
 /**
  * @author vmad
@@ -60,5 +61,20 @@ public class PlatformServiceImpl implements PlatformService {
     @Override
     public InputStream getPlatformConfiguration() {
       return TCServerMain.getSetupManager().rawConfigFile();
+    }
+
+    @Override
+    public void stopPlatformIfPassive(RestartMode restartMode) throws PlatformStopException {
+      tcServer.stopIfPassive(restartMode);
+    }
+
+    @Override
+    public void stopPlatformIfActive(RestartMode restartMode) throws PlatformStopException {
+      tcServer.stopIfActive(restartMode);
+    }
+
+    @Override
+    public void stopPlatform(RestartMode restartMode) {
+      tcServer.stop(restartMode);
     }
 }
