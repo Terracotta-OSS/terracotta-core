@@ -73,8 +73,8 @@ public class PassthroughServer implements PassthroughDumper {
   private final List<ServiceProviderAndConfiguration> savedServiceProviderData;
   private final Collection<Object> extendedConfigurationObjects;
   private final Map<Long, PassthroughConnection> savedClientConnections;
-  
-  
+  private PassthroughClusterControl passthroughClusterControl;
+
   public PassthroughServer() {
     this.entityClientServices = new Vector<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>>();
     
@@ -339,6 +339,9 @@ public class PassthroughServer implements PassthroughDumper {
     return savedClientConnections != null ? Collections.unmodifiableSet(savedClientConnections.keySet()) : Collections.<Long>emptySet();
   }
 
+  public void setClusterControl(PassthroughClusterControl passthroughClusterControl) {
+    this.passthroughClusterControl = passthroughClusterControl;
+  }
 
   private static class ServiceProviderAndConfiguration {
     public final ServiceProvider serviceProvider;
@@ -363,7 +366,7 @@ public class PassthroughServer implements PassthroughDumper {
     this.serverProcess.registerImplementationProvidedServiceProvider(communicatorServiceProvider, null);
     PassthroughMessengerServiceProvider messengerServiceProvider = new PassthroughMessengerServiceProvider(this.serverProcess);
     this.serverProcess.registerImplementationProvidedServiceProvider(messengerServiceProvider, null);
-    PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(this);
+    PassthroughPlatformServiceProvider passthroughPlatformServiceProvider = new PassthroughPlatformServiceProvider(passthroughClusterControl, this);
     this.serverProcess.registerImplementationProvidedServiceProvider(passthroughPlatformServiceProvider, null);
     this.monitoringProducer = new PassthroughMonitoringProducer(this.serverProcess);
     this.serverProcess.registerImplementationProvidedServiceProvider(this.monitoringProducer, null);

@@ -18,12 +18,11 @@
  */
 package org.terracotta.passthrough;
 
-import com.tc.classloader.PermanentEntity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.terracotta.entity.EntityServerService;
-import org.terracotta.exception.EntityException;
+import org.terracotta.monitoring.PlatformService.RestartMode;
+import org.terracotta.monitoring.PlatformStopException;
 
 
 /**
@@ -58,6 +57,7 @@ public class PassthroughClusterControl implements IClusterControl {
     for (PassthroughServer ps : passthroughServers) {
       Assert.assertTrue(ps != null);
       this.passthroughServers.add(ps);
+      ps.setClusterControl(this);
       ps.registerAsynchronousServerCrasher(this.crasher);
     }
     bootstrapCluster();
@@ -291,6 +291,44 @@ public class PassthroughClusterControl implements IClusterControl {
       // In this case, it means that no server in the stripe is running, at all.  In that case, we still need to hold onto this active server so that we can re-attach clients, whenever something is started.
       Assert.assertTrue(null == this.mostRecentlyStoppedActiveServer);
       this.mostRecentlyStoppedActiveServer = prevActiveServer;
+    }
+  }
+
+  synchronized void terminateIfActive(PassthroughServer passthroughServer, RestartMode restartMode) throws PlatformStopException {
+    if (activeServer == passthroughServer) {
+      internalTerminateActive();
+      startIfNeeded(passthroughServer, restartMode);
+    } else {
+      throw new PlatformStopException("Server is not in active state");
+    }
+  }
+
+  synchronized void terminateIfPassive(PassthroughServer passthroughServer, RestartMode restartMode) throws PlatformStopException {
+    if (activeServer != passthroughServer) {
+      if (!this.stoppedPassthroughServers.contains(passthroughServer)) {
+        internalTerminatePassive(passthroughServer);
+        startIfNeeded(passthroughServer, restartMode);
+      }
+    } else {
+      throw new PlatformStopException("Server is not in passive state");
+    }
+  }
+
+  synchronized void terminate(PassthroughServer passthroughServer, RestartMode restartMode) {
+    if (activeServer == passthroughServer) {
+      internalTerminateActive();
+    } else {
+      if (!this.stoppedPassthroughServers.contains(passthroughServer)) {
+        internalTerminatePassive(passthroughServer);
+        startIfNeeded(passthroughServer, restartMode);
+      }
+    }
+  }
+
+  private synchronized void startIfNeeded(PassthroughServer passthroughServer, RestartMode restartMode) {
+    if (restartMode == RestartMode.STOP_AND_RESTART) {
+      this.stoppedPassthroughServers.remove(passthroughServer);
+      startTerminatedServer(passthroughServer);
     }
   }
 }
