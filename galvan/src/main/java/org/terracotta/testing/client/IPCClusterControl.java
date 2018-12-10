@@ -44,6 +44,11 @@ public class IPCClusterControl implements IClusterControl {
   }
 
   @Override
+  public void safeStartOneServer() {
+    ipcManager.startOneServer();
+  }
+
+  @Override
   public void startAllServers() throws Exception {
     ipcManager.startAllServers();
   }

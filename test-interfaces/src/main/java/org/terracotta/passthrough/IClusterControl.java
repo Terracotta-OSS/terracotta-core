@@ -42,12 +42,20 @@ public interface IClusterControl {
   public void waitForRunningPassivesInStandby() throws Exception;
 
   /**
-   * Starts a single server if there is one currently offline, from the initial configuration. If all servers are running,
+   * Force starts a single server if there is one currently offline, from the initial configuration. If all servers are running,
    * does nothing.
    * 
    * @throws Exception Implementation-defined failure.
    */
   public void startOneServer() throws Exception;
+
+  /**
+   * Safely starts a single server if there is one currently offline, from the initial configuration. If all servers are running,
+   * does nothing.
+   *
+   * @throws Exception Implementation-defined failure.
+   */
+  public void safeStartOneServer() throws Exception;
 
   /**
    * Starts all servers which are currently offline, from the initial configuration. If all servers are running, does

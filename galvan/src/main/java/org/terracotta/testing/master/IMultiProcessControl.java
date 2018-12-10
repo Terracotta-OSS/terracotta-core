@@ -45,6 +45,8 @@ public interface IMultiProcessControl {
    */
   public void startOneServer() throws GalvanFailureException;
 
+  public void safeStartOneServer() throws GalvanFailureException;
+
   public void startAllServers() throws GalvanFailureException;
 
   public void terminateAllServers() throws GalvanFailureException;

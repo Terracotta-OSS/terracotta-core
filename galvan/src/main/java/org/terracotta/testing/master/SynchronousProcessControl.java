@@ -83,12 +83,21 @@ public class SynchronousProcessControl implements IMultiProcessControl {
 
   @Override
   public synchronized void startOneServer() throws GalvanFailureException {
+    startOneServer(true);
+  }
+
+  @Override
+  public synchronized void safeStartOneServer() throws GalvanFailureException {
+    startOneServer(false);
+  }
+
+  public synchronized void startOneServer(boolean unsafe) throws GalvanFailureException {
     this.logger.output(">>> startOneServer");
     ServerProcess server = this.stateInterlock.getOneTerminatedServer();
     if (null == server) {
       throw new IllegalStateException("Tried to start one server when none are terminated");
     }
-    safeStart(server);
+    safeStart(server, unsafe);
     
     // Wait for it to start up (otherwise, later calls to wait for the servers to become ready may not know that
     //  this one was still expected, just not started).
@@ -102,7 +111,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
     this.logger.output(">>> startAllServers");
     ServerProcess server = this.stateInterlock.getOneTerminatedServer();
     while (null != server) {
-      safeStart(server);
+      safeStart(server, false);
       
       // Wait for it to start up (since we need to grab a different one in the next call).
       this.stateInterlock.waitForServerRunning(server);
@@ -158,9 +167,9 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
 
-  private void safeStart(ServerProcess server) {
+  private void safeStart(ServerProcess server, boolean unsafe) {
     try {
-      server.start();
+      server.start(unsafe);
     } catch (FileNotFoundException e) {
       // Unexpected, given that this server was already started, at one point.
       Assert.unexpected(e);

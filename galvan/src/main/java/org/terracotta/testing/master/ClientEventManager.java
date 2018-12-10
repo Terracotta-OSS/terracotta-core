@@ -61,7 +61,13 @@ public class ClientEventManager {
       public void runWithControl(IMultiProcessControl control) throws Throwable {
         control.startOneServer();
       }}, processStdin);
-    
+
+    installEventHandler(subBus, eventMap, control, IPCMessageConstants.SAFE_START_ONE_SERVER, new ControlCaller() {
+      @Override
+      public void runWithControl(IMultiProcessControl control) throws Throwable {
+        control.safeStartOneServer();
+      }}, processStdin);
+
     installEventHandler(subBus, eventMap, control, IPCMessageConstants.START_ALL_SERVERS, new ControlCaller() {
       @Override
       public void runWithControl(IMultiProcessControl control) throws Throwable {
