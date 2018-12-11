@@ -92,7 +92,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                    System.getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
                                                    configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
-    this.safeMode = commandLine.hasOption('s');
+    this.safeMode = !commandLine.hasOption('u');
   }
 
   private String getDefaultL2Identifier(CommandLine commandLine) {
@@ -160,7 +160,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       l2NameOption.setArgName("l2-name");
       options.addOption(l2NameOption);
 
-      Option safeModeOption = new Option("s", "safe", false, "to start the server in safe mode");
+      Option safeModeOption = new Option("u", "unsafe", false, "to force an unsafe start-up of the server");
       safeModeOption.setRequired(false);
       options.addOption(safeModeOption);
     } else {
