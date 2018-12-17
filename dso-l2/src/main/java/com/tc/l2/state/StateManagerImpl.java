@@ -35,6 +35,8 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
+import com.tc.server.TCServer;
+import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
@@ -66,6 +68,7 @@ public class StateManagerImpl implements StateManager {
   private volatile ServerMode               state               = ServerMode.START;
   private ServerMode               startState               = null;
   private final ElectionGate                      elections  = new ElectionGate();
+  private final TCServer tcServer;
 
   // Known servers from previous election
   Set<NodeID> prevKnownServers = new HashSet<>();
@@ -77,7 +80,8 @@ public class StateManagerImpl implements StateManager {
                           Sink<StateChangedEvent> stateChangeSink, StageManager mgr, 
                           int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
                           ConsistencyManager availabilityMgr, 
-                          ClusterStatePersistor clusterStatePersistor) {
+                          ClusterStatePersistor clusterStatePersistor,
+                          TCServer tcServer) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
@@ -86,6 +90,7 @@ public class StateManagerImpl implements StateManager {
     this.electionMgr = new ElectionManagerImpl(groupManager, expectedServers, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
+    this.tcServer = tcServer;
   }
 
   @Override
@@ -281,7 +286,7 @@ public class StateManagerImpl implements StateManager {
           throw new TCServerRestartException("Caught in an inconsistent state.  Restarting with a new DB");
         } 
         info("Moved to " + state, true);
-        stateChangeSink.addToSink(new StateChangedEvent(START_STATE, state.getState()));
+        publishStateChange(new StateChangedEvent(START_STATE, state.getState()));
         break;
       case UNINITIALIZED:
         // double election
@@ -313,7 +318,7 @@ public class StateManagerImpl implements StateManager {
     synchronizedWaitForStart();
     if (state == ServerMode.UNINITIALIZED) {
       syncdTo = connectedTo;
-      stateChangeSink.addToSink(new StateChangedEvent(state.getState(), PASSIVE_SYNCING));
+      publishStateChange(new StateChangedEvent(state.getState(), PASSIVE_SYNCING));
       state = ServerMode.SYNCING;
       info("Moved to " + state, true);
     } 
@@ -327,7 +332,7 @@ public class StateManagerImpl implements StateManager {
       throw new AssertionError("Cant move to " + PASSIVE_STANDBY + " from " + ACTIVE_COORDINATOR + " at least for now");
     } else if (state != ServerMode.PASSIVE) {
       clusterStatePersistor.setDBClean(true);
-      stateChangeSink.addToSink(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
+      publishStateChange(new StateChangedEvent(state.getState(), PASSIVE_STANDBY));
       state = ServerMode.PASSIVE;
       info("Moved to " + state, true);
     } else {
@@ -336,12 +341,13 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized void moveToActiveState() {
+    synchronizedWaitForStart();
     if (state == ServerMode.START || state == ServerMode.PASSIVE) {
       // TODO :: If state == START_STATE publish cluster ID
       debugInfo("Moving to active state");
       StateChangedEvent event = new StateChangedEvent(state.getState(), ACTIVE_COORDINATOR);
       state = ServerMode.ACTIVE;
-      stateChangeSink.addToSink(event);
+      publishStateChange(event);
       setActiveNodeID(getLocalNodeID());
       info("Becoming " + state, true);
       // we are moving from passive standby to active state with a new election but we need to use previous election
@@ -352,6 +358,12 @@ public class StateManagerImpl implements StateManager {
     } else {
       throw new AssertionError("Cant move to " + ACTIVE_COORDINATOR + " from " + state);
     }
+  }
+
+  private void publishStateChange(StateChangedEvent event) {
+    // publish new state to TCServer first to implement conditional shutdown operations
+    tcServer.l2StateChanged(event);
+    stateChangeSink.addToSink(event);
   }
 
   @Override

@@ -711,9 +711,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         configSetupManager.getActiveServerGroupForThisL2().getMembers().length,
         configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs(),
         weightGeneratorFactory, consistencyMgr, 
-        this.persistor.getClusterStatePersistor());
+        this.persistor.getClusterStatePersistor(), server);
     
-    state.registerForStateChangeEvents(this.server);
     // And the stage for handling their response batching/serialization.
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 
         new GenericHandler<>(), 1, maxStageSize);
