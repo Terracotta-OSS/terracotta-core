@@ -580,17 +580,18 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                            .getConnectionManager(), pInfo.version());
     channelManager.addEventListener(this.connectionIdFactory);
 
+    final boolean availableMode = voteCount < 0;
     final WeightGeneratorFactory weightGeneratorFactory = new WeightGeneratorFactory();
     // At this point, we can create the weight generator factory we will use for elections and other inter-server consensus decisions.
     // Generators to produce:
     // 1)  ConsistencyWeightGenerator - needs the ConsistencyManagerImpl if being used.
-    final ConsistencyManagerWeightGenerator consistency = new ConsistencyManagerWeightGenerator(()->l2Coordinator.getStateManager(), consistencyMgr);
+    final ConsistencyManagerWeightGenerator consistency = new ConsistencyManagerWeightGenerator(()->l2Coordinator.getStateManager(), availableMode);
     weightGeneratorFactory.add(consistency);
-    // 1.5) ConsistencyBlockingTimeWeightGenerator - needs the ConsistencyManagerImpl if being used.
-    final BlockTimeWeightGenerator blocking = new BlockTimeWeightGenerator(consistencyMgr);
+    // 1.5) ConsistencyBlockingTimeWeightGenerator - obsolete weight generator kept for compatibility.
+    final BlockTimeWeightGenerator blocking = new BlockTimeWeightGenerator();
     weightGeneratorFactory.add(blocking);
     // 2)  ChannelWeightGenerator - needs the DSOChannelManager.
-    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(()->l2Coordinator.getStateManager(), channelManager);
+    final ChannelWeightGenerator connectedClientCountWeightGenerator = new ChannelWeightGenerator(()->l2Coordinator.getStateManager(), channelManager, availableMode);
     weightGeneratorFactory.add(connectedClientCountWeightGenerator);
     // 3)  ConnectionIDWeightGenerator - How many connection ids have been created.  Greater wins
     final ConnectionIDWeightGenerator connectionsMade = new ConnectionIDWeightGenerator(connectionIdFactory);
@@ -599,10 +600,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
     weightGeneratorFactory.add(initialState);
     // 5)  ServerUptimeWeightGenerator.
-    final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator();
+    final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator(availableMode);
     weightGeneratorFactory.add(serverUptimeWeightGenerator);
     // 6)  RandomWeightGenerator.
-    final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom());
+    final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom(), availableMode);
     weightGeneratorFactory.add(randomWeightGenerator);
     // 7)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
     final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);

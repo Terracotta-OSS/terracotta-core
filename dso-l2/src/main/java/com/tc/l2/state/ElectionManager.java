@@ -19,12 +19,11 @@
 package com.tc.l2.state;
 
 import com.tc.l2.msg.L2StateMessage;
-import com.tc.net.NodeID;
 import com.tc.util.State;
 
 public interface ElectionManager {
 
-  public void declareWinner(NodeID myNodeId, State currentState);
+  public void declareWinner(Enrollment myNodeId, State currentState);
 
   public boolean handleStartElectionRequest(L2StateMessage msg, State currentState);
 

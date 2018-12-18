@@ -34,7 +34,7 @@ public class ChannelWeightGeneratorTest extends TCTestCase {
   public void testSimpleIncreaseDecrease() throws Exception {
     DSOChannelManager mockChannelManager = mock(DSOChannelManager.class);
     StateManager mockStateManager = mock(StateManager.class);
-    ChannelWeightGenerator generator = new ChannelWeightGenerator(()->mockStateManager, mockChannelManager);
+    ChannelWeightGenerator generator = new ChannelWeightGenerator(()->mockStateManager, mockChannelManager, true);
 
     Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 1, 1), generator.getWeight());
     Assert.assertEquals(mockPlatform(mockStateManager, mockChannelManager, false, 2, 1), generator.getWeight());

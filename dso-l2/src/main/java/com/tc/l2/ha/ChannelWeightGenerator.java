@@ -28,12 +28,14 @@ import java.util.function.Supplier;
 public class ChannelWeightGenerator implements WeightGenerator {
   private final DSOChannelManager channelManager;
   private final Supplier<StateManager> stateManager;
+  private final boolean isAvailable;
 
-  public ChannelWeightGenerator(Supplier<StateManager> stateManager, DSOChannelManager channelManager) {
+  public ChannelWeightGenerator(Supplier<StateManager> stateManager, DSOChannelManager channelManager, boolean isAvailable) {
     Assert.assertNotNull(channelManager);
     Assert.assertNotNull(stateManager);
     this.channelManager = channelManager;
     this.stateManager = stateManager;
+    this.isAvailable = isAvailable;
   }
 
   @Override
@@ -51,4 +53,8 @@ public class ChannelWeightGenerator implements WeightGenerator {
     return count;
   }
 
+  @Override
+  public boolean isVerificationWeight() {
+    return isAvailable;
+  }
 }

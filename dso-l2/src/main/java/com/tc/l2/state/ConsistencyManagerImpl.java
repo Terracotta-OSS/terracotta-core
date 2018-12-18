@@ -71,6 +71,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     activePeers.remove(nodeID);
   }
   
+  @Override
   public long getCurrentTerm() {
     return voteTerm;
   }
@@ -230,9 +231,4 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public synchronized boolean isBlocked() {
     return blocked;
   }
-
-  long getVotingTerm() {
-    return voteTerm;
-  }
-
 }

@@ -38,4 +38,9 @@ public class GenerationWeightGenerator implements WeightGenerator {
       return 0L; // always return zero in availability mode
     }
   }
+
+  @Override
+  public boolean isVerificationWeight() {
+    return true;
+  }
 }

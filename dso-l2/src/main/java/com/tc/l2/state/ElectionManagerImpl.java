@@ -176,10 +176,9 @@ public class ElectionManagerImpl implements ElectionManager {
    * This method is called by the winner of the election to announce to the world
    */
   @Override
-  public synchronized void declareWinner(NodeID myNodeId, State currentState) {
-    Assert.assertEquals(winner.getNodeID(), myNodeId);
-    L2StateMessage msg = L2StateMessage.createElectionWonMessage(this.winner, currentState);
-    debugInfo("Announcing as winner: " + myNodeId);
+  public synchronized void declareWinner(Enrollment verify, State currentState) {
+    L2StateMessage msg = L2StateMessage.createElectionWonMessage(verify, currentState);
+    debugInfo("Announcing as winner: " + winner.getNodeID());
     this.groupManager.sendAll(msg);
     logger.info("Declared as Winner: Winner is : " + this.winner);
     reset(winner);

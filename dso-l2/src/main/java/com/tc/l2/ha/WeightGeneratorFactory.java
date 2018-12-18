@@ -40,12 +40,13 @@ public class WeightGeneratorFactory {
     return weights;
   }
   
-  public synchronized long[] generateMaxWeightSequence() {
+  public synchronized long[] generateVerificationSequence() {
     long weights[] = new long[generators.size()];
     for (int i=0;i<generators.size();i++) {
+      WeightGenerator gen = generators.get(i);
       // generation weight generator is for information sharing only
-      if (generators.get(i) instanceof GenerationWeightGenerator) {
-        weights[i] = generators.get(i).getWeight();
+      if (gen.isVerificationWeight()) {
+        weights[i] = gen.getWeight();
       } else {
         weights[i] = Long.MAX_VALUE;
       }
@@ -62,5 +63,8 @@ public class WeightGeneratorFactory {
    */
   public static interface WeightGenerator {
     public long getWeight();
+    default boolean isVerificationWeight() {
+      return false;
+    }
   }
 }

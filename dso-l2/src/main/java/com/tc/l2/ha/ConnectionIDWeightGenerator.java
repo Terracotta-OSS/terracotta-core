@@ -37,4 +37,8 @@ public class ConnectionIDWeightGenerator implements WeightGenerator {
     return persistor.getCurrentConnectionID();
   }
 
+  @Override
+  public boolean isVerificationWeight() {
+    return true;
+  }
 }

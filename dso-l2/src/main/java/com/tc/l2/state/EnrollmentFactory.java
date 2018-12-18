@@ -29,9 +29,9 @@ public class EnrollmentFactory {
     return e;
   }
 
-  public static Enrollment createTrumpEnrollment(NodeID myNodeId, WeightGeneratorFactory weightFactory) {
-    long[] weights = weightFactory.generateMaxWeightSequence();
-    Enrollment e = new Enrollment(myNodeId, false, weights);
+  public static Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
+    long[] weights = weightFactory.generateVerificationSequence();
+    Enrollment e = new Enrollment(lastActive, false, weights);
     return e;
   }
 

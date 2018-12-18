@@ -23,13 +23,20 @@ import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
 
 public class ServerUptimeWeightGenerator implements WeightGenerator {
   private final long startMillis;
+  private final boolean isAvailable;
 
-  public ServerUptimeWeightGenerator() {
+  public ServerUptimeWeightGenerator(boolean isAvailable) {
     this.startMillis = System.currentTimeMillis();
+    this.isAvailable = isAvailable;
   }
 
   @Override
   public long getWeight() {
     return System.currentTimeMillis() - this.startMillis;
+  }
+
+  @Override
+  public boolean isVerificationWeight() {
+    return isAvailable;
   }
 }

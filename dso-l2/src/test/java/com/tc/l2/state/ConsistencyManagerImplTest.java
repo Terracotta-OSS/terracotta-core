@@ -137,12 +137,12 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
     ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1, 1);
-    long cterm = impl.getVotingTerm();
+    long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertFalse(granted);
     Assert.assertFalse(impl.isVoting());
     Assert.assertFalse(impl.isBlocked());
-    Assert.assertEquals(cterm, impl.getVotingTerm());
+    Assert.assertEquals(cterm, impl.getCurrentTerm());
   }
 
   @Test

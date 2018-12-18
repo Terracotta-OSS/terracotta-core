@@ -122,4 +122,9 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     }
   }
 
+  @Override
+  public long getCurrentTerm() {
+    return consistencyManager.getCurrentTerm();
+  }
+
 }

@@ -302,7 +302,7 @@ public class StateManagerImplTest {
   }
   
   @Test
-  public void testZapAndSync() {
+  public void testZapAndSync() throws Exception {
     Logger tcLogger = mock(Logger.class);
     GroupManager groupManager = mock(GroupManager.class);
     Sink stateChangeSink = mock(Sink.class);
@@ -321,16 +321,15 @@ public class StateManagerImplTest {
     L2StateMessage sw = mock(L2StateMessage.class);
     when(sw.getType()).thenReturn(L2StateMessage.ABORT_ELECTION);
     when(sw.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);
-    when(sw.getEnrollment()).thenReturn(mock(Enrollment.class));
-
-    try {
-      mgr.handleClusterStateMessage(sw);
-      Assert.fail();
-    } catch (TCServerRestartException expected) {
-      
-    }
+    Enrollment winner = mock(Enrollment.class);
+    when(sw.getEnrollment()).thenReturn(winner);
+    NodeID active = mock(NodeID.class);
+    when(winner.getNodeID()).thenReturn(active);
+    when(winner.wins(any(Enrollment.class))).thenReturn(Boolean.TRUE);
+    when(sw.messageFrom()).thenReturn(active);
+    mgr.handleClusterStateMessage(sw);
     
-    verify(persistor).setDBClean(eq(Boolean.FALSE));
+    verify(groupManager).sendTo(eq(active), any(L2StateMessage.class));
   }
 
   private ArgumentMatcher<StateChangedEvent> stateChangeEvent(State oldState, State currentState) {

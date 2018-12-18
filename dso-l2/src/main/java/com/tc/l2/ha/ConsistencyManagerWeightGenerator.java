@@ -19,36 +19,41 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
-import com.tc.l2.state.ConsistencyManager;
-import com.tc.l2.state.ConsistencyManagerImpl;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import java.util.function.Supplier;
 
 
 public class ConsistencyManagerWeightGenerator implements WeightGenerator {
-  private final ConsistencyManagerImpl consistency;
+  private final boolean isAvailable;
   private final Supplier<StateManager> state;
 
-  public ConsistencyManagerWeightGenerator(Supplier<StateManager> state, ConsistencyManager consistency) {
+  public ConsistencyManagerWeightGenerator(Supplier<StateManager> state, boolean isAvailable) {
     this.state = state;
-    this.consistency = consistency instanceof ConsistencyManagerImpl ? (ConsistencyManagerImpl)consistency : null;
+    this.isAvailable = isAvailable;
   }
-
+  /**
+   * this weight is now obsolete, keep it for compatibility, will use it to designate the active
+   * in availability mode.  In consistency mode, the active is not relevant.  This weighting is 
+   * only used during a verification election as actives do not participate in bootstrap elections.
+   * 
+   * @return 
+   */
   @Override
   public long getWeight() {
     long weight = 0L;
     if (state.get().isActiveCoordinator()) {
       weight |= 0x08;
-      if (consistency != null) {
-        if (!consistency.isBlocked()) {
-          weight |= 0x04;
-        }
-        if (!consistency.isVoting()) {
-          weight |= 0x02;
-        }
-      }
+    } else if (state.get().getCurrentMode() == ServerMode.PASSIVE) {
+      weight |= 0x01;
     }
 
     return weight;
+  }
+
+  @Override
+  public boolean isVerificationWeight() {
+    // only participate in election verification if in availability mode.  
+    return isAvailable;
   }
 }
