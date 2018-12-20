@@ -31,6 +31,7 @@ public final class ManagedEntitySyncInterop {
 //  multiple sync threads possible
   private int syncsReadyToStart;
   private int syncsStarted;
+  private int syncsFinishing;
 
   public ManagedEntitySyncInterop() {
   }
@@ -95,12 +96,19 @@ public final class ManagedEntitySyncInterop {
   }
   
   public synchronized boolean isSyncing() {
-    return syncsStarted > 0;
+    return syncsStarted > 0 || syncsFinishing > 0;
+  }
+  
+  public synchronized void syncFinishing() {
+    Assert.assertTrue(syncsStarted > 0);
+    syncsStarted -= 1;
+    syncsFinishing += 1;
+    notifyAll();
   }
   
   public synchronized void syncFinished() {
-    Assert.assertTrue(syncsStarted > 0);
-    syncsStarted -= 1;
+    Assert.assertTrue(syncsFinishing > 0);
+    syncsFinishing -= 1;
     notifyAll();
   }
   
