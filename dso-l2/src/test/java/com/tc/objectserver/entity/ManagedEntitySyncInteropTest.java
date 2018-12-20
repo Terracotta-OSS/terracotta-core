@@ -160,12 +160,13 @@ public class ManagedEntitySyncInteropTest {
     // EXPECTED
     }
     // We finish the sync and observe that the lifecycle operation can now complete.
-    instance.syncFinished();
+    instance.syncFinishing();
     try {
       f2.get(5, TimeUnit.SECONDS);
     } catch (TimeoutException to) {
       Assert.fail("should not block");
     }
+    instance.syncFinished();
   }
   
   private <T> Future<T> run(Callable<T> r) {
