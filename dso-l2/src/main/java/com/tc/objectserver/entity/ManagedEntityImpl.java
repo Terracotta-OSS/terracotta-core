@@ -1120,14 +1120,12 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     } finally {
       //  flush the sync pipeline and switch back to main pipeline.
-      if (!this.isDestroyed) {
-        interop.syncFinishing();
-        messageSelf.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(new FetchID(getConsumerID()), ClientInstanceID.NULL_ID), 
-          ()-> { 
-            interop.syncFinished();
-          })
-        );
-      }
+      interop.syncFinishing();
+      messageSelf.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(new FetchID(getConsumerID()), ClientInstanceID.NULL_ID), 
+        ()-> { 
+          interop.syncFinished();
+        })
+      );
     }
   }  
 
