@@ -43,11 +43,13 @@ public class IPCMessageConstants {
   public static final String START_ONE_SERVER_SYN = synFrom(START_ONE_SERVER);
   public static final String START_ONE_SERVER_ACK = ackFrom(START_ONE_SERVER);
 
-  public static final String SAFE_START_ONE_SERVER = "SAFE_START_ONE_SERVER";
+  public static final String START_ONE_SERVER_WITH_CONSISTENCY = "START_ONE_SERVER_WITH_CONSISTENCY";
 
   public static final String START_ALL_SERVERS = "START_ALL_SERVERS";
   public static final String START_ALL_SERVERS_SYN = synFrom(START_ALL_SERVERS);
   public static final String START_ALL_SERVERS_ACK = ackFrom(START_ALL_SERVERS);
+
+  public static final String START_ALL_SERVERS_WITH_CONSISTENCY = "START_ALL_SERVERS_WITH_CONSISTENCY";
 
   public static final String SHUT_DOWN_STRIPE = "SHUT_DOWN_STRIPE";
   public static final String SHUT_DOWN_STRIPE_SYN = synFrom(SHUT_DOWN_STRIPE);

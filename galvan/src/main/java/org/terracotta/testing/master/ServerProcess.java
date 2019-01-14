@@ -128,7 +128,7 @@ public class ServerProcess {
    * 
    * @throws FileNotFoundException The logs couldn't be created since the server's working directory is missing.
    */
-  public void start(boolean unsafe) throws FileNotFoundException {
+  public void start(boolean consistentStart) throws FileNotFoundException {
     UUID token = enter();
     try {
     // First thing we need to do is make sure that we aren't already running.
@@ -158,8 +158,8 @@ public class ServerProcess {
     String startScript = getStartScriptCommand();
 
     String[] command;
-    if (unsafe) {
-      command = new String[]{startScript, "-u", "-n", this.serverName, this.eyeCatcher};
+    if (consistentStart) {
+      command = new String[]{startScript, "-c", "-n", this.serverName, this.eyeCatcher};
     } else {
       command = new String[]{startScript, "-n", this.serverName, this.eyeCatcher};
     }

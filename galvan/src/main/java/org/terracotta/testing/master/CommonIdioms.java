@@ -39,7 +39,7 @@ public class CommonIdioms {
         stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart,
         stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment,
         stripeConfiguration.serviceFragment, stripeConfiguration.failoverPriorityVoterCount, stripeConfiguration.clientReconnectWindowTime,
-        stripeConfiguration.tcProperties, stripeConfiguration.serverProperties, stripeConfiguration.logConfigExtension, stripeConfiguration.unsafeStart);
+        stripeConfiguration.tcProperties, stripeConfiguration.serverProperties, stripeConfiguration.logConfigExtension, stripeConfiguration.consistentStart);
   }
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
@@ -82,7 +82,7 @@ public class CommonIdioms {
     public String serviceFragment;
     public String stripeName;
     public String logConfigExtension;
-    public boolean unsafeStart;
+    public boolean consistentStart;
   }
 
 
