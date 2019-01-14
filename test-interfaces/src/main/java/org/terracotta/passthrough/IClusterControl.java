@@ -50,12 +50,12 @@ public interface IClusterControl {
   public void startOneServer() throws Exception;
 
   /**
-   * Safely starts a single server if there is one currently offline, from the initial configuration. If all servers are running,
-   * does nothing.
+   * Starts a single server if there is one currently offline, from the initial configuration ensuring consistency.
+   * If all servers are running, does nothing.
    *
    * @throws Exception Implementation-defined failure.
    */
-  public void safeStartOneServer() throws Exception;
+  public void startOneServerWithConsistency() throws Exception;
 
   /**
    * Starts all servers which are currently offline, from the initial configuration. If all servers are running, does
@@ -64,6 +64,14 @@ public interface IClusterControl {
    * @throws Exception Implementation-defined failure.
    */
   public void startAllServers() throws Exception;
+
+  /**
+   * Starts all servers which are currently offline, from the initial configuration ensuring consistency.
+   * If all servers are running, does nothing.
+   *
+   * @throws Exception Implementation-defined failure.
+   */
+  public void startAllServersWithConsistency() throws Exception;
 
   /**
    * Forces the currently-active server to terminate, returning once it has. Behavior is undefined if there is no active
