@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class BasicExternalClusterFOPAvailabilityIT {
 
@@ -44,4 +45,20 @@ public class BasicExternalClusterFOPAvailabilityIT {
     connectionFuture.get(10, TimeUnit.SECONDS);
   }
 
+  @Test(expected = TimeoutException.class)
+  public void testConsistentStartup() throws Exception {
+    CLUSTER.getClusterControl().terminateAllServers();
+
+    CLUSTER.getClusterControl().startOneServerWithConsistency();
+
+    CompletableFuture<Void> connectionFuture = CompletableFuture.runAsync(() -> {
+      try {
+        CLUSTER.getClusterControl().waitForActive();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+    // The started up server should not have become active as a consistent start was requested and only one server was started up
+    connectionFuture.get(10, TimeUnit.SECONDS);
+  }
 }

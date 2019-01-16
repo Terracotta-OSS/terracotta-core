@@ -40,7 +40,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   private static final Logger LOGGER = LoggerFactory.getLogger(SafeStartupManagerImpl.class);
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
 
-  private final boolean safeMode;
+  private final boolean consistentStartup;
   private volatile boolean allowTransition = false;
   private boolean suspended = false;
 
@@ -48,8 +48,8 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   private final ConsistencyManager consistencyManager;
   private final Set<NodeID> activePeers = new HashSet<>();
 
-  public SafeStartupManagerImpl(boolean safeMode, int peerServers, ConsistencyManager consistencyManager) {
-    this.safeMode = safeMode;
+  public SafeStartupManagerImpl(boolean consistentStartup, int peerServers, ConsistencyManager consistencyManager) {
+    this.consistentStartup = consistentStartup;
     this.peerServers = peerServers;
     this.consistencyManager = consistencyManager;
     initMBean();
@@ -66,7 +66,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
 
   @Override
   public synchronized boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
-    if (safeMode && mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
+    if (consistentStartup && mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
       if (activePeers.size() == peerServers) {
         CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
         suspended = false;
