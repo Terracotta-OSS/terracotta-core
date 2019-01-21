@@ -41,7 +41,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
 
   private final boolean consistentStartup;
-  private volatile boolean allowTransition = false;
+  private boolean allowTransition = false;
   private boolean suspended = false;
 
   private final int peerServers;
@@ -85,7 +85,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   }
 
   @Override
-  public boolean lastTransitionSuspended() {
+  public synchronized boolean lastTransitionSuspended() {
     if (suspended) {
       return true;
     }
