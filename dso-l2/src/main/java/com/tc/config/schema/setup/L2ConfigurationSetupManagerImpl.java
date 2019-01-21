@@ -65,13 +65,13 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private final Set<InetAddress> localInetAddresses;
   private final TcConfiguration configuration;
   private final ServiceLocator locator;
-  private final boolean safeMode;
+  private final boolean consistentStartup;
 
   private volatile ActiveServerGroupConfig activeServerGroupConfig;
 
   private Servers serversBean;
 
-  public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator, String thisL2Identifier, ClassLoader loader, boolean safeMode)
+  public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator, String thisL2Identifier, ClassLoader loader, boolean consistentStartup)
       throws ConfigurationSetupException {
     super(args, configurationCreator);
 
@@ -110,7 +110,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     verifyL2Identifier(servers, this.thisL2Identifier);
     this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
     this.activeServerGroupConfig = new ActiveServerGroupConfigObject(configuration.getPlatformConfiguration().getServers(), this);
-    this.safeMode = safeMode;
+    this.consistentStartup = consistentStartup;
   }
 
   @Override
@@ -138,8 +138,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   @Override
-  public boolean safeModeStartup() {
-    return safeMode;
+  public boolean consistentStartup() {
+    return consistentStartup;
   }
 
   private void verifyL2Identifier(Server[] servers, String l2Identifier) throws ConfigurationSetupException {

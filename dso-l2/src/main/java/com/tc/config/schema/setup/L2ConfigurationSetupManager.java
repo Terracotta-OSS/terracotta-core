@@ -46,7 +46,7 @@ public interface L2ConfigurationSetupManager {
 
   String getL2Identifier();
 
-  boolean safeModeStartup();
+  boolean consistentStartup();
 
   CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException;
 

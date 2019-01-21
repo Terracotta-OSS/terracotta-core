@@ -259,8 +259,8 @@ class BasicExternalCluster extends Cluster {
       }
 
       @Override
-      public void safeStartOneServer() throws Exception {
-        cluster.stripeControl.safeStartOneServer();
+      public void startOneServerWithConsistency() throws Exception {
+        cluster.stripeControl.startOneServerWithConsistency();
       }
 
       @Override
@@ -271,6 +271,11 @@ class BasicExternalCluster extends Cluster {
       @Override
       public void startAllServers() throws Exception {
         cluster.stripeControl.startAllServers();
+      }
+
+      @Override
+      public void startAllServersWithConsistency() throws Exception {
+        cluster.stripeControl.startAllServersWithConsistency();
       }
 
       @Override

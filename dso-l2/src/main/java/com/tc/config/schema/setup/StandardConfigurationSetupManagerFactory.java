@@ -48,7 +48,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
 
   private final String[] args;
   private final String defaultL2Identifier;
-  private final boolean safeMode;
+  private final boolean consistentStartup;
   private final ConfigurationSpec configurationSpec;
 
   public static enum ConfigMode {
@@ -92,7 +92,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                    System.getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
                                                    configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
-    this.safeMode = !commandLine.hasOption('u');
+    this.consistentStartup = commandLine.hasOption('c');
   }
 
   private String getDefaultL2Identifier(CommandLine commandLine) {
@@ -160,7 +160,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       l2NameOption.setArgName("l2-name");
       options.addOption(l2NameOption);
 
-      Option safeModeOption = new Option("u", "unsafe", false, "to force an unsafe start-up of the server");
+      Option safeModeOption = new Option("c", "consistency-on-startup", false, "ensure that data consistency is preserved on startup");
       safeModeOption.setRequired(false);
       options.addOption(safeModeOption);
     } else {
@@ -179,7 +179,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     ConfigurationCreator configurationCreator;
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory);
 
-    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, loader, safeMode);
+    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, loader, consistentStartup);
   }
 
   public String[] getArguments() {
