@@ -56,7 +56,7 @@ public class DiagnosticClientBuilder extends StandardClientBuilder {
   }
 
   @Override
-  protected ProductID getTypeOfClient(Properties connectionProperties) {
+  protected ProductID getTypeOfClient() {
     return ProductID.DIAGNOSTIC;
   }
 }

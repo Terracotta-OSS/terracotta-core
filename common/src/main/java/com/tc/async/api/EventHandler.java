@@ -46,5 +46,13 @@ public interface EventHandler<EC> extends PostInit {
    * Shut down the stage
    */
   public void destroy();
+  
+  public static <EC> void directExecution(EventHandler<EC> handler, EC event) {
+    try {
+      handler.handleEvent(event);
+    } catch (EventHandlerException ee) {
+      throw new RuntimeException(ee);
+    }
+  }
 
 }

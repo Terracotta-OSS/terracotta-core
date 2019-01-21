@@ -93,7 +93,8 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     return SocketConnectStartStatus.STARTED;
   }
 
-  private void stop() {
+  @Override
+  public void stop() {
     if (conn != null) {
       conn.removeListener(this);
       conn.asynchClose();

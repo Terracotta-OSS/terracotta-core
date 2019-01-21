@@ -36,7 +36,6 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.delivery.OOOConnectionWatcher;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayer;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher.AsyncReconnect;
@@ -58,6 +57,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 public class ClientConnectionEstablisherTest {
   private ClientConnectionEstablisher         connEstablisher;

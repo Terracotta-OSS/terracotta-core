@@ -32,9 +32,9 @@ public class ClientFactory {
   public static DistributedObjectClient createClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                                      PreparedComponentsFromL2Connection connectionComponents,
                                                      ClusterInternal cluster,
-                                                     String uuid, String name) {
+                                                     String uuid, String name, boolean async) {
     return new DistributedObjectClient(config, builder, threadGroup, connectionComponents,
         cluster,
-        uuid, name);
+        uuid, name, async);
   }
 }

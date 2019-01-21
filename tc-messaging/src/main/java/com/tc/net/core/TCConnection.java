@@ -93,7 +93,7 @@ public interface TCConnection extends NetworkMessageSink {
    * @throws IOException if there is an error connecting to the destination address
    * @throws TCTimeoutException if a timeout occurs
    */
-  public void connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
+  public Socket connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
 
   /**
    * Connect asynchronously to the given destination address

@@ -73,4 +73,9 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
     throw new AssertionError("Echo HealthChecker");
   }
 
+  @Override
+  public void close() {
+
+  }
+
 }

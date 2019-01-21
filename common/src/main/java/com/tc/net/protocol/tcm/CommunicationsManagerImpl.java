@@ -89,7 +89,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private final Set<NetworkListener>                                           listeners                 = new HashSet<NetworkListener>();
   private final ReentrantLock                                                  licenseLock               = new ReentrantLock();
   private final TCConnectionManager                                            connectionManager;
-  private final boolean                                                        privateConnMgr;
+  private final boolean                                                        privateConnMgr = true;
   private final NetworkStackHarnessFactory                                     stackHarnessFactory;
   private final TransportHandshakeMessageFactory                               transportMessageFactory;
   private final MessageMonitor                                                 monitor;
@@ -199,7 +199,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.stackHarnessFactory = stackHarnessFactory;
     this.healthCheckerConfig = healthCheckerConf;
     this.handshakeErrHandler = transportHandshakeErrorHandler;
-    this.privateConnMgr = (connMgr == null);
+//    this.privateConnMgr = (connMgr == null);
     this.messageTypeClassMapping.putAll(messageTypeClassMapping);
     this.messageTypeFactoryMapping.putAll(messageTypeFactoryMapping);
     this.reconnectionRejectedHandler = reconnectionRejectedHandler;

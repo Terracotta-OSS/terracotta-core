@@ -75,7 +75,6 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
         sink.putMessage(msg);
       }
     }
-    return;
   }
 
   @Override

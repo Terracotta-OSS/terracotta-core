@@ -89,7 +89,7 @@ public class DistributedObjectClientFactory {
     
     DistributedObjectClient client = ClientFactory.createClient(configHelper, builder, group, connectionComponents, cluster,
         uuid,
-        name);
+        name, Boolean.parseBoolean(properties.getProperty("connection.async", "false")));
 
     try {
       client.start();

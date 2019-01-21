@@ -24,6 +24,7 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import com.tc.async.api.StageManager;
 import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.management.TCClient;
+import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -52,18 +53,18 @@ import java.util.Properties;
 
 public class StandardClientBuilder implements ClientBuilder {
   
-  private final ProductID typeOfClient;
+  private final Properties connectionProperties;
   private volatile ClientConnectionErrorListener listener;
 
   public StandardClientBuilder(Properties connectionProperties) {
-    this.typeOfClient = getTypeOfClient(connectionProperties);
+    this.connectionProperties = connectionProperties;
   }
 
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
                                                          int socketConnectTimeout, TCClient client) {
-    ClientMessageChannel cmc = commMgr.createClientChannel(typeOfClient, sessionProvider, socketConnectTimeout);
+    ClientMessageChannel cmc = commMgr.createClientChannel(getTypeOfClient(), sessionProvider, socketConnectTimeout);
     if (listener != null){
       cmc.addClientConnectionErrorListener(listener);
     }
@@ -77,7 +78,8 @@ public class StandardClientBuilder implements ClientBuilder {
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler) {
-    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
+    boolean asyncDrive = Boolean.parseBoolean(connectionProperties.getProperty("connection.async", "false"));
+    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, asyncDrive ? null : new BasicConnectionManager(getBufferManagerFactory()),
                                          connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
                                          reconnectionRejectedHandler, getBufferManagerFactory());
   }
@@ -99,7 +101,7 @@ public class StandardClientBuilder implements ClientBuilder {
     return new ClientEntityManagerImpl(channel, stages);
   }
 
-  protected ProductID getTypeOfClient(Properties connectionProperties) {
+  protected ProductID getTypeOfClient() {
     boolean noreconnect =
         Boolean.valueOf(connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT,
                                                          "false"));

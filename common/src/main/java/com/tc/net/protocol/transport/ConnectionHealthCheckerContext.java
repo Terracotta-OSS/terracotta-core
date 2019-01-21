@@ -35,4 +35,6 @@ public interface ConnectionHealthCheckerContext {
   boolean receiveProbe(HealthCheckerProbeMessage message);
 
   void checkTime();
+  
+  void close();
 }

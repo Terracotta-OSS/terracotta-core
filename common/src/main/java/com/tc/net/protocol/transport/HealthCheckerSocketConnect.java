@@ -41,4 +41,5 @@ public interface HealthCheckerSocketConnect extends TCConnectionEventListener {
 
   public void removeSocketConnectEventListener(HealthCheckerSocketConnectEventListener listener);
 
+  public void stop();
 }

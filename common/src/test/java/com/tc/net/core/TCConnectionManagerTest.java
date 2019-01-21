@@ -21,7 +21,6 @@ package com.tc.net.core;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -30,6 +29,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * TODO Jan 13, 2005: comment describing what this class is for.

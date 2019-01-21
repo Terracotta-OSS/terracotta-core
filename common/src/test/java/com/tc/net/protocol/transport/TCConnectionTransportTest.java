@@ -28,7 +28,6 @@ import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -48,6 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * To Test Message Packup happening at the comms writer.

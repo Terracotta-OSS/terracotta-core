@@ -56,9 +56,7 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
    */
   @Override
   public final ClientMessageTransport attachNewConnection(TCConnection connection) throws IllegalReconnectException {
-    Assert.eval("Attempt to connect a transport to a stack that hasn't been finalized.", finalized.isSet());
-    this.transport.attachNewConnection(connection);
-    return this.transport;
+    throw new UnsupportedOperationException("this is a server-side operation");
   }
 
   /**

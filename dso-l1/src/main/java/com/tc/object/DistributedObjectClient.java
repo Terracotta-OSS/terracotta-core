@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,19 +159,21 @@ public class DistributedObjectClient implements TCClient {
   private ClientEntityManager clientEntityManager;
   private RequestReceiveHandler singleMessageReceiver;
   private final StageManager communicationStageManager;
+  
+  private final boolean isAsync;
 
   
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster, Properties properties) {
     this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents, cluster,
-         UUID.NULL_ID.toString(), "");
+         UUID.NULL_ID.toString(), "", Boolean.parseBoolean(properties.getProperty("connection.async", "false")));
   }
 
   public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  ClusterInternal cluster,
-                                 String uuid, String name) {
+                                 String uuid, String name, boolean asyncDrive) {
     Assert.assertNotNull(config);
     this.config = config;
     this.connectionComponents = connectionComponents;
@@ -179,6 +182,7 @@ public class DistributedObjectClient implements TCClient {
     this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
+    this.isAsync = asyncDrive;
     
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA<Void> seda = new SEDA<Void>(threadGroup);
@@ -304,7 +308,7 @@ public class DistributedObjectClient implements TCClient {
     this.singleMessageReceiver = new RequestReceiveHandler(this.clientEntityManager);
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
-
+    
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     this.counterManager.createCounter(sampledRateCounterConfig);
     this.counterManager.createCounter(sampledRateCounterConfig);
@@ -340,13 +344,17 @@ public class DistributedObjectClient implements TCClient {
       ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
       ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,
       ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE
-    } : 
-    new String[] {
-    };
+    } : (isAsync) ?
+      new String[] {
+      }
+      : 
+      new String[] {
+        ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE
+      };
 
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
-    initChannelMessageRouter(messageRouter, pauseStage.getSink(), clusterMembershipEventStage.getSink(), multiResponseStage.getSink());
+    initChannelMessageRouter(messageRouter, pauseStage.getSink(), clusterMembershipEventStage.getSink(), isAsync ? multiResponseStage.getSink() : (e)->EventHandler.directExecution(mutil, e));
     new Thread(threadGroup, new Runnable() {
         public void run() {
           while (!clientStopped.isSet()) {
@@ -562,6 +570,7 @@ public class DistributedObjectClient implements TCClient {
       try {
         this.communicationsManager.shutdown();
       } catch (final Throwable t) {
+        t.printStackTrace();
         logger.error("Error shutting down communications manager", t);
       } finally {
         this.communicationsManager = null;
@@ -571,6 +580,7 @@ public class DistributedObjectClient implements TCClient {
     try {
       this.communicationStageManager.stopAll();
     } catch (final Throwable t) {
+      t.printStackTrace();
       logger.error("Error stopping stage manager", t);
     }
     

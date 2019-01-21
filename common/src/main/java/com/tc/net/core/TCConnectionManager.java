@@ -20,10 +20,10 @@ package com.tc.net.core;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.text.PrettyPrintable;
 
 import java.io.IOException;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * Manages connections and listeners. The connection manager also provides default implementations of connection event

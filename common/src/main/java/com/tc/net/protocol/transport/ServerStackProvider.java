@@ -31,7 +31,6 @@ import com.tc.net.protocol.ProductNotSupportedException;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.RejectReconnectionException;
 import com.tc.net.protocol.ServerNetworkStackHarness;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
@@ -47,6 +46,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * Provides network stacks on the server side

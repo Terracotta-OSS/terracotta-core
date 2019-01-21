@@ -100,6 +100,11 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     configFactor = 1;
     initCallbackPortVerification();
   }
+  
+  @Override
+  public void close() {
+    sockectConnect.stop();
+  }
 
   // RMP-343
   private void initCallbackPortVerification() {

@@ -24,7 +24,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.PortChooser;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -43,6 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  *
