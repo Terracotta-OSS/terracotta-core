@@ -47,12 +47,14 @@ public interface EventHandler<EC> extends PostInit {
    */
   public void destroy();
   
-  public static <EC> void directExecution(EventHandler<EC> handler, EC event) {
-    try {
-      handler.handleEvent(event);
-    } catch (EventHandlerException ee) {
-      throw new RuntimeException(ee);
-    }
+  public static <EC> Sink<EC> directSink(EventHandler<EC> handler) {
+    return (e)->{
+      try {
+        handler.handleEvent(e);
+      } catch (EventHandlerException ee) {
+        throw new RuntimeException(ee);
+      }
+    };
   }
 
 }

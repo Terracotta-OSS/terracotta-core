@@ -60,7 +60,6 @@ public interface ClientBuilder {
   ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
                                                       SessionManager sessionManager,
-                                                      ClusterInternalEventsGun clusterEventsGun,
                                                       String uuid,
                                                       String name,
                                                       String clientVersion,

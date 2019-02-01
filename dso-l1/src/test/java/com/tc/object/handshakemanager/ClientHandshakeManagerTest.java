@@ -18,7 +18,6 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.util.UUID;
@@ -48,9 +47,6 @@ public class ClientHandshakeManagerTest {
   private SessionManager sessionManager;
 
   @Mock
-  private ClusterInternalEventsGun clusterEventsGun;
-
-  @Mock
   private ClientHandshakeCallback entities;
 
   @Before
@@ -76,7 +72,7 @@ public class ClientHandshakeManagerTest {
 
   private void checkClientServerVersionCompatibility(String clientVersion, String serverVersion) {
     ClientHandshakeManagerImpl manager = new ClientHandshakeManagerImpl(logger, chmf, sessionManager,
-            clusterEventsGun, UUID.getUUID().toString(), "name", clientVersion, entities);
+            UUID.getUUID().toString(), "name", clientVersion, entities);
     manager.checkClientServerVersionCompatibility(serverVersion);
   }
 

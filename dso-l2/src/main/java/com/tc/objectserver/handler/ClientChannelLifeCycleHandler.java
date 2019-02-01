@@ -83,10 +83,6 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
-      // Broadcast locally (chain) and remotely this message if active
-      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_DISCONNECTED, clientID, productId);
-      // send a disconnection message to the platform entity to initiate the disconnection sequence, this flushes the PTH 
-      // of any possible fetches there
       voltronSink.addToSink(createDisconnectMessage(clientID));
     }
 
@@ -127,29 +123,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
   }
 
   private void nodeConnected(NodeID nodeID, ProductID productId) {
-    // We want to track this if it is an L1 (ClientID) connecting.
-    if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
-      ClientID clientID = (ClientID) nodeID;
-      // Broadcast locally (chain) and remotely this message if active
-      broadcastClientClusterMembershipMessage(ClusterMembershipMessage.EventType.NODE_CONNECTED, clientID, productId);
-    }
-  }
 
-  private void broadcastClientClusterMembershipMessage(int eventType, ClientID clientID, ProductID productId) {
-    // Only broadcast when the current server is the active coordinator.
-    // Do not broadcast for internal clients
-    if (!productId.isInternal()) {
-      MessageChannel[] channels = channelMgr.getActiveChannels();
-      for (MessageChannel channel : channels) {
-        // only broadcast to clients that are not internal
-        if (!channelMgr.getClientIDFor(channel.getChannelID()).equals(clientID) && !channel.getProductID().isInternal()) {
-          ClusterMembershipMessage cmm = (ClusterMembershipMessage) channel
-              .createMessage(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE);
-          cmm.initialize(eventType, clientID, productId);
-          cmm.send();
-        }
-      }
-    }
   }
 /**
  * channel created is strangely connected.  When a new channel is created, it can be 

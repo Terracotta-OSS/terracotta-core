@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 import com.tc.async.api.StageManager;
-import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.management.TCClient;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
@@ -88,12 +87,11 @@ public class StandardClientBuilder implements ClientBuilder {
   public ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                              ClientHandshakeMessageFactory chmf, 
                                                              SessionManager sessionManager,
-                                                             ClusterInternalEventsGun clusterEventsGun, 
                                                              String uuid, 
                                                              String name, 
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, uuid, name, clientVersion, entity);
   }
 
   @Override

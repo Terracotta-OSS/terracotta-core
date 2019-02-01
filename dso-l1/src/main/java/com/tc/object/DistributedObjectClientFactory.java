@@ -19,7 +19,6 @@
 package com.tc.object;
 
 import com.tc.client.ClientFactory;
-import com.tc.cluster.ClusterImpl;
 import com.tc.config.schema.setup.ClientConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -29,7 +28,6 @@ import com.tc.object.config.ClientConfig;
 import com.tc.object.config.ClientConfigImpl;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.util.UUID;
-import com.tc.cluster.ClusterInternal;
 import java.net.InetSocketAddress;
 
 import java.util.List;
@@ -80,14 +78,12 @@ public class DistributedObjectClientFactory {
                                                                    }
                                                                  });
     final TCThreadGroup group = new TCThreadGroup(throwableHandler);
-
-    final ClusterInternal cluster = new ClusterImpl();
     
     String uuid = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_UUID, UUID.getUUID().toString());
     String name = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME, "");
     boolean async = Boolean.parseBoolean(this.properties.getProperty(ConnectionPropertyNames.CONNECTION_ASYNC, "false"));
     
-    DistributedObjectClient client = ClientFactory.createClient(configHelper, builder, group, connectionComponents, cluster,
+    DistributedObjectClient client = ClientFactory.createClient(configHelper, builder, group, connectionComponents,
         uuid,
         name, async);
 
@@ -112,8 +108,6 @@ public class DistributedObjectClientFactory {
       client.shutdown();
       throw e;
     }
-    cluster.init(client.getClusterEventsStage());
-
     return client;
   }
 
