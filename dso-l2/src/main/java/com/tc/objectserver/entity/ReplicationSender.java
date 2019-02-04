@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
@@ -125,6 +126,7 @@ public class ReplicationSender {
   }  
   
   private class SyncState {
+    private final NodeID target;
     // liveSet is the total set of entities which we believe have finished syncing and fully exist on the passive.
     private final Set<FetchID> liveFetch = new HashSet<>();
     // syncdID is the set of concurrency keys, of the entity syncingID, which we believe have finished syncing and fully
@@ -143,7 +145,8 @@ public class ReplicationSender {
 
     private final GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity> batchContext;
     
-    public SyncState(NodeID target) {  
+    public SyncState(NodeID target) {
+      this.target = target;
       this.batchContext = new GroupMessageBatchContext<>(ReplicationMessage::createActivityContainer, group, target, maximumBatchSize, idealMessagesInFlight, (node)->flushBatch());  
     }
     
@@ -331,9 +334,10 @@ public class ReplicationSender {
     private void flushBatch() {
       outgoing.addToSink(()->{
         try {
-          long mid = this.batchContext.flushBatch();
-        } catch (GroupException group) {
-          logger.error("Exception flushing batch context", group);
+          this.batchContext.flushBatch();
+        } catch (GroupException ge) {
+          logger.error("error sending sync to passive");
+          ReplicationSender.this.group.zapNode(this.target, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "failed to sync");
         }
       });
     }
