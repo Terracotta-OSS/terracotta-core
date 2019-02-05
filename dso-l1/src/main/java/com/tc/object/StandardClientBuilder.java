@@ -24,9 +24,9 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import com.tc.async.api.StageManager;
 import com.tc.cluster.ClusterInternalEventsGun;
 import com.tc.management.TCClient;
-import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -75,12 +75,12 @@ public class StandardClientBuilder implements ClientBuilder {
   public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter,
                                                            NetworkStackHarnessFactory stackHarnessFactory,
                                                            ConnectionPolicy connectionPolicy, 
+                                                           TCConnectionManager connections,
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler) {
-    boolean asyncDrive = Boolean.parseBoolean(connectionProperties.getProperty("connection.async", "false"));
-    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, asyncDrive ? null : new BasicConnectionManager(getBufferManagerFactory()),
-                                         connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
+    return new CommunicationsManagerImpl(monitor, messageRouter, stackHarnessFactory, connections,
+                                         connectionPolicy, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
                                          reconnectionRejectedHandler, getBufferManagerFactory());
   }
 
@@ -116,6 +116,11 @@ public class StandardClientBuilder implements ClientBuilder {
     }
 
     return product;
+  }
+  
+  @Override
+  public BufferManagerFactory createBufferManagerFactory() {
+    return getBufferManagerFactory();
   }
 
   protected BufferManagerFactory getBufferManagerFactory() {

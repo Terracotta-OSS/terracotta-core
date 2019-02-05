@@ -42,6 +42,8 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
@@ -142,6 +144,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final BufferManagerFactory                        bufferManagerFactory;
 
   private CommunicationsManager                             communicationsManager;
+  private TCConnectionManager                               connectionManager;
   private NetworkListener                                   groupListener;
   private TCGroupMemberDiscovery                            discover;
   private ZapNodeRequestProcessor                           zapNodeRequestProcessor     = new DefaultZapNodeRequestProcessor(
@@ -236,11 +239,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
-
-    communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
-                                                          new NullMessageMonitor(), messageRouter,
-                                                          networkStackHarnessFactory, this.connectionPolicy, 
-                                                          serverCount,
+    
+    connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_GROUPS, serverCount, new HealthCheckerConfigImpl(tcProperties
+                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"), bufferManagerFactory);
+    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
+                                                          networkStackHarnessFactory, 
+                                                          this.connectionManager,
+                                                          this.connectionPolicy,
                                                           new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
@@ -354,6 +359,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
+    connectionManager.shutdown();
     for (TCGroupMember m : members.values()) {
       notifyAnyPendingRequests(m);
     }

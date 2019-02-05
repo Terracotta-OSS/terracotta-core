@@ -226,6 +226,8 @@ import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -255,6 +257,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   protected NetworkListener                      l1Listener;
   protected NetworkListener                      l1Diagnostics;
   private CommunicationsManager                  communicationsManager;
+  private TCConnectionManager                   connectionManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
   private ServerManagementContext                managementContext;
@@ -524,9 +527,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
     
-    this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
+    this.connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
+    this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
-                                                               this.connectionPolicy, commWorkerThreadCount,
+                                                               this.connectionManager,
+                                                               this.connectionPolicy,
                                                                new DisabledHealthCheckerConfigImpl(),
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),

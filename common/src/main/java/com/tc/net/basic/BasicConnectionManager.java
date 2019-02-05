@@ -71,7 +71,7 @@ public class BasicConnectionManager implements TCConnectionManager {
 
   @Override
   public void asynchCloseAllConnections() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    new Thread(()->closeAllConnections(1000)).start();
   }
 
   @Override

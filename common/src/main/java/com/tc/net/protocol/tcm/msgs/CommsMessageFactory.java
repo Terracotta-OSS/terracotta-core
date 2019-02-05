@@ -18,13 +18,11 @@
  */
 package com.tc.net.protocol.tcm.msgs;
 
-import com.tc.net.protocol.tcm.CommunicationsManager;
-
 import java.text.MessageFormat;
 
 public class CommsMessageFactory {
-  public static String createReconnectRejectMessage(String commsMgrName, Object[] arguments){
-    if (commsMgrName.equals(CommunicationsManager.COMMSMGR_GROUPS)){
+  public static String createReconnectRejectMessage(boolean isServer, Object[] arguments){
+    if (isServer){
       return MessageFormat.format(CommsMessagesResource.getL2L2RejectionMessage(), arguments);
     }else {
       return MessageFormat.format(CommsMessagesResource.getL2L1RejectionMessage(), arguments);

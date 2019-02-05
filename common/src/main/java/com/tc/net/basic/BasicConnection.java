@@ -100,7 +100,6 @@ public class BasicConnection implements TCConnection {
             }
           }
         } catch (IOException ioe) {
-          ioe.printStackTrace();
         } catch (Throwable t) {
           t.printStackTrace();
         }

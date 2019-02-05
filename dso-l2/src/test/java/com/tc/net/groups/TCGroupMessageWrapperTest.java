@@ -24,7 +24,11 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -71,6 +75,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
   final NullSessionManager                        sessionManager = new NullSessionManager();
   final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
   final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
+  private TCConnectionManager                     clientConns;
+  private TCConnectionManager                     serverConns;  
   private CommunicationsManager                   clientComms;
   private CommunicationsManager                   serverComms;
   private ChannelManager                          channelManager;
@@ -81,14 +87,16 @@ public class TCGroupMessageWrapperTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new TCMessageRouterImpl(),
-                                                new PlainNetworkStackHarnessFactory(), null,
-                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+    clientConns = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
+                                                new PlainNetworkStackHarnessFactory(), clientConns,
+                                                new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
                                                 Collections.emptyMap());
-    serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new TCMessageRouterImpl(),
-                                                new PlainNetworkStackHarnessFactory(), null,
-                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
+                                                new PlainNetworkStackHarnessFactory(), serverConns,
+                                                new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
                                                 Collections.emptyMap());
   }
@@ -109,8 +117,10 @@ public class TCGroupMessageWrapperTest extends TestCase {
     } finally {
       try {
         clientComms.shutdown();
+        clientConns.shutdown();
       } finally {
         serverComms.shutdown();
+        serverConns.shutdown();
       }
     }
   }

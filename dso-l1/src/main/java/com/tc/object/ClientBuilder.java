@@ -37,7 +37,8 @@ import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.cluster.ClusterInternalEventsGun;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
 
 import java.util.Map;
 
@@ -51,6 +52,7 @@ public interface ClientBuilder {
                                                     TCMessageRouter messageRouter,
                                                     NetworkStackHarnessFactory stackHarnessFactory,
                                                     ConnectionPolicy connectionPolicy,
+                                                    TCConnectionManager connections,
                                                     HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
                                                     ReconnectionRejectedHandler reconnectionRejectedBehaviour);
@@ -67,5 +69,7 @@ public interface ClientBuilder {
   ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);
 
   void setClientConnectionErrorListener(ClientConnectionErrorListener listener);
+  
+  BufferManagerFactory createBufferManagerFactory();
 
 }

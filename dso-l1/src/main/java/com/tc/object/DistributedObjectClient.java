@@ -109,6 +109,9 @@ import com.tc.cluster.ClusterInternalEventsContext;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
 import com.tc.util.runtime.ThreadDumpUtil;
 
@@ -140,6 +143,7 @@ public class DistributedObjectClient implements TCClient {
   protected final PreparedComponentsFromL2Connection connectionComponents;
 
   private ClientMessageChannel                       channel;
+  private TCConnectionManager                        connectionManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
 
@@ -165,9 +169,9 @@ public class DistributedObjectClient implements TCClient {
   
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
-                                 ClusterInternal cluster, Properties properties) {
-    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents, cluster,
-         UUID.NULL_ID.toString(), "", Boolean.parseBoolean(properties.getProperty("connection.async", "false")));
+                                 Properties properties) {
+    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents,
+         UUID.NULL_ID.toString(), "", false);
   }
 
   public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
@@ -265,11 +269,16 @@ public class DistributedObjectClient implements TCClient {
     final HealthCheckerConfig hc = new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
+    this.connectionManager = (isAsync) ?
+            new TCConnectionManagerImpl(communicationsManager.COMMSMGR_CLIENT, 0, hc, this.clientBuilder.createBufferManagerFactory())
+            :
+            new BasicConnectionManager(this.clientBuilder.createBufferManagerFactory());
     this.communicationsManager = this.clientBuilder
         .createCommunicationsManager(mm,
                                      messageRouter,
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
+                                     connectionManager,
                                      hc,
                                      getMessageTypeClassMapping(),
                                      ReconnectionRejectedHandlerL1.SINGLETON);
@@ -570,17 +579,25 @@ public class DistributedObjectClient implements TCClient {
       try {
         this.communicationsManager.shutdown();
       } catch (final Throwable t) {
-        t.printStackTrace();
         logger.error("Error shutting down communications manager", t);
       } finally {
         this.communicationsManager = null;
+      }
+    }
+    
+    if (this.connectionManager != null) {
+      try {
+        this.connectionManager.shutdown();
+      } catch (final Throwable t) {
+        logger.error("Error shutting down connection manager", t);
+      } finally {
+        this.connectionManager = null;
       }
     }
 
     try {
       this.communicationStageManager.stopAll();
     } catch (final Throwable t) {
-      t.printStackTrace();
       logger.error("Error stopping stage manager", t);
     }
     

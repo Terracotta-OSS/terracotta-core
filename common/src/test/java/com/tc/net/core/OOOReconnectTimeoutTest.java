@@ -20,6 +20,7 @@ package com.tc.net.core;
 
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -51,27 +52,43 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.ProductID;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: Fix test
 @Ignore
 public class OOOReconnectTimeoutTest extends TCTestCase {
-  //
+  private final List<TCConnectionManager> clientConnectionMgrs = Collections.synchronizedList(new ArrayList<>());
 
   Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
   private final int L1_RECONNECT_TIMEOUT = 15000;
 
+  @Override
+  protected void tearDown() throws Exception {
+    clientConnectionMgrs.forEach(TCConnectionManager::shutdown);
+    clientConnectionMgrs.clear();
+    super.tearDown(); 
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    Assert.assertTrue(clientConnectionMgrs.isEmpty());
+  }
+  
   private ClientMessageChannel createClientMsgCh() {
     return createClientMsgCh(true);
   }
 
   private ClientMessageChannel createClientMsgCh(boolean ooo) {
-
-    CommunicationsManager clientComms = new CommunicationsManagerImpl("Client-TestCommsMgr", new NullMessageMonitor(),
+    BasicConnectionManager connMgr = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConnectionMgrs.add(connMgr);
+    CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
+                                                                      connMgr, 
                                                                       new NullConnectionPolicy());
 
     ClientMessageChannel clientMsgCh = clientComms
@@ -97,10 +114,15 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
 
   public void testWorkerCommDistributionAfterReconnect() throws Exception {
     // comms manager with 3 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new HealthCheckerConfigImpl(TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
+                                                                                                     "Test Server"), new ClearTextBufferManagerFactory());
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TCMessageRouterImpl(),
                                                                    getNetworkStackHarnessFactory(true),
-                                                                   new NullConnectionPolicy(), 3,
+                                                                   connectionMgr,
+                                                                   new NullConnectionPolicy(),
                                                                    new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                        .getProperties()
                                                                        .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY),
@@ -204,6 +226,8 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ensureThreadCount(OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl.RESTORE_TIMERTHREAD_NAME, 1);
 
     listener.stop(5000);
+    commsMgr.shutdown();
+    connectionMgr.shutdown();
   }
 
   private void ensureThreadCount(String absentThreadName, int count) {

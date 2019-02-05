@@ -19,10 +19,14 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.util.TCTimeoutException;
 
@@ -40,13 +44,15 @@ import junit.framework.TestCase;
  */
 public class NetworkListenerTest extends TestCase {
 
+  TCConnectionManager connMgr;
   CommunicationsManager commsMgr;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    commsMgr = new CommunicationsManagerImpl("TestCommMgr", new NullMessageMonitor(),
-                                             new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
+    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                             new PlainNetworkStackHarnessFactory(), connMgr, new NullConnectionPolicy());
   }
 
   @Override
@@ -55,6 +61,9 @@ public class NetworkListenerTest extends TestCase {
 
     if (commsMgr != null) {
       commsMgr.shutdown();
+    }
+    if (connMgr != null) {
+      connMgr.shutdown();
     }
   }
 
