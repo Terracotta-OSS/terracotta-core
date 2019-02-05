@@ -181,7 +181,7 @@ public class DistributedObjectClient implements TCClient {
     this.isAsync = asyncDrive;
     
     // We need a StageManager to create the SEDA stages used for handling the messages.
-    final SEDA<Void> seda = new SEDA<>(threadGroup);
+    final SEDA seda = new SEDA(threadGroup);
     communicationStageManager = seda.getStageManager();
   }
 

@@ -92,11 +92,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
       final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
 
-      if (!id.isNull()) {
- //  why are all these identifiers intermingled?
-        long validID = id.toLong();
-        setLocalNodeID(new ClientID(validID));
-      }
       this.channelSessionID = this.sessionProvider.getSessionID();
       channelOpened();
       return id;

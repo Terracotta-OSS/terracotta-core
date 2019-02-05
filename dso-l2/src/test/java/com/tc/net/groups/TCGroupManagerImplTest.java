@@ -37,6 +37,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.SessionID;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
 import com.tc.util.State;
@@ -207,6 +208,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
    * Both open channel to each other, only one direction to keep
    */
   public void testResolveTwoWayConnection() throws Exception {
+    try {
+    TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(new HashMap<>());
     setupGroups(2);
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
@@ -235,6 +238,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
                m0.getPeerNodeID().equals(m1.getLocalNodeID()));
 
     tearGroups();
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 //
 //  public void testSendTo() throws Exception {

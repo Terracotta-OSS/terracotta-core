@@ -110,7 +110,6 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
-import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -270,7 +269,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private ConnectionIDFactoryImpl                connectionIdFactory;
 
   private final TCThreadGroup                    threadGroup;
-  private final SEDA<HttpConnectionContext>                             seda;
+  private final SEDA                            seda;
 
   private ReconnectConfig                        l1ReconnectConfig;
 
@@ -285,13 +284,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   // used by a test
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
-    this(configSetupManager, threadGroup, connectionPolicy, new SEDA<HttpConnectionContext>(threadGroup), null);
+    this(configSetupManager, threadGroup, connectionPolicy, new SEDA(threadGroup), null);
 
   }
 
   public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy,
-                                 SEDA<HttpConnectionContext> seda,
+                                 SEDA seda,
                                  TCServer server) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
