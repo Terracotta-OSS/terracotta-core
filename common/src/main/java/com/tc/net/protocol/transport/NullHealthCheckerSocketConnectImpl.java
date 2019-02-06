@@ -63,4 +63,9 @@ public class NullHealthCheckerSocketConnectImpl implements HealthCheckerSocketCo
     //
   }
 
+  @Override
+  public void stop() {
+    //
+  }
+
 }

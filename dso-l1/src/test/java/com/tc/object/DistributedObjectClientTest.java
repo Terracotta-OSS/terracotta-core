@@ -18,7 +18,6 @@
  */
 package com.tc.object;
 
-import com.tc.cluster.ClusterImpl;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -35,7 +34,6 @@ import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.ProductID;
-import com.tc.cluster.ClusterInternal;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -93,13 +91,12 @@ public class DistributedObjectClientTest extends TestCase {
     ConnectionInfo info = new ConnectionInfo("localhost", new PortChooser().chooseRandomPort());
     Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
-    ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     Properties connectionProperties = new Properties();
     connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
     connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
     DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup,
-                                                                 l2connection, cluster, connectionProperties);
+                                                                 l2connection, connectionProperties);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();
@@ -161,7 +158,6 @@ public class DistributedObjectClientTest extends TestCase {
     ConnectionInfo info = new ConnectionInfo("localhost", new PortChooser().chooseRandomPort());
     Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
     Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
-    ClusterInternal cluster = new ClusterImpl();
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     Properties connectionProperties = new Properties();
     connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
@@ -179,7 +175,7 @@ public class DistributedObjectClientTest extends TestCase {
       }
     };
     
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, cluster, null, null);
+    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, null, null, false);
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();

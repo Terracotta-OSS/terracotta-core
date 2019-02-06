@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-public enum MessageTransportState {
+enum MessageTransportState {
   /**
    * XXX: move to client state machine Initial state for client transports.
    */

@@ -158,13 +158,8 @@ public class StageManagerImpl implements StageManager {
 
   @Override
   public void cleanup() {
-    // TODO: ClientConfigurationContext is not visible so can't use ClientConfigurationContext.CLUSTER_EVENTS_STAGE
-    Collection<String> skipStages = new HashSet<String>();
-    skipStages.add("cluster_events_stage");
     for (Stage<?> s : stages.values()) {
-      if (!skipStages.contains(s.getName())) {
-        s.clear();
-      }
+      s.clear();
     }
   }
 

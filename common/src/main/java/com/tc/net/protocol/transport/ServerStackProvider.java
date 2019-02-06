@@ -31,8 +31,6 @@ import com.tc.net.protocol.ProductNotSupportedException;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.RejectReconnectionException;
 import com.tc.net.protocol.ServerNetworkStackHarness;
-import com.tc.net.protocol.TCProtocolAdaptor;
-import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.operatorevent.NodeNameProvider;
@@ -47,6 +45,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * Provides network stacks on the server side
@@ -65,7 +64,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final MessageTransportFactory          messageTransportFactory;
   private final List<MessageTransportListener>   transportListeners = new ArrayList<MessageTransportListener>();
   private final ReentrantLock                    licenseLock;
-  private final String                           commsMgrName;
   private final NodeNameProvider                 activeProvider;
   private final Predicate<MessageTransport>                validateTransport;
 
@@ -77,8 +75,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
     this(initialConnectionIDs, null, (t)->true, harnessFactory, channelFactory, messageTransportFactory,
-         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock,
-         CommunicationsManager.COMMSMGR_SERVER);
+         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock);
   }
 
   public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validate, NetworkStackHarnessFactory harnessFactory,
@@ -87,8 +84,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
-                             WireProtocolMessageSink wireProtoMsgSink, ReentrantLock licenseLock,
-                             String commsMgrName) {
+                             WireProtocolMessageSink wireProtoMsgSink, ReentrantLock licenseLock) {
     this.messageTransportFactory = messageTransportFactory;
     this.connectionPolicy = connectionPolicy;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
@@ -101,7 +97,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.transportListeners.add(this);
     Assert.assertNotNull(licenseLock);
     this.licenseLock = licenseLock;
-    this.commsMgrName = commsMgrName;
     for (final ConnectionID client : initialConnectionIDs) {
       logger.info("Preparing comms stack for previously connected client: " + client);
       MessageTransport transport = messageTransportFactory.createNewTransport(
@@ -238,7 +233,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     if (wireProtoMsgsink != null) {
       return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(wireProtoMsgsink);
     } else {
-      MessageSink sink = new MessageSink(createHandshakeErrorHandler(), this.commsMgrName);
+      MessageSink sink = new MessageSink(createHandshakeErrorHandler());
       return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(sink);
     }
   }
@@ -249,14 +244,12 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
   class MessageSink implements WireProtocolMessageSink {
     private final TransportHandshakeErrorHandler handshakeErrorHandler;
-    private final String                         commsManagerName;
     private volatile boolean                     isSynReceived    = false;
     private volatile boolean                     isHandshakeError = false;
     private volatile MessageTransport            transport;
 
-    private MessageSink(TransportHandshakeErrorHandler handshakeErrorHandler, String commsMgrName) {
+    private MessageSink(TransportHandshakeErrorHandler handshakeErrorHandler) {
       this.handshakeErrorHandler = handshakeErrorHandler;
-      this.commsManagerName = commsMgrName;
     }
 
     @Override
@@ -288,7 +281,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handleSyn((SynMessage) message);
           isSynced = true;
         } catch (RejectReconnectionException e) {
-          String errorMessage = CommsMessageFactory.createReconnectRejectMessage(this.commsManagerName,
+          // clients don't have valid callback ports
+          String errorMessage = CommsMessageFactory.createReconnectRejectMessage(((SynMessage)message).getCallbackPort() > 0,
                                                                                  new Object[] { e.getMessage() });
           // send connection rejected SycAck back to L1
           // since stack no found, create a temp transport for sending sycAck message back

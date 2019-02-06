@@ -54,4 +54,9 @@ public class ConnectionHealthCheckerContextDummyImpl implements ConnectionHealth
     throw new AssertionError("Dummy HealthCheckerContext.");
   }
 
+  @Override
+  public void close() {
+
+  }
+
 }

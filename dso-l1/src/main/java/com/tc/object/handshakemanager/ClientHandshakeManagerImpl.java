@@ -28,7 +28,6 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.util.Assert;
 import com.tc.util.Util;
-import com.tc.cluster.ClusterInternalEventsGun;
 
 import java.util.Objects;
 
@@ -63,16 +62,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private volatile boolean disconnected;
   private volatile boolean isShutdown = false;
 
-  private final ClusterInternalEventsGun clusterEventsGun;
-
   public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
-                                    SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
+                                    SessionManager sessionManager,
                                     String uuid, String name, String clientVersion,
                                     ClientHandshakeCallback entities) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
-    this.clusterEventsGun = clusterEventsGun;
     this.uuid = uuid;
     this.name = name;
     this.clientVersion = clientVersion;
@@ -124,7 +120,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     final String msg = "Reconnection was rejected from server. This client will never be able to join the cluster again.";
     logger.error(msg);
     LOGGER.error(msg);
-    clusterEventsGun.fireNodeError();
   }
 
   @Override
@@ -170,8 +165,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       changeToRunning();
       notifyAll();
       unpauseCallbacks();
-
-      clusterEventsGun.fireThisNodeJoined(thisNodeId, clusterMembers);
     }
   }
 
@@ -231,8 +224,6 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
         didChangeToPaused = true;
         this.disconnected = true;
       }
-
-      this.clusterEventsGun.fireOperationsDisabled();
     }
     return didChangeToPaused;
   }

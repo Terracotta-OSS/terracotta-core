@@ -21,6 +21,7 @@ package com.tc.net.core;
 
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -53,16 +54,20 @@ import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.util.Assert;
 import com.tc.util.ProductID;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
   private final int             L1_RECONNECT_TIMEOUT = 5000;
   private final AtomicInteger connections          = new AtomicInteger(0);
   private int baseAsyncThreads;
+  private final List<TCConnectionManager> clientConnectionMgrs = Collections.synchronizedList(new ArrayList<>());
   
 
   @Override
@@ -70,6 +75,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     super.setUp();
     connections.set(0);
     baseAsyncThreads = getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
+    Assert.assertTrue(clientConnectionMgrs.isEmpty());
   }
 
   private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean enableReconnect) {
@@ -91,9 +97,11 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   private ClientMessageChannel createClientMsgCh(boolean ooo) {
-
-    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+    BasicConnectionManager connMgr = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConnectionMgrs.add(connMgr);
+    CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
+                                                                      connMgr,
                                                                       new NullConnectionPolicy());
     ClientMessageChannel clientMsgCh = clientComms
         .createClientChannel(ProductID.SERVER, new NullSessionManager(),
@@ -102,12 +110,16 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExit() throws Exception {
-
-    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
+    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new HealthCheckerConfigImpl(TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
+                                                                                                     "Test Server"), new ClearTextBufferManagerFactory());
+    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
                                                                          new NullMessageMonitor(),
                                                                          new TCMessageRouterImpl(),
                                                                          getNetworkStackHarnessFactory(false),
-                                                                         new NullConnectionPolicy(), 3,
+                                                                         connectionMgr,
+                                                                         new NullConnectionPolicy(),
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
@@ -163,15 +175,21 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     }
 
     listener.stop(5000);
-
+    serverCommsMgr.shutdown();
+    connectionMgr.shutdown();
   }
 
   public void testConnectionEstablisherThreadExitAfterOOO() throws Exception {
-    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
+    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new HealthCheckerConfigImpl(TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
+                                                                                                     "Test Server"), new ClearTextBufferManagerFactory());
+    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
                                                                          new NullMessageMonitor(),
                                                                          new TCMessageRouterImpl(),
                                                                          getNetworkStackHarnessFactory(true),
-                                                                         new NullConnectionPolicy(), 3,
+                                                                         connectionMgr,
+                                                                         new NullConnectionPolicy(),
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
@@ -230,6 +248,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     }
 
     listener.stop(5000);
+    serverCommsMgr.shutdown();
+    connectionMgr.shutdown();
   }
 
   private int getThreadCount(String absentThreadName) {
@@ -245,6 +265,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
   @Override
   protected void tearDown() throws Exception {
+    clientConnectionMgrs.forEach(TCConnectionManager::shutdown);
+    clientConnectionMgrs.clear();
     super.tearDown();
   }
 

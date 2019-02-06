@@ -333,9 +333,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     
     Stage<VoltronEntityMultiResponse> responderMulti = stages.getStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class);
-    FlushResponse flush = new FlushResponse();
-    responderMulti.getSink().addToSink(flush);
-    flush.waitForAccess();
+    if (!responderMulti.isEmpty()) {
+      FlushResponse flush = new FlushResponse();
+      responderMulti.getSink().addToSink(flush);
+      flush.waitForAccess();
+    }
     // Walk the inFlightMessages, adding them all to the handshake, since we need them to be replayed.
     for (InFlightMessage inFlight : this.inFlightMessages.values()) {
       VoltronEntityMessage message = inFlight.getMessage();

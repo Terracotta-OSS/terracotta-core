@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
@@ -39,6 +40,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -73,14 +75,18 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   private static final int L1_RECONNECT_TIMEOUT = 15000;
   Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
   List<ClientMessageTransport> transports = new ArrayList<ClientMessageTransport>();
+  private final List<TCConnectionManager> clientConnectionMgrs = Collections.synchronizedList(new ArrayList<>());
 
   public TCWorkerCommManagerTest() {
 
   }
   
   private synchronized ClientMessageTransport createClient(String clientName) {
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl(clientName + "CommsMgr", new NullMessageMonitor(),
+    TCConnectionManager connection = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConnectionMgrs.add(connection);
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
+                                                                   connection, 
                                                                    new NullConnectionPolicy());
 
     ClientMessageTransport cmt = new ClientMessageTransport(commsMgr.getConnectionManager(), createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
@@ -106,13 +112,17 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    Assert.assertTrue(this.clientConnectionMgrs.isEmpty());
   }
 
   public void testReaderandWriterCommThread() throws Exception {
     // comms manager with 4 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 4, 
+      new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
-                                                                   new NullConnectionPolicy(), 4);
+                                                                   connMgr, 
+                                                                   new NullConnectionPolicy());
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory(), (t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
@@ -155,13 +165,18 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     client4.close();
 
     listener.stop(5000);
+    commsMgr.shutdown();
+    connMgr.shutdown();
   }
 
   public void testWorkerCommDistributionAfterClose() throws Exception {
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, 
+      new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
     // comms manager with 3 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(false),
-                                                                   new NullConnectionPolicy(), 3);
+                                                                   connMgr,
+                                                                   new NullConnectionPolicy());
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory(), (t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
@@ -211,15 +226,19 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     waitForWeight(commsMgr, 2, 0);
 
     listener.stop(5000);
+    commsMgr.shutdown();
+    connMgr.shutdown();
   }
 
   @Ignore("this test expects add more weight from a thread not able to do it")
   public void WorkerCommDistributionAfterAddMoreWeight() throws Exception {
-    
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, 
+      new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
     // comms manager with 3 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(false),
-                                                                   new NullConnectionPolicy(), 3);
+                                                                   connMgr,
+                                                                   new NullConnectionPolicy());
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory(), (t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
@@ -289,9 +308,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private ClientMessageChannel createClientMsgCh(boolean ooo) {
-
-    CommunicationsManager clientComms = new CommunicationsManagerImpl("Client-TestCommsMgr", new NullMessageMonitor(),
+    TCConnectionManager connection = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConnectionMgrs.add(connection);
+    CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
+                                                                      connection,
                                                                       new NullConnectionPolicy());
 
     ClientMessageChannel clientMsgCh = clientComms
@@ -311,10 +332,13 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                  .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY).addAllPropertiesTo(props);
       props.list(System.out);
       HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(1000, 1000, 1, "test server", false, 1, 1);
-      CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+      TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, 
+        new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+      CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                      new TCMessageRouterImpl(),
                                                                      getNetworkStackHarnessFactory(true),
-                                                                     new NullConnectionPolicy(), 3,
+                                                                     connMgr,
+                                                                     new NullConnectionPolicy(),
                                                                      config,
                                                                      new ServerID(),
                                                                      new TransportHandshakeErrorNullHandler(),
@@ -428,6 +452,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       client6.close();
 
       listener.stop(5000);
+      commsMgr.shutdown();
+      connMgr.shutdown();
     }
   }
 
@@ -520,5 +546,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       t.close();
     }
     transports.clear();
+    clientConnectionMgrs.forEach(TCConnectionManager::shutdown);
+    clientConnectionMgrs.clear();
   }
 }

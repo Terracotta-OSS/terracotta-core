@@ -26,29 +26,11 @@ import com.tc.properties.TCPropertiesImpl;
 
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {
-  public static final String             CLIENT_COORDINATION_STAGE                   = "client_coordination_stage";
-  public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";
-  public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
   public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
 
   public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
   
-  private final ClientEntityManager       entityManager;
-  private final ClientHandshakeManager    clientHandshakeManager;
-
-  public ClientConfigurationContext(StageManager stageManager,
-                                    ClientEntityManager entityManager,
-                                    ClientHandshakeManager clientHandshakeManager) {
+  public ClientConfigurationContext(StageManager stageManager) {
     super(stageManager);
-    this.entityManager = entityManager;
-    this.clientHandshakeManager = clientHandshakeManager;
-  }
-
-  public ClientEntityManager getEntityManager() {
-    return this.entityManager;
-  }
-
-  public ClientHandshakeManager getClientHandshakeManager() {
-    return this.clientHandshakeManager;
   }
 }

@@ -22,7 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ClearTextBufferManager;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
@@ -55,6 +60,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
+  TCConnectionManager                                     serverConns;
+  TCConnectionManager                                     clientConns;
   CommunicationsManager                                   serverComms;
   CommunicationsManager                                   clientComms;
 
@@ -80,21 +87,16 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
                                                                    new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                    new L1ReconnectConfigImpl(true, 120000, 5000, 16, 32));
 
-    if (serverHCConf != null) {
-      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(), serverMessageRouter,
-                                                  networkStackHarnessFactory, new NullConnectionPolicy(), serverHCConf,
+    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, (serverHCConf != null) ? serverHCConf :new DisabledHealthCheckerConfigImpl() , new ClearTextBufferManagerFactory());
+    serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), serverMessageRouter,
+                                                  networkStackHarnessFactory, serverConns, new NullConnectionPolicy(), serverHCConf,
+                                                  new TransportHandshakeErrorNullHandler(),
                                                   Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                   Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
-    } else {
-      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(), serverMessageRouter,
-                                                  networkStackHarnessFactory, new NullConnectionPolicy(),
-                                                  new DisabledHealthCheckerConfigImpl(),
-                                                  Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
-                                                  Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
-    }
-
-    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(), clientMessageRouter,
-                                                networkStackHarnessFactory, new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(), 
+    clientConns = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), clientMessageRouter,
+                                                networkStackHarnessFactory, clientConns, new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(), 
+                                                new TransportHandshakeErrorHandlerForL1(),
                                                 Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
@@ -284,6 +286,12 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     }
     if (clientComms != null) {
       clientComms.shutdown();
+    }
+    if (serverConns != null) {
+      serverConns.shutdown();
+    }
+    if (clientConns != null) {
+      clientConns.shutdown();
     }
     closeClientMessageChannels();
   }

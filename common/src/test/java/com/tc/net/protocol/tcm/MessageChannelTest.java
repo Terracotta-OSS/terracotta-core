@@ -22,7 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
@@ -30,6 +34,9 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
+import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
@@ -72,6 +79,8 @@ public class MessageChannelTest extends TCTestCase {
   Logger logger = LoggerFactory.getLogger(getClass());
   NetworkListener              lsnr;
   ConnectionInfo               connectTo;
+  TCConnectionManager         clientConns;
+  TCConnectionManager         serverConns;
   CommunicationsManagerImpl        clientComms;
   CommunicationsManagerImpl        serverComms;
   TCMessageRouter              clientMessageRouter;
@@ -105,14 +114,18 @@ try {
     clientMessageRouter = new TCMessageRouterImpl();
     serverMessageRouter = new TCMessageRouterImpl();
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, clientMessageRouter,
-                                                clientStackHarnessFactory, new NullConnectionPolicy(),
-                                                new DisabledHealthCheckerConfigImpl(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+    clientConns = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(mm, clientMessageRouter,
+                                                clientStackHarnessFactory, clientConns, new NullConnectionPolicy(),
+                                                new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), 
+                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
-    serverComms = new CommunicationsManagerImpl("TestCommMgr-server", mm, serverMessageRouter,
-                                                serverStackHarnessFactory, new NullConnectionPolicy(),
-                                                new DisabledHealthCheckerConfigImpl(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+    serverConns = new TCConnectionManagerImpl("TestCommMgr-server", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverComms = new CommunicationsManagerImpl(mm, serverMessageRouter,
+                                                serverStackHarnessFactory, serverConns, new NullConnectionPolicy(),
+                                                new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorNullHandler(),
+                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
@@ -189,6 +202,8 @@ try {
     if (this.clientChannel != null) this.clientChannel.close();
     if (clientComms != null) clientComms.shutdown();
     if (serverComms != null) serverComms.shutdown();
+    if (clientConns != null) clientConns.shutdown();
+    if (serverConns != null) serverConns.shutdown();
   }
 
   public void testAttachments() throws Exception {
@@ -271,14 +286,21 @@ try {
     serverWatcher = new MessageSendAndReceiveWatcher();
 
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, new PlainNetworkStackHarnessFactory(),
-                                                new NullConnectionPolicy(), 0);
-    CommunicationsManagerImpl serverComms1 = new CommunicationsManagerImpl("TestCommMgr-server-1", mm,
+    
+    clientConns = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(mm, new PlainNetworkStackHarnessFactory(),
+                                                clientConns, 
+                                                new NullConnectionPolicy());
+
+    TCConnectionManager serverConns1 = new TCConnectionManagerImpl("TestCommMgr-server-1", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    CommunicationsManagerImpl serverComms1 = new CommunicationsManagerImpl(mm,
                                                                        new PlainNetworkStackHarnessFactory(),
-                                                                       new NullConnectionPolicy(), 0);
-    CommunicationsManagerImpl serverComms2 = new CommunicationsManagerImpl("TestCommMgr-server-2", mm,
+                                                                       serverConns1, 
+                                                                       new NullConnectionPolicy());
+    TCConnectionManager serverConns2 = new TCConnectionManagerImpl("TestCommMgr-server-2", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    CommunicationsManagerImpl serverComms2 = new CommunicationsManagerImpl(mm,
                                                                        new PlainNetworkStackHarnessFactory(),
-                                                                       new NullConnectionPolicy(), 0);
+                                                                       serverConns2, new NullConnectionPolicy());
 
     addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms1);
     NetworkListener lsnr1 = getListener(clientWatcher, serverWatcher, true, serverComms1);
@@ -286,9 +308,10 @@ try {
     addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms2);
     NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
 
-    CommunicationsManager clComms = new CommunicationsManagerImpl("TestCommMgr-client", mm,
+    TCConnectionManager clientConns2 = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    CommunicationsManager clComms = new CommunicationsManagerImpl(mm,
                                                                   new PlainNetworkStackHarnessFactory(),
-                                                                  new NullConnectionPolicy(), 0);
+                                                                  clientConns2, new NullConnectionPolicy());
 
     this.setUpClientReceiveSink();
     this.clientChannel = createClientMessageChannel(ProductID.STRIPE, clComms);
@@ -302,6 +325,12 @@ try {
       throw t;
     }
     Assert.eval(clientChannel.isConnected());
+    lsnr1.stop(1000);
+    lsnr2.stop(1000);
+    serverComms1.shutdown();
+    serverComms2.shutdown();
+    clComms.shutdown();
+    clientConns2.shutdown();
   }
 
   private NetworkListener getListener(MessageSendAndReceiveWatcher clientWatcher2,

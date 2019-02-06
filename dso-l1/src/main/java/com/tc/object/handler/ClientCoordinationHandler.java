@@ -22,8 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
-import com.tc.object.ClientConfigurationContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
@@ -32,7 +30,11 @@ import com.tc.object.msg.ClientHandshakeResponse;
 public class ClientCoordinationHandler extends AbstractEventHandler<ClientHandshakeResponse> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientCoordinationHandler.class);
-  private ClientHandshakeManager clientHandshakeManager;
+  private final ClientHandshakeManager clientHandshakeManager;
+
+  public ClientCoordinationHandler(ClientHandshakeManager clientHandshakeManager) {
+    this.clientHandshakeManager = clientHandshakeManager;
+  }
 
   @Override
   public void handleEvent(ClientHandshakeResponse context) {
@@ -50,12 +52,4 @@ public class ClientCoordinationHandler extends AbstractEventHandler<ClientHandsh
   private void handleClientHandshakeAckMessage(ClientHandshakeAckMessage handshakeAck) {
     clientHandshakeManager.acknowledgeHandshake(handshakeAck);
   }
-
-  @Override
-  public synchronized void initialize(ConfigurationContext context) {
-    super.initialize(context);
-    ClientConfigurationContext ccContext = (ClientConfigurationContext) context;
-    this.clientHandshakeManager = ccContext.getClientHandshakeManager();
-  }
-
 }

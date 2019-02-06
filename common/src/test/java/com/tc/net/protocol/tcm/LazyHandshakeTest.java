@@ -25,11 +25,16 @@ import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
@@ -59,6 +64,8 @@ public class LazyHandshakeTest extends TCTestCase {
   private static final long     PROXY_SYNACK_DELAY = ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT;
   private static final int      CLIENT_COUNT       = 3;
 
+  private TCConnectionManager   serverConn;
+  private TCConnectionManager   clientConn;
   private CommunicationsManager serverComms;
   private CommunicationsManager clientComms;
   private PortChooser           pc;
@@ -77,10 +84,14 @@ public class LazyHandshakeTest extends TCTestCase {
 
   private void lazySetUp() {
     pc = new PortChooser();
-    serverComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+    serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    clientConn = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+                                                serverConn,
                                                 new NullConnectionPolicy());
-    clientComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                                new NullConnectionPolicy());
+    clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+            clientConn,                                    
+            new NullConnectionPolicy());
 
     listener = serverComms.createListener(new TCSocketAddress(0), true,
                                           new DefaultConnectionIdFactory(), (t)->true);
@@ -111,6 +122,10 @@ public class LazyHandshakeTest extends TCTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    clientComms.shutdown();
+    serverComms.shutdown();
+    clientConn.shutdown();
+    serverConn.shutdown();
     super.tearDown();
   }
 

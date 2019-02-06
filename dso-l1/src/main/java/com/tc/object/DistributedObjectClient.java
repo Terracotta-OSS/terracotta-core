@@ -18,6 +18,7 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.cluster.Cluster;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.NetworkVoltronEntityMessageImpl;
@@ -70,8 +70,6 @@ import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.object.config.ClientConfig;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handler.ClientCoordinationHandler;
-import com.tc.object.handler.ClusterInternalEventsHandler;
-import com.tc.object.handler.ClusterMembershipEventsHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
@@ -103,12 +101,14 @@ import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.SetOnceRef;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
-import com.tc.cluster.ClusterInternal;
-import com.tc.cluster.ClusterInternalEventsContext;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
+import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
@@ -122,6 +122,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 
 /**
@@ -133,18 +134,16 @@ public class DistributedObjectClient implements TCClient {
   
   private final ClientBuilder                        clientBuilder;
   private final ClientConfig                         config;
-  private final ClusterInternal                      cluster;
   private final TCThreadGroup                        threadGroup;
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
 
   private ClientMessageChannel                       channel;
+  private TCConnectionManager                        connectionManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
 
   private CounterManager                             counterManager;
-
-  private Stage<ClusterInternalEventsContext> clusterEventsStage;
 
   private final String                                 uuid;
   private final String                               name;
@@ -153,35 +152,36 @@ public class DistributedObjectClient implements TCClient {
 
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
   private final SetOnceFlag                          connectionMade                       = new SetOnceFlag();
-  private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<Exception>();
+  private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<>();
  
   private ClientEntityManager clientEntityManager;
   private RequestReceiveHandler singleMessageReceiver;
   private final StageManager communicationStageManager;
+  
+  private final boolean isAsync;
 
   
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
-                                 ClusterInternal cluster, Properties properties) {
-    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents, cluster,
-         UUID.NULL_ID.toString(), "");
+                                 Properties properties) {
+    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents,
+         UUID.NULL_ID.toString(), "", false);
   }
 
   public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
-                                 ClusterInternal cluster,
-                                 String uuid, String name) {
+                                 String uuid, String name, boolean asyncDrive) {
     Assert.assertNotNull(config);
     this.config = config;
     this.connectionComponents = connectionComponents;
-    this.cluster = cluster;
     this.threadGroup = threadGroup;
     this.clientBuilder = builder;
     this.uuid = uuid;
     this.name = name;
+    this.isAsync = asyncDrive;
     
     // We need a StageManager to create the SEDA stages used for handling the messages.
-    final SEDA<Void> seda = new SEDA<Void>(threadGroup);
+    final SEDA seda = new SEDA(threadGroup);
     communicationStageManager = seda.getStageManager();
   }
 
@@ -225,10 +225,6 @@ public class DistributedObjectClient implements TCClient {
     }
   }
 
-  public Stage<ClusterInternalEventsContext> getClusterEventsStage() {
-    return clusterEventsStage;
-  }
-
   public synchronized void start() {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
@@ -243,7 +239,6 @@ public class DistributedObjectClient implements TCClient {
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackOnExitHandler() {
       @Override
       public void callbackOnExit(CallbackOnExitState state) {
-        cluster.fireNodeError();
         DSO_LOGGER.info(getClientState());
         Thread.dumpStack();
       }
@@ -261,18 +256,21 @@ public class DistributedObjectClient implements TCClient {
     final HealthCheckerConfig hc = new HealthCheckerConfigClientImpl(tcProperties
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
+    this.connectionManager = (isAsync) ?
+            new TCConnectionManagerImpl(communicationsManager.COMMSMGR_CLIENT, 0, hc, this.clientBuilder.createBufferManagerFactory())
+            :
+            new BasicConnectionManager(this.clientBuilder.createBufferManagerFactory());
     this.communicationsManager = this.clientBuilder
         .createCommunicationsManager(mm,
                                      messageRouter,
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
+                                     connectionManager,
                                      hc,
                                      getMessageTypeClassMapping(),
                                      ReconnectionRejectedHandlerL1.SINGLETON);
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
-
-    clusterEventsStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE, ClusterInternalEventsContext.class, new ClusterInternalEventsHandler<ClusterInternalEventsContext>(cluster), 1, maxSize);
 
     final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
 
@@ -304,7 +302,7 @@ public class DistributedObjectClient implements TCClient {
     this.singleMessageReceiver = new RequestReceiveHandler(this.clientEntityManager);
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
-
+    
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     this.counterManager.createCounter(sampledRateCounterConfig);
     this.counterManager.createCounter(sampledRateCounterConfig);
@@ -313,40 +311,33 @@ public class DistributedObjectClient implements TCClient {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     this.counterManager.createCounter(sampledCounterConfig);
 
-    // By design this stage needs to be single threaded. If it wasn't then cluster membership messages could get
-    // processed before the client handshake ack, and this client would get a faulty view of the cluster at best, or
-    // more likely an AssertionError
-    final Stage<ClientHandshakeResponse> pauseStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE, ClientHandshakeResponse.class, new ClientCoordinationHandler(), 1, maxSize);
-    final Stage<ClusterMembershipMessage> clusterMembershipEventStage = this.communicationStageManager.createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE, ClusterMembershipMessage.class, new ClusterMembershipEventsHandler(cluster), 1, maxSize);
-
     final ProductInfo pInfo = ProductInfo.getInstance();
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(new ClientIDLogger(this.channel, LoggerFactory
                                           .getLogger(ClientHandshakeManagerImpl.class)), this.channel
                                           .getClientHandshakeMessageFactory(), sessionManager,
-                                      cluster, this.uuid, this.name, pInfo.version(), this.clientEntityManager);
+                                          this.uuid, this.name, pInfo.version(), this.clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(channel, clientHandshakeManager);
 
     this.shutdownManager = new ClientShutdownManager(this, connectionComponents);
 
-    final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager,
-                                                                         this.clientEntityManager,
-                                                                         this.clientHandshakeManager);
+    final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager);
     // DO NOT create any stages after this call
     
-    String[] exclusion = this.channel.getProductID() == ProductID.DIAGNOSTIC ? 
-    new String[] {
-      ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
-      ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,
-      ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE
-    } : 
-    new String[] {
-    };
+    String[] exclusion = this.channel.getProductID() == ProductID.DIAGNOSTIC || !isAsync ? 
+      new String[] {
+        ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE
+      } 
+              :
+      new String[] {
+      };
 
     this.communicationStageManager.startAll(cc, Collections.<PostInit> emptyList(), exclusion);
 
-    initChannelMessageRouter(messageRouter, pauseStage.getSink(), clusterMembershipEventStage.getSink(), multiResponseStage.getSink());
+    EventHandler<ClientHandshakeResponse> handshake = new ClientCoordinationHandler(this.clientHandshakeManager);
+
+    initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), isAsync ? multiResponseStage.getSink() : EventHandler.directSink(mutil));
     new Thread(threadGroup, new Runnable() {
         public void run() {
           while (!clientStopped.isSet()) {
@@ -465,13 +456,12 @@ public class DistributedObjectClient implements TCClient {
     return messageTypeClassMapping;
   }
 
-  private void initChannelMessageRouter(TCMessageRouter messageRouter,
-                                        Sink<ClientHandshakeResponse> pauseSink,
-                                        Sink<ClusterMembershipMessage> clusterMembershipEventSink, Sink<VoltronEntityMultiResponse> multiSink) {
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, new TCMessageHydrateSink<>(pauseSink));
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, new TCMessageHydrateSink<>(pauseSink));
-    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE, new TCMessageHydrateSink<>(pauseSink));
-    messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, new TCMessageHydrateSink<>(clusterMembershipEventSink));
+  private void initChannelMessageRouter(TCMessageRouter messageRouter, Sink<ClientHandshakeResponse> ack, 
+                                         Sink<VoltronEntityMultiResponse> multiSink) {
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, new TCMessageHydrateSink<>(ack));
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, new TCMessageHydrateSink<>(ack));
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REDIRECT_MESSAGE, new TCMessageHydrateSink<>(ack));
+    messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, new TCMessageHydrateSink<>((context) -> {/* black hole for compatibility */}));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE, new TCMessageHydrateAndConvertSink<>(multiSink, this::convertSingleToMulti));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE, new TCMessageHydrateAndConvertSink<>(multiSink, this::convertSingleToMulti));
     messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE, new TCMessageHydrateAndConvertSink<>(multiSink, this::convertSingleToMulti));
@@ -567,6 +557,16 @@ public class DistributedObjectClient implements TCClient {
         this.communicationsManager = null;
       }
     }
+    
+    if (this.connectionManager != null) {
+      try {
+        this.connectionManager.shutdown();
+      } catch (final Throwable t) {
+        logger.error("Error shutting down connection manager", t);
+      } finally {
+        this.connectionManager = null;
+      }
+    }
 
     try {
       this.communicationStageManager.stopAll();
@@ -575,7 +575,6 @@ public class DistributedObjectClient implements TCClient {
     }
     
     CommonShutDownHook.shutdown();
-    this.cluster.shutdown();
 
     if (this.threadGroup != null) {
       boolean interrupted = false;
@@ -684,10 +683,6 @@ public class DistributedObjectClient implements TCClient {
         // the logger is closed by now so we can't even log that
       }
     }
-  }
-
-  public Cluster getCluster() {
-    return this.cluster;
   }
 
   private void shutdownClient(boolean forceImmediate) {

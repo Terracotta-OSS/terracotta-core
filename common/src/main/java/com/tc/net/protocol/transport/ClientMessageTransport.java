@@ -33,7 +33,6 @@ import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -44,7 +43,7 @@ import com.tc.util.concurrent.TCFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * Client implementation of the transport network layer.
@@ -56,9 +55,9 @@ public class ClientMessageTransport extends MessageTransportBase {
                                                                                             10000);
   private final TCConnectionManager connectionManager;
   private boolean                           wasOpened                          = false;
+  private boolean                           isOpening                          = false;
   private TCFuture                          waitForSynAckResult;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
-  private final AtomicBoolean               isOpening                          = new AtomicBoolean(false);
   private final int                         callbackPort;
   private final int                         timeout;
 
@@ -101,31 +100,28 @@ public class ClientMessageTransport extends MessageTransportBase {
     // while the lock on isOpen is held here. That will cause a deadlock because the close event is thrown on the
     // comms thread which means that the handshake messages can't be sent.
     // The state machine here needs to be rationalized.
-    this.isOpening.set(true);
+    if (startOpen()) {
+      if (waitForOpen()) {
+        return new NetworkStackID(getConnectionID().getChannelID());
+      }
+    }
     Assert.eval("can't open an already open transport", !this.status.isOpen());
     Assert.eval("can't open an already connected transport", !this.isConnected());
     TCSocketAddress socket = new TCSocketAddress(info);
-    TCConnection connection = connect(socket);
+    boolean didOpen = false;
+    TCConnection connection = null;
     try {
+      connection = connect(socket);
       openConnection(connection);
-    } catch (CommStackMismatchException e) {
-      connection.close(100);
-      throw e;
-    } catch (MaxConnectionsExceededException e) {
-      connection.close(100);
-      throw e;
-    } catch (TCTimeoutException e) {
-      connection.close(100);
-      throw e;
-    } catch (TransportHandshakeException e) {
-      connection.close(100);
-      throw e;
+      didOpen = true;
+    } finally {
+      finishOpen(didOpen);
+      if (connection != null && !didOpen) {
+        connection.close(100);
+      }
     }
     Assert.eval(!getConnectionID().isNull());
-    Assert.eval(this.status.toString(), this.status.isEstablished());
     NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
-    this.wasOpened = true;
-    this.isOpening.set(false);
     return (nid);
   }
   /**
@@ -209,21 +205,42 @@ public class ClientMessageTransport extends MessageTransportBase {
   /**
    * Returns true if the MessageTransport was ever in an open state.
    */
-  public boolean wasOpened() {
-    synchronized (this.status) {
-      return this.wasOpened;
+  public synchronized boolean wasOpened() {
+    return this.wasOpened;
+  }
+  
+  private synchronized boolean waitForOpen() {
+    try {
+      while (this.isOpening) {
+        wait();
+      }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+    return wasOpened;
+  }
+  
+  private synchronized boolean startOpen() {
+    try {
+      return this.isOpening;
+    } finally {
+      this.isOpening = true;
     }
   }
+  
+  private synchronized void finishOpen(boolean didOpen) {
+    this.isOpening = false;
+    this.wasOpened = didOpen;
+    notifyAll();
+  }
 
-  public boolean isNotOpen() {
-    synchronized(this.status) {
-      return !this.isOpening.get() && !this.status.isOpen();
-    }
+  private synchronized boolean isOpening() {
+    return this.isOpening;
   }
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    if (isNotOpen()) { 
+    if (isOpening() || !status.isOpen()) { 
       return; 
     }
     super.closeEvent(event);

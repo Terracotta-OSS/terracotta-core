@@ -27,7 +27,7 @@ import com.tc.util.concurrent.QueueFactory;
  * 
  * @author steve
  */
-public class SEDA<EC> {
+public class SEDA {
   private final StageManager  stageManager;
   private final TCThreadGroup threadGroup;
 

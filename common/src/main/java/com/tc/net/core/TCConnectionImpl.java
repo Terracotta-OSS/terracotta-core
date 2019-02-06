@@ -27,7 +27,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.WireProtocolGroupMessageImpl;
 import com.tc.net.protocol.transport.WireProtocolHeader;
 import com.tc.net.protocol.transport.WireProtocolMessage;
@@ -62,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * The {@link TCConnection} implementation. SocketChannel read/write happens here.
@@ -732,7 +732,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   @Override
-  public final synchronized void connect(TCSocketAddress addr, int timeout) throws IOException,
+  public final synchronized Socket connect(TCSocketAddress addr, int timeout) throws IOException,
       TCTimeoutException {
     if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
                                                                                        "Connection closed or already connected"); }
@@ -741,6 +741,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     Assert.assertNotNull(this.commWorker);
     Assert.assertNotNull(this.bufferManager);
     this.commWorker.requestReadInterest(this, this.channel);
+    return this.channel.socket();
   }
 
   @Override

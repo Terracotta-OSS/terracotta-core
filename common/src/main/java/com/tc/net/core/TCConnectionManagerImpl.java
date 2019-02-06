@@ -28,7 +28,6 @@ import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -45,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * The {@link TCConnectionManager} implementation.
