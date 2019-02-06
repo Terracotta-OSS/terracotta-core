@@ -19,28 +19,15 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
-import com.tc.l2.state.ConsistencyManager;
-import com.tc.l2.state.ConsistencyManagerImpl;
 
 
 public class BlockTimeWeightGenerator implements WeightGenerator {
-  private final ConsistencyManagerImpl consistency;
 
-  public BlockTimeWeightGenerator(ConsistencyManager consistency) {
-    this.consistency = consistency instanceof ConsistencyManagerImpl ? (ConsistencyManagerImpl)consistency : null;
+  public BlockTimeWeightGenerator() {
   }
 
   @Override
   public long getWeight() {
-    long currentTime = System.currentTimeMillis();
-    // favors in the following order
-    // non-blocking consistency (Positive long, consistency manager returns Long.MAX_VALUE)
-    // availability (zero)
-    // blocking consistency with the shortest about of blocking time (least negative number)
-    if (consistency != null) {
-      return consistency.isBlocked() ? consistency.getBlockingTimestamp() - currentTime : Long.MAX_VALUE;
-    } else {
-      return 0L; // always return zero in availability mode
-    }
+    return 0L; // always return zero for backwards compatibility
   }
 }

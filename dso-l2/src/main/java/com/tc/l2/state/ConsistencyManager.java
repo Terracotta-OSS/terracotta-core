@@ -58,6 +58,8 @@ public interface ConsistencyManager {
 
   Collection<Transition> requestedActions();
   
+  long getCurrentTerm();
+  
   static int parseVoteCount(TcConfig config) {
     Logger consoleLogger = TCLogging.getConsoleLogger();
     if (config.getServers().getServer().size() == 1) {

@@ -43,4 +43,9 @@ public class AvailabilityManagerImpl implements ConsistencyManager {
   public Collection<Transition> requestedActions() {
     return Collections.emptySet();
   }
+
+  @Override
+  public long getCurrentTerm() {
+    return 0L;
+  }
 }

@@ -62,7 +62,7 @@ public interface StateManager extends PrettyPrintable {
   
   public static ServerMode convert(State state) {
     if (state == null) {
-      return null;
+      return ServerMode.START;
     } else {
       return ServerMode.VALID_STATES.stream().filter(m->m.getState().equals(state)).findFirst().get();
     }

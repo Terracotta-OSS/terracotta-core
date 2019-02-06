@@ -26,7 +26,7 @@ import com.tc.test.TCTestCase;
 public class ServerUptimeWeightGeneratorTest extends TCTestCase {
   public void testMonotonicTime() throws Exception {
     // Since we don't know the precision of System's millisecond clock, we can only ensure that the sequence is monotonic.
-    ServerUptimeWeightGenerator generator = new ServerUptimeWeightGenerator();
+    ServerUptimeWeightGenerator generator = new ServerUptimeWeightGenerator(true);
     
     long previous = generator.getWeight();
     for (int i = 0; i < 1000; ++i) {
