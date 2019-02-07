@@ -50,7 +50,6 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY);
     exemptedProperties.add(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY);
     exemptedProperties.add(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY);
-    exemptedProperties.add(TCPropertiesConsts.L1_LOCK_MANAGER_CATEGORY);
     exemptedProperties.add(TCPropertiesConsts.LOGGING_CATEGORY);
     exemptedProperties.add(TCPropertiesConsts.NETCORE_CATEGORY);
   }

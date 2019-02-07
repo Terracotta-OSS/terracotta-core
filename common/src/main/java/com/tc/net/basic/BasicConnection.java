@@ -88,12 +88,16 @@ public class BasicConnection implements TCConnection {
       synchronized (this) {
         try {
           if (this.src != null) {
-            TCByteBuffer[] data = message.getEntireMessageData();
             boolean interrupted = Thread.interrupted();
-            for (TCByteBuffer b : data) {
-              buffer.forwardToWriteBuffer(b.getNioBuffer());
+            int totalLen = message.getTotalLength();
+            int moved = 0;
+            while (moved < totalLen) {
+              TCByteBuffer[] data = message.getEntireMessageData();
+              for (TCByteBuffer b : data) {
+                moved += buffer.forwardToWriteBuffer(b.getNioBuffer());
+              }
+              buffer.sendFromBuffer();
             }
-            buffer.sendFromBuffer();
             message.wasSent();
             if (interrupted) {
               Thread.currentThread().interrupt();

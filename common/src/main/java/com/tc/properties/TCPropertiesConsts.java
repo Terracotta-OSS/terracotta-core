@@ -92,7 +92,6 @@ public interface TCPropertiesConsts {
   // a hidden tc.properties only used for l2 proxy testing purpose
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT                   = "l2.nha.tcgroupcomm.l2proxytoport";
   public static final String L2_NHA_DIRTYDB_AUTODELETE                                      = "l2.nha.dirtydb.autoDelete";
-  public static final String L2_NHA_DIRTYDB_ROLLING                                         = "l2.nha.dirtydb.rolling";
   public static final String L2_NHA_AUTORESTART                                             = "l2.nha.autoRestart";
 
   /*********************************************************************************************************************
@@ -123,10 +122,7 @@ public interface TCPropertiesConsts {
    *                                 value 0 for infinite wait.
    * </code>
    ********************************************************************************************************************/  
-  public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED                 = "l1.transactionmanager.strings.compress.enabled";
-  public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED         = "l1.transactionmanager.strings.compress.logging.enabled";
-  public static final String L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE                 = "l1.transactionmanager.strings.compress.minSize";
-  
+
   public static final String CLIENT_MAX_PENDING_REQUESTS                                    = "client.requests.pending.max";
 
   public static final String TC_TRANSPORT_HANDSHAKE_TIMEOUT                                 = "tc.transport.handshake.timeout";
@@ -144,10 +140,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L1_SOCKET_CONNECT_TIMEOUT                                      = "l1.socket.connect.timeout";
   public static final String L1_SOCKET_RECONNECT_WAIT_INTERVAL                              = "l1.socket.reconnect.waitInterval";
-  public static final String L1_CLUSTEREVENTS_OOB_JOINTIME_MILLIS                           = "l1.clusterevents.outofbandnotifier.jointime.millis";
-  public static final String L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS                           = "l1.clusterevent.executor.maxThreads";
-  public static final String L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS                      = "l1.clusterevent.executor.maxWaitSeconds";
-
+  
   /*********************************************************************************************************************
    * <code>
    * Section: L1 Reconnect Properties
@@ -214,41 +207,6 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String MEMORY_MONITOR_FORCEBASIC                                      = "memory.monitor.forcebasic";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : L1 Lock Manager Properties
-   * Description       : This section contains the defaults for the client lock manager for the L1
-   * striped.count     : striping count for l1 lock manager
-   * timeout.interval  : time after which an unused lock will be a candidate for lock GC
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L1_LOCKMANAGER_STRIPED_COUNT                                   = "l1.lockmanager.striped.count";
-  public static final String L1_LOCKMANAGER_TIMEOUT_INTERVAL                                = "l1.lockmanager.timeout.interval";
-  public static final String L1_LOCKMANAGER_PINNING_ENABLED                                 = "l1.lockmanager.pinning.enabled";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : Lock statistics
-   * lock.statistics.enabled            : Enables/disables lock statistics
-   * l1.lock.statistics.traceDepth      : Depth of locks given to L1s for gathering the statistics
-   * l1.lock.statistics.gatherInterval  : Poll interval for gathering lock statistics
-   * </code>
-   ********************************************************************************************************************/
-  public static final String LOCK_STATISTICS_ENABLED                                        = "lock.statistics.enabled";
-  public static final String L1_LOCK_STATISTICS_TRACEDEPTH                                  = "l1.lock.statistics.traceDepth";
-  public static final String L1_LOCK_STATISTICS_GATHERINTERVAL                              = "l1.lock.statistics.gatherInterval";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Section : L2 Lock Manager
-   * enabled            : Enable/disable greedy locks grant from L2
-   * leaseTimeInMillis  : Time for which greedy locks are given to L1 if more than one of them
-   *                      are contending for them
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_LOCKMANAGER_GREEDY_LEASE_ENABLED                            = "l2.lockmanager.greedy.lease.enabled";
-  public static final String L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS                  = "l2.lockmanager.greedy.lease.leaseTimeInMillis";
 
   /*********************************************************************************************************************
    * <code>
@@ -331,18 +289,6 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String L2_DUMP_ON_EXCEPTION_TIMEOUT                                   = "l2.dump.on.exception.timeout";
-
-  /*********************************************************************************************************************
-   * <code>
-   * Dev console Settings
-   *  l2.operator.events.store      -   Number of operator events L2s will store to keep the history of the events
-   *  tc.time.sync.threshold        -   Number of second of tolerable system time difference between
-   *                                    two nodes of cluster beyond which and operator event will be thrown
-   *  l2.logs.store                 -   Number of logs L2s will store to keep the history of the logs
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_OPERATOR_EVENTS_STORE                                       = "l2.operator.events.store";
-  public static final String TC_TIME_SYNC_THRESHOLD                                         = "tc.time.sync.threshold";
   public static final String L2_LOGS_STORE                                                  = "l2.logs.store";
 
   /*********************************************************************************************************************
@@ -366,7 +312,6 @@ public interface TCPropertiesConsts {
   public static final String  L1_L2_HEALTH_CHECK_CATEGORY                                   = "l1.healthcheck.l2";
   public static final String  L2_L1_HEALTH_CHECK_CATEGORY                                   = "l2.healthcheck.l1";
   public static final String  L2_L2_HEALTH_CHECK_CATEGORY                                   = "l2.healthcheck.l2";
-  public static final String  L1_LOCK_MANAGER_CATEGORY                                      = "l1.lockmanager";
   public static final String  LOGGING_CATEGORY                                              = "logging";
   public static final String  NETCORE_CATEGORY                                              = "net.core";
 
@@ -378,8 +323,6 @@ public interface TCPropertiesConsts {
       L2_SEDA_STAGE_SINGLE_THREAD,
       L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,
       CLIENT_MAX_PENDING_REQUESTS,
-      L1_CLUSTEREVENT_EXECUTOR_MAX_THREADS,
-      L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS
   };
 
 }

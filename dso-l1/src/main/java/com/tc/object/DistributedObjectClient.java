@@ -666,16 +666,11 @@ public class DistributedObjectClient implements TCClient {
 
     @Override
     public void run() {
-      while (threadGroup.activeCount() > 0) {
-        for (Thread liveThread : getLiveThreads(threadGroup)) {
-          liveThread.dumpStack();
-          liveThread.interrupt();
-        }
-        try {
-          Thread.sleep(1000);
-        } catch (final InterruptedException e) {
-          // ignore
-        }
+      for (Thread liveThread : getLiveThreads(threadGroup)) {
+        Exception e = new Exception("thread is stuck " + liveThread.getName());
+        e.setStackTrace(liveThread.getStackTrace());
+        DSO_LOGGER.warn("stray connection threads not stopping", e);
+        liveThread.interrupt();
       }
       try {
         threadGroup.destroy();
