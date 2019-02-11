@@ -191,7 +191,7 @@ public class ClientConnectionEstablisherTest {
     // Mockito.doReturn(Boolean.TRUE).when(cmt).isConnected();
     Mockito.when(cmt.isConnected()).thenReturn(true);
     Mockito.doNothing().when(spyConnEstablisher);
-    spyConnEstablisher.reconnect(cmt);
+    spyConnEstablisher.reconnect(cmt, ()->false);
     Mockito.verify(spyConnEstablisher, Mockito.never()).isReconnectBetweenL2s();
   }
 
@@ -201,7 +201,7 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) Matchers.any());
     Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(Matchers.any(ClientMessageTransport.class), Matchers.any(ClientConnectionErrorListener.class));
     spyConnEstablisher.open(Arrays.asList(connInfo), cmt, errorListener);
-    spyConnEstablisher.reconnect(cmt);
+    spyConnEstablisher.reconnect(cmt, ()->false);
     Mockito.verify(cmt).reopen(Matchers.any(ConnectionInfo.class));
   }
 
@@ -235,7 +235,7 @@ public class ClientConnectionEstablisherTest {
         .getHostByName(connInfo);
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) Matchers.any());
     try {
-      spyConnEstablisher.reconnect(cmt);
+      spyConnEstablisher.reconnect(cmt, ()->false);
     } catch (RuntimeException re) {
       String msg = "failed due to:" + re.getMessage();
       if (re.getCause() instanceof UnknownHostException) {

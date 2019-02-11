@@ -29,6 +29,7 @@ import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -36,6 +37,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.Util;
 
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * This guy establishes a connection to the server for the Client.
@@ -61,9 +64,9 @@ public class ClientConnectionEstablisher {
   private final AtomicBoolean               asyncReconnecting     = new AtomicBoolean(false);
   private final AtomicBoolean               allowReconnects       = new AtomicBoolean(true);
   private volatile AsyncReconnect           asyncReconnect;
-
+  
   private final ReconnectionRejectedHandler reconnectionRejectedHandler;
-
+  
   static {
     Logger logger = LoggerFactory.getLogger(ClientConnectionEstablisher.class);
     long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
@@ -149,7 +152,7 @@ public class ClientConnectionEstablisher {
       } catch (TransportRedirect redirect) {
         ConnectionInfo add = new ConnectionInfo(redirect.getHostname(), redirect.getPort());
         reporter.onError(info, redirect);
-        info = null;
+        info = add;
         if (this.connAddressProvider.add(add)) {
           info = add;
         }
@@ -178,7 +181,7 @@ public class ClientConnectionEstablisher {
     return "ClientConnectionEstablisher[" + this.connAddressProvider + "]";
   }
 
-  void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
+  void reconnect(ClientMessageTransport cmt, Supplier<Boolean> stopCheck) throws MaxConnectionsExceededException {
     try {
       // Lossy logging for connection errors. Log the errors once in every 10 seconds
       LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(cmt.getLogger(), 10000,
@@ -194,7 +197,7 @@ public class ClientConnectionEstablisher {
       boolean reconnectionRejected = false;
       ConnectionInfo target = null;
 
-      for (int i = 0; tryToConnect(connected); i++) {
+      for (int i = 0; tryToConnect(connected) && !stopCheck.get(); i++) {
         Iterator<ConnectionInfo> addresses = new ArrayList<ConnectionInfo>(this.connAddressProvider).iterator();
         while ((target != null || addresses.hasNext()) && tryToConnect(connected)) {
 
@@ -367,9 +370,9 @@ public class ClientConnectionEstablisher {
     }
   }
 
-  public void asyncReconnect(ClientMessageTransport cmt) {
+  public void asyncReconnect(ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
     if (cmt.getConnectionID().isValid()) {
-      putConnectionRequest(ConnectionRequest.newReconnectRequest(cmt));
+      putConnectionRequest(ConnectionRequest.newReconnectRequest(cmt, stopCheck));
     }
   }
 
@@ -512,7 +515,7 @@ public class ClientConnectionEstablisher {
           try {
             switch (request.getType()) {
               case RECONNECT:
-                this.cce.reconnect(cmt);
+                this.cce.reconnect(cmt, request::checkForStop);
                 break;
               case RESTORE_CONNECTION:
                 RestoreConnectionRequest req = (RestoreConnectionRequest) request;
@@ -547,14 +550,16 @@ public class ClientConnectionEstablisher {
 
     private final ConnectionRequestType  type;
     private final ClientMessageTransport cmt;
+    private final Supplier<Boolean> stopCheck;
 
     public ConnectionRequest(ConnectionRequestType requestType) {
-      this(requestType, null);
+      this(requestType, null, ()->false);
     }
 
-    public ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt) {
+    public ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
       this.cmt = cmt;
       this.type = requestType;
+      this.stopCheck = stopCheck;
     }
 
     public ConnectionRequestType getType() {
@@ -564,9 +569,13 @@ public class ClientConnectionEstablisher {
     public ClientMessageTransport getClientMessageTransport() {
       return this.cmt;
     }
+    
+    public boolean checkForStop() {
+        return stopCheck.get();
+    }
 
-    public static ConnectionRequest newReconnectRequest(ClientMessageTransport cmtParam) {
-      return new ConnectionRequest(ConnectionRequestType.RECONNECT, cmtParam);
+    public static ConnectionRequest newReconnectRequest(ClientMessageTransport cmtParam, Supplier<Boolean> stopCheck) {
+      return new ConnectionRequest(ConnectionRequestType.RECONNECT, cmtParam, stopCheck);
     }
 
     public static ConnectionRequest newRestoreConnectionRequest(ClientMessageTransport cmtParam,
@@ -590,7 +599,7 @@ public class ClientConnectionEstablisher {
 
     public RestoreConnectionRequest(ClientMessageTransport cmt, TCSocketAddress sa,
                                     RestoreConnectionCallback callback, long timeoutMillis) {
-      super(ConnectionRequestType.RESTORE_CONNECTION, cmt);
+      super(ConnectionRequestType.RESTORE_CONNECTION, cmt, ()->false);
       this.callback = callback;
       this.timeoutMillis = timeoutMillis;
       this.sa = sa;

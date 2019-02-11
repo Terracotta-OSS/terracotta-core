@@ -108,7 +108,6 @@ import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
-import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
@@ -122,7 +121,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import org.terracotta.connection.ConnectionPropertyNames;
 
 
 /**
@@ -151,7 +149,8 @@ public class DistributedObjectClient implements TCClient {
   private ClientShutdownManager                      shutdownManager;
 
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
-  private final SetOnceFlag                          connectionMade                       = new SetOnceFlag();
+  private final SetOnceFlag                          connectionMade                      = new SetOnceFlag();
+  private final SetOnceRef<Thread>                   connectionThread                    = new SetOnceRef<>();
   private final SetOnceRef<Exception>                exceptionMade                       = new SetOnceRef<>();
  
   private ClientEntityManager clientEntityManager;
@@ -338,8 +337,7 @@ public class DistributedObjectClient implements TCClient {
     EventHandler<ClientHandshakeResponse> handshake = new ClientCoordinationHandler(this.clientHandshakeManager);
 
     initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), isAsync ? multiResponseStage.getSink() : EventHandler.directSink(mutil));
-    new Thread(threadGroup, new Runnable() {
-        public void run() {
+    connectionThread.set(new Thread(threadGroup, ()->{
           while (!clientStopped.isSet()) {
             try {
               openChannel();
@@ -361,8 +359,8 @@ public class DistributedObjectClient implements TCClient {
             }
           }
           //  don't reset interrupted, thread is done
-        }
-      }, "Connection Maker - " + uuid).start();    
+        }, "Connection Maker - " + uuid));
+      connectionThread.get().start();
   }
 
   private void connectionMade() {
@@ -373,14 +371,11 @@ public class DistributedObjectClient implements TCClient {
   }
   
   public boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
-    long left = timeout > 0 ? units.toMillis(timeout) : Long.MAX_VALUE;
-    synchronized(connectionMade) {
-      while (!connectionMade.isSet() && !exceptionMade.isSet() && left > 0) {
-        long start = System.currentTimeMillis();
-        connectionMade.wait(units.toMillis(timeout));
-        left -= (System.currentTimeMillis() - start);
-      }
+    if (!connectionThread.isSet()) {
+      throw new IllegalStateException("not started");
     }
+    connectionThread.get().join(units.toMillis(timeout));
+
     if (exceptionMade.isSet()) {
       Exception exp = exceptionMade.get();
       throw new RuntimeException(exp);
@@ -394,33 +389,37 @@ public class DistributedObjectClient implements TCClient {
 //  can't open a connection to nowhere
       return;
     }
-    synchronized(clientStopped) {
-      while (!clientStopped.isSet()) {
-        try {
-          DSO_LOGGER.debug("Trying to open channel....");
-          this.channel.open(infos);
-          DSO_LOGGER.debug("Channel open");
-          break;
-        } catch (final TCTimeoutException tcte) {
-          DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
-          DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", infos, tcte.getMessage());
+    while (!clientStopped.isSet()) {
+      try {
+        DSO_LOGGER.debug("Trying to open channel....");
+        this.channel.open(infos);
+        DSO_LOGGER.debug("Channel open");
+        break;
+      } catch (final TCTimeoutException tcte) {
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
+        DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", infos, tcte.getMessage());
+        synchronized(clientStopped) {
           clientStopped.wait(5000);
-        } catch (final ConnectException e) {
-          DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
-          DSO_LOGGER.debug("Connection refused from server/s: {} {}", infos, e.getMessage());
+        }
+      } catch (final ConnectException e) {
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
+        DSO_LOGGER.debug("Connection refused from server/s: {} {}", infos, e.getMessage());
+        synchronized(clientStopped) {
           clientStopped.wait(5000);
-        } catch (final MaxConnectionsExceededException e) {
-          DSO_LOGGER.error(e.getMessage());
-          throw new IllegalStateException(e.getMessage(), e);
-        } catch (final CommStackMismatchException e) {
-          DSO_LOGGER.error(e.getMessage());
-          throw new IllegalStateException(e.getMessage(), e);
-        } catch (TransportHandshakeException handshake) {
-          DSO_LOGGER.error(handshake.getMessage());
-          throw new IllegalStateException(handshake.getMessage(), handshake);
-        } catch (final IOException ioe) {
-          DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
-          DSO_LOGGER.debug("IOException connecting to server/s: {} {}", infos, ioe.getMessage());
+        }
+      } catch (final MaxConnectionsExceededException e) {
+        DSO_LOGGER.error(e.getMessage());
+        throw new IllegalStateException(e.getMessage(), e);
+      } catch (final CommStackMismatchException e) {
+        DSO_LOGGER.error(e.getMessage());
+        throw new IllegalStateException(e.getMessage(), e);
+      } catch (TransportHandshakeException handshake) {
+        DSO_LOGGER.error(handshake.getMessage());
+        throw new IllegalStateException(handshake.getMessage(), handshake);
+      } catch (final IOException ioe) {
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
+        DSO_LOGGER.debug("IOException connecting to server/s: {} {}", infos, ioe.getMessage());
+        synchronized(clientStopped) {
           clientStopped.wait(5000);
         }
       }
@@ -588,16 +587,26 @@ public class DistributedObjectClient implements TCClient {
         Thread[] t = new Thread[threadCount];
         threadCount = this.threadGroup.enumerate(t);
         final long time = System.currentTimeMillis();
+        boolean leaked = false;
         for (int x=0;x<threadCount;x++) {
+          if (System.currentTimeMillis() > end) {
+            break;
+          }
           long start = System.currentTimeMillis();
-          while (System.currentTimeMillis() < end && t[x].isAlive()) {
+          if (t[x].isAlive() && Thread.currentThread() != t[x]) {
             t[x].join(1000);
+            if (t[x].isAlive()) {
+              Exception printer = new Exception();
+              printer.setStackTrace(printer.getStackTrace());
+              DSO_LOGGER.warn("thread leak", printer);
+              leaked = true;
+            }
           }
           logger.debug("Destroyed thread " + t[x].getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
         }
         logger.debug("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
 
-        if (this.threadGroup.activeCount() > 0) {
+        if (leaked) {
           logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
                       + "Live threads: " + getLiveThreads(this.threadGroup));
 
@@ -610,7 +619,9 @@ public class DistributedObjectClient implements TCClient {
           logger.warn("Spawning TCThreadGroup last chance cleaner thread");
         } else {
           logger.debug("Destroying TC thread group");
-          this.threadGroup.destroy();
+          if (this.threadGroup != Thread.currentThread().getThreadGroup()) {
+            this.threadGroup.destroy();
+          }
         }
       } catch (final Throwable t) {
         logger.error("Error destroying TC thread group", t);
@@ -634,9 +645,9 @@ public class DistributedObjectClient implements TCClient {
       final int count = group.enumerate(threads);
 
       if (count < threads.length) {
-        final List<Thread> l = new ArrayList<Thread>(count);
+        final List<Thread> l = new ArrayList<>(count);
         for (final Thread t : threads) {
-          if (t != null) {
+          if (t != null && t != Thread.currentThread()) {
             l.add(t);
           }
         }
@@ -691,6 +702,9 @@ public class DistributedObjectClient implements TCClient {
   }
 
   private void shutdown(boolean forceImmediate) {
+    if (connectionThread.isSet()) {
+      connectionThread.get().interrupt();
+    }
     if (clientStopped.attemptSet()) {
       synchronized (clientStopped) {
         clientStopped.notifyAll();

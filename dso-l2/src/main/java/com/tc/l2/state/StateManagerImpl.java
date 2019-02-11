@@ -495,14 +495,15 @@ public class StateManagerImpl implements StateManager {
     int messageType = clusterMsg.getType();
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     Enrollment verification = EnrollmentFactory.createVerificationEnrollment(getLocalNodeID(), weightsFactory);
-    boolean peerWins = winningEnrollment.wins(verification);
+    boolean peerWins = Arrays.equals(winningEnrollment.getWeights(), verification.getWeights()) ||
+            winningEnrollment.wins(verification);
     if (peerWins) {
       if (messageType == L2StateMessage.ELECTION_WON_ALREADY || messageType == L2StateMessage.ABORT_ELECTION) {
 //  other server wins, they will zap us
         sendNGResponse(clusterMsg.messageFrom(), clusterMsg, winningEnrollment);
       } else {
 //  ELECTION_WON is a broadcast not requiring or expecting a return message, zap local server to re-sync
-        zapAndResyncLocalNode("Split-brain and this node is older, restart to resync"); 
+        zapAndResyncLocalNode("Split-brain and this node is older, restart to resync");
       }
     } else {
 //  zap the other node, it is older

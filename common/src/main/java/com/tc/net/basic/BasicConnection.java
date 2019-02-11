@@ -91,12 +91,16 @@ public class BasicConnection implements TCConnection {
             boolean interrupted = Thread.interrupted();
             int totalLen = message.getTotalLength();
             int moved = 0;
+            int sent = 0;
+            TCByteBuffer[] data = message.getEntireMessageData();
             while (moved < totalLen) {
-              TCByteBuffer[] data = message.getEntireMessageData();
               for (TCByteBuffer b : data) {
                 moved += buffer.forwardToWriteBuffer(b.getNioBuffer());
               }
-              buffer.sendFromBuffer();
+              sent += buffer.sendFromBuffer();
+            }
+            while (sent < totalLen) {
+              sent += buffer.sendFromBuffer();
             }
             message.wasSent();
             if (interrupted) {
@@ -104,8 +108,9 @@ public class BasicConnection implements TCConnection {
             }
           }
         } catch (IOException ioe) {
+          close(0);
         } catch (Throwable t) {
-          t.printStackTrace();
+          close(0);
         }
       }
     };
@@ -164,8 +169,17 @@ public class BasicConnection implements TCConnection {
   @Override
   public boolean close(long timeout) {
     try {
-      Socket socket = detach();
-      if (socket != null) {
+        Socket socket = detach();
+        if (socket != null) {
+        try {
+          if (this.buffer != null) {
+            this.buffer.close();
+          }
+        } catch (EOFException eof) {
+          LOGGER.debug("closed", eof);
+        } catch (IOException ioe) {
+          LOGGER.warn("failed to close buffer manager", ioe);
+        }
         socket.getChannel().close();
         socket.close();
         readerExec.shutdown();
@@ -264,24 +278,31 @@ public class BasicConnection implements TCConnection {
       while (!isClosed()) {
         try {
           long amount = buffer.recvToBuffer();
-          if (amount >= 0) {
+          if (amount > 0) {
             if (amount > Integer.MAX_VALUE) {
               throw new AssertionError("overflow long");
             }
             int transfer = 0;
             while (transfer < amount) {
-              TCByteBuffer[] buffers = adaptor.getReadBuffers();
               int i = 0;
               int read = 0;
+              TCByteBuffer[] buffers = adaptor.getReadBuffers();
               while (i < buffers.length) {
-                read += buffer.forwardFromReadBuffer(buffers[i++].getNioBuffer());
+                read += buffer.forwardFromReadBuffer(buffers[i].getNioBuffer());
+                if (!buffers[i].hasRemaining()) {
+                  i += 1;
+                } else {
+                  break;
+                }
               }
               adaptor.addReadData(this, buffers, read);
               transfer += read;
             }
             markReceived();
           } else {
-            close(0);
+            if (amount < 0) {
+              close(0);
+            }
           }
         } catch (EOFException eof) {
           if (!isClosed()) {
