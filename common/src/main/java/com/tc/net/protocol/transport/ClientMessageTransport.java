@@ -240,7 +240,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    if (isOpening() || !status.isOpen()) { 
+    if (!status.isOpen()) { 
       return; 
     }
     super.closeEvent(event);

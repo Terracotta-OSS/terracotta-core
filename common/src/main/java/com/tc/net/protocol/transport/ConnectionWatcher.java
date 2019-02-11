@@ -18,49 +18,79 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.util.concurrent.SetOnceFlag;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+
 public class ConnectionWatcher implements MessageTransportListener {
 
-  protected final ClientMessageTransport      cmt;
-  protected final ClientConnectionEstablisher cce;
-  protected final MessageTransportListener    target;
+  private final ClientMessageTransport      cmt;
+  private final ClientConnectionEstablisher cce;
+  private final ReferenceQueue<MessageTransportListener> stopQueue = new ReferenceQueue<>();
+  private final SetOnceFlag stopped = new SetOnceFlag();
+  private final WeakReference<MessageTransportListener> targetHolder;
 
   /**
    * Listens to events from a MessageTransport, acts on them, and passes events through to target
    */
   public ConnectionWatcher(ClientMessageTransport cmt, MessageTransportListener target, ClientConnectionEstablisher cce) {
     this.cmt = cmt;
-    this.target = target;
+    this.targetHolder = new WeakReference<>(target, stopQueue);
     this.cce = cce;
+  }
+  
+  private boolean checkForStop() {
+    if (stopQueue.poll() == targetHolder) {
+        stopped.set();
+    }
+    return stopped.isSet();
   }
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
     cce.quitReconnectAttempts();
-    target.notifyTransportClosed(transport);
+    MessageTransportListener target = targetHolder.get();
+    if (target != null) {
+      target.notifyTransportClosed(transport);
+    }
   }
 
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
     if (transport.getProductID().isReconnectEnabled()) {
-      cce.asyncReconnect(cmt);
+      cce.asyncReconnect(cmt, this::checkForStop);
     } else {
+      cce.quitReconnectAttempts();
       transport.close();
     }
-    target.notifyTransportDisconnected(transport, forcedDisconnect);
+    MessageTransportListener target = targetHolder.get();
+    if (target != null) {
+      target.notifyTransportDisconnected(transport, forcedDisconnect);
+    }
   }
 
   @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
-    target.notifyTransportConnectAttempt(transport);
+    MessageTransportListener target = targetHolder.get();
+    if (target != null) {
+      target.notifyTransportConnectAttempt(transport);
+    }
   }
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    target.notifyTransportConnected(transport);
+    MessageTransportListener target = targetHolder.get();
+    if (target != null) {
+      target.notifyTransportConnected(transport);
+    }
   }
 
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
-    target.notifyTransportReconnectionRejected(transport);
+    cce.quitReconnectAttempts();
+    MessageTransportListener target = targetHolder.get();
+    if (target != null) {
+      target.notifyTransportReconnectionRejected(transport);
+    }
   }
 }
