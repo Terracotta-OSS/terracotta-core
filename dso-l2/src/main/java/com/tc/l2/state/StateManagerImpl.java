@@ -599,22 +599,24 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void validateResponse(L2StateMessage response) throws GroupException {
-    NodeID nodeID = response.messageFrom();
-    final String errMesg = "A Terracotta server tried to join the mirror group as PASSIVE STANDBY but with dirty db, "
-        + " Zapping " +  nodeID + " to allow it to resync data from active";
-    if (response.getType() != L2StateMessage.RESULT_AGREED) {
-      String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Active State";
-      logger.error(error);
-      Enrollment verification = response.getEnrollment();
-      if (verification.getNodeID().equals(getLocalNodeID())) {
-      // throwing this exception will initiate a zap elsewhere
-        throw new GroupException(error);
-      } else {
-        zapAndResyncLocalNode("Passive has more recent data compared to active, restart"); 
+    if (response != null) {
+      NodeID nodeID = response.messageFrom();
+      final String errMesg = "A Terracotta server tried to join the mirror group as PASSIVE STANDBY but with dirty db, "
+          + " Zapping " +  nodeID + " to allow it to resync data from active";
+      if (response.getType() != L2StateMessage.RESULT_AGREED) {
+        String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Active State";
+        logger.error(error);
+        Enrollment verification = response.getEnrollment();
+        if (verification.getNodeID().equals(getLocalNodeID())) {
+        // throwing this exception will initiate a zap elsewhere
+          throw new GroupException(error);
+        } else {
+          zapAndResyncLocalNode("Passive has more recent data compared to active, restart"); 
+        }
+      } else if (response.getState().equals(PASSIVE_STANDBY) && !currKnownServers.contains(nodeID)) {
+        logger.error(errMesg);
+        this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB, errMesg);
       }
-    } else if (response.getState().equals(PASSIVE_STANDBY) && !currKnownServers.contains(nodeID)) {
-      logger.error(errMesg);
-      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB, errMesg);
     }
   }
 
