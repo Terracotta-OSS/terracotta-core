@@ -15,6 +15,8 @@
  */
 package org.terracotta.testing.master;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
@@ -330,6 +332,23 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       this.sharedLockState.notifyAll();
     }
   }
+  
+  private <T> Collection<T> makeCopy(Collection<T> servers) {
+    synchronized (this.sharedLockState) {
+      List<T> copy = new ArrayList<>(servers);
+      return copy;
+    }
+  }
+  
+  private boolean checkIfEmpty() {
+    synchronized (this.sharedLockState) {
+      return (null == this.activeServer)
+          && this.passiveServers.isEmpty()
+          && this.unknownRunningServers.isEmpty()
+          && this.runningClients.isEmpty();
+    }
+  }
+  
 
 
   // ----- CLEANUP-----
@@ -339,50 +358,54 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
       this.logger.output("> forceShutdown");
       // Set the flag that we are shutting down.  That way, any servers which were concurrently coming online can be stopped when they check in.
       this.isShuttingDown = true;
+    }
 //  trying to debug a Galvan hang where not all the servers are seen
       long timeExpired = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
       // We wait until there is no active, no passives, no unknown servers, and no running clients.
-      while (timeExpired > System.currentTimeMillis() && (
-          (null != this.activeServer)
-          || !this.passiveServers.isEmpty()
-          || !this.unknownRunningServers.isEmpty()
-          || !this.runningClients.isEmpty()
-        )
-      ) {
-        this.logger.output("* forceShutdown waiting on active: " + (null != this.activeServer)
-            + " passives: " + this.passiveServers.size()
-            + " unknown: " + this.unknownRunningServers.size()
-            + " clients: " + this.runningClients.size()
-            );
+      while (timeExpired > System.currentTimeMillis() && !checkIfEmpty()) {
+        synchronized (this.sharedLockState) {
+          this.logger.output("* forceShutdown waiting on active: " + (null != this.activeServer)
+              + " passives: " + this.passiveServers.size()
+              + " unknown: " + this.unknownRunningServers.size()
+              + " clients: " + this.runningClients.size()
+              );
+        }
         // Force shut-down all clients, all passives, and the active.
         // (note that we won't modify the collections here, just walk them - we are synchronized)
         // this is inside the loop because servers can transition from terminated to active or passive 
         // when the lock is released during the wait, if access is at all fair, should not cause double
         // shutowns
-        for (ClientRunner client : this.runningClients) {
+        for (ClientRunner client : makeCopy(this.runningClients)) {
           client.forceTerminate();
         }
-        for (ServerProcess server : this.unknownRunningServers) {
+        for (ServerProcess server : makeCopy(this.unknownRunningServers)) {
           safeStop(server);
         }
-        for (ServerProcess server : this.passiveServers) {
+        for (ServerProcess server : makeCopy(this.passiveServers)) {
           safeStop(server);
         }
-        if (null != this.activeServer) {
-          safeStop(this.activeServer);
+        ServerProcess active = null;
+        synchronized (this.sharedLockState) {
+          active = this.activeServer;
         }
-        safeWaitWithTimeout(10, TimeUnit.SECONDS);
+        if (null != active) {
+          safeStop(active);
+        }
+        synchronized (this.sharedLockState) {
+          safeWaitWithTimeout(10, TimeUnit.SECONDS);
+        }
       }
-      if (System.currentTimeMillis() > timeExpired) {
-        this.logger.output("* forceShutdown FAILED waiting on active: " + (null != this.activeServer)
-            + " passives: " + this.passiveServers.size()
-            + " unknown: " + this.unknownRunningServers.size()
-            + " clients: " + this.runningClients.size());
-        throw new RuntimeException("FORCE SHUTDOWN FAILED:" + toString());
+      synchronized (this.sharedLockState) {
+        if (System.currentTimeMillis() > timeExpired) {
+          this.logger.output("* forceShutdown FAILED waiting on active: " + (null != this.activeServer)
+              + " passives: " + this.passiveServers.size()
+              + " unknown: " + this.unknownRunningServers.size()
+              + " clients: " + this.runningClients.size());
+          throw new RuntimeException("FORCE SHUTDOWN FAILED:" + toString());
+        }
       }
       
       this.logger.output("< forceShutdown");
-    }
   }
 
   private void safeStop(ServerProcess server) {
