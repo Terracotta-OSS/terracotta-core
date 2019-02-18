@@ -19,7 +19,7 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.Sink;
-import com.tc.config.NodesStore;
+import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.text.PrettyPrintable;
@@ -28,7 +28,7 @@ import java.util.Set;
 
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
-  public NodeID join(Node thisNode, NodesStore nodesStore) throws GroupException;
+  public NodeID join(GroupConfiguration groupConfiguration) throws GroupException;
 
   public NodeID getLocalNodeID();
 

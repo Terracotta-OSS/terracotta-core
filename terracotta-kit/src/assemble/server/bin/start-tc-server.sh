@@ -17,16 +17,6 @@
 #     Terracotta, Inc., a Software AG company
 #
 
-case "$1" in
-  "--help"|"-h"|"-?")
-    echo "Syntax: $0 [-f /path/to/tc-config.xml] [-n server_name]"
-    echo
-    echo "-f : start the server with your own Terracotta configuration instead of the default one"
-    echo "-n : specify which server you want to start when you have more than one servers configured"
-    exit
-    ;;
-esac
-
 TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
 PLUGIN_LIB_DIR="${TC_SERVER_DIR}/plugins/lib"
 PLUGIN_API_DIR="${TC_SERVER_DIR}/plugins/api"

@@ -19,6 +19,8 @@
 package com.tc.services;
 
 import com.tc.text.PrettyPrintable;
+import com.terracotta.config.Configuration;
+
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -39,7 +41,7 @@ public interface TerracottaServiceProviderRegistry extends PrettyPrintable {
    * @param loader the classloader used for all services
    *
    */
-  void initialize(PlatformConfiguration platformConfiguration, TcConfiguration configuration, ClassLoader loader);
+  void initialize(PlatformConfiguration platformConfiguration, Configuration configuration, ClassLoader loader);
 
   /**
    * Method to register platform level service provider which don't have life-cycle using SPI interface but otherwise act

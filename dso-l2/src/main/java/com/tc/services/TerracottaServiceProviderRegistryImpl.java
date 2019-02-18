@@ -30,6 +30,8 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.util.Assert;
+import com.terracotta.config.Configuration;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private boolean hasCreatedSubRegistries;
 
   @Override
-  public void initialize(PlatformConfiguration platformConfiguration, TcConfiguration configuration, ClassLoader loader) {
+  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration, ClassLoader loader) {
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
     if(serviceProviderConfigurationList != null) {

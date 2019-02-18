@@ -25,12 +25,8 @@ import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
-import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
@@ -44,7 +40,6 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -52,7 +47,6 @@ import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
-import com.tc.text.StringUtils;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
@@ -62,9 +56,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -75,35 +68,33 @@ import com.tc.objectserver.core.api.GuardianContext;
 
 
 public class TCServerImpl extends SEDA implements TCServer, StateChangeListener {
-  public static final String                CONNECTOR_NAME_TERRACOTTA                    = "terracotta";
-
   private static final Logger logger = LoggerFactory.getLogger(TCServer.class);
   private static final Logger consoleLogger = TCLogging.getConsoleLogger();
 
   private volatile long                     startTime                                    = -1;
   private volatile long                     activateTime                                 = -1;
 
-  protected DistributedObjectServer         dsoServer;
+  private DistributedObjectServer         dsoServer;
 
   private final Object                      stateLock                                    = new Object();
   private ServerMode           serverState                                  = ServerMode.START;
   
-  private final L2ConfigurationSetupManager configurationSetupManager;
+  private final ServerConfigurationManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
 
   /**
    * This should only be used for tests.
    */
-  public TCServerImpl(L2ConfigurationSetupManager configurationSetupManager) {
+  public TCServerImpl(ServerConfigurationManager configurationSetupManager) {
     this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(logger)));
   }
 
-  public TCServerImpl(L2ConfigurationSetupManager configurationSetupManager, TCThreadGroup threadGroup) {
+  public TCServerImpl(ServerConfigurationManager configurationSetupManager, TCThreadGroup threadGroup) {
     this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  public TCServerImpl(L2ConfigurationSetupManager manager, TCThreadGroup group,
+  public TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
                       ConnectionPolicy connectionPolicy) {
     super(group);
 
@@ -124,56 +115,8 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
   }
 
   @Override
-  public ServerGroupInfo getStripeInfo() {
-    L2Info[] l2Infos = infoForAllL2s();
-    ActiveServerGroupConfig groupInfo = this.configurationSetupManager.getActiveServerGroupForThisL2();
-
-    List<L2Info> memberList = new ArrayList<>();
-    for (L2Info l2Info : l2Infos) {
-      if (groupInfo.isMember(l2Info.name())) {
-        memberList.add(l2Info);
-      }
-    }
-
-    return new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(),true);
-  }
-
-  @Override
-  public L2Info[] infoForAllL2s() {
-    String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();
-    L2Info[] out = new L2Info[allKnownL2s.length];
-
-    for (int i = 0; i < out.length; ++i) {
-      try {
-        CommonL2Config config = this.configurationSetupManager.commonL2ConfigFor(allKnownL2s[i]);
-
-        String name = allKnownL2s[i];
-        if (name == null) {
-          name = L2Info.IMPLICIT_L2_NAME;
-        }
-
-        String host = config.tsaPort().getBind();
-        if (TCSocketAddress.WILDCARD_IP.equals(host)) {
-          host = config.host();
-        }
-        if (StringUtils.isBlank(host)) {
-          host = name;
-        }
-        //XXX hard coded jmx port
-        out[i] = new L2Info(name, host, config.tsaPort().getValue()+10, config.tsaPort().getValue(), config
-            .tsaGroupPort().getBind(), config.tsaGroupPort().getValue(),config.tsaGroupPort().getValue() + 1,
-                            "");
-      } catch (ConfigurationSetupException cse) {
-        throw Assert.failure("This should be impossible here", cse);
-      }
-    }
-
-    return out;
-  }
-
-  @Override
   public String getL2Identifier() {
-    return configurationSetupManager.getL2Identifier();
+    return configurationSetupManager.getServerConfiguration().getName();
   }
 
   @Override
@@ -359,7 +302,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public int getReconnectWindowTimeout() {
-    return configurationSetupManager.dsoL2Config().clientReconnectWindow();
+    return configurationSetupManager.getServerConfiguration().getClientReconnectWindow();
   }
   
   @Override
@@ -406,9 +349,9 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
         }
       }
 
-      String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
-      if (l2Identifier != null) {
-        logger.info("Server started as " + l2Identifier);
+      String serverName = TCServerImpl.this.configurationSetupManager.getServerConfiguration().getName();
+      if (serverName != null) {
+        logger.info("Server started as " + serverName);
       }
     }
   }
@@ -424,8 +367,8 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
     registerDSOServer(dsoServer);
   }
 
-  protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
-                                                                  ConnectionPolicy policy, 
+  protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
+                                                                  ConnectionPolicy policy,
                                                                   TCServerImpl serverImpl) {
     DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
     try {
@@ -505,7 +448,7 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
 
   @Override
   public String[] processArguments() {
-    return configurationSetupManager.processArguments();
+    return configurationSetupManager.getProcessArguments();
   }
 
   @Override

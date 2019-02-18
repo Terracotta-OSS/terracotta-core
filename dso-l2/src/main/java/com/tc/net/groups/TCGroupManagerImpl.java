@@ -24,10 +24,8 @@ import org.slf4j.LoggerFactory;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.config.NodesStore;
-import com.tc.config.ReloadConfigChangeContext;
-import com.tc.config.TopologyChangeListener;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.ServerConfigurationManager;
+import com.tc.config.GroupConfiguration;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
@@ -70,7 +68,7 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
-import com.tc.object.config.schema.L2Config;
+import com.tc.config.ServerConfiguration;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.core.api.Guardian;
@@ -113,7 +111,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyChangeListener {
+public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener {
   private static final Logger logger = LoggerFactory.getLogger(TCGroupManagerImpl.class);
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
@@ -154,14 +152,14 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
-  public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
+  public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
+                            ServerID thisNodeID, Node thisNode,
                             WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, nodesStore, weightGenerator, bufferManagerFactory);
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator, bufferManagerFactory);
   }
 
-  public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
-                            StageManager stageManager, ServerID thisNodeID, Node thisNode, NodesStore nodesStore,
+  public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
+                            StageManager stageManager, ServerID thisNodeID, Node thisNode,
                             WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
@@ -171,10 +169,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
 
-    L2Config l2DSOConfig = configSetupManager.dsoL2Config();
+    ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.allCurrentlyKnownServers().length - 2;  // minus 2 because we don't need to include local node and main selector can be used if only talking to one other server
 
-    this.groupPort = l2DSOConfig.tsaGroupPort().getValue();
+    this.groupPort = l2DSOConfig.getGroupPort().getValue();
     this.weightGeneratorFactory = weightGenerator;
 
     TCSocketAddress socketAddress;
@@ -186,15 +184,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       groupConnectPort = TCPropertiesImpl.getProperties()
           .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
 
-      socketAddress = new TCSocketAddress(l2DSOConfig.tsaGroupPort().getBind(), groupConnectPort);
+      socketAddress = new TCSocketAddress(l2DSOConfig.getTsaPort().getBind(), groupConnectPort);
     } catch (UnknownHostException e) {
       throw new TCRuntimeException(e);
     }
     init(socketAddress);
     Assert.assertNotNull(thisNodeID);
     setDiscover(new TCGroupMemberDiscoveryStatic(this, thisNode));
-
-    nodesStore.registerForTopologyChange(this);
   }
 
   protected final String getVersion() {
@@ -404,16 +400,15 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public NodeID join(Node thisNode, NodesStore nodesStore) throws GroupException {
-    Assert.assertNotNull(thisNode);
+  public NodeID join(GroupConfiguration groupConfiguration) throws GroupException {
     if (!alreadyJoined.compareAndSet(false, true)) { throw new GroupException("Already Joined"); }
 
     // discover must be started before listener thread to avoid missing nodeJoined group events.
     if (isDebugLogging()) {
-      debugInfo("Starting discover... thisNode: " + thisNode + ", otherNodes: " + Arrays.asList(nodesStore.getAllNodes()));
+      debugInfo("Starting discover... thisNode: " + groupConfiguration.getCurrentNode() + ", otherNodes: " + groupConfiguration.getNodes());
     }
 //    discover = new TCGroupMemberDiscoveryStatic(this, thisNode);
-    discover.setupNodes(thisNode, nodesStore.getAllNodes());
+    discover.setupNodes(groupConfiguration.getCurrentNode(), groupConfiguration.getNodes());
     discover.start();
     try {
       groupListener.start(new HashSet<ConnectionID>());
@@ -421,16 +416,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       throw new GroupException(e);
     }
     return (getNodeID());
-  }
-
-  @Override
-  public void topologyChanged(ReloadConfigChangeContext reloadContext) {
-    for (Node nodeAdded : reloadContext.getNodesAdded()) {
-      discover.addNode(nodeAdded);
-    }
-    for (Node nodeRemoved : reloadContext.getNodesRemoved()) {
-      discover.removeNode(nodeRemoved);
-    }
   }
 
   /**

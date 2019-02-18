@@ -17,20 +17,6 @@ REM The Initial Developer of the Covered Software is
 REM     Terracotta, Inc., a Software AG company
 REM
 
-if "%1" == "--help" goto :printHelp
-if "%1" == "-h" goto :printHelp
-if "%1" == "-?" goto :printHelp
-goto :start
-
-:printHelp
-echo Syntax: %~n0 [-f \path\to\tc-config.xml] [-n server_name]
-echo
-echo -f : start the server with your own Terracotta configuration instead of the default one
-echo -n : specify which server you want to start when you have more than one servers configured
-exit /b 0
-
-
-:start
 setlocal enabledelayedexpansion enableextensions
 
 pushd "%~d0%~p0.."

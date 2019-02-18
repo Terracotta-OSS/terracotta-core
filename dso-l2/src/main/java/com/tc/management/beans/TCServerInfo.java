@@ -22,8 +22,6 @@ import com.tc.async.impl.MonitoringEventCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
@@ -247,18 +245,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public L2Info[] getL2Info() {
-    return server.infoForAllL2s();
-  }
-
-  @Override
   public String getL2Identifier() {
     return server.getL2Identifier();
-  }
-
-  @Override
-  public ServerGroupInfo getStripeInfo() {
-    return server.getStripeInfo();
   }
 
   @Override

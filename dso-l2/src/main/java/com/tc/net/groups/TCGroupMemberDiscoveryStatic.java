@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -62,7 +63,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   @Override
-  public void setupNodes(Node local, Node[] nodes) {
+  public void setupNodes(Node local, Set<Node> nodes) {
     Assert.assertEquals(this.local, local);
     for (Node node : nodes) {
       DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);

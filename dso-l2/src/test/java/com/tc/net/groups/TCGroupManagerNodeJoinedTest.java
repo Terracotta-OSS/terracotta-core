@@ -18,13 +18,13 @@
  */
 package com.tc.net.groups;
 
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.config.NodesStore;
-import com.tc.config.NodesStoreImpl;
+import com.tc.config.GroupConfiguration;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -53,6 +53,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import static org.mockito.Mockito.when;
 
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
@@ -142,8 +144,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       Set<Node> nodeSet = new HashSet<>();
       Collections.addAll(nodeSet, allNodes);
-      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-      groupManagers[i].join(allNodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
     waitForAllMessageCountsToReach(nodes - 1);
 
@@ -193,12 +195,12 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, proxiedAllNodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
 
     // joining
     System.err.println("XXX Start Joining...");
     for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].join(allNodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
 
     waitForAllMessageCountsToReach(nodes - 1);
@@ -261,9 +263,10 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     System.out.println("*** Start Joining...");
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, proxiedAllNodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+
     for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].join(allNodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
 
     waitForAllMessageCountsToReach(nodes - 1);

@@ -18,8 +18,6 @@
  */
 package com.tc.management.beans;
 
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
@@ -67,11 +65,7 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getDescriptionOfCapabilities();
 
-  L2Info[] getL2Info();
-
   String getL2Identifier();
-
-  ServerGroupInfo getStripeInfo();
 
   int getTSAListenPort();
 

@@ -20,6 +20,8 @@ package com.tc.net.groups;
 
 import com.tc.net.NodeID;
 
+import java.util.Set;
+
 public interface TCGroupMemberDiscovery extends GroupEventsListener {
 
   public void start() throws GroupException;
@@ -28,7 +30,7 @@ public interface TCGroupMemberDiscovery extends GroupEventsListener {
 
   public void stop(long timeout);
 
-  public void setupNodes(Node local, Node[] nodes);
+  public void setupNodes(Node local, Set<Node> nodes);
   
   public Node getLocalNode();
   

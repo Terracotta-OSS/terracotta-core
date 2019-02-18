@@ -18,8 +18,7 @@
  */
 package com.tc.net.groups;
 
-import com.tc.config.NodesStore;
-import com.tc.config.NodesStoreImpl;
+import com.tc.config.GroupConfiguration;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
@@ -44,6 +43,8 @@ import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.runtime.ThreadDump;
+
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -131,9 +132,13 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-    groups[0].join(nodes[0], nodeStore);
-    groups[1].join(nodes[1], nodeStore);
+
+    GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet, nodes[0]);
+    GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet, nodes[1]);
+
+    groups[0].join(groupConfiguration1);
+    groups[1].join(groupConfiguration2);
+
     // open test
     groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
 
@@ -172,9 +177,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-    groups[0].join(nodes[0], nodeStore);
-    groups[1].join(nodes[1], nodeStore);
+
+    GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet, nodes[0]);
+    GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet, nodes[1]);
+
+    groups[0].join(groupConfiguration1);
+    groups[1].join(groupConfiguration2);
 
     int proc1OutGoingZapMsg = 0, proc1IncomingZapMsg = 0;
     int proc2OutGoingZapMsg = 0, proc2IncomingZapMsg = 0;
@@ -217,10 +225,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
 
-    groups[0].join(nodes[0], nodeStore);
-    groups[1].join(nodes[1], nodeStore);
+    GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet, nodes[0]);
+    GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet, nodes[1]);
+
+    groups[0].join(groupConfiguration1);
+    groups[1].join(groupConfiguration2);
 
     groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
     groups[1].openChannel(LOCALHOST, groupPorts[0], new NullChannelEventListener());
@@ -421,9 +431,9 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nGrp; ++i) {
-      groups[i].join(nodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = getGroupConfiguration(nodeSet, nodes[i]);
+      groups[i].join(groupConfiguration);
     }
     waitForMembersToJoin();
 
@@ -459,8 +469,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < nGrp; ++i) {
       Set<Node> nodeSet = new HashSet<>();
       Collections.addAll(nodeSet, nodes);
-      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-      groups[i].join(nodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = getGroupConfiguration(nodeSet, nodes[i]);
+      groups[i].join(groupConfiguration);
     }
 
     waitForMembersToJoin();
@@ -499,9 +509,9 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, nodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nGrp; ++i) {
-      nodeIDs[i] = groups[i].join(nodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = getGroupConfiguration(nodeSet, nodes[i]);
+      nodeIDs[i] = groups[i].join(groupConfiguration);
     }
     waitForMembersToJoin();
 
@@ -659,11 +669,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < nGrp; ++i) {
       groups[i].registerForMessages(TestMessage.class, listeners[i]);
     }
+
+    Set<Node> nodeSet = new HashSet<>();
+    Collections.addAll(nodeSet, nodes);
     for (int i = 0; i < nGrp; ++i) {
-      Set<Node> nodeSet = new HashSet<>();
-      Collections.addAll(nodeSet, nodes);
-      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-      nodeIDs[i] = groups[i].join(nodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = getGroupConfiguration(nodeSet, nodes[i]);
+      groups[i].join(groupConfiguration);
     }
     waitForMembersToJoin();
 
@@ -890,4 +901,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
   }
 
+  static GroupConfiguration getGroupConfiguration(Set<Node> nodeSet, Node node) {
+    GroupConfiguration groupConfiguration = Mockito.mock(GroupConfiguration.class);
+    when(groupConfiguration.getNodes()).thenReturn(nodeSet);
+    when(groupConfiguration.getCurrentNode()).thenReturn(node);
+    return groupConfiguration;
+  }
 }

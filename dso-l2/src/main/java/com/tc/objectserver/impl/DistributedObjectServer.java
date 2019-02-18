@@ -21,11 +21,14 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 
+import com.tc.config.ServerConfigurationManager;
+import com.tc.config.GroupConfiguration;
 import com.tc.l2.state.AvailabilityManagerImpl;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.config.ServerConfiguration;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.MappedStateCollector;
 import com.tc.services.PlatformConfigurationImpl;
@@ -49,11 +52,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
-import com.tc.config.HaConfig;
-import com.tc.config.HaConfigImpl;
-import com.tc.config.NodesStore;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
@@ -133,7 +132,6 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
-import com.tc.object.config.schema.L2Config;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
@@ -219,7 +217,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.terracotta.config.TcConfiguration;
+
 import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
@@ -236,6 +234,8 @@ import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import com.tc.objectserver.core.api.Guardian;
+import com.terracotta.config.Configuration;
+
 import java.util.stream.Collectors;
 
 
@@ -246,8 +246,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
-  protected final L2ConfigurationSetupManager    configSetupManager;
-  protected final HaConfigImpl                   haConfig;
+  protected final ServerConfigurationManager configSetupManager;
 
   private static final Logger logger = LoggerFactory.getLogger(DistributedObjectServer.class);
   private static final Logger consoleLogger = TCLogging.getConsoleLogger();
@@ -282,13 +281,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private EntityManagerImpl entityManager;
 
   // used by a test
-  public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
+  public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
     this(configSetupManager, threadGroup, connectionPolicy, new SEDA(threadGroup), null);
 
   }
 
-  public DistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
+  public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy,
                                  SEDA seda,
                                  TCServer server) {
@@ -298,20 +297,19 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     Assert.assertEquals(threadGroup, Thread.currentThread().getThreadGroup());
 
     this.configSetupManager = configSetupManager;
-    this.haConfig = new HaConfigImpl(this.configSetupManager);
     this.connectionPolicy = connectionPolicy;
     this.threadGroup = threadGroup;
     this.seda = seda;
     this.server = server;
-    this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
+    this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
     this.timer = new SingleThreadedTimer(null);
     this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
   }
 
-  protected final ServerBuilder createServerBuilder(HaConfig config, Logger tcLogger, TCServer server,
-                                                 L2Config l2dsoConfig) {
-    return new StandardServerBuilder(config, tcLogger);
+  protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
+                                                    TCServer server) {
+    return new StandardServerBuilder(groupConfiguration, tcLogger);
   }
 
   protected ServerBuilder getServerBuilder() {
@@ -360,7 +358,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
     try {
       MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
-      this.configSetupManager.commonl2Config().getTCConfiguration().addStateTo(mappedStateCollector);
       Map<String, Object> state = new HashMap<>();
       state.put("ExtendedConfigs", mappedStateCollector.getMap());
       prettyPrinter.println(state);
@@ -391,16 +388,16 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       }
     });
 
-    this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
+    this.thisServerNodeID = makeServerNodeID(this.configSetupManager.getServerConfiguration());
     ThisServerNodeId.setThisServerNodeId(thisServerNodeID);
 
 
     final List<PostInit> toInit = new ArrayList<>();
 
     // perform the DSO network config verification
-    final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
     // verify user input host name, DEV-2293
-    final String host = l2DSOConfig.host();
+    final String host = l2DSOConfig.getHost();
     final InetAddress ip = InetAddress.getByName(host);
     if (!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
       final String msg = "Unable to find local network interface for " + host;
@@ -409,11 +406,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       System.exit(-1);
     }
 
-    String bindAddress = this.configSetupManager.commonl2Config().tsaPort().getBind();
-    if (bindAddress == null) {
-      // workaround for CDV-584
-      bindAddress = TCSocketAddress.WILDCARD_IP;
-    }
+    String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getBind();
 
     final InetAddress jmxBind = InetAddress.getByName(bindAddress);
     final AddressChecker addressChecker = new AddressChecker();
@@ -431,9 +424,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
 
     // Set up the ServiceRegistry.
-    TcConfiguration base = this.configSetupManager.commonl2Config().getTCConfiguration();
-    PlatformConfiguration platformConfiguration = new PlatformConfigurationImpl(this.configSetupManager.dsoL2Config(), base);
-    serviceRegistry.initialize(platformConfiguration, base, Thread.currentThread().getContextClassLoader());
+    Configuration configuration = this.configSetupManager.getConfiguration();
+    PlatformConfiguration platformConfiguration =
+        new PlatformConfigurationImpl(this.configSetupManager.getServerConfiguration(), configuration);
+    serviceRegistry.initialize(platformConfiguration, configuration, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
@@ -457,9 +451,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     } catch (UnknownHostException unknown) {
       // ignore
     }
-    final int serverPort = l2DSOConfig.tsaPort().getValue();
+    final int serverPort = l2DSOConfig.getTsaPort().getValue();
     final ProductInfo pInfo = ProductInfo.getInstance();
-    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.tsaGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
     
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
@@ -544,7 +538,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
-    int voteCount = ConsistencyManager.parseVoteCount(this.configSetupManager.commonl2Config().getTCConfiguration().getPlatformConfiguration());
+    int voteCount =
+        ConsistencyManager.parseVoteCount(this.configSetupManager.getConfiguration().getPlatformConfiguration());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -559,7 +554,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     ConsistencyManager consistencyMgr = new SafeStartupManagerImpl(consistentStartup, knownPeers,
         (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount));
     
-    final String dsoBind = l2DSOConfig.tsaPort().getBind();
+    final String dsoBind = l2DSOConfig.getTsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (t)->{
                                                                   return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
@@ -655,7 +650,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       Assert.fail("Multiple IMonitoringProducer implementations found!");
     }
 
-    long reconnectTimeout = l2DSOConfig.clientReconnectWindow();
+    long reconnectTimeout = l2DSOConfig.getClientReconnectWindow();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
 
@@ -713,8 +708,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
-        configSetupManager.getActiveServerGroupForThisL2().getMembers().length,
-        configSetupManager.getActiveServerGroupForThisL2().getElectionTimeInSecs(),
+        configSetupManager.getGroupConfiguration().getMembers().length,
+        configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         weightGeneratorFactory, consistencyMgr, 
         this.persistor.getClusterStatePersistor(), server);
     
@@ -784,7 +779,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
-    dispatchHandler.addListener(connectPassiveEvents(info, haConfig.getNodesStore(), monitoringShimService));
+    dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
     
     final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
                                                                               globalTxnCounter,
@@ -968,7 +963,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return control;
   }
   
-  private GroupEventsListener connectPassiveEvents(Sink<PlatformInfoRequest> infoHandler, NodesStore nodesStore, LocalMonitoringProducer monitoringShimService) {
+  private GroupEventsListener connectPassiveEvents(Sink<PlatformInfoRequest> infoHandler, LocalMonitoringProducer monitoringShimService) {
     return new GroupEventsListener() {
 
       @Override
@@ -1031,7 +1026,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   public void startGroupManagers() {
     try {
 
-      final NodeID myNodeId = this.groupCommManager.join(this.haConfig.getThisNode(), this.haConfig.getNodesStore());
+      final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
       logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
@@ -1067,12 +1062,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return logger;
   }
 
-  private ServerID makeServerNodeID(L2Config l2DSOConfig) {
-    String host = l2DSOConfig.tsaGroupPort().getBind();
+  private ServerID makeServerNodeID(ServerConfiguration l2DSOConfig) {
+    String host = l2DSOConfig.getGroupPort().getBind();
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
-      host = l2DSOConfig.host();
+      host = l2DSOConfig.getHost();
     }
-    final Node node = new Node(host, l2DSOConfig.tsaPort().getValue());
+    final Node node = new Node(host, l2DSOConfig.getTsaPort().getValue());
     final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
@@ -1169,8 +1164,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
    * config value unless the special value 0 is specified for use in the tests to get a random port.
    */
   public int getListenPort() {
-    final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
-    final int configValue = l2DSOConfig.tsaPort().getValue();
+    final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
+    final int configValue = l2DSOConfig.getTsaPort().getValue();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
       try {
@@ -1186,8 +1181,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   public int getGroupPort() {
-    final L2Config l2DSOConfig = this.configSetupManager.dsoL2Config();
-    final int configValue = l2DSOConfig.tsaGroupPort().getValue();
+    final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
+    final int configValue = l2DSOConfig.getGroupPort().getValue();
     if (configValue != 0) { return configValue; }
     return -1;
   }
@@ -1214,7 +1209,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, ConsistencyManager cm) {
-    return new ClientHandshakeHandler(this.configSetupManager.dsoL2Config().serverName(), entities, processTransactionHandler, cm);
+    return new ClientHandshakeHandler(this.configSetupManager.getServerConfiguration().getName(), entities,
+                                      processTransactionHandler, cm);
   }
 
   // for tests only

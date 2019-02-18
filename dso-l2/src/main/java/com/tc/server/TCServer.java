@@ -21,8 +21,6 @@ package com.tc.server;
 import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.util.State;
@@ -69,11 +67,7 @@ public interface TCServer extends StateChangeListener {
 
   String getDescriptionOfCapabilities();
 
-  L2Info[] infoForAllL2s();
-
   String getL2Identifier();
-
-  ServerGroupInfo getStripeInfo();
 
   int getTSAListenPort();
 

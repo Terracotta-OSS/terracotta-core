@@ -19,7 +19,7 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.Sink;
-import com.tc.config.NodesStore;
+import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.util.Assert;
@@ -61,7 +61,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public NodeID join(Node thisNode, NodesStore nodesStore) {
+  public NodeID join(GroupConfiguration groupConfiguration) {
     throw new UnsupportedOperationException();
   }
 

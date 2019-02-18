@@ -25,8 +25,8 @@ import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
-import com.tc.config.HaConfig;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.ServerConfigurationManager;
+import com.tc.config.GroupConfiguration;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -52,22 +52,22 @@ import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class StandardServerBuilder implements ServerBuilder {
-  private final HaConfig            haConfig;
+  private final GroupConfiguration groupConfiguration;
 
   protected final Logger logger;
 
-  public StandardServerBuilder(HaConfig haConfig, Logger logger) {
+  public StandardServerBuilder(GroupConfiguration groupConfiguration, Logger logger) {
     this.logger = logger;
-    this.haConfig = haConfig;
+    this.groupConfiguration = groupConfiguration;
   }
 
   @Override
-  public GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
-                                             StageManager stageManager, ServerID serverNodeID,
-                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                             BufferManagerFactory bufferManagerFactory) {
-    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getThisNode(),
-        this.haConfig.getNodesStore(), weightGeneratorFactory, bufferManagerFactory);
+  public GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
+                                                                   StageManager stageManager, ServerID serverNodeID,
+                                                                   StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
+                                                                   BufferManagerFactory bufferManagerFactory) {
+    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.groupConfiguration.getCurrentNode(),
+                                  weightGeneratorFactory, bufferManagerFactory);
   }
 
   @Override
