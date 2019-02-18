@@ -29,7 +29,6 @@ import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -37,7 +36,6 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.Util;
 
 import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
