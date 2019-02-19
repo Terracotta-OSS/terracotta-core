@@ -410,35 +410,36 @@ public class ServerProcess {
   public void stop() throws InterruptedException {
     UUID token = enter();
     try {
-    // Can't stop something now running.
-    Assert.assertTrue(this.stateInterlock.isServerRunning(this));
-    // Can't stop something unless we determined the PID.
-    long localPid = waitForPid();
-    Assert.assertTrue(localPid > 0);
-    // Log the intent.
-    this.harnessLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
-    // Mark this as expected.
-    this.setCrashExpected(true);
-    
-    Process process = null;
+    // Can't stop something not running.
+      if (this.stateInterlock.isServerRunning(this)) {      
+        // Can't stop something unless we determined the PID.
+        long localPid = waitForPid();
+        Assert.assertTrue(localPid > 0);
+        // Log the intent.
+        this.harnessLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
+        // Mark this as expected.
+        this.setCrashExpected(true);
 
-    // Destroy the process.
-    if (TestHelpers.isWindows()){
-      //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
-      process = killProcessWindows(this.pid);
-    } else {
-      process = killProcessUnix(this.pid);
-    }
-    while (process.isAlive()) {
-      harnessLogger.output("Waiting for server to exit PID:" + localPid);
- //  give up the synchronized lock while waiting for the kill process to 
- //  do it's job.  This can deadlock since the event bus will need this lock 
- //  to log events
-      process.waitFor(1, TimeUnit.SECONDS);
-    }
-    int result = process.exitValue();
-    harnessLogger.output("Attempt to kill server process resulted in:" + result);
-    harnessLogger.output("server process killed");
+        Process process = null;
+
+        // Destroy the process.
+        if (TestHelpers.isWindows()){
+          //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
+          process = killProcessWindows(this.pid);
+        } else {
+          process = killProcessUnix(this.pid);
+        }
+        while (process.isAlive()) {
+          harnessLogger.output("Waiting for server to exit PID:" + localPid);
+     //  give up the synchronized lock while waiting for the kill process to 
+     //  do it's job.  This can deadlock since the event bus will need this lock 
+     //  to log events
+          process.waitFor(1, TimeUnit.SECONDS);
+        }
+        int result = process.exitValue();
+        harnessLogger.output("Attempt to kill server process resulted in:" + result);
+        harnessLogger.output("server process killed");
+      }
     } finally {
       exit(token);
     }
