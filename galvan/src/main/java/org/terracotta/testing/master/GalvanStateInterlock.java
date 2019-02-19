@@ -36,7 +36,7 @@ import org.terracotta.testing.logging.ContextualLogger;
  */
 public class GalvanStateInterlock implements IGalvanStateInterlock {
   private final ContextualLogger logger;
-  private final ITestWaiter sharedLockState;
+private final ITestWaiter sharedLockState;
   private boolean isShuttingDown;
   private boolean ignoreServerCrashes;
 
@@ -370,11 +370,6 @@ public class GalvanStateInterlock implements IGalvanStateInterlock {
               + " clients: " + this.runningClients.size()
               );
         }
-        // Force shut-down all clients, all passives, and the active.
-        // (note that we won't modify the collections here, just walk them - we are synchronized)
-        // this is inside the loop because servers can transition from terminated to active or passive 
-        // when the lock is released during the wait, if access is at all fair, should not cause double
-        // shutowns
         for (ClientRunner client : makeCopy(this.runningClients)) {
           client.forceTerminate();
         }
