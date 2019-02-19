@@ -32,8 +32,6 @@ public interface ClientMessageChannel extends MessageChannel, NetworkLayer, Mess
 
   public int getConnectAttemptCount();
 
-  public ClientHandshakeMessageFactory getClientHandshakeMessageFactory();
-
   public void setMessageTransportInitiator(MessageTransportInitiator initiator);
 
   public void addClientConnectionErrorListener(ClientConnectionErrorListener errorListener);

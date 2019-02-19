@@ -29,7 +29,6 @@ import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
-import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -37,7 +36,6 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.Util;
 
 import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -507,35 +505,29 @@ public class ClientConnectionEstablisher {
     @Override
     public void run() {
       logger.debug("Connection establisher starting. " + System.identityHashCode(this));
-      while (!isStopped()) {
-        ConnectionRequest request = waitUntilRequestAvailableOrStopped();
-        if (request != null) {
-          logger.info("Handling connection request: " + request);
-          ClientMessageTransport cmt = request.getClientMessageTransport();
-          try {
-            switch (request.getType()) {
-              case RECONNECT:
-                this.cce.reconnect(cmt, request::checkForStop);
-                break;
-              case RESTORE_CONNECTION:
-                RestoreConnectionRequest req = (RestoreConnectionRequest) request;
-                this.cce.restoreConnection(req.getClientMessageTransport(), req.getSocketAddress(),
-                                           req.getTimeoutMillis(), req.getCallback());
-                break;
-              default:
-                throw new AssertionError("Unknown connection request type - " + request.getType());
-            }
-          } catch (MaxConnectionsExceededException e) {
-            String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-            cmt.getLogger().error(connInfo + e.getMessage());
-            return;
-          } catch (Throwable t) {
-            if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
+      ConnectionRequest request = waitUntilRequestAvailableOrStopped();
+      if (request != null) {
+        logger.info("Handling connection request: " + request);
+        ClientMessageTransport cmt = request.getClientMessageTransport();
+        try {
+          switch (request.getType()) {
+            case RECONNECT:
+              this.cce.reconnect(cmt, request::checkForStop);
+              break;
+            case RESTORE_CONNECTION:
+              RestoreConnectionRequest req = (RestoreConnectionRequest) request;
+              this.cce.restoreConnection(req.getClientMessageTransport(), req.getSocketAddress(),
+                                         req.getTimeoutMillis(), req.getCallback());
+              break;
+            default:
+              throw new AssertionError("Unknown connection request type - " + request.getType());
           }
-        } else {
-          if (!isStopped()) {
-            throw new AssertionError("AsyncReconnect not stopped yet, but next request was null");
-          }
+        } catch (MaxConnectionsExceededException e) {
+          String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
+          cmt.getLogger().error(connInfo + e.getMessage());
+          return;
+        } catch (Throwable t) {
+          if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
         }
       }
       logger.info("Connection establisher exiting." + System.identityHashCode(this));
@@ -552,26 +544,26 @@ public class ClientConnectionEstablisher {
     private final ClientMessageTransport cmt;
     private final Supplier<Boolean> stopCheck;
 
-    public ConnectionRequest(ConnectionRequestType requestType) {
+    ConnectionRequest(ConnectionRequestType requestType) {
       this(requestType, null, ()->false);
     }
 
-    public ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
+    ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
       this.cmt = cmt;
       this.type = requestType;
       this.stopCheck = stopCheck;
     }
 
-    public ConnectionRequestType getType() {
+    ConnectionRequestType getType() {
       return type;
     }
 
-    public ClientMessageTransport getClientMessageTransport() {
+    ClientMessageTransport getClientMessageTransport() {
       return this.cmt;
     }
     
-    public boolean checkForStop() {
-        return stopCheck.get();
+    boolean checkForStop() {
+      return stopCheck.get();
     }
 
     public static ConnectionRequest newReconnectRequest(ClientMessageTransport cmtParam, Supplier<Boolean> stopCheck) {

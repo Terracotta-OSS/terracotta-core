@@ -91,7 +91,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private boolean wasBusy = false;
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
-    this.logger = new ClientIDLogger(channel, LoggerFactory.getLogger(ClientEntityManager.class));
+    this.logger = new ClientIDLogger(channel::getClientID, LoggerFactory.getLogger(ClientEntityManager.class));
     
     this.channel = channel;
 
