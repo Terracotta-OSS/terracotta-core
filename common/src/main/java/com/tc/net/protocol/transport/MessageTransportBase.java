@@ -33,6 +33,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected final MessageTransportStatus           status;
   protected final TransportHandshakeMessageFactory messageFactory;
   private final TransportHandshakeErrorHandler     handshakeErrorHandler;
-  private NetworkLayer                             receiveLayer;
+  private WeakReference<NetworkLayer>                             receiveLayer;
 
   private final Object                             attachingNewConnection = new Object();
   private final AtomicReference<TCConnectionEvent> connectionCloseEvent   = new AtomicReference<TCConnectionEvent>(null);
@@ -92,12 +93,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   
   @Override
   public final void setReceiveLayer(NetworkLayer layer) {
-    this.receiveLayer = layer;
+    this.receiveLayer = new WeakReference<>(layer);
   }
 
   @Override
   public final NetworkLayer getReceiveLayer() {
-    return receiveLayer;
+    return receiveLayer == null ? null : receiveLayer.get();
   }
 
   @Override
@@ -119,8 +120,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected abstract void receiveTransportMessageImpl(WireProtocolMessage message);
 
   protected final void receiveToReceiveLayer(WireProtocolMessage message) {
-    Assert.assertNotNull(receiveLayer);
-    if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
+    NetworkLayer receiver = this.getReceiveLayer();
+    if (receiver == null) {
+      disconnect();
+      return;
+    } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
       // message is printed for debugging
       getLogger().info(message.toString());
       throw new AssertionError("Wrong handshake message from: " + message.getSource());
@@ -131,7 +135,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         throw new AssertionError("Wrong HealthChecker Probe message from: " + message.getSource());
       }
     }
-    this.receiveLayer.receive(message.getPayload());
+    receiver.receive(message.getPayload());
     message.getWireProtocolHeader().recycle();
   }
 

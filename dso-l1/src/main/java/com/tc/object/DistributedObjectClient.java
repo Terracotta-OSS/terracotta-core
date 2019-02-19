@@ -38,8 +38,6 @@ import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.util.ProductID;
-import com.tc.logging.CallbackOnExitHandler;
-import com.tc.logging.CallbackOnExitState;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.management.TCClient;
@@ -104,13 +102,19 @@ import com.tc.util.sequence.SimpleSequence;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
+import com.tc.logging.CallbackOnExitState;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
+import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,7 +140,7 @@ public class DistributedObjectClient implements TCClient {
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
 
-  private ClientMessageChannel                       channel;
+  private WeakReference<ClientMessageChannel>                       channel;
   private TCConnectionManager                        connectionManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
@@ -234,13 +238,14 @@ public class DistributedObjectClient implements TCClient {
         return new SimpleSequence();
       }
     });
-
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackOnExitHandler() {
-      @Override
-      public void callbackOnExit(CallbackOnExitState state) {
-        DSO_LOGGER.info(getClientState());
-        Thread.dumpStack();
+//  weak reference to allow garbage collection if ref is dropped    
+    Reference<DistributedObjectClient> ref = new WeakReference<>(this);
+    this.threadGroup.addCallbackOnExitDefaultHandler((CallbackOnExitState state) -> {
+      DistributedObjectClient client = ref.get();
+      if (client != null) {
+        DSO_LOGGER.info(client.getClientState());
       }
+      Thread.dumpStack();
     });
 
     final ReconnectConfig l1ReconnectConfig = getReconnectPropertiesFromServer();
@@ -275,13 +280,14 @@ public class DistributedObjectClient implements TCClient {
 
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
-    this.channel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
+    ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
                                                                  sessionManager, socketConnectTimeout, this);
+    this.channel = new WeakReference<>(clientChannel);
     // add this listener so that the whole system is shutdown
     // if the transport is closed from underneath.
     //  this typically happens when the transport is disconnected and 
     // reconnect is disabled
-    this.channel.addListener(new ChannelEventListener() {
+    clientChannel.addListener(new ChannelEventListener() {
       @Override
       public void notifyChannelEvent(ChannelEvent event) {
         switch(event.getType()) {
@@ -292,12 +298,12 @@ public class DistributedObjectClient implements TCClient {
       }
     });
 
-    final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(this.channel);
+    final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(clientChannel::getClientID);
     this.communicationStageManager.setLoggerProvider(cidLoggerProvider);
 
     DSO_LOGGER.debug("Created channel.");
 
-    this.clientEntityManager = this.clientBuilder.createClientEntityManager(this.channel, this.communicationStageManager);
+    this.clientEntityManager = this.clientBuilder.createClientEntityManager(clientChannel, this.communicationStageManager);
     this.singleMessageReceiver = new RequestReceiveHandler(this.clientEntityManager);
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
@@ -311,20 +317,34 @@ public class DistributedObjectClient implements TCClient {
     this.counterManager.createCounter(sampledCounterConfig);
 
     final ProductInfo pInfo = ProductInfo.getInstance();
+    
+    ClientHandshakeMessageFactory chmf = (u, n, c)->{
+      ClientMessageChannel cmc = channel.get();
+      if (cmc != null) {
+        final ClientHandshakeMessage rv = (ClientHandshakeMessage)cmc.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+        rv.setClientVersion(c);
+        rv.setClientPID(getPID());
+        rv.setUUID(u);
+        rv.setName(n);
+        return rv;
+      } else {
+        return null;
+      }
+    };
+    
     this.clientHandshakeManager = this.clientBuilder
-        .createClientHandshakeManager(new ClientIDLogger(this.channel, LoggerFactory
-                                          .getLogger(ClientHandshakeManagerImpl.class)), this.channel
-                                          .getClientHandshakeMessageFactory(), sessionManager,
+        .createClientHandshakeManager(new ClientIDLogger(clientChannel, LoggerFactory
+                                          .getLogger(ClientHandshakeManagerImpl.class)), chmf, sessionManager,
                                           this.uuid, this.name, pInfo.version(), this.clientEntityManager);
 
-    ClientChannelEventController.connectChannelEventListener(channel, clientHandshakeManager);
+    ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);
 
-    this.shutdownManager = new ClientShutdownManager(this, connectionComponents);
+    this.shutdownManager = new ClientShutdownManager(this);
 
     final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager);
     // DO NOT create any stages after this call
     
-    String[] exclusion = this.channel.getProductID() == ProductID.DIAGNOSTIC || !isAsync ? 
+    String[] exclusion = clientChannel.getProductID() == ProductID.DIAGNOSTIC || !isAsync ? 
       new String[] {
         ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE
       } 
@@ -340,8 +360,8 @@ public class DistributedObjectClient implements TCClient {
     connectionThread.set(new Thread(threadGroup, ()->{
           while (!clientStopped.isSet()) {
             try {
-              openChannel();
-              waitForHandshake();
+              openChannel(clientChannel);
+              waitForHandshake(clientChannel);
               connectionMade();
               break;
             } catch (RuntimeException runtime) {
@@ -383,7 +403,7 @@ public class DistributedObjectClient implements TCClient {
     return connectionMade.isSet();
   }
 
-  private void openChannel() throws InterruptedException {
+  private void openChannel(ClientMessageChannel channel) throws InterruptedException {
     Collection<ConnectionInfo> infos = Arrays.asList(this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos());
     if (infos.isEmpty()) {
 //  can't open a connection to nowhere
@@ -392,7 +412,7 @@ public class DistributedObjectClient implements TCClient {
     while (!clientStopped.isSet()) {
       try {
         DSO_LOGGER.debug("Trying to open channel....");
-        this.channel.open(infos);
+        channel.open(infos);
         DSO_LOGGER.debug("Channel open");
         break;
       } catch (final TCTimeoutException tcte) {
@@ -426,12 +446,12 @@ public class DistributedObjectClient implements TCClient {
     }
   }
 
-  private void waitForHandshake() {
+  private void waitForHandshake(ClientMessageChannel channel) {
     this.clientHandshakeManager.waitForHandshake();
-    if (this.channel != null) {
-      final TCSocketAddress remoteAddress = this.channel.getRemoteAddress();
+    if (channel != null) {
+      final TCSocketAddress remoteAddress = channel.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
-      if (!this.channel.getProductID().isInternal() && this.channel.isConnected()) {
+      if (!channel.getProductID().isInternal() && channel.isConnected()) {
         DSO_LOGGER.info(infoMsg);
       }
     }
@@ -497,10 +517,6 @@ public class DistributedObjectClient implements TCClient {
     return this.communicationsManager;
   }
 
-  public ClientMessageChannel getChannel() {
-    return this.channel;
-  }
-
   public ClientHandshakeManager getClientHandshakeManager() {
     return this.clientHandshakeManager;
   }
@@ -537,13 +553,14 @@ public class DistributedObjectClient implements TCClient {
       }
     }
 
-    if (this.channel != null) {
+    ClientMessageChannel clientChannel = this.channel.get();
+    if (clientChannel != null) {
       try {
-        this.channel.close();
+        clientChannel.close();
       } catch (final Throwable t) {
         logger.error("Error closing channel", t);
       } finally {
-        this.channel = null;
+
       }
     }
 
@@ -709,10 +726,20 @@ public class DistributedObjectClient implements TCClient {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
-      if (this.channel != null && !this.channel.getProductID().isInternal() && this.channel.isConnected()) {
-        DSO_LOGGER.info("closing down Terracotta Connection force=" + forceImmediate + " channel=" + this.channel.getChannelID() + " client=" + this.channel.getClientID());
+      ClientMessageChannel clientChannel = this.channel.get();
+      if (clientChannel != null && !clientChannel.getProductID().isInternal() && clientChannel.isConnected()) {
+        DSO_LOGGER.info("closing down Terracotta Connection force=" + forceImmediate + " channel=" + clientChannel.getChannelID() + " client=" + clientChannel.getClientID());
       }
       shutdownClient(forceImmediate);
     }
+  }
+  
+  private int getPID() {
+    String vmName = ManagementFactory.getRuntimeMXBean().getName();
+    int index = vmName.indexOf('@');
+
+    if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
+
+    return Integer.parseInt(vmName.substring(0, index));
   }
 }

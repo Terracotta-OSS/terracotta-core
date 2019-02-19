@@ -103,14 +103,16 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
     changeToStarting();
     handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion);
-    notifyCallbackOnHandshake(handshakeMessage);
+    if (handshakeMessage != null) {
+      notifyCallbackOnHandshake(handshakeMessage);
 
-    this.logger.debug("Sending handshake message");
-    if (!handshakeMessage.send()) {
-      if (handshakeMessage.getChannel().isConnected()) {
-        LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
-      } else {
-        LOGGER.info("handshake failed. channel not connected");
+      this.logger.debug("Sending handshake message");
+      if (!handshakeMessage.send()) {
+        if (handshakeMessage.getChannel().isConnected()) {
+          LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
+        } else {
+          LOGGER.info("handshake failed. channel not connected");
+        }
       }
     }
   }

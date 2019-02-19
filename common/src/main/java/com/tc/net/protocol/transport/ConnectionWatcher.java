@@ -19,11 +19,15 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.util.concurrent.SetOnceFlag;
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConnectionWatcher implements MessageTransportListener {
 
+  private static Logger LOGGER = LoggerFactory.getLogger(ConnectionWatcher.class);
   private final ClientMessageTransport      cmt;
   private final ClientConnectionEstablisher cce;
   private final ReferenceQueue<MessageTransportListener> stopQueue = new ReferenceQueue<>();
@@ -40,8 +44,12 @@ public class ConnectionWatcher implements MessageTransportListener {
   }
   
   private boolean checkForStop() {
-    if (stopQueue.poll() == targetHolder) {
-        stopped.set();
+    Reference<? extends MessageTransportListener> target = stopQueue.poll();
+    if (target != null) {
+      if (target == targetHolder) {
+          stopped.set();
+          LOGGER.warn("unreferenced connection left open");
+      }
     }
     return stopped.isSet();
   }

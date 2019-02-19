@@ -35,21 +35,19 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportInitiator;
-import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
-public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
+public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel {
   private static final Logger logger = LoggerFactory.getLogger(ClientMessageChannel.class);
 
   private int                             connectAttemptCount;
@@ -167,30 +165,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public ClientID getClientID() {
     return (ClientID) getLocalNodeID();
-  }
-
-  @Override
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion) {
-    final ClientHandshakeMessage rv = (ClientHandshakeMessage) createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
-    rv.setClientVersion(clientVersion);
-    rv.setClientPID(getPID());
-    rv.setUUID(uuid);
-    rv.setName(name);
-    return rv;
-  }
-
-  @Override
-  public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
-    return this;
-  }
-
-  private int getPID() {
-    String vmName = ManagementFactory.getRuntimeMXBean().getName();
-    int index = vmName.indexOf('@');
-
-    if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
-
-    return Integer.parseInt(vmName.substring(0, index));
   }
 
   @Override

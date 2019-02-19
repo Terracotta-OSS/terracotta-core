@@ -1,0 +1,67 @@
+/*
+ * Copyright Terracotta, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.terracotta.testing.rules;
+
+
+import org.junit.ClassRule;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.terracotta.connection.Connection;
+import org.terracotta.passthrough.IClusterControl;
+
+
+/**
+ * This test is similar to BasicExternalClusterClassRuleIT, in that it uses the class rule to perform a basic test.
+ * 
+ * In this case, the basic test is watching how Galvan handles interaction with a basic active-passive cluster.
+ */
+// XXX: Currently ignored since this test depends on restartability of the server, which now requires a persistence service
+//  to be plugged in (and there isn't one available, in open source).
+public class ClientLeakIT {
+  @ClassRule
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(1).build(); //logConfigExtensionResourceName("custom-logback-ext.xml").build();
+
+  /**
+   * This will ensure that a fail-over correctly happens.
+   */
+  @Test
+  public void testRestartActive() throws Exception {
+    Connection leak = CLUSTER.newConnection();
+    CLUSTER.getClusterControl().terminateActive();
+    Thread reconnect = lookForConnectionEstablisher();
+    while (reconnect == null) {
+      Thread.sleep(5000);
+      reconnect = lookForConnectionEstablisher();
+    }
+    leak = null;
+    while (reconnect.isAlive()) {
+      System.out.println("reconnect thread " + reconnect.getName() + " is alive " + reconnect.isAlive());
+      System.gc();
+      Thread.sleep(5000);
+    }
+  }
+  
+  private static Thread lookForConnectionEstablisher() {
+    Thread[] list = new Thread[Thread.activeCount()];
+    Thread.enumerate(list);
+    for (Thread t : list) {
+      if (t.getName().startsWith("ConnectionEstablisher")) {
+        return t;
+      }
+    }
+    return null;
+  }
+}

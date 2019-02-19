@@ -505,35 +505,29 @@ public class ClientConnectionEstablisher {
     @Override
     public void run() {
       logger.debug("Connection establisher starting. " + System.identityHashCode(this));
-      while (!isStopped()) {
-        ConnectionRequest request = waitUntilRequestAvailableOrStopped();
-        if (request != null) {
-          logger.info("Handling connection request: " + request);
-          ClientMessageTransport cmt = request.getClientMessageTransport();
-          try {
-            switch (request.getType()) {
-              case RECONNECT:
-                this.cce.reconnect(cmt, request::checkForStop);
-                break;
-              case RESTORE_CONNECTION:
-                RestoreConnectionRequest req = (RestoreConnectionRequest) request;
-                this.cce.restoreConnection(req.getClientMessageTransport(), req.getSocketAddress(),
-                                           req.getTimeoutMillis(), req.getCallback());
-                break;
-              default:
-                throw new AssertionError("Unknown connection request type - " + request.getType());
-            }
-          } catch (MaxConnectionsExceededException e) {
-            String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-            cmt.getLogger().error(connInfo + e.getMessage());
-            return;
-          } catch (Throwable t) {
-            if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
+      ConnectionRequest request = waitUntilRequestAvailableOrStopped();
+      if (request != null) {
+        logger.info("Handling connection request: " + request);
+        ClientMessageTransport cmt = request.getClientMessageTransport();
+        try {
+          switch (request.getType()) {
+            case RECONNECT:
+              this.cce.reconnect(cmt, request::checkForStop);
+              break;
+            case RESTORE_CONNECTION:
+              RestoreConnectionRequest req = (RestoreConnectionRequest) request;
+              this.cce.restoreConnection(req.getClientMessageTransport(), req.getSocketAddress(),
+                                         req.getTimeoutMillis(), req.getCallback());
+              break;
+            default:
+              throw new AssertionError("Unknown connection request type - " + request.getType());
           }
-        } else {
-          if (!isStopped()) {
-            throw new AssertionError("AsyncReconnect not stopped yet, but next request was null");
-          }
+        } catch (MaxConnectionsExceededException e) {
+          String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
+          cmt.getLogger().error(connInfo + e.getMessage());
+          return;
+        } catch (Throwable t) {
+          if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
         }
       }
       logger.info("Connection establisher exiting." + System.identityHashCode(this));
@@ -550,26 +544,26 @@ public class ClientConnectionEstablisher {
     private final ClientMessageTransport cmt;
     private final Supplier<Boolean> stopCheck;
 
-    public ConnectionRequest(ConnectionRequestType requestType) {
+    ConnectionRequest(ConnectionRequestType requestType) {
       this(requestType, null, ()->false);
     }
 
-    public ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
+    ConnectionRequest(ConnectionRequestType requestType, ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
       this.cmt = cmt;
       this.type = requestType;
       this.stopCheck = stopCheck;
     }
 
-    public ConnectionRequestType getType() {
+    ConnectionRequestType getType() {
       return type;
     }
 
-    public ClientMessageTransport getClientMessageTransport() {
+    ClientMessageTransport getClientMessageTransport() {
       return this.cmt;
     }
     
-    public boolean checkForStop() {
-        return stopCheck.get();
+    boolean checkForStop() {
+      return stopCheck.get();
     }
 
     public static ConnectionRequest newReconnectRequest(ClientMessageTransport cmtParam, Supplier<Boolean> stopCheck) {

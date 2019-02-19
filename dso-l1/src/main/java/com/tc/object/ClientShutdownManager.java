@@ -21,11 +21,6 @@ package com.tc.object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.core.ConnectionInfo;
-import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
-import com.tc.object.handshakemanager.ClientHandshakeManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,18 +28,11 @@ import java.util.Set;
 public class ClientShutdownManager {
   private static final Logger logger = LoggerFactory.getLogger(ClientShutdownManager.class);
 
-  private final ClientMessageChannel               channel;
-
-  private final ClientHandshakeManager             handshakeManager;
-  private final PreparedComponentsFromL2Connection connectionComponents;
   private final Set<Runnable>                      beforeShutdown = new HashSet<Runnable>();
   private final DistributedObjectClient            client;
 
-  public ClientShutdownManager(DistributedObjectClient client, PreparedComponentsFromL2Connection connectionComponents) {
+  public ClientShutdownManager(DistributedObjectClient client) {
     this.client = client;
-    this.channel = client.getChannel();
-    this.handshakeManager = client.getClientHandshakeManager();
-    this.connectionComponents = connectionComponents;
   }
 
   public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
@@ -79,23 +67,12 @@ public class ClientShutdownManager {
   private void closeLocalWork(boolean forceImmediate) {
 
     // stop handshaking while shutting down
-    handshakeManager.shutdown();
+    this.client.getClientHandshakeManager().shutdown();
 
     ClientEntityManager entityMgr = this.client.getEntityManager();
     if (entityMgr != null) {
       entityMgr.shutdown();
     }
-  }
-
-  private boolean isImmediate() {
-    // XXX: Race condition here --> we can start the non-immediate shutdown procedure becuase we think the channel is
-    // open, but it can die before we start (or in the middle of) flushing the local work
-    if (channel.isConnected()) { return false; }
-
-    // If we think there is more than one server out there, we should try to flush
-    ConnectionInfoConfig connectionInfoItem = this.connectionComponents.createConnectionInfoConfigItem();
-    ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    return connectionInfo.length == 1;
   }
 
   private void shutdown() {
