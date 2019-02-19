@@ -307,14 +307,6 @@ public class DistributedObjectClient implements TCClient {
     this.singleMessageReceiver = new RequestReceiveHandler(this.clientEntityManager);
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
-    
-    final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
-    this.counterManager.createCounter(sampledRateCounterConfig);
-    this.counterManager.createCounter(sampledRateCounterConfig);
-
-    // for SRA L1 Tx count
-    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    this.counterManager.createCounter(sampledCounterConfig);
 
     final ProductInfo pInfo = ProductInfo.getInstance();
     
