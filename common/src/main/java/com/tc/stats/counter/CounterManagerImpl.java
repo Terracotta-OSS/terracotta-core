@@ -35,7 +35,9 @@ public class CounterManagerImpl implements CounterManager {
   public synchronized void shutdown() {
     if (shutdown) { return; }
     try {
-      timer.cancel();
+      if (timer != null) {
+        timer.cancel();
+      }
     } finally {
       shutdown = true;
     }

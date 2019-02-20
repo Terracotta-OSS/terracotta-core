@@ -42,8 +42,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -403,14 +401,13 @@ public class ClientConnectionEstablisher {
 
   // for testing only
   int connectionRequestQueueSize() {
-    return this.asyncReconnect.connectionRequestQueueSize();
+    return 0;
   }
-
-  static class AsyncReconnect implements Runnable {
+  
+  static class AsyncReconnect {
     private static final Logger logger = LoggerFactory.getLogger(AsyncReconnect.class);
     private final ClientConnectionEstablisher cce;
     private boolean                  stopped            = false;
-    private final Queue<ConnectionRequest>    connectionRequests = new LinkedList<ConnectionRequest>();
     private Thread                            connectionEstablisherThread;
     private boolean                           disableThreadSpawn = false;
 
@@ -448,7 +445,6 @@ public class ClientConnectionEstablisher {
         if (!stopped) {
           throw new AssertionError("not stopped");
         }
-        connectionRequests.clear();
         LOGGER.debug("waiting for connection establisher to finish " + connectionEstablisherThread);
         this.notifyAll();
       }
@@ -463,49 +459,23 @@ public class ClientConnectionEstablisher {
 
     public synchronized void putConnectionRequest(ConnectionRequest request) {
       if (!stopped) {
-        startThreadIfNecessary();
-        connectionRequests.add(request);
-        this.notifyAll();
+        waitForThread(connectionEstablisherThread, true);
+        startThreadIfNecessary(request);
       }
     }
 
-    // for testing only
-    synchronized int connectionRequestQueueSize() {
-      return connectionRequests.size();
-    }
-
-    public synchronized ConnectionRequest waitUntilRequestAvailableOrStopped() {
-      boolean isInterrupted = false;
-      try {
-        while (!stopped && connectionRequests.isEmpty()) {
-          try {
-              this.wait();
-          } catch (InterruptedException e) {
-            isInterrupted = true;
-          }
-        }
-        return connectionRequests.poll();
-      } finally {
-        if (isInterrupted) {
-          Util.selfInterruptIfNeeded(isInterrupted);
-        }
-      }
-    }
-
-    private void startThreadIfNecessary() {
+    private void startThreadIfNecessary(ConnectionRequest request) {
   //  Should be synchronized by caller
-      if (connectionEstablisherThread == null && !disableThreadSpawn) {
-        Thread thread = new Thread(this, RECONNECT_THREAD_NAME + "-" + this.cce.connAddressProvider.toString() + "-" + System.identityHashCode(this));
+      if (!disableThreadSpawn) {
+        Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + this.cce.connAddressProvider.toString() + "-" + System.identityHashCode(request));
         thread.setDaemon(true);
         thread.start();
         connectionEstablisherThread = thread;
       }
     }
 
-    @Override
-    public void run() {
+    public void execute(ConnectionRequest request) {
       logger.debug("Connection establisher starting. " + System.identityHashCode(this));
-      ConnectionRequest request = waitUntilRequestAvailableOrStopped();
       if (request != null) {
         logger.info("Handling connection request: " + request);
         ClientMessageTransport cmt = request.getClientMessageTransport();
