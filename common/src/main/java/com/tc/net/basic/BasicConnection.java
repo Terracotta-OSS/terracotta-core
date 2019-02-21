@@ -54,12 +54,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author mscott
  */
 public class BasicConnection implements TCConnection {
   private static final Logger LOGGER = LoggerFactory.getLogger(BasicConnection.class);
   
-  private final long connect = System.currentTimeMillis();
+  private long connect = 0;
   private volatile long last = System.currentTimeMillis();
   private volatile long received = System.currentTimeMillis();
   
@@ -231,6 +230,7 @@ public class BasicConnection implements TCConnection {
     if (connected) {
       readMessages();
       fireConnect();
+      connect = System.currentTimeMillis();
     }
     if (interrupted) {
       Thread.currentThread().interrupt();
