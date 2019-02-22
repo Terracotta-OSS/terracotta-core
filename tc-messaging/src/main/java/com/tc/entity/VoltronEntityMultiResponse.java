@@ -47,4 +47,6 @@ public interface VoltronEntityMultiResponse extends TCMessage {
   boolean addServerMessage(ClientInstanceID cid, byte[] message);
   boolean addServerMessage(TransactionID cid, byte[] message);
   void stopAdding();
+  
+  boolean isEmpty();
 }

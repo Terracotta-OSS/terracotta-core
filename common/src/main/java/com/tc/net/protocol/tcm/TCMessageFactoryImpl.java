@@ -28,7 +28,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public class TCMessageFactoryImpl implements TCMessageFactory {
-  private final Map<TCMessageType, GeneratedMessageFactory> generators = new EnumMap<TCMessageType, GeneratedMessageFactory>(TCMessageType.class);
+  private final Map<TCMessageType, GeneratedMessageFactory> generators = new EnumMap<>(TCMessageType.class);
   private final MessageMonitor  monitor;
   private final SessionProvider sessionProvider;
 
