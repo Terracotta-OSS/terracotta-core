@@ -30,7 +30,6 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.stats.api.DSOMBean;
-import com.tc.stats.api.Stats;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -73,7 +72,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   static final int DEFAULT_JMX_REMOTE_PORT = 5000;
 
-  private final StatsImpl                           dsoStats;
   private final MBeanServer                            mbeanServer;
   
   private final Set<ObjectName>                        clientObjectNames      = new LinkedHashSet<>();
@@ -96,7 +94,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     } catch (Exception e) {/**/
     }
     this.mbeanServer = mbeanServer;
-    this.dsoStats = new StatsImpl(managementContext);
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
     this.connectionPolicy = managementContext.getConnectionPolicy();
@@ -110,36 +107,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   @Override
   public void reset() {
     // TODO: implement this?
-  }
-
-  @Override
-  public Stats getStats() {
-    return dsoStats;
-  }
-
-  @Override
-  public long getTransactionRate() {
-    return getStats().getTransactionRate();
-  }
-
-  @Override
-  public long getReadOperationRate() {
-    return getStats().getReadOperationRate();
-  }
-  
-  @Override
-  public long getTransactionSizeRate() {
-    return getStats().getTransactionSizeRate();
-  }
-
-  @Override
-  public long getBroadcastRate() {
-    return getStats().getBroadcastRate();
-  }
-
-  @Override
-  public Number[] getStatistics(String[] names) {
-    return getStats().getStatistics(names);
   }
 
   @Override
@@ -338,31 +305,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       }
     }
     return result;
-  }
-
-  @Override
-  public long getGlobalServerMapGetSizeRequestsCount() {
-    return getStats().getGlobalServerMapGetSizeRequestsCount();
-  }
-
-  @Override
-  public long getGlobalServerMapGetSizeRequestsRate() {
-    return getStats().getGlobalServerMapGetSizeRequestsRate();
-  }
-
-  @Override
-  public long getGlobalServerMapGetValueRequestsCount() {
-    return getStats().getGlobalServerMapGetValueRequestsCount();
-  }
-
-  @Override
-  public long getGlobalServerMapGetValueRequestsRate() {
-    return getStats().getGlobalServerMapGetValueRequestsRate();
-  }
-
-  @Override
-  public long getWriteOperationRate() {
-    return getStats().getWriteOperationRate();
   }
 
   private class ChannelManagerListener implements ChannelManagerEventListener {

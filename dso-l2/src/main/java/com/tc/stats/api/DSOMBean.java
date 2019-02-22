@@ -31,9 +31,7 @@ import javax.management.ObjectName;
  * aggregating statistical, configuration, and operational child interfaces.
  */
 
-public interface DSOMBean extends Stats, TerracottaMBean {
-
-  Stats getStats();
+public interface DSOMBean extends TerracottaMBean {
 
   static final String CLIENT_ATTACHED = "dso.client.attached";
   static final String CLIENT_DETACHED = "dso.client.detached";

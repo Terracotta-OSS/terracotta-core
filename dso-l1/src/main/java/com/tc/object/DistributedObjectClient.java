@@ -511,7 +511,7 @@ public class DistributedObjectClient implements TCClient {
     return this.clientHandshakeManager;
   }
   
-  private String getClientState() {
+  public String getClientState() {
     PrettyPrinter printer = new MapListPrettyPrint();
     this.communicationStageManager.prettyPrint(printer);
     this.clientEntityManager.prettyPrint(printer);

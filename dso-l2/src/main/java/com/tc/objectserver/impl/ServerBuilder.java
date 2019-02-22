@@ -36,7 +36,6 @@ import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.Persistor;
@@ -54,7 +53,6 @@ public interface ServerBuilder extends PostInit {
                                                               ChannelStatsImpl channelStats,
                                                               L2Coordinator l2HACoordinator,
                                                               ServerClientHandshakeManager clientHandshakeManager,
-                                                              GlobalServerStats serverStats,
                                                               ConnectionIDFactory connectionIdFactory,
                                                               int maxStageSize, ChannelManager genericChannelManager);
 

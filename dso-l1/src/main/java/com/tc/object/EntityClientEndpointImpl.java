@@ -29,6 +29,8 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodecException;
 
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.object.InFlightStats.Type;
+import com.tc.text.MapListPrettyPrint;
 import com.tc.util.Assert;
 import org.terracotta.exception.EntityException;
 
@@ -57,7 +59,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   private EndpointDelegate<R> delegate;
   private boolean isOpen;
   private Future<Void> releaseFuture;
-
+  private final InFlightStats stats = new InFlightStats();
   /**
    * @param eid The type name name of the target entity
    * @param version the version of the entity targeted
@@ -116,7 +118,11 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       this.delegate.handleMessage(messageFromServer);
     }
   }
-
+    
+  public InFlightStats getStatistics() {
+    return stats;
+  }
+    
   @Override
   public InvocationBuilder<M, R> beginInvoke() {
     // We can't create new invocations when the endpoint is closed.
@@ -198,8 +204,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       return this;
     }
     
-    private InvokeFuture<R> returnTypedInvoke(final InFlightMessage result) {
-    return new InvokeFuture<R>() {
+    private InvokeFuture<R> returnTypedInvoke(long startTime, final InFlightMessage result) {
+      return new InvokeFuture<R>() {
         @Override
         public boolean isDone() {
           return result.isDone();
@@ -211,6 +217,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
             return codec.decodeResponse(result.get());
           } catch (MessageCodecException e) {
             throw new RuntimeException(e);
+          } finally {
+            collectStats(startTime, result);
           }
         }
 
@@ -220,12 +228,19 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
             return codec.decodeResponse(result.getWithTimeout(timeout, unit));
           } catch (MessageCodecException e) {
             throw new RuntimeException(e);
+          } finally {
+            collectStats(startTime, result);
           }
         }
 
         @Override
         public void interrupt() {
           result.interrupt();
+        }
+
+        @Override
+        public String toString() {
+          return result.prettyPrint(new MapListPrettyPrint()).toString();
         }
       };
     }
@@ -235,7 +250,18 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       checkInvoked();
       invoked = true;
       InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
-      return returnTypedInvoke(invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, time, units, codec.encodeMessage(request)));
+      long start = System.nanoTime();
+      return returnTypedInvoke(start, invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, time, units, codec.encodeMessage(request)));
+    }
+    
+    private void collectStats(long startTime, InFlightMessage msg) {
+      long now = System.nanoTime();
+      msg.setStatisticsBoundries(startTime, now);
+      msg.runOnRetire(()->{
+        long[] vals = new long[Type.values().length];
+        msg.collect(vals);
+        stats.collect(vals);
+      });
     }
 
     @Override
@@ -243,8 +269,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       checkInvoked();
       invoked = true;
       InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
-      return returnTypedInvoke(invocationHandler.invokeAction(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, codec.encodeMessage(request)));
-      
+      long startTime = System.nanoTime();
+      return returnTypedInvoke(startTime, invocationHandler.invokeAction(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, codec.encodeMessage(request)));
     }
 
     private void checkInvoked() {
