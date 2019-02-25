@@ -18,13 +18,12 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.Config;
 import java.io.File;
 
 /**
  * Contains methods for L1 DSO.
  */
-public interface CommonL1Config extends Config {
+public interface CommonL1Config {
 
   File logsPath();
 }

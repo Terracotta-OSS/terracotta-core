@@ -16,85 +16,76 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.object.config.schema;
+package com.tc.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
-import org.terracotta.config.Servers;
+
 import com.tc.net.TCSocketAddress;
 
+import java.io.File;
 
+public class ServerConfiguration {
+  private static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
 
-/**
- * The standard implementation of {@link L2Config}.
- */
-public class L2ConfigObject implements L2Config {
-  private static final Logger logger = LoggerFactory.getLogger(L2ConfigObject.class);
   private static final String LOCALHOST = "localhost";
-  public static final short DEFAULT_JMXPORT_OFFSET_FROM_TSAPORT = 10;
-  public static final short DEFAULT_GROUPPORT_OFFSET_FROM_TSAPORT = 20;
-  public static final short DEFAULT_MANAGEMENTPORT_OFFSET_FROM_TSAPORT = 30;
-  public static final int MIN_PORTNUMBER = 0x0FFF;
-  public static final int MAX_PORTNUMBER = 0xFFFF;
-  public static final String DEFAULT_DATA_STORAGE_SIZE = "512m";
 
   private final BindPort tsaPort;
   private final BindPort tsaGroupPort;
   private final String host;
   private final String serverName;
-  private final String bind;
+  private final String logs;
   private final int clientReconnectWindow;
 
-  public L2ConfigObject(Server s, int clientReconnectWindow) {
-    Server server = s;
-    this.clientReconnectWindow = clientReconnectWindow;
-
-    this.bind = server.getBind();
+  ServerConfiguration(Server server, int clientReconnectWindow) {
+    String bindAddress = server.getBind();
     this.host = server.getHost();
     if (this.host.equalsIgnoreCase(LOCALHOST)) {
       logger.warn("The specified hostname \"" + this.host
                   + "\" may not work correctly if clients and operator console are connecting from other hosts. " + "Replace \""
                   + this.host + "\" with an appropriate hostname in configuration.");
     }
+
     this.serverName = server.getName();
+
     this.tsaPort = server.getTsaPort();
-    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(this.bind)) {
-      this.tsaPort.setBind(this.bind);
+    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
+      this.tsaPort.setBind(bindAddress);
     }
+
     this.tsaGroupPort = server.getTsaGroupPort();
-    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaGroupPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(this.bind)) {
-      this.tsaGroupPort.setBind(this.bind);
+    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaGroupPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
+      this.tsaGroupPort.setBind(bindAddress);
     }
+
+    this.clientReconnectWindow = clientReconnectWindow;
+
+    this.logs = server.getLogs();
   }
 
-  @Override
-  public BindPort tsaPort() {
+  public BindPort getTsaPort() {
     return this.tsaPort;
   }
 
-  @Override
-  public BindPort tsaGroupPort() {
+  public BindPort getGroupPort() {
     return this.tsaGroupPort;
   }
 
-  @Override
-  public String host() {
+  public String getHost() {
     return host;
   }
 
-  @Override
-  public String serverName() {
+  public String getName() {
     return this.serverName;
   }
 
-  @Override
-  public int clientReconnectWindow() {
+  public int getClientReconnectWindow() {
     return this.clientReconnectWindow;
   }
 
-  public static Server[] getServers(Servers servers) {
-    return servers.getServer().toArray(new Server[servers.getServer().size()]);
+  public File getLogsLocation() {
+    return new File(this.logs);
   }
 }

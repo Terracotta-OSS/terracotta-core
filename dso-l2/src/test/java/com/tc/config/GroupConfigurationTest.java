@@ -1,0 +1,116 @@
+package com.tc.config;
+
+import org.junit.Test;
+import org.terracotta.config.BindPort;
+
+import com.tc.net.TCSocketAddress;
+import com.tc.net.groups.Node;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+public class GroupConfigurationTest {
+
+  private final String[] SERVER_NAMES = {"server-1", "server-2"};
+  private final int[]    SERVER_PORTS = {1000, 2000};
+  private final Node[]   NODES = new Node[SERVER_NAMES.length];
+
+  private final Map<String, ServerConfiguration> serverConfigurationMap = new HashMap<>();
+
+  @Test
+  public void testGetCurrentNode() {
+    createServiceConfigurations();
+    GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
+
+    assertThat(groupConfiguration.getCurrentNode(), is(NODES[0]));
+  }
+
+  @Test
+  public void testGetNodes() {
+    createServiceConfigurations();
+    GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
+
+    assertThat(groupConfiguration.getNodes(), containsInAnyOrder(NODES));
+  }
+
+  @Test
+  public void testGetMembers() {
+    createServiceConfigurations();
+    GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
+
+    assertThat(groupConfiguration.getMembers(), arrayContainingInAnyOrder(SERVER_NAMES));
+  }
+
+  @Test
+  public void testGetElectionTimeInSecsWithMultipleServers() {
+    createServiceConfigurations();
+    GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
+
+    assertThat(groupConfiguration.getElectionTimeInSecs(), is(GroupConfiguration.MULTI_SERVER_ELECTION_TIMEOUT));
+  }
+
+  @Test
+  public void testGetElectionTimeInSecsWithSingleServer() {
+    createServiceConfigurations();
+    serverConfigurationMap.remove(SERVER_NAMES[1]);
+    GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
+
+    assertThat(groupConfiguration.getElectionTimeInSecs(), is(GroupConfiguration.SINGLE_SERVER_ELECTION_TIMEOUT));
+  }
+
+  @Test
+  public void testGetNodesWithWildCard() {
+    createServiceConfigurations(true);
+    GroupConfiguration groupConfiguration = new GroupConfiguration(serverConfigurationMap, SERVER_NAMES[0]);
+
+    assertThat(groupConfiguration.getNodes(), containsInAnyOrder(NODES));
+  }
+
+  private void createServiceConfigurations() {
+    createServiceConfigurations(false);
+  }
+
+  private void createServiceConfigurations(boolean wildcard) {
+    String hostName = wildcard ? TCSocketAddress.WILDCARD_IP : "localhost";
+
+    for (int i = 0; i < SERVER_NAMES.length; i++) {
+      serverConfigurationMap.put(SERVER_NAMES[i],
+                                 getServiceConfiguration(SERVER_NAMES[i],
+                                                         hostName,
+                                                         SERVER_PORTS[i],
+                                                         hostName,
+                                                         SERVER_PORTS[i] + 100));
+      NODES[i] = new Node("localhost", SERVER_PORTS[i], SERVER_PORTS[i] + 100);
+    }
+  }
+
+  private ServerConfiguration getServiceConfiguration(String serverName,
+                                                      String tsaBindAddress,
+                                                      int tsaPort,
+                                                      String groupBindAddress,
+                                                      int groupPort) {
+    ServerConfiguration serverConfiguration = mock(ServerConfiguration.class);
+
+    BindPort tsaPortMock = mock(BindPort.class);
+    when(tsaPortMock.getBind()).thenReturn(tsaBindAddress);
+    when(tsaPortMock.getValue()).thenReturn(tsaPort);
+
+    BindPort groupPortMock = mock(BindPort.class);
+    when(groupPortMock.getBind()).thenReturn(groupBindAddress);
+    when(groupPortMock.getValue()).thenReturn(groupPort);
+
+    when(serverConfiguration.getTsaPort()).thenReturn(tsaPortMock);
+    when(serverConfiguration.getGroupPort()).thenReturn(groupPortMock);
+    when(serverConfiguration.getName()).thenReturn(serverName);
+    when(serverConfiguration.getHost()).thenReturn("localhost");
+
+    return serverConfiguration;
+  }
+}

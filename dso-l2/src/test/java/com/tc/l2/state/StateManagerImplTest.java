@@ -5,9 +5,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.config.NodesStore;
-import com.tc.config.NodesStoreImpl;
-import com.tc.exception.TCServerRestartException;
+import com.tc.config.GroupConfiguration;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.RandomWeightGenerator;
@@ -109,10 +107,11 @@ public class StateManagerImplTest {
 
   @Test
   public void testElection() throws Exception {
-
-    NodesStore nodesStore = new NodesStoreImpl(nodeSet);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
-      groupManagers[i].join(nodes[i], nodesStore);
+      GroupConfiguration groupConfiguration = mock(GroupConfiguration.class);
+      when(groupConfiguration.getNodes()).thenReturn(nodeSet);
+      when(groupConfiguration.getCurrentNode()).thenReturn(nodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
 
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
@@ -268,13 +267,19 @@ public class StateManagerImplTest {
   @Test
   public void testElectionWithNodeJoiningLater() throws Exception {
 
-    NodesStore nodesStore = new NodesStoreImpl(nodeSet);
-    groupManagers[0].join(nodes[0], nodesStore);
+    GroupConfiguration[] groupConfiguration = new GroupConfiguration[NUM_OF_SERVERS];
+    for (int i = 0; i < 3; i++) {
+      groupConfiguration[i] = mock(GroupConfiguration.class);
+      when(groupConfiguration[i].getNodes()).thenReturn(nodeSet);
+      when(groupConfiguration[i].getCurrentNode()).thenReturn(nodes[i]);
+    }
+
+    groupManagers[0].join(groupConfiguration[0]);
     stateManagers[0].initializeAndStartElection();
     stateManagers[0].waitForDeclaredActive();
     NodeID active = stateManagers[0].getActiveNodeID();
 
-    groupManagers[1].join(nodes[1], nodesStore);
+    groupManagers[1].join(groupConfiguration[1]);
     int spin = 0;
     while (spin++ < 5 && 1 > groupManagers[1].getMembers().size()) {
       TimeUnit.SECONDS.sleep(2);
@@ -284,7 +289,7 @@ public class StateManagerImplTest {
     stateManagers[1].waitForDeclaredActive();
     Assert.assertEquals(active, stateManagers[1].getActiveNodeID());
 
-    groupManagers[2].join(nodes[2], nodesStore);
+    groupManagers[2].join(groupConfiguration[2]);
     spin = 0;
     while (spin++ < 5 && 2 > groupManagers[2].getMembers().size()) {
       TimeUnit.SECONDS.sleep(2);

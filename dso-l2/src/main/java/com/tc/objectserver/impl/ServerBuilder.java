@@ -23,7 +23,7 @@ import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.StageManager;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.state.ConsistencyManager;
@@ -45,10 +45,10 @@ import java.io.IOException;
 
 
 public interface ServerBuilder extends PostInit {
-  GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
-                                      StageManager stageManager, ServerID serverNodeID,
-                                      StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                      BufferManagerFactory bufferManagerFactory);
+  GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
+                                                            StageManager stageManager, ServerID serverNodeID,
+                                                            StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
+                                                            BufferManagerFactory bufferManagerFactory);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,

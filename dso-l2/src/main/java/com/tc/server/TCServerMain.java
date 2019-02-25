@@ -19,14 +19,13 @@
 package com.tc.server;
 
 import com.tc.classloader.ServiceLocator;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.util.ProductInfo;
+import com.terracotta.config.ConfigurationProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,13 +37,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 public class TCServerMain {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCServerMain.class);
 
   public static TCServer server;
-  public static L2ConfigurationSetupManager setup;
+  public static ServerConfigurationManager setup;
 
   public static void main(String[] args) {
     writeVersion();
@@ -55,21 +55,28 @@ public class TCServerMain {
     try {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
 
-      ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(args,
-                                                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2);
+      ConfigurationProvider configurationProvider = getConfigurationProvider();
+
+      CommandLineParser commandLineParser = new CommandLineParser(args, configurationProvider);
+
+      configurationProvider.initialize(commandLineParser.getProviderArgs());
 
       ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
       Thread.currentThread().setContextClassLoader(systemLoader);
 
-//  set this as the context loader for creation of all the infrastructure at bootstrap time.
+      setup = new ServerConfigurationManager(
+          commandLineParser.getServerName(),
+          configurationProvider.getConfiguration(),
+          commandLineParser.consistentStartup(),
+          systemLoader,
+          args
+      );
 
-      setup = factory.createL2TVSConfigurationSetupManager(null, systemLoader);
-
-      TCLogbackLogging.redirectLogging(setup.commonl2Config().logsPath().getCanonicalPath());
+      TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation().getCanonicalPath());
 
       writeSystemProperties();
 
-      server = ServerFactory.createServer(setup,threadGroup);
+      server = ServerFactory.createServer(setup, threadGroup);
       server.start();
 
       server.waitUntilShutdown();
@@ -78,12 +85,29 @@ public class TCServerMain {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
     }
   }
-  
+
+  private static ConfigurationProvider getConfigurationProvider() {
+    ConfigurationProvider configurationProvider = null;
+    for (ConfigurationProvider provider : ServiceLoader.load(ConfigurationProvider.class)) {
+      if (configurationProvider == null) {
+        configurationProvider = provider;
+      } else {
+        throw new RuntimeException("Found multiple implementations of ConfigurationProvider");
+      }
+    }
+
+    if (configurationProvider == null) {
+      throw new RuntimeException("No ConfigurationProvider implementation found");
+    }
+
+    return configurationProvider;
+  }
+
   public static TCServer getServer() {
     return server;
   }
   
-  public static L2ConfigurationSetupManager getSetupManager() {
+  public static ServerConfigurationManager getSetupManager() {
     return setup;
   }
 

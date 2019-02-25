@@ -46,6 +46,11 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>configuration-provider</artifactId>
+      <version>${terracotta-configuration.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
       <scope>compile</scope>
     </dependency>

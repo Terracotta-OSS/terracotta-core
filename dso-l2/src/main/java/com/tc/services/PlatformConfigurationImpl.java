@@ -19,37 +19,38 @@
 package com.tc.services;
 
 import java.util.Collection;
-import org.terracotta.config.TcConfiguration;
+
 import org.terracotta.entity.PlatformConfiguration;
 
-import com.tc.object.config.schema.L2Config;
+import com.tc.config.ServerConfiguration;
+import com.terracotta.config.Configuration;
 
 /**
  * @author vmad
  */
 public class PlatformConfigurationImpl implements PlatformConfiguration {
 
-  private final L2Config l2Config;
-  private final TcConfiguration config;
+  private final ServerConfiguration serverConfig;
+  private final Configuration config;
 
-  public PlatformConfigurationImpl(L2Config l2Config, TcConfiguration config) {
-    this.l2Config = l2Config;
+  public PlatformConfigurationImpl(ServerConfiguration serverConfig, Configuration config) {
+    this.serverConfig = serverConfig;
     this.config = config;
   }
 
   @Override
   public String getServerName() {
-    return l2Config.serverName();
+    return serverConfig.getName();
   }
 
   @Override
   public String getHost() {
-    return l2Config.host();
+    return serverConfig.getHost();
   }
 
   @Override
   public int getTsaPort() {
-    return l2Config.tsaPort().getValue();
+    return serverConfig.getTsaPort().getValue();
   }
 
   @Override

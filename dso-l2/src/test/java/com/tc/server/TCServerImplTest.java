@@ -7,7 +7,7 @@ import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.rules.ExpectedException;
 import org.terracotta.monitoring.PlatformService.RestartMode;
 
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.state.ServerMode;
 
 import static com.tc.lang.ServerExitStatus.EXITCODE_RESTART_REQUEST;
@@ -25,7 +25,7 @@ public class TCServerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    tcServer = new TCServerImpl(mock(L2ConfigurationSetupManager.class));
+    tcServer = new TCServerImpl(mock(ServerConfigurationManager.class));
   }
 
   @Test

@@ -21,6 +21,8 @@ package com.tc.net.groups;
 import com.tc.net.NodeID;
 import com.tc.util.Assert;
 
+import java.util.Set;
+
 public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
 
   @Override
@@ -30,7 +32,7 @@ public class NullTCGroupMemberDiscovery implements TCGroupMemberDiscovery {
   }
 
   @Override
-  public void setupNodes(Node local, Node[] nodes) {
+  public void setupNodes(Node local, Set<Node> nodes) {
     return;
   }
 
