@@ -195,6 +195,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       boolean requestedReceived = message.doesRequestReceived();
+      boolean requestedRetired = message.doesRequestRetired();
 
       Consumer<byte[]> completion = null;
       Consumer<EntityException> exception = null;
@@ -227,7 +228,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           break;
       }
       MessagePayload payload =  MessagePayload.commonMessagePayload(extendedData, entityMessage, doesRequireReplication, !message.getSource().isNull());
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived, requestedRetired);
     }
 
     @Override
@@ -327,7 +328,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
 
 // only the process transaction thread will add messages here except for on reconnect
-  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, Consumer<byte[]> chaincomplete, Consumer<EntityException> chainfail, boolean requiresReceived) {
+  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, 
+          MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, 
+          Consumer<byte[]> chaincomplete, Consumer<EntityException> chainfail, boolean requiresReceived, boolean requiresRetired) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
 
@@ -394,7 +397,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       ManagedEntity entity = optionalEntity.get();
       // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
       if (ServerEntityAction.INVOKE_ACTION == action) {
-        InvokeHandler handler = new InvokeHandler(request, chaincomplete, chainfail, requiresReceived);
+        InvokeHandler handler = new InvokeHandler(request, chaincomplete, chainfail, requiresReceived, requiresRetired);
         if(transactionOrderPersistenceFuture != null) {
           transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
         }
@@ -617,11 +620,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
     payload.setDebugId(message.toString());
 
     boolean requestedReceived = message.doesRequestReceived();
+    boolean requestedRetired = message.doesRequestRetired();
     Consumer<byte[]> completion = null;
     if (message instanceof Runnable) {
       completion = (r)->((Runnable)message).run();
     }
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived, requestedRetired);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
@@ -669,10 +673,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
     private final SetOnceFlag sent = new SetOnceFlag();
     private final SetOnceFlag failure = new SetOnceFlag();
     private final boolean sendReceived;
+    private final boolean holdResultForRetired;
+    private byte[] heldResult;
 
-    InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived) {
+    InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived, boolean reqRetired) {
       super(request, complete, failure);
       sendReceived = reqReceived;
+      holdResultForRetired = reqRetired;
     }
 
     @Override
@@ -726,7 +733,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
         if (getNodeID().isNull()) {
           super.complete(result);
         } else {
-          addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
+          if (!holdResultForRetired) {
+            addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
+          } else {
+            heldResult = result;
+          }
         }
       } else {
         throw new AssertionError();
@@ -764,7 +775,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
       this.waiter.get().waitForCompleted();
       if (!getNodeID().isNull()) {
         Assert.assertTrue(sent.isSet() || failure.isSet());
-        addSequentially(getNodeID(), addTo -> addTo.addRetired(InvokeHandler.this.getTransaction()));
+        addSequentially(getNodeID(), addTo -> {
+          if (heldResult != null) {
+            return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
+          } else {
+            return addTo.addRetired(InvokeHandler.this.getTransaction());
+          }
+        });
       }
       MonitoringEventCreator.finish();
     }

@@ -64,6 +64,11 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
   public boolean doesRequestReceived() {
     return false;
   }
+
+  @Override
+  public boolean doesRequestRetired() {
+    return false;
+  }
   
   @Override
   public Type getVoltronType() {

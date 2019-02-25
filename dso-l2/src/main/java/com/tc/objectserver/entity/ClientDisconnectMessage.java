@@ -65,6 +65,11 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   }
 
   @Override
+  public boolean doesRequestRetired() {
+    return false;
+  }
+    
+  @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return Type.DISCONNECT_CLIENT;
   }

@@ -217,9 +217,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean deferred, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, 
+          Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, 
+          boolean shouldBlockGetOnRetire, boolean deferred, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
     long start = System.nanoTime();
-    InFlightMessage inFlightMessage = queueInFlightMessage(eid, ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, acks),
+    InFlightMessage inFlightMessage = queueInFlightMessage(eid, ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, makeServerAcks(shouldBlockGetOnRetire, acks)),
             acks, monitor, invokeTimeout, units, shouldBlockGetOnRetire, deferred);
     long timeLeft = units.toNanos(invokeTimeout) - (System.nanoTime() - start);
     if (invokeTimeout == 0) {
@@ -231,12 +233,24 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     return inFlightMessage;
   }
-
+  // add the retired ack to the message if block on retired is requested, this will increase 
+  // message efficiency by grouping the retired message with the result.
+  private Set<VoltronEntityMessage.Acks> makeServerAcks(boolean blockOnRetire, Set<VoltronEntityMessage.Acks> requestedAcks) {
+    Set<VoltronEntityMessage.Acks> serverAcks = requestedAcks;
+    if (blockOnRetire) {
+      serverAcks = EnumSet.copyOf(requestedAcks);
+      serverAcks.add(VoltronEntityMessage.Acks.RETIRED);
+    }
+    return serverAcks;
+  }
+  
   @Override
-  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean deferred, byte[] payload) {
-    try {
-      InFlightMessage inFlightMessage = queueInFlightMessage(eid, ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
-              requestedAcks, monitor, 0L, TimeUnit.MILLISECONDS, shouldBlockGetOnRetire, deferred);
+  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, 
+          InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean deferred, byte[] payload) {
+    try { 
+    InFlightMessage inFlightMessage = queueInFlightMessage(eid, 
+            ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, makeServerAcks(shouldBlockGetOnRetire, requestedAcks)),
+            requestedAcks, monitor, 0L, TimeUnit.MILLISECONDS, shouldBlockGetOnRetire, deferred);
       inFlightMessage.waitForAcks();
       return inFlightMessage;
     } catch (TimeoutException to) {

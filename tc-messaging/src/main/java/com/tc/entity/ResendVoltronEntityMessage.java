@@ -85,6 +85,12 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
 // if it's a resend, this already happened or it didn't
     return false;
   }
+
+  @Override
+  public boolean doesRequestRetired() {
+// if it's a resend, this already happened or it didn't
+    return false;
+  }
   
   @Override
   public Type getVoltronType() {

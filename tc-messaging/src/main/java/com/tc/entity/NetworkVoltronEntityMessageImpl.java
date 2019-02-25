@@ -89,6 +89,11 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
   
   @Override
+  public boolean doesRequestRetired() {
+    return this.requestedAcks.contains(Acks.RETIRED);
+  }
+  
+  @Override
   public Type getVoltronType() {
     Assert.assertNotNull(this.type);
     return this.type;
