@@ -71,6 +71,20 @@ public class PassthroughClusterControl implements IClusterControl {
   }
 
   @Override
+  public void startOneServerWithConsistency() throws Exception {
+    // this is bogus, passthrough does not know about consistency and maybe it shouldn't
+    // TODO: re-evaluate at some later point
+    this.startOneServer();
+  }
+
+  @Override
+  public void startAllServersWithConsistency() throws Exception {
+    // this is bogus, passthrough does not know about consistency and maybe it shouldn't
+    // TODO: re-evaluate at some later point
+    this.startAllServers();
+  }
+
+  @Override
   public synchronized void waitForRunningPassivesInStandby() throws Exception {
     // we sync passives during the active election itself, so just wait on same state
     while (this.activeServer == null) {
