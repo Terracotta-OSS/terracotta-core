@@ -435,10 +435,10 @@ private final ITestWaiter sharedLockState;
    * @param server The server we were trying to add/remove/change at the time.
    */
   private void localAssert(boolean clause, ServerProcess server) {
-    if (!clause) {
+    if (!clause && !isShuttingDown) {
       System.err.println("FAIL USING " + server);
       System.err.println(toString());
     }
-    Assert.assertTrue(clause);
+    Assert.assertTrue(clause || isShuttingDown);
   }
 }
