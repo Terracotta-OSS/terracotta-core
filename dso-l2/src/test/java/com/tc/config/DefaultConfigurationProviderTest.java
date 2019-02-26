@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import static com.tc.config.DefaultConfigurationProvider.CONFIG_FILE_PROPERTY_NAME;
 import static com.tc.config.DefaultConfigurationProvider.DEFAULT_CONFIG_NAME;
 import static com.tc.config.DefaultConfigurationProvider.Opt.CONFIG_PATH;
+import java.nio.file.FileAlreadyExistsException;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -167,14 +168,18 @@ public class DefaultConfigurationProviderTest {
   @Test
   public void testWithDefaultConfigurationInUserDirectory() throws Exception {
     Path configurationFile = Paths.get(System.getProperty("user.home")).resolve(DEFAULT_CONFIG_NAME);
-    Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), configurationFile);
-
     try {
-      provider.initialize(Collections.emptyList());
+      Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), configurationFile);
 
-      validateConfiguration(provider.getConfiguration());
-    } finally {
-      Files.delete(configurationFile);
+      try {
+        provider.initialize(Collections.emptyList());
+
+        validateConfiguration(provider.getConfiguration());
+      } finally {
+        Files.delete(configurationFile);
+      }
+    } catch (FileAlreadyExistsException exists) {
+      //  if the file exists, just skip this test
     }
   }
 

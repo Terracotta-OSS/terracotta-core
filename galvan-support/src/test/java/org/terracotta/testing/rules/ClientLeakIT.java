@@ -88,6 +88,7 @@ public class ClientLeakIT {
         while (lookForConnectionMaker() == null) {
           Thread.sleep(1000);
         }
+        Thread.sleep(1000);
         target.interrupt();
       } catch (InterruptedException ie) {
         
@@ -102,7 +103,11 @@ public class ClientLeakIT {
     assertNull(leak);
     Thread maker = lookForConnectionMaker();
     if (maker != null) {
-      maker.join(4000);
+      for (int x=0;x<1000 && maker.isAlive();x++) {
+        System.gc();
+        System.out.println("trying to join:" + x);
+        maker.join(1000);
+      }
       assertFalse(maker.isAlive());
     }
   }
