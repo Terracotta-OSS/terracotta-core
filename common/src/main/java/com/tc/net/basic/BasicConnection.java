@@ -295,7 +295,9 @@ public class BasicConnection implements TCConnection {
   
   private void readMessages() {
     readerExec = Executors.newFixedThreadPool(1, (r) -> {
-      return new Thread(r, "BasicConnectionReader-" + this.src.getLocalSocketAddress() + "<-" + this.src.getRemoteSocketAddress());
+      Thread t = new Thread(r, "BasicConnectionReader-" + this.src.getLocalSocketAddress() + "<-" + this.src.getRemoteSocketAddress());
+      t.setDaemon(true);
+      return t;
     });
     readerExec.submit(() -> {
       while (!isClosed()) {
