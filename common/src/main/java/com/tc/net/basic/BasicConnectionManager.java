@@ -31,11 +31,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import com.tc.net.protocol.TCProtocolAdaptor;
-import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  *
- * @author mscott
  */
 public class BasicConnectionManager implements TCConnectionManager {
   private final Set<TCConnection>       connections            = new HashSet<>();
@@ -75,8 +74,8 @@ public class BasicConnectionManager implements TCConnectionManager {
   }
 
   @Override
-  public synchronized void closeAllConnections(long timeout) {
-    new ArrayList<>(connections).forEach(c->c.close(timeout));
+  public void closeAllConnections(long timeout) {
+    Arrays.asList(getAllConnections()).forEach(c->c.close(timeout));
   }
 
   @Override
@@ -86,17 +85,18 @@ public class BasicConnectionManager implements TCConnectionManager {
 
   @Override
   public void shutdown() {
-    closeAllConnections(30000);
+    closeAllConnections(1000);
   }
 
   @Override
-  public TCConnection[] getAllConnections() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  public synchronized TCConnection[] getAllConnections() {
+    TCConnection[] all = new TCConnection[connections.size()];
+    return connections.toArray(all);
   }
-
+  
   @Override
   public TCConnection[] getAllActiveConnections() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return getAllConnections();
   }
 
   @Override

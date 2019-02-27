@@ -547,7 +547,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InFlightMessage result = this.manager.invokeAction(entityID, descriptor, Collections.<Acks>emptySet(), null, false, true, false, new byte[0]);
+    InFlightMessage result = this.manager.invokeAction(entityID, descriptor, EnumSet.noneOf(Acks.class), null, false, true, false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     byte[] last = result.get();
     assertTrue(resultObject == last);
@@ -560,7 +560,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityException resultException = null;
     TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, false);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
-    InFlightMessage result = this.manager.invokeAction(entityID, descriptor, Collections.<Acks>emptySet(), null, false, true, false, new byte[0]);
+    InFlightMessage result = this.manager.invokeAction(entityID, descriptor, EnumSet.noneOf(Acks.class), null, false, true, false, new byte[0]);
     // We are waiting for no ACKs so this should be available since the send will trigger the delivery.
     long start = System.currentTimeMillis();
     try {
@@ -734,6 +734,11 @@ public class ClientEntityManagerTest extends TestCase {
     @Override
     public boolean doesRequestReceived() {
       return true;
+    }
+
+    @Override
+    public boolean doesRequestRetired() {
+      return false;
     }
     
     @Override

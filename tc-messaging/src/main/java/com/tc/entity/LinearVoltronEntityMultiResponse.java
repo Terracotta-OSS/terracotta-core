@@ -238,4 +238,9 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     }
     putNVPair(DONE_ID,count);
   }
+
+  @Override
+  public boolean isEmpty() {
+    return timeline.isEmpty();
+  } 
 }

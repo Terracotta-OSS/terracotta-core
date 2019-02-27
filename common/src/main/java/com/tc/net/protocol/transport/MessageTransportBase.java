@@ -177,12 +177,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     if (!disconnect) {
       fireTransportClosedEvent();
     }
-
-    if (connection != null && !this.connection.isClosed()) {
-      this.connection.asynchClose();
-    }
     if (healthCheckerContext != null) {
       this.healthCheckerContext.close();
+    }
+    if (connection != null && !this.connection.isClosed()) {
+      this.connection.asynchClose();
     }
   }
 

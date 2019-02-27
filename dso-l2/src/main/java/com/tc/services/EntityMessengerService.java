@@ -187,6 +187,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
 
     @Override
+    public boolean doesRequestRetired() {
+      return false;
+    }
+  
+    @Override
     public Type getVoltronType() {
       return Type.INVOKE_ACTION;
     }

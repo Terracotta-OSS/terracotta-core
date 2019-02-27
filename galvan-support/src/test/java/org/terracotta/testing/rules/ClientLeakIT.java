@@ -16,11 +16,12 @@
 package org.terracotta.testing.rules;
 
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
-import org.terracotta.passthrough.IClusterControl;
+import org.terracotta.connection.ConnectionException;
 
 
 /**
@@ -38,21 +39,89 @@ public class ClientLeakIT {
    * This will ensure that a fail-over correctly happens.
    */
   @Test
-  public void testRestartActive() throws Exception {
+  public void testClientLeakIsCleaned() throws Exception {
+    CLUSTER.getClusterControl().startAllServers();
+    CLUSTER.getClusterControl().waitForActive();
     Connection leak = CLUSTER.newConnection();
     CLUSTER.getClusterControl().terminateActive();
     Thread reconnect = lookForConnectionEstablisher();
     while (reconnect == null) {
-      Thread.sleep(5000);
+      Thread.sleep(1000);
       reconnect = lookForConnectionEstablisher();
     }
     leak = null;
     while (reconnect.isAlive()) {
       System.out.println("reconnect thread " + reconnect.getName() + " is alive " + reconnect.isAlive());
       System.gc();
-      Thread.sleep(5000);
+      Thread.sleep(1000);
     }
   }
+
+  @Test
+  public void testConnectionEstablisherDiesAfterJob() throws Exception {
+    CLUSTER.getClusterControl().startAllServers();
+    CLUSTER.getClusterControl().waitForActive();
+    Connection leak = CLUSTER.newConnection();
+    CLUSTER.getClusterControl().terminateActive();
+    Thread reconnect = lookForConnectionEstablisher();
+    while (reconnect == null) {
+      Thread.sleep(1000);
+      reconnect = lookForConnectionEstablisher();
+    }
+    CLUSTER.getClusterControl().startOneServer();
+    CLUSTER.getClusterControl().waitForActive();
+    while (reconnect.isAlive()) {
+      System.out.println("reconnect thread " + reconnect.getName() + " is alive " + reconnect.isAlive());
+      System.gc();
+      Thread.sleep(1000);
+    }
+  }
+  
+  @Test
+  public void testConnectionMakerDiesWithNoRef() throws Exception {
+    CLUSTER.getClusterControl().startAllServers();
+    CLUSTER.getClusterControl().waitForActive();
+    CLUSTER.getClusterControl().terminateAllServers();
+    Thread target = Thread.currentThread();
+    new Thread(()->{
+      try {
+        while (lookForConnectionMaker() == null) {
+          Thread.sleep(1000);
+        }
+        Thread.sleep(1000);
+        target.interrupt();
+      } catch (InterruptedException ie) {
+        
+      }
+    }).start();
+    Connection leak = null;
+    try {
+      leak = CLUSTER.newConnection();
+    } catch (ConnectionException ce) {
+      // expected
+    }
+    assertNull(leak);
+    Thread maker = lookForConnectionMaker();
+    if (maker != null) {
+      for (int x=0;x<1000 && maker.isAlive();x++) {
+        System.gc();
+        System.out.println("trying to join:" + x);
+        maker.join(1000);
+      }
+      assertFalse(maker.isAlive());
+    }
+  }
+  
+  private static Thread lookForConnectionMaker() {
+    Thread[] list = new Thread[Thread.activeCount()];
+    Thread.enumerate(list);
+    for (Thread t : list) {
+      if (t.getName().startsWith("Connection Maker")) {
+        return t;
+      }
+    }
+    return null;
+  }  
   
   private static Thread lookForConnectionEstablisher() {
     Thread[] list = new Thread[Thread.activeCount()];

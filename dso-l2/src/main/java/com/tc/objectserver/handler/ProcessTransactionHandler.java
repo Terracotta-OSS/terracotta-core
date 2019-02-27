@@ -24,6 +24,7 @@ import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
+import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -33,11 +34,13 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
@@ -60,6 +63,7 @@ import com.tc.services.EntityMessengerService;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,10 +121,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
       TCMessage response = context.getResponse();
       
       invokeReturn.remove((ClientID) destinationID, response);
+      
+      boolean replace = false;
       if (response instanceof VoltronEntityMultiResponse) {
         VoltronEntityMultiResponse voltronEntityMultiResponse = (com.tc.entity.VoltronEntityMultiResponse)response;
         voltronEntityMultiResponse.stopAdding();
         waitForTransactions(voltronEntityMultiResponse);
+        replace = true;
       } else if (response instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)response).getTransactionID());
       } else {
@@ -132,6 +139,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
         LOGGER.warn("Failed to send message to: " + destinationID);
       } else if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("sent " + response);
+      }
+      if (replace) {
+        safeGetChannel(destinationID).ifPresent(c->{
+          VoltronEntityMultiResponse exists = invokeReturn.putIfAbsent((ClientID)destinationID, (VoltronEntityMultiResponse)c.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE));
+        });
       }
     }
   };
@@ -183,11 +195,14 @@ public class ProcessTransactionHandler implements ReconnectListener {
       boolean doesRequireReplication = message.doesRequireReplication();
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       boolean requestedReceived = message.doesRequestReceived();
+      boolean requestedRetired = message.doesRequestRetired();
 
       Consumer<byte[]> completion = null;
       Consumer<EntityException> exception = null;
       switch(message.getVoltronType()) {
         case DISCONNECT_CLIENT:
+          //  remove any invoke returns to prevent leak if doing pre-allocation
+          invokeReturn.remove(message.getSource());
           ClientDisconnectMessage disconnect = (ClientDisconnectMessage)message;
           completion = (raw)->disconnect.run();
           exception = (e)->disconnect.run();
@@ -213,7 +228,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           break;
       }
       MessagePayload payload =  MessagePayload.commonMessagePayload(extendedData, entityMessage, doesRequireReplication, !message.getSource().isNull());
-      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived);
+      ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived, requestedRetired);
     }
 
     @Override
@@ -225,7 +240,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
 
       multiSend = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class);
-
+      
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered
       reconnectDone = entityManager.enterActiveState();
 
@@ -284,24 +299,27 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // if not, compute the result and schedule send if neccessary
     if (!target.isNull()) {
       invokeReturn.compute(target, (client, vmr)-> {
+        boolean enqueue = false;
+        if (vmr == null) {
+          Optional<MessageChannel> channel = safeGetChannel(target);
+          if (channel.isPresent()) {
+            enqueue = true;
+            vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          }
+        } else if (vmr.isEmpty()) {
+          enqueue = true;
+        }
         if (vmr != null) {
           boolean added = adder.test(vmr);
           Assert.assertTrue(added);
-        } else {
-          Optional<MessageChannel> channel = safeGetChannel(target);
-          if (channel.isPresent()) {
-            vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
-            boolean added = adder.test(vmr);
-            Assert.assertTrue(added);
-            // direct execution must be under compute lock because not all 
-            // messages are coming from the pipeline
-            if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-              waitForTransactions(vmr);
-              vmr.send();
-              vmr = null;
-            } else {
-              multiSend.getSink().addToSink(new ResponseMessage(vmr));
-            }
+        }
+        if (enqueue) {
+          if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+            waitForTransactions(vmr);
+            vmr.send();
+            vmr = null;
+          } else {
+            multiSend.getSink().addToSink(new ResponseMessage(vmr));
           }
         }
         return vmr;
@@ -310,7 +328,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
 
 // only the process transaction thread will add messages here except for on reconnect
-  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, Consumer<byte[]> chaincomplete, Consumer<EntityException> chainfail, boolean requiresReceived) {
+  private void addMessage(ClientID sourceNodeID, EntityDescriptor descriptor, ServerEntityAction action, 
+          MessagePayload entityMessage, TransactionID transactionID, TransactionID oldestTransactionOnClient, 
+          Consumer<byte[]> chaincomplete, Consumer<EntityException> chainfail, boolean requiresReceived, boolean requiresRetired) {
     // Version error or duplicate creation requests will manifest as exceptions here so catch them so we can send them back
     //  over the wire as an error in the request.
 
@@ -377,7 +397,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       ManagedEntity entity = optionalEntity.get();
       // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
       if (ServerEntityAction.INVOKE_ACTION == action) {
-        InvokeHandler handler = new InvokeHandler(request, chaincomplete, chainfail);
+        InvokeHandler handler = new InvokeHandler(request, chaincomplete, chainfail, requiresReceived, requiresRetired);
         if(transactionOrderPersistenceFuture != null) {
           transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
         }
@@ -600,11 +620,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
     payload.setDebugId(message.toString());
 
     boolean requestedReceived = message.doesRequestReceived();
+    boolean requestedRetired = message.doesRequestRetired();
     Consumer<byte[]> completion = null;
     if (message instanceof Runnable) {
       completion = (r)->((Runnable)message).run();
     }
-    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived);
+    ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, null, requestedReceived, requestedRetired);
   }
 
   private static ServerEntityAction decodeMessageType(VoltronEntityMessage.Type type) {
@@ -651,9 +672,14 @@ public class ProcessTransactionHandler implements ReconnectListener {
     private Supplier<ActivePassiveAckWaiter> waiter;
     private final SetOnceFlag sent = new SetOnceFlag();
     private final SetOnceFlag failure = new SetOnceFlag();
+    private final boolean sendReceived;
+    private final boolean holdResultForRetired;
+    private byte[] heldResult;
 
-    InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure) {
+    InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived, boolean reqRetired) {
       super(request, complete, failure);
+      sendReceived = reqReceived;
+      holdResultForRetired = reqRetired;
     }
 
     @Override
@@ -663,7 +689,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     @Override
     public void received() {
-      addSequentially(getNodeID(), adder->adder.addReceived(getTransaction()));
+      if (sendReceived) {
+        addSequentially(getNodeID(), adder->adder.addReceived(getTransaction()));
+      }
     }
 
     @Override
@@ -705,7 +733,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
         if (getNodeID().isNull()) {
           super.complete(result);
         } else {
-          addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
+          if (!holdResultForRetired) {
+            addSequentially(getNodeID(), addTo->addTo.addResult(getTransaction(), result));
+          } else {
+            heldResult = result;
+          }
         }
       } else {
         throw new AssertionError();
@@ -743,7 +775,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
       this.waiter.get().waitForCompleted();
       if (!getNodeID().isNull()) {
         Assert.assertTrue(sent.isSet() || failure.isSet());
-        addSequentially(getNodeID(), addTo -> addTo.addRetired(InvokeHandler.this.getTransaction()));
+        addSequentially(getNodeID(), addTo -> {
+          if (heldResult != null) {
+            return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
+          } else {
+            return addTo.addRetired(InvokeHandler.this.getTransaction());
+          }
+        });
       }
       MonitoringEventCreator.finish();
     }
@@ -764,7 +802,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
       this.version = version;
       this.consumerID = consumerID;
       this.config = config;
-      super.autoRetire(true);
     }
 
     @Override

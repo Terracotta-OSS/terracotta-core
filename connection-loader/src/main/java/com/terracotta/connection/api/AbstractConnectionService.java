@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 abstract class AbstractConnectionService implements ConnectionService {
 
@@ -95,10 +96,12 @@ abstract class AbstractConnectionService implements ConnectionService {
 
   private Connection createConnection(Properties properties, TerracottaClientConfigParams clientConfig) throws DetailedConnectionException {
     properties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.of(scheme));
+    
     clientConfig.addGenericProperties(properties);
 
+    properties.put("connection", clientConfig.getStripeMemberUris().stream().map(i->i.toString()).collect(Collectors.joining(", ")));
     final TerracottaInternalClient client = clientFactory.createL1Client(clientConfig);
     client.init();
-    return new TerracottaConnection(client.getClientEntityManager(), endpointConnector, client::shutdown);
+    return new TerracottaConnection(properties, client.getClientEntityManager(), endpointConnector, client::shutdown);
   }
 }

@@ -61,6 +61,11 @@ public class DestroyMessage implements VoltronEntityMessage {
   }
 
   @Override
+  public boolean doesRequestRetired() {
+    return false;
+  }
+  
+  @Override
   public VoltronEntityMessage.Type getVoltronType() {
     return Type.DESTROY_ENTITY;
   }

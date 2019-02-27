@@ -98,11 +98,18 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     currentState = INIT;
     callbackPort = transport.getRemoteCallbackPort();
     configFactor = 1;
-    initCallbackPortVerification();
+    // only verify the callback port if the callback is different 
+    // from the connection port
+    if (callbackPort != transport.getRemoteAddress().getPort()) {
+      initCallbackPortVerification();
+    } else {
+      changeState(START);
+    }
   }
   
   @Override
-  public void close() {
+  public synchronized void close() {
+    changeState(DEAD);
     sockectConnect.stop();
   }
 

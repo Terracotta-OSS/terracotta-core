@@ -77,6 +77,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     Assert.eval(!currentState.equals(SOCKETCONNECT_IN_PROGRESS));
     socketConnectNoReplyWaitCount = 0;
     try {
+      changeState(SOCKETCONNECT_IN_PROGRESS);
       conn.addListener(this);
       conn.asynchConnect(peerNodeAddr);
     } catch (IOException e) {
@@ -89,7 +90,6 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     if (logger.isDebugEnabled()) {
       logger.debug("Socket Connect triggered for " + remoteNodeDesc);
     }
-    changeState(SOCKETCONNECT_IN_PROGRESS);
     return SocketConnectStartStatus.STARTED;
   }
 

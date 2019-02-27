@@ -41,7 +41,6 @@ import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -76,7 +75,6 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                      ChannelStatsImpl channelStats,
                                                                      L2Coordinator coordinator,
                                                                      ServerClientHandshakeManager clientHandshakeManager,
-                                                                     GlobalServerStats serverStats,
                                                                      ConnectionIDFactory connectionIdFactory,
                                                                      int maxStageSize,
                                                                      ChannelManager genericChannelManager) {

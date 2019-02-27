@@ -28,31 +28,38 @@ import org.terracotta.exception.ConnectionShutdownException;
 import org.terracotta.exception.EntityNotProvidedException;
 
 import com.tc.object.ClientEntityManager;
+import com.tc.text.MapListPrettyPrint;
+import com.tc.text.PrettyPrintable;
 import com.terracotta.connection.entity.TerracottaEntityRef;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class TerracottaConnection implements Connection {
+public class TerracottaConnection implements Connection, PrettyPrintable {
   private final ClientEntityManager entityManager;
   private final EntityClientServiceFactory factory = new EntityClientServiceFactory();
   private final EndpointConnector endpointConnector;
   private final Runnable shutdown;
   private final ConcurrentMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> cachedEntityServices = new ConcurrentHashMap<Class<? extends Entity>, EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>>();
   private final AtomicLong  clientIds = new AtomicLong(1); // initialize to 1 because zero client is a special case for uninitialized
-
+  private final Properties connectionPropertiesForReporting;
+  
   private boolean isShutdown = false;
 
-  public TerracottaConnection(ClientEntityManager entityManager, Runnable shutdown) {
-    this(entityManager, new EndpointConnectorImpl(), shutdown);
+  public TerracottaConnection(Properties props, ClientEntityManager entityManager, Runnable shutdown) {
+    this(props, entityManager, new EndpointConnectorImpl(), shutdown);
   }
 
-  public TerracottaConnection(ClientEntityManager entityManager, EndpointConnector endpointConnector, Runnable shutdown) {
+  public TerracottaConnection(Properties props, ClientEntityManager entityManager, EndpointConnector endpointConnector, Runnable shutdown) {
     this.entityManager = entityManager;
     this.endpointConnector = endpointConnector;
     this.shutdown = shutdown;
+    this.connectionPropertiesForReporting = props;
   }
 
   @Override
@@ -94,6 +101,21 @@ public class TerracottaConnection implements Connection {
     }
   }
 
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> state = new LinkedHashMap<>();
+    state.put("props" , connectionPropertiesForReporting);
+    state.put("stats" , this.entityManager.getStateMap());
+    return state;
+  }
+
+  @Override
+  public String toString() {
+    MapListPrettyPrint print = new MapListPrettyPrint();
+    this.prettyPrint(print);
+    return "TerracottaConnection{" + print + '}';
+  }
+  
   private static class EntityKey<T extends Entity> {
     private final Class<T> cls;
     private final String name;
@@ -123,4 +145,6 @@ public class TerracottaConnection implements Connection {
       return result;
     }
   }
+  
+  
 }

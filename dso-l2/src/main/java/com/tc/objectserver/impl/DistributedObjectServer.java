@@ -141,7 +141,6 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.api.ServerEntityAction;
-import com.tc.objectserver.core.api.GlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -421,7 +420,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final StageManager stageManager = this.seda.getStageManager();
 
     this.sampledCounterManager = new CounterManagerImpl();
-    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
 
     // Set up the ServiceRegistry.
     Configuration configuration = this.configSetupManager.getConfiguration();
@@ -614,30 +612,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-
-    // DEV-8737. Count map mutation operations
-    final SampledCounter globalOperationCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-
-    final SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-
-    final SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
-        .createCounter(sampledCounterConfig);
-    final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
-    final SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
-        .createCounter(sampledRateCounterConfig);
-    final SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
-        .createCounter(sampledRateCounterConfig);
-    final SampledCumulativeCounter globalServerMapGetSizeRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
-        .createCounter(sampledCumulativeCounterConfig);
-    final SampledCumulativeCounter globalServerMapGetValueRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
-        .createCounter(sampledCumulativeCounterConfig);
-    final SampledCumulativeCounter globalServerMapGetSnapshotRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
-        .createCounter(sampledCumulativeCounterConfig);
-
     // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
     IMonitoringProducer serviceInterface = null;
     try {
@@ -781,16 +755,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
     dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
     
-    final GlobalServerStatsImpl serverStats = new GlobalServerStatsImpl(globalObjectFaultCounter,
-                                                                              globalTxnCounter,
-                                                                              broadcastCounter,
-                                                                              changesPerBroadcast,
-                                                                              transactionSizeCounter,
-        globalOperationCounter);
-
-    serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
-        .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
-        .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
 
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
                                                                                                  LoggerFactory
@@ -806,8 +770,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
-        clientHandshakeManager,
-                                                                       serverStats, this.connectionIdFactory,
+                                                                       clientHandshakeManager,
+                                                                       this.connectionIdFactory,
                                                                        maxStageSize,
                                                                        this.l1Listener.getChannelManager()
     );
@@ -816,8 +780,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     startStages(stageManager, toInit);    
 
     // XXX: yucky casts
-    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,
-                                                         serverStats, channelStats,
+    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,channelStats,
                                                          connectionPolicy, getOperationGuardian(platformServiceRegistry, channelLifeCycleHandler));
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);

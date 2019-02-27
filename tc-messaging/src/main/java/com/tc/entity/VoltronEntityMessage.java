@@ -102,6 +102,8 @@ public interface VoltronEntityMessage {
   
   boolean doesRequestReceived();
   
+  boolean doesRequestRetired();
+  
   Type getVoltronType();
   
   byte[] getExtendedData();

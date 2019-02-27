@@ -21,22 +21,18 @@ package com.tc.objectserver.core.impl;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
-import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.Guardian;
 
 public class ServerManagementContext {
 
   private final DSOChannelManagerMBean        channelMgr;
-  private final GlobalServerStats          serverStats;
   private final ChannelStats                  channelStats;
   private final ConnectionPolicy              connectionPolicy;
   private final Guardian           guardian;
 
-  public ServerManagementContext(DSOChannelManagerMBean channelMgr,
-                                 GlobalServerStats serverStats, ChannelStats channelStats,
+  public ServerManagementContext(DSOChannelManagerMBean channelMgr,ChannelStats channelStats,
                                  ConnectionPolicy connectionPolicy, Guardian guard) {
     this.channelMgr = channelMgr;
-    this.serverStats = serverStats;
     this.channelStats = channelStats;
     this.connectionPolicy = connectionPolicy;
     this.guardian = guard;
@@ -44,10 +40,6 @@ public class ServerManagementContext {
 
   public DSOChannelManagerMBean getChannelManager() {
     return this.channelMgr;
-  }
-
-  public GlobalServerStats getServerStats() {
-    return this.serverStats;
   }
 
   public ChannelStats getChannelStats() {

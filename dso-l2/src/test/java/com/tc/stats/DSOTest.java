@@ -5,7 +5,6 @@ import org.junit.Test;
 
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerMBean;
-import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.util.PortChooser;
@@ -27,7 +26,6 @@ public class DSOTest {
   @Before
   public void setUp() throws Exception {
     ServerManagementContext serverManagementContext = mock(ServerManagementContext.class);
-    when(serverManagementContext.getServerStats()).thenReturn(mock(GlobalServerStats.class));
     DSOChannelManagerMBean dsoChannelManagerMBean = mock(DSOChannelManagerMBean.class);
     when(dsoChannelManagerMBean.getActiveChannels()).thenReturn(new MessageChannel[0]);
     when(serverManagementContext.getChannelManager()).thenReturn(dsoChannelManagerMBean);

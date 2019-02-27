@@ -456,15 +456,20 @@ public class ClientConnectionEstablisher {
       stopped = true;
       this.notifyAll();
     }
+    
+    public synchronized Thread getConnectionThread() {
+      return connectionEstablisherThread;
+    }
 
-    public synchronized void putConnectionRequest(ConnectionRequest request) {
-      if (!stopped) {
-        waitForThread(connectionEstablisherThread, true);
+    public void putConnectionRequest(ConnectionRequest request) {
+      if (!isStopped()) {
+        Thread oldThread = getConnectionThread();
+        waitForThread(oldThread, true);
         startThreadIfNecessary(request);
       }
     }
 
-    private void startThreadIfNecessary(ConnectionRequest request) {
+    private synchronized void startThreadIfNecessary(ConnectionRequest request) {
   //  Should be synchronized by caller
       if (!disableThreadSpawn) {
         Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + this.cce.connAddressProvider.toString() + "-" + System.identityHashCode(request));

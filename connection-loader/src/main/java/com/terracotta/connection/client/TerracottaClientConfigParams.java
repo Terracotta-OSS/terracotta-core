@@ -27,7 +27,6 @@ import java.util.Properties;
 
 public class TerracottaClientConfigParams {
   private final List<InetSocketAddress> stripeMembers;
-  private boolean disableReconnect = false;
   private ClassLoader clasLoader;
   private final Properties properties = new Properties();
 
@@ -42,15 +41,6 @@ public class TerracottaClientConfigParams {
   public TerracottaClientConfigParams addStripeMember(InetSocketAddress stripeMember) {
     this.stripeMembers.add(stripeMember);
     return this;
-  }
-  
-  public TerracottaClientConfigParams disableReconnect() {
-    disableReconnect = true;
-    return this;
-  }
-
-  public boolean isDisableReconnect() {
-    return disableReconnect;
   }
 
   public ClassLoader getClassLoader() {

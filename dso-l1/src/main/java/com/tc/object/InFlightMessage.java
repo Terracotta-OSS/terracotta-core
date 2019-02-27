@@ -24,14 +24,18 @@ import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 
 /**
@@ -40,7 +44,7 @@ import java.util.concurrent.TimeoutException;
  * Note that this is only used from within ClietEntityManagerImpl, and was originally embedded there, but was extracted to
  * make unit testing more direct.
  */
-public class InFlightMessage {
+public class InFlightMessage implements PrettyPrintable {
   private final VoltronEntityMessage message;
   private final EntityID eid;
   private final InFlightMonitor monitor;
@@ -64,20 +68,82 @@ public class InFlightMessage {
   private final boolean blockGetOnRetired;
   private final Trace trace;
   
-  public InFlightMessage(EntityID extraInfo, VoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean isDeferred) {
-    this.message = message;
-    this.eid = extraInfo;
+  private Runnable runOnRetire;
+    
+  private long start;
+  private long send;
+  private long notifySent;
+  private long sent;
+  private long received;
+  private long got;
+  private long complete;
+  private long retired;
+  private long end;
+  
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean isDeferred) {
+    this.eid = eid;
+    this.message = message.get();
     this.monitor = monitor;
     Assert.assertNotNull(eid);
     Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
-    this.waitingThreads = new HashSet<Thread>();
+    this.waitingThreads = new HashSet<>();
     this.blockGetOnRetired = shouldBlockGetOnRetire || isDeferred;
     // We always assume that we can set the result, the first time.
     this.canSetResult = true;
-    this.trace = Trace.newTrace(message, "InFlightMessage");
+    this.trace = Trace.newTrace(this.message, "InFlightMessage");
     this.isDeferred = isDeferred;
+  }
+  
+  void setStatisticsBoundries(long start, long end) {
+    this.start = start;
+    this.end = end;
+  }
+  
+  public void collect(long[] stats) {
+    if (stats != null) {
+      stats[InFlightStats.Type.CLIENT_ENCODE.ordinal()] = start;
+      stats[InFlightStats.Type.CLIENT_SEND.ordinal()] = send;
+      stats[InFlightStats.Type.CLIENT_SENT.ordinal()] = sent;
+      stats[InFlightStats.Type.CLIENT_GOT.ordinal()] = got;
+      stats[InFlightStats.Type.SERVER_COMPLETE.ordinal()] = complete;
+      stats[InFlightStats.Type.SERVER_RECEIVED.ordinal()] = received;
+      stats[InFlightStats.Type.SERVER_RETIRED.ordinal()] = retired;
+      stats[InFlightStats.Type.CLIENT_DECODED.ordinal()] = end;
+    }
+  }
+  
+  synchronized void runOnRetire(Runnable r) {
+    if (retired != 0) {
+      r.run();
+    } else {
+      this.runOnRetire = r;
+    }
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("entity", eid);
+    Map<String, Object> timing = new LinkedHashMap<>();
+    timing.put("send", send);
+    timing.put("sent", sent);
+    timing.put("notifySent", notifySent);
+    timing.put("received", received);
+    timing.put("complete", complete);
+    timing.put("got", got);
+    timing.put("retired", retired);
+    map.put("marks", timing);
+    Map<String, Object> offset = new LinkedHashMap<>();
+    offset.put("sent->notifySent", send - notifySent);
+    offset.put("send->sent", sent - send);
+    offset.put("sent->received", received - sent);
+    offset.put("received->complete", complete - received);
+    offset.put("complete->got", got - complete);
+    offset.put("complete->retired", retired - complete);
+    map.put("timing", offset);
+    return map;
   }
 
   public EntityID getEntityID() {
@@ -99,7 +165,12 @@ public class InFlightMessage {
     Trace.activeTrace().log("InFlightMessage.send()");
     Assert.assertFalse(this.isSent);
     this.isSent = true;
-    return ((TCMessage)this.message).send();
+    this.send = System.nanoTime();
+    try {
+      return ((TCMessage)this.message).send();
+    } finally {
+      this.sent = System.nanoTime();
+    }
   }
   
   public void waitForAcks() {
@@ -129,6 +200,7 @@ public class InFlightMessage {
   }
   
   public synchronized void sent() {
+    this.notifySent = System.nanoTime();
     ackDelivered(VoltronEntityMessage.Acks.SENT);
     if (this.pendingAcks.isEmpty()) {
       notifyAll();
@@ -136,6 +208,7 @@ public class InFlightMessage {
   }
 
   public synchronized void received() {
+    this.received = System.nanoTime();
     ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
     if (this.pendingAcks.isEmpty()) {
       notifyAll();
@@ -193,6 +266,7 @@ public class InFlightMessage {
   public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     trace.log("getWithTimeout()");
     timedWait(() -> getCanComplete, timeout, unit);
+    this.got = System.nanoTime();
     if (exception != null) {
       throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
     } else {
@@ -207,7 +281,11 @@ public class InFlightMessage {
     if (Trace.isTraceEnabled()) {
       trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
     }
+    if (this.received == 0) {
+      this.received = System.nanoTime();
+    }
     ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
+    this.complete = System.nanoTime();
     ackDelivered(VoltronEntityMessage.Acks.COMPLETED);
     if (pendingAcks.isEmpty()) {
       notifyAll();
@@ -260,6 +338,7 @@ public class InFlightMessage {
   }
 
   public synchronized void retired() {
+    this.retired = System.nanoTime();
     ackDelivered(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
       this.getCanComplete = true;
@@ -268,6 +347,9 @@ public class InFlightMessage {
       }
     }
     notifyAll();
+    if (this.runOnRetire != null) {
+      this.runOnRetire.run();
+    }
     if (monitor != null) {
       monitor.close();
     }

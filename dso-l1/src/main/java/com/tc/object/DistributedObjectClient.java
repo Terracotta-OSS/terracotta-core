@@ -86,8 +86,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
-import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -140,7 +138,7 @@ public class DistributedObjectClient implements TCClient {
 
   protected final PreparedComponentsFromL2Connection connectionComponents;
 
-  private WeakReference<ClientMessageChannel>                       channel;
+  private ClientMessageChannel                       channel;
   private TCConnectionManager                        connectionManager;
   private CommunicationsManager                      communicationsManager;
   private ClientHandshakeManager                     clientHandshakeManager;
@@ -282,7 +280,7 @@ public class DistributedObjectClient implements TCClient {
                                                                        + socketConnectTimeout); }
     ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
                                                                  sessionManager, socketConnectTimeout, this);
-    this.channel = new WeakReference<>(clientChannel);
+    this.channel = clientChannel;
     // add this listener so that the whole system is shutdown
     // if the transport is closed from underneath.
     //  this typically happens when the transport is disconnected and 
@@ -311,7 +309,7 @@ public class DistributedObjectClient implements TCClient {
     final ProductInfo pInfo = ProductInfo.getInstance();
     
     ClientHandshakeMessageFactory chmf = (u, n, c)->{
-      ClientMessageChannel cmc = channel.get();
+      ClientMessageChannel cmc = channel;
       if (cmc != null) {
         final ClientHandshakeMessage rv = (ClientHandshakeMessage)cmc.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         rv.setClientVersion(c);
@@ -513,7 +511,7 @@ public class DistributedObjectClient implements TCClient {
     return this.clientHandshakeManager;
   }
   
-  private String getClientState() {
+  public String getClientState() {
     PrettyPrinter printer = new MapListPrettyPrint();
     this.communicationStageManager.prettyPrint(printer);
     this.clientEntityManager.prettyPrint(printer);
@@ -545,7 +543,7 @@ public class DistributedObjectClient implements TCClient {
       }
     }
 
-    ClientMessageChannel clientChannel = this.channel.get();
+    ClientMessageChannel clientChannel = this.channel;
     if (clientChannel != null) {
       try {
         clientChannel.close();
@@ -718,7 +716,7 @@ public class DistributedObjectClient implements TCClient {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
-      ClientMessageChannel clientChannel = this.channel.get();
+      ClientMessageChannel clientChannel = this.channel;
       if (clientChannel != null && !clientChannel.getProductID().isInternal() && clientChannel.isConnected()) {
         DSO_LOGGER.info("closing down Terracotta Connection force=" + forceImmediate + " channel=" + clientChannel.getChannelID() + " client=" + clientChannel.getClientID());
       }

@@ -110,5 +110,10 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
   public int getTotalLength() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
+
+  @Override
+  public boolean isEmpty() {
+    return false;
+  }
   
 }
