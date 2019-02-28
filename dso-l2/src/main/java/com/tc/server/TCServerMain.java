@@ -24,6 +24,7 @@ import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
+import com.tc.util.ManagedServiceLoader;
 import com.tc.util.ProductInfo;
 import com.terracotta.config.ConfigurationProvider;
 
@@ -55,14 +56,14 @@ public class TCServerMain {
     try {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
 
-      ConfigurationProvider configurationProvider = getConfigurationProvider();
+      ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
+      Thread.currentThread().setContextClassLoader(systemLoader);
+
+      ConfigurationProvider configurationProvider = getConfigurationProvider(systemLoader);
 
       CommandLineParser commandLineParser = new CommandLineParser(args, configurationProvider);
 
       configurationProvider.initialize(commandLineParser.getProviderArgs());
-
-      ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
-      Thread.currentThread().setContextClassLoader(systemLoader);
 
       setup = new ServerConfigurationManager(
           commandLineParser.getServerName(),
@@ -86,9 +87,10 @@ public class TCServerMain {
     }
   }
 
-  private static ConfigurationProvider getConfigurationProvider() {
+  private static ConfigurationProvider getConfigurationProvider(ClassLoader systemLoader) {
     ConfigurationProvider configurationProvider = null;
-    for (ConfigurationProvider provider : ServiceLoader.load(ConfigurationProvider.class)) {
+    for (ConfigurationProvider provider : ManagedServiceLoader.loadServices(ConfigurationProvider.class,
+                                                                            systemLoader)) {
       if (configurationProvider == null) {
         configurationProvider = provider;
       } else {
