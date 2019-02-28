@@ -110,6 +110,7 @@ public class ServerClientHandshakeManagerTest {
     
     // We should see the server start after it gets this handshake since it was waiting for one connection.
     ClientHandshakeMessage handshake = mock(ClientHandshakeMessage.class);
+    when(handshake.getClientVersion()).thenReturn("");
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(handshake.getChannel()).thenReturn(messageChannel);
@@ -145,6 +146,7 @@ public class ServerClientHandshakeManagerTest {
     
     // We should see this first message go through to the transaction handler but not start the server.
     ClientHandshakeMessage message1 = mock(ClientHandshakeMessage.class);
+    when(message1.getClientVersion()).thenReturn("");
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel1 = mock(MessageChannel.class);
     when(message1.getChannel()).thenReturn(messageChannel1);
@@ -158,6 +160,7 @@ public class ServerClientHandshakeManagerTest {
     
     // This second message will now start the server.
     ClientHandshakeMessage message2 = mock(ClientHandshakeMessage.class);
+    when(message2.getClientVersion()).thenReturn("");
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel2 = mock(MessageChannel.class);
     when(message2.getChannel()).thenReturn(messageChannel2);

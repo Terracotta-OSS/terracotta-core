@@ -18,44 +18,29 @@
  */
 package com.tc.object;
 
-import static com.tc.object.InFlightStats.Type.CLIENT_DECODED;
-import static com.tc.object.InFlightStats.Type.CLIENT_ENCODE;
-import static com.tc.object.InFlightStats.Type.CLIENT_GOT;
-import static com.tc.object.InFlightStats.Type.CLIENT_SEND;
-import static com.tc.object.InFlightStats.Type.CLIENT_SENT;
-import static com.tc.object.InFlightStats.Type.SERVER_COMPLETE;
-import static com.tc.object.InFlightStats.Type.SERVER_RECEIVED;
-import static com.tc.object.InFlightStats.Type.SERVER_RETIRED;
+import static com.tc.object.StatType.CLIENT_DECODED;
+import static com.tc.object.StatType.CLIENT_ENCODE;
+import static com.tc.object.StatType.CLIENT_GOT;
+import static com.tc.object.StatType.CLIENT_SEND;
+import static com.tc.object.StatType.CLIENT_SENT;
 import com.tc.text.PrettyPrintable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
+import static com.tc.object.StatType.CLIENT_RECEIVED;
+import static com.tc.object.StatType.CLIENT_COMPLETE;
+import static com.tc.object.StatType.CLIENT_RETIRED;
+import static com.tc.object.StatType.SERVER_ADD;
+import static com.tc.object.StatType.SERVER_BEGININVOKE;
+import static com.tc.object.StatType.SERVER_ENDINVOKE;
+import static com.tc.object.StatType.SERVER_SCHEDULE;
 
 /**
  *
  */
 class InFlightStats implements PrettyPrintable {
-  enum Type {
-    CLIENT_ENCODE("CLIENT:encode"),
-    CLIENT_SEND("CLIENT:send"),
-    CLIENT_SENT("CLIENT:sent"),
-    SERVER_RECEIVED("SERVER:received"),
-    SERVER_COMPLETE("SERVER:complete"),
-    CLIENT_GOT("CLIENT:retrieved"),
-    CLIENT_DECODED("CLIENT:decoded"),
-    SERVER_RETIRED("SERVER:retired");
-    private final String description;
-    
-    Type(String description) {
-      this.description = description;
-    }
-    
-    public String description() {
-      return this.description;
-    }
-  }
   
   private final List<Combo> values = new ArrayList<>();
   private final LongAdder totalCount = new LongAdder();
@@ -63,13 +48,16 @@ class InFlightStats implements PrettyPrintable {
   public InFlightStats() {
     values.add(new Combo(CLIENT_ENCODE, CLIENT_SEND));
     values.add(new Combo(CLIENT_SEND, CLIENT_SENT));
-    values.add(new Combo(CLIENT_SENT, SERVER_RECEIVED));
-    values.add(new Combo(SERVER_RECEIVED, SERVER_COMPLETE));
-    values.add(new Combo(SERVER_COMPLETE, CLIENT_GOT));
+    values.add(new Combo(CLIENT_SENT, CLIENT_RECEIVED));
+    values.add(new Combo(CLIENT_RECEIVED, CLIENT_COMPLETE));
+    values.add(new Combo(CLIENT_COMPLETE, CLIENT_GOT));
     values.add(new Combo(CLIENT_GOT, CLIENT_DECODED));
-    values.add(new Combo(SERVER_COMPLETE, SERVER_RETIRED));
-    values.add(new Combo(CLIENT_SENT, SERVER_RETIRED));
+    values.add(new Combo(CLIENT_COMPLETE, CLIENT_RETIRED));
+    values.add(new Combo(CLIENT_SENT, CLIENT_RETIRED));
     values.add(new Combo(CLIENT_ENCODE, CLIENT_DECODED));
+    values.add(new Combo(SERVER_ADD, SERVER_SCHEDULE));
+    values.add(new Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE));
+    values.add(new Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE));
   }
   
   public void collect(long[] input) {
@@ -80,16 +68,18 @@ class InFlightStats implements PrettyPrintable {
   @Override
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
-    values.forEach(c->map.put(c.toString(), c.value()/totalCount.sum()));
+    if (totalCount.sum() > 0) {
+      values.forEach(c->map.put(c.toString(), c.value()/totalCount.sum()));
+    }
     return map;
   } 
   
   private static class Combo {
-    private final Type from;
-    private final Type to;
+    private final StatType from;
+    private final StatType to;
     private final LongAdder value = new LongAdder();
 
-    public Combo(Type from, Type to) {
+    public Combo(StatType from, StatType to) {
       this.from = from;
       this.to = to;
     }

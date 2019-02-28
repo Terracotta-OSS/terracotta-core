@@ -47,6 +47,7 @@ import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.api.StatisticsCapture;
 import com.tc.objectserver.entity.AbstractServerEntityRequestResponse;
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
@@ -163,6 +164,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
       @Override
       public void message(TransactionID tid, byte[] message) {
+      }
+
+      @Override
+      public void stats(TransactionID tid, long[] message) {
       }
     });
   }
@@ -402,6 +407,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
       if (ServerEntityAction.INVOKE_ACTION == action) {
         InvokeHandler handler = new InvokeHandler(request, this::insertMessageInStream, chaincomplete, chainfail, requiresReceived, requiresRetired);
+        handler.addMessage();
         if(transactionOrderPersistenceFuture != null) {
           transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
         }
@@ -671,7 +677,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     return action;
   }
 
-  private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture {
+  private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture, StatisticsCapture {
 
     private Supplier<ActivePassiveAckWaiter> waiter;
     private final SetOnceFlag sent = new SetOnceFlag();
@@ -679,6 +685,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     private final boolean sendReceived;
     private final boolean holdResultForRetired;
     private byte[] heldResult;
+    private final long[] stats = new long[4];
 
     InvokeHandler(ServerEntityRequest request, Consumer<VoltronEntityResponse> sender, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived, boolean reqRetired) {
       super(request, sender, complete, failure);
@@ -762,6 +769,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
       this.waiter.get().waitForCompleted();
       if (!getNodeID().isNull()) {
         Assert.assertTrue(sent.isSet() || failure.isSet());
+        safeGetChannel(getNodeID()).ifPresent(c -> {
+          if (c.getAttachment("SendStats") != null) {
+            addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));
+          }
+        });
         addSequentially(getNodeID(), addTo -> {
           if (heldResult != null) {
             return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
@@ -771,6 +783,26 @@ public class ProcessTransactionHandler implements ReconnectListener {
         });
       }
       MonitoringEventCreator.finish();
+    }
+
+    @Override
+    public void addMessage() {
+      stats[0] = System.nanoTime();
+    }
+
+    @Override
+    public void schedule() {
+      stats[1] = System.nanoTime();
+    }
+
+    @Override
+    public void beginInvoke() {
+      stats[2] = System.nanoTime();
+    }
+
+    @Override
+    public void endInvoke() {
+      stats[3] = System.nanoTime();
     }
   }
 

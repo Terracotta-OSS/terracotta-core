@@ -75,6 +75,11 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   public void handleMessage(TransactionID entityDescriptor, byte[] message) {
 
   }
+
+  @Override
+  public void handleStatistics(TransactionID transaction, long[] message) {
+    throw new UnsupportedOperationException(); 
+  }
   
   @Override
   public byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException {

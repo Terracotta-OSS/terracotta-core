@@ -156,7 +156,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     if (msg != null) {
       msg.handleMessage(message);
     } else {
-      Assert.fail("transaction " + tid + " not found. Ignoring message.");
+      logger.info("transaction " + tid + " not found. Ignoring message.");
+    }
+  }
+
+  @Override
+  public void handleStatistics(TransactionID tid, long[] message) {
+    InFlightMessage msg = this.inFlightMessages.get(tid);
+    if (msg != null) {
+      msg.addServerStatistics(message);
     }
   }
   
@@ -652,6 +660,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
     @Override
     public boolean addServerMessage(ClientInstanceID cid, byte[] message) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean addStats(TransactionID cid, long[] timings) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
