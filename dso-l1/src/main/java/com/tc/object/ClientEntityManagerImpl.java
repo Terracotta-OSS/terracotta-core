@@ -661,8 +661,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     @Override
-    public boolean isEmpty() {
-      return true;
+    public boolean startAdding() {
+      throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public synchronized void waitForAccess() {

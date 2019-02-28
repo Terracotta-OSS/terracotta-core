@@ -24,23 +24,21 @@ import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
-import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
-import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
@@ -63,7 +61,6 @@ import com.tc.services.EntityMessengerService;
 import com.tc.util.Assert;
 import com.tc.util.SparseList;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,15 +116,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
     public void handleEvent(ResponseMessage context) throws EventHandlerException {
       NodeID destinationID = context.getResponse().getDestinationNodeID();
       TCMessage response = context.getResponse();
-      
-      invokeReturn.remove((ClientID) destinationID, response);
-      
-      boolean replace = false;
+            
       if (response instanceof VoltronEntityMultiResponse) {
-        VoltronEntityMultiResponse voltronEntityMultiResponse = (com.tc.entity.VoltronEntityMultiResponse)response;
+        VoltronEntityMultiResponse voltronEntityMultiResponse = (VoltronEntityMultiResponse)response;
+        VoltronEntityMultiResponse sub = (VoltronEntityMultiResponse)response.getChannel().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+        invokeReturn.put((ClientID)destinationID, sub);
         voltronEntityMultiResponse.stopAdding();
         waitForTransactions(voltronEntityMultiResponse);
-        replace = true;
       } else if (response instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)response).getTransactionID());
       } else {
@@ -139,11 +134,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
         LOGGER.warn("Failed to send message to: " + destinationID);
       } else if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("sent " + response);
-      }
-      if (replace) {
-        safeGetChannel(destinationID).ifPresent(c->{
-          VoltronEntityMultiResponse exists = invokeReturn.putIfAbsent((ClientID)destinationID, (VoltronEntityMultiResponse)c.createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE));
-        });
       }
     }
   };
@@ -293,37 +283,51 @@ public class ProcessTransactionHandler implements ReconnectListener {
   boolean removeClient(ClientID target) {
     return !inflightFetch.containsKey(target);
   }
+  
+  private void insertMessageInStream(VoltronEntityResponse msg) {
+    // cutoff multi response so that a multi-message enqueued before this message do not
+    // capture new messages intended to be sent after this one.
+    if (!msg.getDestinationNodeID().isNull()) {
+      VoltronEntityMultiResponse vmr = invokeReturn.remove((ClientID)msg.getDestinationNodeID());
+      if (vmr != null) {
+        vmr.stopAdding();
+      }
+      multiSend.getSink().addToSink(new ResponseMessage(msg));
+    }
+  }
 
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
     // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
-    if (!target.isNull()) {
-      invokeReturn.compute(target, (client, vmr)-> {
-        boolean enqueue = false;
-        if (vmr == null) {
-          Optional<MessageChannel> channel = safeGetChannel(target);
+    VoltronEntityMultiResponse vmr = null;
+    while (!target.isNull() && vmr == null) {
+      // get the vmr.  most cases, will be present but if not create one 
+      vmr = invokeReturn.computeIfAbsent(target, (client)-> {
+          Optional<MessageChannel> channel = safeGetChannel(client);
           if (channel.isPresent()) {
-            enqueue = true;
-            vmr = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+            return (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+          } else {
+            return null;
           }
-        } else if (vmr.isEmpty()) {
-          enqueue = true;
-        }
-        if (vmr != null) {
-          boolean added = adder.test(vmr);
-          Assert.assertTrue(added);
+        });
+      // no vmr means no live channel, just exit
+      if (vmr == null) {
+        break;
+      } else {
+        // enqueue if start adding returns true;  this means first to add
+        boolean enqueue = vmr.startAdding();
+        if (!adder.test(vmr)) {
+          vmr = null;
         }
         if (enqueue) {
           if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
             waitForTransactions(vmr);
             vmr.send();
-            vmr = null;
           } else {
             multiSend.getSink().addToSink(new ResponseMessage(vmr));
           }
         }
-        return vmr;
-      });
+      }
     }
   }
 
@@ -360,7 +364,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     if (ServerEntityAction.CREATE_ENTITY == action) {
       long consumerID = this.persistor.getEntityPersistor().getNextConsumerID();
       // The common pattern for this is to pass an empty array on success ("found") or an exception on failure ("not found").
-      LifecycleResultsCapture capture = new LifecycleResultsCapture(descriptor.getEntityID(), descriptor.getClientSideVersion(), consumerID, request, chaincomplete, chainfail, entityMessage.getRawPayload(), isReplicatedMessage);
+      LifecycleResultsCapture capture = new LifecycleResultsCapture(descriptor.getEntityID(), descriptor.getClientSideVersion(), consumerID, request, this::insertMessageInStream, chaincomplete, chainfail, entityMessage.getRawPayload(), isReplicatedMessage);
       capture.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
       try {
         EntityID entityID = descriptor.getEntityID();
@@ -375,13 +379,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
       try {
         optionalEntity = entityManager.getEntity(descriptor);
       } catch (EntityException ee) {
-        ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
+        ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
         rr.failure(ee);
         return;
       }
       if (!optionalEntity.isPresent()) {
         if (!descriptor.isIndexed()) {
-          ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
+          ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
           rr.failure(new EntityNotFoundException(descriptor.getEntityID().getClassName(), descriptor.getEntityID().getEntityName()));
           return;
         } else {
@@ -397,7 +401,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       ManagedEntity entity = optionalEntity.get();
       // Note that it is possible to trigger an exception when decoding a message in addInvokeRequest.
       if (ServerEntityAction.INVOKE_ACTION == action) {
-        InvokeHandler handler = new InvokeHandler(request, chaincomplete, chainfail, requiresReceived, requiresRetired);
+        InvokeHandler handler = new InvokeHandler(request, this::insertMessageInStream, chaincomplete, chainfail, requiresReceived, requiresRetired);
         if(transactionOrderPersistenceFuture != null) {
           transactionOrderPersistenceFutures.put(transactionID, transactionOrderPersistenceFuture);
         }
@@ -415,7 +419,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           version = descriptor.getClientSideVersion();
           consumerID = entity.getConsumerID();
         }
-        LifecycleResultsCapture capture = new LifecycleResultsCapture(eid, version, consumerID, request, chaincomplete, chainfail, entityMessage.getRawPayload(), isReplicatedMessage);
+        LifecycleResultsCapture capture = new LifecycleResultsCapture(eid, version, consumerID, request, this::insertMessageInStream, chaincomplete, chainfail, entityMessage.getRawPayload(), isReplicatedMessage);
         capture.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
         entity.addRequestMessage(capture, entityMessage, capture);
       } else if (action == ServerEntityAction.MANAGED_ENTITY_GC && entity.isRemoveable()) {
@@ -425,7 +429,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         entityManager.removeDestroyed(descriptor.getFetchID());
         //  no need to schedule for an entity that is removed
       } else {
-        ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
+        ServerEntityRequestResponse rr = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(sourceNodeID), chaincomplete, chainfail, isReplicatedMessage);
         rr.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
         entity.addRequestMessage(rr, entityMessage, rr);
       }
@@ -510,7 +514,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
       if (cached) {
         ServerEntityRequest request = new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
-        ServerEntityRequestResponse response = new ServerEntityRequestResponse(request, ()->safeGetChannel(resentMessage.getSource()), null, null, false);
+        ServerEntityRequestResponse response = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(resentMessage.getSource()), null, null, false);
         response.received();
         if (result != null) {
           response.complete(result);
@@ -525,7 +529,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       }
     } catch (EntityException ee) {
       ServerEntityRequest request = new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
-      ServerEntityRequestResponse response = new ServerEntityRequestResponse(request, ()->safeGetChannel(resentMessage.getSource()), null, null, false);
+      ServerEntityRequestResponse response = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(resentMessage.getSource()), null, null, false);
 
       response.received();
       response.failure(ee);
@@ -676,8 +680,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     private final boolean holdResultForRetired;
     private byte[] heldResult;
 
-    InvokeHandler(ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived, boolean reqRetired) {
-      super(request, complete, failure);
+    InvokeHandler(ServerEntityRequest request, Consumer<VoltronEntityResponse> sender, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived, boolean reqRetired) {
+      super(request, sender, complete, failure);
       sendReceived = reqReceived;
       holdResultForRetired = reqRetired;
     }
@@ -746,24 +750,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     private void sendFailure(EntityException exception) {
       if (failure.attemptSet()) {
-        if (getNodeID().isNull()) {
-          super.failure(exception);
-        } else {
-          safeGetChannel(getNodeID()).ifPresent(channel -> {
-            VoltronEntityAppliedResponse failMessage = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
-            failMessage.setFailure(getTransaction(), exception);
-            invokeReturn.compute(getNodeID(), (client, vmr)-> {
-              if (vmr == null && DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-                waitForTransactionOrderPersistenceFuture(failMessage.getTransactionID());
-                failMessage.send();
-              } else {
-                multiSend.getSink().addToSink(new ResponseMessage(failMessage));
-              }
-              // unmap anything that was previously there
-              return null;
-            });
-          });
-        }
+        super.failure(exception);
         MonitoringEventCreator.finish();
       } else {
         throw new AssertionError();
@@ -796,8 +783,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     private Supplier<ActivePassiveAckWaiter> setOnce;
 
-    public LifecycleResultsCapture(EntityID eid, long version, long consumerID, ServerEntityRequest request, Consumer<byte[]> complete, Consumer<EntityException> fail, byte[] config, boolean isReplicatedMessage) {
-      super(request, complete, fail);
+    public LifecycleResultsCapture(EntityID eid, long version, long consumerID, ServerEntityRequest request, Consumer<VoltronEntityResponse> sender, Consumer<byte[]> complete, Consumer<EntityException> fail, byte[] config, boolean isReplicatedMessage) {
+      super(request, sender, complete, fail);
       this.eid = eid;
       this.version = version;
       this.consumerID = consumerID;

@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -45,24 +46,22 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   private final ServerEntityRequest request;
   private final Consumer<byte[]> complete;
   private final Consumer<EntityException> fail;
+  
+  private final Consumer<VoltronEntityResponse> messageSender;
     
   private boolean isComplete = false;
   private boolean isRetired = false;
-  private boolean alsoRetire = false;
 
   private volatile Future<Void> transactionOrderPersistenceFuture;
   
-  public AbstractServerEntityRequestResponse(ServerEntityRequest action, Consumer<byte[]> complete, Consumer<EntityException> fail) {
+  public AbstractServerEntityRequestResponse(ServerEntityRequest action, Consumer<VoltronEntityResponse> messageSender, Consumer<byte[]> complete, Consumer<EntityException> fail) {
     this.request = action;
+    this.messageSender = messageSender;
     this.complete = complete;
     this.fail = fail;
   }
   
   public abstract Optional<MessageChannel> getReturnChannel();
-
-  public final void autoRetire(boolean auto) {
-    this.alsoRetire = auto;
-  }
 
   @Override
   public ClientInstanceID getClientInstance() {
@@ -103,14 +102,14 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public ServerEntityAction getAction() {
     return request.getAction();
   }
-     
+  
   @Override
   public void failure(EntityException e) {
     if (!this.getNodeID().isNull()) {
       getReturnChannel().ifPresent(channel -> {
-        VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
+        VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
         message.setFailure(request.getTransaction(), e);
-        message.send();
+        messageSender.accept(message);
       });
       this.isComplete = true;
     }
@@ -131,7 +130,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
         }
       }
       message.setTransactionID(request.getTransaction());
-      message.send();
+      messageSender.accept(message);
     });
   }
   
@@ -151,8 +150,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
           case FETCH_ENTITY:
             // In these cases, we just return an empty success to acknowledge that they completed.
             actionResponse.setSuccess(request.getTransaction(), new byte[0]);
-            actionResponse.send();
-
+            messageSender.accept(actionResponse);
             break;
           default:
             // Unknown action completion type.
@@ -180,7 +178,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
           case RECONFIGURE_ENTITY:
             VoltronEntityAppliedResponse actionResponse = (VoltronEntityAppliedResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);
             actionResponse.setSuccess(request.getTransaction(), value);
-            actionResponse.send();
+            messageSender.accept(actionResponse);
             break;
           default:
             throw new IllegalArgumentException("Unexpected action in complete(byte[]) " + request.getAction());
@@ -204,7 +202,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
     getReturnChannel().ifPresent(channel -> {
       VoltronEntityRetiredResponse response = (VoltronEntityRetiredResponse) channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE);
       response.setTransactionID(request.getTransaction());
-      response.send();
+      messageSender.accept(response);
     });
     this.isRetired = true;
   }

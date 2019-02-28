@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -80,13 +81,17 @@ public class ServerEntityRequestImplTest {
     boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
     ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.CREATE_ENTITY, nodeID, transactionID, TransactionID.NULL_ID, requiresReplication);
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(request, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(request, this::send, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
 
     serverEntityRequest.complete();
     serverEntityRequest.retired();
     
     verify(responseMessage).setSuccess(transactionID, new byte[0]);
     verify(responseMessage).send();
+  }
+  
+  private void send(VoltronEntityResponse msg) {
+    msg.send();
   }
 
   @Test
@@ -113,6 +118,6 @@ public class ServerEntityRequestImplTest {
     boolean isReceivedRequested = false;
     EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
     ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.INVOKE_ACTION, nodeID, transactionID, TransactionID.NULL_ID, isReceivedRequested);
-    return new ServerEntityRequestResponse(request, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
+    return new ServerEntityRequestResponse(request, this::send, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
   }
 }

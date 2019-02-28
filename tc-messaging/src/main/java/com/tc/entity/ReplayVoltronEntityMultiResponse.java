@@ -112,8 +112,8 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
   }
 
   @Override
-  public boolean isEmpty() {
-    return false;
+  public boolean startAdding() {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
   
 }
