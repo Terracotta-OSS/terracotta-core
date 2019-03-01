@@ -1,3 +1,21 @@
+/*
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
+ */
 package com.tc.config;
 
 import org.apache.commons.cli.CommandLine;
@@ -19,7 +37,6 @@ import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -30,6 +47,9 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.tc.config.DefaultConfigurationProvider.Opt.CONFIG_PATH;
+import com.tc.services.MappedStateCollector;
+import com.tc.text.PrettyPrintable;
+import java.util.Map;
 
 public class DefaultConfigurationProvider implements ConfigurationProvider {
 
@@ -69,7 +89,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     }
   }
 
-  private volatile Configuration configuration;
+  private volatile TcConfiguration configuration;
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
@@ -83,35 +103,14 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       ServiceClassLoader serviceClassLoader =
           new ServiceClassLoader(serviceLocator.getImplementations(ServiceConfigParser.class, classLoader));
 
-      TcConfiguration tcConfiguration = getTcConfiguration(configurationPath, serviceClassLoader);
+      this.configuration = getTcConfiguration(configurationPath, serviceClassLoader);
 
       LOGGER.info("Successfully loaded configuration from the file at '{}'", configurationPath);
 
       LOGGER.info("The configuration specified by the configuration file at '{}': \n\n{}",
                   configurationPath,
-                  tcConfiguration.toString());
+                  configuration.toString());
 
-      this.configuration = new Configuration() {
-        @Override
-        public TcConfig getPlatformConfiguration() {
-          return tcConfiguration.getPlatformConfiguration();
-        }
-
-        @Override
-        public List<ServiceProviderConfiguration> getServiceConfigurations() {
-          return tcConfiguration.getServiceConfigurations();
-        }
-
-        @Override
-        public <T> List<T> getExtendedConfiguration(Class<T> type) {
-          return tcConfiguration.getExtendedConfiguration(type);
-        }
-
-        @Override
-        public String getRawConfiguration() {
-          return tcConfiguration.toString();
-        }
-      };
     } catch (Exception e) {
       throw new ConfigurationException("Unable to initialize DefaultConfigurationProvider with " + configurationParams,
                                        e);
@@ -120,7 +119,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
 
   @Override
   public Configuration getConfiguration() {
-    return configuration;
+    return new TcConfigurationWrapper(configuration);
   }
 
   @Override
@@ -205,5 +204,40 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     );
 
     return options;
+  }
+  
+  private static class TcConfigurationWrapper implements Configuration, PrettyPrintable {
+    private final TcConfiguration  configuration;
+
+    public TcConfigurationWrapper(TcConfiguration configuration) {
+      this.configuration = configuration;
+    }
+
+    @Override
+    public TcConfig getPlatformConfiguration() {
+      return this.configuration.getPlatformConfiguration();
+    }
+
+    @Override
+    public List<ServiceProviderConfiguration> getServiceConfigurations() {
+      return this.configuration.getServiceConfigurations();
+    }
+
+    @Override
+    public <T> List<T> getExtendedConfiguration(Class<T> type) {
+      return this.configuration.getExtendedConfiguration(type);
+    }
+
+    @Override
+    public String getRawConfiguration() {
+      return configuration.toString();
+    }
+    
+    @Override
+    public Map<String, ?> getStateMap() {
+      MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
+      this.configuration.addStateTo(mappedStateCollector);
+      return mappedStateCollector.getMap();
+    }
   }
 }

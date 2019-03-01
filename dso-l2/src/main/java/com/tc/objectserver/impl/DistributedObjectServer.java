@@ -356,9 +356,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
     try {
-      MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
       Map<String, Object> state = new HashMap<>();
-      state.put("ExtendedConfigs", mappedStateCollector.getMap());
+      state.put("ExtendedConfigs", this.configSetupManager.getStateMap());
       prettyPrinter.println(state);
     } catch (Throwable t) {
       prettyPrinter.println("unable to collect cluster state for ExtendedConfigs" + " : " + t.getLocalizedMessage());

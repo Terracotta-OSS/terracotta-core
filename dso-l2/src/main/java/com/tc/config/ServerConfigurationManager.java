@@ -8,6 +8,7 @@ import org.terracotta.config.TcProperties;
 import com.tc.classloader.ServiceLocator;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
 import com.terracotta.config.Configuration;
 
 import java.io.ByteArrayInputStream;
@@ -18,6 +19,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class ServerConfigurationManager {
+public class ServerConfigurationManager implements PrettyPrintable {
 
   private final Configuration configuration;
   private final GroupConfiguration groupConfiguration;
@@ -184,5 +186,14 @@ public class ServerConfigurationManager {
     }
 
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(propMap);
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    if (configuration instanceof PrettyPrintable) {
+      return ((PrettyPrintable)configuration).getStateMap();
+    } else {
+      return Collections.emptyMap();
+    }
   }
 }
