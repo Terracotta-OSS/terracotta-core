@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -40,13 +41,13 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   
   private Supplier<ActivePassiveAckWaiter> waiter;
 
-  public ServerEntityRequestResponse(ServerEntityRequest request,  
+  public ServerEntityRequestResponse(ServerEntityRequest request, 
+      Consumer<VoltronEntityResponse> sender,
       Supplier<Optional<MessageChannel>> returnChannel, 
       Consumer<byte[]> completion, Consumer<EntityException> exception, boolean isReplicatedMessage) {
-    super(request, completion, exception);
+    super(request, sender, completion, exception);
     this.returnChannel = returnChannel;
     this.isReplicatedMessage = isReplicatedMessage;
-    this.autoRetire(true);
   }
 
   @Override

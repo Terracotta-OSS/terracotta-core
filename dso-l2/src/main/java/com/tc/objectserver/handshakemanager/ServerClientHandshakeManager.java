@@ -95,6 +95,10 @@ public class ServerClientHandshakeManager {
   public synchronized boolean isStarted() {
     return this.state == State.STARTED;
   }
+  
+  private boolean canAcceptStats(String version) {
+    return version.equals(ProductInfo.getInstance().version());
+  }
 
   public void notifyClientConnect(ClientHandshakeMessage handshake, EntityManager entityManager, ProcessTransactionHandler transactionHandler) throws ClientHandshakeException {
     final ClientID clientID = (ClientID) handshake.getSourceNodeID();
@@ -103,6 +107,9 @@ public class ServerClientHandshakeManager {
       this.logger.info("Handling client handshake for " + clientID);
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
           new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
+      if (canAcceptStats(handshake.getClientVersion())) {
+        handshake.getChannel().addAttachment("SendStats", true, true);
+      }
       this.logger.info("confirming client handshake for " + state + " " + save + " " + clientID);
       if (this.state == State.STARTED) {
         Assert.assertEquals(save, clientID.toLong());

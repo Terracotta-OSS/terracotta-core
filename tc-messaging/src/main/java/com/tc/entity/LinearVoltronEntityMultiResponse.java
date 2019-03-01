@@ -29,8 +29,10 @@ import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +43,7 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
   
   private final byte OP_ID = 1;
   private final byte DONE_ID = 2;
+  private final byte STATS_ID = 3;
   
   public enum Operation {
     RECEIVED,
@@ -65,7 +68,12 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
         return true;
       }
     },
-    DONE;
+    DONE,
+    STATS {
+      boolean hasData() {
+        return true;
+      }
+    };
     
     boolean hasData() {
       return false;
@@ -74,6 +82,7 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     
   private List<Op> timeline = new LinkedList<>();
 
+  private SetOnceFlag open = new SetOnceFlag();
   private boolean stopAdding;
   
   private static class Op {
@@ -130,6 +139,14 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
           receiver.retired(new TransactionID(op.id));
           break;
         case DONE:
+          break;
+        case STATS:
+          ByteBuffer data = ByteBuffer.wrap(op.data);
+          long[] vals = new long[data.remaining() / Long.BYTES];
+          for (int x=0;x<vals.length;x++) {
+            vals[x] = data.getLong();
+          }
+          receiver.stats(new TransactionID(op.id), vals);
           break;
         default:
           throw new AssertionError("unknown op");
@@ -197,6 +214,15 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
   public boolean addServerMessage(TransactionID cid, byte[] message) {
     return buildOp(Operation.INVOKE_MESSAGE, cid.toLong(), message);
   }
+
+  @Override
+  public boolean addStats(TransactionID cid, long[] timings) {
+    ByteBuffer buffer = ByteBuffer.allocate(timings.length * Long.BYTES);
+    for (long t : timings) {
+      buffer.putLong(t);
+    }
+    return buildOp(Operation.STATS, cid.toLong(), buffer.array());
+  }
   
   @Override
   public synchronized void stopAdding() {
@@ -237,10 +263,11 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
       count++;
     }
     putNVPair(DONE_ID,count);
+    
   }
 
   @Override
-  public boolean isEmpty() {
-    return timeline.isEmpty();
-  } 
+  public boolean startAdding() {
+    return open.attemptSet();
+  }
 }

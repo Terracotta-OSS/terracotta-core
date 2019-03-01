@@ -42,6 +42,7 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
+import com.tc.objectserver.api.StatisticsCapture;
 import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -366,6 +367,9 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     }
     int locked = key;
+    if (response instanceof StatisticsCapture) {
+      ((StatisticsCapture)response).schedule();
+    }
     scheduleInOrder(request, response, message, ()->invoke(request, response, message, locked), locked);
   }
 
@@ -858,6 +862,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(message);
           if (loc.runOnActive()) {
+            if (response instanceof StatisticsCapture) {
+              ((StatisticsCapture)response).beginInvoke();
+            }
             Trace trace = Trace.activeTrace().subTrace("invokeActive");
             trace.start();
             EntityResponse resp = this.activeServerEntity.invokeActive(
@@ -877,6 +884,9 @@ public class ManagedEntityImpl implements ManagedEntity {
             trace.end();
             if (er != null) {
               response.complete(er);
+            }
+            if (response instanceof StatisticsCapture) {
+              ((StatisticsCapture)response).endInvoke();
             }
             retirementManager.retireMessage(message);
           } else {

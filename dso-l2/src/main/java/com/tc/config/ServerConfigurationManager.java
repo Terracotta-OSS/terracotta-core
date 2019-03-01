@@ -1,3 +1,20 @@
+/*
+ * The contents of this file are subject to the Terracotta Public License Version
+ * 2.0 (the "License"); You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at
+ *
+ * http://terracotta.org/legal/terracotta-public-license.
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Covered Software is Terracotta Configuration.
+ *
+ * The Initial Developer of the Covered Software is
+ * Terracotta, Inc., a Software AG company
+ *
+ */
 package com.tc.config;
 
 import org.terracotta.config.Property;
@@ -8,6 +25,7 @@ import org.terracotta.config.TcProperties;
 import com.tc.classloader.ServiceLocator;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
 import com.terracotta.config.Configuration;
 
 import java.io.ByteArrayInputStream;
@@ -18,6 +36,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +45,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class ServerConfigurationManager {
+public class ServerConfigurationManager implements PrettyPrintable {
 
   private final Configuration configuration;
   private final GroupConfiguration groupConfiguration;
@@ -184,5 +203,14 @@ public class ServerConfigurationManager {
     }
 
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(propMap);
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    if (configuration instanceof PrettyPrintable) {
+      return ((PrettyPrintable)configuration).getStateMap();
+    } else {
+      return Collections.emptyMap();
+    }
   }
 }

@@ -62,6 +62,11 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
   }
 
   @Override
+  public boolean addStats(TransactionID cid, long[] timings) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
   public void stopAdding() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
@@ -112,8 +117,8 @@ public abstract class ReplayVoltronEntityMultiResponse implements VoltronEntityM
   }
 
   @Override
-  public boolean isEmpty() {
-    return false;
+  public boolean startAdding() {
+    throw new UnsupportedOperationException("Not supported yet.");
   }
   
 }

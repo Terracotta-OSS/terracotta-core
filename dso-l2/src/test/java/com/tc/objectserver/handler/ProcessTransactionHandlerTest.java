@@ -112,9 +112,12 @@ public class ProcessTransactionHandlerTest {
     
     when(this.entityPersistor.getNextConsumerID()).thenReturn(1L);
     MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(mock(VoltronEntityReceivedResponse.class));
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(mock(VoltronEntityRetiredResponse.class));
+    VoltronEntityAppliedResponse msg = when(mock(VoltronEntityAppliedResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(msg);
+    VoltronEntityReceivedResponse rsp = when(mock(VoltronEntityReceivedResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(rsp);
+    VoltronEntityRetiredResponse retire = when(mock(VoltronEntityRetiredResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(retire);
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);

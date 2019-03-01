@@ -64,6 +64,11 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
       public void message(TransactionID tid, byte[] message) {
         handler.handleMessage(tid, message);
       }
+
+      @Override
+      public void stats(TransactionID tid, long[] message) {
+        handler.handleStatistics(tid, message);
+      }
     });
   }
 }

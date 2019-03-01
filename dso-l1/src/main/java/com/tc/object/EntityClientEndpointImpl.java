@@ -29,7 +29,6 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodecException;
 
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.object.InFlightStats.Type;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.Assert;
 import org.terracotta.exception.EntityException;
@@ -258,7 +257,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       long now = System.nanoTime();
       msg.setStatisticsBoundries(startTime, now);
       msg.runOnRetire(()->{
-        long[] vals = new long[Type.values().length];
+        long[] vals = new long[StatType.values().length];
         msg.collect(vals);
         stats.collect(vals);
       });

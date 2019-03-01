@@ -36,6 +36,7 @@ public interface VoltronEntityMultiResponse extends TCMessage {
     void result(TransactionID tid, byte[] result);
     void message(ClientInstanceID cid, byte[] message);
     void message(TransactionID tid, byte[] message);
+    void stats(TransactionID tid, long[] message);
   }
   
   int replay(ReplayReceiver receiver);
@@ -46,7 +47,9 @@ public interface VoltronEntityMultiResponse extends TCMessage {
   boolean addResultAndRetire(TransactionID tid, byte[] result);
   boolean addServerMessage(ClientInstanceID cid, byte[] message);
   boolean addServerMessage(TransactionID cid, byte[] message);
+  boolean addStats(TransactionID cid, long[] timings);
+  
   void stopAdding();
   
-  boolean isEmpty();
+  boolean startAdding();
 }

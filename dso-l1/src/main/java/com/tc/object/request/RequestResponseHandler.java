@@ -75,4 +75,6 @@ public interface RequestResponseHandler {
    * @param message opaque message
    */
   void handleMessage(TransactionID transaction, byte[] message);
+  
+  void handleStatistics(TransactionID transaction, long[] message);
 }

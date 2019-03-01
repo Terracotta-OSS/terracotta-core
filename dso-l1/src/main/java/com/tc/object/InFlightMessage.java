@@ -80,6 +80,8 @@ public class InFlightMessage implements PrettyPrintable {
   private long retired;
   private long end;
   
+  private long[] serverStats;
+  
   public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean isDeferred) {
     this.eid = eid;
     this.message = message.get();
@@ -103,14 +105,20 @@ public class InFlightMessage implements PrettyPrintable {
   
   public void collect(long[] stats) {
     if (stats != null) {
-      stats[InFlightStats.Type.CLIENT_ENCODE.ordinal()] = start;
-      stats[InFlightStats.Type.CLIENT_SEND.ordinal()] = send;
-      stats[InFlightStats.Type.CLIENT_SENT.ordinal()] = sent;
-      stats[InFlightStats.Type.CLIENT_GOT.ordinal()] = got;
-      stats[InFlightStats.Type.SERVER_COMPLETE.ordinal()] = complete;
-      stats[InFlightStats.Type.SERVER_RECEIVED.ordinal()] = received;
-      stats[InFlightStats.Type.SERVER_RETIRED.ordinal()] = retired;
-      stats[InFlightStats.Type.CLIENT_DECODED.ordinal()] = end;
+      stats[StatType.CLIENT_ENCODE.ordinal()] = start;
+      stats[StatType.CLIENT_SEND.ordinal()] = send;
+      stats[StatType.CLIENT_SENT.ordinal()] = sent;
+      stats[StatType.CLIENT_GOT.ordinal()] = got;
+      stats[StatType.CLIENT_COMPLETE.ordinal()] = complete;
+      stats[StatType.CLIENT_RECEIVED.ordinal()] = received;
+      stats[StatType.CLIENT_RETIRED.ordinal()] = retired;
+      stats[StatType.CLIENT_DECODED.ordinal()] = end;
+      if (serverStats != null) {
+        stats[StatType.SERVER_ADD.ordinal()] = serverStats[0];
+        stats[StatType.SERVER_SCHEDULE.ordinal()] = serverStats[1];
+        stats[StatType.SERVER_BEGININVOKE.ordinal()] = serverStats[2];
+        stats[StatType.SERVER_ENDINVOKE.ordinal()] = serverStats[3];
+      }
     }
   }
   
@@ -353,5 +361,9 @@ public class InFlightMessage implements PrettyPrintable {
     if (monitor != null) {
       monitor.close();
     }
+  }
+  
+  void addServerStatistics(long[] stats) {
+    this.serverStats = stats;
   }
 }
