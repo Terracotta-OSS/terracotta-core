@@ -299,10 +299,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private void addSequentially(ClientID target, Predicate<VoltronEntityMultiResponse> adder) {
     // don't bother if the client isNull, no where to send the message
     // if not, compute the result and schedule send if neccessary
-    VoltronEntityMultiResponse vmr = null;
-    while (!target.isNull() && vmr == null) {
+    while (!target.isNull()) {
       // get the vmr.  most cases, will be present but if not create one 
-      vmr = invokeReturn.computeIfAbsent(target, (client)-> {
+      VoltronEntityMultiResponse vmr = invokeReturn.computeIfAbsent(target, (client)-> {
           Optional<MessageChannel> channel = safeGetChannel(client);
           if (channel.isPresent()) {
             return (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
@@ -316,14 +315,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
       } else {
         // enqueue if start adding returns true;  this means first to add
         boolean enqueue = vmr.startAdding();
-        if (!adder.test(vmr)) {
-          vmr = null;
-        }
-        if (enqueue) {
-          if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
-            waitForTransactions(vmr);
-            vmr.send();
-          } else {
+        try {
+          if (adder.test(vmr)) {
+            // added the message, exit the loop
+            break;
+          }
+        } finally {
+          if (enqueue) {
             multiSend.getSink().addToSink(new ResponseMessage(vmr));
           }
         }

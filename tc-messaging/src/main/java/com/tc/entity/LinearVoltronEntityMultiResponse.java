@@ -29,6 +29,7 @@ import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -238,9 +239,15 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     }
     putNVPair(DONE_ID,count);
   }
+  
+  private boolean started = false;
 
   @Override
-  public boolean isEmpty() {
-    return timeline.isEmpty();
-  } 
+  public synchronized boolean startAdding() {
+    if (!stopAdding && !started) {
+      started = true;
+      return true;
+    }
+    return false;
+  }
 }
