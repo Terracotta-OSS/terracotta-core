@@ -265,9 +265,15 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     putNVPair(DONE_ID,count);
     
   }
+  
+  private boolean started = false;
 
   @Override
-  public boolean startAdding() {
-    return open.attemptSet();
+  public synchronized boolean startAdding() {
+    if (!stopAdding && !started) {
+      started = true;
+      return true;
+    }
+    return false;
   }
 }
