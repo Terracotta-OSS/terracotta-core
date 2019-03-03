@@ -216,7 +216,7 @@ private final ITestWaiter sharedLockState;
       this.logger.output("getOneTerminatedServer");
       this.sharedLockState.checkDidPass();
       ServerProcess one = null;
-      if (!this.terminatedServers.isEmpty()) {
+      if (!this.terminatedServers.isEmpty() && !isShuttingDown) {
         one = this.terminatedServers.get(0);
       }
       return one;
@@ -333,9 +333,20 @@ private final ITestWaiter sharedLockState;
     }
   }
   
-  private <T> Collection<T> makeCopy(Collection<T> servers) {
+  private Collection<ServerProcess> collectAllRunningServers() {
     synchronized (this.sharedLockState) {
-      List<T> copy = new ArrayList<>(servers);
+      List<ServerProcess> copy = new ArrayList<>();
+      copy.addAll(this.passiveServers);
+      copy.addAll(this.unknownRunningServers);
+      copy.add(this.activeServer);
+      return copy;
+    }
+  }
+  
+  private Collection<ClientRunner> collectRunningClients() {
+    synchronized (this.sharedLockState) {
+      List<ClientRunner> copy = new ArrayList<>();
+      copy.addAll(this.runningClients);
       return copy;
     }
   }
@@ -370,22 +381,13 @@ private final ITestWaiter sharedLockState;
               + " clients: " + this.runningClients.size()
               );
         }
-        for (ClientRunner client : makeCopy(this.runningClients)) {
+        for (ClientRunner client : collectRunningClients()) {
           client.forceTerminate();
         }
-        for (ServerProcess server : makeCopy(this.unknownRunningServers)) {
+        for (ServerProcess server : collectAllRunningServers()) {
           safeStop(server);
         }
-        for (ServerProcess server : makeCopy(this.passiveServers)) {
-          safeStop(server);
-        }
-        ServerProcess active = null;
-        synchronized (this.sharedLockState) {
-          active = this.activeServer;
-        }
-        if (null != active) {
-          safeStop(active);
-        }
+
         synchronized (this.sharedLockState) {
           safeWaitWithTimeout(10, TimeUnit.SECONDS);
         }
