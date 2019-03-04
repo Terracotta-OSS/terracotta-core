@@ -138,7 +138,6 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     private boolean shouldBlockGetOnRetire = true;
     private InvokeMonitor<R> monitor;
     private Executor executor;
-    private boolean deferred;
 
     // TODO: fill in durability/consistency options here.
 
@@ -185,9 +184,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       return this;
     }
     
-    @Override
+    @Deprecated @Override
     public InvocationBuilder<M, R> asDeferredResponse() {
-      this.deferred = true;
       return this;
     }    
 
@@ -250,7 +248,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       invoked = true;
       InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
       long start = System.nanoTime();
-      return returnTypedInvoke(start, invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, time, units, codec.encodeMessage(request)));
+      return returnTypedInvoke(start, invocationHandler.invokeActionWithTimeout(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, time, units, codec.encodeMessage(request)));
     }
     
     private void collectStats(long startTime, InFlightMessage msg) {
@@ -269,7 +267,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       invoked = true;
       InFlightMonitor<R> ifm = (this.monitor != null) ? new InFlightMonitor<>(codec, this.monitor, executor) : null;
       long startTime = System.nanoTime();
-      return returnTypedInvoke(startTime, invocationHandler.invokeAction(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, this.deferred, codec.encodeMessage(request)));
+      return returnTypedInvoke(startTime, invocationHandler.invokeAction(entityID, invokeDescriptor, this.acks, ifm, this.requiresReplication, this.shouldBlockGetOnRetire, codec.encodeMessage(request)));
     }
 
     private void checkInvoked() {
