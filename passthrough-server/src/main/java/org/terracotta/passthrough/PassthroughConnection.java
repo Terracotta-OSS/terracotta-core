@@ -35,7 +35,6 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
@@ -139,18 +138,17 @@ public class PassthroughConnection implements Connection {
     // going to be re-sent - otherwise, we may double-release or double-acquire).
     boolean shouldWaitForRetired = false;
     boolean forceGetToBlockOnRetire = true;
-    boolean deferred = false;
-    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, deferred, null);
+    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, null);
   }
 
   /**
    * This entry-point is specifically used for entity-defined action messages.
    */
-  public Future<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, boolean deferred, PassthroughMonitor monitor) {
-    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, deferred, monitor);
+  public Future<byte[]> invokeActionAndWaitForAcks(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
+    return invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
   }
 
-  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, boolean deferred, PassthroughMonitor monitor) {
+  private PassthroughWait invokeAndWait(PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
     // If we have already disconnected, fail with IllegalStateException (this is consistent with the double-close case).
     if(state == State.INIT) {
       throw new IllegalStateException("Connection is not in " + State.RUNNING + " state");
@@ -158,7 +156,7 @@ public class PassthroughConnection implements Connection {
     if (state == State.CLOSED) {
       throw new ConnectionClosedException("Connection already closed");
     }
-    PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, deferred, monitor);
+    PassthroughWait waiter = this.connectionState.sendNormal(this, message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
     if (Thread.currentThread() == clientThread) {
 //  this check is kind of horrible but if this is the client thread as the result of being invoked from within 
 //  message handling (server originated), then just do message completion locally.
@@ -264,7 +262,11 @@ public class PassthroughConnection implements Connection {
             } else {
               error = PassthroughMessageCodec.deserializeExceptionFromArray(bytes);
             }
-            handleComplete(sender, transactionID, result, error);
+            if (type == Type.MONITOR_MESSAGE) {
+              handleMonitor(sender, transactionID, result);
+            } else {
+              handleComplete(sender, transactionID, result, error);
+            }
             break;
           }
           case RETIRE_FROM_SERVER:
@@ -324,12 +326,12 @@ public class PassthroughConnection implements Connection {
       waiter.handleComplete(result, error);
     }
   }
-
-  private void handleMonitor(PassthroughServerProcess sender, long transactionID, byte[] result, EntityException error) {
+  
+  private void handleMonitor(PassthroughServerProcess sender, long transactionID, byte[] result) {
     PassthroughWait waiter = this.connectionState.getWaiterForTransaction(sender, transactionID);
     // Note that we may fail because this server may be dead.
     if (null != waiter) {
-      waiter.handleMonitor(result, error);
+      waiter.handleMonitor(result);
     }
   }
   
@@ -402,8 +404,7 @@ public class PassthroughConnection implements Connection {
     boolean shouldWaitForCompleted = false;
     boolean shouldWaitForRetired = false;
     boolean forceGetToBlockOnRetire = false;
-    boolean deferred = false;
-    Future<byte[]> received = invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, deferred, null);
+    Future<byte[]> received = invokeAndWait(message, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, null);
     try {
       received.get();
     } catch (InterruptedException e) {

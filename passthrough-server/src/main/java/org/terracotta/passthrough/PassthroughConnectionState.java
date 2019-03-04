@@ -48,7 +48,7 @@ public class PassthroughConnectionState {
     return serverProcess.isServerThread();
   }
 
-  public synchronized PassthroughWait sendNormal(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, boolean deferred, PassthroughMonitor monitor) {
+  public synchronized PassthroughWait sendNormal(PassthroughConnection sender, PassthroughMessage message, boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
     // This uses the normal server process so wait for it to become available.
     while (null == this.serverProcess) {
       try {
@@ -66,16 +66,16 @@ public class PassthroughConnectionState {
     }
     return createAndSend(this.serverProcess, this.inFlightMessages, sender, message, 
         oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, 
-        shouldWaitForRetired, forceGetToBlockOnRetire, deferred, monitor);
+        shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
   }
 
   private PassthroughWait createAndSend(PassthroughServerProcess target, Map<Long, PassthroughWait> tracker, 
       PassthroughConnection sender, PassthroughMessage message, long oldestTransactionID, 
       boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, 
-      boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, boolean deferred,
+      boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire,
       PassthroughMonitor monitor
   ) {
-    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, deferred, monitor);
+    PassthroughWait waiter = new PassthroughWait(shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, monitor);
     long transactionID = this.nextTransactionID;
     this.nextTransactionID += 1;
     message.setTransactionTracking(transactionID, oldestTransactionID);
@@ -98,7 +98,7 @@ public class PassthroughConnectionState {
     Assert.assertTrue(null != this.reconnectingServerProcess);
     // We won't bother clearing transactions on re-send.
     long oldestTransactionID = 0;
-    return createAndSend(this.reconnectingServerProcess, this.inFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, false, null);
+    return createAndSend(this.reconnectingServerProcess, this.inFlightMessages, sender, message, oldestTransactionID, shouldWaitForSent, shouldWaitForReceived, shouldWaitForCompleted, shouldWaitForRetired, forceGetToBlockOnRetire, null);
   }
 
   public synchronized Map<Long, PassthroughWait> enterReconnectState(PassthroughServerProcess newServerProcess) {

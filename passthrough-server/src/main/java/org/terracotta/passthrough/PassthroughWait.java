@@ -51,15 +51,13 @@ public class PassthroughWait implements Future<byte[]> {
   private boolean waitingForComplete;
   private boolean waitingForRetired;
   private boolean forceGetToBlockOnRetire;
-  private boolean deferred;
   private boolean canGetReturn;
-  private boolean canChangeResponse;
   private byte[] response;
   private EntityException checkedException;
   private RuntimeEntityException uncheckedException;
-  private PassthroughMonitor monitor;
+  private final PassthroughMonitor monitor;
 
-  public PassthroughWait(boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, boolean deferred, PassthroughMonitor monitor) {
+  public PassthroughWait(boolean shouldWaitForSent, boolean shouldWaitForReceived, boolean shouldWaitForCompleted, boolean shouldWaitForRetired, boolean forceGetToBlockOnRetire, PassthroughMonitor monitor) {
     this.shouldWaitForReceived = shouldWaitForReceived;
     this.shouldWaitForCompleted = shouldWaitForCompleted;
     this.shouldWaitForRetired = shouldWaitForRetired;
@@ -70,10 +68,7 @@ public class PassthroughWait implements Future<byte[]> {
     this.waitingForComplete = shouldWaitForCompleted;
     this.waitingForRetired = shouldWaitForRetired;
     this.forceGetToBlockOnRetire = forceGetToBlockOnRetire;
-    this.deferred = deferred;
     this.canGetReturn = false;
-    // We can always change the response, when we first start.
-    this.canChangeResponse = true;
     this.response = null;
     this.monitor = monitor;
   }
@@ -173,30 +168,16 @@ public class PassthroughWait implements Future<byte[]> {
 
   public synchronized void handleComplete(byte[] result, EntityException error) {
     this.waitingForComplete = false;
-    if (deferred && error == null) {
-      if (monitor != null && this.response != null) {
-        monitor.sendResponse(this.response);
-      }
-      this.response = result;
-    } else if (this.canChangeResponse) {
-      this.response = result;
-      this.checkedException = error;
-      // We will only allow more changes to this response if we are blocking the get on the retire.  Otherwise, we only
-      // want to return the first value.
-      this.canChangeResponse = this.forceGetToBlockOnRetire;
-    }
+    this.response = result;
+    this.checkedException = error;
     if (!this.forceGetToBlockOnRetire) {
       this.canGetReturn = true;
     }
     notifyAll();
   }
   
-  public synchronized void handleMonitor(byte[] result, EntityException error) {
-    if (error != null || deferred) {
-      handleComplete(result, error);
-    } else {
-      if (result != null) monitor.sendResponse(result);
-    }
+  public synchronized void handleMonitor(byte[] result) {
+    if (result != null) monitor.sendResponse(result);
   }
   
   public synchronized void handleRetire() {
@@ -218,7 +199,6 @@ public class PassthroughWait implements Future<byte[]> {
     this.waitingForComplete = this.shouldWaitForCompleted;
     this.waitingForRetired = this.shouldWaitForRetired;
     this.canGetReturn = false;
-    this.canChangeResponse = true;
     this.response = null;
     this.checkedException = null;
     return this.rawMessageForResend;
