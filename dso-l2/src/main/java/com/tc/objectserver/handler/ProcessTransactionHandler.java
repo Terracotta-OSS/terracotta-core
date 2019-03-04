@@ -127,6 +127,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       } else if (response instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)response).getTransactionID());
       } else {
+        // only applied messages should be sent back to the client
         Assert.fail("Unexpected message type: " + response.getClass());
       }
       boolean didSend = response.send();
@@ -292,7 +293,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private void insertMessageInStream(VoltronEntityResponse msg) {
     // cutoff multi response so that a multi-message enqueued before this message do not
     // capture new messages intended to be sent after this one.
-    if (!msg.getDestinationNodeID().isNull()) {
+    // only actions that were client generated need to be sent back to the client
+    if (!msg.getDestinationNodeID().isNull()  && !msg.getTransactionID().isNull()) {
       VoltronEntityMultiResponse vmr = invokeReturn.remove((ClientID)msg.getDestinationNodeID());
       if (vmr != null) {
         vmr.stopAdding();
@@ -309,7 +311,17 @@ public class ProcessTransactionHandler implements ReconnectListener {
       VoltronEntityMultiResponse vmr = invokeReturn.computeIfAbsent(target, (client)-> {
           Optional<MessageChannel> channel = safeGetChannel(client);
           if (channel.isPresent()) {
-            return (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+            VoltronEntityMultiResponse msg = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
+     //  use direct execution under map lock.  this makes sure there
+     //  is only one for this client
+            if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+              Assert.assertTrue(adder.test(msg));
+              msg.send();
+              return null;
+            } else {
+     // no direct execution, return the msg
+              return msg;
+            }
           } else {
             return null;
           }
