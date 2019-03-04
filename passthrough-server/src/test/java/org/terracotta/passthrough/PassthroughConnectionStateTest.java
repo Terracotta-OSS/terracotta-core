@@ -38,7 +38,7 @@ public class PassthroughConnectionStateTest {
 
   private static void sendOneMessageAndVerify(PassthroughConnectionState passthroughConnectionState, ArgumentCaptor<byte[]> byteArgumentCaptor, long expectedOldTxnID, long expectedCurTxnID) {
     passthroughConnectionState.sendNormal(mock(PassthroughConnection.class), PassthroughMessageCodec.createAckMessage(),
-        false, false, false, false, false, false, mock(PassthroughMonitor.class));
+        false, false, false, false, false, mock(PassthroughMonitor.class));
     TestTxnInfo testTxnInfo = PassthroughMessageCodec.decodeRawMessage((type, shouldReplicate, transactionID, oldestTransactionID, input) -> new TestTxnInfo(oldestTransactionID, transactionID), byteArgumentCaptor
         .getValue());
     assertThat(testTxnInfo.oldestTransactionID <= testTxnInfo.currentTransactionID, is(true));

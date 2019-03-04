@@ -150,7 +150,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
+    @Deprecated @Override
     public InvocationBuilder<M, R> asDeferredResponse() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
