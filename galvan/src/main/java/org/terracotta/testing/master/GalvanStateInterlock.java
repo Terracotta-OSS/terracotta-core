@@ -338,7 +338,9 @@ private final ITestWaiter sharedLockState;
       List<ServerProcess> copy = new ArrayList<>();
       copy.addAll(this.passiveServers);
       copy.addAll(this.unknownRunningServers);
-      copy.add(this.activeServer);
+      if (activeServer != null) {
+        copy.add(this.activeServer);
+      }
       return copy;
     }
   }
