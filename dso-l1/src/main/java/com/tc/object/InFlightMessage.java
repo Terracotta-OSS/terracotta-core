@@ -48,7 +48,6 @@ public class InFlightMessage implements PrettyPrintable {
   private final VoltronEntityMessage message;
   private final EntityID eid;
   private final InFlightMonitor monitor;
-  private final boolean isDeferred;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -63,7 +62,6 @@ public class InFlightMessage implements PrettyPrintable {
   private boolean isSent;
   private EntityException exception;
   private byte[] value;
-  private boolean canSetResult;
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
   private final Trace trace;
@@ -82,7 +80,7 @@ public class InFlightMessage implements PrettyPrintable {
   
   private long[] serverStats;
   
-  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean isDeferred) {
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire) {
     this.eid = eid;
     this.message = message.get();
     this.monitor = monitor;
@@ -91,11 +89,8 @@ public class InFlightMessage implements PrettyPrintable {
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
     this.waitingThreads = new HashSet<>();
-    this.blockGetOnRetired = shouldBlockGetOnRetire || isDeferred;
-    // We always assume that we can set the result, the first time.
-    this.canSetResult = true;
+    this.blockGetOnRetired = shouldBlockGetOnRetire;
     this.trace = Trace.newTrace(this.message, "InFlightMessage");
-    this.isDeferred = isDeferred;
   }
   
   void setStatisticsBoundries(long start, long end) {
@@ -307,33 +302,18 @@ public class InFlightMessage implements PrettyPrintable {
       notifyAll();
     } else {
       Assert.assertNotNull(value);
-      if (isDeferred) {
-        pushOneMessage(value);
-      } else if (this.canSetResult) {
-        this.value = value;
-        if (!this.blockGetOnRetired) {
-          this.getCanComplete = true;
-          notifyAll();
-        }
-        // Determine if this can be over-written - only if we are waiting for the retired.
-        this.canSetResult = this.blockGetOnRetired;
+      this.value = value;
+      if (!this.blockGetOnRetired) {
+        this.getCanComplete = true;
+        notifyAll();
       }
     }
   }
   
-  
-  
-  private void pushOneMessage(byte[] raw) {
-    if (isDeferred) {
-      if (value != null && monitor != null) {
-        monitor.accept(value);
-      } 
-    }
-    value = raw;
-  }
-  
   public synchronized void handleMessage(byte[] raw) {
-    pushOneMessage(raw);
+      if (monitor != null) {
+        monitor.accept(raw);
+      } 
   }
   
   private void ackDelivered(VoltronEntityMessage.Acks ack) {

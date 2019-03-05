@@ -28,6 +28,7 @@ import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
+import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -127,8 +128,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
       } else if (response instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)response).getTransactionID());
       } else {
-        // only applied messages should be sent back to the client
-        Assert.fail("Unexpected message type: " + response.getClass());
+        // only applied messages should be sent back to the client except on resent messages
+        // that path is unoptimized so regular received messages can hit this path
       }
       boolean didSend = response.send();
       if (!didSend) {
@@ -315,7 +316,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
      //  use direct execution under map lock.  this makes sure there
      //  is only one for this client
             if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+              msg.startAdding();
               Assert.assertTrue(adder.test(msg));
+              msg.stopAdding();
               msg.send();
               return null;
             } else {

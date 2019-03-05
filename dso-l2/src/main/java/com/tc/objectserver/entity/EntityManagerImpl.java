@@ -267,15 +267,15 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst) {
     snapshotLock.acquireUninterruptibly();
+    List<ManagedEntity> sortingList = new ArrayList<>(this.entityIndex.values());
     try {
-      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
       Collections.sort(sortingList, this.consumerIdSorter);
-      if (runFirst != null) {
-        runFirst.accept(sortingList);
-      }
       return sortingList;
     } finally {
       snapshotLock.release();
+      if (runFirst != null) {
+        runFirst.accept(sortingList);
+      }
     }
   }
 

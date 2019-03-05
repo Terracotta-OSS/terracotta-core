@@ -227,10 +227,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, 
           Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, 
-          boolean shouldBlockGetOnRetire, boolean deferred, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
+          boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
     long start = System.nanoTime();
     InFlightMessage inFlightMessage = queueInFlightMessage(eid, ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, makeServerAcks(shouldBlockGetOnRetire, acks)),
-            acks, monitor, invokeTimeout, units, shouldBlockGetOnRetire, deferred);
+            acks, monitor, invokeTimeout, units, shouldBlockGetOnRetire);
     long timeLeft = units.toNanos(invokeTimeout) - (System.nanoTime() - start);
     if (invokeTimeout == 0) {
       inFlightMessage.waitForAcks();
@@ -254,11 +254,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   
   @Override
   public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, 
-          InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, boolean deferred, byte[] payload) {
+          InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     try { 
     InFlightMessage inFlightMessage = queueInFlightMessage(eid, 
             ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, makeServerAcks(shouldBlockGetOnRetire, requestedAcks)),
-            requestedAcks, monitor, 0L, TimeUnit.MILLISECONDS, shouldBlockGetOnRetire, deferred);
+            requestedAcks, monitor, 0L, TimeUnit.MILLISECONDS, shouldBlockGetOnRetire);
       inFlightMessage.waitForAcks();
       return inFlightMessage;
     } catch (TimeoutException to) {
@@ -489,7 +489,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private byte[] sendMessageWhileBusy(EntityID eid, Supplier<NetworkVoltronEntityMessage> msg, Set<VoltronEntityMessage.Acks> requestedAcks, final String traceComponentName) throws EntityException {
     while (true) {
       try {
-        InFlightMessage inflight = queueInFlightMessage(eid, msg, requestedAcks, null, 0L, TimeUnit.MILLISECONDS, false, false);
+        InFlightMessage inflight = queueInFlightMessage(eid, msg, requestedAcks, null, 0L, TimeUnit.MILLISECONDS, false);
         inflight.waitForAcks();
         return inflight.get();
       } catch (EntityBusyException busy) {
@@ -516,8 +516,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
             requestedAcks, "ClientEntityManagerImpl.internalRetrieve");
   }
 
-  private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire, boolean isDeferred) throws TimeoutException {
-    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire, isDeferred);
+  private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
     
     // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
         if(enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
