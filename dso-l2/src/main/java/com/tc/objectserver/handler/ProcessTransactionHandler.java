@@ -779,23 +779,24 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     @Override
     public void retired() {
-      this.waiter.get().waitForCompleted();
-      if (!getNodeID().isNull()) {
-        Assert.assertTrue(sent.isSet() || failure.isSet());
-        safeGetChannel(getNodeID()).ifPresent(c -> {
-          if (c.getAttachment("SendStats") != null) {
-            addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));
-          }
-        });
-        addSequentially(getNodeID(), addTo -> {
-          if (heldResult != null) {
-            return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
-          } else {
-            return addTo.addRetired(InvokeHandler.this.getTransaction());
-          }
-        });
-      }
-      MonitoringEventCreator.finish();
+      this.waiter.get().runWhenCompleted(()->{
+        if (!getNodeID().isNull()) {
+          Assert.assertTrue(sent.isSet() || failure.isSet());
+          safeGetChannel(getNodeID()).ifPresent(c -> {
+            if (c.getAttachment("SendStats") != null) {
+              addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));
+            }
+          });
+          addSequentially(getNodeID(), addTo -> {
+            if (heldResult != null) {
+              return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
+            } else {
+              return addTo.addRetired(InvokeHandler.this.getTransaction());
+            }
+          });
+        }
+        MonitoringEventCreator.finish();
+      });
     }
 
     @Override

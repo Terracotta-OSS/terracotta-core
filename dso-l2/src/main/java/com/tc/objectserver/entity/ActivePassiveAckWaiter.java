@@ -39,6 +39,7 @@ public class ActivePassiveAckWaiter {
   private final Set<NodeID> receivedPending;
   private final Set<NodeID> receivedByComplete;
   private final Set<NodeID> completedPending;
+  private Runnable finalizer;
   private final Map<NodeID, ReplicationResultCode> results;
   private final PassiveReplicationBroker parent;
 
@@ -58,6 +59,19 @@ public class ActivePassiveAckWaiter {
       }
     } catch (InterruptedException ie) {
       throw new RuntimeException(ie);
+    }
+  }
+  
+  public void runWhenCompleted(Runnable r) {
+    boolean wasSet = false;
+    synchronized (this) {
+      if (!this.completedPending.isEmpty()) {
+        finalizer = r;
+        wasSet = true;
+      }
+    }
+    if (!wasSet) {
+      r.run();
     }
   }
 
@@ -112,7 +126,17 @@ public class ActivePassiveAckWaiter {
    * @param payload
    * @return True if this was the last outstanding completion required and the waiter is now done.
    */
-  public synchronized boolean didCompleteOnPassive(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
+  public boolean didCompleteOnPassive(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
+    boolean isDone = updateCompletionFlags(onePassive, isNormalComplete, payload);
+//  by passing through the synchronization block above, the finalizer if present 
+//  will be properly visible
+    if (isDone && finalizer != null) {
+      finalizer.run();
+    }
+    return isDone;
+  }
+  
+  private synchronized boolean updateCompletionFlags(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
     // Note that we will try to remove from the received set, but usually it will already have been removed.
     boolean didContainInReceived = this.receivedPending.remove(onePassive);
     if (didContainInReceived) {
