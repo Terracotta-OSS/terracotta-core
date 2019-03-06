@@ -107,6 +107,7 @@ import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
@@ -119,6 +120,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -301,11 +303,17 @@ public class DistributedObjectClient implements TCClient {
 
     DSO_LOGGER.debug("Created channel.");
 
+
     this.clientEntityManager = this.clientBuilder.createClientEntityManager(clientChannel, this.communicationStageManager);
     this.singleMessageReceiver = new RequestReceiveHandler(this.clientEntityManager);
     MultiRequestReceiveHandler mutil = new MultiRequestReceiveHandler(this.clientEntityManager);
     Stage<VoltronEntityMultiResponse> multiResponseStage = this.communicationStageManager.createStage(ClientConfigurationContext.VOLTRON_ENTITY_MULTI_RESPONSE_STAGE, VoltronEntityMultiResponse.class, mutil, 1, maxSize);
-
+    clientChannel.addAttachment("ChannelStats", (PrettyPrintable)() -> {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("messageHandler", mutil.getStateMap());
+        return map;
+      }, true);
+    
     final ProductInfo pInfo = ProductInfo.getInstance();
     
     ClientHandshakeMessageFactory chmf = (u, n, c)->{

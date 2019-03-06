@@ -53,6 +53,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.text.MapListPrettyPrint;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
@@ -271,6 +272,17 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     Map<String, Object> map = new LinkedHashMap<>();
     for (EntityClientEndpointImpl<?,?> s : objectStoreMap.values()) {
       map.put(s.getEntityID().toString(), s.getStatistics().getStateMap());
+    }
+    Object stats = this.channel.getAttachment("ChannelStats");
+    Map<String, Object> sub = new LinkedHashMap<>();
+    sub.put("connection", channel.getConnectionID());
+    sub.put("local", channel.getLocalAddress());
+    sub.put("remote", channel.getRemoteAddress());
+    sub.put("product", channel.getProductID());
+    sub.put("client", channel.getClientID());
+    map.put("channel", sub);
+    if (stats instanceof PrettyPrintable) {
+      sub.put("stats", ((PrettyPrintable)stats).getStateMap());
     }
     return map;
   }

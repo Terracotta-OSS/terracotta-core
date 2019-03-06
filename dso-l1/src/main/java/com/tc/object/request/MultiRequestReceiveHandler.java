@@ -24,30 +24,48 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
+import com.tc.text.PrettyPrintable;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
 
 
-public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEntityMultiResponse> {
+public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEntityMultiResponse> implements PrettyPrintable {
   private final RequestResponseHandler handler;
+  private final LongAdder opCount = new LongAdder();
+  private final LongAdder msgCount = new LongAdder();
 
   public MultiRequestReceiveHandler(RequestResponseHandler handler) {
     this.handler = handler;
   }
 
   @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("opCount", opCount.longValue());
+    map.put("msgCount", msgCount.longValue());
+    return map;
+  }
+
+  @Override
   public void handleEvent(VoltronEntityMultiResponse response) throws EventHandlerException {
+    msgCount.increment();
     response.replay(new VoltronEntityMultiResponse.ReplayReceiver() {
       @Override
       public void received(TransactionID tid) {
+        opCount.increment();
         handler.received(tid);
       }
 
       @Override
       public void retired(TransactionID tid) {
+        opCount.increment();
         handler.retired(tid);
       }
 
       @Override
       public void result(TransactionID tid, byte[] result) {
+        opCount.increment();
         if (result != null) {
           handler.complete(tid, result);
         } else {
@@ -57,16 +75,19 @@ public class MultiRequestReceiveHandler extends AbstractEventHandler<VoltronEnti
 
       @Override
       public void message(ClientInstanceID cid, byte[] message) {
+        opCount.increment();
         handler.handleMessage(cid, message);
       }
 
       @Override
       public void message(TransactionID tid, byte[] message) {
+        opCount.increment();
         handler.handleMessage(tid, message);
       }
 
       @Override
       public void stats(TransactionID tid, long[] message) {
+        opCount.increment();
         handler.handleStatistics(tid, message);
       }
     });
