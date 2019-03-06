@@ -52,4 +52,8 @@ public interface VoltronEntityMultiResponse extends TCMessage {
   void stopAdding();
   
   boolean startAdding();
+  
+  default boolean shouldSend() {
+    return true;
+  }
 }

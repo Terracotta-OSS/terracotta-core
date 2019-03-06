@@ -28,7 +28,6 @@ import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
-import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -315,7 +314,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
             VoltronEntityMultiResponse msg = (VoltronEntityMultiResponse)channel.get().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
      //  use direct execution under map lock.  this makes sure there
      //  is only one for this client
-            if (DirectExecutionMode.isActivated() && multiSend.isEmpty()) {
+            if (DirectExecutionMode.isActivated() && msg.shouldSend() && multiSend.isEmpty()) {
               msg.startAdding();
               Assert.assertTrue(adder.test(msg));
               msg.stopAdding();
@@ -779,23 +778,24 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     @Override
     public void retired() {
-      this.waiter.get().waitForCompleted();
-      if (!getNodeID().isNull()) {
-        Assert.assertTrue(sent.isSet() || failure.isSet());
-        safeGetChannel(getNodeID()).ifPresent(c -> {
-          if (c.getAttachment("SendStats") != null) {
-            addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));
-          }
-        });
-        addSequentially(getNodeID(), addTo -> {
-          if (heldResult != null) {
-            return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
-          } else {
-            return addTo.addRetired(InvokeHandler.this.getTransaction());
-          }
-        });
-      }
-      MonitoringEventCreator.finish();
+      this.waiter.get().runWhenCompleted(()->{
+        if (!getNodeID().isNull()) {
+          Assert.assertTrue(sent.isSet() || failure.isSet());
+          safeGetChannel(getNodeID()).ifPresent(c -> {
+            if (c.getAttachment("SendStats") != null) {
+              addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));
+            }
+          });
+          addSequentially(getNodeID(), addTo -> {
+            if (heldResult != null) {
+              return addTo.addResultAndRetire(InvokeHandler.this.getTransaction(), heldResult);
+            } else {
+              return addTo.addRetired(InvokeHandler.this.getTransaction());
+            }
+          });
+        }
+        MonitoringEventCreator.finish();
+      });
     }
 
     @Override

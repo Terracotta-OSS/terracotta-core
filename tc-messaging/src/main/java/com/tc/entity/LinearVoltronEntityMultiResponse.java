@@ -29,10 +29,8 @@ import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
-import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +41,6 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
   
   private final byte OP_ID = 1;
   private final byte DONE_ID = 2;
-  private final byte STATS_ID = 3;
   
   public enum Operation {
     RECEIVED,
@@ -82,7 +79,6 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     
   private List<Op> timeline = new LinkedList<>();
 
-  private SetOnceFlag open = new SetOnceFlag();
   private boolean stopAdding;
   
   private static class Op {
@@ -181,8 +177,16 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     if (!stopAdding) {
       Op op = new Op(type, id, data);
       timeline.add(op);
-      if (type == Operation.DONE) {
-        stopAdding = true;
+      switch (type) {
+        case DONE:
+          stopAdding = true;
+          // fallthrough
+        case RESULT_RETIRED:
+        case RECEIVED:
+        case RESULT:
+          immediateSend = true;
+          break;
+        default:
       }
       return true;
     }
@@ -275,5 +279,14 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
       return true;
     }
     return false;
+  }
+  // the setter and getter on this variable is always the same 
+  // thread and it is used for a minor optimation which does not affect correctness.
+  // As a result it does not need synchronization or volatile  
+  private boolean immediateSend = false;
+  
+  @Override
+  public boolean shouldSend() {
+    return immediateSend;
   }
 }

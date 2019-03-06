@@ -170,8 +170,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.version = getVersion();
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
-    serverCount = configSetupManager.allCurrentlyKnownServers().length - 2;  // minus 2 because we don't need to include local node and main selector can be used if only talking to one other server
-
+    serverCount = configSetupManager.allCurrentlyKnownServers().length;
+    
     this.groupPort = l2DSOConfig.getGroupPort().getValue();
     this.weightGeneratorFactory = weightGenerator;
 
@@ -234,7 +234,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
     
-    connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_GROUPS, serverCount, new HealthCheckerConfigImpl(tcProperties
+    connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 : serverCount, new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"), bufferManagerFactory);
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory, 

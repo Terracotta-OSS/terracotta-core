@@ -19,6 +19,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.config.ServerConfigurationManager;
@@ -30,7 +31,6 @@ import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.config.ServerConfiguration;
 import com.tc.objectserver.api.EntityManager;
-import com.tc.services.MappedStateCollector;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
 import com.tc.services.SingleThreadedTimer;
@@ -167,12 +167,7 @@ import com.tc.services.LocalMonitoringProducer;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCounter;
-import com.tc.stats.counter.sampled.SampledCounterConfig;
-import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
-import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
@@ -233,6 +228,8 @@ import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.handler.ReplicationReceivingAction;
+import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.terracotta.config.Configuration;
 
 import java.util.stream.Collectors;
@@ -677,7 +674,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService), eventCollector);
+    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService, knownPeers > 0), eventCollector);
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
@@ -712,14 +709,17 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     connectServerStateToReplicatedState(processTransactionHandler, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Stage<Runnable> replicationSenderStage = stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, Runnable.class, new GenericHandler<>(), 1, maxStageSize);
+    final Sink<ReplicationSendingAction> replicationSenderStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationSendingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
+            (context) -> {throw new AssertionError("no messages to replication");};
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
+    final Sink<ReplicationReceivingAction> replicationReceivingStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE, ReplicationReceivingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
+            (context) -> {throw new AssertionError("no messages to replication");};
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
-        new AbstractEventHandler<ReplicationMessageAck>() {
+      new AbstractEventHandler<ReplicationMessageAck>() {
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
             switch (context.getType()) {
@@ -892,7 +892,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         .getSink().addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
-  private StageController createStageController(LocalMonitoringProducer monitoringSupport) {
+  private StageController createStageController(LocalMonitoringProducer monitoringSupport, boolean knownPeers) {
     StageController control = new StageController();
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
@@ -907,12 +907,14 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 //  turn on the process transaction handler, the active to passive driver, and the replication ack handler, replication handler needs to be shutdown and empty for 
 //  active to start
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.SINGLE_THREADED_FAST_PATH);
-    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);
-    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE);    
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.HYDRATE_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
-    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    if (knownPeers) {
+      control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+      control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    }
     control.addTriggerToState(ServerMode.ACTIVE.getState(), () -> {
       server.updateActivateTime();
   // transition the local monitoring producer to active so the tree is rebuilt as a new active of the stripe
