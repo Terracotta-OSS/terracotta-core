@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
@@ -63,7 +64,7 @@ public class ActiveToPassiveReplicationTest {
     ReplicationSender replicate = mock(ReplicationSender.class);
     ConsistencyManager cmgr = mock(ConsistencyManager.class);
     when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
-    replication = new ActiveToPassiveReplication(cmgr, mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(GroupManager.class));
+    replication = new ActiveToPassiveReplication(cmgr, mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(Sink.class), mock(GroupManager.class));
   }
   
   @Test

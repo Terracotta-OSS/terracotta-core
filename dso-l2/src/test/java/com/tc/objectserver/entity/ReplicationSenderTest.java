@@ -34,6 +34,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -58,13 +59,13 @@ public class ReplicationSenderTest {
   @SuppressWarnings("unchecked")
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
-  Sink<Runnable> sink = new Sink<Runnable>() {
+  Sink<ReplicationSendingAction> sink = new Sink<ReplicationSendingAction>() {
     @Override
-    public void addToSink(Runnable context) {
+    public void addToSink(ReplicationSendingAction context) {
       context.run();
     }
   };
-  Stage<Runnable> stage = mock(Stage.class);
+  Stage<ReplicationSendingAction> stage = mock(Stage.class);
 
   ReplicationSender testSender;
 
@@ -86,7 +87,7 @@ public class ReplicationSenderTest {
   @Before
   public void setUp() throws Exception {
     when(stage.getSink()).thenReturn(sink);
-    this.testSender = new ReplicationSender(stage, groupMgr);
+    this.testSender = new ReplicationSender(sink, groupMgr);
     doAnswer((invoke)-> {
       Object[] args = invoke.getArguments();
       // We need to emulate having sent the message so run it through the serialization mechanism.
@@ -171,7 +172,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      testSender.replicateMessage(node, activity, null);
+      testSender.replicateMessage(node, 0, activity, null);
       });
     System.err.println("filter SDSC");
     validateCollector(validation);
@@ -202,7 +203,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg, null);
+      testSender.replicateMessage(node, 0, msg, null);
       });
     
     System.err.println("filter CDC");
@@ -238,7 +239,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, msg, null);
+      testSender.replicateMessage(node, 0, msg, null);
       });
     
     validateCollector(validation);
@@ -282,10 +283,10 @@ public class ReplicationSenderTest {
           SetOnceFlag sent = new SetOnceFlag();
           SetOnceFlag notsent = new SetOnceFlag();
           if (SyncReplicationActivity.ActivityType.SYNC_START == activityType) {
-            this.testSender.addPassive(node, activity);
+            this.testSender.addPassive(node, 0, activity);
             sent.set();
           } else {
-            this.testSender.replicateMessage(node, activity, (didSend)->{
+            this.testSender.replicateMessage(node, 0, activity, (didSend)->{
               if (didSend) {
                 sent.set();
               } else {

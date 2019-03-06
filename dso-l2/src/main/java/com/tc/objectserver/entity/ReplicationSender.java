@@ -29,6 +29,7 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.FetchID;
 import com.tc.objectserver.handler.GroupMessageBatchContext;
+import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.util.EnumSet;
@@ -59,25 +60,25 @@ public class ReplicationSender {
   private static final boolean debugLogging = logger.isDebugEnabled();
   private static final boolean debugMessaging = PLOGGER.isDebugEnabled();
 
-  private final Sink<Runnable> outgoing;
+  private final Sink<ReplicationSendingAction> outgoing;
 
-  public ReplicationSender(Stage<Runnable> outgoing, GroupManager<AbstractGroupMessage> group) {
+  public ReplicationSender(Sink<ReplicationSendingAction> outgoing, GroupManager<AbstractGroupMessage> group) {
     this.group = group;
-    this.outgoing = outgoing.getSink();
+    this.outgoing = outgoing;
   }
 
   public void removePassive(NodeID dest) {
     filtering.remove(dest);
   }
 
-  public void addPassive(NodeID dest, SyncReplicationActivity activity) {
+  public void addPassive(NodeID dest, int nodeToId, SyncReplicationActivity activity) {
     // Set up the sync state.
-    SyncState state = createAndRegisterSyncState(dest);
+    SyncState state = createAndRegisterSyncState(dest, nodeToId);
     // Send the message.
     state.attemptToSend(activity);
   }
 
-  public void replicateMessage(NodeID dest, SyncReplicationActivity activity, Consumer<Boolean> sentCallback) {
+  public void replicateMessage(NodeID dest, int nodeToId, SyncReplicationActivity activity, Consumer<Boolean> sentCallback) {
     if (debugLogging) {
       logger.debug("WIRE:" + activity);
     }
@@ -85,20 +86,19 @@ public class ReplicationSender {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
     Optional<SyncState> syncing = getSyncState(dest, activity);
-    outgoing.addToSink(()->{
-      Optional<Boolean> didSend = syncing.map(state->state.attemptToSend(activity));
-      if (sentCallback != null) {
-        sentCallback.accept(didSend.orElse(false));
-      }
-    });
+    outgoing.addToSink(new ReplicationSendingAction(nodeToId, ()->{
+          Optional<Boolean> didSend = syncing.map(state->state.attemptToSend(activity));
+          if (sentCallback != null) {
+            sentCallback.accept(didSend.orElse(false));
+          }
+    }));
 
   }
   
-  private SyncState createAndRegisterSyncState(NodeID nodeid) {
+  private SyncState createAndRegisterSyncState(NodeID nodeid, int nodeToId) {
     // We can't already have a state for this passive.
-    Assert.assertTrue(!filtering.containsKey(nodeid));
-
-    return filtering.computeIfAbsent(nodeid, SyncState::new);
+    Assert.assertTrue(!filtering.containsKey(nodeid));    
+    return filtering.computeIfAbsent(nodeid, n -> new SyncState(n, nodeToId));
   }
 
   private Optional<SyncState> getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
@@ -145,8 +145,11 @@ public class ReplicationSender {
 
     private final GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity> batchContext;
     
-    public SyncState(NodeID target) {
+    private final int index;
+        
+    public SyncState(NodeID target, int nodeToId) {
       this.target = target;
+      this.index = nodeToId;
       this.batchContext = new GroupMessageBatchContext<>(ReplicationMessage::createActivityContainer, group, target, maximumBatchSize, idealMessagesInFlight, (node)->flushBatch());  
     }
     
@@ -332,14 +335,14 @@ public class ReplicationSender {
     }
         
     private void flushBatch() {
-      outgoing.addToSink(()->{
+      outgoing.addToSink(new ReplicationSendingAction(index, ()->{
         try {
           this.batchContext.flushBatch();
         } catch (GroupException ge) {
           logger.error("error sending sync to passive");
           ReplicationSender.this.group.zapNode(this.target, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "failed to sync");
         }
-      });
+      }));
     }
   }
 }

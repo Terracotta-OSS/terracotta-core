@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,8 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
+import com.tc.objectserver.handler.ReplicationReceivingAction;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 
@@ -72,14 +75,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
   private final ConsistencyManager consistencyMgr;
+  
+  private final Sink<ReplicationReceivingAction> receiveHandler;
+  private final Map<NodeID, Integer> lane = new ConcurrentHashMap<>();
 
-  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
     this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
     this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
+    this.receiveHandler = processor;
   }
 
   @Override
@@ -126,7 +133,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
       }
       logger.debug("Starting message sequence on " + node);
-      this.replicationSender.addPassive(node, SyncReplicationActivity.createStartMessage());
+      this.replicationSender.addPassive(node, lane.computeIfAbsent(node, n->lane.size()), SyncReplicationActivity.createStartMessage());
       return true;
     } else {
       return false;
@@ -196,18 +203,21 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   public void batchAckReceived(ReplicationMessageAck context) {
     NodeID messageFrom = context.messageFrom();
-    for (ReplicationAckTuple tuple : context.getBatch()) {
-      if (ReplicationResultCode.RECEIVED == tuple.result) {
-        ActivePassiveAckWaiter waiter = waiters.get(tuple.respondTo);
-        if (null != waiter) {
-          waiter.didReceiveOnPassive(messageFrom);
+    Integer id = this.lane.get(messageFrom);
+    this.receiveHandler.addToSink(new ReplicationReceivingAction(id, ()->{
+      for (ReplicationAckTuple tuple : context.getBatch()) {
+        if (ReplicationResultCode.RECEIVED == tuple.result) {
+          ActivePassiveAckWaiter waiter = waiters.get(tuple.respondTo);
+          if (null != waiter) {
+            waiter.didReceiveOnPassive(messageFrom);
+          }
+        } else {
+          // This is a normal completion.
+          boolean isNormalComplete = true;
+          internalAckCompleted(tuple.respondTo, messageFrom, tuple.result, isNormalComplete);
         }
-      } else {
-        // This is a normal completion.
-        boolean isNormalComplete = true;
-        internalAckCompleted(tuple.respondTo, messageFrom, tuple.result, isNormalComplete);
       }
-    }
+    }));
   }
 
   /**
@@ -244,7 +254,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       for (NodeID node : copy) {
         if (!isLocalFlush) {
           // This isn't local-only so try to replicate.
-          this.replicationSender.replicateMessage(node, activity, sent->{
+          this.replicationSender.replicateMessage(node, lane.get(node), activity, sent->{
             if (!sent) {
               // We didn't send so just ack complete, internally.
               boolean isNormalComplete = true;

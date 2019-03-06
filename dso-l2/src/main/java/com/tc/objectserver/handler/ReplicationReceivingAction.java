@@ -16,24 +16,35 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.handler;
 
-import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventHandlerException;
+import com.tc.async.api.MultiThreadedEventContext;
+import com.tc.net.NodeID;
 
-import java.util.concurrent.Callable;
 
-/**
- * @author tim
- */
-public class ReplicationEnvelopeHandler extends AbstractEventHandler<Callable<?>> {
-  @Override
-  public void handleEvent(Callable<?> context) throws EventHandlerException {
-    try {
-      context.call();
-    } catch (Exception e) {
-      throw new EventHandlerException(e);
-    }
+public class ReplicationReceivingAction implements MultiThreadedEventContext, Runnable {
+
+  private final Runnable response;
+  private final Integer destination;
+
+  public ReplicationReceivingAction(Integer skew, Runnable response) {
+    this.destination = skew;
+    this.response = response;
   }
+
+  @Override
+  public void run() {
+    response.run();
+  }
+  
+  @Override
+  public Object getSchedulingKey() {
+    return destination;
+  }
+
+  @Override
+  public boolean flush() {
+    return false;
+  }
+
 }
