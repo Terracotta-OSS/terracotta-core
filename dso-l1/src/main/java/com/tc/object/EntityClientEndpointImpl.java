@@ -255,9 +255,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       long now = System.nanoTime();
       msg.setStatisticsBoundries(startTime, now);
       msg.runOnRetire(()->{
-        long[] vals = new long[StatType.values().length];
-        msg.collect(vals);
-        stats.collect(vals);
+        stats.collect(msg.collect());
       });
     }
 

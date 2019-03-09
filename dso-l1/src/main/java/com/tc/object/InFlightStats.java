@@ -34,7 +34,10 @@ import static com.tc.object.StatType.CLIENT_COMPLETE;
 import static com.tc.object.StatType.CLIENT_RETIRED;
 import static com.tc.object.StatType.SERVER_ADD;
 import static com.tc.object.StatType.SERVER_BEGININVOKE;
+import static com.tc.object.StatType.SERVER_COMPLETE;
 import static com.tc.object.StatType.SERVER_ENDINVOKE;
+import static com.tc.object.StatType.SERVER_RECEIVED;
+import static com.tc.object.StatType.SERVER_RETIRED;
 import static com.tc.object.StatType.SERVER_SCHEDULE;
 
 /**
@@ -58,6 +61,8 @@ class InFlightStats implements PrettyPrintable {
     values.add(new Combo(SERVER_ADD, SERVER_SCHEDULE));
     values.add(new Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE));
     values.add(new Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE));
+    values.add(new Combo(SERVER_RECEIVED, SERVER_COMPLETE));
+    values.add(new Combo(SERVER_COMPLETE, SERVER_RETIRED));
   }
   
   public void collect(long[] input) {

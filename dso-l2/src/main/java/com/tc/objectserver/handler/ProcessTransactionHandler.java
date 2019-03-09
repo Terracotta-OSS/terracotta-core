@@ -37,6 +37,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.StatType;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
@@ -690,14 +691,13 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
 
   private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture, StatisticsCapture {
-
     private Supplier<ActivePassiveAckWaiter> waiter;
     private final SetOnceFlag sent = new SetOnceFlag();
     private final SetOnceFlag failure = new SetOnceFlag();
     private final boolean sendReceived;
     private final boolean holdResultForRetired;
     private byte[] heldResult;
-    private final long[] stats = new long[4];
+    private final long[] stats = new long[StatType.SERVER_RETIRED.serverSpot() + 1];
 
     InvokeHandler(ServerEntityRequest request, Consumer<VoltronEntityResponse> sender, Consumer<byte[]> complete, Consumer<EntityException> failure, boolean reqReceived, boolean reqRetired) {
       super(request, sender, complete, failure);
@@ -712,6 +712,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     @Override
     public void received() {
+      stats[StatType.SERVER_RECEIVED.serverSpot()] = System.nanoTime();
       if (sendReceived) {
         addSequentially(getNodeID(), adder->adder.addReceived(getTransaction()));
       }
@@ -719,16 +720,19 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     @Override
     public void failure(EntityException exp) {
+      stats[StatType.SERVER_COMPLETE.serverSpot()] = System.nanoTime();
       sendFailure(exp);
     }
 
     @Override
     public void complete(byte[] result) {
+      stats[StatType.SERVER_COMPLETE.serverSpot()] = System.nanoTime();
       sendResponse(result);
     }
 
     @Override
     public void complete() {
+      stats[StatType.SERVER_COMPLETE.serverSpot()] = System.nanoTime();
       sendResponse(new byte[0]);
     }
 
@@ -780,6 +784,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     public void retired() {
       this.waiter.get().runWhenCompleted(()->{
         if (!getNodeID().isNull()) {
+          stats[StatType.SERVER_RETIRED.serverSpot()] = System.nanoTime();
           Assert.assertTrue(sent.isSet() || failure.isSet());
           safeGetChannel(getNodeID()).ifPresent(c -> {
             if (c.getAttachment("SendStats") != null) {
@@ -800,22 +805,22 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
     @Override
     public void addMessage() {
-      stats[0] = System.nanoTime();
+      stats[StatType.SERVER_ADD.serverSpot()] = System.nanoTime();
     }
 
     @Override
     public void schedule() {
-      stats[1] = System.nanoTime();
+      stats[StatType.SERVER_SCHEDULE.serverSpot()] = System.nanoTime();
     }
 
     @Override
     public void beginInvoke() {
-      stats[2] = System.nanoTime();
+      stats[StatType.SERVER_BEGININVOKE.serverSpot()] = System.nanoTime();
     }
 
     @Override
     public void endInvoke() {
-      stats[3] = System.nanoTime();
+      stats[StatType.SERVER_ENDINVOKE.serverSpot()] = System.nanoTime();
     }
   }
 

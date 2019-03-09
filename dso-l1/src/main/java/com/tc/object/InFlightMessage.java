@@ -98,7 +98,8 @@ public class InFlightMessage implements PrettyPrintable {
     this.end = end;
   }
   
-  public void collect(long[] stats) {
+  public long[] collect() {
+    long[] stats = new long[StatType.SERVER_RETIRED.ordinal() + 1];
     if (stats != null) {
       stats[StatType.CLIENT_ENCODE.ordinal()] = start;
       stats[StatType.CLIENT_SEND.ordinal()] = send;
@@ -109,12 +110,16 @@ public class InFlightMessage implements PrettyPrintable {
       stats[StatType.CLIENT_RETIRED.ordinal()] = retired;
       stats[StatType.CLIENT_DECODED.ordinal()] = end;
       if (serverStats != null) {
-        stats[StatType.SERVER_ADD.ordinal()] = serverStats[0];
-        stats[StatType.SERVER_SCHEDULE.ordinal()] = serverStats[1];
-        stats[StatType.SERVER_BEGININVOKE.ordinal()] = serverStats[2];
-        stats[StatType.SERVER_ENDINVOKE.ordinal()] = serverStats[3];
+        stats[StatType.SERVER_ADD.ordinal()] = serverStats[StatType.SERVER_ADD.serverSpot()];
+        stats[StatType.SERVER_SCHEDULE.ordinal()] = serverStats[StatType.SERVER_SCHEDULE.serverSpot()];
+        stats[StatType.SERVER_BEGININVOKE.ordinal()] = serverStats[StatType.SERVER_BEGININVOKE.serverSpot()];
+        stats[StatType.SERVER_ENDINVOKE.ordinal()] = serverStats[StatType.SERVER_ENDINVOKE.serverSpot()];
+        stats[StatType.SERVER_RECEIVED.ordinal()] = serverStats[StatType.SERVER_RECEIVED.serverSpot()];
+        stats[StatType.SERVER_RETIRED.ordinal()] = serverStats[StatType.SERVER_RETIRED.serverSpot()];
+        stats[StatType.SERVER_COMPLETE.ordinal()] = serverStats[StatType.SERVER_COMPLETE.serverSpot()];
       }
     }
+    return stats;
   }
   
   synchronized void runOnRetire(Runnable r) {
