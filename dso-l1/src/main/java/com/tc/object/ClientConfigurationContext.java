@@ -20,7 +20,6 @@ package com.tc.object;
 
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
-import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 

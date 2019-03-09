@@ -129,10 +129,10 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
   }
 
   private void createWorkerQueues(int queueCount, QueueFactory queueFactory, Class<EC> type, int queueSize, String stage) {
-    if (queueSize != Integer.MAX_VALUE) {
+    if (queueSize != Integer.MAX_VALUE && queueSize != 0) {
       queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
     }
-    Assert.eval(queueSize > 0);
+    Assert.eval(queueSize >= 0);
 
     for (int i = 0; i < queueCount; i++) {
       this.sourceQueues[i] = new MultiSourceQueueImpl(queueFactory.createInstance(type, queueSize), v->this.fcheck = v, i);

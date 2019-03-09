@@ -53,15 +53,12 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
                           String stageName,
                           int queueSize) {
     super(loggerProvider, stageName, creator);
-    this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize, stageName);
+    this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize);
   }
 
   private SourceQueueImpl createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
-                                                                int queueSize,
-                                                                String stage) {
-    BlockingQueue<Event> q = null;
-
-    Assert.eval(queueSize > 0);
+                                                                int queueSize) {
+    Assert.eval(queueSize >= 0);
 
     return new SourceQueueImpl(queueFactory.createInstance(type, queueSize));
   }
