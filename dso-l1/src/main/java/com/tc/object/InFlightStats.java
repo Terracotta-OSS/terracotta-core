@@ -45,7 +45,7 @@ import static com.tc.object.StatType.SERVER_SCHEDULE;
  */
 class InFlightStats implements PrettyPrintable {
   
-  private final List<Combo> values = new ArrayList<>();
+  private static final List<Combo> values = new ArrayList<>();
   private final LongAdder totalCount = new LongAdder();
 
   public InFlightStats() {
@@ -79,21 +79,22 @@ class InFlightStats implements PrettyPrintable {
     return map;
   } 
   
-  private static class Combo {
+  static class Combo {
     private final StatType from;
     private final StatType to;
     private final LongAdder value = new LongAdder();
 
-    public Combo(StatType from, StatType to) {
+    Combo(StatType from, StatType to) {
       this.from = from;
       this.to = to;
     }
     
-    private void add(long[] vals) {
+    Combo add(long[] vals) {
       value.add(vals[to.ordinal()] - vals[from.ordinal()]);
+      return this;
     }
     
-    private long value() {
+    long value() {
       return value.sum();
     }
 

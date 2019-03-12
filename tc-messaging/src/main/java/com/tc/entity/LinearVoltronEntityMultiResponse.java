@@ -135,6 +135,7 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
           receiver.retired(new TransactionID(op.id));
           break;
         case DONE:
+          receiver.stats(TransactionID.NULL_ID, new long[] {op.id});
           break;
         case STATS:
           ByteBuffer data = ByteBuffer.wrap(op.data);
@@ -229,8 +230,9 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
   }
   
   @Override
-  public synchronized void stopAdding() {
-    stopAdding = true;
+  public void stopAdding() {
+    stopAddingTime = System.nanoTime();
+    buildOp(Operation.DONE, stopAddingTime - startAddingTime, null);
     timeline = Collections.unmodifiableList(timeline);
   }
   
@@ -270,11 +272,14 @@ public class LinearVoltronEntityMultiResponse extends DSOMessageBase implements 
     
   }
   
+  private long stopAddingTime;
+  private long startAddingTime;
   private boolean started = false;
 
   @Override
   public synchronized boolean startAdding() {
-    if (!stopAdding && !started) {
+    if (!started) {
+      startAddingTime = System.nanoTime();
       started = true;
       return true;
     }

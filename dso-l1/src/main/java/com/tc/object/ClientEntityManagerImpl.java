@@ -96,6 +96,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   
   private final LongAdder msgCount = new LongAdder();
   private final LongAdder inflights = new LongAdder();
+  private final LongAdder addWindow = new LongAdder();
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
     this.logger = new ClientIDLogger(channel::getClientID, LoggerFactory.getLogger(ClientEntityManager.class));
@@ -170,6 +171,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage msg = this.inFlightMessages.get(tid);
     if (msg != null) {
       msg.addServerStatistics(message);
+    } else {
+      addWindow.add(message[0]);
+      if (message[0] > TimeUnit.MILLISECONDS.toNanos(500)) {
+        logger.debug("add window " + message[0]);
+      }
     }
   }
   
@@ -280,6 +286,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     map.put("messagesOut", msgCount.sum());
     if (msgCount.sum() > 0) {
       map.put("averagePending", inflights.sum()/msgCount.sum());
+      map.put("averageServerWindow", addWindow.sum()/msgCount.sum());
     }
     Object stats = this.channel.getAttachment("ChannelStats");
     Map<String, Object> sub = new LinkedHashMap<>();
