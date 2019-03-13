@@ -176,13 +176,17 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : Common Stage Monitoring properties for both L1 and L2
    * Description : Stage monitoring can be enabled or disabled for debugging.
-   * stage.monitor.enabled                : <true/false>    - Enable or Disable Monitoring
+   * gc.monitor.enabled                   : <true/false>    - Enable or Disable GC Monitoring
+   * gc.monitor.delay                     : long            - frequency in milliseconds
+   * stage.monitor.enabled                : <true/false>    - Enable or Disable stage Monitoring
    * stage.monitor.delay                  : long            - frequency in milliseconds
    * bytebuffer.pooling.enabled           : Enable/disable tc byte buffer pooling
    * bytebuffer.common.pool.maxcount      : Max size of pool for tc byte buffer
    * bytebuffer.threadlocal.pool.maxcount : Thread pool size
    * </code>
    ********************************************************************************************************************/
+  public static final String TC_GC_MONITOR_ENABLED                                          = "tc.gc.monitor.enabled";
+  public static final String TC_GC_MONITOR_DELAY                                            = "tc.gc.monitor.delay";
   public static final String TC_STAGE_MONITOR_ENABLED                                       = "tc.stage.monitor.enabled";
   public static final String TC_STAGE_MONITOR_DELAY                                         = "tc.stage.monitor.delay";
   public static final String TC_MESSAGE_GROUPING_ENABLED                                    = "tc.messages.grouping.enabled";
