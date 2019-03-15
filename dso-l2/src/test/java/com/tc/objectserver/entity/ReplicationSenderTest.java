@@ -121,9 +121,9 @@ public class ReplicationSenderTest {
       case ORDERING_PLACEHOLDER:
         return SyncReplicationActivity.createOrderingPlaceholder(new FetchID(1L), ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
       case LOCAL_ENTITY_GC:
-        return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), true);
+        return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), SyncReplicationActivity.ActivityType.DESTROY_ENTITY);
       case FLUSH_LOCAL_PIPELINE:
-        return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), false);
+        return SyncReplicationActivity.createFlushLocalPipelineMessage(new FetchID(1L), SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE);
       case SYNC_BEGIN:
         return SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0] );
       case SYNC_END:

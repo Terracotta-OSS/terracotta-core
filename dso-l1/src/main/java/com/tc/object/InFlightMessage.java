@@ -41,7 +41,6 @@ import static com.tc.object.StatType.SERVER_ENDINVOKE;
 import static com.tc.object.StatType.SERVER_RECEIVED;
 import static com.tc.object.StatType.SERVER_RETIRED;
 import static com.tc.object.StatType.SERVER_SCHEDULE;
-import com.tc.text.MapListPrettyPrint;
 import java.util.ArrayList;
 
 import java.util.EnumSet;
@@ -120,7 +119,7 @@ public class InFlightMessage implements PrettyPrintable {
   }
   
   public long[] collect() {
-    long[] stats = new long[StatType.SERVER_RETIRED.ordinal() + 1];
+    long[] stats = new long[StatType.END.ordinal()];
     if (stats != null) {
       stats[StatType.CLIENT_ENCODE.ordinal()] = start;
       stats[StatType.CLIENT_SEND.ordinal()] = send;

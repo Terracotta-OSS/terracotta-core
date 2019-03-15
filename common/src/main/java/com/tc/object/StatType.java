@@ -36,7 +36,8 @@ package com.tc.object;
   SERVER_BEGININVOKE("SERVER:begin"),
   SERVER_ENDINVOKE("SERVER:end"),
   SERVER_COMPLETE("SERVER:complete"),
-  SERVER_RETIRED("SERVER:retired")
+  SERVER_RETIRED("SERVER:retired"),
+  END("NOT USED")
   ;
   
   private final String description;

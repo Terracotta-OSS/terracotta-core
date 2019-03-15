@@ -18,6 +18,9 @@
  */
 package com.tc.objectserver.api;
 
+import com.tc.l2.msg.SyncReplicationActivity;
+import java.util.EnumMap;
+
 /**
  * These "actions" represent the superset of "Request.Type" values. That is,
  * they are an internal representation of what was sent over the wire OR derived
@@ -171,5 +174,22 @@ public enum ServerEntityAction {
   
   public boolean isReplicated() {
     return isLifecycle();
+  }
+  
+  private static EnumMap<ServerEntityAction,SyncReplicationActivity.ActivityType> typeMap = new EnumMap(ServerEntityAction.class);
+  static {
+    typeMap.put(ServerEntityAction.CREATE_ENTITY, SyncReplicationActivity.ActivityType.CREATE_ENTITY);
+    typeMap.put(ServerEntityAction.RECONFIGURE_ENTITY, SyncReplicationActivity.ActivityType.RECONFIGURE_ENTITY);
+    typeMap.put(ServerEntityAction.DESTROY_ENTITY, SyncReplicationActivity.ActivityType.DESTROY_ENTITY);
+    typeMap.put(ServerEntityAction.FETCH_ENTITY, SyncReplicationActivity.ActivityType.FETCH_ENTITY);
+    typeMap.put(ServerEntityAction.INVOKE_ACTION, SyncReplicationActivity.ActivityType.INVOKE_ACTION);
+    typeMap.put(ServerEntityAction.ORDER_PLACEHOLDER_ONLY, SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER);
+    typeMap.put(ServerEntityAction.RELEASE_ENTITY, SyncReplicationActivity.ActivityType.RELEASE_ENTITY);
+    typeMap.put(ServerEntityAction.REQUEST_SYNC_ENTITY, SyncReplicationActivity.ActivityType.SYNC_ENTITY_CONCURRENCY_BEGIN);
+    typeMap.put(ServerEntityAction.DISCONNECT_CLIENT, SyncReplicationActivity.ActivityType.DISCONNECT_CLIENT);
+  }
+  
+  public SyncReplicationActivity.ActivityType replicationType() {
+    return typeMap.get(this);
   }
 }

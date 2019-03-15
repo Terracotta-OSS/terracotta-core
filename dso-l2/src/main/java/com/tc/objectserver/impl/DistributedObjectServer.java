@@ -878,7 +878,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addToSink(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
+            .getSink().addToSink(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, action.replicationType())));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
