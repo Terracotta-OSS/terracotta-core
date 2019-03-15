@@ -135,6 +135,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     // to deserialize, but also because we may have to replicate the message to the passive).
     FakeEntityMessage interEntityMessage = encodeAsFake(message, response);
     // if the entity isDestroyed(), this message could be being sent during the create sequence
+
+    // register this server message with the retirement manager.  Once the message is retired, 
+    // the retirement manager will take care off tracking.  This is needed so the entity is not
+    // destroyed from under the server initiated message
+    this.retirementManager.registerServerMessage(message);
     this.messageSink.addToSink(interEntityMessage);
   }
 

@@ -706,7 +706,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (!this.canDelete) {
         Assert.assertTrue(clientReferenceCount < 0);
         response.failure(new VoltronWrapperException(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName())));
-      } else if (clientReferenceCount == 0) {
+      } else if (clientReferenceCount == 0 && !retirementManager.hasServerInflightMessages()) {
         Assert.assertTrue(!isInActiveState || clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
         Assert.assertFalse(this.isDestroyed);
         commonServerEntity.destroy();

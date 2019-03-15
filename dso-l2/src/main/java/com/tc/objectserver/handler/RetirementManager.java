@@ -30,6 +30,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
@@ -50,11 +51,21 @@ public class RetirementManager {
   private final Map<EntityMessage, LogicalSequence> currentlyRunning;
   private final Map<EntityMessage, LogicalSequence> waitingForDeferredRegistration;
   private final Map<Integer, LogicalSequence> mostRecentRegisteredToKey;
+  private final Set<EntityMessage> inflightServerMessages;
 
   public RetirementManager() {
     this.currentlyRunning = new IdentityHashMap<>();
     this.waitingForDeferredRegistration = new IdentityHashMap<>();
+    this.inflightServerMessages = new IdentityHashMap<EntityMessage, Void>().keySet();
     this.mostRecentRegisteredToKey = new HashMap<>();
+  }
+  
+  public synchronized void registerServerMessage(EntityMessage msg) {
+    inflightServerMessages.add(msg);
+  }
+  
+  public synchronized boolean hasServerInflightMessages() {
+    return !this.inflightServerMessages.isEmpty();
   }
   
   public synchronized boolean isMessageRunning(EntityMessage invokeMessage) {
@@ -106,6 +117,7 @@ public class RetirementManager {
    * @return
    */
   synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
+    boolean wasServerMessage = inflightServerMessages.remove(completedMessage);
     List<Retiree> toRetire = new ArrayList<>();
     //  must be non-null if called
     this.currentlyRunning.compute(completedMessage, (m,ls)->{
