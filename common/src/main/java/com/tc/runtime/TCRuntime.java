@@ -26,6 +26,7 @@ import com.tc.util.Assert;
 public class TCRuntime {
 
   private static JVMMemoryManager memoryManager;
+  private static GcMonitor gcMonitor;
 
   static {
     init();
@@ -43,6 +44,11 @@ public class TCRuntime {
       memoryManager = new TCMemoryManagerJdk15Basic();
     } else {
       memoryManager = new TCMemoryManagerJdk15PoolMonitor();
+    }
+
+    if (props.getBoolean(TCPropertiesConsts.TC_GC_MONITOR_ENABLED)) {
+      gcMonitor = new GcMonitor();
+      gcMonitor.init();
     }
   }
 }
