@@ -49,6 +49,7 @@ import java.util.Date;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,10 +188,13 @@ public class BasicConnection implements TCConnection {
         socket.close();
         if (readerExec != null) {
           readerExec.shutdown();
+          readerExec.awaitTermination(timeout, TimeUnit.MILLISECONDS);
         }
       }
       return true;
     } catch (IOException ioe) {
+      return false;
+    } catch (InterruptedException ie) {
       return false;
     } finally {
       fireClosed();
