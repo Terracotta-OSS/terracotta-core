@@ -218,6 +218,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
+import com.tc.net.groups.NullGroupManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -652,10 +653,14 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
             
-    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+    this.groupCommManager = (knownPeers == 0) ? new NullGroupManager(thisServerNodeID) : this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
                                                                       bufferManagerFactory);
+    
+    if (knownPeers == 0) {
+      Assert.assertTrue(this.groupCommManager instanceof NullGroupManager);
+    }
         
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -989,8 +994,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   public void startGroupManagers() {
     try {
 
-      final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
-      logger.info("This L2 Node ID = " + myNodeId);
+        final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
+        logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
       throw new RuntimeException(e);
