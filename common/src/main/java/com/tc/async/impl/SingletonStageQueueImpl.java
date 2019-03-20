@@ -93,7 +93,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     try {
       for (; ; ) {
         try {
-          this.sourceQueue.put(wrapper);
+          updateDepth(this.sourceQueue.put(wrapper));
           break;
         } catch (InterruptedException e) {
           this.logger.debug("StageQueue Add: " + e);
@@ -158,8 +158,9 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
 
     @Override
-    public void put(Event context) throws InterruptedException {
+    public int put(Event context) throws InterruptedException {
       this.queue.put(context);
+      return this.queue.size();
     }
 
     @Override

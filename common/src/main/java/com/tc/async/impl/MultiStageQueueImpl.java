@@ -162,7 +162,7 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
       try {
         while (true) {
           try {
-            this.sourceQueues[index].put(wrapper);
+            updateDepth(this.sourceQueues[index].put(wrapper));
             break;
           } catch (InterruptedException e) {
             this.logger.debug("StageQueue Add: " + e);
@@ -308,8 +308,9 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
     }
 
     @Override
-    public void put(Event context) throws InterruptedException {
+    public int put(Event context) throws InterruptedException {
       this.queue.put(context);
+      return this.queue.size();
     }
 
     @Override

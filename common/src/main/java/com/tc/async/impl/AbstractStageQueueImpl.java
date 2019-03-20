@@ -17,6 +17,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
   private volatile boolean closed = false;  // open at create
   private volatile boolean extraStats = true;  
+  private volatile int maxDepth = 0;
   private final MonitoringEventCreator<EC> monitoring;
   private final EventCreator<EC> creator;
   final Logger logger;
@@ -62,12 +63,19 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
     }
   }
   
+  protected void updateDepth(int max) {
+    if (max > maxDepth) {
+      maxDepth = max;
+    }
+  }
+  
   public Map<String, ?> getState() {
     Map<String, Object> queueState = new LinkedHashMap<>();
     if (extraStats) {
       Map<String, ?> stats = this.monitoring.getState();
       if (!stats.isEmpty()) {
         queueState.put("stats", stats);
+        queueState.put("maxQueueDepth", maxDepth);
       }
     }
     return queueState;
@@ -81,8 +89,8 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
 
     @Override
     Event poll(long timeout) throws InterruptedException;
-
-    void put(Event context) throws InterruptedException;
+    /*  returns queue depth at time of put  */
+    int put(Event context) throws InterruptedException;
 
     int size();
 
