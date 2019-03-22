@@ -136,6 +136,7 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
           if (cmd.length != 3) {
             result = ("Invalid JMX call:" + raw).getBytes(set);
           } else {
+            GuardianContext.validate(Guardian.Op.GENERIC_OP, cmd[2]);
             result = subsystem.call(cmd[1], cmd[2], null).getBytes(set);
           }
           break;
