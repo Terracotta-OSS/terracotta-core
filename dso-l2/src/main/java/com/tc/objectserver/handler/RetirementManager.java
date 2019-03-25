@@ -21,15 +21,19 @@ package com.tc.objectserver.handler;
 import com.tc.objectserver.api.Retiree;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
+import java.util.AbstractSet;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 
-import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
@@ -50,11 +54,21 @@ public class RetirementManager {
   private final Map<EntityMessage, LogicalSequence> currentlyRunning;
   private final Map<EntityMessage, LogicalSequence> waitingForDeferredRegistration;
   private final Map<Integer, LogicalSequence> mostRecentRegisteredToKey;
+  private final Map<EntityMessage, EntityMessage> inflightServerMessages;
 
   public RetirementManager() {
     this.currentlyRunning = new IdentityHashMap<>();
     this.waitingForDeferredRegistration = new IdentityHashMap<>();
+    this.inflightServerMessages = new IdentityHashMap<>(); 
     this.mostRecentRegisteredToKey = new HashMap<>();
+  }
+  
+  public synchronized void registerServerMessage(EntityMessage msg) {
+    inflightServerMessages.put(msg, msg);
+  }
+  
+  public synchronized boolean hasServerInflightMessages() {
+    return !this.inflightServerMessages.isEmpty();
   }
   
   public synchronized boolean isMessageRunning(EntityMessage invokeMessage) {
@@ -105,8 +119,9 @@ public class RetirementManager {
    * @param completedMessage
    * @return
    */
-  synchronized List<Retiree> retireForCompletion(EntityMessage completedMessage) {
-    List<Retiree> toRetire = new ArrayList<>();
+  private synchronized Deque<LogicalSequence> retireForCompletion(EntityMessage completedMessage) {
+    boolean wasServerMessage = inflightServerMessages.remove(completedMessage, completedMessage);
+    Deque<LogicalSequence> toRetire = new LinkedList<>();
     //  must be non-null if called
     this.currentlyRunning.compute(completedMessage, (m,ls)->{
       if (ls.heldCount > 0) {
@@ -114,16 +129,19 @@ public class RetirementManager {
         return ls;
       } else {
         ls.isCompleted = true;
-        traverseDependencyGraph(toRetire, ls);
+        toRetire.push(ls);
         return null;
       }
     });
     return toRetire;
   }
+  
+  List<Retiree> testingRetireForCompletion(EntityMessage completedMessage) {
+    return traverseDependencyGraph(retireForCompletion(completedMessage));
+  }
 
-  private void traverseDependencyGraph(List<Retiree> toRetire, LogicalSequence completedRequest) {
-    Stack<LogicalSequence> requestStack = new Stack<>();
-    requestStack.add(completedRequest);
+  private List<Retiree> traverseDependencyGraph(Deque<LogicalSequence> requestStack) {
+    List<Retiree> toRetire = new LinkedList<>();
 
     while(!requestStack.isEmpty()) {
       LogicalSequence currentRequest = requestStack.pop();
@@ -136,7 +154,7 @@ public class RetirementManager {
           // We can retire.
           toRetire.add(currentRequest.response);
           currentRequest.isRetired = true;
-          this.mostRecentRegisteredToKey.remove(currentRequest.concurrencyKey, currentRequest);
+          removeRegisteredToKey(currentRequest.concurrencyKey, currentRequest.entityMessage);
           // since current request is retired, we can unblock next request on same concurrency key if any
           if (currentRequest.nextInKey != null) {
             currentRequest.nextInKey.isWaitingForPreviousInKey = false;
@@ -153,6 +171,11 @@ public class RetirementManager {
         }
       }
     }
+    return toRetire;
+  }
+  
+  private synchronized boolean removeRegisteredToKey(int ck, EntityMessage msg) {
+    return this.mostRecentRegisteredToKey.remove(ck, msg);
   }
 
   public synchronized void deferRetirement(EntityMessage invokeMessageToDefer, EntityMessage laterMessage) {
@@ -194,7 +217,8 @@ public class RetirementManager {
   }
   
   public void retireMessage(EntityMessage message) {
-    List<Retiree> readyToRetire = retireForCompletion(message);
+    Deque<LogicalSequence> sequence = retireForCompletion(message);
+    List<Retiree> readyToRetire = traverseDependencyGraph(sequence);
     for (Retiree toRetire : readyToRetire) {
       if (null != toRetire) {
         if (Trace.isTraceEnabled()) {

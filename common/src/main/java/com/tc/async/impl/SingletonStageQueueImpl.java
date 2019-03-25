@@ -53,15 +53,12 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
                           String stageName,
                           int queueSize) {
     super(loggerProvider, stageName, creator);
-    this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize, stageName);
+    this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize);
   }
 
   private SourceQueueImpl createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
-                                                                int queueSize,
-                                                                String stage) {
-    BlockingQueue<Event> q = null;
-
-    Assert.eval(queueSize > 0);
+                                                                int queueSize) {
+    Assert.eval(queueSize >= 0);
 
     return new SourceQueueImpl(queueFactory.createInstance(type, queueSize));
   }
@@ -96,7 +93,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     try {
       for (; ; ) {
         try {
-          this.sourceQueue.put(wrapper);
+          updateDepth(this.sourceQueue.put(wrapper));
           break;
         } catch (InterruptedException e) {
           this.logger.debug("StageQueue Add: " + e);
@@ -161,8 +158,9 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     }
 
     @Override
-    public void put(Event context) throws InterruptedException {
+    public int put(Event context) throws InterruptedException {
       this.queue.put(context);
+      return this.queue.size();
     }
 
     @Override

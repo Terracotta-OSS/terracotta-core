@@ -47,13 +47,14 @@ public enum TCMessageType {
     DIAGNOSTIC_RESPONSE(true);
     
   private final boolean validType;
+  private final static TCMessageType[] values = values();
 
   TCMessageType(boolean valid) {
     validType = valid;
   }
 
   public static TCMessageType getInstance(int i) {
-    return values()[i];
+    return values[i];
   }
 
   public int getType() {

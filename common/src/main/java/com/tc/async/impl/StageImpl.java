@@ -32,6 +32,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
@@ -40,6 +41,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -59,7 +61,8 @@ public class StageImpl<EC> implements Stage<EC> {
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
   private final AtomicInteger  inflight = new AtomicInteger();
-
+  private final long           warnStallTime = TCPropertiesImpl.getProperties()
+                                                     .getLong(TCPropertiesConsts.L2_SEDA_STAGE_STALL_WARNING, 500);
   /**
    * The Constructor.
    * 
@@ -99,8 +102,13 @@ public class StageImpl<EC> implements Stage<EC> {
   
   private EventCreator<EC> baseCreator() {
     return (event) -> {
+      long start = System.nanoTime();
       inflight.incrementAndGet();
       return ()-> {
+        long exec = System.nanoTime();
+        if (exec - start > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
+          logger.warn("Stage: {} has stalled on event {} for {}ms", name, event, TimeUnit.NANOSECONDS.toMillis(exec-start));
+        }
         try {
           handler.handleEvent(event);
         } finally {
@@ -192,7 +200,7 @@ public class StageImpl<EC> implements Stage<EC> {
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread<>(threadName, this.stageQueue.getSource(i), handler);
+      threads[i] = new WorkerThread<>(threadName, this.stageQueue.getSource(i));
       threads[i].start();
     }
   }
@@ -236,7 +244,6 @@ public class StageImpl<EC> implements Stage<EC> {
 
   private class WorkerThread<EC> extends Thread {
     private final Source       source;
-    private final EventHandler<EC> handler;
     private volatile boolean idle = false;
     private final Object idleLock = new Object();
     private boolean waitingForIdle = false;
@@ -245,11 +252,10 @@ public class StageImpl<EC> implements Stage<EC> {
     private long runTime = 0;
     private long count = 0;
 
-    public WorkerThread(String name, Source source, EventHandler<EC> handler) {
+    public WorkerThread(String name, Source source) {
       super(group, name);
       setDaemon(true);
       this.source = source;
-      this.handler = handler;
     }
 
     private void handleStageDebugPauses() {

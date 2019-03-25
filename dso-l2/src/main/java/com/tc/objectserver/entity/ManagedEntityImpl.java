@@ -573,9 +573,6 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void invoke(ServerEntityRequest request, ResultCapture response, MessagePayload message, int concurrencyKey) {
     Trace trace = new Trace(request.getTraceID(), "ManagedEntityImpl.invoke");
     trace.start();
-    if (request.requiresReceived()) {
-      response.waitForReceived(); // waits for received on passives
-    }  
     response.received(); // call received locally
     
     GuardianContext.setCurrentChannelID(request.getNodeID().getChannelID());
@@ -709,7 +706,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (!this.canDelete) {
         Assert.assertTrue(clientReferenceCount < 0);
         response.failure(new VoltronWrapperException(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName())));
-      } else if (clientReferenceCount == 0) {
+      } else if (clientReferenceCount == 0 && !retirementManager.hasServerInflightMessages()) {
         Assert.assertTrue(!isInActiveState || clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
         Assert.assertFalse(this.isDestroyed);
         commonServerEntity.destroy();
@@ -862,6 +859,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           ExecutionStrategy.Location loc = this.executionStrategy.getExecutionLocation(message);
           if (loc.runOnActive()) {
+            if (wrappedRequest.requiresReceived()) {
+              response.waitForReceived(); // waits for received on passives
+            }
             if (response instanceof StatisticsCapture) {
               ((StatisticsCapture)response).beginInvoke();
             }

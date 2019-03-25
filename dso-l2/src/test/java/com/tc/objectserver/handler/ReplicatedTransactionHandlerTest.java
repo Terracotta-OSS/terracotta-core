@@ -144,7 +144,7 @@ public class ReplicatedTransactionHandlerTest {
   }
     
   private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
-    ReplicationMessage flush = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, action == ServerEntityAction.DESTROY_ENTITY));
+    ReplicationMessage flush = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, action.replicationType()));
     loopbackSink.addToSink(flush);
   }
   

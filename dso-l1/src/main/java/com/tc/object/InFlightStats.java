@@ -34,7 +34,10 @@ import static com.tc.object.StatType.CLIENT_COMPLETE;
 import static com.tc.object.StatType.CLIENT_RETIRED;
 import static com.tc.object.StatType.SERVER_ADD;
 import static com.tc.object.StatType.SERVER_BEGININVOKE;
+import static com.tc.object.StatType.SERVER_COMPLETE;
 import static com.tc.object.StatType.SERVER_ENDINVOKE;
+import static com.tc.object.StatType.SERVER_RECEIVED;
+import static com.tc.object.StatType.SERVER_RETIRED;
 import static com.tc.object.StatType.SERVER_SCHEDULE;
 
 /**
@@ -42,7 +45,7 @@ import static com.tc.object.StatType.SERVER_SCHEDULE;
  */
 class InFlightStats implements PrettyPrintable {
   
-  private final List<Combo> values = new ArrayList<>();
+  private static final List<Combo> values = new ArrayList<>();
   private final LongAdder totalCount = new LongAdder();
 
   public InFlightStats() {
@@ -58,6 +61,8 @@ class InFlightStats implements PrettyPrintable {
     values.add(new Combo(SERVER_ADD, SERVER_SCHEDULE));
     values.add(new Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE));
     values.add(new Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE));
+    values.add(new Combo(SERVER_RECEIVED, SERVER_COMPLETE));
+    values.add(new Combo(SERVER_COMPLETE, SERVER_RETIRED));
   }
   
   public void collect(long[] input) {
@@ -74,21 +79,22 @@ class InFlightStats implements PrettyPrintable {
     return map;
   } 
   
-  private static class Combo {
+  static class Combo {
     private final StatType from;
     private final StatType to;
     private final LongAdder value = new LongAdder();
 
-    public Combo(StatType from, StatType to) {
+    Combo(StatType from, StatType to) {
       this.from = from;
       this.to = to;
     }
     
-    private void add(long[] vals) {
+    Combo add(long[] vals) {
       value.add(vals[to.ordinal()] - vals[from.ordinal()]);
+      return this;
     }
     
-    private long value() {
+    long value() {
       return value.sum();
     }
 

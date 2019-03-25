@@ -26,16 +26,35 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
+import static com.tc.object.StatType.CLIENT_COMPLETE;
+import static com.tc.object.StatType.CLIENT_DECODED;
+import static com.tc.object.StatType.CLIENT_ENCODE;
+import static com.tc.object.StatType.CLIENT_GOT;
+import static com.tc.object.StatType.CLIENT_RECEIVED;
+import static com.tc.object.StatType.CLIENT_RETIRED;
+import static com.tc.object.StatType.CLIENT_SEND;
+import static com.tc.object.StatType.CLIENT_SENT;
+import static com.tc.object.StatType.SERVER_ADD;
+import static com.tc.object.StatType.SERVER_BEGININVOKE;
+import static com.tc.object.StatType.SERVER_COMPLETE;
+import static com.tc.object.StatType.SERVER_ENDINVOKE;
+import static com.tc.object.StatType.SERVER_RECEIVED;
+import static com.tc.object.StatType.SERVER_RETIRED;
+import static com.tc.object.StatType.SERVER_SCHEDULE;
+import java.util.ArrayList;
 
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -45,6 +64,7 @@ import java.util.function.Supplier;
  * make unit testing more direct.
  */
 public class InFlightMessage implements PrettyPrintable {
+  private static Logger LOGGER = LoggerFactory.getLogger(InFlightMessage.class);
   private final VoltronEntityMessage message;
   private final EntityID eid;
   private final InFlightMonitor monitor;
@@ -98,7 +118,8 @@ public class InFlightMessage implements PrettyPrintable {
     this.end = end;
   }
   
-  public void collect(long[] stats) {
+  public long[] collect() {
+    long[] stats = new long[StatType.END.ordinal()];
     if (stats != null) {
       stats[StatType.CLIENT_ENCODE.ordinal()] = start;
       stats[StatType.CLIENT_SEND.ordinal()] = send;
@@ -109,12 +130,16 @@ public class InFlightMessage implements PrettyPrintable {
       stats[StatType.CLIENT_RETIRED.ordinal()] = retired;
       stats[StatType.CLIENT_DECODED.ordinal()] = end;
       if (serverStats != null) {
-        stats[StatType.SERVER_ADD.ordinal()] = serverStats[0];
-        stats[StatType.SERVER_SCHEDULE.ordinal()] = serverStats[1];
-        stats[StatType.SERVER_BEGININVOKE.ordinal()] = serverStats[2];
-        stats[StatType.SERVER_ENDINVOKE.ordinal()] = serverStats[3];
+        stats[StatType.SERVER_ADD.ordinal()] = serverStats[StatType.SERVER_ADD.serverSpot()];
+        stats[StatType.SERVER_SCHEDULE.ordinal()] = serverStats[StatType.SERVER_SCHEDULE.serverSpot()];
+        stats[StatType.SERVER_BEGININVOKE.ordinal()] = serverStats[StatType.SERVER_BEGININVOKE.serverSpot()];
+        stats[StatType.SERVER_ENDINVOKE.ordinal()] = serverStats[StatType.SERVER_ENDINVOKE.serverSpot()];
+        stats[StatType.SERVER_RECEIVED.ordinal()] = serverStats[StatType.SERVER_RECEIVED.serverSpot()];
+        stats[StatType.SERVER_RETIRED.ordinal()] = serverStats[StatType.SERVER_RETIRED.serverSpot()];
+        stats[StatType.SERVER_COMPLETE.ordinal()] = serverStats[StatType.SERVER_COMPLETE.serverSpot()];
       }
     }
+    return stats;
   }
   
   synchronized void runOnRetire(Runnable r) {
@@ -127,6 +152,23 @@ public class InFlightMessage implements PrettyPrintable {
 
   @Override
   public Map<String, ?> getStateMap() {
+    List<InFlightStats.Combo> values = new ArrayList<>(20);
+    long[] collect = collect();
+    values.add(new InFlightStats.Combo(CLIENT_ENCODE, CLIENT_SEND).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_SEND, CLIENT_SENT).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_SENT, CLIENT_RECEIVED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_RECEIVED, CLIENT_COMPLETE).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_COMPLETE, CLIENT_GOT).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_GOT, CLIENT_DECODED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_COMPLETE, CLIENT_RETIRED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_SENT, CLIENT_RETIRED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_ENCODE, CLIENT_DECODED).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_ADD, SERVER_SCHEDULE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_RECEIVED, SERVER_COMPLETE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_COMPLETE, SERVER_RETIRED).add(collect));
+
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("entity", eid);
     Map<String, Object> timing = new LinkedHashMap<>();
@@ -139,12 +181,7 @@ public class InFlightMessage implements PrettyPrintable {
     timing.put("retired", retired);
     map.put("marks", timing);
     Map<String, Object> offset = new LinkedHashMap<>();
-    offset.put("sent->notifySent", send - notifySent);
-    offset.put("send->sent", sent - send);
-    offset.put("sent->received", received - sent);
-    offset.put("received->complete", complete - received);
-    offset.put("complete->got", got - complete);
-    offset.put("complete->retired", retired - complete);
+    values.forEach(c->offset.put(c.toString(), c.value()));
     map.put("timing", offset);
     return map;
   }
@@ -324,8 +361,8 @@ public class InFlightMessage implements PrettyPrintable {
       monitor.ackDelivered(ack);
     }
   }
-
-  public synchronized void retired() {
+  
+  private synchronized Runnable retiredBookeeping() {
     this.retired = System.nanoTime();
     ackDelivered(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
@@ -335,11 +372,16 @@ public class InFlightMessage implements PrettyPrintable {
       }
     }
     notifyAll();
-    if (this.runOnRetire != null) {
-      this.runOnRetire.run();
-    }
+    return this.runOnRetire;
+  }
+
+  public void retired() {
+    Runnable runAfter = retiredBookeeping();
     if (monitor != null) {
       monitor.close();
+    }
+    if (runAfter != null) {
+      runAfter.run();
     }
   }
   

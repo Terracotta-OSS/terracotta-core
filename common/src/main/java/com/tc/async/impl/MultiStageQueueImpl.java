@@ -129,10 +129,10 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
   }
 
   private void createWorkerQueues(int queueCount, QueueFactory queueFactory, Class<EC> type, int queueSize, String stage) {
-    if (queueSize != Integer.MAX_VALUE) {
+    if (queueSize != Integer.MAX_VALUE && queueSize != 0) {
       queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
     }
-    Assert.eval(queueSize > 0);
+    Assert.eval(queueSize >= 0);
 
     for (int i = 0; i < queueCount; i++) {
       this.sourceQueues[i] = new MultiSourceQueueImpl(queueFactory.createInstance(type, queueSize), v->this.fcheck = v, i);
@@ -162,7 +162,7 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
       try {
         while (true) {
           try {
-            this.sourceQueues[index].put(wrapper);
+            updateDepth(this.sourceQueues[index].put(wrapper));
             break;
           } catch (InterruptedException e) {
             this.logger.debug("StageQueue Add: " + e);
@@ -308,8 +308,9 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
     }
 
     @Override
-    public void put(Event context) throws InterruptedException {
+    public int put(Event context) throws InterruptedException {
       this.queue.put(context);
+      return this.queue.size();
     }
 
     @Override

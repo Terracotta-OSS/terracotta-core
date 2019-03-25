@@ -71,6 +71,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityServerUncaughtException;
@@ -92,6 +93,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final ExecutorService endpointCloser = Executors.newWorkStealingPool();
 //  for testing
   private boolean wasBusy = false;
+  
+  private final LongAdder msgCount = new LongAdder();
+  private final LongAdder inflights = new LongAdder();
+  private final LongAdder addWindow = new LongAdder();
   
   public ClientEntityManagerImpl(ClientMessageChannel channel, StageManager mgr) {
     this.logger = new ClientIDLogger(channel::getClientID, LoggerFactory.getLogger(ClientEntityManager.class));
@@ -166,6 +171,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage msg = this.inFlightMessages.get(tid);
     if (msg != null) {
       msg.addServerStatistics(message);
+    } else {
+      addWindow.add(message[0]);
+      if (message[0] > TimeUnit.MILLISECONDS.toNanos(500)) {
+        logger.debug("add window " + message[0]);
+      }
     }
   }
   
@@ -272,6 +282,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     Map<String, Object> map = new LinkedHashMap<>();
     for (EntityClientEndpointImpl<?,?> s : objectStoreMap.values()) {
       map.put(s.getEntityID().toString(), s.getStatistics().getStateMap());
+    }
+    map.put("messagesOut", msgCount.sum());
+    if (msgCount.sum() > 0) {
+      map.put("averagePending", inflights.sum()/msgCount.sum());
+      map.put("averageServerWindow", addWindow.sum()/msgCount.sum());
     }
     Object stats = this.channel.getAttachment("ChannelStats");
     Map<String, Object> sub = new LinkedHashMap<>();
@@ -401,11 +416,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     for(EntityClientEndpointImpl<?, ?> endpoint : this.objectStoreMap.values()) {
       try {
         endpoint.didCloseUnexpectedly();
-        if (logger.isDebugEnabled()) {
-          MapListPrettyPrint print = new MapListPrettyPrint();
-          endpoint.getStatistics().prettyPrint(print);
-          logger.debug("Unexpectedly closed " + endpoint.getEntityID() + "=" + print.toString());
-        }
       } catch (Throwable t) {
 //  something happened in cleanup.  log and continue
         logger.error("error in shutdown", t);
@@ -413,6 +423,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     this.endpointCloser.shutdownNow(); // ignore the return.  nothing we can do
     // And then drop them.
+    if (logger.isDebugEnabled()) {
+      MapListPrettyPrint print = new MapListPrettyPrint();
+      this.prettyPrint(print);
+      logger.debug(print.toString());
+    }
     this.objectStoreMap.clear();
   }
   
@@ -530,7 +545,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
     InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
-    
+    msgCount.increment();
+    inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
     // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
         if(enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
           inFlight.sent();

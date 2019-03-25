@@ -598,33 +598,36 @@ public class DistributedObjectClient implements TCClient {
                          + TCPropertiesImpl.getProperties()
                              .getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
 
-        int threadCount = this.threadGroup.activeCount();
-        Thread[] t = new Thread[threadCount];
-        threadCount = this.threadGroup.enumerate(t);
+        List<Thread> liveThreads = getLiveThreads(threadGroup);
         final long time = System.currentTimeMillis();
         boolean leaked = false;
-        for (int x=0;x<threadCount;x++) {
-          if (System.currentTimeMillis() > end) {
-            break;
-          }
-          long start = System.currentTimeMillis();
-          if (t[x].isAlive() && Thread.currentThread() != t[x]) {
-            t[x].join(1000);
-            if (t[x].isAlive()) {
-              Exception printer = new Exception();
-              printer.setStackTrace(printer.getStackTrace());
-              DSO_LOGGER.warn("thread leak", printer);
-              leaked = true;
+        while (!liveThreads.isEmpty() && System.currentTimeMillis() < end) {
+          for (Thread t : liveThreads) {
+            if (System.currentTimeMillis() > end) {
+              break;
             }
+            long start = System.currentTimeMillis();
+            if (t.isAlive() && Thread.currentThread() != t) {
+              t.join(1000);
+              if (t.isAlive()) {
+                Exception printer = new Exception();
+                printer.setStackTrace(t.getStackTrace());
+                DSO_LOGGER.warn("thread leak", printer);
+                leaked = true;
+              }
+            }
+            logger.debug("Destroyed thread " + t.getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
           }
-          logger.debug("Destroyed thread " + t[x].getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
+          if (!leaked) {
+            break;
+          } else {
+            liveThreads = getLiveThreads(threadGroup);
+          }
         }
         logger.debug("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
-
         if (leaked) {
           logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
                       + "Live threads: " + getLiveThreads(this.threadGroup));
-
           Thread threadGroupCleanerThread = new Thread(this.threadGroup.getParent(),
                                                        new TCThreadGroupCleanerRunnable(threadGroup),
                                                        "TCThreadGroup last chance cleaner thread");
@@ -697,6 +700,11 @@ public class DistributedObjectClient implements TCClient {
         e.setStackTrace(liveThread.getStackTrace());
         DSO_LOGGER.warn("stray connection threads not stopping", e);
         liveThread.interrupt();
+        try {
+          liveThread.join(2000);
+        } catch (InterruptedException ie) {
+        //  ignore
+        }
       }
       try {
         threadGroup.destroy();

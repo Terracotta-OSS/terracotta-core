@@ -19,7 +19,6 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.config.ServerConfigurationManager;
@@ -219,6 +218,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
+import com.tc.net.groups.NullGroupManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -636,7 +636,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
-    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, USE_DIRECT);
+    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, 0 /* synchronous queue */, USE_DIRECT);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize, false);
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
@@ -653,10 +653,14 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // If we are running in a restartable mode, instantiate any entities in storage.
     processTransactionHandler.loadExistingEntities();
             
-    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+    this.groupCommManager = (knownPeers == 0) ? new NullGroupManager(thisServerNodeID) : this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
                                                                       bufferManagerFactory);
+    
+    if (knownPeers == 0) {
+      Assert.assertTrue(this.groupCommManager instanceof NullGroupManager);
+    }
         
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -879,7 +883,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       try {
         this.seda.getStageManager()
             .getStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class)
-            .getSink().addToSink(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, forDestroy)));
+            .getSink().addToSink(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, action.replicationType())));
         return;
       } catch (IllegalStateException state) {
 //  ignore, could have transitioned to active before message got added
@@ -990,8 +994,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   public void startGroupManagers() {
     try {
 
-      final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
-      logger.info("This L2 Node ID = " + myNodeId);
+        final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
+        logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
       throw new RuntimeException(e);

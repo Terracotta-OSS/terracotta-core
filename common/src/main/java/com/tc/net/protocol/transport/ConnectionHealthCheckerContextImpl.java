@@ -323,7 +323,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionID(), transport.getConnection()));
       } catch (IOException ioe) {
         logger.warn("probe problem", ioe);
-        return false;
+        return true;
       }
     } else if (message.isPingReply()) {
       // The peer is alive

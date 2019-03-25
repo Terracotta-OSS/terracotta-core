@@ -31,9 +31,13 @@ package com.tc.object;
   CLIENT_DECODED("CLIENT:decoded"), 
   CLIENT_RETIRED("CLIENT:retired"),
   SERVER_ADD("SERVER:add"),
+  SERVER_RECEIVED("SERVER:received"),
   SERVER_SCHEDULE("SERVER:schedule"),
   SERVER_BEGININVOKE("SERVER:begin"),
   SERVER_ENDINVOKE("SERVER:end"),
+  SERVER_COMPLETE("SERVER:complete"),
+  SERVER_RETIRED("SERVER:retired"),
+  END("NOT USED")
   ;
   
   private final String description;
@@ -46,4 +50,7 @@ package com.tc.object;
     return this.description;
   }
   
+  public int serverSpot() {
+    return this.ordinal() - CLIENT_RETIRED.ordinal();
+  }
 }

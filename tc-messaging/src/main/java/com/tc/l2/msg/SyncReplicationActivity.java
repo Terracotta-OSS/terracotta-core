@@ -118,9 +118,17 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
 
   // Factory methods.
-  public static SyncReplicationActivity createFlushLocalPipelineMessage(FetchID fetch, boolean forDestroy) {
+  public static SyncReplicationActivity createFlushLocalPipelineMessage(FetchID fetch, ActivityType reason) {
     int referenceCount = 0;
-    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, forDestroy ? ActivityType.LOCAL_ENTITY_GC : ActivityType.FLUSH_LOCAL_PIPELINE, null, 0, referenceCount, null);
+    ActivityType type = ActivityType.FLUSH_LOCAL_PIPELINE;
+    switch (reason) {
+      case DESTROY_ENTITY:
+        type = ActivityType.LOCAL_ENTITY_GC;
+        break;
+      default:
+        break;
+    }
+    return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, EntityDescriptor.INVALID_VERSION, fetch, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, type, null, 0, referenceCount, null);
   }
 
   public static SyncReplicationActivity createOrderingPlaceholder(FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, String debugId) {

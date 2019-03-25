@@ -47,7 +47,7 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
         this.transport.send(pingReplyMessage);
       } catch (IOException ioe) {
         logger.warn("trouble ping", ioe);
-        return false;
+        return true;
       }
       return true;
     } else if (message.isTimeCheck()) {

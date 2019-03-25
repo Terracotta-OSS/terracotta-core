@@ -48,7 +48,8 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
   private static final Logger LOGGER = LoggerFactory.getLogger(VoltronMessageHandler.class);
   private final AtomicInteger clientsConnected = new AtomicInteger();
   private final boolean ALWAYS_DIRECT = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_SINGLE_THREAD, false);
-
+  private final TimedActivation timer = new TimedActivation();
+  
   public VoltronMessageHandler(DSOChannelManager clients, boolean use_direct) {
     this.useDirect = use_direct;
     clients.addEventListener(new ChannelManagerEventListener() {
@@ -77,9 +78,12 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
       }
     } else if (useDirect) {
       // only use the fastpath if there is one client connected and nothing in the pipeline
-      boolean fast = fastPath.size() < 2 && destPath.isEmpty() && requestProcessor.isEmpty() 
-          && requestProcessorSync.isEmpty() && clientsConnected.get() == 1;
-      if (fast != activated) {
+      boolean fast = fastPath.size() < 2 && destPath.isEmpty() 
+              && requestProcessor.isEmpty() 
+              && requestProcessorSync.isEmpty() 
+              && clientsConnected.get() == 1;
+      timer.update(fast);
+      if (activated != fast && timer.shouldFlip(fast)) {
         activated = fast;
         DirectExecutionMode.activate(activated);
         LOGGER.debug("switching to direct sink activated:{} with {}", activated , fastPath.size());
@@ -102,5 +106,19 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
     destSink = destPath.getSink();
   }
   
-  
+  private static class TimedActivation {
+    private long lastChange;
+    private boolean state;
+    
+    private void update(boolean activate) {
+      if (activate != this.state) {
+        lastChange = System.currentTimeMillis();
+        this.state = activate;
+      }
+    }
+    
+    private boolean shouldFlip(boolean requested) {
+      return !requested || System.currentTimeMillis() - lastChange > 5000;
+    }
+  }
 }
