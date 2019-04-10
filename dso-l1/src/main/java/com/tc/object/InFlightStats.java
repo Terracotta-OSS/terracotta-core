@@ -24,7 +24,6 @@ import static com.tc.object.StatType.CLIENT_GOT;
 import static com.tc.object.StatType.CLIENT_SEND;
 import static com.tc.object.StatType.CLIENT_SENT;
 import com.tc.text.PrettyPrintable;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,34 +38,37 @@ import static com.tc.object.StatType.SERVER_ENDINVOKE;
 import static com.tc.object.StatType.SERVER_RECEIVED;
 import static com.tc.object.StatType.SERVER_RETIRED;
 import static com.tc.object.StatType.SERVER_SCHEDULE;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 class InFlightStats implements PrettyPrintable {
   
-  private static final List<Combo> values = new ArrayList<>();
+  private static final List<Combo> values = Arrays.asList(
+    new Combo(CLIENT_ENCODE, CLIENT_SEND),
+    new Combo(CLIENT_SEND, CLIENT_SENT),
+    new Combo(CLIENT_SENT, CLIENT_RECEIVED),
+    new Combo(CLIENT_RECEIVED, CLIENT_COMPLETE),
+    new Combo(CLIENT_COMPLETE, CLIENT_GOT),
+    new Combo(CLIENT_GOT, CLIENT_DECODED),
+    new Combo(CLIENT_COMPLETE, CLIENT_RETIRED),
+    new Combo(CLIENT_SENT, CLIENT_RETIRED),
+    new Combo(CLIENT_ENCODE, CLIENT_DECODED),
+    new Combo(SERVER_ADD, SERVER_SCHEDULE),
+    new Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE),
+    new Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE),
+    new Combo(SERVER_RECEIVED, SERVER_COMPLETE),
+    new Combo(SERVER_COMPLETE, SERVER_RETIRED)
+  );
   private final LongAdder totalCount = new LongAdder();
-
-  public InFlightStats() {
-    values.add(new Combo(CLIENT_ENCODE, CLIENT_SEND));
-    values.add(new Combo(CLIENT_SEND, CLIENT_SENT));
-    values.add(new Combo(CLIENT_SENT, CLIENT_RECEIVED));
-    values.add(new Combo(CLIENT_RECEIVED, CLIENT_COMPLETE));
-    values.add(new Combo(CLIENT_COMPLETE, CLIENT_GOT));
-    values.add(new Combo(CLIENT_GOT, CLIENT_DECODED));
-    values.add(new Combo(CLIENT_COMPLETE, CLIENT_RETIRED));
-    values.add(new Combo(CLIENT_SENT, CLIENT_RETIRED));
-    values.add(new Combo(CLIENT_ENCODE, CLIENT_DECODED));
-    values.add(new Combo(SERVER_ADD, SERVER_SCHEDULE));
-    values.add(new Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE));
-    values.add(new Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE));
-    values.add(new Combo(SERVER_RECEIVED, SERVER_COMPLETE));
-    values.add(new Combo(SERVER_COMPLETE, SERVER_RETIRED));
-  }
   
   public void collect(long[] input) {
-    values.forEach(c->c.add(input));
+    if (input != null) {
+      values.forEach(c->c.add(input));
+    }
     totalCount.increment();
   }
 
@@ -80,6 +82,7 @@ class InFlightStats implements PrettyPrintable {
   } 
   
   static class Combo {
+    Logger LOG = LoggerFactory.getLogger(Combo.class);
     private final StatType from;
     private final StatType to;
     private final LongAdder value = new LongAdder();
@@ -90,7 +93,11 @@ class InFlightStats implements PrettyPrintable {
     }
     
     Combo add(long[] vals) {
-      value.add(vals[to.ordinal()] - vals[from.ordinal()]);
+      try {
+        value.add(vals[to.ordinal()] - vals[from.ordinal()]);
+      } catch (Throwable t) {
+        LOG.warn("error collecting stats", t);
+      }
       return this;
     }
     
