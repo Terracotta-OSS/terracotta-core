@@ -23,6 +23,7 @@ import com.tc.test.TCTestCase;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.util.List;
+import org.junit.Assume;
 
 public class MemoryPoolsTest extends TCTestCase {
 
@@ -42,7 +43,7 @@ public class MemoryPoolsTest extends TCTestCase {
       System.err.println("=====================");
     }
     JVMMemoryManager memManager = new TCMemoryManagerJdk15PoolMonitor();
-    assertTrue(memManager.isMemoryPoolMonitoringSupported());
+    Assume.assumeTrue(memManager.isMemoryPoolMonitoringSupported());  // false for IBM
     MemoryUsage mu1 = memManager.getOldGenUsage();
     assertNotNull(mu1);
     long collectorCount1 = mu1.getCollectionCount();
