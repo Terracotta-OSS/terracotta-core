@@ -31,4 +31,8 @@ public interface Configuration {
   <T> List<T> getExtendedConfiguration(Class<T> type);
 
   String getRawConfiguration();
+
+  default boolean isPartialConfiguration() {
+    return false;
+  }
 }

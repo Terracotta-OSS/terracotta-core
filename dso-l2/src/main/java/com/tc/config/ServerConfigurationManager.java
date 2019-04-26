@@ -117,6 +117,10 @@ public class ServerConfigurationManager implements PrettyPrintable {
     return this.consistentStartup;
   }
 
+  public boolean isPartialConfiguration() {
+    return this.configuration.isPartialConfiguration();
+  }
+
   public ServiceLocator getServiceLocator() {
     return this.serviceLocator;
   }
