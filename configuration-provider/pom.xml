@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>org.terracotta.internal</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>5.6-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>configuration-provider</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+      <version>${terracotta-apis.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig-schema</artifactId>
+      <version>${terracotta-configuration.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>
