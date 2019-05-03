@@ -73,7 +73,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private static final long                     NO_CONNECT_TIME             = -1L;
   private static final Logger logger = LoggerFactory.getLogger(TCConnection.class);
-  private static final long                     WARN_THRESHOLD              = 0x400000L;                                                    // 4MB
+  private static final long                     WARN_THRESHOLD              = 0x800000L;                                                    // 4MB
 
   private volatile CoreNIOServices              commWorker;
   private volatile SocketChannel                channel;

@@ -63,6 +63,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final AtomicInteger  inflight = new AtomicInteger();
   private final long           warnStallTime = TCPropertiesImpl.getProperties()
                                                      .getLong(TCPropertiesConsts.L2_SEDA_STAGE_STALL_WARNING, 500);
+  private volatile long lastWarnTime = 0;
   /**
    * The Constructor.
    * 
@@ -107,7 +108,7 @@ public class StageImpl<EC> implements Stage<EC> {
       return ()-> {
         long exec = System.nanoTime();
         if (exec - start > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
-          logger.warn("Stage: {} has stalled on event {} for {}ms", name, event, TimeUnit.NANOSECONDS.toMillis(exec-start));
+          warnIfWarranted(event, TimeUnit.NANOSECONDS.toMillis(exec-start));
         }
         try {
           handler.handleEvent(event);
@@ -116,6 +117,14 @@ public class StageImpl<EC> implements Stage<EC> {
         }
       };
     };
+  }
+  
+  private void warnIfWarranted(Object event, long time) {
+    long now = System.currentTimeMillis();
+    if (now - lastWarnTime > 1000) {
+      lastWarnTime = now;
+      logger.warn("Stage: {} has stalled on event {} for {}ms", name, event, time);
+    }
   }
   
   @Override

@@ -49,7 +49,6 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
     State newState = sce.getCurrentState();
     // notify the collector that the server's state first to mark the start of transition
     if (sce.movedToActive()) {
-      TCServerMain.getServer().updateActivateTime(); // make sure activateTime is updated if needed
 //  if this server just became active
       eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());      
     } else {

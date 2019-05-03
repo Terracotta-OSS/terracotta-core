@@ -20,20 +20,22 @@ package com.tc.async.impl;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Stage;
+import com.tc.util.State;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  *
  */
 public class StageController {
 
-  private final Map<com.tc.util.State, Set<String>> states = new HashMap<com.tc.util.State, Set<String>>();
-  private final Map<String, Runnable> triggers = new HashMap<String, Runnable>();
+  private final Map<com.tc.util.State, Set<String>> states = new HashMap<>();
+  private final Map<String, Consumer<State>> triggers = new HashMap<>();
 
   public StageController() {
   }
@@ -46,7 +48,7 @@ public class StageController {
     Set<String> list = states.get(state);
     if (list == null) {
 // order is important here.  each stage should be started in the order added.
-      list = new LinkedHashSet<String>();
+      list = new LinkedHashSet<>();
       states.put(state, list);
     }
     list.add(stage);
@@ -56,13 +58,13 @@ public class StageController {
    * @param state
    * @param trigger 
    */
-  public synchronized void addTriggerToState(com.tc.util.State state, Runnable trigger) {
+  public synchronized void addTriggerToState(com.tc.util.State state, Consumer<State> trigger) {
     Set<String> list = states.get(state);
     String uuid = "TRIGGER-" + UUID.randomUUID().toString();
     triggers.put(uuid, trigger);
     if (list == null) {
 // order is important here.  each stage should be started in the order added.
-      list = new LinkedHashSet<String>();
+      list = new LinkedHashSet<>();
       states.put(state, list);
     }
     list.add(uuid);
@@ -85,7 +87,7 @@ public class StageController {
     }
     for (String s : coming) {
       if (s.startsWith("TRIGGER-")) {
-        triggers.get(s).run();
+        triggers.get(s).accept(old);
       } else {
         Stage<?> st = cxt.getStage(s, Object.class);
         if (st != null && !leaving.contains(s)) {

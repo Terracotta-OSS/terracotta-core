@@ -73,7 +73,6 @@ public class RequestProcessor {
   }
 
   public void enterActiveState() {
-    passives.enterActiveState();
     isActive = true;
   }
   
@@ -108,7 +107,7 @@ public class RequestProcessor {
         ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), request.getClientInstance(), requestAction, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
-    EntityRequest entityRequest =  new EntityRequest(eid, call, token, concurrencyKey);
+    EntityRequest entityRequest =  new EntityRequest(eid, call, token, concurrencyKey, payload);
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("SCHEDULING:{} {} on {} with concurrency:{} replicatedTo: {}",requestAction, payload.getDebugId(), eid, concurrencyKey, replicateTo);
     }
@@ -149,12 +148,14 @@ public class RequestProcessor {
     private final Consumer<ActivePassiveAckWaiter> invoke;
     private final int key;
     private final Supplier<ActivePassiveAckWaiter> waiter;
+    private final MessagePayload debug;
 
-    public EntityRequest(EntityID entity, Consumer<ActivePassiveAckWaiter> runnable, Supplier<ActivePassiveAckWaiter> waiter, int key) {
+    EntityRequest(EntityID entity, Consumer<ActivePassiveAckWaiter> runnable, Supplier<ActivePassiveAckWaiter> waiter, int key, MessagePayload debug) {
       this.entity = entity;
       this.invoke = runnable;
       this.key = key;
       this.waiter = waiter;
+      this.debug = debug;
     }
 
     @Override
@@ -185,6 +186,11 @@ public class RequestProcessor {
 // anything on the management key needs a complete flush of all the queues
 // the hydrate stage does not need to be flushed as each client 
       return (key == ConcurrencyStrategy.MANAGEMENT_KEY);
+    }
+
+    @Override
+    public String toString() {
+      return "EntityRequest{" + "entity=" + entity + ", key=" + key + ", debug=" + debug.getDebugId() + '}';
     }
   }
 }

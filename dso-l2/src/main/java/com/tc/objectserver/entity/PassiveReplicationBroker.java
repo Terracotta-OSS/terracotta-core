@@ -27,5 +27,4 @@ public interface PassiveReplicationBroker {
   ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<NodeID> passives);
   void zapAndWait(NodeID node);
   Set<NodeID> passives();
-  void enterActiveState();
 }
