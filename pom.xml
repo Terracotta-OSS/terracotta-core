@@ -62,6 +62,7 @@
     <module>terracotta</module>
     <module>client-runtime</module>
     <module>galvan-support</module>
+    <module>configuration-provider</module>
   </modules>
 
   <build>

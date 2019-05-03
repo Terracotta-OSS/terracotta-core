@@ -24,6 +24,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.GroupConfiguration;
 import com.tc.l2.state.AvailabilityManagerImpl;
+import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.BufferManagerFactory;
@@ -545,10 +546,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       consoleLogger.warn("It is not recommended to configure external voters when there is an odd number of servers in the stripe");
     }
 
-    boolean consistentStartup = knownPeers > 0 && (configSetupManager.consistentStartup() || voteCount >= 0);
-    ConsistencyManager consistencyMgr = new SafeStartupManagerImpl(consistentStartup, knownPeers,
-        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount));
-    
+    ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
+
     final String dsoBind = l2DSOConfig.getTsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (t)->{
@@ -794,6 +793,26 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.l2Coordinator.start();
     startDiagnosticListener();
     setLoggerOnExit();
+  }
+
+  private static ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
+                                                             int knownPeers,
+                                                             int voteCount) {
+    // start the server in diagnostic mode if the configuration is not complete
+    if (configSetupManager.isPartialConfiguration()) {
+      if (knownPeers != 0) {
+        throw new RuntimeException("Diagnostic mode is not supported with multi-server stripe");
+      }
+      return new DiagnosticModeConsistencyManager();
+    }
+
+    boolean consistentStartup = knownPeers > 0 && (configSetupManager.consistentStartup() || voteCount >= 0);
+    return new SafeStartupManagerImpl(
+        consistentStartup,
+        knownPeers,
+        (voteCount < 0 || knownPeers == 0) ?
+            new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount)
+    );
   }
 
   private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ClientChannelLifeCycleHandler handler) {
