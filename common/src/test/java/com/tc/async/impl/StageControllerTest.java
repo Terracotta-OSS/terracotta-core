@@ -101,9 +101,7 @@ public class StageControllerTest {
     
     instance.addStageToState(init, "INIT");
     instance.addStageToState(test, "PRE");
-    instance.addTriggerToState(test, new Runnable() {
-      public void run() {didRun.set();}
-    });
+    instance.addTriggerToState(test, s->didRun.set());
     instance.addStageToState(test, "POST");
 
     instance.transition(cxt, init, test);

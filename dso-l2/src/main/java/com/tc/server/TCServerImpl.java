@@ -343,7 +343,6 @@ public class TCServerImpl extends SEDA implements TCServer, StateChangeListener 
       startDSOServer();
 
       if (isActive()) {
-        updateActivateTime();
         if (TCServerImpl.this.activationListener != null) {
           TCServerImpl.this.activationListener.serverActivated();
         }

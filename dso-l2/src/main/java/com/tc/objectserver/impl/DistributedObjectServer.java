@@ -19,6 +19,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandlerException;
 
 import com.tc.config.ServerConfigurationManager;
@@ -100,7 +101,6 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.ThreadDumpHandler;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.AddressChecker;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -121,7 +121,6 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -196,7 +195,6 @@ import com.tc.objectserver.entity.EntityManagerImpl;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReplicationSender;
 import com.tc.objectserver.entity.RequestProcessor;
-import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.GenericHandler;
 import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 import com.tc.objectserver.handler.VoltronMessageHandler;
@@ -217,12 +215,14 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ClientID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.groups.NullGroupManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
@@ -230,6 +230,7 @@ import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.terracotta.config.Configuration;
@@ -650,8 +651,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     Stage<VoltronEntityMessage> fast = stageManager.createStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class, voltron, 1, maxStageSize);
     messengerProvider.setMessageSink(fast.getSink());
     entityManager.setMessageSink(fast.getSink());    
-    // If we are running in a restartable mode, instantiate any entities in storage.
-    processTransactionHandler.loadExistingEntities();
             
     this.groupCommManager = (knownPeers == 0) ? new NullGroupManager(thisServerNodeID) : this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
@@ -678,7 +677,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(monitoringShimService, knownPeers > 0), eventCollector);
+    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(processTransactionHandler, knownPeers > 0), eventCollector);
     final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
         stateChange.getSink(), stageManager, 
@@ -711,9 +710,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                   this.stripeIDStateManager,
                                                                   consistencyMgr);
 
-    connectServerStateToReplicatedState(processTransactionHandler, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
+    connectServerStateToReplicatedState(monitoringShimService, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Sink<ReplicationSendingAction> replicationSenderStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationSendingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
+    final Sink<ReplicationSendingAction> replicationSenderStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationSendingAction.class, new GenericHandler<ReplicationSendingAction>(), knownPeers, maxStageSize).getSink() :
             (context) -> {throw new AssertionError("no messages to replication");};
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
     final Sink<ReplicationReceivingAction> replicationReceivingStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE, ReplicationReceivingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
@@ -724,6 +723,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
       new AbstractEventHandler<ReplicationMessageAck>() {
+          @Override
+          protected void initialize(ConfigurationContext context) {
+            super.initialize(context); 
+            passives.enterActiveState();
+          }
+
           @Override
           public void handleEvent(ReplicationMessageAck context) throws EventHandlerException {
             switch (context.getType()) {
@@ -751,7 +756,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.groupCommManager.registerForGroupEvents(dispatchHandler.createDispatcher(groupEvents.getSink()));
   //  TODO:  These stages should probably be activated and destroyed dynamically    
 //  Replicated messages need to be ordered
-    Sink<ReplicationMessage> replication = new OrderedSink<ReplicationMessage>(logger, replicationStage.getSink());
+    Sink<ReplicationMessage> replication = new OrderedSink<>(logger, replicationStage.getSink());
     this.groupCommManager.routeMessages(ReplicationMessage.class, replication);
 
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
@@ -916,7 +921,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         .getSink().addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
-  private StageController createStageController(LocalMonitoringProducer monitoringSupport, boolean knownPeers) {
+  private StageController createStageController(ProcessTransactionHandler pth, boolean knownPeers) {
     StageController control = new StageController();
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
@@ -935,19 +940,18 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.HYDRATE_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE);
+    control.addTriggerToState(ServerMode.ACTIVE.getState(),s->{
+      //  this is shimmed in to add permanent entities or load existing entities before replication and clients are active
+      //  but after the active machinery is up and running
+      startActiveMode(pth, StateManager.convert(s) == ServerMode.PASSIVE);
+      server.updateActivateTime();
+    });
+    // these need to be started after startActiveMode is called since replication is only active after permanement 
+    // entities are create or existing entities are reloaded
     if (knownPeers) {
       control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
       control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     }
-    control.addTriggerToState(ServerMode.ACTIVE.getState(), () -> {
-      server.updateActivateTime();
-  // transition the local monitoring producer to active so the tree is rebuilt as a new active of the stripe
-      monitoringSupport.serverIsActive();
-      PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
-  //  due to the broadcast nature of this call, it is possible to get multiple 
-  //  responses from the same server.  The underlying collector must tolerate this
-      groupCommManager.sendAll(req);  //  request info from all the other servers
-    });
     return control;
   }
   
@@ -987,20 +991,25 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     };
   }
   
-  private void connectServerStateToReplicatedState(ProcessTransactionHandler pth, StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
+  private void connectServerStateToReplicatedState(LocalMonitoringProducer monitoringShimService, StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
     mgr.registerForStateChangeEvents(new StateChangeListener() {
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
-        final Set<ClientID> existingClients = new HashSet<>(persistor.getClientStatePersistor().loadAllClientIDs());
+        if (sce.movedToActive()) {
+    // transition the local monitoring producer to active so the tree is rebuilt as a new active of the stripe
+          monitoringShimService.serverIsActive();
+          PlatformInfoRequest req = PlatformInfoRequest.createEmptyRequest();
+      //  due to the broadcast nature of this call, it is possible to get multiple 
+      //  responses from the same server.  The underlying collector must tolerate this
+          groupCommManager.sendAll(req);  //  request info from all the other servers
+          final Set<ClientID> existingClients = new HashSet<>(persistor.getClientStatePersistor().loadAllClientIDs());
 //  must do this because the replicated state when it comes to clients, may not include all the references 
 //  to clients that were in the midst of cleaning up after disconnection.  
-        existingClients.addAll(clients.clearClientReferences());
-        if (sce.movedToActive()) {
+          existingClients.addAll(clients.clearClientReferences());
           Set<ConnectionID> existingConnections = existingClients.stream()
               .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
           getContext().getClientHandshakeManager().setStarting(existingClients);
-          startActiveMode(pth, sce.getOldState().equals(StateManager.PASSIVE_STANDBY));
           try {
             startL1Listener(existingConnections);
           } catch (IOException ioe) {
@@ -1080,28 +1089,33 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   private void startActiveMode(ProcessTransactionHandler pth, boolean wasStandby) {
-    if (!wasStandby && persistor.getClusterStatePersistor().getInitialState() == null) {
-      
-      Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
-      Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
-//  find annotated permanent entities
-      List<VoltronEntityMessage> annotated = entityManager.getEntityLoader().getAnnotatedEntities();
-      for (VoltronEntityMessage vem : annotated) {
-//  map them to weed out duplicates
-        checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
-      } 
-      for (VoltronEntityMessage vem : checkdups.values()) {
-        msgSink.addToSink(vem);
-      }
-      EntityPersistor ep = this.persistor.getEntityPersistor();
-      for (VoltronEntityMessage vem : checkdups.values()) {
-        try {
-          ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
-        } catch (RuntimeException e) {
-          throw e;
-        } catch (Exception e) {
-          throw new RuntimeException(e);
+    if (!wasStandby) {
+      if (persistor.getClusterStatePersistor().getInitialState() == null) {
+  //  no reconnects on a new server
+        pth.reconnectComplete();
+        Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
+        Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
+  //  find annotated permanent entities
+        List<VoltronEntityMessage> annotated = entityManager.getEntityLoader().getAnnotatedEntities();
+        for (VoltronEntityMessage vem : annotated) {
+  //  map them to weed out duplicates
+          checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
+        } 
+        for (VoltronEntityMessage vem : checkdups.values()) {
+          msgSink.addToSink(vem);
         }
+        EntityPersistor ep = this.persistor.getEntityPersistor();
+        for (VoltronEntityMessage vem : checkdups.values()) {
+          try {
+            ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
+          } catch (RuntimeException e) {
+            throw e;
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      } else {
+        pth.loadExistingEntities();
       }
     }
   }

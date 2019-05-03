@@ -106,7 +106,6 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     }
   }
   
-  @Override
   public void enterActiveState() {
     Assert.assertFalse(activated);
     primePassives();

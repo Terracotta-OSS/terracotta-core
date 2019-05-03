@@ -20,7 +20,6 @@ package com.tc.objectserver.entity;
 
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
-import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.Set;
 
@@ -29,17 +28,8 @@ import java.util.Set;
  * Stubbed implementation which provides no replication.
  */
 public class NoReplicationBroker implements PassiveReplicationBroker {
-  
-  private boolean isActive = false;
-  
+    
   public static final ActivePassiveAckWaiter NOOP_WAITER = new ActivePassiveAckWaiter(Collections.emptySet(), null);
-
-  @Override
-  public void enterActiveState() {
-// only happens once
-    Assert.assertFalse(isActive);
-    isActive = true;
-  }
 
   @Override
   public Set<NodeID> passives() {
