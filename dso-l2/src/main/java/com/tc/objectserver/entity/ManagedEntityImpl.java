@@ -585,7 +585,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       switch (request.getAction()) {
         case INVOKE_ACTION:
           Optional.ofNullable(decodeMessage(message, response))
-              .ifPresent(em->performAction(request, em , response, concurrencyKey));
+              .ifPresent(em->performAction(request, em, response, concurrencyKey));
           break;
         case REQUEST_SYNC_ENTITY:
           performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
@@ -1251,6 +1251,16 @@ public class ManagedEntityImpl implements ManagedEntity {
         
     private void start() {
       if (concurrency == ConcurrencyStrategy.MANAGEMENT_KEY) {
+        if (logger.isDebugEnabled()) {
+          try {
+            if (request.getAction() == ServerEntityAction.INVOKE_ACTION) {
+              payload.decodeMessage(raw->codec.decodeMessage(raw));
+            }
+          } catch (MessageCodecException codec) {
+            
+          }
+          logger.debug("deferring actions in {} based on {} as a {}", getID(), payload.getDebugId(), request.getAction());
+        }
         runnables.activate();
       }
       boolean replicate = payload.shouldReplicate();

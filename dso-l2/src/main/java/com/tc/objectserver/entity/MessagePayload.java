@@ -25,11 +25,15 @@ import org.terracotta.entity.MessageCodecException;
 
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
-    return new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
+    MessagePayload payload = new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
+    payload.setDebugId("EMPTY");
+    return payload;
   }
 
   public static final MessagePayload rawDataOnly(byte[] raw) {
-    return new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, false, false);
+    MessagePayload payload = new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, false, false);
+    payload.setDebugId("RAW");
+    return payload;
   }
 
   public static final MessagePayload commonMessagePayload(byte[] raw, EntityMessage message, boolean replicate, boolean allowBusy) {
@@ -124,6 +128,6 @@ public class MessagePayload {
 
   @Override
   public String toString() {
-    return "MessagePayload{" + "debugId=" + debugId + '}';
+    return "MessagePayload{" + "debugId=" + getDebugId() + '}';
   }
 }
