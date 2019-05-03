@@ -127,7 +127,12 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
   // listener was with readerComm only
   public void stopListener(ServerSocketChannel ssc, Runnable callback) {
-    readerComm.stopListener(ssc, callback);
+    writerComm.cleanupChannel(ssc, new Runnable() {
+      @Override
+      public void run() {
+        readerComm.cleanupChannel(ssc, callback);
+      }
+    });
   }
 
   private synchronized void listenerRemoved(TCListener listener) {
