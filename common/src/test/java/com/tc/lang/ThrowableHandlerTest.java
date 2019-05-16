@@ -22,13 +22,13 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
+import com.tc.util.runtime.VmVersion;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 import static org.junit.Assume.assumeFalse;
-import org.junit.Ignore;
 
 public class ThrowableHandlerTest extends TestCase {
 
@@ -84,7 +84,6 @@ public class ThrowableHandlerTest extends TestCase {
     assertFalse(exited.get());
   }
 
-  @Ignore
   public void testIsThreadGroupDestroyed() throws Exception {
     final AtomicBoolean exited = new AtomicBoolean(false);
     ThrowableHandler throwableHandler = new ThrowableHandlerImpl(LoggerFactory.getLogger(getClass())) {
@@ -123,7 +122,9 @@ public class ThrowableHandlerTest extends TestCase {
     t.setStackTrace(stack);
 
     throwableHandler.handleThrowable(thread, t);
-    assumeFalse(exited.get());  // this fails for IBM JDK
+    if (!new VmVersion(System.getProperties()).isIBM()) {
+      assumeFalse(exited.get());  // this fails for IBM JDK
+    }
   }
 
   private class TestCallbackOnExitHandler implements CallbackOnExitHandler {
