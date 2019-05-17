@@ -24,6 +24,7 @@ import java.util.Collections;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
@@ -86,5 +87,11 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
   public void setMessageSink(Sink<VoltronEntityMessage> messageSink) {
     Assert.assertNotNull(messageSink);
     this.messageSink = messageSink;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    StateDumpCollector dumpCollector = stateDumpCollector.subStateDumpCollector(getClass().getCanonicalName());
+    dumpCollector.addState("isServerActive", serverIsActive);
   }
 }

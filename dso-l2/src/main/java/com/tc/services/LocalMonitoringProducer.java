@@ -31,6 +31,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.monitoring.IMonitoringProducer;
 import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
@@ -400,6 +401,15 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     public void pushBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values);
   }
 
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    StateDumpCollector dumpCollector = stateDumpCollector.subStateDumpCollector(getClass().getCanonicalName());
+    dumpCollector.addState("platformServerInfo", thisServer.toString());
+    StateDumpCollector dump = dumpCollector.subStateDumpCollector("otherServers");
+    for (Map.Entry<ServerID, PlatformServer> entry : otherServers.entrySet()) {
+      dump.addState(entry.getKey().toString(), entry.getValue().toString());
+    }
+  }
 
   private static class CacheNode {
     public final Serializable data;
