@@ -23,13 +23,16 @@ import com.tc.logging.TCLogging;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import java.io.InputStream;
+
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.monitoring.PlatformStopException;
 
 /**
  * @author vmad
  */
-public class PlatformServiceImpl implements PlatformService {
+public class PlatformServiceImpl implements PlatformService, StateDumpable {
 
     private final TCServer tcServer;
 
@@ -77,4 +80,11 @@ public class PlatformServiceImpl implements PlatformService {
     public void stopPlatform(RestartMode restartMode) {
       tcServer.stop(restartMode);
     }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("tcServerState", tcServer.getState());
+    stateDumpCollector.addState("tcServerConfig", tcServer.getConfig());
+    stateDumpCollector.addState("tcServerDescriptionCapabilities", tcServer.getDescriptionOfCapabilities());
+  }
 }

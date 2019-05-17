@@ -23,6 +23,7 @@ import com.tc.server.TCServer;
 
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.monitoring.PlatformService;
 
 import java.util.Collection;
@@ -57,4 +58,12 @@ public class PlatformServiceProvider implements ImplementationProvidedServicePro
     public void serverDidBecomeActive() {
       // The platform service works the same way whether active or passive - ignore.
     }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    StateDumpCollector dumpCollector = stateDumpCollector.subStateDumpCollector(getClass().getCanonicalName());
+    StateDumpCollector dump = dumpCollector.subStateDumpCollector(platformService.getClass()
+        .getSimpleName());
+    platformService.addStateTo(dump);
+  }
 }
