@@ -162,25 +162,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
       buf.append(extraMsgInfo);
     }
 
-    if (header != null) {
-      buf.append("Header (").append(header.getClass().getName()).append(")\n");
-      buf.append(StringUtil.indentLines(header.toString()));
-      if (buf.charAt(buf.length() - 1) != '\n') {
-        buf.append('\n');
-      }
-    }
-
-    buf.append("Payload:\n");
-    if (messagePayload != null) {
-      buf.append(StringUtil.indentLines(messagePayload.toString())).append("\n");
-    } else {
-      if (payloadData != null) {
-        buf.append(StringUtil.indentLines(describePayload()));
-      } else {
-        buf.append(StringUtil.indentLines("*** No payoad data ***\n"));
-      }
-    }
-
     return buf.toString();
   }
 
