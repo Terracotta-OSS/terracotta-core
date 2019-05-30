@@ -32,7 +32,7 @@ public class QueueFactory {
 
   public <E> BlockingQueue<Event> createInstance(Class<E> type, int capacity) {
     return (capacity == 0) ? new SynchronousQueue<>() : 
-            (capacity < 256) ? new ArrayBlockingQueue<>(capacity) :
+            (capacity <= 1024) ? new ArrayBlockingQueue<>(capacity) :
             new LinkedBlockingQueue<>(capacity);
   }
 }

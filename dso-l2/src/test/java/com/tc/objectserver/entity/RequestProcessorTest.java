@@ -96,7 +96,7 @@ public class RequestProcessorTest {
       Assert.assertThat((Integer)inv.getArguments()[3], greaterThanOrEqualTo(minProcs));
       return mock(Stage.class);
     });
-    RequestProcessor instance = new RequestProcessor(mgr, true);
+    RequestProcessor instance = new RequestProcessor(mgr, 1024, true);
     // one for sync stage and once for regular
     verify(mgr, times(2)).createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean());
   }  

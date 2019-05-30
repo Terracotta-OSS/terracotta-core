@@ -94,7 +94,9 @@ public class MockStage implements Stage {
   public Map getState() {
     return Collections.emptyMap();
   }
-  
-  
+
+  @Override
+  public void setSpinningCount(int spin) {
+  }
 
 }

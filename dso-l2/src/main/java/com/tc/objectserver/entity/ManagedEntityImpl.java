@@ -589,7 +589,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               .ifPresent(em->performAction(request, em, response, concurrencyKey));
           break;
         case REQUEST_SYNC_ENTITY:
-          performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
+          performSync(response, request.replicateTo(Collections.emptySet()), concurrencyKey);
           break;
         case RECEIVE_SYNC_ENTITY_KEY_START:
           receiveSyncEntityKeyStart(response, concurrencyKey);

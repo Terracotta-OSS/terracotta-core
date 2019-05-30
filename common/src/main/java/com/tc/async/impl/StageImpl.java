@@ -64,6 +64,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final long           warnStallTime = TCPropertiesImpl.getProperties()
                                                      .getLong(TCPropertiesConsts.L2_SEDA_STAGE_STALL_WARNING, 500);
   private volatile long lastWarnTime = 0;
+  private int spinning = 0;
   /**
    * The Constructor.
    * 
@@ -135,6 +136,11 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public int size() {
     return inflight.get();
+  }
+
+  @Override
+  public void setSpinningCount(int spin) {
+    spinning = spin;
   }
 
   public void trackExtraStatistics(boolean enable) {
@@ -285,12 +291,14 @@ public class StageImpl<EC> implements Stage<EC> {
 
     @Override
     public void run() {
+      int spinCount = 0;
+      boolean spinner = spinning > 0;
       while (!shutdown || !source.isEmpty()) {
         Event ctxt = null;
         try {
           this.setToIdle();
           long stopped = System.nanoTime();
-          ctxt = source.poll(pollTime);
+          ctxt = (spinner) ? source.poll(0) : source.poll(pollTime);
           if (ctxt != null) {
             long running = System.nanoTime();
             this.idle = false;
@@ -299,8 +307,13 @@ public class StageImpl<EC> implements Stage<EC> {
             ctxt.call();
             runTime += (System.nanoTime() - running);
             count += 1;
+            spinCount = 0;
+            spinner = spinning > 0;
           } else {
             idleTime += (System.nanoTime() - stopped);
+            if (spinCount++ >= spinning) {
+              spinner = false;
+            }
           }
         } catch (InterruptedException ie) {
           if (shutdown) { continue; }
