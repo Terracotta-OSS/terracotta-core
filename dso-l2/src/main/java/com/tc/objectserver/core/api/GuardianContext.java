@@ -116,7 +116,7 @@ public class GuardianContext {
   
   private static Guardian getOperationGuardian() {
     TCServer server = TCServerMain.getServer();
-    if (server != null) {
+    if (server != null && server instanceof TCServerImpl) {
       DistributedObjectServer dso = ((TCServerImpl)server).getDSOServer();
       if (dso != null) {
         ServerManagementContext cxt = dso.getManagementContext();
