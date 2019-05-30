@@ -519,7 +519,6 @@ public class StateManagerImpl implements StateManager {
     // if two actives are split-brain and they try and zap each other
     // the ZapProcessor will resolve the differences
     if (isActiveCoordinator()) {
-//  split brain, handle this by sending normal enrollment to determine who wins
       logger.info("split-brain detected");
     }
     boolean verify = verifyElectionWonResults(clusterMsg);

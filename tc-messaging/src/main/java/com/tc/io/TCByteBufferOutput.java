@@ -26,5 +26,7 @@ public interface TCByteBufferOutput extends TCDataOutput, Recyclable {
   public TCByteBuffer[] toArray();
 
   public void write(TCByteBuffer[] data);
+  
+  public void write(TCByteBuffer data);
 
 }

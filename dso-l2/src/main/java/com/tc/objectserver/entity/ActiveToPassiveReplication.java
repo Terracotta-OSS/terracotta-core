@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.bytes.TCByteBufferFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,8 @@ import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
+import java.util.AbstractSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -63,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
-  private static final Logger logger = LoggerFactory.getLogger(PassiveReplicationBroker.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActiveToPassiveReplication.class);
   private final Iterable<NodeID> passives;
   private boolean activated = false;
   private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
@@ -92,7 +95,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   @Override
   public void zapAndWait(NodeID node) {
     synchronized(this.standByNodes) {
-      logger.warn("ZAPPING " + node + " due to inconsistent lifecycle result");
+      LOGGER.warn("ZAPPING " + node + " due to inconsistent lifecycle result");
       try {
         if (this.standByNodes.contains(node)) {
           this.serverCheck.zapNode(node,  L2HAZapNodeRequestProcessor.PROGRAM_ERROR, "inconsistent lifecycle");
@@ -131,7 +134,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
         serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
       }
-      logger.debug("Starting message sequence on " + node);
+      LOGGER.debug("Starting message sequence on " + node);
       this.replicationSender.addPassive(node, lane.computeIfAbsent(node, n->lane.size()), SyncReplicationActivity.createStartMessage());
       return true;
     } else {
@@ -146,7 +149,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     } else {
       Assert.assertTrue("passive node unable to prime and not in the list of passives", passiveNodes.contains(newNode));
     }
-    logger.info("Starting sync to " + newNode);
+    LOGGER.info("Starting sync to " + newNode);
     executePassiveSync(newNode);
   }
   /**
@@ -156,7 +159,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private void executePassiveSync(final NodeID newNode) {
     passiveSyncPool.execute(() -> {
       // start passive sync message
-      logger.debug("starting sync for " + newNode);
+      LOGGER.debug("starting sync for " + newNode);
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
         @Override
         public void accept(List<ManagedEntity> sortedEntities) {
@@ -177,13 +180,13 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         }}
       );
       for (ManagedEntity entity : e) {
-        logger.debug("starting sync for entity " + newNode + "/" + entity.getID());
+        LOGGER.debug("starting sync for entity " + newNode + "/" + entity.getID());
         entity.sync(newNode);
-        logger.debug("ending sync for entity " + newNode + "/" + entity.getID());
+        LOGGER.debug("ending sync for entity " + newNode + "/" + entity.getID());
       }
       //  passive sync done message.  causes passive to go into passive standby mode
-      logger.debug("ending sync " + newNode);
-      replicateActivity(SyncReplicationActivity.createEndSyncMessage(replicateEntityPersistor()), Collections.singleton(newNode)).waitForCompleted();
+      LOGGER.debug("ending sync " + newNode);
+      replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(newNode)).waitForCompleted();
     });
   }
   
@@ -235,14 +238,23 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public Set<NodeID> passives() {
-    return new HashSet<>(passiveNodes);
+    ArrayList<NodeID> copy = new ArrayList<>(passiveNodes);
+    return new AbstractSet<NodeID>() {
+      @Override
+      public Iterator<NodeID> iterator() {
+        return copy.iterator();
+      }
+
+      @Override
+      public int size() {
+        return copy.size();
+      }
+    };
   }
 
   @Override
   public ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<NodeID> all) {
     Set<NodeID> copy = new HashSet<>(all); 
-// don't replicate to a passive that is no longer there
-    copy.retainAll(passives());
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy, this);
     if (!copy.isEmpty()) {
       SyncReplicationActivity.ActivityID activityID = activity.getActivityID();
@@ -273,7 +285,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException ie) {
-          logger.info("interrupted while waiting for permission to remove node");
+          LOGGER.info("interrupted while waiting for permission to remove node");
         }
       }
 // first remove it from the list of passive nodes so that anything sending new messages 
@@ -284,6 +296,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   //  remove the passive node from the sender first.  nothing else is going out
       this.replicationSender.removePassive(nodeID);
       removeWaiters(nodeID);
+      LOGGER.info("removing passive: {}", nodeID);
     });
   }
   

@@ -19,6 +19,8 @@
 package com.tc.l2.msg;
 
 import com.tc.async.api.OrderedEventContext;
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ClientID;
@@ -146,12 +148,12 @@ public class SyncReplicationActivity implements OrderedEventContext {
     );
       
   
-  public static SyncReplicationActivity createLifecycleMessage(EntityID eid, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload) {
+  public static SyncReplicationActivity createLifecycleMessage(EntityID eid, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, TCByteBuffer payload) {
     Assert.assertTrue(lifecycle.contains(action));
     return new SyncReplicationActivity(ActivityID.getNextID(),null,eid,version,fetch,src,instance,tid,oldest,action,payload,0,0,null);
   }
 
-  public static SyncReplicationActivity createInvokeMessage(FetchID fetchID, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, String debugId) {
+  public static SyncReplicationActivity createInvokeMessage(FetchID fetchID, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, TCByteBuffer payload, int concurrency, String debugId) {
     // We shouldn't be using this helper for any of the specialized activity types.
     Assert.assertTrue(ActivityType.INVOKE_ACTION == action);
     int referenceCount = 0;
@@ -163,12 +165,12 @@ public class SyncReplicationActivity implements OrderedEventContext {
     return new SyncReplicationActivity(ActivityID.getNextID(), tuplesForCreation, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_BEGIN, null, 0, referenceCount, null);
   }
 
-  public static SyncReplicationActivity createEndSyncMessage(byte[] extras) {
+  public static SyncReplicationActivity createEndSyncMessage(TCByteBuffer extras) {
     int referenceCount = 0;
     return new SyncReplicationActivity(ActivityID.getNextID(), null, EntityID.NULL_ID, 0L, FetchID.NULL_ID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_END, extras, 0, referenceCount, null);
   }
 
-  public static SyncReplicationActivity createStartEntityMessage(EntityID id, long version, FetchID fetchID, byte[] configPayload, int references) {
+  public static SyncReplicationActivity createStartEntityMessage(EntityID id, long version, FetchID fetchID, TCByteBuffer configPayload, int references) {
     return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_BEGIN, configPayload, 0, references, null);
   }
 
@@ -191,7 +193,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     return new SyncReplicationActivity(ActivityID.getNextID(), null, id, version, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ActivityType.SYNC_ENTITY_CONCURRENCY_END, null, concurrency, referenceCount, null);
   }
 
-  public static SyncReplicationActivity createPayloadMessage(EntityID id, long version, FetchID fetchID, int concurrency, byte[] payload, String debugId) {
+  public static SyncReplicationActivity createPayloadMessage(EntityID id, long version, FetchID fetchID, int concurrency, TCByteBuffer payload, String debugId) {
     // We can only synchronize positive-number keys.
     Assert.assertTrue(concurrency > 0);
     int referenceCount = 0;
@@ -213,7 +215,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
   final TransactionID tid;
   final TransactionID oldest;
 
-  final byte[] payload;
+  final TCByteBuffer payload;
   final int concurrency;
   // NOTE:  referenceCount is only used by SYNC_ENTITY_BEGIN.
   final int referenceCount;
@@ -222,7 +224,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
   final String debugId;
 
-  private SyncReplicationActivity(ActivityID id, EntityCreationTuple[] entitiesForSyncStart, EntityID entity, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, byte[] payload, int concurrency, int referenceCount, String debugId) {
+  private SyncReplicationActivity(ActivityID id, EntityCreationTuple[] entitiesForSyncStart, EntityID entity, long version, FetchID fetch, ClientID src, ClientInstanceID instance, TransactionID tid, TransactionID oldest, ActivityType action, TCByteBuffer payload, int concurrency, int referenceCount, String debugId) {
     Assert.assertNotNull(id);
     Assert.assertNotNull(action);
     if (ActivityType.SYNC_BEGIN == action) {
@@ -245,7 +247,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     this.instance = instance;
     this.tid = tid;
     this.oldest = oldest;
-    this.payload = payload;
+    this.payload = payload == null || payload.isReadOnly() ? payload : payload.asReadOnlyBuffer();
     this.concurrency = concurrency;
     this.referenceCount = referenceCount;
     this.debugId = debugId;
@@ -265,9 +267,9 @@ public class SyncReplicationActivity implements OrderedEventContext {
     return this.entitiesForSyncStart;
   }
 
-  public byte[] getExtendedData() {
+  public TCByteBuffer getExtendedData() {
     Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
-    return payload;
+    return payload == null ? TCByteBufferFactory.getInstance(false, 0) : payload.duplicate();
   }
   
   public ClientID getSource() {
@@ -281,7 +283,6 @@ public class SyncReplicationActivity implements OrderedEventContext {
   }  
   
   public TransactionID getTransactionID() {
-    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
     return tid;
   }
   
@@ -364,8 +365,11 @@ public class SyncReplicationActivity implements OrderedEventContext {
       out.writeLong(oldest.toLong());
       
       if (payload != null) {
-        out.writeInt(payload.length);
-        out.write(payload);
+//        byte[] data = TCByteBufferFactory.unwrap(payload);
+//        out.writeInt(data.length);
+//        out.write(data);
+        out.writeInt(payload.remaining());
+        out.write(payload.duplicate());
       } else {
         out.writeInt(0);
       }
@@ -398,7 +402,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
     ClientInstanceID instance = ClientInstanceID.NULL_ID;
     TransactionID tid = TransactionID.NULL_ID;
     TransactionID oldest = TransactionID.NULL_ID;
-    byte[] payload = null;
+    TCByteBuffer payload = null;
     int concurrency = 0;
     int referenceCount = 0;
     String debug = null;
@@ -422,8 +426,9 @@ public class SyncReplicationActivity implements OrderedEventContext {
       oldest = new TransactionID(in.readLong());
       
       int length = in.readInt();
-      payload = new byte[length];
-      in.readFully(payload);
+      if (length > 0) {
+        payload = in.read(length);
+      }
       
       // Note that we only pass concurrency key or reference count in certain cases.
       concurrency = 0;

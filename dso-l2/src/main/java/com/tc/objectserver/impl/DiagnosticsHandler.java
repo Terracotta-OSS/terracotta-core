@@ -20,6 +20,8 @@ package com.tc.objectserver.impl;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,8 +79,8 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
       logger.warn("trouble with diagnostics", e);
     }
     DiagnosticMessage msg = (DiagnosticMessage)message;
-    byte[] data = msg.getExtendedData();
-    String raw = new String(data, set);
+    TCByteBuffer data = msg.getExtendedData();
+    String raw = new String(TCByteBufferFactory.unwrap(data), set);
     String[] cmd = raw.split(" ");
     byte[] result = null;
     ChannelID channelID = message.getChannel().getChannelID();

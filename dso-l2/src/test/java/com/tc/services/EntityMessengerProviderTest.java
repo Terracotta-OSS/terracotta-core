@@ -59,6 +59,7 @@ public class EntityMessengerProviderTest {
     this.messageSink = mock(Sink.class);
     this.consumerID = 1;
     this.messageCodec = mock(MessageCodec.class);
+    when(this.messageCodec.encodeMessage(any())).thenReturn(new byte[0]);
     this.owningEntity = mock(ManagedEntity.class);
     when(this.owningEntity.getCodec()).thenReturn((MessageCodec)this.messageCodec);
     when(this.owningEntity.getRetirementManager()).thenReturn(mock(RetirementManager.class));

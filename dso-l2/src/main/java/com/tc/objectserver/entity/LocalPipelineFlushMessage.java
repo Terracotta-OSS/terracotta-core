@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import org.terracotta.entity.EntityMessage;
 
 import com.tc.entity.VoltronEntityMessage;
@@ -92,8 +94,8 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
   }
 
   @Override
-  public byte[] getExtendedData() {
-    return new byte[0];
+  public TCByteBuffer getExtendedData() {
+    return TCByteBufferFactory.getInstance(false, 0);
   }
 
   @Override

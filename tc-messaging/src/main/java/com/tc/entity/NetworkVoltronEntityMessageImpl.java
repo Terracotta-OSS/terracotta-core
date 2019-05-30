@@ -20,6 +20,7 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -50,7 +51,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   private EntityDescriptor entityDescriptor;
   private Type type;
   private boolean requiresReplication;
-  private byte[] extendedData;
+  private TCByteBuffer extendedData;
   private TransactionID oldestTransactionPending;
   private MessageCodecSupplier supplier;
   private EntityMessage message;
@@ -100,9 +101,9 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   }
   
   @Override
-  public byte[] getExtendedData() {
+  public TCByteBuffer getExtendedData() {
     Assert.assertNotNull(this.extendedData);
-    return this.extendedData;
+    return this.extendedData.duplicate();
   }
 
   @Override
@@ -117,7 +118,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
   
   @Override
   public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
-          Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks) {
+          Type type, boolean requiresReplication, TCByteBuffer extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks) {
     // Make sure that this wasn't called twice.
     Assert.assertNull(this.type);
     Assert.assertNotNull(clientID);
@@ -140,7 +141,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.entityDescriptor = entityDescriptor;
     this.type = type;
     this.requiresReplication = requiresReplication;
-    this.extendedData = extendedData;
+    this.extendedData = extendedData.asReadOnlyBuffer();
     this.oldestTransactionPending = oldestTransactionPending;
     this.requestedAcks = acks;
   }
@@ -172,8 +173,8 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     
     outputStream.writeInt(type.ordinal());
     
-    outputStream.writeInt(extendedData.length);
-    outputStream.write(extendedData);
+    outputStream.writeInt(extendedData.remaining());
+    outputStream.write(extendedData.duplicate());
     
     outputStream.writeBoolean(requiresReplication);
     
@@ -196,7 +197,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.transactionID = new TransactionID(getLongValue());
     this.entityDescriptor = EntityDescriptor.readFrom(getInputStream());
     this.type = Type.values()[getIntValue()];
-    this.extendedData = getBytesArray();
+    this.extendedData = getByteBuffer();
     this.requiresReplication = getBooleanValue();
     this.oldestTransactionPending = new TransactionID(getLongValue());
     
@@ -219,7 +220,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     try {
       if (this.type == Type.INVOKE_ACTION) {
         MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec = supplier.getMessageCodec(this.entityDescriptor);
-        this.message = codec.decodeMessage(extendedData);
+        this.message = codec.decodeMessage(TCByteBufferFactory.unwrap(extendedData));
       }
     } catch (MessageCodecException exception) {
 /*  swallow it - this is an optimzation which does not handle the failure case.  

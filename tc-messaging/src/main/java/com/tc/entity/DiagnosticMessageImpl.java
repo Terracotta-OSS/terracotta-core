@@ -20,6 +20,7 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -76,8 +77,8 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
   }
   
   @Override
-  public byte[] getExtendedData() {
-    return this.extendedData;
+  public TCByteBuffer getExtendedData() {
+    return TCByteBufferFactory.wrap(this.extendedData);
   }
 
   @Override

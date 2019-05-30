@@ -252,7 +252,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
       long dataLen = 0;
       for (int i = 1; i < entireMessageData.length; i++) {
-        dataLen += entireMessageData[i].limit();
+        dataLen += entireMessageData[i].remaining();
       }
 
       if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }

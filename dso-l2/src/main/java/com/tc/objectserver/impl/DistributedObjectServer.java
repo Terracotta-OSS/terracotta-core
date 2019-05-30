@@ -53,6 +53,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
@@ -86,7 +87,6 @@ import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
-import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
 import com.tc.l2.msg.L2StateMessage;
@@ -415,6 +415,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
+    TCByteBufferFactory.setPoolingEnabled(tcProperties.getBoolean(TCPropertiesConsts.BYTEBUFFER_POOLING, false));
+    TCByteBufferFactory.setPoolingThreadMax(tcProperties.getInt(TCPropertiesConsts.BYTEBUFFER_POOLING_THREAD_MAX, 1024));
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final StageManager stageManager = this.seda.getStageManager();
 

@@ -38,6 +38,8 @@
 
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.classloader.PermanentEntity;
 import com.tc.classloader.PermanentEntityType;
 import com.tc.classloader.ServiceLocator;
@@ -90,10 +92,10 @@ public class ServerEntityFactory {
             String single = p.name();
             int version = p.version();
             if (single != null && single.length() > 0) {
-              msgs.add(createMessage(type, single, version, new byte[0]));
+              msgs.add(createMessage(type, single, version, TCByteBufferFactory.getInstance(false, 0)));
             }
             for (String name : names) {
-              msgs.add(createMessage(type, name, version, new byte[0]));
+              msgs.add(createMessage(type, name, version, TCByteBufferFactory.getInstance(false, 0)));
             }
           }
         }
@@ -105,11 +107,11 @@ public class ServerEntityFactory {
             String single = p.name();
             int version = p.version();
             if (single != null && single.length() > 0) {
-              msgs.add(createMessage(type.getName(), single, version, new byte[0]));
+              msgs.add(createMessage(type.getName(), single, version, TCByteBufferFactory.getInstance(false, 0)));
             }
             
             for (String name : names) {
-              msgs.add(createMessage(type.getName(), name, version, new byte[0]));
+              msgs.add(createMessage(type.getName(), name, version, TCByteBufferFactory.getInstance(false, 0)));
             }
           }
         }
@@ -117,7 +119,7 @@ public class ServerEntityFactory {
     return msgs;
   }  
 
-  public static VoltronEntityMessage createMessage(String type, String name, int version, byte[] data) {
+  public static VoltronEntityMessage createMessage(String type, String name, int version, TCByteBuffer data) {
     return new CreateSystemEntityMessage(new EntityID(type, name),version, data);
   }
 }

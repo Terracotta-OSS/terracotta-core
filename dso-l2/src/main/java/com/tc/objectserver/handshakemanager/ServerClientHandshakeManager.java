@@ -135,7 +135,7 @@ public class ServerClientHandshakeManager {
 
           if (entity.isPresent()) {
             byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
-            ReferenceMessage msg = new ReferenceMessage(clientID, true, descriptor, extendedReconnectData);
+            ReferenceMessage msg = new ReferenceMessage(clientID, true, descriptor, TCByteBufferFactory.wrap(extendedReconnectData));
             transactionHandler.handleResentReferenceMessage(msg);
           } else {
             throw Assert.failure("entity not found");

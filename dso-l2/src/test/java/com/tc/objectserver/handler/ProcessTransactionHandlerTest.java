@@ -31,6 +31,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.classloader.ServiceLocator;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
@@ -328,7 +329,7 @@ public class ProcessTransactionHandlerTest {
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     // Return an empty byte[], for now.
-    when(request.getExtendedData()).thenReturn(new byte[0]);
+    when(request.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
     return request;
   }
 

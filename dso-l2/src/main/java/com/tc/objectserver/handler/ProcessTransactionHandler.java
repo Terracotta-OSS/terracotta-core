@@ -24,6 +24,7 @@ import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
+import com.tc.bytes.TCByteBuffer;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -186,7 +187,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
       EntityMessage entityMessage = message.getEntityMessage();
-      byte[] extendedData = message.getExtendedData();
+      TCByteBuffer extendedData = message.getExtendedData();
 
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
@@ -631,7 +632,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // Note that we currently don't expect messages which already have an EntityMessage instance to appear here.
     EntityMessage entityMessage = message.getEntityMessage();
     Assert.assertNull(entityMessage);
-    byte[] extendedData = message.getExtendedData();
+    TCByteBuffer extendedData = message.getExtendedData();
 
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();

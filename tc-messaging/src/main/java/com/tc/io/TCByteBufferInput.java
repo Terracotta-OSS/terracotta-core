@@ -67,6 +67,8 @@ public interface TCByteBufferInput extends TCDataInput {
   public boolean markSupported();
 
   public int read(byte[] b);
+  
+  public TCByteBuffer read(int len);
 
   public int read();
 

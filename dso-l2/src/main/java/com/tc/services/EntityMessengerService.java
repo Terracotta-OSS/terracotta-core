@@ -19,6 +19,8 @@
 package com.tc.services;
 
 import com.tc.async.api.Sink;
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
@@ -145,7 +147,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
 
   private FakeEntityMessage encodeAsFake(M message, Consumer<MessageResponse<R>> response) throws MessageCodecException {
     byte[] serializedMessage = this.codec.encodeMessage(message);
-    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, serializedMessage, response, waitForReceived);
+    FakeEntityMessage interEntityMessage = new FakeEntityMessage(this.fakeDescriptor, message, TCByteBufferFactory.wrap(serializedMessage), response, waitForReceived);
     return interEntityMessage;
   }
   /**
@@ -154,14 +156,15 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   public class FakeEntityMessage<R extends EntityResponse> implements VoltronEntityMessage {
     private final EntityDescriptor descriptor;
     private final EntityMessage identityMessage;
-    private final byte[] message;
+    private final TCByteBuffer message;
     private final Consumer<MessageResponse<R>> response;
     private final boolean waitForReceived;
 
-    public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, byte[] message, Consumer<MessageResponse<R>> response, boolean waitForReceived) {
+    public FakeEntityMessage(EntityDescriptor descriptor, EntityMessage identityMessage, TCByteBuffer message, Consumer<MessageResponse<R>> response, boolean waitForReceived) {
+      Assert.assertNotNull(message);
       this.descriptor = descriptor;
       this.identityMessage = identityMessage;
-      this.message = message;
+      this.message = message.asReadOnlyBuffer();
       this.response = response;
       this.waitForReceived = waitForReceived;
     }
@@ -202,8 +205,8 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
     }
 
     @Override
-    public byte[] getExtendedData() {
-      return this.message;
+    public TCByteBuffer getExtendedData() {
+      return this.message.duplicate();
     }
 
     @Override

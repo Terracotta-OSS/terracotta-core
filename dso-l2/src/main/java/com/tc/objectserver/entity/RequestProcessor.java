@@ -133,11 +133,11 @@ public class RequestProcessor {
         activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, instance, tid, oldest, payload.getDebugId());
         break;
       case INVOKE_ACTION:
-        activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+        activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getByteBufferPayload(), concurrency, payload.getDebugId());
         break;
       default:
         // Normal replication.
-        activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload());
+        activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getByteBufferPayload());
         break;
     }
     return activity;

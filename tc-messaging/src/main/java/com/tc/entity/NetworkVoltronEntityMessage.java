@@ -19,6 +19,7 @@
 
 package com.tc.entity;
 
+import com.tc.bytes.TCByteBuffer;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.EntityDescriptor;
@@ -39,7 +40,7 @@ public interface NetworkVoltronEntityMessage extends VoltronEntityMessage, TCMes
   /**
    * Initializes the contents of the message.
    */
-  public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks);
+  public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, TCByteBuffer extendedData, TransactionID oldestTransactionPending, Set<VoltronEntityMessage.Acks> acks);
 
   public void setMessageCodecSupplier(MessageCodecSupplier supplier);
 }

@@ -19,11 +19,13 @@
 package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -289,6 +291,43 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   @Override
   public final int read(byte[] b) {
     return read(b, 0, b.length);
+  }
+  
+  @Override
+  public final TCByteBuffer read(int len) {
+    checkClosed();
+
+    if (len == 0) { return TCByteBufferFactory.getInstance(false, 0); }
+
+    if (available() == 0) { return TCByteBufferFactory.getInstance(false, 0); }
+    
+    TCByteBuffer result = this.data[this.index];
+    if (result.remaining() >= len) {
+      TCByteBuffer send = result.slice();
+      send.limit(len);
+      result.position(result.position() + len);
+      return send;
+    }
+
+    result = TCByteBufferFactory.getInstance(false, len);
+    while (this.index < this.numBufs) {
+      TCByteBuffer buf = this.data[this.index];
+      if (buf.hasRemaining()) {
+        int limit = buf.limit();
+        buf.limit(Math.min(buf.position() + result.remaining(), limit));
+        result.put(buf);
+        buf.limit(limit);
+      }
+      if (!result.hasRemaining()) {
+        break;
+      } else {
+        nextBuffer();
+      }
+    }
+    if (result.hasRemaining()) {
+      throw new BufferUnderflowException();
+    }
+    return result.flip();
   }
 
   @Override

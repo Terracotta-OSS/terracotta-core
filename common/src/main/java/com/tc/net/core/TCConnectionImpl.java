@@ -113,7 +113,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                                                                                 .getProperties()
                                                                                 .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
                                                                                         128) * 1024;
-  private static final boolean                  MESSSAGE_PACKUP             = TCPropertiesImpl
+  private static final boolean                  MESSAGE_PACKUP             = TCPropertiesImpl
                                                                                 .getProperties()
                                                                                 .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
                                                                                             true);
@@ -971,7 +971,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
 
-      if (MESSSAGE_PACKUP && TCByteBufferFactory.isPoolingEnabled()) {
+      if (MESSAGE_PACKUP && TCByteBufferFactory.isPoolingEnabled()) {
         this.entireMessageData = getPackedUpMessage(message.getEntireMessageData());
       } else {
         this.entireMessageData = getClonedMessage(message.getEntireMessageData());
@@ -988,7 +988,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     void incrementIndexAndCleanOld() {
-      if (MESSSAGE_PACKUP) {
+      if (MESSAGE_PACKUP && TCByteBufferFactory.isPoolingEnabled()) {
         // we created these new messages. lets recycle it.
         entireMessageData[index].recycle();
       }
@@ -1004,7 +1004,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       final TCByteBuffer[] msgData = sourceMessageByteBuffers;
       TCByteBuffer[] clonedMessageData = new TCByteBuffer[msgData.length];
       for (int i = 0; i < msgData.length; i++) {
-        clonedMessageData[i] = msgData[i].duplicate().asReadOnlyBuffer();
+        clonedMessageData[i] = msgData[i].asReadOnlyBuffer();
       }
       return clonedMessageData;
     }
@@ -1021,7 +1021,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
 
       // packedup message is direct byte buffers based. so that system socket write can avoid copy over of data
-      TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getFixedSizedInstancesForLength(false, len);
+      TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getFixedSizedInstancesForLength(true, len);
       srcOffset = sourceMessageByteBuffers[srcIndex].arrayOffset();
       while (srcIndex < sourceMessageByteBuffers.length) {
         dstRem = packedUpMessageByteBuffers[dstIndex].remaining();
