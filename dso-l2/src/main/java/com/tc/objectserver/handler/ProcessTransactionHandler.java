@@ -72,6 +72,8 @@ import java.util.LinkedList;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -779,7 +781,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     @Override
-    public void retired() {
+    public CompletionStage<Void> retired() {
+      CompletableFuture<Void> complete = new CompletableFuture<>();
       this.waiter.get().runWhenCompleted(()->{
         if (!getNodeID().isNull()) {
           stats[StatType.SERVER_RETIRED.serverSpot()] = System.nanoTime();
@@ -798,7 +801,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
           });
         }
         MonitoringEventCreator.finish();
+        complete.complete(null);
       });
+      return complete;
     }
 
     @Override
@@ -850,8 +855,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     @Override
-    public void retired() {
-      Assert.fail("retired should never be called on a lifecycle operation");
+    public CompletionStage<Void> retired() {
+      throw new AssertionError("retired should never be called on a lifecycle operation");
     }
 
     @Override

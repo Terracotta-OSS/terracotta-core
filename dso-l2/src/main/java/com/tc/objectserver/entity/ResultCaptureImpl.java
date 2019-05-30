@@ -22,6 +22,8 @@ import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
@@ -115,9 +117,8 @@ public class ResultCaptureImpl implements ResultCapture {
   }
 
   @Override
-  public void retired() {
-    throw new UnsupportedOperationException("Not supported yet.");
+  public CompletionStage<Void> retired() {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-  
   
 }

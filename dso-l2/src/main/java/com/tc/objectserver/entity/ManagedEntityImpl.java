@@ -91,6 +91,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -843,8 +844,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       } else {
         this.retirementManager.registerWithMessage(message, concurrencyKey, new Retiree() {
           @Override
-          public void retired() {
-            response.retired();
+          public CompletionStage<Void> retired() {
+            return response.retired();
           }
 
           @Override

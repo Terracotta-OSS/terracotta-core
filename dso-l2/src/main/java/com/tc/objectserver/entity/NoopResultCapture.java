@@ -20,6 +20,8 @@ package com.tc.objectserver.entity;
 
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import org.terracotta.exception.EntityException;
 
@@ -72,8 +74,9 @@ public class NoopResultCapture implements ResultCapture {
   }
 
   @Override
-  public void retired() {
+  public CompletionStage<Void> retired() {
     Trace.activeTrace().log("Retired");
+    return CompletableFuture.completedFuture(null);
   }
   
   

@@ -36,6 +36,8 @@ import com.tc.util.Assert;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -196,7 +198,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   }
   
   @Override
-  public void retired() {
+  public CompletionStage<Void> retired() {
     Assert.assertTrue("Double-retire", !isRetired());
     
     getReturnChannel().ifPresent(channel -> {
@@ -205,6 +207,8 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
       messageSender.accept(response);
     });
     this.isRetired = true;
+    
+    return CompletableFuture.completedFuture(null);
   }
   
   protected boolean isComplete() {
