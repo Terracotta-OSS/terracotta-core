@@ -1108,6 +1108,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         logger.warn("Group member handshake timeout. " + stateInfo(current));
       }
       switchToState(STATE_FAILURE);
+      channel.close();
     }
 
     void disconnected() {
