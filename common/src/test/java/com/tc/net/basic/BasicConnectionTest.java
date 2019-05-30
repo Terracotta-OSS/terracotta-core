@@ -97,7 +97,7 @@ public class BasicConnectionTest {
       BufferManagerFactory buffer = mock(BufferManagerFactory.class);
       when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
       Function<TCConnection, Socket> close = s->null;
-      BasicConnection instance = new BasicConnection(adapter, buffer, close);
+      BasicConnection instance = new BasicConnection("", adapter, buffer, close);
       long expResult = 0L;
       assertEquals(expResult, instance.getConnectTime());
       instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
@@ -124,7 +124,7 @@ public class BasicConnectionTest {
       });
       when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mgr);
       Function<TCConnection, Socket> close = s->null;
-      BasicConnection instance = new BasicConnection(adapter, buffer, close);
+      BasicConnection instance = new BasicConnection("", adapter, buffer, close);
       instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
       long idleTime = instance.getIdleTime();
       Thread.sleep(1000);
@@ -154,7 +154,7 @@ public class BasicConnectionTest {
       BufferManagerFactory buffer = mock(BufferManagerFactory.class);
       when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
       Function<TCConnection, Socket> close = s->null;
-      BasicConnection instance = new BasicConnection(adapter, buffer, close);
+      BasicConnection instance = new BasicConnection("", adapter, buffer, close);
       instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
       long idleTime = instance.getIdleTime();
       Thread.sleep(1000);
@@ -177,7 +177,7 @@ public class BasicConnectionTest {
       BufferManagerFactory buffer = mock(BufferManagerFactory.class);
       when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
       Function<TCConnection, Socket> close = s->null;
-      BasicConnection instance = new BasicConnection(adapter, buffer, close);
+      BasicConnection instance = new BasicConnection("", adapter, buffer, close);
       TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
       instance.addListener(listener);
       instance.connect(new TCSocketAddress(server.getLocalPort()), 0);

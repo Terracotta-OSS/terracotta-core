@@ -39,15 +39,17 @@ import java.util.Arrays;
 public class BasicConnectionManager implements TCConnectionManager {
   private final Set<TCConnection>       connections            = new HashSet<>();
   private final BufferManagerFactory buffers;
+  private final String id;
 
-  public BasicConnectionManager(BufferManagerFactory buffers) {
+  public BasicConnectionManager(String id, BufferManagerFactory buffers) {
     this.buffers = buffers;
+    this.id = id;
   }
 
   @Override
   public TCConnection createConnection(TCProtocolAdaptor adaptor) {
     synchronized (connections) {
-      TCConnection basic = new BasicConnection(adaptor, buffers, (conn)->{
+      TCConnection basic = new BasicConnection(id, adaptor, buffers, (conn)->{
         synchronized (connections) {
           connections.remove(conn);
           return null;

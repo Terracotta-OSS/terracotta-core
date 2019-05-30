@@ -82,7 +82,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
   
   private synchronized ClientMessageTransport createClient(String clientName) {
-    TCConnectionManager connection = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    TCConnectionManager connection = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
@@ -308,7 +308,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   private ClientMessageChannel createClientMsgCh(boolean ooo) {
-    TCConnectionManager connection = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    TCConnectionManager connection = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),

@@ -263,7 +263,7 @@ public class DistributedObjectClient implements TCClient {
     this.connectionManager = (isAsync) ?
             new TCConnectionManagerImpl(communicationsManager.COMMSMGR_CLIENT, 0, hc, this.clientBuilder.createBufferManagerFactory())
             :
-            new BasicConnectionManager(this.clientBuilder.createBufferManagerFactory());
+            new BasicConnectionManager(name + "-" + uuid, this.clientBuilder.createBufferManagerFactory());
     this.communicationsManager = this.clientBuilder
         .createCommunicationsManager(mm,
                                      messageRouter,
@@ -600,7 +600,6 @@ public class DistributedObjectClient implements TCClient {
 
         List<Thread> liveThreads = getLiveThreads(threadGroup);
         final long time = System.currentTimeMillis();
-        boolean leaked = false;
         while (!liveThreads.isEmpty() && System.currentTimeMillis() < end) {
           for (Thread t : liveThreads) {
             if (System.currentTimeMillis() > end) {
@@ -609,25 +608,17 @@ public class DistributedObjectClient implements TCClient {
             long start = System.currentTimeMillis();
             if (t.isAlive() && Thread.currentThread() != t) {
               t.join(1000);
-              if (t.isAlive()) {
-                Exception printer = new Exception();
-                printer.setStackTrace(t.getStackTrace());
-                DSO_LOGGER.warn("thread leak", printer);
-                leaked = true;
-              }
             }
-            logger.debug("Destroyed thread " + t.getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
+            if (!t.isAlive()) {
+              logger.debug("Destroyed thread " + t.getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
+            }
           }
-          if (!leaked) {
-            break;
-          } else {
-            liveThreads = getLiveThreads(threadGroup);
-          }
+          liveThreads = getLiveThreads(threadGroup);
         }
         logger.debug("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
-        if (leaked) {
-          logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
-                      + "Live threads: " + getLiveThreads(this.threadGroup));
+        if (!getLiveThreads(threadGroup).isEmpty()) {
+          logger.warn("Timed out waiting for TC thread group threads to die for connection " + name + "/" + uuid + " - probable shutdown memory leak\n"
+                      + "Live threads: " + getLiveThreads(this.threadGroup) + " in thread group " + this.threadGroup);
           Thread threadGroupCleanerThread = new Thread(this.threadGroup.getParent(),
                                                        new TCThreadGroupCleanerRunnable(threadGroup),
                                                        "TCThreadGroup last chance cleaner thread");

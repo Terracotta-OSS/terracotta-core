@@ -87,7 +87,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    clientConns = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), clientConns,
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),

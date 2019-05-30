@@ -85,7 +85,7 @@ public class LazyHandshakeTest extends TCTestCase {
   private void lazySetUp() {
     pc = new PortChooser();
     serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
-    clientConn = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConn = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 serverConn,
                                                 new NullConnectionPolicy());

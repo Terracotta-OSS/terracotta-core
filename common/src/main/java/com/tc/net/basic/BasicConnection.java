@@ -73,6 +73,7 @@ public class BasicConnection implements TCConnection {
   private boolean connected = true;
   private final List<TCConnectionEventListener> listeners = new CopyOnWriteArrayList<>();
   private ExecutorService readerExec;
+  private final String id;
   
 
   public BasicConnection(Socket src, Consumer<WireProtocolMessage> write, Function<TCConnection, Socket> close) {
@@ -81,9 +82,11 @@ public class BasicConnection implements TCConnection {
     this.closeRunnable = close;
     this.adaptor = null;
     this.bufferManagerFactory = null;
+    this.id = "";
   }
   
-  public BasicConnection(TCProtocolAdaptor adapter, BufferManagerFactory buffers, Function<TCConnection, Socket> close) {
+  public BasicConnection(String id, TCProtocolAdaptor adapter, BufferManagerFactory buffers, Function<TCConnection, Socket> close) {
+    this.id = id;
     this.bufferManagerFactory = buffers;
     Object writeMutex = new Object();
     this.write = (message)->{
@@ -299,7 +302,7 @@ public class BasicConnection implements TCConnection {
   
   private void readMessages() {
     readerExec = Executors.newFixedThreadPool(1, (r) -> {
-      Thread t = new Thread(r, "BasicConnectionReader-" + this.src.getLocalSocketAddress() + "<-" + this.src.getRemoteSocketAddress());
+      Thread t = new Thread(r, "BasicConnectionReader-" + this.src.getLocalSocketAddress() + "<-" + this.src.getRemoteSocketAddress() + " for " + id);
       t.setDaemon(true);
       return t;
     });

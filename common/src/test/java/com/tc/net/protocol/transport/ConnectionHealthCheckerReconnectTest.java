@@ -93,7 +93,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
                                                   new TransportHandshakeErrorNullHandler(),
                                                   Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                   Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
-    clientConns = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), clientMessageRouter,
                                                 networkStackHarnessFactory, clientConns, new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(), 
                                                 new TransportHandshakeErrorHandlerForL1(),
