@@ -28,11 +28,16 @@ public class EnrollmentFactory {
     Enrollment e = new Enrollment(nodeID, isNew, weights);
     return e;
   }
-
+  
+  public static Enrollment createTrumpEnrollment(NodeID myNodeId, WeightGeneratorFactory weightFactory) {
+    long[] weights = weightFactory.generateMaxWeightSequence();
+    Enrollment e = new Enrollment(myNodeId, false, weights);
+    return e;
+  }
+  
   public static Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
     long[] weights = weightFactory.generateVerificationSequence();
     Enrollment e = new Enrollment(lastActive, false, weights);
     return e;
   }
-
 }

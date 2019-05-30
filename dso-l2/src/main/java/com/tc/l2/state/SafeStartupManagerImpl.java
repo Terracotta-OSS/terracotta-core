@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import java.util.Set;
 import javax.management.ObjectName;
 
 import static com.tc.l2.state.ConsistencyMBean.CONSISTENCY_BEAN_NAME;
+import com.tc.util.concurrent.SetOnceFlag;
 
 public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsListener {
 
@@ -47,6 +49,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   private final int peerServers;
   private final ConsistencyManager consistencyManager;
   private final Set<NodeID> activePeers = new HashSet<>();
+  private final SetOnceFlag disable = new SetOnceFlag();
 
   public SafeStartupManagerImpl(boolean consistentStartup, int peerServers, ConsistencyManager consistencyManager) {
     this.consistentStartup = consistentStartup;
@@ -66,20 +69,22 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
 
   @Override
   public synchronized boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
-    if (consistentStartup && mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
+    if (newMode == Transition.CONNECT_TO_ACTIVE) {
+      // disable this mode since we have already tried to connect to an existing active.
+      // safe startup mode no longer applies
+      disable.attemptSet();
+    } else if (!disable.isSet() && consistentStartup && mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
       if (activePeers.size() == peerServers) {
         CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
         suspended = false;
-        return true;
       } else if (allowTransition) {
         CONSOLE.info("Action:{} allowed with external intervention", newMode);
         suspended = false;
-        return true;
       } else {
         CONSOLE.info("Action:{} not allowed because not enough servers are connected", newMode);
         suspended = true;
-        return false;
       }
+      return !suspended;
     }
     return consistencyManager.requestTransition(mode, sourceNode, newMode);
   }
@@ -117,6 +122,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
 
   @Override
   public void nodeLeft(NodeID nodeID) {
+    activePeers.remove(nodeID);
     if (consistencyManager instanceof GroupEventsListener) {
       ((GroupEventsListener) consistencyManager).nodeLeft(nodeID);
     }
@@ -127,4 +133,8 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     return consistencyManager.getCurrentTerm();
   }
 
+  @Override
+  public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
+    return consistencyManager.createVerificationEnrollment(lastActive, weightFactory);
+  }
 }

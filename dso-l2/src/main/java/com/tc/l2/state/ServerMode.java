@@ -33,12 +33,32 @@ import java.util.Set;
  *
  */
 public enum ServerMode {
-  START(START_STATE),
-  UNINITIALIZED(PASSIVE_UNINITIALIZED),    
+  START(START_STATE) {
+    @Override
+    public boolean containsData() {
+      return false;
+    }
+  },
+  UNINITIALIZED(PASSIVE_UNINITIALIZED) {
+    @Override
+    public boolean containsData() {
+      return false;
+    }
+  },    
   RECOVERING(RECOVERING_STATE),
   SYNCING(PASSIVE_SYNCING),
-  PASSIVE(PASSIVE_STANDBY),
-  ACTIVE(ACTIVE_COORDINATOR),
+  PASSIVE(PASSIVE_STANDBY) {
+    @Override
+    public boolean canBeActive() {
+      return true;
+    }
+  },
+  ACTIVE(ACTIVE_COORDINATOR) {
+    @Override
+    public boolean canBeActive() {
+      return true;
+    }
+  },
   STOP(STOP_STATE);
 
   private final State name;
@@ -62,6 +82,14 @@ public enum ServerMode {
   
   public boolean equals() {
     throw new AssertionError();
+  }
+  
+  public boolean canBeActive() {
+    return false;
+  }
+  
+  public boolean containsData() {
+    return true;
   }
   
   public static final Set<ServerMode> VALID_STATES = EnumSet.allOf(ServerMode.class);

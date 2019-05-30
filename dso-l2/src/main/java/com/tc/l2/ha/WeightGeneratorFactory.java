@@ -40,6 +40,14 @@ public class WeightGeneratorFactory {
     return weights;
   }
   
+  public synchronized long[] generateMaxWeightSequence() {
+    long weights[] = new long[generators.size()];
+    for (int i = 0; i < weights.length; i++) {
+      weights[i] = Long.MAX_VALUE;
+    }
+    return weights;
+  }
+  
   public synchronized long[] generateVerificationSequence() {
     long weights[] = new long[generators.size()];
     for (int i=0;i<generators.size();i++) {

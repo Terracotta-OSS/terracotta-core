@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
@@ -84,7 +85,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
     if (newMode == Transition.ADD_PASSIVE) {
  //  starting passive sync to a new node, at this point the passive can be consisdered a
- //  vote for the current active and the passive sync rues will make sure all the data is replicated      
+ //  vote for the current active and the passive sync rules will make sure all the data is replicated      
       passives.add(sourceNode);
       Assert.assertEquals(mode, ServerMode.ACTIVE);
       //  adding a passive to an active is always OK
@@ -198,12 +199,17 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     }
   }
   
+  private void promotePeers() {
+    passives.addAll(activePeers);
+  }
+  
   private synchronized void endVoting(boolean allowed, Transition moveTo) {
     if (activeVote) {
       if (allowed || !moveTo.isStateTransition()) {
         switch(moveTo) {
-          case CONNECT_TO_ACTIVE:
           case MOVE_TO_ACTIVE:
+            promotePeers();
+          case CONNECT_TO_ACTIVE:
             actions.remove(Transition.CONNECT_TO_ACTIVE);
             actions.remove(Transition.MOVE_TO_ACTIVE);
             break;
@@ -230,5 +236,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   public synchronized boolean isBlocked() {
     return blocked;
+  }
+  
+  @Override
+  public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
+    return EnrollmentFactory.createVerificationEnrollment(lastActive, weightFactory);
   }
 }

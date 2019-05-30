@@ -233,9 +233,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
       super.initialize(context);
       ServerConfigurationContext server = (ServerConfigurationContext)context;
 
-      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentMode().getState());
-      server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
-
       multiSend = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class);
       
 //  go right to active state.  this only gets initialized once ACTIVE-COORDINATOR is entered

@@ -54,6 +54,6 @@ public class ConsistencyManagerWeightGenerator implements WeightGenerator {
   @Override
   public boolean isVerificationWeight() {
     // only participate in election verification if in availability mode.  
-    return isAvailable;
+    return false;
   }
 }

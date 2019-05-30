@@ -677,10 +677,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(processTransactionHandler, knownPeers > 0), eventCollector);
-    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
-        stateChange.getSink(), stageManager, 
+        createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager, 
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         weightGeneratorFactory, consistencyMgr, 
@@ -736,6 +734,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                 passives.batchAckReceived(context);
                 break;
               case ReplicationMessageAck.START_SYNC:
+                try {
+                  l2Coordinator.getReplicatedClusterStateManager().publishClusterState(context.messageFrom());
+                } catch (GroupException ge) {
+                  logger.warn("error syncing state", ge);
+                  groupCommManager.closeMember((ServerID)context.messageFrom());
+                }
                 passives.startPassiveSync(context.messageFrom());
                 break;
               default:
@@ -922,7 +926,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   private StageController createStageController(ProcessTransactionHandler pth, boolean knownPeers) {
-    StageController control = new StageController();
+    StageController control = new StageController(this::getContext);
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
@@ -1010,6 +1014,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
           Set<ConnectionID> existingConnections = existingClients.stream()
               .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
           getContext().getClientHandshakeManager().setStarting(existingClients);
+          l2Coordinator.getReplicatedClusterStateManager().goActiveAndSyncState();
           try {
             startL1Listener(existingConnections);
           } catch (IOException ioe) {

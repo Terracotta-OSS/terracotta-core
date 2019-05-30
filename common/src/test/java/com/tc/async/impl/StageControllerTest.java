@@ -68,9 +68,9 @@ public class StageControllerTest {
     State init = new State("INIT");
     State test = new State("TeST");
     
-    StageController instance = new StageController();
-    final SetOnceFlag didRun = new SetOnceFlag();
     ConfigurationContext cxt = mock(ConfigurationContext.class);
+    StageController instance = new StageController(()->cxt);
+    final SetOnceFlag didRun = new SetOnceFlag();
 
     final Stage prestage = mock(Stage.class);
     when(cxt.getStage(Matchers.eq("PRE"), Matchers.any(Class.class))).then(new Answer<Stage>() {
@@ -104,7 +104,7 @@ public class StageControllerTest {
     instance.addTriggerToState(test, s->didRun.set());
     instance.addStageToState(test, "POST");
 
-    instance.transition(cxt, init, test);
+    instance.transition(init, test);
     Assert.assertTrue(didRun.isSet());
     verify(prestage).start(cxt);
     verify(poststage).start(cxt);
