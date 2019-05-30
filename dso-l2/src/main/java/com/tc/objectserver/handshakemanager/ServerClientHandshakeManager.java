@@ -42,6 +42,7 @@ import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class ServerClientHandshakeManager {
     STARTED,
   }
   static final int                       RECONNECT_WARN_INTERVAL           = 15000;
-
+  private static final boolean           SHOULD_SEND_STATS                 = TCPropertiesImpl.getProperties().getBoolean("client.send.stats", false);
   private State                          state                             = State.INIT;
   private final List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
 
@@ -98,7 +99,7 @@ public class ServerClientHandshakeManager {
   }
   
   private boolean canAcceptStats(String version) {
-    return version.equals(ProductInfo.getInstance().version());
+    return SHOULD_SEND_STATS && version.equals(ProductInfo.getInstance().version());
   }
 
   public void notifyClientConnect(ClientHandshakeMessage handshake, EntityManager entityManager, ProcessTransactionHandler transactionHandler) throws ClientHandshakeException {
