@@ -36,7 +36,6 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.ZapNodeRequestProcessor;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
@@ -78,7 +77,6 @@ public class StateManagerImpl implements StateManager {
   private volatile ServerMode               state               = ServerMode.START;
   private final ServerMode               startState;
   private final ElectionGate                      elections  = new ElectionGate();
-  private final TCServer tcServer;
 
   // Known servers from previous election
   Set<NodeID> prevKnownServers = new HashSet<>();
@@ -92,8 +90,7 @@ public class StateManagerImpl implements StateManager {
                           StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr, 
                           int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
                           ConsistencyManager availabilityMgr, 
-                          ClusterStatePersistor clusterStatePersistor,
-                          TCServer tcServer) {
+                          ClusterStatePersistor clusterStatePersistor) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = controller;
@@ -104,7 +101,6 @@ public class StateManagerImpl implements StateManager {
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
-    this.tcServer = tcServer;
     this.startState = StateManager.convert(clusterStatePersistor.getInitialState());
   }
 
@@ -353,7 +349,7 @@ public class StateManagerImpl implements StateManager {
           throw new IllegalStateException(state + " at move to passive ready");
       }
     } catch (IllegalStateException state) {
-      zapAndResyncLocalNode("resync data.");
+      zapAndResyncLocalNode("Improper state");
     }
   }
   
@@ -370,6 +366,21 @@ public class StateManagerImpl implements StateManager {
       clusterStatePersistor.setDBClean(true);
     } else {
       info("Already in " + state);
+    }
+  }
+
+  @Override
+  public void moveToStopState() {
+    ServerMode old = switchToState(ServerMode.STOP, EnumSet.allOf(ServerMode.class));
+  }
+
+  @Override
+  public boolean moveToStopStateIf(Set<ServerMode> validStates) {
+    try {
+      ServerMode old = switchToState(ServerMode.STOP, validStates);
+      return true;
+    } catch (IllegalStateException no) {
+      return false;
     }
   }
 
@@ -413,7 +424,6 @@ public class StateManagerImpl implements StateManager {
 
   private void publishStateChange(StateChangedEvent event) {
     // publish new state to TCServer first to implement conditional shutdown operations
-    tcServer.l2StateChanged(event);
     State newState = event.getCurrentState();
 //    stateChangeSink.addToSink(event);
     if (event.movedToActive()) {
@@ -541,7 +551,8 @@ public class StateManagerImpl implements StateManager {
   
   private void zapAndResyncLocalNode(String msg) {
     clusterStatePersistor.setDBClean(false);
-    throw new TCServerRestartException("Restarting the server - " + msg); 
+    moveToStopState();
+    throw new TCServerRestartException("Clear and resync - " + msg); 
   }
 
   private synchronized void handleElectionResultMessage(L2StateMessage msg) throws GroupException {

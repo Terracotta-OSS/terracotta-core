@@ -375,10 +375,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
       consoleLogger.error("Restarting server: " + state.getThrowable().getMessage());
+      context.getL2Coordinator().getStateManager().moveToStopState();
       state.setRestartNeeded();
     });
     threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, state -> {
       Throwable t = state.getThrowable();
+      context.getL2Coordinator().getStateManager().moveToStopState();
       if(t.getCause() != null) {
         consoleLogger.error("Server exiting: " + t.getMessage(), t.getCause());
       } else {
@@ -685,7 +687,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         weightGeneratorFactory, consistencyMgr, 
-        this.persistor.getClusterStatePersistor(), server);
+        this.persistor.getClusterStatePersistor());
     
     // And the stage for handling their response batching/serialization.
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 

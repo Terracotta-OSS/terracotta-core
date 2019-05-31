@@ -26,6 +26,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -79,6 +80,17 @@ public class TestStateManager implements StateManager {
   @Override
   public void moveToPassiveStandbyState() {
     isActive = false;
+  }
+
+  @Override
+  public void moveToStopState() {
+    isActive = false;
+  }
+
+  @Override
+  public boolean moveToStopStateIf(Set<ServerMode> validStates) {
+    isActive = false;
+    return false;
   }
 
   @Override

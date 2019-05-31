@@ -73,7 +73,7 @@ public class StateManagerImplTest {
   private final TCGroupManagerImpl[] groupManagers = new TCGroupManagerImpl[NUM_OF_SERVERS];
   private final Set<Node> nodeSet = new HashSet<>();
 
-  private final TCServer[] tcServers = new TCServer[NUM_OF_SERVERS];
+//  private final TCServer[] tcServers = new TCServer[NUM_OF_SERVERS];
   private final StageController[] stageControllers = new StageController[NUM_OF_SERVERS];
   private final ManagementTopologyEventCollector[] mgmt = new ManagementTopologyEventCollector[NUM_OF_SERVERS];
   private final StateManagerImpl[] stateManagers = new StateManagerImpl[NUM_OF_SERVERS];
@@ -103,12 +103,12 @@ public class StateManagerImplTest {
       mgmt[i] = mock(ManagementTopologyEventCollector.class);
       ClusterStatePersistor clusterStatePersistorMock = mock(ClusterStatePersistor.class);
       when(clusterStatePersistorMock.isDBClean()).thenReturn(Boolean.TRUE);
-      tcServers[i] = mock(TCServer.class);
+//      tcServers[i] = mock(TCServer.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], weightGeneratorFactory);
 
       stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mgr,
-                                              clusterStatePersistorMock, tcServers[i]);
+                                              clusterStatePersistorMock);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
       groupManagers[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupManagers[i], nodes[i]));
@@ -162,10 +162,10 @@ public class StateManagerImplTest {
 
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
       if (activeIndex == i) {
-        verify(tcServers[i]).l2StateChanged(argThat(stateChangeEvent(START_STATE, ACTIVE_COORDINATOR)));
+//        verify(tcServers[i]).l2StateChanged(argThat(stateChangeEvent(START_STATE, ACTIVE_COORDINATOR)));
         verify(stageControllers[i]).transition(eq(START_STATE), eq(ACTIVE_COORDINATOR));
       } else {
-        verify(tcServers[i]).l2StateChanged(argThat(stateChangeEvent(START_STATE, PASSIVE_UNINITIALIZED)));
+//        verify(tcServers[i]).l2StateChanged(argThat(stateChangeEvent(START_STATE, PASSIVE_UNINITIALIZED)));
         verify(stageControllers[i]).transition(eq(START_STATE), eq(PASSIVE_UNINITIALIZED));
       }
     }
@@ -224,7 +224,7 @@ public class StateManagerImplTest {
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
     StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController,  stageManager, 1, 5, weightGeneratorFactory, mgr,
-                                                  statePersistor, mock(TCServer.class));
+                                                  statePersistor);
     state.initializeAndStartElection();
     
     state.startElectionIfNecessary(mock(NodeID.class));
@@ -283,7 +283,7 @@ public class StateManagerImplTest {
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
     StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
-                                                  statePersistor, mock(TCServer.class));
+                                                  statePersistor);
     state.initializeAndStartElection();
     
     state.startElectionIfNecessary(mock(NodeID.class));
@@ -351,7 +351,7 @@ System.out.println("STARTING LATER #2");
     ClusterStatePersistor persistor = mock(ClusterStatePersistor.class);
     when(persistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);
-    StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stageController, mgmtController, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor, mock(TCServer.class));
+    StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stageController, mgmtController, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor);
     mgr.initializeAndStartElection();
     Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
     Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
