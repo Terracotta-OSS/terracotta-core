@@ -15,4 +15,6 @@
  */
 
 //See Jenkins wiki pages for info
-mavenBuildOSS()
+mavenBuildOSS([maven_goal : 'clean deploy', 
+        maven_goal_pr : 'clean verify'
+])
