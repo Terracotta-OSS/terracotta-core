@@ -18,8 +18,6 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.GroupZapNodeMessage;
 
 public class GroupZapNodeMessageFactory {
 

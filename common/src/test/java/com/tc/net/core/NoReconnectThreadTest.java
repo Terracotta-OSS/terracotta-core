@@ -97,7 +97,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   private ClientMessageChannel createClientMsgCh(boolean ooo) {
-    BasicConnectionManager connMgr = new BasicConnectionManager(new ClearTextBufferManagerFactory());
+    BasicConnectionManager connMgr = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connMgr);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),

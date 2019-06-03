@@ -31,6 +31,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.classloader.ServiceLocator;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
@@ -136,7 +137,7 @@ public class ProcessTransactionHandlerTest {
     this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
     when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
     when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
-    RequestProcessor processor = new RequestProcessor(stageManager, true);
+    RequestProcessor processor = new RequestProcessor(stageManager, 1024, true);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
@@ -328,7 +329,7 @@ public class ProcessTransactionHandlerTest {
     when(request.getTransactionID()).thenReturn(transactionID);
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     // Return an empty byte[], for now.
-    when(request.getExtendedData()).thenReturn(new byte[0]);
+    when(request.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
     return request;
   }
 

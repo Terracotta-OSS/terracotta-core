@@ -53,6 +53,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
@@ -86,7 +87,6 @@ import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
-import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
 import com.tc.l2.msg.L2StateMessage;
@@ -375,10 +375,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
       consoleLogger.error("Restarting server: " + state.getThrowable().getMessage());
+      context.getL2Coordinator().getStateManager().moveToStopState();
       state.setRestartNeeded();
     });
     threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, state -> {
       Throwable t = state.getThrowable();
+      context.getL2Coordinator().getStateManager().moveToStopState();
       if(t.getCause() != null) {
         consoleLogger.error("Server exiting: " + t.getMessage(), t.getCause());
       } else {
@@ -415,7 +417,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.tcProperties = TCPropertiesImpl.getProperties();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
+    TCByteBufferFactory.setPoolingEnabled(tcProperties.getBoolean(TCPropertiesConsts.BYTEBUFFER_POOLING, false));
+    TCByteBufferFactory.setPoolingThreadMax(tcProperties.getInt(TCPropertiesConsts.BYTEBUFFER_POOLING_THREAD_MAX, 1024));
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
+    final int fastStageSize = 1024;
     final StageManager stageManager = this.seda.getStageManager();
 
     this.sampledCounterManager = new CounterManagerImpl();
@@ -629,7 +634,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     if (!USE_DIRECT) {
       logger.info("disabling the use for direct sinks");
     }
-    RequestProcessor processor = new RequestProcessor(stageManager, USE_DIRECT);
+    RequestProcessor processor = new RequestProcessor(stageManager, maxStageSize, USE_DIRECT);
     
     ManagementTopologyEventCollector eventCollector = new ManagementTopologyEventCollector(serviceInterface);
     ClientEntityStateManager clientEntityStateManager = new ClientEntityStateManagerImpl();
@@ -637,7 +642,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
-    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, maxStageSize, USE_DIRECT);
+    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT).setSpinningCount(1000);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize, false);
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
@@ -677,14 +682,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
-    L2StateChangeHandler stateHandler = new L2StateChangeHandler(createStageController(processTransactionHandler, knownPeers > 0), eventCollector);
-    final Stage<StateChangedEvent> stateChange = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, stateHandler, 1, maxStageSize);
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
-        stateChange.getSink(), stageManager, 
+        createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager, 
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         weightGeneratorFactory, consistencyMgr, 
-        this.persistor.getClusterStatePersistor(), server);
+        this.persistor.getClusterStatePersistor());
     
     // And the stage for handling their response batching/serialization.
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 
@@ -736,6 +739,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                 passives.batchAckReceived(context);
                 break;
               case ReplicationMessageAck.START_SYNC:
+                try {
+                  l2Coordinator.getReplicatedClusterStateManager().publishClusterState(context.messageFrom());
+                } catch (GroupException ge) {
+                  logger.warn("error syncing state", ge);
+                  groupCommManager.closeMember((ServerID)context.messageFrom());
+                }
                 passives.startPassiveSync(context.messageFrom());
                 break;
               default:
@@ -922,7 +931,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   private StageController createStageController(ProcessTransactionHandler pth, boolean knownPeers) {
-    StageController control = new StageController();
+    StageController control = new StageController(this::getContext);
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
     control.addStageToState(ServerMode.UNINITIALIZED.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_STAGE);
@@ -1010,6 +1019,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
           Set<ConnectionID> existingConnections = existingClients.stream()
               .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
           getContext().getClientHandshakeManager().setStarting(existingClients);
+          l2Coordinator.getReplicatedClusterStateManager().goActiveAndSyncState();
           try {
             startL1Listener(existingConnections);
           } catch (IOException ioe) {

@@ -36,7 +36,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import java.util.Collections;
-import java.util.EnumMap;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -53,13 +52,12 @@ public class RequestProcessor {
   private boolean isActive = false;
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   
-  public RequestProcessor(StageManager stageManager, boolean use_direct) {
+  public RequestProcessor(StageManager stageManager, int maxQueueSize, boolean use_direct) {
     int MIN_NUM_PROCESSORS = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.MIN_ENTITY_PROCESSOR_THREADS);
-    int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     int numOfProcessors = L2Utils.getOptimalApplyStageWorkerThreads(true);
     numOfProcessors = Math.max(MIN_NUM_PROCESSORS, numOfProcessors);
-    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, EntityRequest.class, new RequestProcessorHandler(), numOfProcessors, maxStageSize, use_direct).getSink();
-    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new RequestProcessorHandler(), MIN_NUM_PROCESSORS, maxStageSize, use_direct).getSink();
+    requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, EntityRequest.class, new RequestProcessorHandler(), numOfProcessors, maxQueueSize, use_direct).getSink();
+    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new RequestProcessorHandler(), MIN_NUM_PROCESSORS, maxQueueSize, use_direct).getSink();
   }
 //  TODO: do some accounting for transaction de-dupping on failover
   
@@ -74,10 +72,6 @@ public class RequestProcessor {
 
   public void enterActiveState() {
     isActive = true;
-  }
-  
-  public Set<NodeID> passives() {
-    return passives.passives();
   }
 
   public ActivePassiveAckWaiter scheduleSync(SyncReplicationActivity activity, NodeID passive) {
@@ -96,27 +90,32 @@ public class RequestProcessor {
     final ServerEntityAction requestAction = (!replicate && request.requiresReceived()) ? ServerEntityAction.ORDER_PLACEHOLDER_ONLY : request.getAction();
     // We will try to replicate anything which isn't just a local flush operation.
     boolean isActionReplicated = requestAction.isReplicated();
-    // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-    Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
-//  if there is somewhere to replicate to but replication was not required
-    if (!replicateTo.isEmpty() && !replicate && !request.requiresReceived()) {
-//  ordering is not requested so don't bother replicating a placeholder
-      replicateTo.clear();
-    }
-    Supplier<ActivePassiveAckWaiter> token = ()->(!replicateTo.isEmpty())
+    
+    Supplier<ActivePassiveAckWaiter> token = ()->{
+      // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
+      Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
+  //  if there is somewhere to replicate to but replication was not required
+      if (!replicateTo.isEmpty() && !replicate && !request.requiresReceived()) {
+  //  ordering is not requested so don't bother replicating a placeholder
+        replicateTo.clear();
+      }
+      if (PLOGGER.isDebugEnabled()) {
+        PLOGGER.debug("SCHEDULING:{} {} on {} with concurrency:{} replicatedTo: {}",requestAction, payload.getDebugId(), eid, concurrencyKey, replicateTo);
+      }
+      return !replicateTo.isEmpty() 
         ? passives.replicateActivity(createReplicationActivity(eid, version, fetchID, request.getNodeID(), request.getClientInstance(), requestAction, 
             request.getTransaction(), request.getOldestTransactionOnClient(), payload, concurrencyKey), replicateTo)
         : NoReplicationBroker.NOOP_WAITER;
+    };
+    
     EntityRequest entityRequest =  new EntityRequest(eid, call, token, concurrencyKey, payload);
-    if (PLOGGER.isDebugEnabled()) {
-      PLOGGER.debug("SCHEDULING:{} {} on {} with concurrency:{} replicatedTo: {}",requestAction, payload.getDebugId(), eid, concurrencyKey, replicateTo);
-    }
+
     if (inSync) {
       syncExecution.addToSink(entityRequest);
     } else {
       requestExecution.addToSink(entityRequest);
     }
-  }  
+  }
 
   private static SyncReplicationActivity createReplicationActivity(EntityID id, long version, FetchID fetchID, ClientID src, ClientInstanceID instance, 
       ServerEntityAction type, TransactionID tid, TransactionID oldest, MessagePayload payload, int concurrency) {
@@ -133,11 +132,11 @@ public class RequestProcessor {
         activity = SyncReplicationActivity.createOrderingPlaceholder(fetchID, src, instance, tid, oldest, payload.getDebugId());
         break;
       case INVOKE_ACTION:
-        activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload(), concurrency, payload.getDebugId());
+        activity = SyncReplicationActivity.createInvokeMessage(fetchID, src, instance, tid, oldest, actionCode, payload.getByteBufferPayload(), concurrency, payload.getDebugId());
         break;
       default:
         // Normal replication.
-        activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getRawPayload());
+        activity = SyncReplicationActivity.createLifecycleMessage(id, version, fetchID, src, instance, tid, oldest, actionCode, payload.getByteBufferPayload());
         break;
     }
     return activity;

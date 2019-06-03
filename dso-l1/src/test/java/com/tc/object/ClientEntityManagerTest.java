@@ -23,6 +23,7 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.MessageCodecSupplier;
 import org.junit.Assert;
 import org.junit.Test;
@@ -52,7 +53,6 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -694,7 +694,7 @@ public class ClientEntityManagerTest extends TestCase {
     private TransactionID transactionID;
     private EntityDescriptor descriptor;
     private EntityID entityID;
-    private byte[] extendedData;
+    private TCByteBuffer extendedData;
     private boolean requiresReplication;
     private Type type;
     
@@ -810,8 +810,8 @@ public class ClientEntityManagerTest extends TestCase {
       return type;
     }
     @Override
-    public byte[] getExtendedData() {
-      return this.extendedData;
+    public TCByteBuffer getExtendedData() {
+      return this.extendedData.asReadOnlyBuffer();
     }
     @Override
     public TransactionID getOldestTransactionOnClient() {
@@ -819,7 +819,7 @@ public class ClientEntityManagerTest extends TestCase {
     }
     @Override
     public void setContents(ClientID clientID, TransactionID transactionID, EntityID eid, EntityDescriptor entityDescriptor, 
-            Type type, boolean requiresReplication, byte[] extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
+            Type type, boolean requiresReplication, TCByteBuffer extendedData, TransactionID oldestTransactionPending, Set<Acks> acks) {
       this.transactionID = transactionID;
       Assert.assertNotNull(eid);
       this.entityID = eid;

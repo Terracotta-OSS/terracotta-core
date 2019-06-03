@@ -18,11 +18,13 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 import org.terracotta.entity.EntityMessage;
 
 /**
@@ -32,12 +34,13 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
   
   private final EntityID eid;
   private final long version;
-  private final byte[] data;
+  private final TCByteBuffer data;
   
-  public CreateSystemEntityMessage(EntityID eid, int version, byte[] extended) {
+  public CreateSystemEntityMessage(EntityID eid, int version, TCByteBuffer extended) {
+    Assert.assertNotNull(extended);
     this.eid = eid;
     this.version = version;
-    this.data = extended;
+    this.data = extended == null || extended.isReadOnly() ? extended : extended.asReadOnlyBuffer();
   }
   
   @Override
@@ -76,8 +79,8 @@ public class CreateSystemEntityMessage implements VoltronEntityMessage {
   }
 
   @Override
-  public byte[] getExtendedData() {
-    return data;
+  public TCByteBuffer getExtendedData() {
+    return data == null ? data : data.duplicate();
   }
 
   @Override

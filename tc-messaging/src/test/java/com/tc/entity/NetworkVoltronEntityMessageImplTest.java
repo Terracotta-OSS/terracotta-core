@@ -21,6 +21,7 @@ package com.tc.entity;
 import java.io.IOException;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.entity.VoltronEntityMessage.Type;
 import com.tc.io.TCByteBufferOutputStream;
@@ -60,7 +61,7 @@ public class NetworkVoltronEntityMessageImplTest {
     EntityDescriptor entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, 3);
     Type messageType = VoltronEntityMessage.Type.FETCH_ENTITY;
     boolean requiresReplication = false;
-    byte[] extendedData = new byte[1];
+    TCByteBuffer extendedData = TCByteBufferFactory.wrap(new byte[1]);
     TransactionID oldestTransactionPending = new TransactionID(1);
     message.setContents(clientID, transactionID, EntityID.NULL_ID, entityDescriptor, messageType, 
             requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));

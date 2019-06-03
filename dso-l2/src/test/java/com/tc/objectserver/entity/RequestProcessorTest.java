@@ -22,6 +22,8 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
@@ -94,7 +96,7 @@ public class RequestProcessorTest {
       Assert.assertThat((Integer)inv.getArguments()[3], greaterThanOrEqualTo(minProcs));
       return mock(Stage.class);
     });
-    RequestProcessor instance = new RequestProcessor(mgr, true);
+    RequestProcessor instance = new RequestProcessor(mgr, 1024, true);
     // one for sync stage and once for regular
     verify(mgr, times(2)).createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean());
   }  
@@ -128,7 +130,7 @@ public class RequestProcessorTest {
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     int key = Math.abs((int)(Math.random() * Integer.MAX_VALUE));
     when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
-    byte[] payload = intToArray(key);
+    TCByteBuffer payload = TCByteBufferFactory.wrap(intToArray(key));
 
     Sink dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);

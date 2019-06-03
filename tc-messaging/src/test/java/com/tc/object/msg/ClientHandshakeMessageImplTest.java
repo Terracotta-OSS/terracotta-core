@@ -1,5 +1,6 @@
 package com.tc.object.msg;
 
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.io.TCByteBufferOutputStream;
@@ -27,11 +28,11 @@ public class ClientHandshakeMessageImplTest {
         ClientHandshakeMessageImpl chm = new ClientHandshakeMessageImpl(mock(SessionID.class), mock(MessageMonitor.class),
                 new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         ResendVoltronEntityMessage msg1 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(1),
-                mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, new byte[0], mock(TransactionID.class));
+                mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
         ResendVoltronEntityMessage msg2 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(10),
-                mock(EntityDescriptor.class), VoltronEntityMessage.Type.CREATE_ENTITY, false, new byte[0], mock(TransactionID.class));
+                mock(EntityDescriptor.class), VoltronEntityMessage.Type.CREATE_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
         ResendVoltronEntityMessage msg3 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(40),
-                mock(EntityDescriptor.class), VoltronEntityMessage.Type.DESTROY_ENTITY, false, new byte[0], mock(TransactionID.class));
+                mock(EntityDescriptor.class), VoltronEntityMessage.Type.DESTROY_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
 
         chm.addResendMessage(msg3);
         chm.addResendMessage(msg2);

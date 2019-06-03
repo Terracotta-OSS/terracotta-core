@@ -19,6 +19,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.object.tx.TransactionID;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Interface for active entities to communicate to a client that a Entity Request can 
@@ -28,7 +29,7 @@ import com.tc.object.tx.TransactionID;
  * @author 
  */
 public interface Retiree {
-  void retired(); 
+  CompletionStage<Void> retired(); 
   TransactionID getTransaction();
   String getTraceID();
 }

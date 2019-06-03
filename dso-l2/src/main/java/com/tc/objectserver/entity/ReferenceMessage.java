@@ -18,10 +18,12 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 import org.terracotta.entity.EntityMessage;
 
 /**
@@ -32,13 +34,14 @@ public class ReferenceMessage implements VoltronEntityMessage {
   private final ClientID clientID;
   private final EntityDescriptor entityDescriptor;
   private final VoltronEntityMessage.Type type;
-  private final byte[] extendedData;
+  private final TCByteBuffer extendedData;
 
-  public ReferenceMessage(ClientID clientID, boolean fetch, EntityDescriptor entityDescriptor, byte[] extendedData) {
+  public ReferenceMessage(ClientID clientID, boolean fetch, EntityDescriptor entityDescriptor, TCByteBuffer extendedData) {
+    Assert.assertNotNull(extendedData);
     this.clientID = clientID;
     this.type = fetch ? VoltronEntityMessage.Type.FETCH_ENTITY : VoltronEntityMessage.Type.RELEASE_ENTITY;
     this.entityDescriptor = entityDescriptor;
-    this.extendedData = extendedData;
+    this.extendedData = extendedData == null || extendedData.isReadOnly() ? extendedData : extendedData.asReadOnlyBuffer();
   }
 
   @Override
@@ -77,8 +80,8 @@ public class ReferenceMessage implements VoltronEntityMessage {
   }
 
   @Override
-  public byte[] getExtendedData() {
-    return extendedData;
+  public TCByteBuffer getExtendedData() {
+    return extendedData == null ? extendedData : extendedData.duplicate();
   }
 
   @Override

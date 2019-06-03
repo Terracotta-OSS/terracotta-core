@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -180,7 +181,7 @@ public class ManagedEntityImplTest {
   }
   
   private MessagePayload mockInvokePayload() {
-    return MessagePayload.commonMessagePayloadBusy(new byte[0], mock(EntityMessage.class), true);
+    return MessagePayload.commonMessagePayloadBusy(TCByteBufferFactory.wrap(new byte[0]), mock(EntityMessage.class), true);
   }
   
   @SuppressWarnings("unchecked")
@@ -679,7 +680,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->{EntityMessage cstring = mock(EntityMessage.class);
       TestingResponse resp = mockResponse();
       when(cstring.toString()).thenReturn(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY));
-      managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes(), cstring, true), resp);
+      managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(TCByteBufferFactory.wrap(Integer.toString(ConcurrencyStrategy.MANAGEMENT_KEY).getBytes()), cstring, true), resp);
     });
     for (int x=1;x<=24;x++) {
       int key = (x == 12) ? ConcurrencyStrategy.MANAGEMENT_KEY : x;
@@ -687,7 +688,7 @@ public class ManagedEntityImplTest {
         TestingResponse resp = mockResponse();
         EntityMessage cstring = mock(EntityMessage.class);
         when(cstring.toString()).thenReturn(Integer.toString(key));
-        managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(Integer.toString(key).getBytes(), cstring, true), resp);
+        managedEntity.addRequestMessage(mockInvokeRequest(), MessagePayload.commonMessagePayloadBusy(TCByteBufferFactory.wrap(Integer.toString(key).getBytes()), cstring, true), resp);
       });
     }
 //  only thing in the queue should be the MGMT action    
@@ -848,14 +849,14 @@ public class ManagedEntityImplTest {
 
   private MessagePayload mockCreatePayload(Serializable config) {
     try {
-      return MessagePayload.commonMessagePayloadBusy(serialize(config), null, true);
+      return MessagePayload.commonMessagePayloadBusy(TCByteBufferFactory.wrap(serialize(config)), null, true);
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     }
   }
   
   private MessagePayload mockLocationPayload(ExecutionStrategy.Location location) throws IOException {
-    return MessagePayload.commonMessagePayloadBusy(new byte[0], new LocationInvoke() {
+    return MessagePayload.commonMessagePayloadBusy(TCByteBufferFactory.wrap(new byte[0]), new LocationInvoke() {
       @Override
       public ExecutionStrategy.Location getLocation() {
         return location;
@@ -864,7 +865,7 @@ public class ManagedEntityImplTest {
   }
   
   private MessagePayload mockReconfigurePayload(Serializable config) throws IOException {
-    return MessagePayload.commonMessagePayloadBusy(serialize(config), null, true);
+    return MessagePayload.commonMessagePayloadBusy(TCByteBufferFactory.wrap(serialize(config)), null, true);
   }
   
   private TestingResponse mockResponse() {

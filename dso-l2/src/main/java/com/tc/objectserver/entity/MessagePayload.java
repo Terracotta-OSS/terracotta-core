@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
@@ -25,39 +27,39 @@ import org.terracotta.entity.MessageCodecException;
 
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
-    MessagePayload payload = new MessagePayload(new byte[0], null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
+    MessagePayload payload = new MessagePayload(TCByteBufferFactory.getInstance(false, 0), null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
     payload.setDebugId("EMPTY");
     return payload;
   }
 
-  public static final MessagePayload rawDataOnly(byte[] raw) {
+  public static final MessagePayload rawDataOnly(TCByteBuffer raw) {
     MessagePayload payload = new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, false, false);
     payload.setDebugId("RAW");
     return payload;
   }
 
-  public static final MessagePayload commonMessagePayload(byte[] raw, EntityMessage message, boolean replicate, boolean allowBusy) {
+  public static final MessagePayload commonMessagePayload(TCByteBuffer raw, EntityMessage message, boolean replicate, boolean allowBusy) {
     return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, allowBusy);
   }
 
-  public static final MessagePayload commonMessagePayloadBusy(byte[] raw, EntityMessage message, boolean replicate) {
+  public static final MessagePayload commonMessagePayloadBusy(TCByteBuffer raw, EntityMessage message, boolean replicate) {
     return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, true);
   }
 
-  public static final MessagePayload commonMessagePayloadNotBusy(byte[] raw, EntityMessage message, boolean replicate) {
+  public static final MessagePayload commonMessagePayloadNotBusy(TCByteBuffer raw, EntityMessage message, boolean replicate) {
     return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, false);
   }
 
-  public static final MessagePayload syncPayloadNormal(byte[] raw, int concurrencyKey) {
+  public static final MessagePayload syncPayloadNormal(TCByteBuffer raw, int concurrencyKey) {
     return new MessagePayload(raw, null, concurrencyKey, 0, false, false);
   }
 
-  public static final MessagePayload syncPayloadCreation(byte[] raw, int referenceCount) {
+  public static final MessagePayload syncPayloadCreation(TCByteBuffer raw, int referenceCount) {
     return new MessagePayload(raw, null, 0, referenceCount, false, false);
   }
 
 
-  private final byte[] raw;
+  private final TCByteBuffer raw;
   private EntityMessage message;
   private MessageCodecException exception;
   private final int concurrency;
@@ -67,8 +69,8 @@ public class MessagePayload {
   private String debugId;
   
   // NOTE:  ReferenceCount is a special-case for synchronizing the creation of an existing entity.
-  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
-    this.raw = raw;
+  private MessagePayload(TCByteBuffer raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
+    this.raw = raw == null || raw.isReadOnly() ? raw : raw.asReadOnlyBuffer();
     this.message = message;
     this.debugId = null;
     this.concurrency = concurrency;
@@ -77,8 +79,16 @@ public class MessagePayload {
     this.canBeBusy = canBeBusy;
   }
   
+  private byte[] convertRawToBytes() {
+    return TCByteBufferFactory.unwrap(raw);
+  }
+  
   public byte[] getRawPayload() {
-    return raw;
+    return convertRawToBytes();
+  }
+  
+  public TCByteBuffer getByteBufferPayload() {
+    return this.raw.duplicate();
   }
   
   public void setDebugId(String debugId) {
@@ -102,7 +112,7 @@ public class MessagePayload {
     }
     try {
       if (message == null) {
-        message = codec.decode(raw);
+        message = codec.decode(convertRawToBytes());
       }
       return message;
     } catch (MessageCodecException ce) {

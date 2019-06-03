@@ -109,6 +109,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     write(b, 0, b.length);
   }
 
+  @Override
   public void write(TCByteBuffer data) {
     if (data == null) { throw new NullPointerException(); }
     write(new TCByteBuffer[] { data });
@@ -123,28 +124,32 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
     checkClosed();
     if (data == null) { throw new NullPointerException(); }
     if (data.length == 0) { return; }
-
-    // deal with the current buffer
-    final boolean reuseCurrent = current.position() == 0;
-
-    if (!reuseCurrent) {
-      // shrink and make it look like "full"
-      buffers.add(current.limit(current.position()).position(0));
-    }
-
+    
     for (TCByteBuffer element : data) {
-      int len = element.limit();
+      int len = element.remaining();
       if (len == 0) {
         continue;
       }
-
+      if (current != null) {
+        if (len < current.remaining()) {
+          current.put(element);
+          Assert.assertFalse(element.hasRemaining());
+        } else {
+          if (current.position() > 0) {
+            buffers.add(current.flip());
+          }
+          current = null;
+          buffers.add(element.duplicate());
+          element.position(element.limit());
+        }
+      } else {
+        buffers.add(element.duplicate());
+        element.position(element.limit());
+      }
       written += len;
-      buffers.add(element.duplicate().position(0));
     }
-
-    if (!reuseCurrent) {
-      current = buffers.remove(buffers.size() - 1);
-      current.position(current.limit());
+    if (current == null) {
+      addBuffer();
     }
   }
 
@@ -200,7 +205,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
   public String toString() {
     return (buffers == null) ? "null" : buffers.toString();
   }
-
+  
   private void addBuffer() {
     if (current != null) {
       current.flip();
@@ -208,15 +213,20 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
 
       // use a buffer twice as big as the previous, at least until we hit the maximum block size allowed for this stream
       if (blockSize < maxBlockSize) {
-        blockSize *= 2;
+        blockSize <<= 1;
 
         if (blockSize > maxBlockSize) {
           blockSize = maxBlockSize;
         }
       }
     }
-
-    current = newBuffer(blockSize);
+    if (TCByteBufferFactory.isPoolingEnabled()) {
+      TCByteBuffer[] fixed = TCByteBufferFactory.getFixedSizedInstancesForLength(direct, TCByteBufferFactory.FIXED_BUFFER_SIZE);
+      Assert.assertEquals(1, fixed.length);
+      current = fixed[0];
+    } else {
+      current = newBuffer(blockSize);
+    }
     blockSize = current.capacity();
   }
 
@@ -231,7 +241,11 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
       current.flip();
       buffers.add(current);
     }
-
+    // not currently used for performance reasons
+    //packupFinalBuffers();
+  }
+  
+  private void packupFinalBuffers() {
     current = null;
 
     List<TCByteBuffer> finalBufs = new ArrayList<TCByteBuffer>();

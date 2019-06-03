@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.util.PortChooser;
 
 /**
  * To Test Message Packup happening at the comms writer.
@@ -74,7 +75,7 @@ public class TCConnectionTransportTest extends TestCase {
       }
     };
 
-    server = connMgr.createListener(new TCSocketAddress(5678), factory);
+    server = connMgr.createListener(new TCSocketAddress(new PortChooser().chooseRandomPort()), factory);
   }
 
   @Override
@@ -168,11 +169,11 @@ public class TCConnectionTransportTest extends TestCase {
     MessageMonitor monitor = new NullMessageMonitor();
     ArrayList<TCByteBuffer> bufs = new ArrayList<TCByteBuffer>();
     int len = 0;
-    long totLen = 0;
     while (bufCunt > 0) {
       len = r.nextInt(500 + 1);
 
       TCByteBuffer sourceBuffer = TCByteBufferFactory.wrap(getContent(len).getBytes());
+      Assert.assertEquals(len, sourceBuffer.remaining());
 
       switch (len % 3) {
         case 0:
@@ -195,9 +196,8 @@ public class TCConnectionTransportTest extends TestCase {
 
       bufs.add(sourceBuffer);
       bufCunt--;
-      totLen += len;
     }
-    TCNetworkMessage message = getDSOMessage(monitor, bufs.toArray(new TCByteBuffer[] {}), totLen);
+    TCNetworkMessage message = getDSOMessage(monitor, bufs.toArray(new TCByteBuffer[] {}));
     return message;
   }
 
@@ -214,9 +214,9 @@ public class TCConnectionTransportTest extends TestCase {
     return buf.toString();
   }
 
-  private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs, long totLen) {
+  private TCNetworkMessage getDSOMessage(MessageMonitor monitor, TCByteBuffer[] bufs) {
     TCNetworkMessage msg = new MyMessage(monitor);
-    ((MyMessage) msg).initialize(seq.getNextSequence(), bufs, totLen);
+    ((MyMessage) msg).initialize(seq.getNextSequence(), bufs);
     msg.seal();
     return msg;
   }
@@ -227,28 +227,32 @@ public class TCConnectionTransportTest extends TestCase {
     private static final byte DATA     = 2;
     private long              seqID;
     private TCByteBuffer[]    data;
-    private long              totLen;
 
     @SuppressWarnings("resource")
     MyMessage(MessageMonitor monitor) {
       super(new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
     }
 
-    public void initialize(long nextSequence, TCByteBuffer[] bufs, long totLe) {
+    public void initialize(long nextSequence, TCByteBuffer[] bufs) {
       this.seqID = nextSequence;
       this.data = bufs;
-      this.totLen = totLe;
+      int tot = 0;
+      for (TCByteBuffer c : bufs) {
+        tot += c.remaining();
+      }
       dehydrateValues();
-      final TCByteBuffer[] nvData = getOutputStream().toArray();
+      TCByteBufferOutputStream out = getOutputStream();
+      final TCByteBuffer[] nvData = out.toArray();
       Assert.eval(nvData.length > 0);
+      int after = 0;
+      for (TCByteBuffer c : nvData) {
+        after += c.remaining();
+      }
+      System.out.println(out.getBytesWritten() + " " + tot + " " + after);
       nvData[0].putInt(0, 2);
       this.setPayload(nvData);
     }
-
-    public long getTotLen() {
-      return totLen;
-    }
-
+    
     @Override
     protected void dehydrateValues() {
       putNVPair(SEQUENCE, seqID);

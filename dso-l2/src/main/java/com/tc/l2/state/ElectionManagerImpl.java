@@ -57,6 +57,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private Enrollment            myVote               = null;
   private State                 serverState;
   private Enrollment            winner;
+  private NodeID                active = ServerID.NULL_ID;
 
   private final long            electionTime;
   private final int             expectedServers;
@@ -168,7 +169,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   private void basicAbort(L2StateMessage msg) {
-    reset(msg.getEnrollment());
+    reset(msg.messageFrom(), msg.getEnrollment());
     logger.info("Aborted Election : Winner is : " + this.winner);
   }
 
@@ -178,14 +179,15 @@ public class ElectionManagerImpl implements ElectionManager {
   @Override
   public synchronized void declareWinner(Enrollment verify, State currentState) {
     L2StateMessage msg = L2StateMessage.createElectionWonMessage(verify, currentState);
-    debugInfo("Announcing as winner: " + winner.getNodeID());
+    debugInfo("Announcing as winner: " + groupManager.getLocalNodeID());
     this.groupManager.sendAll(msg);
     logger.info("Declared as Winner: Winner is : " + this.winner);
-    reset(winner);
+    reset(groupManager.getLocalNodeID(), winner);
   }
 
   @Override
-  public synchronized void reset(Enrollment winningEnrollment) {
+  public synchronized void reset(NodeID winnerNode, Enrollment winningEnrollment) {
+    this.active = winnerNode;
     this.winner = winningEnrollment;
     this.state = INIT;
     this.votes.clear();
@@ -204,10 +206,10 @@ public class ElectionManagerImpl implements ElectionManager {
         winnerID = doElection(myNodeId, isNew, weightsFactory, currentState);
       } catch (InterruptedException e) {
         logger.error("Interrupted during election : ", e);
-        reset(null);
+        reset(ServerID.NULL_ID, null);
       } catch (GroupException e1) {
         logger.error("Error during election : ", e1);
-        reset(null);
+        reset(ServerID.NULL_ID, null);
       }
     }
     return winnerID;
@@ -258,7 +260,7 @@ public class ElectionManagerImpl implements ElectionManager {
     if (lWinner != e) {
       logger.info("Election lost : Winner is : " + lWinner);
       Assert.assertNotNull(lWinner);
-      return lWinner.getNodeID();
+      return active;
     }
     // Step 4 : local host won the election, so notify world for acceptance
     msg = L2StateMessage.createElectionResultMessage(e, currentState);
@@ -287,6 +289,7 @@ public class ElectionManagerImpl implements ElectionManager {
       this.state = ELECTION_COMPLETE;
       logger.info("Election Complete : " + votes.values() + " : " + state);
       winner = countVotes();
+      active = winner.getNodeID();
     }
     return winner;
   }

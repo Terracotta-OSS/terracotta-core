@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import org.slf4j.Logger;
@@ -59,6 +60,8 @@ public interface ConsistencyManager {
   Collection<Transition> requestedActions();
   
   long getCurrentTerm();
+  
+  Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory);
   
   static int parseVoteCount(TcConfig config) {
     Logger consoleLogger = TCLogging.getConsoleLogger();

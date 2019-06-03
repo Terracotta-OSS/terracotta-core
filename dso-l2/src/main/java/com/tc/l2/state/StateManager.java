@@ -24,6 +24,7 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
+import java.util.Set;
 
 
 public interface StateManager extends PrettyPrintable {
@@ -51,6 +52,10 @@ public interface StateManager extends PrettyPrintable {
   public void moveToPassiveSyncing(NodeID connectedTo);
   
   public void moveToPassiveStandbyState();
+  
+  public void moveToStopState();
+
+  public boolean moveToStopStateIf(Set<ServerMode> validStates);
 
   public void publishActiveState(NodeID nodeID) throws GroupException;
 

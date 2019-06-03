@@ -19,21 +19,16 @@
 package com.tc.l2.handler;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.state.StateManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.server.TCServerMain;
 import com.tc.util.State;
 
 
 public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent> {
 
-  private StateManager stateManager;
   private final StageController stageManager;
-  private ConfigurationContext context;
   private final ITopologyEventCollector eventCollector;
 
   public L2StateChangeHandler(StageController stageManager, ITopologyEventCollector eventCollector) {
@@ -54,16 +49,6 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
     } else {
       eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
     }
-    stageManager.transition(context, sce.getOldState(), newState);
-    stateManager.fireStateChangedEvent(sce);
+    stageManager.transition(sce.getOldState(), newState);
   }
-
-  @Override
-  public void initialize(ConfigurationContext context) {
-    super.initialize(context);
-    ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    this.stateManager = oscc.getL2Coordinator().getStateManager();
-    this.context = context;
-  }
-
 }

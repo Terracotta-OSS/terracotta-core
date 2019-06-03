@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.NodeID;
 
 import java.util.Collection;
@@ -47,5 +48,10 @@ public class AvailabilityManagerImpl implements ConsistencyManager {
   @Override
   public long getCurrentTerm() {
     return 0L;
+  }
+
+  @Override
+  public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
+    return EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
   }
 }

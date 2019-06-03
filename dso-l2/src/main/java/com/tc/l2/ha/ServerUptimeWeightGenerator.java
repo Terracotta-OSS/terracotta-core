@@ -37,6 +37,6 @@ public class ServerUptimeWeightGenerator implements WeightGenerator {
 
   @Override
   public boolean isVerificationWeight() {
-    return isAvailable;
+    return false;
   }
 }

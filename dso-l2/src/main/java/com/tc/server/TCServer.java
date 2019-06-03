@@ -22,11 +22,10 @@ import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.l2.state.StateChangeListener;
 import com.tc.util.State;
 
 
-public interface TCServer extends StateChangeListener {
+public interface TCServer {
   String[] processArguments();
 
   void start() throws Exception;

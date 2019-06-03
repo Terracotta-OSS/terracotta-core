@@ -257,17 +257,17 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   protected byte[] getBytesArray() throws IOException {
-    int length = bbis.readInt();
+    int length = bbis.readInt();    
     byte bytes[] = new byte[length];
-    int off = 0;
-    while (length > 0) {
-      int read = bbis.read(bytes, off, length);
-      length -= read;
-      off += read;
-    }
+    bbis.readFully(bytes);
     return bytes;
   }
 
+  protected TCByteBuffer getByteBuffer() throws IOException {
+    int length = bbis.readInt();
+    return bbis.read(length);
+  }
+  
   protected void putNVPair(byte name, boolean value) {
     nvCount++;
     out.write(name);

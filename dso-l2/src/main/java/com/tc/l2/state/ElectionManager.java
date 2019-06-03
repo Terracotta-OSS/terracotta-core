@@ -19,6 +19,7 @@
 package com.tc.l2.state;
 
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.net.NodeID;
 import com.tc.util.State;
 
 public interface ElectionManager {
@@ -31,7 +32,7 @@ public interface ElectionManager {
 
   public void handleElectionResultMessage(L2StateMessage msg, State currentState);
 
-  public void reset(Enrollment winner);
+  public void reset(NodeID winnerNode, Enrollment winner);
 
   public long getElectionTime();
 }

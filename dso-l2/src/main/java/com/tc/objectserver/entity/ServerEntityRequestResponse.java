@@ -25,6 +25,7 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.util.Assert;
 
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.terracotta.exception.EntityException;
@@ -93,13 +94,13 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   }
  
   @Override
-  public synchronized void retired() {
+  public synchronized CompletionStage<Void> retired() {
     // Replicated messages are never retired.
     Assert.assertFalse(this.isReplicatedMessage);
     // We can only send the retire, once.
     if (isRetired()) {
       throw new AssertionError("Double-sending retire " + this.getAction());
     }
-    super.retired();
+    return super.retired();
   }
 }

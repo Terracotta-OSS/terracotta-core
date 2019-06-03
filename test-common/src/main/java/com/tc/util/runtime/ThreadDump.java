@@ -173,7 +173,7 @@ public class ThreadDump {
         e.printStackTrace();
       }
     } else {
-      Banner.warnBanner("jps not found");
+      Banner.warnBanner("jps not found in " + jps.getPath());
     }
   }
 

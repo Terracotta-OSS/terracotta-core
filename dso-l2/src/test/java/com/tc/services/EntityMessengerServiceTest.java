@@ -48,6 +48,7 @@ public class EntityMessengerServiceTest {
     RetirementManager retirementManager = mock(RetirementManager.class);
     when(entity.getRetirementManager()).thenReturn(retirementManager);
     @SuppressWarnings("rawtypes") MessageCodec codec = mock(MessageCodec.class);
+    when(codec.encodeMessage(any())).thenReturn(new byte[0]);
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.
@@ -78,6 +79,7 @@ public class EntityMessengerServiceTest {
     when(entity.getRetirementManager()).thenReturn(mock(RetirementManager.class));
     @SuppressWarnings("rawtypes")
     MessageCodec codec = mock(MessageCodec.class);
+    when(codec.encodeMessage(any())).thenReturn(new byte[0]);
     when(entity.getCodec()).thenReturn(codec);
 
     // Create the service.

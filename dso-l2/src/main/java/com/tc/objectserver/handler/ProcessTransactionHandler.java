@@ -24,6 +24,7 @@ import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Stage;
 import com.tc.async.impl.MonitoringEventCreator;
+import com.tc.bytes.TCByteBuffer;
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
@@ -71,6 +72,8 @@ import java.util.LinkedList;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -186,7 +189,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       EntityDescriptor descriptor = message.getEntityDescriptor();
       ServerEntityAction action = decodeMessageType(message.getVoltronType());
       EntityMessage entityMessage = message.getEntityMessage();
-      byte[] extendedData = message.getExtendedData();
+      TCByteBuffer extendedData = message.getExtendedData();
 
       TransactionID transactionID = message.getTransactionID();
       boolean doesRequireReplication = message.doesRequireReplication();
@@ -232,9 +235,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
     protected void initialize(ConfigurationContext context) {
       super.initialize(context);
       ServerConfigurationContext server = (ServerConfigurationContext)context;
-
-      server.getL2Coordinator().getReplicatedClusterStateManager().setCurrentState(server.getL2Coordinator().getStateManager().getCurrentMode().getState());
-      server.getL2Coordinator().getReplicatedClusterStateManager().goActiveAndSyncState();
 
       multiSend = server.getStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class);
       
@@ -634,7 +634,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     // Note that we currently don't expect messages which already have an EntityMessage instance to appear here.
     EntityMessage entityMessage = message.getEntityMessage();
     Assert.assertNull(entityMessage);
-    byte[] extendedData = message.getExtendedData();
+    TCByteBuffer extendedData = message.getExtendedData();
 
     TransactionID transactionID = message.getTransactionID();
     boolean doesRequireReplication = message.doesRequireReplication();
@@ -781,7 +781,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     @Override
-    public void retired() {
+    public CompletionStage<Void> retired() {
+      CompletableFuture<Void> complete = new CompletableFuture<>();
       this.waiter.get().runWhenCompleted(()->{
         if (!getNodeID().isNull()) {
           stats[StatType.SERVER_RETIRED.serverSpot()] = System.nanoTime();
@@ -800,7 +801,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
           });
         }
         MonitoringEventCreator.finish();
+        complete.complete(null);
       });
+      return complete;
     }
 
     @Override
@@ -852,8 +855,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     @Override
-    public void retired() {
-      Assert.fail("retired should never be called on a lifecycle operation");
+    public CompletionStage<Void> retired() {
+      throw new AssertionError("retired should never be called on a lifecycle operation");
     }
 
     @Override

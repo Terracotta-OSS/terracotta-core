@@ -114,7 +114,6 @@ public class L2HACoordinator implements L2Coordinator {
     if (this.stateManager.isActiveCoordinator()) {
       try {
         this.stateManager.publishActiveState(nodeID);
-        this.rClusterStateMgr.publishClusterState(nodeID);
       } catch (final GroupException ge) {
         final String errMesg = "A Terracotta server tried to join the mirror group as a second ACTIVE: " + nodeID
                                + " Zapping it to allow it to join as PASSIVE standby (backup): ";

@@ -37,10 +37,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Before;
+import org.junit.Ignore;
 
 public class TCByteBufferOutputStreamTest {
 
   final Random random = new Random();
+  
+  @Before
+  public void setup() {
+    TCByteBufferFactory.setPoolingEnabled(false);
+  }
 
   @Test
   public void testMultipleToArray() {
@@ -295,7 +302,7 @@ public class TCByteBufferOutputStreamTest {
     }
   }
 
-  @Test
+  @Test @Ignore
   public void testBasicConsolidation() {
     TCByteBufferOutputStream os = new TCByteBufferOutputStream(32, 4096, false);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();

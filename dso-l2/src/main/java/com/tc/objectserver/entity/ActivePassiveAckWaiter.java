@@ -63,15 +63,24 @@ public class ActivePassiveAckWaiter {
   }
   
   public void runWhenCompleted(Runnable r) {
-    boolean wasSet = false;
+    Runnable runInPlace = null;
     synchronized (this) {
-      if (!this.completedPending.isEmpty()) {
+      if (finalizer != null) {
+        finalizer = ()->{
+          finalizer.run();
+          r.run();
+        };
+      } else {
         finalizer = r;
-        wasSet = true;
       }
+
+      if (this.completedPending.isEmpty()) {
+        runInPlace = finalizer;
+        finalizer = null;
+      } 
     }
-    if (!wasSet) {
-      r.run();
+    if (runInPlace != null) {
+      runInPlace.run();
     }
   }
 
@@ -130,10 +139,19 @@ public class ActivePassiveAckWaiter {
     boolean isDone = updateCompletionFlags(onePassive, isNormalComplete, payload);
 //  by passing through the synchronization block above, the finalizer if present 
 //  will be properly visible
-    if (isDone && finalizer != null) {
-      finalizer.run();
+    if (isDone) {
+      Runnable clear = clearFinalizer();
+      if (clear != null) {
+        clear.run();
+      }
     }
     return isDone;
+  }
+  
+  private synchronized Runnable clearFinalizer() {
+    Runnable f = finalizer;
+    finalizer = null;
+    return f;
   }
   
   private synchronized boolean updateCompletionFlags(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {

@@ -295,7 +295,7 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
 
     @Override
     public Event poll(long timeout) throws InterruptedException {
-      Event rv = this.queue.poll(timeout, TimeUnit.MILLISECONDS);
+      Event rv = timeout == 0 ? this.queue.poll() : this.queue.poll(timeout, TimeUnit.MILLISECONDS);
       if (rv != null) {
         if (queue.isEmpty()) {
           // set the empty index for shortest queue in hopes of catching it on the first try

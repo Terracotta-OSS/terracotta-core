@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 
@@ -63,4 +64,11 @@ public class DiagnosticModeConsistencyManager implements ConsistencyManager {
       Thread.currentThread().interrupt();
     }
   }
+
+  @Override
+  public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
+    return EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+  }
+  
+  
 }

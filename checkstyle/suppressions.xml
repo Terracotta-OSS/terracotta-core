@@ -25,6 +25,19 @@
 
 <suppressions>
   <suppress checks="Header" files=".java" />
+  <suppress checks="LineLength" files=".java" />
+  <suppress checks="MethodLength" files=".java" />
+  <suppress checks="ParameterNumber" files=".java" />
+  <suppress checks="WhitespaceAfter" files=".java" />
+  <suppress checks="WhitespaceAround" files=".java" />
+  <suppress checks="OperatorWrap" files=".java" />
+  <suppress checks="NoWhitespaceBefore" files=".java" />
+  <suppress checks="NoWhitespaceAfter" files=".java" />
+  <suppress checks="JavadocMethod" files=".java" />
+  <suppress checks="JavadocPackage" files=".java" />
+  <suppress checks="JavadocStyle" files=".java" />
+  <suppress checks="JavadocType" files=".java" />
+  <suppress checks="JavadocVariable" files=".java" />
   
   <!-- allow hardcoded toolkit classnames in these files -->
   <suppress id="forbidden-toolkit-classes" files="TestDNA.java" />

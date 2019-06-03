@@ -24,6 +24,8 @@ import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessage;
@@ -287,7 +289,7 @@ public class ReplicatedTransactionHandler {
 
     final Future<Void> transactionOrderPersistenceFuture = tmpFuture;
 
-    byte[] extendedData = activity.getExtendedData();
+    TCByteBuffer extendedData = activity.getExtendedData();
 
     // Create the request, since it is how we will generically return complete.
     ServerEntityRequest request = activityToLocalRequest(activity);
@@ -303,10 +305,10 @@ public class ReplicatedTransactionHandler {
         temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), createCapture(()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
           (result) -> {
             if (canDelete) {
-              this.persistor.getEntityPersistor().entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
+              this.persistor.getEntityPersistor().entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, TCByteBufferFactory.unwrap(extendedData));
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             } else {
-              this.persistor.getEntityPersistor().entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, extendedData);
+              this.persistor.getEntityPersistor().entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, TCByteBufferFactory.unwrap(extendedData));
               acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }
           }, (exception) -> {
@@ -599,6 +601,7 @@ public class ReplicatedTransactionHandler {
   private void acknowledge(ServerID activeSender, SyncReplicationActivity activity, ReplicationResultCode code) {
 //  when is the right time to send the ack?
     if (!activeSender.equals(ServerID.NULL_ID)) {
+      LOGGER.debug("{} acking {} as {}", activity.getTransactionID(), activity.getActivityID().id, code);
       prepareAckForSend(activeSender, activity.getActivityID(), code);
     }
   }

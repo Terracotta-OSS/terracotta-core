@@ -19,6 +19,7 @@
 
 package com.tc.entity;
 
+import com.tc.bytes.TCByteBuffer;
 import org.terracotta.entity.EntityMessage;
 
 import com.tc.net.ClientID;
@@ -106,7 +107,7 @@ public interface VoltronEntityMessage {
   
   Type getVoltronType();
   
-  byte[] getExtendedData();
+  TCByteBuffer getExtendedData();
   
   /**
    * This represents the oldest transaction that the sending client still knows about, from a tracking perspective.  The

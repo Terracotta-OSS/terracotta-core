@@ -8,10 +8,21 @@ import org.junit.rules.ExpectedException;
 import org.terracotta.monitoring.PlatformService.RestartMode;
 
 import com.tc.config.ServerConfigurationManager;
+import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.state.ServerMode;
+import com.tc.l2.state.StateManager;
 
 import static com.tc.lang.ServerExitStatus.EXITCODE_RESTART_REQUEST;
+import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.net.DSOChannelManagerMBean;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.impl.DistributedObjectServer;
+import java.util.Set;
+import javax.management.MBeanServer;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TCServerImplTest {
 
@@ -22,10 +33,39 @@ public class TCServerImplTest {
   public final ExpectedException expectedException = ExpectedException.none();
 
   private TCServerImpl tcServer;
+  private ServerMode currentState = ServerMode.START;
 
   @Before
   public void setUp() throws Exception {
     tcServer = new TCServerImpl(mock(ServerConfigurationManager.class));
+    DistributedObjectServer dso = mock(DistributedObjectServer.class);
+    ServerManagementContext smc = mock(ServerManagementContext.class);
+    DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
+    when(cm.getActiveChannels()).thenReturn(new MessageChannel[0]);
+    when(smc.getChannelManager()).thenReturn(cm);    
+    when(dso.getManagementContext()).thenReturn(smc);
+    ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
+    when(dso.getContext()).thenReturn(cxt);
+    L2Coordinator l2 = mock(L2Coordinator.class);
+    when(cxt.getL2Coordinator()).thenReturn(l2);
+    StateManager state = mock(StateManager.class);
+    when(state.getCurrentMode()).then(i->{
+      return currentState;
+    });
+    when(state.moveToStopStateIf(any())).then(i->{
+      return ((Set)i.getArguments()[0]).contains(currentState);
+    });
+    when(l2.getStateManager()).thenReturn(state);
+    try {
+      tcServer.registerDSOServer(dso, mock(MBeanServer.class));
+    } catch (NullPointerException n) {
+      n.printStackTrace();
+      throw n;
+    }
+  }
+  
+  private void setState(ServerMode state) {
+    currentState = state;
   }
 
   @Test
@@ -42,56 +82,56 @@ public class TCServerImplTest {
 
   @Test
   public void testStopIfPassive() throws Exception {
-    tcServer.setState(ServerMode.PASSIVE);
+    setState(ServerMode.PASSIVE);
     expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfPassive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsUninitialized() throws Exception {
-    tcServer.setState(ServerMode.UNINITIALIZED);
+    setState(ServerMode.UNINITIALIZED);
     expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfPassive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsSyncing() throws Exception {
-    tcServer.setState(ServerMode.SYNCING);
+    setState(ServerMode.SYNCING);
     expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfPassive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void testStopIfPassiveWhenStateIsNotPassive() throws Exception {
-    tcServer.setState(ServerMode.ACTIVE);
+    setState(ServerMode.ACTIVE);
     expectedException.expect(UnexpectedStateException.class);
     tcServer.stopIfPassive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void testStopIfPassiveWithRestart() throws Exception {
-    tcServer.setState(ServerMode.PASSIVE);
+    setState(ServerMode.PASSIVE);
     expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
     tcServer.stopIfPassive(RestartMode.STOP_AND_RESTART);
   }
 
   @Test
   public void testStopIfActive() throws Exception {
-    tcServer.setState(ServerMode.ACTIVE);
+    setState(ServerMode.ACTIVE);
     expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfActive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void testStopIfActiveWhenStateIsNotActive() throws Exception {
-    tcServer.setState(ServerMode.PASSIVE);
+    setState(ServerMode.PASSIVE);
     expectedException.expect(UnexpectedStateException.class);
     tcServer.stopIfActive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void testStopIfActiveWithRestart() throws Exception {
-    tcServer.setState(ServerMode.ACTIVE);
+    setState(ServerMode.ACTIVE);
     expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
     tcServer.stopIfActive(RestartMode.STOP_AND_RESTART);
   }

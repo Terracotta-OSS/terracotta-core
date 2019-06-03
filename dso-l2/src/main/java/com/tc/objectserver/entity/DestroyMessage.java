@@ -18,6 +18,8 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
@@ -71,8 +73,8 @@ public class DestroyMessage implements VoltronEntityMessage {
   }
 
   @Override
-  public byte[] getExtendedData() {
-    return new byte[0];
+  public TCByteBuffer getExtendedData() {
+    return TCByteBufferFactory.getInstance(false, 0);
   }
 
   @Override

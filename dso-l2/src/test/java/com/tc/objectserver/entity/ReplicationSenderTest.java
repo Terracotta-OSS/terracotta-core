@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
@@ -115,9 +116,9 @@ public class ReplicationSenderTest {
       case CREATE_ENTITY:
       case DESTROY_ENTITY:
       case RECONFIGURE_ENTITY:
-        return SyncReplicationActivity.createLifecycleMessage(entity, 1, fetch, source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0]);
+        return SyncReplicationActivity.createLifecycleMessage(entity, 1, fetch, source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, type, TCByteBufferFactory.wrap(new byte[0]));
       case INVOKE_ACTION:
-        return SyncReplicationActivity.createInvokeMessage(fetch, source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, type, new byte[0], concurrency, "");
+        return SyncReplicationActivity.createInvokeMessage(fetch, source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, type, TCByteBufferFactory.wrap(new byte[0]), concurrency, "");
       case ORDERING_PLACEHOLDER:
         return SyncReplicationActivity.createOrderingPlaceholder(new FetchID(1L), ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, "");
       case LOCAL_ENTITY_GC:
@@ -127,15 +128,15 @@ public class ReplicationSenderTest {
       case SYNC_BEGIN:
         return SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0] );
       case SYNC_END:
-        return SyncReplicationActivity.createEndSyncMessage(new byte[0]);
+        return SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(new byte[0]));
       case SYNC_ENTITY_BEGIN:
-        return SyncReplicationActivity.createStartEntityMessage(entity, 1, new FetchID(1L), new byte[0], 0);
+        return SyncReplicationActivity.createStartEntityMessage(entity, 1, new FetchID(1L), TCByteBufferFactory.wrap(new byte[0]), 0);
       case SYNC_ENTITY_CONCURRENCY_BEGIN:
         return SyncReplicationActivity.createStartEntityKeyMessage(entity, 1, new FetchID(1L), concurrency);
       case SYNC_ENTITY_CONCURRENCY_END:
         return SyncReplicationActivity.createEndEntityKeyMessage(entity, 1, new FetchID(1L), concurrency++);
       case SYNC_ENTITY_CONCURRENCY_PAYLOAD:
-        return SyncReplicationActivity.createPayloadMessage(entity, 1, new FetchID(1L), concurrency, new byte[0], "");
+        return SyncReplicationActivity.createPayloadMessage(entity, 1, new FetchID(1L), concurrency, TCByteBufferFactory.wrap(new byte[0]), "");
       case SYNC_ENTITY_END:
         return SyncReplicationActivity.createEndEntityMessage(entity, 1, new FetchID(1L));
       default:

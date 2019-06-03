@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
@@ -37,6 +37,7 @@ import com.tc.objectserver.persistence.TestClusterStatePersistor;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.l2.state.ServerMode;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.server.TCServer;
 
 import static org.mockito.Matchers.any;
@@ -67,10 +68,11 @@ public class TestStateManagerFactory {
     StageManager stages = stageCreator.createStageManager();
     
     LateLoadingEventHandler handler = new LateLoadingEventHandler();
-    Stage stateChange = stages.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, handler, 0, 1024);
     ConsistencyManager cmgr = mock(ConsistencyManager.class);
+    StageController controller = mock(StageController.class);
+    ManagementTopologyEventCollector mgmt = mock(ManagementTopologyEventCollector.class);
     when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
-    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), cmgr, new TestClusterStatePersistor(), mock(TCServer.class));
+    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, controller, mgmt, stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), cmgr, new TestClusterStatePersistor());
     handler.setMgr(mgr);
 
     stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();

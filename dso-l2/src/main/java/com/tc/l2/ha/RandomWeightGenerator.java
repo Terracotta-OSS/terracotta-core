@@ -39,7 +39,7 @@ public class RandomWeightGenerator implements WeightGenerator {
   
   @Override
   public boolean isVerificationWeight() {
-    return isAvailable;
+    return false;
   }  
   /**
    * A helper used only in tests (and kept here since it is used in a selection of different tests) which creates a generator

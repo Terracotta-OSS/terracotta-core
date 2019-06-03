@@ -20,6 +20,7 @@ package com.tc.object;
 
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.util.Throwables;
 
 import org.slf4j.Logger;
@@ -590,7 +591,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     // Create the message and populate it.
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
-    message.setContents(clientID, transactionID, entityID, entityDescriptor, type, requiresReplication, config, oldestTransactionPending, acks);
+    message.setContents(clientID, transactionID, entityID, entityDescriptor, type, requiresReplication, TCByteBufferFactory.wrap(config), oldestTransactionPending, acks);
     return message;
   }
   

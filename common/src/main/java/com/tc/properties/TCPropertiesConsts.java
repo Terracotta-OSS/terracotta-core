@@ -186,6 +186,9 @@ public interface TCPropertiesConsts {
    * bytebuffer.threadlocal.pool.maxcount : Thread pool size
    * </code>
    ********************************************************************************************************************/
+  public static final String BYTEBUFFER_POOLING                                             = "bytebuffer.pooling.enabled";
+  public static final String BYTEBUFFER_POOLING_THREAD_MAX                             = "bytebuffer.threadlocal.pool.maxcount";
+  
   public static final String TC_GC_MONITOR_ENABLED                                          = "tc.gc.monitor.enabled";
   public static final String TC_GC_MONITOR_DELAY                                            = "tc.gc.monitor.delay";
   public static final String TC_STAGE_MONITOR_ENABLED                                       = "tc.stage.monitor.enabled";

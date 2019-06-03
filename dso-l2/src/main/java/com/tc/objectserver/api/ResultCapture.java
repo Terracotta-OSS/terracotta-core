@@ -19,6 +19,7 @@
 package com.tc.objectserver.api;
 
 import com.tc.objectserver.entity.ActivePassiveAckWaiter;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 /**
@@ -28,5 +29,5 @@ public interface ResultCapture extends ServerEntityResponse {
   void message(byte[] message);
   void setWaitFor(Supplier<ActivePassiveAckWaiter> waiter);
   void waitForReceived();
-  void retired();
+  CompletionStage<Void> retired();
 }

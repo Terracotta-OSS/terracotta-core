@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.Sink;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.classloader.TemporaryEntity;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.EntityBusyException;
@@ -90,6 +91,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -556,7 +558,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.activeServerEntity.notifyDestroyed(new ClientSourceIdImpl(cid.toLong()));
       List<EntityDescriptor> eds = this.clientEntityStateManager.clientDisconnectedFromEntity(cid, this.fetchID);
       eventCollector.clientDisconnectedFromEntity(cid, fetchID, eds);
-      eds.forEach(ed->messageSelf.addToSink(new ReferenceMessage(cid, false, ed, null)));
+      eds.forEach(ed->messageSelf.addToSink(new ReferenceMessage(cid, false, ed, TCByteBufferFactory.getInstance(false, 0))));
     } else {
       this.passiveServerEntity.notifyDestroyed(new ClientSourceIdImpl(cid.toLong()));
     }
@@ -588,7 +590,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               .ifPresent(em->performAction(request, em, response, concurrencyKey));
           break;
         case REQUEST_SYNC_ENTITY:
-          performSync(response, request.replicateTo(executor.passives()), concurrencyKey);
+          performSync(response, request.replicateTo(Collections.emptySet()), concurrencyKey);
           break;
         case RECEIVE_SYNC_ENTITY_KEY_START:
           receiveSyncEntityKeyStart(response, concurrencyKey);
@@ -842,8 +844,8 @@ public class ManagedEntityImpl implements ManagedEntity {
       } else {
         this.retirementManager.registerWithMessage(message, concurrencyKey, new Retiree() {
           @Override
-          public void retired() {
-            response.retired();
+          public CompletionStage<Void> retired() {
+            return response.retired();
           }
 
           @Override
@@ -1095,7 +1097,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.executor.scheduleRequest(interop.isSyncing(), this.id, this.version, this.fetchID, new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.LOCAL_FLUSH_AND_SYNC, ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, false), MessagePayload.emptyPayload(), (w)-> { 
         Assert.assertTrue(this.isInActiveState);
         if (!this.isDestroyed) {
-          executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, fetchID, constructorInfo, canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
+          executor.scheduleSync(SyncReplicationActivity.createStartEntityMessage(id, version, fetchID, TCByteBufferFactory.wrap(constructorInfo), canDelete ? this.clientReferenceCount : ManagedEntity.UNDELETABLE_ENTITY), passive).waitForCompleted();
         }
         interop.syncStarted();
         syncStart.complete();
@@ -1442,7 +1444,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         try {
           byte[] message = syncCodec.encode(concurrencyKey, payload);
           ActivePassiveAckWaiter waiter = executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,
-                                             concurrencyKey, message, ""), passive);
+                                             concurrencyKey, TCByteBufferFactory.wrap(message), ""), passive);
           //  wait for the passive to receive before sending the next
           waiter.waitForReceived();
         } catch (MessageCodecException ce) {
