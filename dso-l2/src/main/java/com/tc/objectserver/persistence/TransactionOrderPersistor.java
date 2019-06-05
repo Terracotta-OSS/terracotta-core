@@ -100,7 +100,7 @@ public class TransactionOrderPersistor {
         return fastStoreSequence(source, transaction, oldestTransactionOnClient.toLong());
       }
     } else {
-      return CompletableFuture.completedFuture(null);
+      return null;
     }
   }
   
@@ -150,7 +150,7 @@ public class TransactionOrderPersistor {
     } else {
       // must be a client that will not reconnect
     }
-    return CompletableFuture.completedFuture(null);
+    return null;
   }
     
   private static class ClientTransaction {

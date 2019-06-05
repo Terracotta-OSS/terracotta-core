@@ -157,10 +157,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
       @Override
       public void retired(TransactionID tid) {
+        waitForTransactionOrderPersistenceFuture(tid);
       }
 
       @Override
       public void result(TransactionID tid, byte[] result) {
+        waitForTransactionOrderPersistenceFuture(tid);
       }
 
       @Override
@@ -459,14 +461,14 @@ public class ProcessTransactionHandler implements ReconnectListener {
   }
 
   private void waitForTransactionOrderPersistenceFuture(TransactionID transactionID) {
-    Future<Void> future = transactionOrderPersistenceFutures.get(transactionID);
-    if(future != null) {
-      try {
-        future.get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      } finally {
-        transactionOrderPersistenceFutures.remove(transactionID);
+    if (!transactionOrderPersistenceFutures.isEmpty()) {
+      Future<Void> future = transactionOrderPersistenceFutures.remove(transactionID);
+      if(future != null) {
+        try {
+          future.get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
