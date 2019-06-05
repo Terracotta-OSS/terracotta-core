@@ -22,7 +22,6 @@ import com.tc.objectserver.api.Retiree;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.util.Collections;
 import org.terracotta.entity.EntityMessage;
 
 import java.util.Deque;
