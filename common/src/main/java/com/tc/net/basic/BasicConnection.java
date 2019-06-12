@@ -155,7 +155,7 @@ public class BasicConnection implements TCConnection {
 
   @Override
   public void asynchClose() {
-    close(0);
+    close(1000);
   }
 
   @Override
@@ -191,7 +191,9 @@ public class BasicConnection implements TCConnection {
         socket.close();
         if (readerExec != null) {
           readerExec.shutdown();
-          readerExec.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+          if (!readerExec.awaitTermination(timeout, TimeUnit.MILLISECONDS)) {
+            LOGGER.warn("failed to shutdown reader thread");
+          }
         }
       }
       return true;
