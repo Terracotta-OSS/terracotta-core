@@ -32,14 +32,19 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
+import com.tc.util.Assert;
 import com.tc.util.ProductID;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMessage> {
+public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMessage> implements PrettyPrintable {
   private Sink<VoltronEntityMessage> destSink;
-  private boolean useDirect = false;
+  private final boolean useDirect;
   private Stage<VoltronEntityMessage> fastPath;
   private Stage<VoltronEntityMessage> destPath;
   private Stage<?> requestProcessor;
@@ -47,7 +52,8 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
   private boolean activated = false;
   private static final Logger LOGGER = LoggerFactory.getLogger(VoltronMessageHandler.class);
   private final AtomicInteger clientsConnected = new AtomicInteger();
-  private final boolean ALWAYS_DIRECT = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_SINGLE_THREAD, false);
+  private boolean ALWAYS_DIRECT = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_SINGLE_THREAD, false);
+  private boolean USE_BACKOFF = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_USE_BACKOFF, false);
   private final TimedActivation timer = new TimedActivation();
   
   public VoltronMessageHandler(DSOChannelManager clients, boolean use_direct) {
@@ -89,6 +95,15 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
         LOGGER.debug("switching to direct sink activated:{} with {}", activated , fastPath.size());
       }
     }
+    
+    if (!activated && USE_BACKOFF) {
+      if (destPath.size() > 8 && fastPath.size() <= 1) {
+        timer.backoffWait();
+      } else {
+        timer.accelerate();
+      }
+    }
+    
     if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
       MonitoringEventCreator.start();
     }
@@ -106,9 +121,46 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
     destSink = destPath.getSink();
   }
   
+  public int currentBackoff() {
+    return (int)timer.backoffTime;
+  }
+  
+  public boolean currentlyDirect() {
+    return activated;
+  }
+  
+  public boolean isDirect() {
+    return ALWAYS_DIRECT;
+  }
+  
+  public void setDirect(boolean direct) {
+    ALWAYS_DIRECT = direct;
+  }
+  
+  public void setUseBackoff(boolean use) {
+    USE_BACKOFF = use;
+  }
+  
+  public boolean isUseBackoff() {
+    return USE_BACKOFF;
+  }
+  
+  public long backoffCount() {
+    return timer.backoffCount;
+  }
+  
+  public long getMaxBackoffTime() {
+    return timer.maxBackoffTime;
+  }
+  
   private static class TimedActivation {
     private long lastChange;
     private boolean state;
+    
+    private long backoffTime = 0;
+    private long maxBackoffTime = 0;
+    private long backoffCount = 0;
+    private static final long MAX_BACKOFF = TimeUnit.MICROSECONDS.toNanos(10);
     
     private void update(boolean activate) {
       if (activate != this.state) {
@@ -120,5 +172,37 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
     private boolean shouldFlip(boolean requested) {
       return !requested || System.currentTimeMillis() - lastChange > 5000;
     }
+    
+    private void backoffWait() {
+      backoffTime += 2;
+      if (backoffTime > MAX_BACKOFF) {
+        backoffTime = MAX_BACKOFF;
+      }
+      try {
+        Assert.assertTrue(backoffTime < Integer.MAX_VALUE);
+        Thread.sleep(0, (int)backoffTime);
+        backoffCount++;
+        if (backoffTime > maxBackoffTime) {
+          maxBackoffTime = backoffTime;
+        }
+      } catch (InterruptedException ie) {
+        throw new RuntimeException(ie);
+      }
+    }
+    
+    private void accelerate() {
+      backoffTime >>= 1;
+    }
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+    map.put("backoffTime", timer.backoffTime);
+    map.put("backoffCount", timer.backoffCount);
+    map.put("maxBackoffTime", timer.maxBackoffTime);
+    map.put("directMode", this.activated);
+    map.put("clientsConnected", this.clientsConnected.get());
+    return map;
   }
 }

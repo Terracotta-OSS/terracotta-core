@@ -151,4 +151,13 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   public AbstractGroupMessage asAbstractGroupMessage() {
     return this;
   }
+
+  @Override
+  public long getPayloadSize() {
+    long amt = 0L;
+    for (SyncReplicationActivity a : activities) {
+      amt += a.getExtendedData().remaining();
+    }
+    return amt;
+  }
 }

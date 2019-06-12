@@ -113,4 +113,9 @@ public class ReplicationMessageAck extends AbstractGroupMessage implements IBatc
   public AbstractGroupMessage asAbstractGroupMessage() {
     return this;
   }
+
+  @Override
+  public long getPayloadSize() {
+    return 0L;
+  }
 }

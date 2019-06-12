@@ -75,5 +75,20 @@ public interface DSOMBean extends TerracottaMBean {
   String startJMXRemote();
 
   String stopJMXRemote();
-
+  
+  int getCurrentBackoff();
+  
+  void setBackoffActive(boolean active);
+  
+  boolean isBackoffActive();
+  
+  boolean isCurrentlyDirect();
+  
+  boolean isDirectExecution();
+  
+  void setDirectExecution(boolean activate);
+  
+  long getMaxBackoffTime();
+  
+  long getBackoffCount();
 }

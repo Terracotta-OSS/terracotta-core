@@ -114,7 +114,7 @@ public class ReplicationSender {
 //  make sure node is not connected
     Assert.assertFalse("node is not connected for:" + activity, group.isNodeConnected(nodeid));
 //  passive must have died during passive sync, ignore this message
-    logger.info("ignoring " + activity + " target " + nodeid + " no longer exists");
+    logger.debug("ignoring " + activity + " target " + nodeid + " no longer exists");
   }
 // for testing only
   boolean isSyncOccuring(NodeID origin) {
