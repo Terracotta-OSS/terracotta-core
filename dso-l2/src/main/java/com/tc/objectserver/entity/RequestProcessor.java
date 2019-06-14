@@ -57,7 +57,7 @@ public class RequestProcessor {
     int numOfProcessors = L2Utils.getOptimalApplyStageWorkerThreads(true);
     numOfProcessors = Math.max(MIN_NUM_PROCESSORS, numOfProcessors);
     requestExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE, EntityRequest.class, new RequestProcessorHandler(), numOfProcessors, maxQueueSize, use_direct).getSink();
-    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new RequestProcessorHandler(), MIN_NUM_PROCESSORS, maxQueueSize, use_direct).getSink();
+    syncExecution = stageManager.createStage(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE, EntityRequest.class, new SyncRequestProcessorHandler(), MIN_NUM_PROCESSORS, maxQueueSize, use_direct).getSink();
   }
 //  TODO: do some accounting for transaction de-dupping on failover
   
@@ -171,13 +171,15 @@ public class RequestProcessor {
       invoke();
     }
     
-    void invoke()  {
+    ActivePassiveAckWaiter invoke()  {
         // NOTE:  No longer waiting for received for before invoke.  Wait has been moved to 
 	// the completed/failure notification.  This should be fine for both client invokes 
 	// and EntityMessenger
 
         // We can now run the invoke.
-        invoke.accept(waiter.get());
+        ActivePassiveAckWaiter token = waiter.get();
+        invoke.accept(token);
+        return token;
     }
 
     @Override

@@ -52,6 +52,7 @@ public interface TCPropertiesConsts {
   public static final String L2_SEDA_STAGE_SINK_CAPACITY                                    = "l2.seda.stage.sink.capacity";
   public static final String L2_SEDA_STAGE_DISABLE_DIRECT_SINKS                                    = "l2.seda.stage.sink.disable.direct";
   public static final String L2_SEDA_STAGE_SINGLE_THREAD                                    = "l2.seda.stage.single.thread";
+  public static final String L2_SEDA_STAGE_USE_BACKOFF                                    = "l2.seda.stage.voltron.backoff";
   public static final String L2_SEDA_STAGE_STALL_WARNING                                    = "l2.seda.stage.stall.warning";
   String L2_TCCOM_WORKERTHREADS                                                          = "l2.tccom.workerthreads";
   String L2_SEDA_STAGE_WORKERTHREADS                                                     = "l2.seda.stage.workerthreads";
@@ -328,6 +329,7 @@ public interface TCPropertiesConsts {
       L2_TCCOM_WORKERTHREADS,
       L2_SEDA_STAGE_WORKERTHREADS,
       L2_SEDA_STAGE_DISABLE_DIRECT_SINKS,
+      L2_SEDA_STAGE_USE_BACKOFF,
       L2_SEDA_STAGE_SINGLE_THREAD,
       L2_SEDA_STAGE_STALL_WARNING,
       L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT,

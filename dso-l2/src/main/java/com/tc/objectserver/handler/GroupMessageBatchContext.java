@@ -33,6 +33,8 @@ import java.util.function.Function;
 public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   private static final Logger LOGGER = LoggerFactory.getLogger(GroupMessageBatchContext.class);
   
+  private static final long THRESHOLD = 16 * 1024 * 1024;
+  
   private final Function<E, M> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final NodeID target;
@@ -89,14 +91,17 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     synchronized (this) {
       // See if we have a batched message and are ready to send one.
       // Note that we will override the ideal number of in-flight messages if the batch is getting too large.
-      if ((null != this.cachedMessage) && (
-          ((0 == this.idealMessagesInFlight) || (this.messagesInFlight < this.idealMessagesInFlight))
-          || (this.cachedMessage.getBatchSize() >= this.maximumBatchSize))
+      if (null != this.cachedMessage) {
+        if ((0 == this.idealMessagesInFlight) ||
+          (this.messagesInFlight < this.idealMessagesInFlight) ||
+          (this.cachedMessage.getBatchSize() >= this.maximumBatchSize) || 
+          (this.cachedMessage.getPayloadSize() > THRESHOLD)
         ) {
-        // There is a batched message so send it.
-        messageToSend = this.cachedMessage;
-        this.cachedMessage = null;
-        this.messagesInFlight += 1;
+          // There is a batched message so send it.
+          messageToSend = this.cachedMessage;
+          this.cachedMessage = null;
+          this.messagesInFlight += 1;
+        }
       }
     }
     
@@ -106,7 +111,10 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
       try {
         AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
         this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
-        return msg.getMessageID().toLong();
+          if (messageToSend.getPayloadSize() > THRESHOLD) {
+            waitForFlush();
+          }
+          return msg.getMessageID().toLong();
       } catch (GroupException e) {
         LOGGER.warn("replication message failed", e);
         //  message failed but we still need to reset state
@@ -116,10 +124,21 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
     }
     return -1L;
   }
+  
+  private synchronized void waitForFlush() {
+    try {
+      while (messagesInFlight > 0) {
+        wait();
+      }
+    } catch (InterruptedException ie) {
+      throw new RuntimeException(ie);
+    }
+  }
 
   public void handleNetworkDone() {
     synchronized (this) {
       this.messagesInFlight -= 1;
+      notifyAll();
     }
     
     // Call the network done target so that our owner can decide how to enqueue the next flush.

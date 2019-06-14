@@ -289,11 +289,11 @@ public class RetirementManager {
     }
     
     public void retire() {
-      isRetired.set();
+      isRetired.attemptSet();
     }
     
     public boolean complete() {
-      isCompleted.set();
+      isCompleted.attemptSet();
       return !isWaitingForExplicitDefer();
     }
     

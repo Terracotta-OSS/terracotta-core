@@ -38,6 +38,8 @@ public interface IBatchableGroupMessage<E> {
    */
   public int getBatchSize();
   
+  public long getPayloadSize();
+  
   public void setSequenceID(long rid);
 
   /**

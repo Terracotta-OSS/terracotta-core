@@ -29,6 +29,7 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.stats.api.DSOMBean;
 
 import java.rmi.registry.LocateRegistry;
@@ -80,7 +81,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final DSOChannelManagerMBean                 channelMgr;
   private final ChannelStats                           channelStats;
   private final ConnectionPolicy                       connectionPolicy;
-
+  private final VoltronMessageHandler               messageHandler;
+  
   private volatile int jmxRemotePort = DEFAULT_JMX_REMOTE_PORT;
   private volatile JMXConnectorServer jmxConnectorServer;
   private Registry registry;
@@ -97,10 +99,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
     this.connectionPolicy = managementContext.getConnectionPolicy();
-
+    this.messageHandler = managementContext.getVoltronMessageHandler();
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
-
+    
     setupClients();
   }
 
@@ -565,4 +567,47 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
       return "Caught exception while stopping jmx remote at port " + jmxRemotePort + ": " + t.getLocalizedMessage();
     }
   }
+  
+
+  @Override
+  public int getCurrentBackoff() {
+    return messageHandler.currentBackoff();
+  }
+
+  @Override
+  public boolean isDirectExecution() {
+    return messageHandler.isDirect();
+  }
+
+  @Override
+  public void setDirectExecution(boolean activate) {
+    messageHandler.setDirect(activate);
+  }
+
+  @Override
+  public void setBackoffActive(boolean active) {
+    messageHandler.setUseBackoff(active);
+  }
+
+  @Override
+  public boolean isBackoffActive() {
+    return messageHandler.isUseBackoff();
+  }
+
+  @Override
+  public boolean isCurrentlyDirect() {
+    return messageHandler.currentlyDirect();
+  }  
+
+  @Override
+  public long getMaxBackoffTime() {
+    return messageHandler.getMaxBackoffTime();
+  }
+
+  @Override
+  public long getBackoffCount() {
+    return messageHandler.backoffCount();
+  }
+  
+  
 }

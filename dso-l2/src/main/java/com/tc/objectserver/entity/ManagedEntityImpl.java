@@ -812,7 +812,9 @@ public class ManagedEntityImpl implements ManagedEntity {
           // Create the channel which will send the payloads over the wire.
           PassiveSynchronizationChannel<EntityMessage> syncChannel = new EntityMessagePassiveSynchronizationChannelImpl(
             passives,
-            concurrencyKey);
+            concurrencyKey,
+            false
+          );
         //  start is handled by the sync request that triggered this action
           this.activeServerEntity.synchronizeKeyToPassive(syncChannel, concurrencyKey);
         }
@@ -1114,7 +1116,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           Assert.assertTrue(concurrency > 0);  
 
           if (activeServerEntity != null) {
-            activeServerEntity.prepareKeyForSynchronizeOnPassive(new EntityMessagePassiveSynchronizationChannelImpl(Collections.singleton(passive), concurrency), concurrency);
+            activeServerEntity.prepareKeyForSynchronizeOnPassive(new EntityMessagePassiveSynchronizationChannelImpl(Collections.singleton(passive), concurrency, true), concurrency);
           }
           // We don't actually use the message in the direct strategy so this is safe.
           //  don't care about the result
@@ -1430,11 +1432,13 @@ public class ManagedEntityImpl implements ManagedEntity {
   private class EntityMessagePassiveSynchronizationChannelImpl implements PassiveSynchronizationChannel<EntityMessage> {
     private final List<NodeID> passives;
     private final int concurrencyKey;
+    private final boolean prepare;
 
-    public EntityMessagePassiveSynchronizationChannelImpl(Collection<NodeID> passives, int concurrencyKey) {
+    public EntityMessagePassiveSynchronizationChannelImpl(Collection<NodeID> passives, int concurrencyKey, boolean prepare) {
       this.passives = new ArrayList<>(passives);
       Collections.sort(this.passives);
       this.concurrencyKey = concurrencyKey;
+      this.prepare = prepare;
     }
 
     @Override

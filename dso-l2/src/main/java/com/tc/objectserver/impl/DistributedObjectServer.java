@@ -332,7 +332,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
     collectState(this.serviceRegistry, pp);
+    collectState(this.managementContext, pp);
     addExtendedConfigState(pp);
+    
     return pp.toString().getBytes(set);
   }
 
@@ -798,7 +800,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,channelStats,
-                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, channelLifeCycleHandler));
+                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, channelLifeCycleHandler), voltron);
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
