@@ -330,10 +330,12 @@ public class ServerProcess {
    * @param isActive True if active, false if passive.
    */
   private void didBecomeActive(boolean isActive) {
-    if (isActive) {
-      this.stateInterlock.serverBecameActive(this);
-    } else {
-      this.stateInterlock.serverBecamePassive(this);
+    if (pid != 0) { //  zapped, don't do anything
+      if (isActive) {
+        this.stateInterlock.serverBecameActive(this);
+      } else {
+        this.stateInterlock.serverBecamePassive(this);
+      }
     }
   }
 
