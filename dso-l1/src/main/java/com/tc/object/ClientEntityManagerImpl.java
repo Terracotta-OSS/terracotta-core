@@ -26,7 +26,9 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Util;
 
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +39,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
@@ -55,8 +56,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
   private final BlockingQueue<InFlightMessage> outbound;
   private final Semaphore requestTickets;
-  private final AtomicLong currentTransactionID;
-  
+  private final TransactionSource transactionSource;
+
   private volatile State state;
   private final ConcurrentMap<EntityDescriptor, EntityClientEndpoint> objectStoreMap;
 
@@ -70,8 +71,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.inFlightMessages = new ConcurrentHashMap<>();
     this.outbound = new LinkedBlockingQueue<>(MAX_QUEUED_REQUESTS);
     this.requestTickets = new Semaphore(MAX_PENDING_REQUESTS);
-    this.currentTransactionID = new AtomicLong();
-    
+    this.transactionSource = new TransactionSource();
+
     this.state = State.RUNNING;
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
     
@@ -89,15 +90,20 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     boolean requiresReplication = false;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(lookupDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.DOES_EXIST);
-    boolean doesExist = false;
     try {
-      synchronousWaitForResponse(message, requestedAcks);
-      // If we don't throw an exception, it means the entity exists.
-      doesExist = true;
-    } catch (ExecutionException e) {
-      // We get a not found exception if the entity didn't exist.
+      boolean doesExist = false;
+      try {
+        synchronousWaitForResponse(message, requestedAcks);
+        // If we don't throw an exception, it means the entity exists.
+        doesExist = true;
+      } catch (ExecutionException e) {
+        // We get a not found exception if the entity didn't exist.
+      }
+      return doesExist;
+    } catch (Throwable t) {
+      transactionSource.retire(message.getTransactionID());
+      throw t;
     }
-    return doesExist;
   }
 
   @Override
@@ -127,7 +133,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A create needs to be replicated.
     boolean requiresReplication = true;
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, config, VoltronEntityMessage.Type.CREATE_ENTITY);
-    return Futures.lazyTransform(createInFlightMessageAfterAcks(message, requestedAcks), ignore -> null);
+    try {
+      return Futures.lazyTransform(createInFlightMessageAfterAcks(message, requestedAcks), ignore -> null);
+    } catch (Throwable t) {
+      transactionSource.retire(message.getTransactionID());
+      throw t;
+    }
   }
 
   @Override
@@ -137,13 +148,23 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     // A destroy call has no extended data.
     byte[] emtpyExtendedData = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithoutClientInstance(entityID, version, requestedAcks, requiresReplication, emtpyExtendedData, VoltronEntityMessage.Type.DESTROY_ENTITY);
-    return Futures.lazyTransform(createInFlightMessageAfterAcks(message, requestedAcks), ignore -> null);
+    try {
+      return Futures.lazyTransform(createInFlightMessageAfterAcks(message, requestedAcks), ignore -> null);
+    } catch (Throwable t) {
+      transactionSource.retire(message.getTransactionID());
+      throw t;
+    }
   }
 
   @Override
   public Future<byte[]> invokeAction(EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, boolean requiresReplication, byte[] payload) {
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION);
-    return createInFlightMessageAfterAcks(message, requestedAcks);
+    try {
+      return createInFlightMessageAfterAcks(message, requestedAcks);
+    } catch (Throwable t) {
+      transactionSource.retire(message.getTransactionID());
+      throw t;
+    }
   }
 
   @Override
@@ -382,16 +403,21 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     boolean requiresReplication = false;
     byte[] payload = new byte[0];
     NetworkVoltronEntityMessage message = createMessageWithDescriptor(entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.FETCH_ENTITY);
-    byte[] result = null;
     try {
-      result = synchronousWaitForResponse(message, requestedAcks);
-    } catch (ExecutionException e) {
-      // There was a failure in the GET.
-      // Currently, we only communicate this back via a TCObjectNotFoundException.
-      // TODO:  Rationalize these exceptions so we can throw back exactly what we got from the server.
-      throw new TCObjectNotFoundException(entityDescriptor.toString());
+      byte[] result = null;
+      try {
+        result = synchronousWaitForResponse(message, requestedAcks);
+      } catch (ExecutionException e) {
+        // There was a failure in the GET.
+        // Currently, we only communicate this back via a TCObjectNotFoundException.
+        // TODO:  Rationalize these exceptions so we can throw back exactly what we got from the server.
+        throw new TCObjectNotFoundException(entityDescriptor.toString());
+      }
+      return result;
+    } catch (Throwable t) {
+      transactionSource.retire(message.getTransactionID());
+      throw t;
     }
-    return result;
   }
 
   private void sendLoop() {
@@ -434,22 +460,31 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private NetworkVoltronEntityMessage createMessageWithDescriptor(EntityDescriptor entityDescriptor, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type) {
     // Get the clientID for our channel.
     ClientID clientID = this.channel.getClientID();
-    // Get the next transaction ID.
-    TransactionID transactionID = new TransactionID(currentTransactionID.incrementAndGet());
-    // Figure out the "trailing edge" of the current progress through the transaction stream.
-    TransactionID oldestTransactionPending = transactionID;
-    for (TransactionID pendingID : this.inFlightMessages.keySet()) {
-      if (oldestTransactionPending.compareTo(pendingID) > 0) {
-        // peindingID is earlier than oldestTransactionPending.
-        oldestTransactionPending = pendingID;
-      }
-    }
+    TransactionID transactionID = transactionSource.create();
+    TransactionID oldestTransactionPending = transactionSource.oldest();
+    //this is expensive -- only assert when testing
+    TransactionID oldestTransactionInFlight;
+    assert (oldestTransactionInFlight = oldestTransactionIn(inFlightMessages.keySet())) == null || (oldestTransactionPending.compareTo(oldestTransactionInFlight) <= 0);
     // Create the message and populate it.
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
     message.setContents(clientID, transactionID, entityDescriptor, type, requiresReplication, config, oldestTransactionPending);
     return message;
   }
 
+  private TransactionID oldestTransactionIn(Collection<TransactionID> transactionIds) {
+    Iterator<TransactionID> it = transactionIds.iterator();
+    if (it.hasNext()) {
+      TransactionID oldest = it.next();
+      for (TransactionID txnId : transactionIds) {
+        if (oldest.compareTo(txnId) > 0) {
+          oldest = txnId;
+        }
+      }
+      return oldest;
+    } else {
+      return null;
+    }
+  }
 
   /**
    * This is essentially a wrapper over an in-flight VoltronEntityMessage, used for tracking its response.
