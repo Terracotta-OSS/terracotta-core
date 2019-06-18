@@ -432,8 +432,11 @@ public class StateManagerImpl implements StateManager {
     } else {
       eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
     }
-    this.stateChangeSink.transition(event.getOldState(), newState);
-
+    //  TODO: rationalize the stop state.  Transistions here should be handled 
+    //  but more work is required to properly shut queues
+    if (StateManager.convert(newState) != ServerMode.STOP) {
+      this.stateChangeSink.transition(event.getOldState(), newState);
+    }
     fireStateChangedEvent(event);
     info("Moved to " + newState, true);
   }
