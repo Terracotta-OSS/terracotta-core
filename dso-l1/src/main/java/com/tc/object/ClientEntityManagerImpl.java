@@ -59,9 +59,11 @@ import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Collections;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -71,7 +73,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
 import org.terracotta.exception.EntityNotFoundException;
@@ -84,7 +85,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private final ClientMessageChannel channel;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
   private final MessagePendingCount requestTickets = new MessagePendingCount();
-  private final AtomicLong currentTransactionID;
+  private final TransactionSource transactionSource;
 
   private final ClientEntityStateManager stateManager;
   private final ConcurrentMap<ClientInstanceID, EntityClientEndpointImpl<?, ?>> objectStoreMap;
@@ -105,7 +106,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.channel = channel;
 
     this.inFlightMessages = new ConcurrentHashMap<>();
-    this.currentTransactionID = new AtomicLong();
+    this.transactionSource = new TransactionSource();
     this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
     this.stages = mgr;      
@@ -345,15 +346,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   @Override
   public void retired(TransactionID id) {
     // We only retire the InFlightMessage from our mapping and release the request ticket once we get the retired ACK.
-    InFlightMessage inFlight = inFlightMessages.remove(id);
-    if (inFlight != null) {
-      inFlight.retired();
-      synchronized (this) {
-        requestTickets.messageRetired();
-        notify();
+    try {
+      InFlightMessage inFlight = inFlightMessages.remove(id);
+      if (inFlight != null) {
+        inFlight.retired();
+        synchronized (this) {
+          requestTickets.messageRetired();
+          notify();
+        }
+      } else {
+        // resend result or stop
       }
-    } else {
-   // resend result or stop
+    } finally {
+      transactionSource.retire(id);
     }
   }
 
@@ -546,25 +551,30 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
   private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
     InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
-    msgCount.increment();
-    inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
-    // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
-        if(enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
-          inFlight.sent();
-          if (inFlight.send()) {
-//  when encountering a send for anything other than an invoke, wait here before sending anything else
-//  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
-//  make sure those complete before sending any new invokes or lifecycle messages
-            if (inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
-              inFlight.waitForAcks();
-            }
-          } else {
-            logger.debug("message not sent.  Make sure resend happens " + inFlight);
+    try {
+      msgCount.increment();
+      inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
+      // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
+      if (enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
+        inFlight.sent();
+        if (inFlight.send()) {
+          //  when encountering a send for anything other than an invoke, wait here before sending anything else
+          //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
+          //  make sure those complete before sending any new invokes or lifecycle messages
+          if (inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
+            inFlight.waitForAcks();
           }
         } else {
-          throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+          logger.debug("message not sent.  Make sure resend happens " + inFlight);
         }
-        return inFlight;
+      } else {
+        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+      }
+      return inFlight;
+    } catch (Throwable t) {
+      transactionSource.retire(inFlight.getTransactionID());
+      throw t;
+    }
   }
 
   private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type, Set<VoltronEntityMessage.Acks> acks) {
@@ -574,27 +584,32 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private NetworkVoltronEntityMessage createMessageWithDescriptor(EntityID entityID, EntityDescriptor entityDescriptor, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type, Set<VoltronEntityMessage.Acks> acks) {
-    // Get the clientID for our channel.
-    ClientID clientID = this.channel.getClientID();
-    // Get the next transaction ID.
-    TransactionID transactionID = new TransactionID(currentTransactionID.incrementAndGet());
-    // Figure out the "trailing edge" of the current progress through the transaction stream.
-    TransactionID oldestTransactionPending = transactionID;
-    // if reconnectable, discover the oldest transaction still being waited for
-    if (this.channel.getProductID().isReconnectEnabled()) {
-      for (TransactionID pendingID : this.inFlightMessages.keySet()) {
-        if (oldestTransactionPending.compareTo(pendingID) > 0) {
-          // pendingID is earlier than oldestTransactionPending.
-          oldestTransactionPending = pendingID;
-        }
-      }
-    }
-    // Create the message and populate it.
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
+    ClientID clientID = this.channel.getClientID();
+    TransactionID transactionID = transactionSource.create();
+    TransactionID oldestTransactionPending = transactionSource.oldest();
+    //this is expensive -- only assert when testing
+    TransactionID oldestTransactionInFlight;
+    assert (oldestTransactionInFlight = oldestTransactionIn(inFlightMessages.keySet())) == null || (oldestTransactionPending.compareTo(oldestTransactionInFlight) <= 0);
     message.setContents(clientID, transactionID, entityID, entityDescriptor, type, requiresReplication, TCByteBufferFactory.wrap(config), oldestTransactionPending, acks);
     return message;
   }
-  
+
+  private TransactionID oldestTransactionIn(Collection<TransactionID> transactionIds) {
+    Iterator<TransactionID> it = transactionIds.iterator();
+    if (it.hasNext()) {
+      TransactionID oldest = it.next();
+      for (TransactionID txnId : transactionIds) {
+        if (oldest.compareTo(txnId) > 0) {
+          oldest = txnId;
+        }
+      }
+      return oldest;
+    } else {
+      return null;
+    }
+  }
+
   private static class FlushResponse implements VoltronEntityResponse, VoltronEntityMultiResponse {
     private boolean accessed = false;
     
