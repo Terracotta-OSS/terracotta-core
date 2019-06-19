@@ -371,17 +371,12 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToStopState() {
-    ServerMode old = switchToState(ServerMode.STOP, EnumSet.allOf(ServerMode.class));
+  //  noop for now
   }
 
   @Override
-  public boolean moveToStopStateIf(Set<ServerMode> validStates) {
-    try {
-      ServerMode old = switchToState(ServerMode.STOP, validStates);
-      return true;
-    } catch (IllegalStateException no) {
-      return false;
-    }
+  public synchronized boolean moveToStopStateIf(Set<ServerMode> validStates) {
+    return validStates.contains(this.getCurrentMode());
   }
 
   private void moveToActiveState() {
