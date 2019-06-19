@@ -117,7 +117,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     } finally {
       finishOpen(didOpen);
       if (connection != null && !didOpen) {
-        connection.close(100);
+        connection.close(1000);
       }
     }
     Assert.eval(!getConnectionID().isNull());
