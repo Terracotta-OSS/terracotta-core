@@ -86,7 +86,7 @@ while [ 1 ] ; do
     exitValue=$?
 
     if [ $exitValue -eq 11 ] ; then
-        echo "$0: Restarting server"
+        echo "$0: Restarting the server..."
         sleep 1
     else
         exit $exitValue
