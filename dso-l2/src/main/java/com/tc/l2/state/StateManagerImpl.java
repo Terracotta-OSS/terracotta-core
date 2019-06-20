@@ -349,7 +349,7 @@ public class StateManagerImpl implements StateManager {
           throw new IllegalStateException(state + " at move to passive ready");
       }
     } catch (IllegalStateException state) {
-      zapAndResyncLocalNode("Improper state");
+      zapAndResyncLocalNode(state.getMessage());
     }
   }
   
