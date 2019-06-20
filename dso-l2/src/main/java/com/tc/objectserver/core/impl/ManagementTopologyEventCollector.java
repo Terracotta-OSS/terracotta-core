@@ -135,7 +135,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
           minfo.getUuid(),
           minfo.getName(),
           localAddress.getAddress(), localAddress.getPort(), remoteAddress.getAddress(), remoteAddress.getPort(),
-              minfo.getPid() & 0xffffffffL);
+              minfo.getPid() & 0xffffffffL, minfo.getVersion());
       // We will use the ClientID long value as the node name.
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
