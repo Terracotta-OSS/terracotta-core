@@ -319,6 +319,12 @@ public class StateManagerImpl implements StateManager {
         }
       }
     }
+    // active is already set 
+    if (!getActiveNodeID().isNull()) {
+      Assert.assertEquals(getActiveNodeID(), active);
+      logger.info("active already set");
+      return;
+    }
     
     logger.info("moving to passive ready " + state + " " + src + " " + active);
     logger.info("verification = {}", getVerificationEnrollment());
