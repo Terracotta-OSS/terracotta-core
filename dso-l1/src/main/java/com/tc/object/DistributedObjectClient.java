@@ -317,7 +317,7 @@ public class DistributedObjectClient implements TCClient {
     final ProductInfo pInfo = ProductInfo.getInstance();
     
     ClientHandshakeMessageFactory chmf = (u, n, c)->{
-      ClientMessageChannel cmc = channel;
+      ClientMessageChannel cmc = getClientMessageChannel();
       if (cmc != null) {
         final ClientHandshakeMessage rv = (ClientHandshakeMessage)cmc.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         rv.setClientVersion(c);
@@ -446,8 +446,9 @@ public class DistributedObjectClient implements TCClient {
 
   private void waitForHandshake(ClientMessageChannel channel) {
     this.clientHandshakeManager.waitForHandshake();
-    if (channel != null) {
-      final TCSocketAddress remoteAddress = channel.getRemoteAddress();
+    ClientMessageChannel cmc = this.getClientMessageChannel();
+    if (cmc != null) {
+      final TCSocketAddress remoteAddress = cmc.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
       if (!channel.getProductID().isInternal() && channel.isConnected()) {
         DSO_LOGGER.info(infoMsg);
@@ -551,7 +552,7 @@ public class DistributedObjectClient implements TCClient {
       }
     }
 
-    ClientMessageChannel clientChannel = this.channel;
+    ClientMessageChannel clientChannel = this.getClientMessageChannel();
     if (clientChannel != null) {
       try {
         clientChannel.close();
@@ -723,7 +724,7 @@ public class DistributedObjectClient implements TCClient {
       synchronized (clientStopped) {
         clientStopped.notifyAll();
       }
-      ClientMessageChannel clientChannel = this.channel;
+      ClientMessageChannel clientChannel = this.getClientMessageChannel();
       if (clientChannel != null && !clientChannel.getProductID().isInternal() && clientChannel.isConnected()) {
         DSO_LOGGER.info("closing down Terracotta Connection force=" + forceImmediate + " channel=" + clientChannel.getChannelID() + " client=" + clientChannel.getClientID());
       }
@@ -738,5 +739,9 @@ public class DistributedObjectClient implements TCClient {
     if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
 
     return Integer.parseInt(vmName.substring(0, index));
+  }
+  
+  private synchronized ClientMessageChannel getClientMessageChannel() {
+    return this.channel;
   }
 }

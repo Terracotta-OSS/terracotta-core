@@ -319,6 +319,12 @@ public class StateManagerImpl implements StateManager {
         }
       }
     }
+    // active is already set 
+    if (!getActiveNodeID().isNull()) {
+      Assert.assertEquals(getActiveNodeID(), active);
+      logger.info("active already set");
+      return;
+    }
     
     logger.info("moving to passive ready " + state + " " + src + " " + active);
     logger.info("verification = {}", getVerificationEnrollment());
@@ -349,7 +355,7 @@ public class StateManagerImpl implements StateManager {
           throw new IllegalStateException(state + " at move to passive ready");
       }
     } catch (IllegalStateException state) {
-      zapAndResyncLocalNode("Improper state");
+      zapAndResyncLocalNode(state.getMessage());
     }
   }
   
