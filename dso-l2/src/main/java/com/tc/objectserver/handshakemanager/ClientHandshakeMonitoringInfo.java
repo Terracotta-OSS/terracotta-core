@@ -27,11 +27,13 @@ public class ClientHandshakeMonitoringInfo {
   private final int pid;
   private final String uuid;
   private final String name;
+  private final String version;
 
-  public ClientHandshakeMonitoringInfo(int pid, String uuid, String name) {
+  public ClientHandshakeMonitoringInfo(int pid, String uuid, String name, String version) {
     this.pid = pid;
     this.uuid = uuid;
     this.name = name;
+    this.version = version;
   }
 
   public int getPid() {
@@ -45,4 +47,6 @@ public class ClientHandshakeMonitoringInfo {
   public String getName() {
     return name;
   }
+
+  public String getVersion() { return version; }
 }

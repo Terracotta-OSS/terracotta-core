@@ -260,10 +260,11 @@ public class ManagementTopologyEventCollectorTest {
     final int TEST_CLIENT_PID = 2498;
     final String uuid = UUID.getUUID().toString();
     final String name = "TEST";
+    final String version = "1.2.0";
     
     // prepare and call collector.clientDidConnect(...)
     MessageChannel channel = mock(MessageChannel.class);
-    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name);
+    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name, version);
     when(channel.getAttachment(Matchers.eq(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT))).thenReturn(info);
     when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("localhost", 1234));
     when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("localhost", 4567));
@@ -276,6 +277,7 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
     Assert.assertEquals(uuid, argumentCaptor.getValue().uuid);
     Assert.assertEquals(name, argumentCaptor.getValue().name);
+    Assert.assertEquals(version, argumentCaptor.getValue().version);
   }
 
   @Test
@@ -324,7 +326,8 @@ public class ManagementTopologyEventCollectorTest {
     InetAddress remoteAddress = InetAddress.getLoopbackAddress();
     int remotePort = 2;
     long clientPID = 3;
-    PlatformConnectedClient originalConnectedClient = new PlatformConnectedClient(uuid, name, localAddress, localPort, remoteAddress, remotePort, clientPID);
+    String clientVersion = "1.2.0";
+    PlatformConnectedClient originalConnectedClient = new PlatformConnectedClient(uuid, name, localAddress, localPort, remoteAddress, remotePort, clientPID, clientVersion);
     
     String typeName = "typeName";
     String entityName = "entityName";
