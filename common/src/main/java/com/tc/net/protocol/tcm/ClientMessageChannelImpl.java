@@ -35,7 +35,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportInitiator;
-import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.TCTimeoutException;
