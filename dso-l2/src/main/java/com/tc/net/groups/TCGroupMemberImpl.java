@@ -77,16 +77,22 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
     // We can expose this callback if the caller is interested but for now we ignore it (at the moment, we are only looking
     //  at batching passive replication responses).
     Runnable sentCallback = null;
-    sendMessage(msg, sentCallback);
+    try {
+      sendMessage(msg, sentCallback);
+    } catch (GroupException ge) {
+      logger.warn("Attempting send to a not ready member " + this + ", msg will not be sent: " + msg, ge);
+    }
   }
 
-  private void sendMessage(AbstractGroupMessage msg, Runnable sentCallback) {
+  private void sendMessage(AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     TCGroupMessageWrapper wrapper = (TCGroupMessageWrapper) channel.createMessage(TCMessageType.GROUP_WRAPPER_MESSAGE);
     wrapper.setGroupMessage(msg);
     if (null != sentCallback) {
       wrapper.setSentCallback(sentCallback);
     }
-    wrapper.send();
+    if (!wrapper.send()) {
+      throw new GroupException("message not sent");
+    }
   }
 
   @Override

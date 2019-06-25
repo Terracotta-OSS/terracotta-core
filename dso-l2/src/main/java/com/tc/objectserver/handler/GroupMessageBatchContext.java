@@ -111,10 +111,10 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
       try {
         AbstractGroupMessage msg = messageToSend.asAbstractGroupMessage();
         this.groupManager.sendToWithSentCallback(this.target, msg, this::handleNetworkDone);
-          if (messageToSend.getPayloadSize() > THRESHOLD) {
-            waitForFlush();
-          }
-          return msg.getMessageID().toLong();
+        if (messageToSend.getPayloadSize() > THRESHOLD) {
+          waitForFlush();
+        }
+        return msg.getMessageID().toLong();
       } catch (GroupException e) {
         LOGGER.warn("replication message failed", e);
         //  message failed but we still need to reset state
