@@ -21,12 +21,13 @@ package com.tc.l2.state;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.text.PrettyPrintable;
 import org.slf4j.Logger;
 import org.terracotta.config.TcConfig;
 
 import java.util.Collection;
 
-public interface ConsistencyManager {
+public interface ConsistencyManager extends PrettyPrintable {
   
   public enum Transition {
     MOVE_TO_ACTIVE,

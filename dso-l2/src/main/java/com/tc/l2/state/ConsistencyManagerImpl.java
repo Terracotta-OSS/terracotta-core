@@ -28,9 +28,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +51,26 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   private final ServerVoterManager voter;
   private final Set<NodeID> activePeers = Collections.synchronizedSet(new HashSet<>());
   private final Set<NodeID> passives = Collections.synchronizedSet(new HashSet<>());
-
+  
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("type", "Consistency");
+    map.put("peerServers", peerServers);
+    map.put("activeVote", activeVote);
+    map.put("blocked", blocked);
+    map.put("actions", new HashSet<>(actions).stream().map(Transition::toString).collect(Collectors.toList()));
+    map.put("votingTerm", voteTerm);
+    map.put("blockedAt", blockedAt);
+    map.put("activePeers", new ArrayList<>(activePeers).stream().map(n->n.toString()).collect(Collectors.toList()));
+    map.put("passives", new ArrayList<>(passives).stream().map(n->n.toString()).collect(Collectors.toList()));
+    map.put("voter.registered", voter.getRegisteredVoters());
+    map.put("voter.count", voter.getVoteCount());
+    map.put("voter.limit", voter.getVoterLimit());
+    map.put("voter.overridden", voter.overrideVoteReceived());
+    return map;
+  }
+  
   public ConsistencyManagerImpl(int knownPeers, int voters) {
     try {
       this.peerServers = knownPeers;
