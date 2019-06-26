@@ -45,6 +45,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
@@ -172,7 +173,7 @@ public class ReplicatedTransactionHandler {
         }
 
         @Override
-        public Set<NodeID> replicateTo(Set<NodeID> passives) {
+        public Set<SessionID> replicateTo(Set<SessionID> passives) {
           return Collections.emptySet();
         }
       };
@@ -865,7 +866,7 @@ public class ReplicatedTransactionHandler {
     }
 
     @Override
-    public Set<NodeID> replicateTo(Set<NodeID> passives) {
+    public Set<SessionID> replicateTo(Set<SessionID> passives) {
       return Collections.emptySet();
     }
 

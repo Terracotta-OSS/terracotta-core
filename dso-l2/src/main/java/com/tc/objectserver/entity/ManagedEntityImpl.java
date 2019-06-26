@@ -36,6 +36,7 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
@@ -803,7 +804,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     response.complete();
   }
 
-  private void performSync(ResultCapture response, Set<NodeID> passives, int concurrencyKey) {
+  private void performSync(ResultCapture response, Set<SessionID> passives, int concurrencyKey) {
     if (!this.isDestroyed) {
       if (this.isInActiveState) {
         if (null == this.activeServerEntity) {
@@ -1091,7 +1092,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
-  public void sync(NodeID passive) {
+  public void sync(SessionID passive) {
 //  this is simply a barrier to make sure all actions are flushed before sync is started (hence, it has a null passive).
     PassiveSyncServerEntityRequest req = new PassiveSyncServerEntityRequest(passive);
 // wait for future is ok, occuring on sync executor thread
@@ -1195,10 +1196,10 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private static class PassiveSyncServerEntityRequest implements ServerEntityRequest {
-    private final NodeID passive;
+    private final SessionID passive;
     private final ServerEntityAction action;
     
-    public PassiveSyncServerEntityRequest(NodeID passive) {
+    public PassiveSyncServerEntityRequest(SessionID passive) {
       action = ServerEntityAction.REQUEST_SYNC_ENTITY;
       this.passive = passive;
     }
@@ -1214,7 +1215,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
 
     @Override
-    public Set<NodeID> replicateTo(Set<NodeID> passives) {
+    public Set<SessionID> replicateTo(Set<SessionID> passives) {
       return passive == null ? Collections.emptySet() : Collections.singleton(passive);
     }
 
@@ -1430,11 +1431,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   private class EntityMessagePassiveSynchronizationChannelImpl implements PassiveSynchronizationChannel<EntityMessage> {
-    private final List<NodeID> passives;
+    private final List<SessionID> passives;
     private final int concurrencyKey;
     private final boolean prepare;
 
-    public EntityMessagePassiveSynchronizationChannelImpl(Collection<NodeID> passives, int concurrencyKey, boolean prepare) {
+    public EntityMessagePassiveSynchronizationChannelImpl(Collection<SessionID> passives, int concurrencyKey, boolean prepare) {
       this.passives = new ArrayList<>(passives);
       Collections.sort(this.passives);
       this.concurrencyKey = concurrencyKey;
@@ -1444,7 +1445,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     @Override
 //  TODO:  what should be done about exception handling?
     public void synchronizeToPassive(EntityMessage payload) {
-      for (NodeID passive : passives) {
+      for (SessionID passive : passives) {
         try {
           byte[] message = syncCodec.encode(concurrencyKey, payload);
           ActivePassiveAckWaiter waiter = executor.scheduleSync(SyncReplicationActivity.createPayloadMessage(id, version, fetchID,

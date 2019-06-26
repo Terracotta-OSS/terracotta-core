@@ -21,8 +21,8 @@ package com.tc.objectserver.api;
 import org.terracotta.entity.MessageCodec;
 
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.net.NodeID;
 import com.tc.object.EntityID;
+import com.tc.object.session.SessionID;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.handler.RetirementManager;
 import java.util.Map;
@@ -59,7 +59,7 @@ public interface ManagedEntity {
    * 
    * @param passive target passive
    */
-  void sync(NodeID passive);
+  void sync(SessionID passive);
   /**
   * Called when passive sync wants to start sync on this entity.
   * 

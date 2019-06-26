@@ -21,9 +21,9 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
-import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -84,7 +84,7 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void sync(NodeID passive) {
+  public void sync(SessionID passive) {
   //  never sync
   }
   

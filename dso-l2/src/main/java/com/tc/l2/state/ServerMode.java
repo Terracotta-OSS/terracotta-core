@@ -38,6 +38,11 @@ public enum ServerMode {
     public boolean containsData() {
       return false;
     }
+
+    @Override
+    public boolean canBeActive() {
+      return true;
+    }
   },
   UNINITIALIZED(PASSIVE_UNINITIALIZED) {
     @Override

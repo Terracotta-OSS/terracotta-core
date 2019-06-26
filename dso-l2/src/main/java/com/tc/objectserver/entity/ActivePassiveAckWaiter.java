@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.exception.TCServerRestartException;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
+import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,15 +36,17 @@ import java.util.Set;
  * COMPLETED acknowledgement for a specific message.
  */
 public class ActivePassiveAckWaiter {
-  private final Set<NodeID> start;
-  private final Set<NodeID> receivedPending;
-  private final Set<NodeID> receivedByComplete;
-  private final Set<NodeID> completedPending;
+  private final Map<NodeID, SessionID> session;
+  private final Set<SessionID> start;
+  private final Set<SessionID> receivedPending;
+  private final Set<SessionID> receivedByComplete;
+  private final Set<SessionID> completedPending;
   private Runnable finalizer;
   private final Map<NodeID, ReplicationResultCode> results;
   private final PassiveReplicationBroker parent;
 
-  public ActivePassiveAckWaiter(Set<NodeID> allPassiveNodes, PassiveReplicationBroker parent) {
+  public ActivePassiveAckWaiter(Map<NodeID, SessionID> map, Set<SessionID> allPassiveNodes, PassiveReplicationBroker parent) {
+    this.session = map;
     this.start =  Collections.unmodifiableSet(allPassiveNodes);
     this.receivedPending =  new HashSet<>(allPassiveNodes);
     this.completedPending =  new HashSet<>(allPassiveNodes);
@@ -114,12 +117,16 @@ public class ActivePassiveAckWaiter {
   public synchronized boolean isCompleted() {
     return this.completedPending.isEmpty();
   }
+  
+  private SessionID nodeToSession(NodeID node) {
+    return this.session.get(node);
+  }
 
   public synchronized void didReceiveOnPassive(NodeID onePassive) {
-    boolean didContain = this.receivedPending.remove(onePassive);
+    boolean didContain = this.receivedPending.remove(nodeToSession(onePassive));
     // We must have contained this passive in order to receive.
     if (!didContain) {
-      Assert.assertTrue(onePassive + " " + toString(), this.receivedByComplete.contains(onePassive));
+      Assert.assertTrue(onePassive + " " + toString(), this.receivedByComplete.contains(nodeToSession(onePassive)));
     }    
     // Wake everyone up if this changed something.
     if (this.receivedPending.isEmpty()) {
@@ -148,6 +155,19 @@ public class ActivePassiveAckWaiter {
     return isDone;
   }
   
+  public synchronized boolean failedToSendToPassive(SessionID session) {
+    boolean didContainInReceived = this.receivedPending.remove(session);
+    if (didContainInReceived) {
+      this.receivedByComplete.add(session);
+    }
+    boolean didContainInCompleted = this.completedPending.remove(session);
+    boolean isDoneWaiting = this.completedPending.isEmpty();
+    if ((didContainInReceived && this.receivedPending.isEmpty()) || isDoneWaiting) {
+      notifyAll();
+    }
+    return this.completedPending.isEmpty();
+  }
+  
   private synchronized Runnable clearFinalizer() {
     Runnable f = finalizer;
     finalizer = null;
@@ -156,12 +176,12 @@ public class ActivePassiveAckWaiter {
   
   private synchronized boolean updateCompletionFlags(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
     // Note that we will try to remove from the received set, but usually it will already have been removed.
-    boolean didContainInReceived = this.receivedPending.remove(onePassive);
+    boolean didContainInReceived = this.receivedPending.remove(nodeToSession(onePassive));
     if (didContainInReceived) {
-      this.receivedByComplete.add(onePassive);
+      this.receivedByComplete.add(this.session.get(onePassive));
     }
     // We know that it must still be in the completed set, though.
-    boolean didContainInCompleted = this.completedPending.remove(onePassive);
+    boolean didContainInCompleted = this.completedPending.remove(nodeToSession(onePassive));
     // We must have contained this passive in order to complete.
     if (isNormalComplete) {
       // In the unexpected case, we are just making sure this node is removed from all waiters, even though it might have
