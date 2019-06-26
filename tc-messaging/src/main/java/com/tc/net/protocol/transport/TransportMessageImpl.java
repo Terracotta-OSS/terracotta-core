@@ -205,5 +205,4 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   public int getCallbackPort() {
     return this.callbackPort;
   }
-
 }
