@@ -199,7 +199,9 @@ public class StageManagerImpl implements StageManager {
     map.put("monitor", MONITOR);
     List<Object> list = new ArrayList<>(stages.size());
     for (Stage<?> stage : stages.values()) {
-      list.add(stage.getState());
+      if (stage.isStarted()) {
+        list.add(stage.getState());
+      }
     }
     map.put("stages", list);
     return map;

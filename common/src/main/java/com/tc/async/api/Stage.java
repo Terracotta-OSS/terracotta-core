@@ -45,5 +45,7 @@ public interface Stage<EC> {
   
   public void setSpinningCount(int spin);
   
+  public boolean isStarted();
+  
   public Map<String, ?> getState();
 }
