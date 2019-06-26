@@ -91,7 +91,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
       wrapper.setSentCallback(sentCallback);
     }
     if (!wrapper.send()) {
-      throw new GroupException("message not sent");
+      throw new GroupException("message not sent:" + msg);
     }
   }
 
