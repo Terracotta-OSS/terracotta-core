@@ -30,9 +30,6 @@ public interface ReplicatedClusterStateManager {
   public void publishClusterState(NodeID nodeID) throws GroupException;
 
   public void setCurrentState(State currentState);
-
-  public Iterable<NodeID> getPassives();
   
   public void reportStateToMap(Map<String, Object> state);
-
 }

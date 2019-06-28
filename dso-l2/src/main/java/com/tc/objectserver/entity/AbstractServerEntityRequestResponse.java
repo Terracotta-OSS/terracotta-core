@@ -23,10 +23,10 @@ import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -86,7 +86,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   }
 
   @Override
-  public Set<NodeID> replicateTo(Set<NodeID> current) {
+  public Set<SessionID> replicateTo(Set<SessionID> current) {
     return request.replicateTo(current);
   }
 

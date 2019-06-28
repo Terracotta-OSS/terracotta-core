@@ -62,6 +62,8 @@ public interface StateManager extends PrettyPrintable {
   public void handleClusterStateMessage(L2StateMessage clusterMsg);
 
   public NodeID getActiveNodeID();
+  
+  public Set<NodeID> getPassiveStandbys();
 
   public void cleanupKnownServers();
   

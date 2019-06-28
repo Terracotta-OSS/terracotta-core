@@ -21,7 +21,6 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import org.junit.Before;
@@ -29,6 +28,7 @@ import org.junit.Test;
 
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -167,7 +167,7 @@ public class EntityManagerImplTest {
       }
 
       @Override
-      public Set<NodeID> replicateTo(Set<NodeID> passives) {
+      public Set<SessionID> replicateTo(Set<SessionID> passives) {
         return Collections.emptySet();
       }
     };

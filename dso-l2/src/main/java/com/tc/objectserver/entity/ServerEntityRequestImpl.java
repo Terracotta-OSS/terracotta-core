@@ -19,8 +19,8 @@
 package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -78,7 +78,7 @@ public class ServerEntityRequestImpl implements ServerEntityRequest {
   }
  
   @Override
-  public Set<NodeID> replicateTo(Set<NodeID> passives) {
+  public Set<SessionID> replicateTo(Set<SessionID> passives) {
     // Note that we should be avoiding the decision to replicate messages at a higher-level so filter out any local-only
     //  operations.
     Assert.assertFalse((ServerEntityAction.LOCAL_FLUSH == this.action)

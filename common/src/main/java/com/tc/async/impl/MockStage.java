@@ -99,4 +99,11 @@ public class MockStage implements Stage {
   public void setSpinningCount(int spin) {
   }
 
+  @Override
+  public boolean isStarted() {
+    return true;
+  }
+  
+  
+
 }

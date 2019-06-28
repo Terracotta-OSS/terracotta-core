@@ -27,6 +27,8 @@ import com.tc.net.core.TCComm;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,8 @@ public class VoltronMessageSink extends TCMessageHydrateSink<VoltronEntityMessag
   private final Stage<HydrateContext> helper;
   private final Sink<VoltronEntityMessage> dest;
   private static final Logger LOGGER = LoggerFactory.getLogger(VoltronMessageSink.class);
+  private boolean always_hydrate = TCPropertiesImpl.getProperties()
+                                                     .getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_ALWAYS_HYDRATE, false);
 
   public VoltronMessageSink(Stage<HydrateContext> helper, Sink<VoltronEntityMessage> destSink, MessageCodecSupplier codecSupplier) {
     super(destSink);
@@ -48,7 +52,7 @@ public class VoltronMessageSink extends TCMessageHydrateSink<VoltronEntityMessag
   public void putMessage(TCMessage message) { 
     if (message instanceof NetworkVoltronEntityMessage) {
       ((NetworkVoltronEntityMessage)message).setMessageCodecSupplier(codecSupplier);
-      if (TCComm.hasPendingRead() || !helper.isEmpty()) {
+      if (always_hydrate || TCComm.hasPendingRead() || !helper.isEmpty()) {
         helper.getSink().addToSink(new HydrateContext(message, this.dest));
       } else {
         super.putMessage(message);
@@ -56,5 +60,13 @@ public class VoltronMessageSink extends TCMessageHydrateSink<VoltronEntityMessag
     } else {
       Assert.fail();
     }
+  }
+  
+  public void setAlwaysHydrate(boolean hydrate) {
+    always_hydrate = hydrate;
+  }
+  
+  public boolean isAlwaysHydrate() {
+    return always_hydrate;
   }
 }

@@ -22,10 +22,10 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagementKeyCallback;
@@ -808,7 +808,7 @@ public class ManagedEntityImplTest {
       verify(activeServerEntity).prepareKeyForSynchronizeOnPassive(any(), eq(1));
       return null;
     }).when(activeServerEntity).synchronizeKeyToPassive(any(), eq(1));
-    managedEntity.sync(mock(NodeID.class));
+    managedEntity.sync(mock(SessionID.class));
   }
   
   @Test

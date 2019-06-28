@@ -28,6 +28,7 @@ import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -74,7 +75,7 @@ public class RequestProcessor {
     isActive = true;
   }
 
-  public ActivePassiveAckWaiter scheduleSync(SyncReplicationActivity activity, NodeID passive) {
+  public ActivePassiveAckWaiter scheduleSync(SyncReplicationActivity activity, SessionID passive) {
     return passives.replicateActivity(activity, Collections.singleton(passive));
   }
   
@@ -93,7 +94,7 @@ public class RequestProcessor {
     
     Supplier<ActivePassiveAckWaiter> token = ()->{
       // Unless this is a message type we allow to choose its own concurrency key, we will use management (default for all internal operations).
-      Set<NodeID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
+      Set<SessionID> replicateTo = (isActive && isActionReplicated && passives != null) ? request.replicateTo(passives.passives()) : Collections.emptySet();
   //  if there is somewhere to replicate to but replication was not required
       if (!replicateTo.isEmpty() && !replicate && !request.requiresReceived()) {
   //  ordering is not requested so don't bother replicating a placeholder

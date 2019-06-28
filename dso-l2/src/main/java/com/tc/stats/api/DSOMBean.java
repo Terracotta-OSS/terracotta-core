@@ -91,4 +91,8 @@ public interface DSOMBean extends TerracottaMBean {
   long getMaxBackoffTime();
   
   long getBackoffCount();
+  
+  void setAlwaysHydrate(boolean hydrate);
+  
+  boolean isAlwaysHydrate();
 }

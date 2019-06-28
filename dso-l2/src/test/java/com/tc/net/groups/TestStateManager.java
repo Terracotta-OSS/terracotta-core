@@ -58,6 +58,11 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
+  public Set<NodeID> getPassiveStandbys() {
+    return Collections.emptySet();
+  }
+
+  @Override
   public void cleanupKnownServers() {
 
   }

@@ -677,8 +677,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
     Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this), 1, 1);
     
+    VoltronMessageSink voltronSink = new VoltronMessageSink(hydrator, fast.getSink(), entityManager);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
-    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, new VoltronMessageSink(hydrator, fast.getSink(), entityManager));
+    messageRouter.routeMessageType(TCMessageType.VOLTRON_ENTITY_MESSAGE, voltronSink);
     messageRouter.routeMessageType(TCMessageType.DIAGNOSTIC_REQUEST, m -> diagStage.getSink().addToSink(m));    
 
     HASettingsChecker haChecker = new HASettingsChecker(configSetupManager, tcProperties);
@@ -723,7 +724,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final Sink<ReplicationReceivingAction> replicationReceivingStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE, ReplicationReceivingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
             (context) -> {throw new AssertionError("no messages to replication");};
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
@@ -731,7 +732,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
           @Override
           protected void initialize(ConfigurationContext context) {
             super.initialize(context); 
-            passives.enterActiveState();
+            passives.enterActiveState(state.getPassiveStandbys());
           }
 
           @Override
@@ -800,7 +801,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,channelStats,
-                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, channelLifeCycleHandler), voltron);
+                                                         connectionPolicy, getOperationGuardian(platformServiceRegistry, 
+                                                                 channelLifeCycleHandler), voltron, voltronSink);
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);

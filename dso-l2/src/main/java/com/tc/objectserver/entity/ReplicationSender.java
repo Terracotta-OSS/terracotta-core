@@ -19,7 +19,6 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
@@ -28,6 +27,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.GroupMessageBatchContext;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.properties.TCPropertiesImpl;
@@ -54,7 +54,7 @@ public class ReplicationSender {
   //  this is all single threaded.  If there is any attempt to make this multi-threaded,
   //  control structures must be fixed
   private final GroupManager<AbstractGroupMessage> group;
-  private final Map<NodeID, SyncState> filtering = new ConcurrentHashMap<>();
+  private final Map<SessionID, SyncState> filtering = new ConcurrentHashMap<>();
   private static final Logger logger = LoggerFactory.getLogger(ReplicationSender.class);
   private static final Logger PLOGGER = LoggerFactory.getLogger(MessagePayload.class);
   private static final boolean debugLogging = logger.isDebugEnabled();
@@ -67,57 +67,69 @@ public class ReplicationSender {
     this.outgoing = outgoing;
   }
 
-  public void removePassive(NodeID dest) {
+  public void removePassive(SessionID dest) {
     filtering.remove(dest);
   }
 
-  public void addPassive(NodeID dest, int nodeToId, SyncReplicationActivity activity) {
+  public boolean addPassive(NodeID node, SessionID session, Integer execution, SyncReplicationActivity activity) {
     // Set up the sync state.
-    SyncState state = createAndRegisterSyncState(dest, nodeToId);
+    SyncState state = createAndRegisterSyncState(node, session, execution);
     // Send the message.
-    state.attemptToSend(activity);
+    return state.attemptToSend(activity);
   }
 
-  public void replicateMessage(NodeID dest, int nodeToId, SyncReplicationActivity activity, Consumer<Boolean> sentCallback) {
+  public void replicateMessage(SessionID session, SyncReplicationActivity activity, Consumer<Boolean> sentCallback) {
     if (debugLogging) {
       logger.debug("WIRE:" + activity);
     }
     if (debugMessaging) {
       PLOGGER.debug("SENDING:" + activity.getDebugID());
     }
-    Optional<SyncState> syncing = getSyncState(dest, activity);
-    outgoing.addToSink(new ReplicationSendingAction(nodeToId, ()->{
-          Optional<Boolean> didSend = syncing.map(state->state.attemptToSend(activity));
-          if (sentCallback != null) {
-            sentCallback.accept(didSend.orElse(false));
-          }
-    }));
+    Optional<SyncState> syncing = getSyncState(session, activity);
+    if (syncing.isPresent()) {
+      outgoing.addToSink(new ReplicationSendingAction(syncing.get().executionLane, ()->{
+            Optional<Boolean> didSend = syncing.map(state->state.attemptToSend(activity));
+            if (sentCallback != null) {
+              sentCallback.accept(didSend.orElse(false));
+            }
+      }));
+    } else {
+      logger.info("ignoring replication message no session {} for activity {}", session, activity);
+      if (sentCallback != null) {
+        sentCallback.accept(false);
+      }
+    }
 
   }
   
-  private SyncState createAndRegisterSyncState(NodeID nodeid, int nodeToId) {
+  private SyncState createAndRegisterSyncState(NodeID node, SessionID session, int lane) {
     // We can't already have a state for this passive.
-    Assert.assertTrue(!filtering.containsKey(nodeid));    
-    return filtering.computeIfAbsent(nodeid, n -> new SyncState(n, nodeToId));
+    Assert.assertTrue(!node.isNull());
+    Assert.assertTrue(!filtering.containsKey(session));
+    SyncState state = new SyncState(node, session, lane);
+    filtering.put(session, state);
+    return state;
   }
 
-  private Optional<SyncState> getSyncState(NodeID nodeid, SyncReplicationActivity activity) {
-    SyncState state = filtering.get(nodeid);
-    if (null == state) {
+  private Optional<SyncState> getSyncState(SessionID session, SyncReplicationActivity activity) {
+    SyncState state = filtering.get(session);
+    if (null == state || !state.isSameSession(session)) {
       // We don't know anything about this passive so drop the message.
-      dropActivityForDisconnectedServer(nodeid, activity);
+      dropActivityForDisconnectedServer(session, activity);
+      return Optional.empty();
+    } else {
+      return Optional.of(state);
     }
-    return Optional.ofNullable(state);
   }
 
-  private void dropActivityForDisconnectedServer(NodeID nodeid, SyncReplicationActivity activity) {
-//  make sure node is not connected
-    Assert.assertFalse("node is not connected for:" + activity, group.isNodeConnected(nodeid));
+  private void dropActivityForDisconnectedServer(SessionID session, SyncReplicationActivity activity) {
 //  passive must have died during passive sync, ignore this message
-    logger.debug("ignoring " + activity + " target " + nodeid + " no longer exists");
+    if (logger.isDebugEnabled()) {
+      logger.debug("ignoring: " + session + " no longer exists");
+    }
   }
 // for testing only
-  boolean isSyncOccuring(NodeID origin) {
+  boolean isSyncOccuring(SessionID origin) {
     SyncState state = filtering.get(origin);
     if (state != null) {
       return state.isSyncOccuring();
@@ -145,14 +157,21 @@ public class ReplicationSender {
 
     private final GroupMessageBatchContext<ReplicationMessage, SyncReplicationActivity> batchContext;
     
-    private final int index;
+    private final SessionID session;
+    private final int executionLane;
         
-    public SyncState(NodeID target, int nodeToId) {
+    public SyncState(NodeID target, SessionID nodeToId, int lane) {
       this.target = target;
-      this.index = nodeToId;
+      this.session = nodeToId;
+      this.executionLane = lane;
+      
       this.batchContext = new GroupMessageBatchContext<>(ReplicationMessage::createActivityContainer, group, target, maximumBatchSize, idealMessagesInFlight, (node)->flushBatch());  
     }
     
+    private boolean isSameSession(SessionID session) {
+      return this.session.equals(session);
+    }
+              
     public boolean isSyncOccuring() {
       return (begun && !complete);
     }
@@ -335,14 +354,15 @@ public class ReplicationSender {
     }
         
     private void flushBatch() {
-      outgoing.addToSink(new ReplicationSendingAction(index, ()->{
+      outgoing.addToSink(new ReplicationSendingAction(this.executionLane, ()->{
         try {
           this.batchContext.flushBatch();
         } catch (GroupException ge) {
-          logger.error("error sending sync to passive");
-          ReplicationSender.this.group.zapNode(this.target, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "failed to sync");
+          logger.warn("error sending message to passive ", ge);
+          ReplicationSender.this.group.zapNode(this.target, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "failed to replicate messages to server");
         }
       }));
     }
+
   }
 }

@@ -28,6 +28,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
@@ -205,7 +206,7 @@ public class RequestProcessorTest {
     Sink dump = mock(Sink.class);
 
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
-    when(broker.passives()).thenReturn(Collections.singleton(mock(NodeID.class)));
+    when(broker.passives()).thenReturn(Collections.singleton(mock(SessionID.class)));
     when(broker.replicateActivity(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
     doAnswer(i->{
       EntityRequest req = (EntityRequest)i.getArguments()[0];
@@ -268,10 +269,7 @@ public class RequestProcessorTest {
     @Override
     public void describeTo(Description description) {
       description.appendText("my matcher");
-    }
-    
-    
-    
+    } 
   }
   
   private static class ByteArrayMessage implements EntityMessage {

@@ -45,17 +45,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
+import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -67,9 +68,8 @@ import java.util.concurrent.TimeUnit;
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveToPassiveReplication.class);
-  private final Iterable<NodeID> passives;
   private boolean activated = false;
-  private final Set<NodeID> passiveNodes = new CopyOnWriteArraySet<>();
+  private final Map<NodeID, SessionID> passiveNodes = new ConcurrentHashMap<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final ReplicationSender replicationSender;
@@ -80,12 +80,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final ConsistencyManager consistencyMgr;
   
   private final Sink<ReplicationReceivingAction> receiveHandler;
+  private final AtomicLong sessionMaker = new AtomicLong();
   private final Map<NodeID, Integer> lane = new ConcurrentHashMap<>();
 
-  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
     this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
-    this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
@@ -109,57 +109,71 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     }
   }
   
-  public void enterActiveState() {
+  public void enterActiveState(Set<NodeID> passives) {
     Assert.assertFalse(activated);
-    primePassives();
+    primePassives(passives);
     activated = true;
   }
-
-/**
+  /**
  * starts the stream of messages to each passive the server knows about.  This should only happen 
  * when a server enters active state.
  */
-  private void primePassives() {
+  private void primePassives(Set<NodeID> passives) {
     passives.forEach(i -> {
-      if (prime(i)) {
-        passiveNodes.add(i);
+      SessionID session = prime(i);
+      if (session == null) {
+        LOGGER.warn("add passive disallowed for " + i);
+      } else {
+        Assert.assertNull(passiveNodes.put(i, session));
       }
     });
   }
 /**
  * prime the message channel to a node by setting the starting ordering id to zero.
  */
-  private boolean prime(NodeID node) {
-    if (!passiveNodes.contains(node)) {
+  private SessionID prime(NodeID node) {
+    Assert.assertFalse(node.isNull());
+    SessionID current = passiveNodes.get(node);
+    if (current == null) {
       if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
         serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
+        return null;
+      } else {
+        LOGGER.debug("Starting message sequence on " + node);
+        SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
+        //  this execution lane is important to make sure each passive has it's own 
+        //  set of network threads for operations
+        Integer executionLane = lane.computeIfAbsent(node, n->lane.size());
+        boolean sent = this.replicationSender.addPassive(node, newSession, executionLane, SyncReplicationActivity.createStartMessage());
+        Assert.assertTrue(sent);
+        return newSession;
       }
-      LOGGER.debug("Starting message sequence on " + node);
-      this.replicationSender.addPassive(node, lane.computeIfAbsent(node, n->lane.size()), SyncReplicationActivity.createStartMessage());
-      return true;
-    } else {
-      return false;
     }
+    return current;
   }
   
   public void startPassiveSync(NodeID newNode) {
     Assert.assertTrue(activated);
-    if (prime(newNode)) {
-      passiveNodes.add(newNode);
+    SessionID session = prime(newNode);
+    if (session != null) {
+      SessionID previous = passiveNodes.put(newNode, session);
+      if (previous != null) {
+        removePassiveSession(previous);
+      }
     } else {
-      Assert.assertTrue("passive node unable to prime and not in the list of passives", passiveNodes.contains(newNode));
+      Assert.assertTrue("passive node unable to prime and not in the list of passives", passiveNodes.containsKey(newNode));
     }
     LOGGER.info("Starting sync to " + newNode);
-    executePassiveSync(newNode);
+    executePassiveSync(newNode, session);
   }
   /**
    * Using an executor service here to sync multiple passives at once
    * @param newNode
    */
-  private void executePassiveSync(final NodeID newNode) {
+  private void executePassiveSync(final NodeID newNode, SessionID session) {
     passiveSyncPool.execute(() -> {
       // start passive sync message
-      LOGGER.debug("starting sync for " + newNode);
+      LOGGER.debug("starting sync for " + newNode + " on session " + session);
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
         @Override
         public void accept(List<ManagedEntity> sortedEntities) {
@@ -176,17 +190,17 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           }
           replicateActivity(SyncReplicationActivity.
               createStartSyncMessage(tuplesForCreation.
-                  toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(newNode)).waitForCompleted();
+                  toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(session)).waitForCompleted();
         }}
       );
       for (ManagedEntity entity : e) {
         LOGGER.debug("starting sync for entity " + newNode + "/" + entity.getID());
-        entity.sync(newNode);
+        entity.sync(session);
         LOGGER.debug("ending sync for entity " + newNode + "/" + entity.getID());
       }
       //  passive sync done message.  causes passive to go into passive standby mode
       LOGGER.debug("ending sync " + newNode);
-      replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(newNode)).waitForCompleted();
+      replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
     });
   }
   
@@ -205,8 +219,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   public void batchAckReceived(ReplicationMessageAck context) {
     NodeID messageFrom = context.messageFrom();
-    Integer id = this.lane.get(messageFrom);
-    this.receiveHandler.addToSink(new ReplicationReceivingAction(id, ()->{
+    this.receiveHandler.addToSink(new ReplicationReceivingAction(lane.get(messageFrom), ()->{
       for (ReplicationAckTuple tuple : context.getBatch()) {
         if (ReplicationResultCode.RECEIVED == tuple.result) {
           ActivePassiveAckWaiter waiter = waiters.get(tuple.respondTo);
@@ -237,11 +250,11 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   @Override
-  public Set<NodeID> passives() {
-    ArrayList<NodeID> copy = new ArrayList<>(passiveNodes);
-    return new AbstractSet<NodeID>() {
+  public Set<SessionID> passives() {
+    List<SessionID> copy = new ArrayList<>(passiveNodes.values());
+    return new AbstractSet<SessionID>() {
       @Override
-      public Iterator<NodeID> iterator() {
+      public Iterator<SessionID> iterator() {
         return copy.iterator();
       }
 
@@ -253,23 +266,20 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   @Override
-  public ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<NodeID> all) {
-    Set<NodeID> copy = new HashSet<>(all); 
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(copy, this);
-    if (!copy.isEmpty()) {
+  public ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<SessionID> all) {
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(this.passiveNodes, all, this);
+    if (!all.isEmpty()) {
       SyncReplicationActivity.ActivityID activityID = activity.getActivityID();
       waiters.put(activityID, waiter);
       // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a local flush
       //  command.
       boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
-      for (NodeID node : copy) {
+      for (SessionID node : all) {
         if (!isLocalFlush) {
           // This isn't local-only so try to replicate.
-          this.replicationSender.replicateMessage(node, lane.get(node), activity, sent->{
+          this.replicationSender.replicateMessage(node, activity, sent->{
             if (!sent) {
-              // We didn't send so just ack complete, internally.
-              boolean isNormalComplete = true;
-              internalAckCompleted(activityID, node, null, isNormalComplete);
+              waiter.failedToSendToPassive(node);
             }
           });
         }
@@ -280,6 +290,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   private void removePassive(NodeID nodeID) {
+    SessionID session = this.passiveNodes.get(nodeID);
     passiveSyncPool.execute(()->{
       while (!consistencyMgr.requestTransition(ServerMode.ACTIVE, nodeID, ConsistencyManager.Transition.REMOVE_PASSIVE)) {
         try {
@@ -290,19 +301,19 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       }
 // first remove it from the list of passive nodes so that anything sending new messages 
 // will have to remove it from the list of nodes to send to
-      passiveNodes.remove(nodeID);
 //  acknowledge all the messages for this node because it is gone, this may result in 
 //  a double ack locally but that is ok.  acknowledge is loose and can tolerate it. 
   //  remove the passive node from the sender first.  nothing else is going out
-      this.replicationSender.removePassive(nodeID);
-      removeWaiters(nodeID);
-      LOGGER.info("removing passive: {}", nodeID);
+      if (passiveNodes.remove(nodeID, session)) {
+        removePassiveSession(session);
+        LOGGER.info("removing passive: {}", nodeID);
+      }
     });
   }
   
-  private void removeWaiters(NodeID nodeID) {      // This is a an unexpected kind of completion.
-    boolean isNormalComplete = false;
-    waiters.forEach((key, value)->internalAckCompleted(key, nodeID, null,isNormalComplete));
+  private void removePassiveSession(SessionID session) {
+    this.replicationSender.removePassive(session);
+    waiters.values().forEach(value->value.failedToSendToPassive(session));
   }
 
   @Override

@@ -29,6 +29,7 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
+import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.stats.api.DSOMBean;
 
@@ -65,7 +66,6 @@ import javax.management.remote.JMXServiceURL;
  * This is the top-level MBean for the DSO subsystem, off which to hang JSR-77 Stats and Config MBeans.
  * 
  * @see DSOMBean
- * @see StatsImpl
  */
 public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
@@ -82,6 +82,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ChannelStats                           channelStats;
   private final ConnectionPolicy                       connectionPolicy;
   private final VoltronMessageHandler               messageHandler;
+  private final VoltronMessageSink                  messageSink;
   
   private volatile int jmxRemotePort = DEFAULT_JMX_REMOTE_PORT;
   private volatile JMXConnectorServer jmxConnectorServer;
@@ -100,6 +101,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.channelStats = managementContext.getChannelStats();
     this.connectionPolicy = managementContext.getConnectionPolicy();
     this.messageHandler = managementContext.getVoltronMessageHandler();
+    this.messageSink = managementContext.getVoltronMessageSink();
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
     
@@ -608,6 +610,14 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getBackoffCount() {
     return messageHandler.backoffCount();
   }
-  
-  
+
+  @Override
+  public void setAlwaysHydrate(boolean hydrate) {
+    this.messageSink.setAlwaysHydrate(hydrate);
+  }
+
+  @Override
+  public boolean isAlwaysHydrate() {
+    return this.messageSink.isAlwaysHydrate();
+  }
 }

@@ -39,7 +39,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
@@ -225,9 +224,9 @@ public class StateManagerImpl implements StateManager {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-          if (clusterStatePersistor.isDBClean() && 
+          if (getCurrentMode().canBeActive() && clusterStatePersistor.isDBClean() && 
               this.availabilityMgr.requestTransition(this.state, nodeid, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
-            moveToActiveState();
+            moveToActiveState(electionMgr.passiveStandbys());
           } else {
             if (!clusterStatePersistor.isDBClean()) {
               logger.info("rerunning election because " + nodeid + " must be synced to an active");
@@ -385,12 +384,12 @@ public class StateManagerImpl implements StateManager {
     return validStates.contains(this.getCurrentMode());
   }
 
-  private void moveToActiveState() {
+  private void moveToActiveState(Set<NodeID> passives) {
     refreshKnownServers();
     ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.START, ServerMode.PASSIVE));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
-    for (NodeID peer : prevKnownServers) {
+    for (NodeID peer : passives) {
       if (!this.availabilityMgr.requestTransition(state, peer, ConsistencyManager.Transition.ADD_PASSIVE)) {
         groupManager.zapNode(peer, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "unable to add passive");
       }
@@ -639,25 +638,39 @@ public class StateManagerImpl implements StateManager {
     if (response != null) {
       NodeID nodeID = response.messageFrom();
       ServerMode peerState = StateManager.convert(response.getState());
-      if (response.getType() != L2StateMessage.RESULT_AGREED) {
+      if (response.getType() != L2StateMessage.RESULT_AGREED) {        
         String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Active State";
-        logger.error(error);
+        logger.info(error);
+        // verify the verification
+        Enrollment mine = getVerificationEnrollment();
+        if (mine == null) {
+          mine = createVerificationEnrollment();
+        }
+        Enrollment peer = response.getEnrollment();
         if (peerState == ACTIVE) {
         //  split brain.  use enrollment to determine which active should continue
-          Enrollment e = response.getEnrollment();
-          Enrollment mine = EnrollmentFactory.createEnrollment(nodeID, false, weightsFactory);
-          if (mine.wins(e)) {
-            groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, mine + " wins over " + e);
+          if (mine.wins(peer)) {
+            groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, mine + " wins over " + peer);
           } else {
             // if the other wins, expect them to zap us as soon as our response is sent
           }      
         } else if (peerState.canBeActive()) {
-          zapAndResyncLocalNode("Passive has more recent data compared to active, restart"); 
+        //  verify the verification
+          if (mine.equals(peer) || mine.wins(peer)) {
+            logger.info("results not agreed for verification election");
+          } else {
+            zapAndResyncLocalNode("Passive has more recent data compared to active, restart");
+          }
         } else {
           logger.info("Server peer has more current data yet cannot be active.  Server is going dormant until next election.");
         }
       }
     }
+  }
+
+  @Override
+  public Set<NodeID> getPassiveStandbys() {
+    return electionMgr.passiveStandbys();
   }
 
   @Override

@@ -23,6 +23,8 @@ import com.tc.net.NodeID;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AvailabilityManagerImpl implements ConsistencyManager {
   @Override
@@ -53,5 +55,12 @@ public class AvailabilityManagerImpl implements ConsistencyManager {
   @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
     return EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("type", "Availability");
+    return map;
   }
 }

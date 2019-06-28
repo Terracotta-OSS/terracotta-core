@@ -36,6 +36,10 @@ import javax.management.ObjectName;
 
 import static com.tc.l2.state.ConsistencyMBean.CONSISTENCY_BEAN_NAME;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsListener {
 
@@ -57,7 +61,19 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
     this.consistencyManager = consistencyManager;
     initMBean();
   }
-
+  
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("type", "SafeStartup");
+    map.put("allowTransition", allowTransition);
+    map.put("suspended", suspended);
+    map.put("peerServers", new ArrayList<>(peerServers).stream().map(n->n.toString()).collect(Collectors.toList()));
+    map.put("disable", disable.isSet());
+    map.put("delegate", consistencyManager.getStateMap());
+    return map;
+  }
+  
   private void initMBean() {
     try {
       ObjectName mbeanName = TerracottaManagement.createObjectName(null, CONSISTENCY_BEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC);

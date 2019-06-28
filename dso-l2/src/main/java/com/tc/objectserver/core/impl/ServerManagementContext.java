@@ -22,6 +22,7 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.Guardian;
+import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.text.PrettyPrintable;
 import java.util.LinkedHashMap;
@@ -34,14 +35,17 @@ public class ServerManagementContext implements PrettyPrintable {
   private final ConnectionPolicy              connectionPolicy;
   private final Guardian           guardian;
   private final VoltronMessageHandler handler;
+  private final VoltronMessageSink msgSink;
 
   public ServerManagementContext(DSOChannelManagerMBean channelMgr,ChannelStats channelStats,
-                                 ConnectionPolicy connectionPolicy, Guardian guard, VoltronMessageHandler handler) {
+                                 ConnectionPolicy connectionPolicy, Guardian guard, VoltronMessageHandler handler,
+                                 VoltronMessageSink msgs) {
     this.channelMgr = channelMgr;
     this.channelStats = channelStats;
     this.connectionPolicy = connectionPolicy;
     this.guardian = guard;
     this.handler = handler;
+    this.msgSink = msgs;
   }
 
   public DSOChannelManagerMBean getChannelManager() {
@@ -62,6 +66,10 @@ public class ServerManagementContext implements PrettyPrintable {
   
   public VoltronMessageHandler getVoltronMessageHandler() {
     return this.handler;
+  }
+  
+  public VoltronMessageSink getVoltronMessageSink() {
+    return this.msgSink;
   }
 
   @Override

@@ -38,7 +38,10 @@ import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.NodeID;
+import com.tc.object.session.SessionID;
+import java.util.function.Consumer;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -62,18 +65,22 @@ public class ActiveToPassiveReplicationTest {
   public void setUp() {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
+    when(replicate.addPassive(any(NodeID.class), any(SessionID.class), anyInt(), any(SyncReplicationActivity.class))).thenReturn(Boolean.TRUE);
     ConsistencyManager cmgr = mock(ConsistencyManager.class);
     when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
-    replication = new ActiveToPassiveReplication(cmgr, mock(ProcessTransactionHandler.class), Collections.singleton(passive), mock(EntityPersistor.class), replicate, mock(Sink.class), mock(GroupManager.class));
+    ProcessTransactionHandler pth = mock(ProcessTransactionHandler.class);
+    when(pth.snapshotEntityList(any(Consumer.class))).thenReturn(Collections.emptyList());
+    replication = new ActiveToPassiveReplication(cmgr, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), mock(GroupManager.class));
   }
   
   @Test
   public void testNodeLeft() throws Exception {
-    replication.enterActiveState();
+    replication.enterActiveState(Collections.emptySet());
     replication.nodeJoined(passive);
     SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
     when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
-    ActivePassiveAckWaiter ack = replication.replicateActivity(activity, Collections.singleton(passive));
+    replication.startPassiveSync(passive);
+    ActivePassiveAckWaiter ack = replication.replicateActivity(activity, replication.passives());
     Thread it = new Thread(()->{
       try {
         TimeUnit.MILLISECONDS.sleep(100);

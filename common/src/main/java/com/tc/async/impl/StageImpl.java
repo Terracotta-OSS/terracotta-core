@@ -400,4 +400,9 @@ public class StageImpl<EC> implements Stage<EC> {
     }
     return rootCause instanceof TCNotRunningException;
   }
+
+  @Override
+  public boolean isStarted() {
+    return !shutdown;
+  }
 }

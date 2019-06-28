@@ -20,8 +20,8 @@ package com.tc.objectserver.api;
 
 import com.tc.net.ClientID;
 
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import java.util.Set;
 
@@ -50,7 +50,7 @@ public interface ServerEntityRequest {
  * @param passives current set of passive nodes
  * @return the passives that this request needs to be replicated to
  */  
-  Set<NodeID> replicateTo(Set<NodeID> passives);
+  Set<SessionID> replicateTo(Set<SessionID> passives);
 
   default String getTraceID() {
     return getNodeID().toLong() + ":" + getTransaction().toLong();

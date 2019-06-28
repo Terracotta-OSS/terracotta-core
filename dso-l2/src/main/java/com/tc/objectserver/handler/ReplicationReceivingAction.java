@@ -19,7 +19,6 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.net.NodeID;
 
 
 public class ReplicationReceivingAction implements MultiThreadedEventContext, Runnable {

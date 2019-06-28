@@ -34,6 +34,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.util.Assert;
@@ -57,6 +58,7 @@ import static org.mockito.Mockito.when;
 
 public class ReplicationSenderTest {
   NodeID node = mock(NodeID.class);
+  SessionID session = mock(SessionID.class);
   @SuppressWarnings("unchecked")
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
   List<ReplicationMessage> collector = new LinkedList<>();
@@ -107,6 +109,7 @@ public class ReplicationSenderTest {
       collector.add(receiving);
       return null;
     }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
+    
   }
   
   private SyncReplicationActivity makeMessage(SyncReplicationActivity.ActivityType type) {
@@ -173,7 +176,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(activity-> {
-      testSender.replicateMessage(node, 0, activity, null);
+      testSender.replicateMessage(new SessionID(1L), activity, null);
       });
     System.err.println("filter SDSC");
     validateCollector(validation);
@@ -204,7 +207,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, 0, msg, null);
+      testSender.replicateMessage(new SessionID(1L), msg, null);
       });
     
     System.err.println("filter CDC");
@@ -240,7 +243,7 @@ public class ReplicationSenderTest {
     buildTest(origin, validation, makeMessage(SyncReplicationActivity.ActivityType.INVOKE_ACTION), false);
 
     origin.stream().forEach(msg-> {
-      testSender.replicateMessage(node, 0, msg, null);
+      testSender.replicateMessage(new SessionID(1L), msg, null);
       });
     
     validateCollector(validation);
@@ -284,10 +287,10 @@ public class ReplicationSenderTest {
           SetOnceFlag sent = new SetOnceFlag();
           SetOnceFlag notsent = new SetOnceFlag();
           if (SyncReplicationActivity.ActivityType.SYNC_START == activityType) {
-            this.testSender.addPassive(node, 0, activity);
+            this.testSender.addPassive(node, session, 1, activity);
             sent.set();
           } else {
-            this.testSender.replicateMessage(node, 0, activity, (didSend)->{
+            this.testSender.replicateMessage(session, activity, (didSend)->{
               if (didSend) {
                 sent.set();
               } else {
@@ -296,8 +299,8 @@ public class ReplicationSenderTest {
             });
    
           }
-          Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(node));
-          if (!testSender.isSyncOccuring(node) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
+          Assert.assertEquals(started.isSet() + " " + finished.isSet(), started.isSet() && !finished.isSet(), testSender.isSyncOccuring(session));
+          if (!testSender.isSyncOccuring(session) && (SyncReplicationActivity.ActivityType.ORDERING_PLACEHOLDER != activityType)) {
             Assert.assertTrue(activity, sent.isSet());
           }
         }

@@ -25,7 +25,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCInternalError;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
-import com.tc.util.StringUtil;
 import com.tc.util.concurrent.SetOnceFlag;
 
 /**
@@ -159,7 +158,11 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
     String extraMsgInfo = describeMessage();
     if (extraMsgInfo != null) {
-      buf.append(extraMsgInfo);
+      buf.append(extraMsgInfo).append("\n");
+    }
+    String payload = describePayload();
+    if (payload != null) {
+      buf.append(payload);
     }
 
     return buf.toString();
@@ -169,9 +172,13 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   protected String describeMessage() {
     return null;
   }
+  
+  protected String describePayload() {
+    return null;
+  }
 
   // override this method to add more description to your payload data
-  protected String describePayload() {
+  protected String messageBytes() {
     StringBuffer buf = new StringBuffer();
     int totalBytesDumped = 0;
     if ((payloadData != null) && (payloadData.length != 0)) {

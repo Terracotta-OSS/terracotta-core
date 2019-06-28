@@ -23,6 +23,8 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public class DiagnosticModeConsistencyManager implements ConsistencyManager {
@@ -68,6 +70,13 @@ public class DiagnosticModeConsistencyManager implements ConsistencyManager {
   @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
     return EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("type", "Diagnostic");
+    return map;
   }
   
   
