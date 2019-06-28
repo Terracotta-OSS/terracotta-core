@@ -104,6 +104,7 @@ public class ReplicationSender {
   
   private SyncState createAndRegisterSyncState(NodeID node, SessionID session, int lane) {
     // We can't already have a state for this passive.
+    Assert.assertTrue(!node.isNull());
     Assert.assertTrue(!filtering.containsKey(session));
     SyncState state = new SyncState(node, session, lane);
     filtering.put(session, state);

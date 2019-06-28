@@ -724,7 +724,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final Sink<ReplicationReceivingAction> replicationReceivingStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE, ReplicationReceivingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
             (context) -> {throw new AssertionError("no messages to replication");};
     
-    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, l2Coordinator.getReplicatedClusterStateManager().getPassives(), this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
+    final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives); 
 
     Stage<ReplicationMessageAck> replicationStageAck = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE, ReplicationMessageAck.class, 
@@ -732,7 +732,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
           @Override
           protected void initialize(ConfigurationContext context) {
             super.initialize(context); 
-            passives.enterActiveState();
+            passives.enterActiveState(state.getPassiveStandbys());
           }
 
           @Override

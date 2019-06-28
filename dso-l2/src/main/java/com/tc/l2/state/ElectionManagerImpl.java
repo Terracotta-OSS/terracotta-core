@@ -34,9 +34,12 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupResponse;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.util.Collections;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class ElectionManagerImpl implements ElectionManager {
@@ -58,6 +61,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private State                 serverState;
   private Enrollment            winner;
   private NodeID                active = ServerID.NULL_ID;
+  private Set<NodeID>           passiveStandbys;
 
   private final long            electionTime;
   private final int             expectedServers;
@@ -86,6 +90,10 @@ public class ElectionManagerImpl implements ElectionManager {
           context.setWinner(runElection(context.getNode(), context.isNew(), context.getFactory(), context.getCurrentState()));
       }
     };
+  }
+  
+  public Set<NodeID> passiveStandbys() {
+    return passiveStandbys;
   }
 
   @Override
@@ -235,6 +243,7 @@ public class ElectionManagerImpl implements ElectionManager {
     this.myVote = e;
     this.serverState = serverState;
     this.winner = null;
+    this.passiveStandbys = null;
     this.votes.clear();
     this.votes.put(e.getNodeID(), e); // Cast my vote
     logger.info("Election Started : " + e);
@@ -266,10 +275,14 @@ public class ElectionManagerImpl implements ElectionManager {
     msg = L2StateMessage.createElectionResultMessage(e, currentState);
     debugInfo("Won election, announcing to world and waiting for response...");
     GroupResponse<L2StateMessage> responses = groupManager.sendAllAndWaitForResponse(msg);
+    Set<NodeID> passives = new HashSet<>();
     for (L2StateMessage response : responses.getResponses()) {
       Assert.assertEquals(msg.getMessageID(), response.inResponseTo());
       if (response.getType() == L2StateMessage.RESULT_AGREED) {
         Assert.assertEquals(e, response.getEnrollment());
+        if (StateManager.convert(response.getState()) == ServerMode.PASSIVE) {
+          passives.add(response.messageFrom());
+        }
       } else if (response.getType() == L2StateMessage.RESULT_CONFLICT) {
         logger.info("Result Conflict: Local Result : " + e + " From : " + response.messageFrom() + " Result : "
                     + response.getEnrollment());
@@ -279,7 +292,7 @@ public class ElectionManagerImpl implements ElectionManager {
                                  + " responded neither with RESULT_AGREED or RESULT_CONFLICT :" + response);
       }
     }
-
+    passiveStandbys = Collections.unmodifiableSet(passives);
     // Step 5 : result agreed - I am the winner
     return myNodeId;
   }

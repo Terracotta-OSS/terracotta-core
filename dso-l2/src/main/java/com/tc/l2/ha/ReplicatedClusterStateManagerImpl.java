@@ -37,10 +37,8 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -108,18 +106,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     } else {
       return true;
     }
-  }
-
-  @Override
-  public synchronized Iterable<NodeID> getPassives() {
-    return new Iterable<NodeID>() {
-      @Override
-      public Iterator<NodeID> iterator() {
-        synchronized(ReplicatedClusterStateManagerImpl.this) {
-          return new ArrayList<>(others).iterator();
-        }
-      }
-    };
   }
 
   @Override

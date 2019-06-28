@@ -68,7 +68,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ActiveToPassiveReplication implements PassiveReplicationBroker, GroupEventsListener {
   
   private static final Logger LOGGER = LoggerFactory.getLogger(ActiveToPassiveReplication.class);
-  private final Iterable<NodeID> passives;
   private boolean activated = false;
   private final Map<NodeID, SessionID> passiveNodes = new ConcurrentHashMap<>();
   private final Set<NodeID> standByNodes = new HashSet<>();
@@ -84,10 +83,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final AtomicLong sessionMaker = new AtomicLong();
   private final Map<NodeID, Integer> lane = new ConcurrentHashMap<>();
 
-  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, Iterable<NodeID> passives, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
+  public ActiveToPassiveReplication(ConsistencyManager consistencyMgr, ProcessTransactionHandler snapshotter, EntityPersistor persistor, ReplicationSender replicationSender, Sink<ReplicationReceivingAction> processor, GroupManager serverMatch) {
     this.consistencyMgr = consistencyMgr;
     this.replicationSender = replicationSender;
-    this.passives = passives;
     this.persistor = persistor;
     this.serverCheck = serverMatch;
     this.snapshotter = snapshotter;
@@ -111,17 +109,16 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     }
   }
   
-  public void enterActiveState() {
+  public void enterActiveState(Set<NodeID> passives) {
     Assert.assertFalse(activated);
-    primePassives();
+    primePassives(passives);
     activated = true;
   }
-
-/**
+  /**
  * starts the stream of messages to each passive the server knows about.  This should only happen 
  * when a server enters active state.
  */
-  private void primePassives() {
+  private void primePassives(Set<NodeID> passives) {
     passives.forEach(i -> {
       SessionID session = prime(i);
       if (session == null) {
@@ -135,6 +132,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  * prime the message channel to a node by setting the starting ordering id to zero.
  */
   private SessionID prime(NodeID node) {
+    Assert.assertFalse(node.isNull());
     SessionID current = passiveNodes.get(node);
     if (current == null) {
       if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
