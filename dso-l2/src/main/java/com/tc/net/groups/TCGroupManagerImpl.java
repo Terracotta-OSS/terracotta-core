@@ -525,6 +525,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       }
       member.send(msg, sentCallback);
     } else {
+      if (member != null) {
+        closeMember(member);
+      }
       throw new GroupException("Send to " + ((member == null) ? "non-exist" : "not ready") + " member of " + node);
     }
   }
@@ -546,6 +549,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     } else {
       String errorMsg = "Node " + nodeID + " not present in the group. Ignoring Message : " + msg;
       logger.error(errorMsg);
+      if (m != null) {
+        closeMember(m);
+      }
       throw new GroupException(errorMsg);
     }
     return groupResponse.getResponse(nodeID);
@@ -838,6 +844,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         Runnable sentCallback = null;
         member.send(msg, sentCallback);
       } else {
+        manager.closeMember(member);
         throw new GroupException("Send to a not ready member " + member);
       }
     }

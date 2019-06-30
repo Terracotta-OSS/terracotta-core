@@ -746,7 +746,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                   l2Coordinator.getReplicatedClusterStateManager().publishClusterState(context.messageFrom());
                 } catch (GroupException ge) {
                   logger.warn("error syncing state", ge);
-                  groupCommManager.closeMember((ServerID)context.messageFrom());
                 }
                 passives.startPassiveSync(context.messageFrom());
                 break;

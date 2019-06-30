@@ -511,8 +511,6 @@ public class StateManagerImpl implements StateManager {
       }
     } catch (GroupException ge) {
       logger.error("Zapping Node : Caught Exception while handling Message : " + clusterMsg, ge);
-      groupManager.zapNode(clusterMsg.messageFrom(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
-                           "Error handling Election Message " + L2HAZapNodeRequestProcessor.getErrorString(ge));
     }
   }
   

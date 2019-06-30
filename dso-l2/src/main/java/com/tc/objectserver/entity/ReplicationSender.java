@@ -359,7 +359,6 @@ public class ReplicationSender {
           this.batchContext.flushBatch();
         } catch (GroupException ge) {
           logger.warn("error sending message to passive ", ge);
-          ReplicationSender.this.group.zapNode(this.target, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "failed to replicate messages to server");
         }
       }));
     }
