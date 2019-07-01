@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
@@ -55,6 +54,7 @@ import com.tc.objectserver.handler.ReplicationReceivingAction;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -73,7 +73,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final ReplicationSender replicationSender;
-  private final Executor passiveSyncPool = Executors.newCachedThreadPool();
+  private final ExecutorService passiveSyncPool = Executors.newCachedThreadPool();
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
@@ -347,5 +347,11 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   Map<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> getWaiters() {
     return waiters;
   }
+  // for test
+  void finishPassiveSync(long timeout) throws InterruptedException {
+    passiveSyncPool.shutdown();
+    passiveSyncPool.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+  }
+  
   
 }
