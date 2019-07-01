@@ -99,6 +99,7 @@ public class ActiveToPassiveReplicationTest {
     when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
     ActivePassiveAckWaiter ack2 = replication.replicateActivity(nowait, replication.passives());
     Assert.assertTrue(ack2.isCompleted());
+    replication.finishPassiveSync(10000);
     Assert.assertTrue(replication.getWaiters().isEmpty());
   }
   
