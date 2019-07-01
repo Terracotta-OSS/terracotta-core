@@ -610,7 +610,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
     weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
-    this.globalWeightGeneratorFactory = weightGeneratorFactory;
+    
+    this.globalWeightGeneratorFactory = weightGeneratorFactory.complete();
     
 
     final ChannelStatsImpl channelStats = new ChannelStatsImpl(sampledCounterManager, channelManager);
@@ -689,7 +690,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager, 
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
-        weightGeneratorFactory, consistencyMgr, 
+        this.globalWeightGeneratorFactory, consistencyMgr, 
         this.persistor.getClusterStatePersistor());
     
     // And the stage for handling their response batching/serialization.
