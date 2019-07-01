@@ -53,6 +53,6 @@ public class RandomWeightGenerator implements WeightGenerator {
     for (int i = 0; i < generatorsToUse; ++i) {
       wgf.add(new RandomWeightGenerator(new SecureRandom(), true));
     }
-    return wgf;
+    return wgf.complete();
   }
 }

@@ -138,34 +138,27 @@ public class ActivePassiveAckWaiter {
    * Notifies the waiter that it is complete for the given node.
    * 
    * @param onePassive The passive which has completed the replicated message
-   * @param isNormalComplete True if this was a normal complete ack, false if we are completing because the node disappeared
    * @param payload
    * @return True if this was the last outstanding completion required and the waiter is now done.
    */
-  public boolean didCompleteOnPassive(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
-    boolean isDone = updateCompletionFlags(onePassive, isNormalComplete, payload);
-//  by passing through the synchronization block above, the finalizer if present 
-//  will be properly visible
-    if (isDone) {
+  public boolean didCompleteOnPassive(NodeID onePassive, ReplicationResultCode payload) {
+    // do this first to prevent updating the map while it is being checked
+    this.results.put(onePassive, payload);
+    return runFinalizerOnComplete(updateCompletionFlags(nodeToSession(onePassive), true));
+  }
+  
+  public boolean failedToSendToPassive(SessionID session) {
+    return runFinalizerOnComplete(updateCompletionFlags(session, false));
+  }
+  
+  private boolean runFinalizerOnComplete(boolean completed) {
+    if (completed) {
       Runnable clear = clearFinalizer();
       if (clear != null) {
         clear.run();
       }
     }
-    return isDone;
-  }
-  
-  public synchronized boolean failedToSendToPassive(SessionID session) {
-    boolean didContainInReceived = this.receivedPending.remove(session);
-    if (didContainInReceived) {
-      this.receivedByComplete.add(session);
-    }
-    boolean didContainInCompleted = this.completedPending.remove(session);
-    boolean isDoneWaiting = this.completedPending.isEmpty();
-    if ((didContainInReceived && this.receivedPending.isEmpty()) || isDoneWaiting) {
-      notifyAll();
-    }
-    return this.completedPending.isEmpty();
+    return completed;
   }
   
   private synchronized Runnable clearFinalizer() {
@@ -174,26 +167,24 @@ public class ActivePassiveAckWaiter {
     return f;
   }
   
-  private synchronized boolean updateCompletionFlags(NodeID onePassive, boolean isNormalComplete, ReplicationResultCode payload) {
+  private synchronized boolean updateCompletionFlags(SessionID onePassive, boolean isNormal) {
     // Note that we will try to remove from the received set, but usually it will already have been removed.
-    boolean didContainInReceived = this.receivedPending.remove(nodeToSession(onePassive));
+    boolean didContainInReceived = this.receivedPending.remove(onePassive);
     if (didContainInReceived) {
-      this.receivedByComplete.add(this.session.get(onePassive));
+      this.receivedByComplete.add(onePassive);
     }
     // We know that it must still be in the completed set, though.
-    boolean didContainInCompleted = this.completedPending.remove(nodeToSession(onePassive));
-    // We must have contained this passive in order to complete.
-    if (isNormalComplete) {
-      // In the unexpected case, we are just making sure this node is removed from all waiters, even though it might have
-      // already completed on some of them.
-      Assert.assertTrue(didContainInCompleted);
-      this.results.put(onePassive, payload);
+    boolean didContainInCompleted = this.completedPending.remove(onePassive);
+    if (isNormal && !didContainInCompleted) {
+      throw new AssertionError("was completed twice");
     }
+    // We must have contained this passive in order to complete.
     boolean isDoneWaiting = this.completedPending.isEmpty();
     // Wake everyone up if this changed something.
     if ((didContainInReceived && this.receivedPending.isEmpty()) || isDoneWaiting) {
       notifyAll();
     }
+
     return isDoneWaiting;
   }
 

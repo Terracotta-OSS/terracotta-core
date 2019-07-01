@@ -228,8 +228,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           }
         } else {
           // This is a normal completion.
-          boolean isNormalComplete = true;
-          internalAckCompleted(tuple.respondTo, messageFrom, tuple.result, isNormalComplete);
+          internalAckCompleted(tuple.respondTo, messageFrom, tuple.result);
         }
       }
     }));
@@ -239,10 +238,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * This internal handling for completed is split out since it happens for both completed acks but also situations which
    * implies no ack is forthcoming (the passive disappearing, for example).
    */
-  private void internalAckCompleted(SyncReplicationActivity.ActivityID activityID, NodeID passive, ReplicationResultCode payload, boolean isNormalComplete) {
+  private void internalAckCompleted(SyncReplicationActivity.ActivityID activityID, NodeID passive, ReplicationResultCode payload) {
     ActivePassiveAckWaiter waiter = waiters.get(activityID);
     if (null != waiter) {
-      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, isNormalComplete, payload);
+      boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, payload);
       if (shouldDiscardWaiter) {
         waiters.remove(activityID);
       }
@@ -279,7 +278,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           // This isn't local-only so try to replicate.
           this.replicationSender.replicateMessage(node, activity, sent->{
             if (!sent) {
-              waiter.failedToSendToPassive(node);
+              boolean complete = waiter.failedToSendToPassive(node);
+              if (complete) {
+                waiters.remove(activityID);
+              }
             }
           });
         }
@@ -313,7 +315,13 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   
   private void removePassiveSession(SessionID session) {
     this.replicationSender.removePassive(session);
-    waiters.values().forEach(value->value.failedToSendToPassive(session));
+    Iterator<Map.Entry<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter>> scan = waiters.entrySet().iterator();
+    while (scan.hasNext()) {
+      Map.Entry<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> e = scan.next();
+      if (e.getValue().failedToSendToPassive(session)) {
+        scan.remove();
+      }
+    }
   }
 
   @Override
@@ -335,4 +343,9 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       standByNodes.notifyAll();
     }
   }
+  // for test
+  Map<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> getWaiters() {
+    return waiters;
+  }
+  
 }

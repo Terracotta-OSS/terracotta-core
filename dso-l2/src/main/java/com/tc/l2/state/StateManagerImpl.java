@@ -510,9 +510,7 @@ public class StateManagerImpl implements StateManager {
           throw new AssertionError("This message shouldn't have been routed here : " + clusterMsg);
       }
     } catch (GroupException ge) {
-      logger.error("Zapping Node : Caught Exception while handling Message : " + clusterMsg, ge);
-      groupManager.zapNode(clusterMsg.messageFrom(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
-                           "Error handling Election Message " + L2HAZapNodeRequestProcessor.getErrorString(ge));
+      logger.error("Caught Exception while handling Message : " + clusterMsg, ge);
     }
   }
   
@@ -646,6 +644,7 @@ public class StateManagerImpl implements StateManager {
         if (mine == null) {
           mine = createVerificationEnrollment();
         }
+        logger.info("verification enrollment:" + mine);
         Enrollment peer = response.getEnrollment();
         if (peerState == ACTIVE) {
         //  split brain.  use enrollment to determine which active should continue
