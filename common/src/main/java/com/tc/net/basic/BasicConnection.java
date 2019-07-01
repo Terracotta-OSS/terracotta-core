@@ -232,15 +232,7 @@ public class BasicConnection implements TCConnection {
       reader.shutdownNow();
       if (time != 0) {
         try {
-          if (!reader.awaitTermination(time, TimeUnit.MILLISECONDS)) {
-            LOGGER.info(System.identityHashCode(this) + " failed to shutdown reader thread", new Exception());
-            LOGGER.info(System.identityHashCode(this) + " interrupting " + serviceThread);
-            Objects.nonNull(serviceThread);
-            serviceThread.interrupt();
-            return false;
-          } else {
-            return true;
-          }
+          return reader.awaitTermination(time, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ie) {
           LOGGER.warn(System.identityHashCode(this) + " interrupted waiting for termination", ie);
         }
