@@ -752,6 +752,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
         }
 
         conn.fireErrorEvent(ioe, null);
+        cleanupChannel(sc, null);
       }
     }
 
