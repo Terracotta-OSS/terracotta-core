@@ -156,6 +156,12 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload) {
+    // TODO implement?
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
     return invokeAction(eid, entityDescriptor, acks, monitor, false, false, payload);
   }

@@ -120,6 +120,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   } 
   
+  private synchronized boolean enqueueMessage(InFlightMessage msg) {
+    if (!this.stateManager.isRunning()) {
+      return false;
+    }
+    if (!requestTickets.messagePendingSlotAvailable()) {
+      throw new IllegalStateException("Output queue is full");
+    }
+
+    inFlightMessages.put(msg.getTransactionID(), msg);
+    requestTickets.messagePending();
+    return true;
+  }
+
   private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
     boolean enqueued = true;
     boolean interrupted = false;
@@ -276,6 +289,32 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       return inFlightMessage;
     } catch (TimeoutException to) {
       throw new RuntimeException(to);
+    }
+  }
+
+  @Override
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload) {
+    asyncQueueInFlightMessage(eid,
+        ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+        requestedAcks, monitor);
+  }
+
+  private void asyncQueueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor) {
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, false);
+    try {
+      msgCount.increment();
+      inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
+      if (enqueueMessage(inFlight)) {
+        inFlight.sent();
+        if (!inFlight.send()) {
+          logger.debug("message not sent.  Make sure resend happens : {}", inFlight);
+        }
+      } else {
+        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+      }
+    } catch (Throwable t) {
+      transactionSource.retire(inFlight.getTransactionID());
+      throw t;
     }
   }
 

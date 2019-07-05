@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
@@ -377,7 +378,59 @@ public class ClientEntityManagerTest extends TestCase {
       fail();
     }
   }
-  
+
+  public void testAsync() throws Exception {
+    // Set the target for success.
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    final EntityException resultException = null;
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+      }
+    });
+    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
+    fetcher.start();
+    fetcher.join();
+
+
+
+    EntityClientEndpoint endpoint = fetcher.getResult();
+
+    endpoint.beginAsyncInvoke().invoke(new InvocationCallback() {
+      @Override
+      public void sent() {
+        System.out.println("sent");
+      }
+
+      @Override
+      public void received() {
+        System.out.println("received");
+      }
+
+      @Override
+      public void result(Object response) {
+        System.out.println("result : " + response);
+      }
+
+      @Override
+      public void failure(Throwable failure) {
+        System.out.println("failure : " + failure);
+      }
+
+      @Override
+      public void complete() {
+        System.out.println("complete");
+      }
+
+      @Override
+      public void retired() {
+        System.out.println("retired");
+      }
+    });
+  }
+
   public void testFullQueueTimesOut() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];
@@ -552,8 +605,8 @@ public class ClientEntityManagerTest extends TestCase {
     byte[] last = result.get();
     assertTrue(resultObject == last);
   }
-  
-  
+
+
   @Test
   public void testSingleInvokeTimeout() throws Exception {
     byte[] resultObject = new byte[0];
