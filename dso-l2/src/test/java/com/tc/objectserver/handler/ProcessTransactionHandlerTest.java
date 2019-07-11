@@ -18,7 +18,7 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -74,11 +74,11 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
-import org.mockito.Matchers;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import org.mockito.ArgumentMatchers;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import org.terracotta.monitoring.IMonitoringProducer;
 
 
@@ -125,7 +125,7 @@ public class ProcessTransactionHandlerTest {
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
-    when(channelManager.getActiveChannel(Matchers.eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
+    when(channelManager.getActiveChannel(eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
     
     StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();

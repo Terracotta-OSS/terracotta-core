@@ -29,12 +29,13 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -76,7 +77,7 @@ public class ServerMessageTransportTest {
         listeners.add((TCConnectionEventListener)invocation.getArguments()[0]);
         return null;
       }
-    }).when(connection).addListener(Matchers.any(TCConnectionEventListener.class));
+    }).when(connection).addListener(ArgumentMatchers.any(TCConnectionEventListener.class));
     TransportHandshakeErrorHandler errHdr = mock(TransportHandshakeErrorHandler.class);
     TransportHandshakeMessageFactory factory = mock(TransportHandshakeMessageFactory.class);
     ServerMessageTransport transport = new ServerMessageTransport(connection, errHdr, factory);
@@ -120,7 +121,7 @@ public class ServerMessageTransportTest {
       trigger.closeEvent(event);
     }    
 
-    verify(checker, times(2)).notifyTransportDisconnected(Matchers.eq(transport), Matchers.eq(false));
-    verify(checker, times(1)).notifyTransportDisconnected(Matchers.eq(transport), Matchers.eq(true));
+    verify(checker, times(2)).notifyTransportDisconnected(eq(transport), eq(false));
+    verify(checker, times(1)).notifyTransportDisconnected(eq(transport), eq(true));
   }
 }

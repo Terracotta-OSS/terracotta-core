@@ -39,8 +39,6 @@ import com.tc.properties.TCPropertiesImpl;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -48,11 +46,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -110,13 +110,13 @@ public class RequestProcessorTest {
     System.out.println("scheduleRequest");
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
-    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
+    when(request.replicateTo(anySet())).thenReturn(Collections.emptySet());
     Sink<EntityRequest> dump = mock(Sink.class);
     RequestProcessor instance = new RequestProcessor(dump);
 
     instance.scheduleRequest(false, mock(EntityID.class), 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
     
-    verify(dump).addToSink(Matchers.any());
+    verify(dump).addToSink(ArgumentMatchers.any());
   }
   
   @Test
@@ -130,7 +130,7 @@ public class RequestProcessorTest {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
     int key = Math.abs((int)(Math.random() * Integer.MAX_VALUE));
-    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
+    when(request.replicateTo(anySet())).thenReturn(Collections.emptySet());
     TCByteBuffer payload = TCByteBufferFactory.wrap(intToArray(key));
 
     Sink dump = mock(Sink.class);
@@ -140,7 +140,7 @@ public class RequestProcessorTest {
 
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.commonMessagePayloadBusy(payload, null, true), (w)->{}, true, key);
 
-    verify(dump).addToSink(Matchers.argThat(new MultiThreadedEventMatcher(testid, key)));
+    verify(dump).addToSink(ArgumentMatchers.argThat(new MultiThreadedEventMatcher(testid, key)));
   }
 
   @Test
@@ -152,7 +152,7 @@ public class RequestProcessorTest {
     when(entity.getID()).thenReturn(testid);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
-    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
+    when(request.replicateTo(anySet())).thenReturn(Collections.emptySet());
     Sink dump = mock(Sink.class);
 
     RequestProcessor instance = new RequestProcessor(dump);
@@ -160,7 +160,7 @@ public class RequestProcessorTest {
     int expResult = ConcurrencyStrategy.UNIVERSAL_KEY;
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
 
-    verify(dump).addToSink(Matchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
+    verify(dump).addToSink(ArgumentMatchers.argThat(new MultiThreadedEventMatcher(testid, expResult)));
   }
 
   @Test
@@ -171,7 +171,7 @@ public class RequestProcessorTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     when(entity.getID()).thenReturn(testid);
     ServerEntityRequest request = mock(ServerEntityRequest.class);
-    when(request.replicateTo(Matchers.anySet())).thenReturn(Collections.emptySet());
+    when(request.replicateTo(anySet())).thenReturn(Collections.emptySet());
     when(request.getAction()).thenReturn(ServerEntityAction.CREATE_ENTITY);
     Sink dump = mock(Sink.class);
 
@@ -179,7 +179,7 @@ public class RequestProcessorTest {
     instance.setReplication(broker);
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.MANAGEMENT_KEY);
 
-    verify(dump).addToSink(Matchers.argThat(new MultiThreadedEventMatcher(testid, ConcurrencyStrategy.MANAGEMENT_KEY)));
+    verify(dump).addToSink(ArgumentMatchers.argThat(new MultiThreadedEventMatcher(testid, ConcurrencyStrategy.MANAGEMENT_KEY)));
   }
   
   @Test
@@ -193,7 +193,7 @@ public class RequestProcessorTest {
 
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getAction()).thenReturn(ServerEntityAction.INVOKE_ACTION);
-    when(request.replicateTo(Matchers.anySet())).thenAnswer(new Answer<Set<NodeID>>() {
+    when(request.replicateTo(anySet())).thenAnswer(new Answer<Set<NodeID>>() {
       @Override
       public Set<NodeID> answer(InvocationOnMock invocation) throws Throwable {
         return (Set<NodeID>)invocation.getArguments()[0];
@@ -207,7 +207,7 @@ public class RequestProcessorTest {
 
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.singleton(mock(SessionID.class)));
-    when(broker.replicateActivity(Matchers.any(), Matchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
+    when(broker.replicateActivity(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(NoReplicationBroker.NOOP_WAITER);
     doAnswer(i->{
       EntityRequest req = (EntityRequest)i.getArguments()[0];
       req.run();
@@ -218,13 +218,13 @@ public class RequestProcessorTest {
     
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
     
-    verify(broker, times(0)).replicateActivity(Matchers.any(), Matchers.any());
+    verify(broker, times(0)).replicateActivity(ArgumentMatchers.any(), ArgumentMatchers.any());
     
     instance.enterActiveState();
     
     instance.scheduleRequest(false, testid, 1L, new FetchID(1L), request, MessagePayload.emptyPayload(), (w)->{}, true, ConcurrencyStrategy.UNIVERSAL_KEY);
 //  assume args from mocked request are passed.  just testing execution
-    verify(broker).replicateActivity(Matchers.any(), Matchers.any());
+    verify(broker).replicateActivity(ArgumentMatchers.any(), ArgumentMatchers.any());
 //    verify(broker).replicateMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),Matchers.any(), Matchers.any());
   }
   
@@ -245,7 +245,7 @@ public class RequestProcessorTest {
     return end;
   }  
   
-  private class MultiThreadedEventMatcher extends BaseMatcher<ServerEntityRequest> {
+  private class MultiThreadedEventMatcher implements ArgumentMatcher<MultiThreadedEventContext> {
     
     private final int rawKey;
     private final EntityID entity;
@@ -256,7 +256,7 @@ public class RequestProcessorTest {
     }
     
     @Override
-    public boolean matches(Object item) {
+    public boolean matches(MultiThreadedEventContext item) {
       if (item instanceof MultiThreadedEventContext) {
         Object schedulingKey = ((MultiThreadedEventContext)item).getSchedulingKey();
         return (rawKey == ConcurrencyStrategy.UNIVERSAL_KEY)
@@ -265,11 +265,6 @@ public class RequestProcessorTest {
       }
       return false;
     }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("my matcher");
-    } 
   }
   
   private static class ByteArrayMessage implements EntityMessage {

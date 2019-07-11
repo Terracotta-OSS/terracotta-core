@@ -21,7 +21,7 @@ package com.tc.net.protocol.tcm;
 import com.tc.async.api.Sink;
 import com.tc.test.TCTestCase;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;

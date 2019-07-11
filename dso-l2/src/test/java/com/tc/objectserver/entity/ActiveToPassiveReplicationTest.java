@@ -40,8 +40,8 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
 import java.util.function.Consumer;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 
 public class ActiveToPassiveReplicationTest {

@@ -17,6 +17,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.ProductID;
 import com.tc.util.sequence.MutableSequence;
+import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -25,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -118,17 +119,17 @@ public class ServerStackProviderTest extends TCTestCase {
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
 
-    when(messageTransportFactory.createNewTransport(any(TCConnection.class), any(TransportHandshakeErrorHandler.class), 
-        any(TransportHandshakeMessageFactory.class), any(List.class))).then(invoke->{
+    when(messageTransportFactory.createNewTransport(any(TCConnection.class), any(TransportHandshakeErrorHandler.class),
+        Mockito.<TransportHandshakeMessageFactory>any(), any(List.class))).then(invoke->{
           Object[] args = invoke.getArguments();
           return new ServerMessageTransport((TCConnection)args[0], (TransportHandshakeErrorHandler)args[1], (TransportHandshakeMessageFactory)args[2]);
         });
-    when(messageTransportFactory.createNewTransport(any(TransportHandshakeErrorHandler.class), 
-        any(TransportHandshakeMessageFactory.class), any(List.class))).then(invoke->{
+    when(messageTransportFactory.createNewTransport(any(TransportHandshakeErrorHandler.class),
+            Mockito.<TransportHandshakeMessageFactory>any(), any(List.class))).then(invoke->{
           Object[] args = invoke.getArguments();
           return new ServerMessageTransport((TransportHandshakeErrorHandler)args[0], (TransportHandshakeMessageFactory)args[1]);
         });
-    
+
     ClientStatePersistor sequence = mock(ClientStatePersistor.class);
     when(sequence.getConnectionIDSequence()).thenReturn(new MutableSequence() {
       long current = 0;
@@ -154,7 +155,7 @@ public class ServerStackProviderTest extends TCTestCase {
     ConnectionID connectionID2 = new ConnectionID("JVM", 2, "server1");
     Set<ConnectionID> rebuild = new HashSet<>();
     rebuild.add(connectionID1);
-    
+
 
     provider = new ServerStackProvider(rebuild, harnessFactory,
                                        serverMessageChannelFactory, messageTransportFactory, null, factory, connectionPolicy,
@@ -171,7 +172,7 @@ public class ServerStackProviderTest extends TCTestCase {
       // expected.
     }
   }
-  
+
 
   public void testRebuildStackWithProductNegtiation() throws Exception {
     NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
@@ -191,13 +192,13 @@ public class ServerStackProviderTest extends TCTestCase {
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
 
-    when(messageTransportFactory.createNewTransport(any(TCConnection.class), any(TransportHandshakeErrorHandler.class), 
-        any(TransportHandshakeMessageFactory.class), any(List.class))).then(invoke->{
+    when(messageTransportFactory.createNewTransport(any(TCConnection.class), any(TransportHandshakeErrorHandler.class),
+            Mockito.<TransportHandshakeMessageFactory>any(), any(List.class))).then(invoke->{
           Object[] args = invoke.getArguments();
           return new ServerMessageTransport((TCConnection)args[0], (TransportHandshakeErrorHandler)args[1], (TransportHandshakeMessageFactory)args[2]);
         });
-    when(messageTransportFactory.createNewTransport(any(TransportHandshakeErrorHandler.class), 
-        any(TransportHandshakeMessageFactory.class), any(List.class))).then(invoke->{
+    when(messageTransportFactory.createNewTransport(any(TransportHandshakeErrorHandler.class),
+            Mockito.<TransportHandshakeMessageFactory>any(), any(List.class))).then(invoke->{
           Object[] args = invoke.getArguments();
           return new ServerMessageTransport((TransportHandshakeErrorHandler)args[0], (TransportHandshakeMessageFactory)args[1]);
         });
@@ -248,5 +249,5 @@ public class ServerStackProviderTest extends TCTestCase {
     } catch (RejectReconnectionException e) {
       // expected.
     }
-  }  
+  }
 }

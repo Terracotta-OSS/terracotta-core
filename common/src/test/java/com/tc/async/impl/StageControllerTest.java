@@ -28,7 +28,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,7 +74,7 @@ public class StageControllerTest {
     final SetOnceFlag didRun = new SetOnceFlag();
 
     final Stage prestage = mock(Stage.class);
-    when(cxt.getStage(Matchers.eq("PRE"), Matchers.any(Class.class))).then(new Answer<Stage>() {
+    when(cxt.getStage(eq("PRE"), any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
         Assert.assertFalse("PRE", didRun.isSet());
@@ -82,7 +83,7 @@ public class StageControllerTest {
     });
 
     final Stage poststage = mock(Stage.class);
-    when(cxt.getStage(Matchers.eq("POST"), Matchers.any(Class.class))).then(new Answer<Stage>() {
+    when(cxt.getStage(eq("POST"), any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
         Assert.assertTrue("POST", didRun.isSet());
@@ -91,7 +92,7 @@ public class StageControllerTest {
     });
     
     final Stage i = mock(Stage.class);
-    when(cxt.getStage(Matchers.eq("INIT"), Matchers.any(Class.class))).then(new Answer<Stage>() {
+    when(cxt.getStage(eq("INIT"), any(Class.class))).then(new Answer<Stage>() {
       @Override
       public Stage answer(InvocationOnMock invocation) throws Throwable {
         Assert.assertFalse("INIT", didRun.isSet());
