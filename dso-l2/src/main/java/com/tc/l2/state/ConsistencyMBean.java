@@ -45,7 +45,7 @@ public interface ConsistencyMBean {
    * 
    * @return the list of transitions requested.
    */
-  Collection<Transition> requestedActions();
+  Collection<String> requestedActions();
 
   /**
    * Forcibly allow a requested transition action

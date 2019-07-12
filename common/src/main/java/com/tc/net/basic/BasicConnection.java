@@ -47,7 +47,6 @@ import java.io.EOFException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.Date;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -102,6 +101,7 @@ public class BasicConnection implements TCConnection {
             int moved = 0;
             int sent = 0;
             TCByteBuffer[] data = message.getEntireMessageData();
+            LOGGER.debug("sending a message with {} buffers", data.length);
             while (moved < totalLen) {
               for (TCByteBuffer b : data) {
                 moved += buffer.forwardToWriteBuffer(b.getNioBuffer());
@@ -385,7 +385,7 @@ public class BasicConnection implements TCConnection {
             markReceived();
           } else {
             if (amount < 0) {
-              close(0);
+              throw new EOFException();
             }
           }
         } catch (EOFException eof) {

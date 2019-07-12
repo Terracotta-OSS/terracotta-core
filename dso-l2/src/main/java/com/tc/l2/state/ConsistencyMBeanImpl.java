@@ -21,6 +21,7 @@ package com.tc.l2.state;
 import com.tc.management.AbstractTerracottaMBean;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements ConsistencyMBean {
 
@@ -42,8 +43,8 @@ public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements Con
   }
 
   @Override
-  public Collection<ConsistencyManager.Transition> requestedActions() {
-    return consistencyManager.requestedActions();
+  public Collection<String> requestedActions() {
+    return consistencyManager.requestedActions().stream().map(t->t.toString()).collect(Collectors.toList());
   }
 
   @Override

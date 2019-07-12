@@ -528,6 +528,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       } catch (EntityBusyException busy) {
   //  server was busy, try again in 2 seconds
         wasBusy = true;
+        logger.info("Cluster is busy. Requested operation will be retried in 2 seconds");
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException in) {

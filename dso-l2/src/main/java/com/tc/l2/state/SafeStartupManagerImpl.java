@@ -102,6 +102,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
       }
       return !suspended;
     }
+    suspended = false;
     return consistencyManager.requestTransition(mode, sourceNode, newMode);
   }
 
