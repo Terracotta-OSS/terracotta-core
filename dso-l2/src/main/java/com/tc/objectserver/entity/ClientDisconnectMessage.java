@@ -24,6 +24,7 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.tx.TransactionID;
+import java.util.function.Consumer;
 import org.terracotta.entity.EntityMessage;
 
 /**
@@ -34,11 +35,13 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   private final ClientID clientID;
   private final EntityDescriptor descriptor;
   private final Runnable disconnectComplete;
+  private final Consumer<Exception> disconnectException;
 
-  public ClientDisconnectMessage(ClientID clientID, EntityDescriptor entityID, Runnable completion) {
+  public ClientDisconnectMessage(ClientID clientID, EntityDescriptor entityID, Runnable completion, Consumer<Exception> exception) {
     this.clientID = clientID;
     this.descriptor = entityID;
     this.disconnectComplete = completion;
+    this.disconnectException = exception;
   }
 
   @Override
@@ -100,6 +103,12 @@ public class ClientDisconnectMessage implements VoltronEntityMessage, Runnable {
   public void run() {
     if (this.disconnectComplete != null) {
       this.disconnectComplete.run();
+    }
+  }
+  
+  public void disconnectException(Exception e) {
+    if (this.disconnectException != null) {
+      this.disconnectException.accept(e);
     }
   }
   

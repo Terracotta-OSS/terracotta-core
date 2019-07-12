@@ -47,13 +47,6 @@ public interface ITopologyEventCollector {
   public void clientDidConnect(MessageChannel channel, ClientID client);
 
   /**
-   * Called when a client explicitly and safely disconnects or when the reconnect window for an missing client closes.
-   * 
-   * @param client The client.
-   */
-  public void clientDidDisconnect(ClientID client);
-
-  /**
    * Called when an entity is explicitly created in response to a request from a client.
    * 
    * @param id The unique identifier for this entity.
