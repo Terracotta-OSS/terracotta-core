@@ -499,6 +499,10 @@ public class StateManagerImpl implements StateManager {
         case L2StateMessage.ELECTION_WON_ALREADY:
           handleElectionAlreadyWonMessage(clusterMsg);
           break;
+        case L2StateMessage.RESULT_AGREED:
+        case L2StateMessage.RESULT_CONFLICT:
+          // just swallow this message, it is orphaned from another election
+          break;
         default:
           throw new AssertionError("This message shouldn't have been routed here : " + clusterMsg);
       }
