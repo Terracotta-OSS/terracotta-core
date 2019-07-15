@@ -109,14 +109,7 @@ public class StateManagerImpl implements StateManager {
     map.put("startState", this.startState);
     map.put("currentState", this.state);
     map.put("active", this.activeNode);
-    if (this.availabilityMgr instanceof ConsistencyManagerImpl) {
-      ConsistencyManagerImpl cc = (ConsistencyManagerImpl)this.availabilityMgr;
-      map.put("requestedActions", cc.getActions());
-      map.put("availabilityRestriction", cc.isVoting());
-      map.put("availabilityStuck", cc.isBlocked());
-    } else {
-      // no useful information to report
-    }
+    map.put("consistency", this.availabilityMgr.getStateMap());
     return map;
   }
 
@@ -505,6 +498,10 @@ public class StateManagerImpl implements StateManager {
           break;
         case L2StateMessage.ELECTION_WON_ALREADY:
           handleElectionAlreadyWonMessage(clusterMsg);
+          break;
+        case L2StateMessage.RESULT_AGREED:
+        case L2StateMessage.RESULT_CONFLICT:
+          // just swallow this message, it is orphaned from another election
           break;
         default:
           throw new AssertionError("This message shouldn't have been routed here : " + clusterMsg);

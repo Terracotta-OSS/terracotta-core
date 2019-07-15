@@ -158,7 +158,6 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     LOGGER.debug("client did connect " + channel);
   }
 
-  @Override
   public synchronized void clientDidDisconnect(ClientID client) {
     // Ensure that this client was already connected.
     Assert.assertTrue(this.connectedClients.contains(client));
@@ -232,7 +231,7 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     
     if (incomingReleases.containsKey(client)) {
       Collection<ClientInstanceID> expected = incomingReleases.get(client);
-      Assert.assertTrue(expected.removeIf(des->des.equals(instance)));
+      Assert.assertTrue(expected.remove(instance));
       if (expected.isEmpty()) {
         incomingReleases.remove(client);
         removeClientIfPossible(client);
@@ -245,8 +244,10 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     if (null != serviceInterface) {
       if (!releases.isEmpty()) {
         incomingDisconnects.put(cid, new ArrayList<>(releases));
+      } else {
+        Assert.assertFalse(incomingReleases.containsKey(cid));
+        Assert.assertTrue(removeClientIfPossible(cid));
       }
-      removeClientIfPossible(cid);
     }
   }  
   
@@ -262,14 +263,16 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     }
   }
   
-  private void removeClientIfPossible(ClientID client) {
+  private boolean removeClientIfPossible(ClientID client) {
     if (!incomingReleases.containsKey(client) && !incomingDisconnects.containsKey(client)) {
       // Remove it from the monitoring interface.
       if (null != this.serviceInterface) {
         String nodeName = clientIdentifierForService(client);
         this.serviceInterface.removeNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName);
       }
+      return true;
     }
+    return false;
   }
   
   private void expectedReleases(ClientID cid, Collection<EntityDescriptor> releases) {

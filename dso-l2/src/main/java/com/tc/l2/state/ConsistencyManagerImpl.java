@@ -64,10 +64,12 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     map.put("blockedAt", blockedAt);
     map.put("activePeers", new ArrayList<>(activePeers).stream().map(n->n.toString()).collect(Collectors.toList()));
     map.put("passives", new ArrayList<>(passives).stream().map(n->n.toString()).collect(Collectors.toList()));
-    map.put("voter.registered", voter.getRegisteredVoters());
-    map.put("voter.count", voter.getVoteCount());
-    map.put("voter.limit", voter.getVoterLimit());
-    map.put("voter.overridden", voter.overrideVoteReceived());
+    Map<String, Object> voteMap = new LinkedHashMap<>();
+    voteMap.put("registered", voter.getRegisteredVoters());
+    voteMap.put("count", voter.getVoteCount());
+    voteMap.put("limit", voter.getVoterLimit());
+    voteMap.put("overridden", voter.overrideVoteReceived());
+    map.put("voter", voteMap);
     return map;
   }
   

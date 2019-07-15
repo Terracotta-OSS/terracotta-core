@@ -81,7 +81,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
-      voltronSink.addToSink(createDisconnectMessage(clientID));
+      voltronSink.addToSink(createClientDisconnectMessage(clientID));
     }
 
     if (commsManager.isInShutdown()) {
@@ -91,7 +91,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     }
   }
   
-  private VoltronEntityMessage createDisconnectMessage(ClientID clientID) {
+  private VoltronEntityMessage createClientDisconnectMessage(ClientID clientID) {
     return new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(PlatformEntity.PLATFORM_FETCH_ID, ClientInstanceID.NULL_ID), ()-> {
 //  now the pth is flushed, check that there are no pending removes in the managed entities
       if (pth.removeClient(clientID)) {
@@ -99,9 +99,12 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
           notifyEnitiesOfDisconnect(clientID);
         } else {
     // there are fetches in the managed entity, not safe to remove the client, recursion
-          voltronSink.addToSink(createDisconnectMessage(clientID));
+          voltronSink.addToSink(createClientDisconnectMessage(clientID));
         }
-      });
+      },
+      // reschedule on error
+      (e)->voltronSink.addToSink(createClientDisconnectMessage(clientID))
+    );
   }
   
   private void notifyEnitiesOfDisconnect(ClientID clientID) {
@@ -111,13 +114,19 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
       notifyClientRemoved(clientID);
     } else {
       CountDownLatch latch = new CountDownLatch(msg.size());
-      msg.forEach(m->voltronSink.addToSink(new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(m, ClientInstanceID.NULL_ID), ()->{
+      msg.forEach(m->voltronSink.addToSink(createMessageForEntityDisconnect(clientID, m, latch)));
+    }
+  }
+  
+  private ClientDisconnectMessage createMessageForEntityDisconnect(ClientID clientID, FetchID target, CountDownLatch latch) {
+    return new ClientDisconnectMessage(clientID,EntityDescriptor.createDescriptorForInvoke(target, ClientInstanceID.NULL_ID), ()->{
         latch.countDown();
         if (latch.getCount() == 0) {
           notifyClientRemoved(clientID);
         }
-      })));
-    }
+      },
+      // on error, reschedule
+      (e)->voltronSink.addToSink(createMessageForEntityDisconnect(clientID, target, latch)));
   }
 
   private void nodeConnected(NodeID nodeID, ProductID productId) {

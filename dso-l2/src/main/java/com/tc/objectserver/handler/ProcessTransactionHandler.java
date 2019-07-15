@@ -198,6 +198,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       TransactionID oldestTransactionOnClient = message.getOldestTransactionOnClient();
       boolean requestedReceived = message.doesRequestReceived();
       boolean requestedRetired = message.doesRequestRetired();
+      boolean canBeBusy = !sourceNodeID.isNull();
 
       Consumer<byte[]> completion = null;
       Consumer<EntityException> exception = null;
@@ -207,7 +208,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           invokeReturn.remove(message.getSource());
           ClientDisconnectMessage disconnect = (ClientDisconnectMessage)message;
           completion = (raw)->disconnect.run();
-          exception = (e)->disconnect.run();
+          exception = disconnect::disconnectException;
           break;
         case FETCH_ENTITY:
 // track fetch calls through the pipeline so disconnects work properly
@@ -229,7 +230,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           }
           break;
       }
-      MessagePayload payload =  MessagePayload.commonMessagePayload(extendedData, entityMessage, doesRequireReplication, !message.getSource().isNull());
+      MessagePayload payload =  MessagePayload.commonMessagePayload(extendedData, entityMessage, doesRequireReplication, canBeBusy);
       ProcessTransactionHandler.this.addMessage(sourceNodeID, descriptor, action, payload, transactionID, oldestTransactionOnClient, completion, exception, requestedReceived, requestedRetired);
     }
 
