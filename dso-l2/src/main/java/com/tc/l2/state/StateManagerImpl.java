@@ -522,14 +522,7 @@ public class StateManagerImpl implements StateManager {
 //  split brain, handle this by sending normal enrollment to determine who wins
       logger.info("split-brain detected");
     }
-    boolean verify = verifyElectionWonResults(clusterMsg);
-    boolean transition = availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
-    if (verify && transition) {
-      sendVerificationOKResponse(clusterMsg);
-      moveToPassiveReady(clusterMsg);
-    } else {
-      sendVerificationNGResponse(clusterMsg);
-    }
+    verifyActiveElectionResults(clusterMsg);
   }
   
   private boolean verifyElectionWonResults(L2StateMessage clusterMsg) {
@@ -575,15 +568,19 @@ public class StateManagerImpl implements StateManager {
 
   private void handleElectionAbort(L2StateMessage clusterMsg) {
     electionMgr.handleElectionAbort(clusterMsg, state.getState());
+    verifyActiveElectionResults(clusterMsg);
+  }
+  
+  private void verifyActiveElectionResults(L2StateMessage clusterMsg) {
     boolean verify = verifyElectionWonResults(clusterMsg);
-    boolean transition = availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
-    if (verify && transition) {
-        sendVerificationOKResponse(clusterMsg);
-        moveToPassiveReady(clusterMsg);
-      } else {
-        sendVerificationOKResponse(clusterMsg);
-      }
+    if (transition) {
+      sendVerificationOKResponse(clusterMsg);
+      moveToPassiveReady(clusterMsg);
+    } else {
+      sendVerificationNGResponse(clusterMsg);
+    }
   }
 
   private void handleStartElectionRequest(L2StateMessage msg) throws GroupException {
