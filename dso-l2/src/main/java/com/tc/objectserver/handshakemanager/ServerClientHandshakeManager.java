@@ -108,7 +108,7 @@ public class ServerClientHandshakeManager {
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
-          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
+          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName(), handshake.getClientVersion()), false);
       if (canAcceptStats(handshake.getClientVersion())) {
         handshake.getChannel().addAttachment("SendStats", true, true);
       }
@@ -172,7 +172,7 @@ public class ServerClientHandshakeManager {
   public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
     clientMsg.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
-        new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName()), false);
+        new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName(), clientMsg.getClientVersion()), false);
     ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
     ack.initialize(Collections.emptySet(), clientID, ProductInfo.getInstance().version());
     ack.send();
