@@ -277,7 +277,6 @@ public class ManagementTopologyEventCollectorTest {
     Assert.assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
     Assert.assertEquals(uuid, argumentCaptor.getValue().uuid);
     Assert.assertEquals(name, argumentCaptor.getValue().name);
-    Assert.assertEquals(version, argumentCaptor.getValue().version);
   }
 
   @Test
@@ -326,8 +325,7 @@ public class ManagementTopologyEventCollectorTest {
     InetAddress remoteAddress = InetAddress.getLoopbackAddress();
     int remotePort = 2;
     long clientPID = 3;
-    String clientVersion = "1.2.0";
-    PlatformConnectedClient originalConnectedClient = new PlatformConnectedClient(uuid, name, localAddress, localPort, remoteAddress, remotePort, clientPID, clientVersion);
+    PlatformConnectedClient originalConnectedClient = new PlatformConnectedClient(uuid, name, localAddress, localPort, remoteAddress, remotePort, clientPID);
     
     String typeName = "typeName";
     String entityName = "entityName";
