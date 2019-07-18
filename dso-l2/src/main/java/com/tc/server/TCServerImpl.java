@@ -353,7 +353,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public void dump() {
     if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "dump")) {
-      TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
+      TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
     } else {
       logger.info("dump operation not permitted by guardian");
     }

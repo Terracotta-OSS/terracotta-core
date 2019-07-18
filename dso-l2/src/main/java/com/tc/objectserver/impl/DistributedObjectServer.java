@@ -316,10 +316,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return this.serverBuilder;
   }
   
-  public byte[] getClusterState(Charset set) {
-    PrettyPrinter pp = null;
+  public byte[] getClusterState(Charset set, PrettyPrinter pp) {
     try {
-      pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+      if (pp == null) {
+        pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+      }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
     }
@@ -355,7 +356,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   public void dumpOnExit() {
     // this is on exit so do not guard
-    TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
+    TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {

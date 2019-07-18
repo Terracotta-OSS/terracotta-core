@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MapListPrettyPrint implements PrettyPrinter {
+public class AbbreviatedMapListPrettyPrint implements PrettyPrinter {
   
   StringWriter base = new StringWriter();
   PrintWriter printer = new PrintWriter(base);
@@ -40,28 +40,49 @@ public class MapListPrettyPrint implements PrettyPrinter {
   private void printIndented(Object o, int depth) {
     if (o instanceof Map.Entry) {
       printer.print(((Map.Entry)o).getKey());
-      printer.print('=');
+      printer.print(':');
       printIndented(((Map.Entry)o).getValue(), depth);
     } else if (o instanceof Map) {
       Set<Map.Entry> set = ((Map)o).entrySet();
-      printer.println('{');
+      printer.println();
       for (Map.Entry e : set) {
-        tabOver(depth + 1);
+        tabOver(depth);
         printIndented(e, depth + 1);
       }
-      tabOver(depth);
-      printer.println('}');
     } else if (o instanceof List) {
-      printer.println('[');
+      printer.println();
       for (Object e : ((List)o)) {
-        tabOver(depth + 1);
+        tabOver(depth);
         printIndented(e, depth + 1);
       }
-      tabOver(depth);
-      printer.println(']');
+    } else if (o instanceof String) {
+      printer.print('"');
+      printer.print(o.toString());
+      printer.print('"');
+      printer.println();
     } else {
       printer.println(o);
     }
+  }
+  
+  public static void main(String[] args) {
+    Map<String, Object> map = new LinkedHashMap<>();
+    Map<String, Object> sub = new LinkedHashMap<>();
+    map.put("map", sub);
+    sub.put("test", "value");
+    sub.put("number", 1);
+    List<Integer> sublist = new ArrayList<>();
+    sublist.add(1);
+    sublist.add(2);
+    sublist.add(3);
+    sublist.add(4);
+    sub.put("nl", sublist);
+    List<String> values = new ArrayList<String>();
+    values.add("a1");
+    values.add("a2");
+    values.add("a3");
+    map.put("array",values);
+    System.out.println(new AbbreviatedMapListPrettyPrint().println(map).toString());
   }
   
   private void tabOver(int num) {
