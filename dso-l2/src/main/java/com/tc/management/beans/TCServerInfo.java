@@ -31,6 +31,9 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
 import com.tc.server.TCServer;
+import com.tc.text.AbbreviatedMapListPrettyPrint;
+import com.tc.text.MapListPrettyPrint;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -420,5 +423,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public String getResourceState() {
     return server.getResourceState();
+  }
+
+  @Override
+  public String getClusterState(boolean shortForm) {
+    PrettyPrinter pp = (shortForm) ? new AbbreviatedMapListPrettyPrint() : new MapListPrettyPrint();
+    return server.getClusterState(pp);
   }
 }

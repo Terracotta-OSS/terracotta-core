@@ -65,6 +65,7 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
+import com.tc.text.PrettyPrinter;
 import java.util.EnumSet;
 
 
@@ -433,5 +434,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     } else {
       logger.info("stop operation not allowed by guardian");
     }
+  }
+
+  @Override
+  public String getClusterState(PrettyPrinter form) {
+    return new String(dsoServer.getClusterState(Charset.defaultCharset(), form), Charset.defaultCharset());
   }
 }

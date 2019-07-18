@@ -102,4 +102,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getResourceState();
   
   void setPipelineMonitoring(boolean monitor);
+  
+  String getClusterState(boolean shortForm);
 }
