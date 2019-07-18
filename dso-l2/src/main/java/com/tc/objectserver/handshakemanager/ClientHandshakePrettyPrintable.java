@@ -33,6 +33,7 @@ public class ClientHandshakePrettyPrintable implements PrettyPrintable {
 
   @Override
   public Map<String, ?> getStateMap() {
+    Map<String, Object> connections = new LinkedHashMap<>();
     Map<String, Object> map = new LinkedHashMap<>();
     if (channels != null) {
       for (MessageChannel c : channels) {
@@ -50,7 +51,8 @@ public class ClientHandshakePrettyPrintable implements PrettyPrintable {
         }
       }
     }
-    return map;
+    connections.put("activeClientConnections", map);
+    return connections;
   }
 
   
