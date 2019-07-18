@@ -38,20 +38,6 @@ public interface DSOMBean extends TerracottaMBean {
 
   ObjectName[] getClients();
 
-  Map<ObjectName, Long> getAllPendingTransactionsCount();
-
-  long getPendingTransactionsCount();
-
-  Map<ObjectName, Long> getClientTransactionRates();
-
-  Map<ObjectName, Map<String, Object>> getL1Statistics();
-
-  Map<ObjectName, Map<String, Object>> getPrimaryClientStatistics();
-
-  Map<ObjectName, Integer> getClientLiveObjectCount();
-
-  int getLiveObjectCount();
-
   Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue);
 
   Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap);
