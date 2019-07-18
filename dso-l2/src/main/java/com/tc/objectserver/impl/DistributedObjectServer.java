@@ -233,6 +233,7 @@ import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.objectserver.handler.ReplicationSendingAction;
+import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
 import com.terracotta.config.Configuration;
 
 import java.util.stream.Collectors;
@@ -315,10 +316,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return this.serverBuilder;
   }
   
-  public byte[] getClusterState(Charset set) {
-    PrettyPrinter pp = null;
+  public byte[] getClusterState(Charset set, PrettyPrinter pp) {
     try {
-      pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+      if (pp == null) {
+        pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+      }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
     }
@@ -328,6 +330,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     collectState(this.seda.getStageManager(), pp);
     collectState(this.persistor, pp);
     collectState(this.communicationsManager, pp);
+    collectState(new ClientHandshakePrettyPrintable(this.context.getChannelManager().getActiveChannels()), pp);
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
@@ -353,7 +356,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   public void dumpOnExit() {
     // this is on exit so do not guard
-    TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset()), Charset.defaultCharset()));
+    TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
@@ -792,9 +795,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                        channelStats, this.l2Coordinator,
                                                                        clientHandshakeManager,
                                                                        this.connectionIdFactory,
-                                                                       maxStageSize,
-                                                                       this.l1Listener.getChannelManager()
-    );
+                                                                       maxStageSize);
     toInit.add(this.serverBuilder);
 
     startStages(stageManager, toInit);    
@@ -1086,11 +1087,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   public ServerID getServerNodeID() {
     return this.thisServerNodeID;
-  }
-
-  // for testing purpose only
-  public ChannelManager getChannelManager() {
-    return this.l1Listener.getChannelManager();
   }
 
   private void setLoggerOnExit() {

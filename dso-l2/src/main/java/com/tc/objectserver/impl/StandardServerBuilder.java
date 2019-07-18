@@ -76,8 +76,7 @@ public class StandardServerBuilder implements ServerBuilder {
                                                                      L2Coordinator coordinator,
                                                                      ServerClientHandshakeManager clientHandshakeManager,
                                                                      ConnectionIDFactory connectionIdFactory,
-                                                                     int maxStageSize,
-                                                                     ChannelManager genericChannelManager) {
+                                                                     int maxStageSize) {
     return new ServerConfigurationContextImpl(stageManager,
         channelManager,
         clientHandshakeManager, channelStats, coordinator

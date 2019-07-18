@@ -22,6 +22,7 @@ import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
 
 
@@ -82,4 +83,5 @@ public interface TCServer {
 
   String getResourceState();
 
+  String getClusterState(PrettyPrinter form);
 }

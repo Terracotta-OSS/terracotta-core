@@ -34,15 +34,12 @@ import com.tc.stats.api.ClientMBean;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
 import javax.management.MBeanServerNotification;
-import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -52,18 +49,11 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
 
   private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
-  private final MBeanServer                    mbeanServer;
-  private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
   private final MessageChannel                 channel;
-  private final SampledCounter                 txnRate;
-  private final SampledCounter                 writeRate;
-  private final SampledCounter                 readRate;
-  private final Counter                        pendingTransactions;
+
   private final ClientHandshakeMonitoringInfo   minfo;
   private final ClientID                       clientID;
-
-  private ObjectName                           enterpriseMBeanName;
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
@@ -78,15 +68,9 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
                 ClientID clientID) throws NotCompliantMBeanException {
     super(ClientMBean.class, true);
 
-    this.mbeanServer = mbeanServer;
     this.channel = channel;
     this.clientID = clientID;
-    this.txnRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.TXN_RATE);
-    this.writeRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.WRITE_RATE);
-    this.readRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.READ_RATE);
-    this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
     this.minfo = (ClientHandshakeMonitoringInfo)channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT);
-
   }
 
   @Override
@@ -108,21 +92,6 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   }
 
   @Override
-  public ObjectName getL1InfoBeanName() {
-    return l1InfoBeanName;
-  }
-
-  @Override
-  public L1InfoMBean getL1InfoBean() {
-    return l1InfoBean;
-  }
-
-  @Override
-  public ObjectName getL1DumperBeanName() {
-    return ObjectName.WILDCARD;
-  }
-
-  @Override
   public ChannelID getChannelID() {
     return channel.getChannelID();
   }
@@ -132,44 +101,6 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     TCSocketAddress addr = channel.getRemoteAddress();
     if (addr == null) { return "not connected"; }
     return addr.getCanonicalStringForm();
-  }
-
-  @Override
-  public long getTransactionRate() {
-    return txnRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getReadRate() {
-    return readRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getWriteRate() {
-    return writeRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getPendingTransactionsCount() {
-    return pendingTransactions.getValue();
-  }
-
-  @Override
-  public Number[] getStatistics(String[] names) {
-    int count = names.length;
-    Number[] result = new Number[count];
-    Method method;
-
-    for (int i = 0; i < count; i++) {
-      try {
-        method = getClass().getMethod("get" + names[i], new Class[] {});
-        result[i] = (Number) method.invoke(this, new Object[] {});
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
-    return result;
   }
 
   @Override
@@ -199,25 +130,7 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     }
     return "";
   }
-  
-  private void setupL1InfoBean() {
-    l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName, L1InfoMBean.class, false);
-  }
-
-  /**
-   * Since ObjectNames can have arbitrary attribute pairs, we need to match against a wildcard pattern that we expect.
-   * Each tunneled client bean is uniquely identified by its node attribute, which is constructed from the remote host
-   * and port of the terracotta client.
-   */
-  private boolean matchesClientBeanName(ObjectName clientBeanName, ObjectName beanName) {
-    try {
-      ObjectName wildcard = new ObjectName(clientBeanName.getCanonicalName() + ",*");
-      return wildcard.apply(beanName);
-    } catch (MalformedObjectNameException moe) {
-      throw new RuntimeException(moe);
-    }
-  }
-
+ 
   private void beanRegistered(ObjectName beanName) {
 
   }
@@ -259,17 +172,7 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   }
 
   @Override
-  public int getLiveObjectCount() {
-    return -1;
-  }
-
-  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
-  }
-
-  @Override
-  public ObjectName getEnterpriseTCClientBeanName() {
-    return enterpriseMBeanName;
   }
 }

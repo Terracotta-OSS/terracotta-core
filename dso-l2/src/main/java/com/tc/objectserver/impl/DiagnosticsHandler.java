@@ -96,7 +96,7 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
           break;
         case "getClusterState":
           if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "getClusterState")) {
-            result = server.getClusterState(set);
+            result = server.getClusterState(set, null);
           } else {
             result = "NOT PERMITTED".getBytes(set);
           }

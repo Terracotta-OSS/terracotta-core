@@ -136,6 +136,9 @@ public class StateManagerImpl implements StateManager {
   }
   
   private boolean electionFinished() {
+    synchronized (this) {
+      verification = null;
+    }
     return elections.electionFinished();
   }
 // for tests  
@@ -473,7 +476,7 @@ public class StateManagerImpl implements StateManager {
   }
   
   private synchronized Enrollment getVerificationEnrollment() {
-    return verification;
+    return verification != null ? verification : createVerificationEnrollment();
   }
 
   @Override
@@ -513,9 +516,9 @@ public class StateManagerImpl implements StateManager {
   
   private void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won msg: " + clusterMsg);
-    boolean verify = verifyElectionWonResults(clusterMsg);
-    boolean transition = availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
-    if (verify && transition) {
+    boolean peerWins = checkIfPeerWinsVerificationElection(clusterMsg);
+    boolean transition = peerWins && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    if (transition) {
       moveToPassiveReady(clusterMsg);
     } else {
       groupManager.closeMember((ServerID)clusterMsg.messageFrom());
@@ -529,14 +532,15 @@ public class StateManagerImpl implements StateManager {
     if (isActiveCoordinator()) {
       logger.info("split-brain detected");
     }
-    verifyActiveElectionResults(clusterMsg);
+    verifyActiveDeclarationAndRespond(clusterMsg);
   }
   
-  private boolean verifyElectionWonResults(L2StateMessage clusterMsg) {
+  private boolean checkIfPeerWinsVerificationElection(L2StateMessage clusterMsg) {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     Enrollment verify = getVerificationEnrollment();
-    boolean peerWins = Arrays.equals(winningEnrollment.getWeights(), verify.getWeights()) ||
+    boolean peerWins = (Arrays.equals(winningEnrollment.getWeights(), verify.getWeights())) ||
             winningEnrollment.wins(verify);
+    logger.info("verifying election won results isActive:{} remote:{} local:{} remoteWins:{}", isActiveCoordinator(), winningEnrollment, verify, peerWins);
     return peerWins;
   }
   
@@ -576,11 +580,16 @@ public class StateManagerImpl implements StateManager {
 
   private void handleElectionAbort(L2StateMessage clusterMsg) {
     electionMgr.handleElectionAbort(clusterMsg, state.getState());
-    verifyActiveElectionResults(clusterMsg);
+    // if two actives are split-brain and they try and zap each other
+    // the ZapProcessor will resolve the differences
+    if (isActiveCoordinator()) {
+      logger.info("split-brain detected");
+    }
+    verifyActiveDeclarationAndRespond(clusterMsg);
   }
   
-  private void verifyActiveElectionResults(L2StateMessage clusterMsg) {
-    boolean verify = verifyElectionWonResults(clusterMsg);
+  private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg);
     boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
     if (transition) {
@@ -598,7 +607,7 @@ public class StateManagerImpl implements StateManager {
       AbstractGroupMessage abortMsg = L2StateMessage.createAbortElectionMessage(msg, verify, state.getState());
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
-      validateResponse(response);
+      validatePeerResponseToActiveDelaration(response);
     } else {
       synchronized (this) {
         currKnownServers.add(msg.getEnrollment().getNodeID());
@@ -618,7 +627,7 @@ public class StateManagerImpl implements StateManager {
     Enrollment verify = createVerificationEnrollment();
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(verify, state.getState());
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
-    validateResponse(response);
+    validatePeerResponseToActiveDelaration(response);
   }
 
   //used in testing
@@ -626,37 +635,38 @@ public class StateManagerImpl implements StateManager {
     currKnownServers.addAll(nodeIDs);
   }
 
-  private void validateResponse(L2StateMessage response) throws GroupException {
+  private void validatePeerResponseToActiveDelaration(L2StateMessage response) throws GroupException {
     if (response != null) {
       NodeID nodeID = response.messageFrom();
       ServerMode peerState = StateManager.convert(response.getState());
       if (response.getType() != L2StateMessage.RESULT_AGREED) {        
         String error = "Recd wrong response from : " + nodeID + " : msg = " + response + " while publishing Active State";
         logger.info(error);
-        // verify the verification
-        Enrollment mine = getVerificationEnrollment();
-        if (mine == null) {
-          mine = createVerificationEnrollment();
-        }
-        logger.info("verification enrollment:" + mine);
-        Enrollment peer = response.getEnrollment();
-        if (peerState == ACTIVE) {
-        //  split brain.  use enrollment to determine which active should continue
-          if (mine.wins(peer)) {
-            groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, mine + " wins over " + peer);
+        
+        boolean doesPeerWin = checkIfPeerWinsVerificationElection(response);
+        if (doesPeerWin) {
+        //  this agrees with the negative response, the peer server should take over
+          if (peerState == ACTIVE) {
+            // will be zapped.  the only way to get here is because this server is active
+            Assert.assertTrue(isActiveCoordinator());
+          } else if (peerState.canBeActive()) {
+            zapAndResyncLocalNode("Passive has more recent data compared to active, node is restarting");
           } else {
-            // if the other wins, expect them to zap us as soon as our response is sent
-          }      
-        } else if (peerState.canBeActive()) {
-        //  verify the verification
-          if (mine.equals(peer) || mine.wins(peer)) {
-            logger.info("results not agreed for verification election");
-          } else {
-            zapAndResyncLocalNode("Passive has more recent data compared to active, restart");
+            logger.info("Node peer has more current data yet cannot be active.  Server is going dormant until next election.");
           }
         } else {
-          logger.info("Server peer has more current data yet cannot be active.  Server is going dormant until next election.");
+          if (peerState == ACTIVE) {
+            // split-brain and the peer is old.  zap it
+            groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, getVerificationEnrollment() + " wins over " + response.getEnrollment());
+          } else if (peerState.canBeActive()) {
+            logger.info("results not agreed for verification election in state: {}", peerState);
+          } else {
+            // the peer does not win and connot be active, zap and re-sync it
+            logger.info("results not agreed for verification election in state: {}", peerState);
+          }
         }
+      } else {
+        // result agreed, do nothing
       }
     }
   }
