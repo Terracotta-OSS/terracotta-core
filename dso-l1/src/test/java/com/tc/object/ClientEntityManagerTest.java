@@ -31,7 +31,9 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationCallback;
+import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
@@ -54,13 +56,18 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
@@ -379,56 +386,75 @@ public class ClientEntityManagerTest extends TestCase {
     }
   }
 
-  public void testAsync() throws Exception {
-    // Set the target for success.
+  public void testInvoke() throws Exception {
+    final byte[] messageObject = new byte[8];
+    ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    final EntityException resultException = null;
     when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
       @Override
       public TCMessage answer(InvocationOnMock invocation) throws Throwable {
-        return new TestRequestBatchMessage(manager, resultObject, resultException, true);
+        return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
-    TestFetcher fetcher = new TestFetcher(this.manager, this.entityID, 1L, this.instance);
-    fetcher.start();
-    fetcher.join();
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
 
+    InvokeFuture future = endpoint.beginInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke();
+    ByteArrayEntityResponse response = (ByteArrayEntityResponse) future.getWithTimeout(5, TimeUnit.SECONDS);
+    assertThat(Arrays.deepEquals(new Object[]{response.getResponse()}, new Object[]{resultObject}), is(true));
+  }
 
-
-    EntityClientEndpoint endpoint = fetcher.getResult();
-
-    endpoint.beginAsyncInvoke().invoke(new InvocationCallback() {
+  public void testAsyncInvoke() throws Exception {
+    final byte[] messageObject = new byte[8];
+    ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
       @Override
-      public void sent() {
-        System.out.println("sent");
-      }
-
-      @Override
-      public void received() {
-        System.out.println("received");
-      }
-
-      @Override
-      public void result(Object response) {
-        System.out.println("result : " + response);
-      }
-
-      @Override
-      public void failure(Throwable failure) {
-        System.out.println("failure : " + failure);
-      }
-
-      @Override
-      public void complete() {
-        System.out.println("complete");
-      }
-
-      @Override
-      public void retired() {
-        System.out.println("retired");
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+
+    AuditingInvocationCallback callback = new AuditingInvocationCallback();
+    endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
+
+    assertThat(callback.acks.get(Acks.SENT).get(), is(1));
+    assertThat(callback.acks.get(Acks.RECEIVED).get(), is(1));
+    assertThat(callback.acks.get(Acks.COMPLETED).get(), is(1));
+    assertThat(callback.acks.get(Acks.RETIRED).get(), is(1));
+    assertThat(callback.failures.isEmpty(), is(true));
+    assertThat(callback.results.isEmpty(), is(false));
+  }
+
+  public void testAsyncInvokeException() throws Exception {
+    final byte[] messageObject = new byte[8];
+    ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      int counter = 0;
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        // the 1st message ("fetch") needs to be successful
+        if (counter++ > 0) {
+          return new TestRequestBatchMessage(manager, resultObject, new EntityException("a.class.name", "an.entity.name", "mock error", new RuntimeException("boom!")) {}, true);
+        }
+        return new TestRequestBatchMessage(manager, resultObject, null, true);
+      }
+    });
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+
+    AuditingInvocationCallback callback = new AuditingInvocationCallback();
+    endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
+
+    assertThat(callback.acks.get(Acks.SENT).get(), is(1));
+    assertThat(callback.acks.get(Acks.RECEIVED).get(), is(1));
+    assertThat(callback.acks.get(Acks.COMPLETED).get(), is(1));
+    assertThat(callback.acks.get(Acks.RETIRED).get(), is(1));
+    assertThat(callback.results.isEmpty(), is(true));
+    assertThat(callback.failures.isEmpty(), is(false));
   }
 
   public void testFullQueueTimesOut() throws Exception {
@@ -694,14 +720,20 @@ public class ClientEntityManagerTest extends TestCase {
     private final long version;
     private boolean interrupt = false;
     private final ClientInstanceID instance;
+    private final MessageCodec codec;
     private EntityClientEndpoint<EntityMessage, EntityResponse> result;
     private Exception exception;
     
     public TestFetcher(ClientEntityManager manager, EntityID entity, long version, ClientInstanceID instance) {
+      this(manager, entity, version, instance, mock(MessageCodec.class));
+    }
+
+    public TestFetcher(ClientEntityManager manager, EntityID entity, long version, ClientInstanceID instance, MessageCodec codec) {
       this.manager = manager;
       this.entity = entity;
       this.version = version;
       this.instance = instance;
+      this.codec = codec;
     }
     @SuppressWarnings("unchecked")
     @Override
@@ -710,7 +742,7 @@ public class ClientEntityManagerTest extends TestCase {
         if (this.interrupt) {
           this.interrupt();
         }
-        this.result = this.manager.fetchEntity(entity, version, instance, mock(MessageCodec.class), mock(Runnable.class));
+        this.result = this.manager.fetchEntity(entity, version, instance, codec, mock(Runnable.class));
         if (this.interrupt) {
           Assert.assertTrue(this.isInterrupted());
         }
@@ -908,6 +940,94 @@ public class ClientEntityManagerTest extends TestCase {
       } catch (EventHandlerException e) {
         throw new RuntimeException(e);
       }
+    }
+  }
+
+
+  static class ByteArrayMessageCodec implements MessageCodec {
+    @Override
+    public byte[] encodeMessage(EntityMessage message) throws MessageCodecException {
+      return ((ByteArrayEntityMessage) message).getMessage();
+    }
+    @Override
+    public EntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
+      return new ByteArrayEntityMessage(payload);
+    }
+    @Override
+    public byte[] encodeResponse(EntityResponse response) throws MessageCodecException {
+      return ((ByteArrayEntityResponse) response).getResponse();
+    }
+    @Override
+    public EntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+      return new ByteArrayEntityResponse(payload);
+    }
+  }
+
+  static class ByteArrayEntityMessage implements EntityMessage {
+    private final byte[] message;
+    public ByteArrayEntityMessage(byte[] message) {
+      this.message = message;
+    }
+    public byte[] getMessage() {
+      return message;
+    }
+    @Override
+    public String toString() {
+      return "ByteArrayEntityMessage " + Arrays.toString(message);
+    }
+  }
+
+  static class ByteArrayEntityResponse implements EntityResponse {
+    private final byte[] response;
+    public ByteArrayEntityResponse(byte[] response) {
+      this.response = response;
+    }
+    public byte[] getResponse() {
+      return response;
+    }
+    @Override
+    public String toString() {
+      return "ByteArrayEntityResponse " + Arrays.toString(response);
+    }
+  }
+
+  static class AuditingInvocationCallback implements InvocationCallback {
+    final Map<Acks, AtomicInteger> acks = new ConcurrentHashMap<Acks, AtomicInteger>() {{
+      for (Acks value : Acks.values()) {
+        put(value, new AtomicInteger());
+      }
+    }};
+    final List<Object> results = new CopyOnWriteArrayList<>();
+    final List<Throwable> failures = new CopyOnWriteArrayList<>();
+
+    @Override
+    public void sent() {
+      acks.get(Acks.SENT).incrementAndGet();
+    }
+
+    @Override
+    public void received() {
+      acks.get(Acks.RECEIVED).incrementAndGet();
+    }
+
+    @Override
+    public void result(Object response) {
+      this.results.add(response);
+    }
+
+    @Override
+    public void failure(Throwable failure) {
+      this.results.add(failure);
+    }
+
+    @Override
+    public void complete() {
+      acks.get(Acks.COMPLETED).incrementAndGet();
+    }
+
+    @Override
+    public void retired() {
+      acks.get(Acks.RETIRED).incrementAndGet();
     }
   }
 }

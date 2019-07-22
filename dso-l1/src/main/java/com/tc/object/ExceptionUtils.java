@@ -46,7 +46,7 @@ public class ExceptionUtils {
     } else if(e instanceof EntityBusyException) {
       wrappedException = new EntityBusyException(entityType, enityName, e);
     } else {
-//  just return the remote exception with remote stack, don't want to hide the type of the 
+//  just return the remote exception with remote stack, don't want to hide the type of the
 //  exception in these cases.
       return e;
     }

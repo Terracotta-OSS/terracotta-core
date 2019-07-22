@@ -343,6 +343,7 @@ public class InFlightMessage implements PrettyPrintable {
       if (!this.blockGetOnRetired) {
         this.getCanComplete = true;
         notifyAll();
+        //handleMessage(value); // TODO: why isn't handleMessage called somewhere else?
       }
     }
   }
