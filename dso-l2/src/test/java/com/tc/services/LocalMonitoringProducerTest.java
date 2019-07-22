@@ -25,8 +25,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +62,7 @@ public class LocalMonitoringProducerTest {
     PlatformServer server = mock(PlatformServer.class);
     InternalServiceRegistry internal = mock(InternalServiceRegistry.class);
     when(internal.getService(any(ServiceConfiguration.class))).thenReturn(mock(IStripeMonitoring.class));
-    when(reg.subRegistry(anyInt())).thenReturn(internal);
+    when(reg.subRegistry(anyLong())).thenReturn(internal);
     producer = new LocalMonitoringProducer(reg, server, timer);
   }
   

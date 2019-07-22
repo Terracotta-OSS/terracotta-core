@@ -50,7 +50,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -108,7 +108,7 @@ public class ReplicationSenderTest {
       }
       collector.add(receiving);
       return null;
-    }).when(groupMgr).sendTo(Matchers.any(NodeID.class), Matchers.any(ReplicationMessage.class));
+    }).when(groupMgr).sendTo(ArgumentMatchers.any(NodeID.class), ArgumentMatchers.any(ReplicationMessage.class));
     
   }
   

@@ -51,10 +51,10 @@ import com.tc.server.TCServerMain;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.Ignore;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 
 import static org.mockito.Mockito.mock;
@@ -375,7 +375,7 @@ System.out.println("STARTING LATER #2");
   private ArgumentMatcher<StateChangedEvent> stateChangeEvent(State oldState, State currentState) {
     return new ArgumentMatcher<StateChangedEvent>() {
       @Override
-      public boolean matches(Object o) {
+      public boolean matches(StateChangedEvent o) {
         if (o instanceof StateChangedEvent) {
           return oldState.equals(((StateChangedEvent)o).getOldState()) && currentState.equals(((StateChangedEvent)o).getCurrentState());
         }

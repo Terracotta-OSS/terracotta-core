@@ -19,6 +19,8 @@
 
 package com.terracotta.connection.entity;
 
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
@@ -59,16 +61,16 @@ public class TerracottaEntityRefTest {
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse, Void> mockEntityClientService = mock(EntityClientService.class);
     Entity testEntity = mock(Entity.class);
-    when(mockEntityClientService.create(any(EntityClientEndpoint.class), any(Void.class))).thenReturn(testEntity);
+    when(mockEntityClientService.create(any(EntityClientEndpoint.class), Mockito.<Void>any())).thenReturn(testEntity);
     EntityClientEndpoint mockTestEntityClientEndpoint = mock(EntityClientEndpoint.class);
-    when(mockClientEntityManager.fetchEntity(any(EntityID.class), anyLong(), any(ClientInstanceID.class), any(MessageCodec.class), any(Runnable.class))).thenReturn(mockTestEntityClientEndpoint);
+    when(mockClientEntityManager.fetchEntity(any(EntityID.class), anyLong(), any(ClientInstanceID.class), Mockito.<MessageCodec>any(), Mockito.<Runnable>any())).thenReturn(mockTestEntityClientEndpoint);
     
     // Now, run the test.
     long version = 1;
 // clientids start at 1
     TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     Entity entity1 = testRef.fetchEntity(null);
-    verify(mockClientEntityManager).fetchEntity(eq(new EntityID(Entity.class.getName(), "TEST")), anyLong(), any(ClientInstanceID.class), any(MessageCodec.class), any(Runnable.class));
+    verify(mockClientEntityManager).fetchEntity(eq(new EntityID(Entity.class.getName(), "TEST")), anyLong(), any(ClientInstanceID.class), Mockito.<MessageCodec>any(), Mockito.<Runnable>any());
     verify(CONNECTOR).connect(mockTestEntityClientEndpoint, mockEntityClientService, null);
     Assert.assertNotNull(entity1);
     Assert.assertEquals(testEntity, entity1);
@@ -104,7 +106,7 @@ public class TerracottaEntityRefTest {
   public void testTryDestroyFailure() throws Exception {
     // Set up the mocked infrastructure.
     ClientEntityManager mockClientEntityManager = mock(ClientEntityManager.class);
-    when(mockClientEntityManager.destroyEntity(Mockito.any(EntityID.class), Mockito.anyLong())).thenReturn(Boolean.FALSE);
+    when(mockClientEntityManager.destroyEntity(any(EntityID.class), anyLong())).thenReturn(Boolean.FALSE);
     EntityClientService<Entity, Void, ? extends EntityMessage, ? extends EntityResponse, Void> mockEntityClientService = mock(EntityClientService.class);
     
     // Now, run the test.

@@ -56,7 +56,10 @@ public class MemoryPoolsTest extends TCTestCase {
       assertNotNull(mu2);
       long collectorCount2 = mu2.getCollectionCount();
       System.err.println("Now the Collector Count  is  " + collectorCount2);
-      assertTrue(collectorCount2 > collectorCount1);
+      /*The assertion is what's bogus about this test. Actual GC is not guaranteed when
+      System.gc() is called and the assertion is based on the fallacy that GC will run when
+      System.gc() is called.*/
+      //assertTrue(collectorCount2 > collectorCount1);
     }
   }
 }

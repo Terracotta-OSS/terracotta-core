@@ -27,7 +27,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -80,7 +80,7 @@ public class SingletonStageQueueImplTest {
     final List<BlockingQueue<Object>> cxts = new ArrayList<BlockingQueue<Object>>();
 
     QueueFactory context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.anyObject(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    when(context.createInstance(ArgumentMatchers.anyObject(), ArgumentMatchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {

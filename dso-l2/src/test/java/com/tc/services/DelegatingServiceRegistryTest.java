@@ -25,11 +25,12 @@ import org.junit.Before;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.Mockito;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
@@ -73,7 +74,7 @@ public class DelegatingServiceRegistryTest {
   @Test(expected=ServiceException.class)
   public void testMultipleServicesInsideOutside() throws Exception {
     when(inside1.getProvidedServiceTypes()).thenReturn(Arrays.asList(fakeInterface));
-    when(inside1.getService(anyLong(), any(ManagedEntity.class), any(ServiceConfiguration.class))).thenReturn(new FakeInterface() {});
+    when(inside1.getService(anyLong(), Mockito.<ManagedEntity>any(), any(ServiceConfiguration.class))).thenReturn(new FakeInterface() {});
     this.registry.getService(new BasicServiceConfiguration<>(FakeInterface.class));
   }
   

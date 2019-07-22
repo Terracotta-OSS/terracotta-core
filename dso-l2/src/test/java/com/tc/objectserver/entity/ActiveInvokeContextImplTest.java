@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import org.terracotta.entity.ActiveInvokeChannel;

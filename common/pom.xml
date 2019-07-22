@@ -75,7 +75,7 @@ Apache Ivy version: 2.2.0 20100923230623
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
     <!-- XXX should we even do this -->

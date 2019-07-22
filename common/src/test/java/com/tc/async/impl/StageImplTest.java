@@ -30,7 +30,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -45,7 +45,7 @@ import java.util.concurrent.CyclicBarrier;
 import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -87,8 +87,8 @@ public class StageImplTest {
   public void testRapidTeardown() throws Exception {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     QueueFactory context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.any())).thenReturn(new ArrayBlockingQueue<>(16));
-    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
+    when(context.createInstance(ArgumentMatchers.any())).thenReturn(new ArrayBlockingQueue<>(16));
+    when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
     EventHandler handler = mock(EventHandler.class);
 
     StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
@@ -96,9 +96,9 @@ public class StageImplTest {
     verify(handler, never()).destroy();
     
     instance.start(null);
-    verify(handler).initializeContext(Mockito.any(ConfigurationContext.class));
+    verify(handler).initializeContext(Mockito.<ConfigurationContext>any());
     instance.start(null);
-    verify(handler).initializeContext(Mockito.any(ConfigurationContext.class));
+    verify(handler).initializeContext(Mockito.<ConfigurationContext>any());
     instance.destroy();
     verify(handler).destroy();
     instance.destroy();
@@ -111,8 +111,8 @@ public class StageImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     QueueFactory context = mock(QueueFactory.class);
     ArrayBlockingQueue queue = new ArrayBlockingQueue<>(16);
-    when(context.createInstance(Matchers.any())).thenReturn(queue);
-    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(queue);
+    when(context.createInstance(ArgumentMatchers.any())).thenReturn(queue);
+    when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
     EventHandler handler = mock(EventHandler.class);
 
     StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
@@ -135,8 +135,8 @@ public class StageImplTest {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     QueueFactory context = mock(QueueFactory.class);
     ArrayBlockingQueue queue = new ArrayBlockingQueue<>(16);
-    when(context.createInstance(Matchers.any())).thenReturn(queue);
-    when(context.createInstance(Matchers.any(), anyInt())).thenReturn(queue);
+    when(context.createInstance(ArgumentMatchers.any())).thenReturn(queue);
+    when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
     EventHandler handler = mock(EventHandler.class);
 
     StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, 16, false);
@@ -189,7 +189,7 @@ public class StageImplTest {
     };
     
     QueueFactory context = mock(QueueFactory.class);
-    when(context.createInstance(Matchers.any(), Matchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
+    when(context.createInstance(ArgumentMatchers.any(), ArgumentMatchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
 
       @Override
       public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
@@ -217,7 +217,7 @@ public class StageImplTest {
 
     barrier.await();
     for (BlockingQueue q : cxts) {
-      verify(q).put(Matchers.any(MultiThreadedEventContext.class));
+      verify(q).put(Mockito.<MultiThreadedEventContext>any());
     }
     
   }

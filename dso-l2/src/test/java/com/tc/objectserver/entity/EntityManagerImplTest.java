@@ -45,7 +45,8 @@ import static java.util.Optional.empty;
 import java.util.Set;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.mockito.Matchers;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
@@ -75,7 +76,7 @@ public class EntityManagerImplTest {
     doAnswer((invoke)->{
         ((Consumer)invoke.getArguments()[6]).accept(waiter);
         return null;
-    }).when(processor).scheduleRequest(anyBoolean(), any(), Matchers.anyLong(), any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt());
+    }).when(processor).scheduleRequest(anyBoolean(), any(), anyLong(), any(), any(), any(), any(), anyBoolean(), anyInt());
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),

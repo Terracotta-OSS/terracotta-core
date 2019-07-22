@@ -74,7 +74,7 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
 
   public void testRemoveId() throws Exception {
     connectionIDFactory.channelRemoved(channelWithId(0));
-    verify(listener).connectionIDDestroyed(Mockito.any(ConnectionID.class));
+    verify(listener).connectionIDDestroyed(Mockito.<ConnectionID>any());
   }
 
   private void nextChannelId(long id) {

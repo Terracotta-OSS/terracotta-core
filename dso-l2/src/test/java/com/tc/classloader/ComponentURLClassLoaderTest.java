@@ -29,8 +29,10 @@ import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
+
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -79,11 +81,11 @@ public class ComponentURLClassLoaderTest {
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
     assertTrue(commonClass == loader.loadClass("com.tc.classloader.CommonComponentClass"));
 //  should happen twice because the class is common
-    verify(parent, times(2)).loadClass(Matchers.eq("com.tc.classloader.CommonComponentClass"), Matchers.anyBoolean());
+    verify(parent, times(2)).loadClass(eq("com.tc.classloader.CommonComponentClass"), anyBoolean());
     Class<?> specificClass = loader.loadClass("com.tc.classloader.SpecificComponentClass");
     assertTrue(specificClass == loader.loadClass("com.tc.classloader.SpecificComponentClass"));
 //  should happen once because the class is specific and should be a loaded class and not hit the parent the second time
-    verify(parent).loadClass(Matchers.eq("com.tc.classloader.SpecificComponentClass"), Matchers.anyBoolean());
+    verify(parent).loadClass(eq("com.tc.classloader.SpecificComponentClass"), anyBoolean());
   }
   
   private static class ExposedClassLoader extends URLClassLoader {

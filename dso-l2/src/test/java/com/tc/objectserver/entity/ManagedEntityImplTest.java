@@ -43,7 +43,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.terracotta.entity.ActiveServerEntity;
@@ -77,8 +77,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -154,7 +154,7 @@ public class ManagedEntityImplTest {
       System.out.println(invoke.getArguments()[0]);
       exec.submit((Runnable)invoke.getArguments()[0]);
       return null;
-    }).when(executionSink).addToSink(Matchers.any());
+    }).when(executionSink).addToSink(ArgumentMatchers.any());
     
     activeServerEntity = mock(ActiveServerEntity.class);
     passiveServerEntity = mock(PassiveServerEntity.class);
@@ -255,7 +255,7 @@ public class ManagedEntityImplTest {
     verify(response2).complete(Mockito.any());
     
     // We expected to see this as a result of the promotion.
-    verify(serverEntityService).reconfigureEntity(Matchers.eq(serviceRegistry), eq(this.activeServerEntity), Matchers.eq(arg2.getRawPayload()));
+    verify(serverEntityService).reconfigureEntity(ArgumentMatchers.eq(serviceRegistry), eq(this.activeServerEntity), ArgumentMatchers.eq(arg2.getRawPayload()));
   }
 
 
@@ -356,7 +356,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->{try {managedEntity.promoteEntity();} catch (ConfigurationException ce) {throw new RuntimeException(ce);}});
     
     // We expected to see this as a result of the promotion.
-    verify(serverEntityService).createActiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg.getRawPayload()));
+    verify(serverEntityService).createActiveEntity(ArgumentMatchers.eq(serviceRegistry), ArgumentMatchers.eq(arg.getRawPayload()));
   }
   
   @Test
@@ -375,7 +375,7 @@ public class ManagedEntityImplTest {
     MessagePayload arg = mockCreatePayload(config);
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
     response.waitFor();
-    verify(serverEntityService).createPassiveEntity(Matchers.eq(serviceRegistry), Matchers.eq(arg.getRawPayload()));
+    verify(serverEntityService).createPassiveEntity(ArgumentMatchers.eq(serviceRegistry), ArgumentMatchers.eq(arg.getRawPayload()));
     verify(response).complete();
   }
 
@@ -589,7 +589,7 @@ public class ManagedEntityImplTest {
     barrier.await();
     fin.waitFor();
     
-    verify(loopback, times(1)).completed(Matchers.any(), Matchers.any(FetchID.class), Matchers.any());
+    verify(loopback, times(1)).completed(ArgumentMatchers.any(), ArgumentMatchers.any(FetchID.class), ArgumentMatchers.any());
     verify(activeServerEntity, times(2)).invokeActive(eq(activeInvokeContext), any(EntityMessage.class));
     verify(response, times(1)).complete();
     verify(fin, times(1)).complete(any());
@@ -669,7 +669,7 @@ public class ManagedEntityImplTest {
           queued.add((Integer)request.getSchedulingKey());
         }
         return null;
-    }).when(executionSink).addToSink(Matchers.any());
+    }).when(executionSink).addToSink(ArgumentMatchers.any());
 
     Mockito.doAnswer(invocation->{
         TestingResponse resp = mockResponse();
