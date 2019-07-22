@@ -336,24 +336,31 @@ public class InFlightMessage implements PrettyPrintable {
       this.pendingAcks.clear();
       this.exception = error;
       this.getCanComplete = true;
+      handleException(error);// TODO: why isn't handleException called somewhere else?
       notifyAll();
     } else {
       Assert.assertNotNull(value);
       this.value = value;
       if (!this.blockGetOnRetired) {
         this.getCanComplete = true;
+        handleMessage(value); // TODO: why isn't handleMessage called somewhere else?
         notifyAll();
-        //handleMessage(value); // TODO: why isn't handleMessage called somewhere else?
       }
     }
   }
   
-  public synchronized void handleMessage(byte[] raw) {
+  synchronized void handleException(EntityException ee) {
       if (monitor != null) {
-        monitor.accept(raw);
+        monitor.exception(ee);
       } 
   }
-  
+
+  synchronized void handleMessage(byte[] raw) {
+      if (monitor != null) {
+        monitor.accept(raw);
+      }
+  }
+
   private void ackDelivered(VoltronEntityMessage.Acks ack) {
     if (Trace.isTraceEnabled()) {
       trace.log("Received ACK: " + ack);

@@ -424,8 +424,9 @@ public class ClientEntityManagerTest extends TestCase {
     assertThat(callback.acks.get(Acks.RECEIVED).get(), is(1));
     assertThat(callback.acks.get(Acks.COMPLETED).get(), is(1));
     assertThat(callback.acks.get(Acks.RETIRED).get(), is(1));
-    assertThat(callback.failures.isEmpty(), is(true));
-    assertThat(callback.results.isEmpty(), is(false));
+    assertThat(callback.failures.size(), is(0));
+    assertThat(callback.results.size(), is(1));
+    assertThat(Arrays.deepEquals(new Object[]{callback.results.get(0).response}, new Object[]{resultObject}), is(true));
   }
 
   public void testAsyncInvokeException() throws Exception {
@@ -439,7 +440,7 @@ public class ClientEntityManagerTest extends TestCase {
       public TCMessage answer(InvocationOnMock invocation) throws Throwable {
         // the 1st message ("fetch") needs to be successful
         if (counter++ > 0) {
-          return new TestRequestBatchMessage(manager, resultObject, new EntityException("a.class.name", "an.entity.name", "mock error", new RuntimeException("boom!")) {}, true);
+          return new TestRequestBatchMessage(manager, null, new EntityException("a.class.name", "an.entity.name", "mock error", new RuntimeException("boom!")) {}, true);
         }
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
@@ -452,9 +453,15 @@ public class ClientEntityManagerTest extends TestCase {
     assertThat(callback.acks.get(Acks.SENT).get(), is(1));
     assertThat(callback.acks.get(Acks.RECEIVED).get(), is(1));
     assertThat(callback.acks.get(Acks.COMPLETED).get(), is(1));
-    assertThat(callback.acks.get(Acks.RETIRED).get(), is(1));
-    assertThat(callback.results.isEmpty(), is(true));
-    assertThat(callback.failures.isEmpty(), is(false));
+    assertThat(callback.acks.get(Acks.RETIRED).get(), is(0)); // messages ending with an exception do not notify their retirement
+    assertThat(callback.results.size(), is(0));
+    assertThat(callback.failures.size(), is(1));
+    EntityException failure = (EntityException) callback.failures.get(0);
+    assertThat(failure.getClassName(), is("a.class.name"));
+    assertThat(failure.getEntityName(), is("an.entity.name"));
+    assertThat(failure.getDescription(), is("mock error"));
+    assertThat(failure.getCause().getClass().getName(), is(RuntimeException.class.getName()));
+    assertThat(failure.getCause().getMessage(), is("boom!"));
   }
 
   public void testFullQueueTimesOut() throws Exception {
@@ -991,13 +998,13 @@ public class ClientEntityManagerTest extends TestCase {
     }
   }
 
-  static class AuditingInvocationCallback implements InvocationCallback {
+  static class AuditingInvocationCallback implements InvocationCallback<ByteArrayEntityResponse> {
     final Map<Acks, AtomicInteger> acks = new ConcurrentHashMap<Acks, AtomicInteger>() {{
       for (Acks value : Acks.values()) {
         put(value, new AtomicInteger());
       }
     }};
-    final List<Object> results = new CopyOnWriteArrayList<>();
+    final List<ByteArrayEntityResponse> results = new CopyOnWriteArrayList<>();
     final List<Throwable> failures = new CopyOnWriteArrayList<>();
 
     @Override
@@ -1011,13 +1018,13 @@ public class ClientEntityManagerTest extends TestCase {
     }
 
     @Override
-    public void result(Object response) {
+    public void result(ByteArrayEntityResponse response) {
       this.results.add(response);
     }
 
     @Override
     public void failure(Throwable failure) {
-      this.results.add(failure);
+      this.failures.add(failure);
     }
 
     @Override

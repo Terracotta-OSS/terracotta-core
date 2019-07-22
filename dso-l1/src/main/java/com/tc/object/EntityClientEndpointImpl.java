@@ -205,6 +205,11 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
+    public void exception(EntityException ee) {
+      callback.failure(ee);
+    }
+
+    @Override
     public void accept(R r) {
       callback.result(r);
     }
