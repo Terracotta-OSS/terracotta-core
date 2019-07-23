@@ -59,6 +59,11 @@ public class DiagnosticModeConsistencyManager implements ConsistencyManager {
     return 0;
   }
 
+  @Override
+  public void setCurrentTerm(long term) {
+
+  }
+
   private static void waitForEver() {
     try {
       new CountDownLatch(1).await();

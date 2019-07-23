@@ -67,6 +67,7 @@ public class ServerConfigurationManagerTest {
     ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[0],
                                                                         configuration,
                                                                         consistentStartup,
+                                                                        false,
                                                                         Thread.currentThread().getContextClassLoader(),
                                                                         processArgs);
 
@@ -104,6 +105,7 @@ public class ServerConfigurationManagerTest {
     ServerConfigurationManager manager = new ServerConfigurationManager(null,
                                                                         configuration,
                                                                         consistentStartup,
+                                                                        false,
                                                                         Thread.currentThread().getContextClassLoader(),
                                                                         processArgs);
 
@@ -131,6 +133,7 @@ public class ServerConfigurationManagerTest {
     new ServerConfigurationManager("not-a-server-name",
                                                                         configuration,
                                                                         consistentStartup,
+                                                                        false,
                                                                         Thread.currentThread().getContextClassLoader(),
                                                                         processArgs);
   }
@@ -154,6 +157,7 @@ public class ServerConfigurationManagerTest {
     ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
                                                                         configuration,
                                                                         consistentStartup,
+                                                                        false,
                                                                         Thread.currentThread().getContextClassLoader(),
                                                                         processArgs);
 
@@ -193,6 +197,7 @@ public class ServerConfigurationManagerTest {
     ServerConfigurationManager manager = new ServerConfigurationManager(null,
                                                                         configuration,
                                                                         true,
+                                                                        false,
                                                                         Thread.currentThread().getContextClassLoader(),
                                                                         processArgs);
   }
@@ -217,6 +222,7 @@ public class ServerConfigurationManagerTest {
     new ServerConfigurationManager("not-a-server-name",
                                    configuration,
                                    true,
+                                   false,
                                    Thread.currentThread().getContextClassLoader(),
                                    processArgs);
   }
@@ -248,6 +254,7 @@ public class ServerConfigurationManagerTest {
     ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
                                                                         configuration,
                                                                         consistentStartup,
+                                                                        false,
                                                                         Thread.currentThread().getContextClassLoader(),
                                                                         processArgs);
 

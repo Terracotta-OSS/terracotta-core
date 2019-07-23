@@ -27,6 +27,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class AvailabilityManagerImpl implements ConsistencyManager {
+  
+  private final boolean compatibility;
+
+  public AvailabilityManagerImpl(boolean uc) {
+    compatibility = uc;
+  }
+  
   @Override
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
     return true;
@@ -53,8 +60,17 @@ public class AvailabilityManagerImpl implements ConsistencyManager {
   }
 
   @Override
+  public void setCurrentTerm(long term) {
+  }
+
+  @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
-    return EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+    Enrollment e = EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+    if (compatibility) {
+      // if in compatibility mode, make the term generator zero to be compatible with old versions
+      e.getWeights()[e.getWeights().length-1] = 0;
+    }
+    return e;
   }
 
   @Override

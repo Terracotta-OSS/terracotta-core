@@ -830,7 +830,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         consistentStartup,
         knownPeers,
         (voteCount < 0 || knownPeers == 0) ?
-            new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount)
+            new AvailabilityManagerImpl(configSetupManager.upgradeCompatiblity()) : new ConsistencyManagerImpl(knownPeers, voteCount)
     );
   }
 

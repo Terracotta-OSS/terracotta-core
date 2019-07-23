@@ -292,18 +292,18 @@ public class StateManagerImpl implements StateManager {
     NodeID active = src.messageFrom();
     
     electionMgr.reset(active, winningEnrollment);
-    if (availabilityMgr instanceof ConsistencyManagerImpl) {
-      long[] weights = winningEnrollment.getWeights();
-      //  if the weight sizes are the same, we can assume that the generators 
-      //  were the same on both ends.  The last one is the current term of the 
-      //  winning election
-      if (weights.length == weightsFactory.size()) {
-        long term = weights[weights.length -1];
-        if (term > 0) {
-          ((ConsistencyManagerImpl)availabilityMgr).setCurrentTerm(term);
-        }
+    
+    long[] weights = winningEnrollment.getWeights();
+    //  term is always the last weight,  this value should
+    //  not be used, it is currently only for informational
+    //  purposes
+    if (weights.length == weightsFactory.size()) {
+      long term = weights[weights.length -1];
+      if (term > 0 && term < Long.MAX_VALUE) {
+        availabilityMgr.setCurrentTerm(term);
       }
     }
+
     // active is already set 
     if (!getActiveNodeID().isNull()) {
       Assert.assertEquals(getActiveNodeID(), active);
@@ -511,8 +511,15 @@ public class StateManagerImpl implements StateManager {
   private boolean checkIfPeerWinsVerificationElection(L2StateMessage clusterMsg) {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     Enrollment verify = getVerificationEnrollment();
-    boolean peerWins = (Arrays.equals(winningEnrollment.getWeights(), verify.getWeights())) ||
-            winningEnrollment.wins(verify);
+    int len = Math.min(winningEnrollment.getWeights().length, verify.getWeights().length);
+    boolean peerWins = true;
+    for (int x=0;x<len;x++) {
+      if (winningEnrollment.getWeights()[x] != verify.getWeights()[x]) {
+        peerWins = false;
+        break;
+      }
+    }
+    peerWins |= winningEnrollment.wins(verify);
     logger.info("verifying election won results isActive:{} remote:{} local:{} remoteWins:{}", isActiveCoordinator(), winningEnrollment, verify, peerWins);
     return peerWins;
   }

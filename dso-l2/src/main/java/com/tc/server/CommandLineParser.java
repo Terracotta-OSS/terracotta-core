@@ -37,12 +37,14 @@ import java.util.Set;
 import static com.tc.server.CommandLineParser.Opt.CONSISTENT_STARTUP;
 import static com.tc.server.CommandLineParser.Opt.HELP;
 import static com.tc.server.CommandLineParser.Opt.SERVER_NAME;
+import static com.tc.server.CommandLineParser.Opt.UPGRADE_MODE;
 
 class CommandLineParser {
 
   enum Opt {
     SERVER_NAME("n", "name"),
     CONSISTENT_STARTUP("c", "consistency-on-startup"),
+    UPGRADE_MODE("u","upgrade-compatiblity"),
     HELP("h", "help");
 
     String shortName;
@@ -79,6 +81,8 @@ class CommandLineParser {
   private final String serverName;
 
   private final boolean consistentStartup;
+  
+  private final boolean upgradeCompatibility;
 
   private final List<String> providerArgs = new ArrayList<>();
 
@@ -105,6 +109,7 @@ class CommandLineParser {
 
       this.serverName = commandLine.getOptionValue(SERVER_NAME.getShortName());
       this.consistentStartup = commandLine.hasOption(CONSISTENT_STARTUP.getShortName());
+      this.upgradeCompatibility = commandLine.hasOption(UPGRADE_MODE.getShortName());
     } catch (ParseException pe) {
       throw new RuntimeException("Unable to parse command-line arguments: " + Arrays.toString(args), pe);
     }
@@ -117,7 +122,11 @@ class CommandLineParser {
   boolean consistentStartup() {
     return this.consistentStartup;
   }
-
+  
+  boolean upgradeCompatibility() {
+    return this.upgradeCompatibility;
+  }
+  
   List<String> getProviderArgs() {
     return Collections.unmodifiableList(providerArgs);
   }
@@ -150,7 +159,14 @@ class CommandLineParser {
               .desc("ensure that data consistency is preserved on startup")
               .build()
     );
-
+    
+    options.addOption(
+        Option.builder(UPGRADE_MODE.getShortName())
+              .longOpt(UPGRADE_MODE.getLongName())
+              .desc("enable rolling upgrade compatiblity mode")
+              .build()
+    );
+    
     options.addOption(
         Option.builder(HELP.getShortName())
               .longOpt(HELP.getLongName())
@@ -171,7 +187,7 @@ class CommandLineParser {
           filteredArgs.add(i + 1);
           i++;
         }
-      } else if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg)) {
+      } else if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg) || UPGRADE_MODE.same(arg)) {
         filteredArgs.add(i);
       }
     }

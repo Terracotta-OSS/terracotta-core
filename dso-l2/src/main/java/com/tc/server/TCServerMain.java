@@ -69,6 +69,7 @@ public class TCServerMain {
           commandLineParser.getServerName(),
           configurationProvider.getConfiguration(),
           commandLineParser.consistentStartup(),
+          commandLineParser.upgradeCompatibility(),
           systemLoader,
           args
       );
