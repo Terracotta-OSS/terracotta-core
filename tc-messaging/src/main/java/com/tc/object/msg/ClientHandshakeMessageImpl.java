@@ -46,12 +46,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte   CLIENT_PID               = 7;
   private static final byte   CLIENT_UUID              = 8;
   private static final byte   CLIENT_NAME              = 9;
-  
+  private static final byte   CLIENT_ADDRESS           = 10;
 
   private long                currentLocalTimeMills    = System.currentTimeMillis();
   private String                uuid                     = com.tc.util.UUID.NULL_ID.toString();
   private String              name                     = "";
-  private String              clientVersion            = "UNKNOWN";
+  private String              clientVersion            = "";
+  private String              clientAddress            = ""; 
   private int                 pid                      = -1;
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
   private final Set<ResendVoltronEntityMessage> resendMessages = new TreeSet<ResendVoltronEntityMessage>(new Comparator<ResendVoltronEntityMessage>() {
@@ -64,11 +65,15 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                     MessageChannel channel, TCMessageType messageType) {
     super(sessionID, monitor, out, channel, messageType);
+    // if this is on the server, it will be replaced by the dehydrate
+    clientAddress = channel.getLocalAddress().getCanonicalStringForm();
   }
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
                                     TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
+    // if this is on the server, it will be replaced by the dehydrate
+    clientAddress = channel.getLocalAddress().getCanonicalStringForm();
   }
 
   @Override
@@ -117,6 +122,11 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
+  public String getClientAddress() {
+    return this.clientAddress;
+  }
+
+  @Override
   protected void dehydrateValues() {
     putNVPair(UNUSED_1, false);  // unused but keep for compatibility
     putNVPair(UNUSED_2, false);  // unused but keep for compatibility
@@ -131,6 +141,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     for (final ResendVoltronEntityMessage resendMessage : this.resendMessages) {
       putNVPair(RESEND_MESSAGES, resendMessage);
     }
+    putNVPair(CLIENT_ADDRESS, this.clientAddress);
   }
 
   @Override
@@ -162,6 +173,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         return true;
       case CLIENT_NAME:
         this.name = getStringValue();
+        return true;
+      case CLIENT_ADDRESS:
+        this.clientAddress = getStringValue();
         return true;
       default:
         return false;

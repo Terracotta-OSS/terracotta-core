@@ -262,10 +262,11 @@ public class ManagementTopologyEventCollectorTest {
     final String uuid = UUID.getUUID().toString();
     final String name = "TEST";
     final String version = "1.2.0";
+    final String address = "unknown";
 
     // prepare and call collector.clientDidConnect(...)
     MessageChannel channel = mock(MessageChannel.class);
-    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name, version);
+    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name, version, address);
     when(channel.getAttachment(eq(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT))).thenReturn(info);
     when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("localhost", 1234));
     when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("localhost", 4567));
@@ -274,7 +275,7 @@ public class ManagementTopologyEventCollectorTest {
 
     // verify
     ArgumentCaptor<PlatformConnectedClient> argumentCaptor = ArgumentCaptor.forClass(PlatformConnectedClient.class);
-    verify(monitoringProducer).addNode(any(), any(), argumentCaptor.capture());
+    verify(monitoringProducer, times(1)).addNode(eq(PlatformMonitoringConstants.CLIENTS_PATH), any(), argumentCaptor.capture());
     Assert.assertEquals(TEST_CLIENT_PID, argumentCaptor.getValue().clientPID);
     Assert.assertEquals(uuid, argumentCaptor.getValue().uuid);
     Assert.assertEquals(name, argumentCaptor.getValue().name);
