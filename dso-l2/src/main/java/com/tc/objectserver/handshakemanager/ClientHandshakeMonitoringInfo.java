@@ -52,11 +52,11 @@ public class ClientHandshakeMonitoringInfo {
 
   public String getVersion() { return version; }
   
-  public String getAddress() {
+  public String getClientReportedAddress() {
     return this.address;
   }
   
-  public boolean hasClientAddress() {
+  public boolean hasClientReportedAddress() {
     return (this.address != null && this.address.length() > 0);
   }
   
