@@ -47,6 +47,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.object.session.NullSessionManager;
@@ -143,7 +144,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                                                     }
                                                                                   });
     NetworkListener lsnr = serverComms.createListener(new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
-                                                      new DefaultConnectionIdFactory(), (t)->true);
+                                                      new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
     lsnr.start(new HashSet<>());
     return (lsnr);

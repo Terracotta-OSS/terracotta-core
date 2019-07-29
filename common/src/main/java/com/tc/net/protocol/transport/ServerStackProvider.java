@@ -46,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.tcm.RedirectAddressProvider;
+import java.net.InetSocketAddress;
 
 /**
  * Provides network stacks on the server side
@@ -64,7 +66,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final MessageTransportFactory          messageTransportFactory;
   private final List<MessageTransportListener>   transportListeners = new ArrayList<MessageTransportListener>();
   private final ReentrantLock                    licenseLock;
-  private final NodeNameProvider                 activeProvider;
+  private final RedirectAddressProvider                 activeProvider;
   private final Predicate<MessageTransport>                validateTransport;
 
   // used only in test
@@ -78,7 +80,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
          handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock);
   }
 
-  public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validate, NetworkStackHarnessFactory harnessFactory,
+  public ServerStackProvider(Set<ConnectionID> initialConnectionIDs, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validate, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
@@ -408,7 +410,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext.getErrorType(), errorContext.getMessage(), source, isMaxConnectionsReached,
                                                       maxConnections);
       } else if (activeProvider != null) {
-        String active = activeProvider.getNodeName();
+        InetSocketAddress add = new InetSocketAddress(source.getRemoteAddress().getAddress(), source.getRemoteAddress().getPort());
+        String active = activeProvider.redirectTo(add);
         if (active != null) {
           synAck = handshakeMessageFactory.createSynAck(connectionId, TransportHandshakeError.ERROR_REDIRECT_CONNECTION, active,
                 source, isMaxConnectionsReached, maxConnections);

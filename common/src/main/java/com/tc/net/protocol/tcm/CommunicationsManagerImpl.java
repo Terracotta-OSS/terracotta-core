@@ -273,7 +273,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
-                                        ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider) {
+                                        ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
     return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider, (t)->true);
   }
 
@@ -289,7 +289,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   NetworkListener createListener(TCSocketAddress addr,
                                          boolean transportDisconnectRemovesChannel,
                                          ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
-                                         WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider, Predicate<MessageTransport> validation) {
+                                         WireProtocolMessageSink wireProtoMsgSnk, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation) {
     if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
@@ -324,7 +324,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   }
 
   TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
-                                 boolean resueAddr, Set<ConnectionID> initialConnectionIDs, NodeNameProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
+                                 boolean resueAddr, Set<ConnectionID> initialConnectionIDs, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
     MessageTransportFactory transportFactory = new MessageTransportFactory() {

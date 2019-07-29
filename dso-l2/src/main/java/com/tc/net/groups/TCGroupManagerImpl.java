@@ -69,6 +69,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.config.ServerConfiguration;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.core.api.Guardian;
@@ -246,7 +247,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
                                                           messageTypeClassMapping, Collections.emptyMap(), bufferManagerFactory
     );
 
-    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory(), (t)->true);
+    groupListener = communicationsManager.createListener(socketAddress, true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     // Listen to channel creation/removal
     groupListener.getChannelManager().addEventListener(this);
 

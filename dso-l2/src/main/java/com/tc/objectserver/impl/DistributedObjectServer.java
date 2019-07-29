@@ -114,7 +114,6 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
-import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -167,7 +166,6 @@ import com.tc.services.LocalMonitoringProducer;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
@@ -225,6 +223,7 @@ import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
@@ -234,7 +233,10 @@ import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
+import com.tc.spi.DiagnosticFormat;
+import com.tc.spi.NetworkTranslator;
 import com.terracotta.config.Configuration;
+import java.net.InetSocketAddress;
 
 import java.util.stream.Collectors;
 
@@ -320,6 +322,29 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     try {
       if (pp == null) {
         pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+      }
+    } catch (ServiceException se) {
+      logger.warn("error getting printer for cluster state", se);
+    }
+    try {
+      if (pp == null) {
+        DiagnosticFormat format = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
+        pp = new PrettyPrinter() {
+          @Override
+          public PrettyPrinter println(Object o) {
+            format.print(o);
+            return this;
+          }
+
+          @Override
+          public void flush() {
+          }
+
+          @Override
+          public String toString() {
+            return format.toString();
+          }
+        };
       }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
@@ -539,9 +564,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                bufferManagerFactory
     );
 
-
-    final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300,
-                                                                                                             true, 0L);
     NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
@@ -561,21 +583,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     final String dsoBind = l2DSOConfig.getTsaPort().getBind();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
-                                                                this.connectionIdFactory, (t)->{
+                                                                this.connectionIdFactory, (MessageTransport t)->{
                                                                   return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
-    
-    boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
-    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, infoConnections, () -> {
-      StateManager stateMgr = l2Coordinator.getStateManager();
-      // only provide an active name if this server is not active
-      ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
-      if (enabled && !server1.isNull()) {
-        return server1.getName();
-      }
-      return null;
-    });
+    this.l1Diagnostics = createDiagnosticsListener(dsoBind, serverPort, infoConnections);
     
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
@@ -875,6 +887,26 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       bufferManagerFactory = new ClearTextBufferManagerFactory();
     }
     return bufferManagerFactory;
+  }
+  
+  private NetworkListener createDiagnosticsListener(String host, int port, ConnectionIDFactory idFactoryForInfoConnections) throws UnknownHostException {
+    boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
+    NetworkTranslator translator = null;
+    try {
+      translator = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(NetworkTranslator.class));
+    } catch (ServiceException se) {
+      logger.warn("error getting printer for cluster state", se);
+    }
+    NetworkTranslator finalTranslator = translator == null ? (src,redirect)->redirect : translator;
+    return this.communicationsManager.createListener(new TCSocketAddress(host, port), true, idFactoryForInfoConnections, (final InetSocketAddress srcOfRequest) -> {
+      StateManager stateMgr = l2Coordinator.getStateManager();
+      // only provide an active name if this server is not active
+      ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
+      if (enabled && !server1.isNull()) {
+        return finalTranslator.redirectTo(srcOfRequest, server1.getName());
+      }
+      return null;
+    });
   }
 
   private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
