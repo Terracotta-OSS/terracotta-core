@@ -53,8 +53,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -64,7 +62,6 @@ import org.slf4j.LoggerFactory;
  * make unit testing more direct.
  */
 public class InFlightMessage implements PrettyPrintable {
-  private static Logger LOGGER = LoggerFactory.getLogger(InFlightMessage.class);
   private final VoltronEntityMessage message;
   private final EntityID eid;
   private final InFlightMonitor monitor;

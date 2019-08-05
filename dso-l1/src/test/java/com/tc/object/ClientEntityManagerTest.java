@@ -61,8 +61,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -401,6 +403,32 @@ public class ClientEntityManagerTest extends TestCase {
     assertThat(Arrays.deepEquals(new Object[]{response.getResponse()}, new Object[]{resultObject}), is(true));
   }
 
+  public void testInvokeException() throws Exception {
+    final byte[] messageObject = new byte[8];
+    ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      int counter = 0;
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        // the 1st message ("fetch") needs to be successful
+        if (counter++ > 0) {
+          return new TestRequestBatchMessage(manager, null, new EntityException("a.class.name", "an.entity.name", "mock error", new RuntimeException("boom!")) {}, true);
+        }
+        return new TestRequestBatchMessage(manager, resultObject, null, true);
+      }
+    });
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+
+    try {
+      endpoint.beginInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke().getWithTimeout(10, TimeUnit.SECONDS);
+      fail("expected EntityException");
+    } catch (EntityException ee) {
+      // expected
+    }
+  }
+
   public void testAsyncInvoke() throws Exception {
     final byte[] messageObject = new byte[8];
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
@@ -460,6 +488,37 @@ public class ClientEntityManagerTest extends TestCase {
 
     // messages ending with an exception do not notify their retirement
     assertThat(callback.events.size(), is(4));
+  }
+
+  public void testAsyncInvokeRejectedExecutionException() throws Exception {
+    final byte[] messageObject = new byte[8];
+    ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      int counter = 0;
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        // the 1st message ("fetch") needs to be successful
+        if (counter++ > 0) {
+          return new TestRequestBatchMessage(manager, resultObject, null, false);
+        }
+        return new TestRequestBatchMessage(manager, resultObject, null, true);
+      }
+    });
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+
+    AuditingInvocationCallback callback = new AuditingInvocationCallback();
+    for (int i = 0; i < ClientConfigurationContext.MAX_PENDING_REQUESTS; i++) {
+      endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
+    }
+
+    try {
+      endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
+      fail("expected RejectedExecutionException");
+    } catch (RejectedExecutionException ree) {
+      // expected
+    }
   }
 
   public void testFullQueueTimesOut() throws Exception {

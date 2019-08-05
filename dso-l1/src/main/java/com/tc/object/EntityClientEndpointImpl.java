@@ -163,7 +163,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     }
 
     @Override
-    public void invoke(InvocationCallback<R> callback) {
+    public void invoke(InvocationCallback<R> callback) throws RejectedExecutionException {
       try {
         checkInvoked();
         invoked = true;
