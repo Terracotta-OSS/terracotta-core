@@ -142,6 +142,8 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     private boolean invoked = false;
     private M request;
     private boolean requiresReplication = true;
+    private long time;
+    private TimeUnit unit;
 
     @Override
     public AsyncInvocationBuilder<M, R> replicate(boolean requiresReplication) {
@@ -153,6 +155,13 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     public AsyncInvocationBuilder<M, R> message(M request) {
       checkInvoked();
       this.request = request;
+      return this;
+    }
+
+    @Override
+    public AsyncInvocationBuilder<M, R> blockEnqueuing(long time, TimeUnit unit) {
+      this.time = time;
+      this.unit = unit;
       return this;
     }
 
@@ -170,7 +179,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
         InvokeMonitor<R> monitor = new AsyncInvokeMonitor<>(callback);
         InFlightMonitor<R> ifm = new InFlightMonitor<>(codec, monitor, null);
         //TODO make requested acks configurable and only invoke callback methods of specified ones
-        invocationHandler.asyncInvokeAction(entityID, invokeDescriptor, EnumSet.allOf(VoltronEntityMessage.Acks.class), ifm, this.requiresReplication, codec.encodeMessage(request));
+        invocationHandler.asyncInvokeAction(entityID, invokeDescriptor, EnumSet.allOf(VoltronEntityMessage.Acks.class), ifm, this.requiresReplication, codec.encodeMessage(request), time, unit);
       } catch (IllegalStateException | MessageCodecException ex) {
         callback.failure(ex);
       }

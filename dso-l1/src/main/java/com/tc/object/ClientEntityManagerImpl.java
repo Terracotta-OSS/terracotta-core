@@ -294,10 +294,20 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload) throws RejectedExecutionException {
-    asyncQueueInFlightMessage(eid,
-        ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
-        requestedAcks, monitor);
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException {
+    if (unit == null) {
+      asyncQueueInFlightMessage(eid,
+          () -> createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+          requestedAcks, monitor);
+    } else {
+      try {
+        queueInFlightMessage(eid,
+            ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+            requestedAcks, monitor, timeout, unit, false);
+      } catch (TimeoutException te) {
+        throw new RejectedExecutionException(te);
+      }
+    }
   }
 
   private void asyncQueueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor) throws RejectedExecutionException {

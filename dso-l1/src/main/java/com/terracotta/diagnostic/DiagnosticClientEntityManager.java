@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -156,7 +157,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload) {
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException {
     // TODO implement?
     throw new UnsupportedOperationException();
   }

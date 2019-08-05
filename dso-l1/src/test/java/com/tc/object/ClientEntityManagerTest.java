@@ -61,7 +61,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -71,6 +70,8 @@ import java.util.concurrent.TimeoutException;
 import junit.framework.TestCase;
 import static org.hamcrest.CoreMatchers.is;
 import org.hamcrest.Matchers;
+
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -509,6 +510,7 @@ public class ClientEntityManagerTest extends TestCase {
     EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
 
     AuditingInvocationCallback callback = new AuditingInvocationCallback();
+    // saturate the send queue
     for (int i = 0; i < ClientConfigurationContext.MAX_PENDING_REQUESTS; i++) {
       endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
     }
@@ -517,6 +519,39 @@ public class ClientEntityManagerTest extends TestCase {
       endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
       fail("expected RejectedExecutionException");
     } catch (RejectedExecutionException ree) {
+      // expected
+    }
+  }
+
+  public void testAsyncInvokeBlockEnqueueingTimeout() throws Exception {
+    final byte[] messageObject = new byte[8];
+    ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
+    final byte[] resultObject = new byte[8];
+    ByteBuffer.wrap(resultObject).putLong(1L);
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+      int counter = 0;
+      @Override
+      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+        // the 1st message ("fetch") needs to be successful
+        if (counter++ > 0) {
+          return new TestRequestBatchMessage(manager, resultObject, null, false);
+        }
+        return new TestRequestBatchMessage(manager, resultObject, null, true);
+      }
+    });
+    EntityClientEndpoint endpoint = this.manager.fetchEntity(entityID, 1L, instance, new ByteArrayMessageCodec(), mock(Runnable.class));
+
+    AuditingInvocationCallback callback = new AuditingInvocationCallback();
+    // saturate the send queue
+    for (int i = 0; i < ClientConfigurationContext.MAX_PENDING_REQUESTS; i++) {
+      endpoint.beginAsyncInvoke().message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
+    }
+
+    try {
+      endpoint.beginAsyncInvoke().blockEnqueuing(100, TimeUnit.MILLISECONDS).message(new ByteArrayEntityMessage(messageObject)).invoke(callback);
+      fail("expected RejectedExecutionException");
+    } catch (RejectedExecutionException ree) {
+      assertThat(ree.getCause(), instanceOf(TimeoutException.class));
       // expected
     }
   }
