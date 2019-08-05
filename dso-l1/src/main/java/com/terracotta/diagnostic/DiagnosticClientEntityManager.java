@@ -150,7 +150,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   @Override
   public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
-    InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false);
+    InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     network.send();
     return message;

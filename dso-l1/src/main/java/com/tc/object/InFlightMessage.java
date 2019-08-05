@@ -65,6 +65,7 @@ public class InFlightMessage implements PrettyPrintable {
   private final VoltronEntityMessage message;
   private final EntityID eid;
   private final InFlightMonitor monitor;
+  private final boolean asyncMode;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -97,10 +98,11 @@ public class InFlightMessage implements PrettyPrintable {
   
   private long[] serverStats;
   
-  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire) {
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean asyncMode) {
     this.eid = eid;
     this.message = message.get();
     this.monitor = monitor;
+    this.asyncMode = asyncMode;
     Assert.assertNotNull(eid);
     Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
@@ -333,14 +335,18 @@ public class InFlightMessage implements PrettyPrintable {
       this.pendingAcks.clear();
       this.exception = error;
       this.getCanComplete = true;
-      handleException(error);// TODO: why isn't handleException called somewhere else?
+      if (asyncMode) {
+        handleException(error);
+      }
       notifyAll();
     } else {
       Assert.assertNotNull(value);
       this.value = value;
       if (!this.blockGetOnRetired) {
         this.getCanComplete = true;
-        handleMessage(value); // TODO: why isn't handleMessage called somewhere else?
+        if (asyncMode) {
+          handleMessage(value);
+        }
         notifyAll();
       }
     }

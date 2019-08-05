@@ -303,7 +303,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       try {
         queueInFlightMessage(eid,
             ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
-            requestedAcks, monitor, timeout, unit, false);
+            requestedAcks, monitor, timeout, unit, false, true);
       } catch (TimeoutException te) {
         throw new RejectedExecutionException(te);
       }
@@ -311,7 +311,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private void asyncQueueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor) throws RejectedExecutionException {
-    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, false);
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, false, true);
     try {
       msgCount.increment();
       inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
@@ -601,7 +601,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
-    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
+    return queueInFlightMessage(eid, message, requestedAcks, monitor, timeout, units, shouldBlockGetOnRetire, false);
+  }
+
+  private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire, boolean asyncMode) throws TimeoutException {
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire, asyncMode);
     try {
       msgCount.increment();
       inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
