@@ -300,6 +300,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String L2_DUMP_ON_EXCEPTION_TIMEOUT                                   = "l2.dump.on.exception.timeout";
   public static final String L2_LOGS_STORE                                                  = "l2.logs.store";
+  public static final String L2_ELECTION_TIMEOUT                                                 = "l2.election.timeout";
 
   /*********************************************************************************************************************
    * <code>

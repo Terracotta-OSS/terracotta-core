@@ -20,6 +20,8 @@ package com.tc.config;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
+import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -28,7 +30,7 @@ import java.util.Set;
 public class GroupConfiguration {
 
   static final int SINGLE_SERVER_ELECTION_TIMEOUT = 0;
-  static final int MULTI_SERVER_ELECTION_TIMEOUT = 5;
+  static final int MULTI_SERVER_ELECTION_TIMEOUT = TCPropertiesImpl.getProperties().getInt(L2_ELECTION_TIMEOUT, 5);
 
   private final Set<String> members = new HashSet<>();
   private final Set<Node> nodes = new HashSet<>();
@@ -52,6 +54,9 @@ public class GroupConfiguration {
       nodes.add(node);
     }
     this.currentNode = currentNode;
+    if (MULTI_SERVER_ELECTION_TIMEOUT < 0) {
+      throw new AssertionError("server election timeout cannot be less than zero");
+    }
   }
 
   public Set<Node> getNodes() {
