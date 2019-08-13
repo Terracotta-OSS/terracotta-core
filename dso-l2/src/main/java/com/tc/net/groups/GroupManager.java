@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Set;
@@ -61,4 +62,6 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public boolean isServerConnected(String nodeName);
 
   public void closeMember(ServerID serverID);
+  
+  public TCConnectionManager getConnectionManager();
 }

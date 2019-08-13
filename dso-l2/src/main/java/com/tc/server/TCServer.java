@@ -22,11 +22,12 @@ import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.spi.Pauseable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
 
 
-public interface TCServer {
+public interface TCServer extends Pauseable {
   String[] processArguments();
 
   void start() throws Exception;

@@ -357,6 +357,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     }
     membersClear();
   }
+  
+  public TCConnectionManager getConnectionManager() {
+    return this.connectionManager;
+  }
 
   public boolean isStopped() {
     return (isStopped.get());

@@ -257,7 +257,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   protected NetworkListener                      l1Listener;
   protected NetworkListener                      l1Diagnostics;
   private CommunicationsManager                  communicationsManager;
-  private TCConnectionManager                   connectionManager;
+  private TCConnectionManager                    connectionManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
   private ServerManagementContext                managementContext;

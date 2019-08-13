@@ -115,7 +115,4 @@ public class BasicConnectionManager implements TCConnectionManager {
   public Map<String, ?> getStateMap() {
     return new LinkedHashMap<>();
   }
-
-  
-  
 }
