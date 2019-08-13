@@ -71,6 +71,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
@@ -120,6 +121,19 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   } 
   
+  private synchronized boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
+    if (!this.stateManager.isRunning()) {
+      return false;
+    }
+    if (!requestTickets.messagePendingSlotAvailable()) {
+      throw new RejectedExecutionException("Output queue is full");
+    }
+
+    inFlightMessages.put(msg.getTransactionID(), msg);
+    requestTickets.messagePending();
+    return true;
+  }
+
   private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
     boolean enqueued = true;
     boolean interrupted = false;
@@ -276,6 +290,42 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       return inFlightMessage;
     } catch (TimeoutException to) {
       throw new RuntimeException(to);
+    }
+  }
+
+  @Override
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException {
+    if (unit == null) {
+      asyncQueueInFlightMessage(eid,
+          () -> createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+          requestedAcks, monitor);
+    } else {
+      try {
+        queueInFlightMessage(eid,
+            ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+            requestedAcks, monitor, timeout, unit, false, true);
+      } catch (TimeoutException te) {
+        throw new RejectedExecutionException(te);
+      }
+    }
+  }
+
+  private void asyncQueueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor) throws RejectedExecutionException {
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, false, true);
+    try {
+      msgCount.increment();
+      inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
+      if (enqueueMessage(inFlight)) {
+        inFlight.sent();
+        if (!inFlight.send()) {
+          logger.debug("message not sent.  Make sure resend happens : {}", inFlight);
+        }
+      } else {
+        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+      }
+    } catch (Throwable t) {
+      transactionSource.retire(inFlight.getTransactionID());
+      throw t;
     }
   }
 
@@ -551,7 +601,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
-    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
+    return queueInFlightMessage(eid, message, requestedAcks, monitor, timeout, units, shouldBlockGetOnRetire, false);
+  }
+
+  private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire, boolean asyncMode) throws TimeoutException {
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire, asyncMode);
     try {
       msgCount.increment();
       inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
