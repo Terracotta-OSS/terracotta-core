@@ -60,7 +60,7 @@ public class SafeStartupManagerImplTest {
     ConsistencyManager consistencyManager = mock(ConsistencyManager.class);
     SafeStartupManagerImpl safeStartupManager = new SafeStartupManagerImpl(true, 2, consistencyManager);
     safeStartupManager.requestTransition(ServerMode.PASSIVE, mock(NodeID.class), ConsistencyManager.Transition.MOVE_TO_ACTIVE);
-    verify(consistencyManager).requestTransition(eq(ServerMode.PASSIVE), any(NodeID.class), eq(ConsistencyManager.Transition.MOVE_TO_ACTIVE));
+    verify(consistencyManager).requestTransition(eq(ServerMode.PASSIVE), any(NodeID.class), any(), eq(ConsistencyManager.Transition.MOVE_TO_ACTIVE));
   }
 
   @Test

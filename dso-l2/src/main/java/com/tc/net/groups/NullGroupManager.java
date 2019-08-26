@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  *
-= */
+*/
 public class NullGroupManager implements GroupManager<AbstractGroupMessage> {
   private final ServerID thisNode;
 
@@ -95,6 +95,11 @@ public class NullGroupManager implements GroupManager<AbstractGroupMessage> {
   }
 
   @Override
+  public void sendTo(Set<String> nodes, AbstractGroupMessage msg) {
+
+  }
+
+  @Override
   public void sendToWithSentCallback(NodeID node, AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     sentCallback.run();
   }
@@ -102,6 +107,21 @@ public class NullGroupManager implements GroupManager<AbstractGroupMessage> {
   @Override
   public AbstractGroupMessage sendToAndWaitForResponse(NodeID nodeID, AbstractGroupMessage msg) throws GroupException {
     throw new UnsupportedOperationException(); 
+  }
+
+  @Override
+  public GroupResponse<AbstractGroupMessage> sendToAndWaitForResponse(Set<String> nodes, AbstractGroupMessage msg) throws GroupException {
+    return new GroupResponse<AbstractGroupMessage>() {
+      @Override
+      public List<AbstractGroupMessage> getResponses() {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public AbstractGroupMessage getResponse(NodeID nodeID) {
+        return null;
+      }
+    };
   }
 
   @Override
