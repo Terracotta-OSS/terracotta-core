@@ -580,6 +580,8 @@ public class DistributedObjectServer {
         ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
+    TopologyManager.get().initialize(this.configSetupManager.getGroupConfiguration().getHostPorts());
+
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
       consoleLogger.warn("It is recommended to keep the total number of servers and external voters to be an odd number");
     }
@@ -707,7 +709,7 @@ public class DistributedObjectServer {
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
-        createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager, 
+        createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager,
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
         this.globalWeightGeneratorFactory, consistencyMgr, 
@@ -843,8 +845,7 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        (voteCount < 0 || knownPeers == 0) ?
-            new AvailabilityManagerImpl(configSetupManager.upgradeCompatiblity()) : new ConsistencyManagerImpl(knownPeers, voteCount)
+        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl(configSetupManager.upgradeCompatiblity()) : new ConsistencyManagerImpl(voteCount)
     );
   }
 

@@ -43,6 +43,8 @@ import com.tc.net.groups.TCGroupMemberDiscoveryStatic;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
+import com.tc.objectserver.impl.Topology;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.server.TCServer;
 import com.tc.util.PortChooser;
@@ -71,6 +73,7 @@ import java.util.concurrent.Executors;
 import org.junit.Ignore;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -104,16 +107,23 @@ public class StateManagerImplTest {
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
     TCServerMain.server = mock(TCServer.class);
     when(TCServerMain.server.getActivateTime()).thenReturn(System.currentTimeMillis());
 
+    Set<String> servers = new HashSet<>();
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       int port = pc.chooseRandom2Port();
       ports[i] = port;
       groupPorts[i] = port + 1;
+      servers.add("localhost:" + ports[i]);
+    }
+    
+    TopologyManager.get().initialize(servers);
+    for(int i = 0; i < NUM_OF_SERVERS; i++) {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
       nodeSet.add(nodes[i]);
       stageControllers[i] = mock(StageController.class);
@@ -236,7 +246,7 @@ public class StateManagerImplTest {
         });
     
     ConsistencyManager mgr = mock(ConsistencyManager.class);
-    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
@@ -264,7 +274,7 @@ public class StateManagerImplTest {
 
     NodeID node = mock(NodeID.class);
     when(grp.getLocalNodeID()).thenReturn(node);
-    when(grp.sendAllAndWaitForResponse(any())).thenReturn(new GroupResponse() {
+    when(grp.sendToAndWaitForResponse(anySet(), any())).thenReturn(new GroupResponse() {
       @Override
       public List getResponses() {
         return Collections.emptyList();
@@ -296,6 +306,7 @@ public class StateManagerImplTest {
     
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
@@ -338,8 +349,7 @@ public class StateManagerImplTest {
     while (spin++ < 5 && 2 > groupManagers[2].getMembers().size()) {
       TimeUnit.SECONDS.sleep(2);
     }
-    
-System.out.println("STARTING LATER #2");
+
     Assert.assertEquals(2, groupManagers[2].getMembers().size());
     stateManagers[2].initializeAndStartElection();
     stateManagers[2].waitForDeclaredActive();
