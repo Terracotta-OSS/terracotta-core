@@ -724,7 +724,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         eventCollector.entityWasDestroyed(id, consumerID);    
         response.complete();
       } else {
-        Assert.assertTrue(!isInActiveState || !clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
+        if (isInActiveState) {
+          Assert.assertTrue("retirementManager:" + retirementManager.hasServerInflightMessages() +
+                  " references:" + clientEntityStateManager.verifyNoEntityReferences(this.fetchID), 
+                  clientReferenceCount > 0 || retirementManager.hasServerInflightMessages() || !clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
+        }
         response.failure(new EntityReferencedException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));        
       }
     }
