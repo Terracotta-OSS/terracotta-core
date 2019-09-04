@@ -1243,7 +1243,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return this.managementContext;
   }
 
-  protected GroupManager<AbstractGroupMessage> getGroupManager() {
+  public GroupManager<AbstractGroupMessage> getGroupManager() {
     return this.groupCommManager;
   }
 

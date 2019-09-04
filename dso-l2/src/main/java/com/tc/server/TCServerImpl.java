@@ -25,6 +25,7 @@ import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
+import com.tc.async.api.Stage;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.ServerMode;
@@ -38,6 +39,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -65,7 +67,6 @@ import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.text.PrettyPrinter;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -443,12 +444,46 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void pause(String path) {
-    this.getStageManager().getStage(path, Object.class).pause();
+    if (path.equalsIgnoreCase("L1")) {
+      try {
+        dsoServer.getCommunicationsManager().getConnectionManager().getTcComm().pause();
+      } catch (NullPointerException npe) {
+        
+      }
+  } else if (path.equalsIgnoreCase("L2")) {
+      try {
+        dsoServer.getGroupManager().getConnectionManager().getTcComm().pause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else {
+      Stage s = this.getStageManager().getStage(path, Object.class);
+      if (s != null) {
+        s.pause();
+      }
+    }
   }
 
   @Override
   public void unpause(String path) {
-    this.getStageManager().getStage(path, Object.class).unpause();
+    if (path.equalsIgnoreCase("L1")) {
+      try {
+        dsoServer.getCommunicationsManager().getConnectionManager().getTcComm().unpause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else if (path.equalsIgnoreCase("L2")) {
+      try {
+        dsoServer.getGroupManager().getConnectionManager().getTcComm().unpause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else {
+      Stage s = this.getStageManager().getStage(path, Object.class);
+      if (s != null) {
+        s.unpause();
+      }
+    }
   }
 
   @Override

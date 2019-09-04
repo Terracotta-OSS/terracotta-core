@@ -18,6 +18,7 @@ package org.terracotta.testing.plugin;
 import com.tc.classloader.BuiltinService;
 import com.tc.server.TCServerMain;
 import com.tc.spi.Pauseable;
+import com.tc.text.MapListPrettyPrint;
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +48,7 @@ public class PauseControl implements ServiceProvider {
       ObjectName name = new ObjectName("org.terracotta:name=PauseControl");
       
       server.registerMBean(new PauseController(), name);
+      return true;
     } catch (InstanceAlreadyExistsException | MBeanRegistrationException | MalformedObjectNameException | NotCompliantMBeanException e) {
       
     }
@@ -68,10 +70,11 @@ public class PauseControl implements ServiceProvider {
 
   }
   
-  private static class PauseController extends StandardMBean implements PauseControlInterface {
+  public static class PauseController extends StandardMBean implements PauseControlInterface {
     private final Pauseable pause = TCServerMain.getServer();
+    private boolean networkPaused = false;
     public PauseController() throws NotCompliantMBeanException {
-      super(PauseControlInterface.class);
+      super(PauseControlInterface.class, false);
     }
 
     @Override
@@ -83,11 +86,36 @@ public class PauseControl implements ServiceProvider {
     public void unpause(String path) {
       pause.unpause(path);
     }
+
+    @Override
+    public void setPauseNetwork(boolean p) {
+      if (p) {
+        pause.pause("L1");
+        pause.pause("L2");
+      } else {
+        pause.unpause("L1");
+        pause.unpause("L2");
+      }
+      networkPaused = p;
+    }
+
+    @Override
+    public boolean isPauseNetwork() {
+      return networkPaused;
+    }
     
+    @Override
+    public String getState() {
+      MapListPrettyPrint pp = new MapListPrettyPrint();
+      return pause.prettyPrint(pp).toString();
+    }
   }
   
-  private interface PauseControlInterface {
+  public interface PauseControlInterface {
     void pause(String path);
     void unpause(String path);
+    void setPauseNetwork(boolean pause);
+    boolean isPauseNetwork();
+    String getState();
   }
 }
