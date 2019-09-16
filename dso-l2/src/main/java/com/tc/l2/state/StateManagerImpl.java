@@ -45,7 +45,6 @@ import com.tc.util.State;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -77,13 +76,7 @@ public class StateManagerImpl implements StateManager {
   private final ServerMode               startState;
   private final ElectionGate                      elections  = new ElectionGate();
 
-  // Known servers from previous election
-  Set<NodeID> prevKnownServers = new HashSet<>();
-
-  // Known servers from current election
-  Set<NodeID> currKnownServers = new HashSet<>();
-  
-  Enrollment verification = null;
+  private Enrollment verification = null;
 
   public StateManagerImpl(Logger consoleLogger, GroupManager<AbstractGroupMessage> groupManager,
                           StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr, 
@@ -124,11 +117,8 @@ public class StateManagerImpl implements StateManager {
   
   private boolean electionStarted() {
     boolean isElectionStarted = elections.electionStarted();
-    if(isElectionStarted) {
+    if (isElectionStarted) {
       synchronized(this) {
-        prevKnownServers.clear();
-        prevKnownServers.addAll(currKnownServers);
-        currKnownServers.clear();
         verification = createVerificationEnrollment();
       }
     }
@@ -381,7 +371,6 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void moveToActiveState(Set<NodeID> passives) {
-    refreshKnownServers();
     ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.START, ServerMode.PASSIVE));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
@@ -392,13 +381,6 @@ public class StateManagerImpl implements StateManager {
     }
     Enrollment verify = createVerificationEnrollment();
     electionMgr.declareWinner(verify, oldState.getState());
-  }
-  
-  private synchronized void refreshKnownServers() {
-    // we are moving from passive standby to active state with a new election but we need to use previous election
-    // known servers list as they are in sync in with previous active
-    currKnownServers.clear();
-    currKnownServers.addAll(prevKnownServers);
   }
   
   private synchronized ServerMode switchToState(ServerMode newState, Set<ServerMode> validOldStates) throws IllegalStateException {
@@ -451,15 +433,6 @@ public class StateManagerImpl implements StateManager {
   
   private synchronized boolean canStartElection() {
     return state == ServerMode.START || state == ServerMode.PASSIVE;
-  }
-  /**
-   * This will be called just before we start processing resends, so any server joins
-   * after this call will be out of sync with this active, so we need to remove all
-   * servers which are not connected yet
-   */
-  @Override
-  public synchronized void cleanupKnownServers() {
-    currKnownServers.removeIf(node->!groupManager.isNodeConnected(node));
   }
 
   @Override
@@ -609,9 +582,6 @@ public class StateManagerImpl implements StateManager {
       L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
       validatePeerResponseToActiveDelaration(response);
     } else {
-      synchronized (this) {
-        currKnownServers.add(msg.getEnrollment().getNodeID());
-      }
       if (!electionMgr.handleStartElectionRequest(msg, state.getState())) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
         startElectionIfNecessary(ServerID.NULL_ID);
@@ -628,11 +598,6 @@ public class StateManagerImpl implements StateManager {
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(verify, state.getState());
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validatePeerResponseToActiveDelaration(response);
-  }
-
-  //used in testing
-  public synchronized void addKnownServersList(Set<NodeID> nodeIDs) {
-    currKnownServers.addAll(nodeIDs);
   }
 
   private void validatePeerResponseToActiveDelaration(L2StateMessage response) throws GroupException {
@@ -685,7 +650,6 @@ public class StateManagerImpl implements StateManager {
     boolean elect = false;
 
     synchronized (this) {
-      currKnownServers.remove(disconnectedNode);
       if (state == ServerMode.START || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);

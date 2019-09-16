@@ -64,8 +64,6 @@ public interface StateManager extends PrettyPrintable {
   public NodeID getActiveNodeID();
   
   public Set<NodeID> getPassiveStandbys();
-
-  public void cleanupKnownServers();
   
   public static ServerMode convert(State state) {
     if (state == null) {
