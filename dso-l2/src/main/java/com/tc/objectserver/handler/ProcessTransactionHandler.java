@@ -93,7 +93,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ProcessTransactionHandler.class);
 
   private final Persistor persistor;
-  private final Runnable stateManagerCleanup;
 
   private final EntityManager entityManager;
   private final DSOChannelManager dsoChannelManager;
@@ -268,11 +267,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
     return sender;
   }
 
-  public ProcessTransactionHandler(Persistor persistor, DSOChannelManager channelManager, EntityManager entityManager, Runnable stateManagerCleanup) {
+  public ProcessTransactionHandler(Persistor persistor, DSOChannelManager channelManager, EntityManager entityManager) {
     this.persistor = persistor;
     this.dsoChannelManager = channelManager;
     this.entityManager = entityManager;
-    this.stateManagerCleanup = stateManagerCleanup;
 
     this.references = new LinkedList<>();
     this.resendReplayList = new SparseList<>();
@@ -575,8 +573,6 @@ public class ProcessTransactionHandler implements ReconnectListener {
         }
       }
     }
-
-    this.stateManagerCleanup.run();
 
     // Clear the transaction order persistor since we are starting fresh.
     this.persistor.getTransactionOrderPersistor().clearAllRecords();
