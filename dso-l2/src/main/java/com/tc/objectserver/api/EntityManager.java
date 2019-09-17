@@ -29,6 +29,7 @@ import com.tc.text.PrettyPrintable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.terracotta.exception.EntityException;
@@ -99,4 +100,9 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
    * @return the classloader used to create all entities
    */
   ServerEntityFactory getEntityLoader();
+
+  /**
+   * @return existing {@link EntityID}s
+   */
+  Set<EntityID> getExistingEntities();
 }

@@ -114,7 +114,6 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
-import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -1103,29 +1102,41 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       if (persistor.getClusterStatePersistor().getInitialState() == null) {
   //  no reconnects on a new server
         pth.reconnectComplete();
-        Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
-        Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
-  //  find annotated permanent entities
-        List<VoltronEntityMessage> annotated = entityManager.getEntityLoader().getAnnotatedEntities();
-        for (VoltronEntityMessage vem : annotated) {
-  //  map them to weed out duplicates
-          checkdups.put(vem.getEntityDescriptor().getEntityID(), vem);
-        } 
-        for (VoltronEntityMessage vem : checkdups.values()) {
-          msgSink.addToSink(vem);
-        }
-        EntityPersistor ep = this.persistor.getEntityPersistor();
-        for (VoltronEntityMessage vem : checkdups.values()) {
-          try {
-            ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
-          } catch (RuntimeException e) {
-            throw e;
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
       } else {
         pth.loadExistingEntities();
+      }
+    }
+
+    createPermanentEntitiesIfNeeded();
+  }
+
+  private void createPermanentEntitiesIfNeeded() {
+    List<VoltronEntityMessage> permanentEntities = entityManager.getEntityLoader().getAnnotatedEntities();
+    Set<EntityID> existingEntities = entityManager.getExistingEntities();
+
+    Sink<VoltronEntityMessage> msgSink = this.seda.getStageManager().getStage(ServerConfigurationContext.SINGLE_THREADED_FAST_PATH, VoltronEntityMessage.class).getSink();
+    Map<EntityID, VoltronEntityMessage> checkdups = new HashMap<>();
+    //  find annotated permanent entities
+    for (VoltronEntityMessage vem : permanentEntities) {
+      //  map them to weed out duplicates
+      EntityID entityID = vem.getEntityDescriptor().getEntityID();
+      if (!existingEntities.contains(entityID)) {
+        checkdups.put(entityID, vem);
+      }
+    }
+
+    for (VoltronEntityMessage vem : checkdups.values()) {
+      msgSink.addToSink(vem);
+    }
+
+    EntityPersistor ep = this.persistor.getEntityPersistor();
+    for (VoltronEntityMessage vem : checkdups.values()) {
+      try {
+        ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
     }
   }

@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -338,6 +339,11 @@ public class EntityManagerImpl implements EntityManager {
     entityMap.put("entities", entities);
     entityIndex.values().forEach(entity->entities.add(entity.getState()));
     return entityMap;
+  }
+
+  @Override
+  public Set<EntityID> getExistingEntities() {
+    return Collections.unmodifiableSet(entities.keySet());
   }
 }
 
