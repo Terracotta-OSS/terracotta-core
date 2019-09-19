@@ -62,6 +62,8 @@ public interface ConsistencyManager extends PrettyPrintable {
   
   long getCurrentTerm();
   
+  void setCurrentTerm(long term);
+  
   Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory);
   
   static int parseVoteCount(TcConfig config) {

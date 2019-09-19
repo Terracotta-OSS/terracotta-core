@@ -147,6 +147,11 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
+  public String getClientAddress() {
+    return "UNKNOWN";
+  }
+
+  @Override
   public void addReconnectReference(ClientEntityReferenceContext context) {
     boolean isNew = this.reconnectReferenceSet.add(context);
     Assert.assertTrue(isNew);

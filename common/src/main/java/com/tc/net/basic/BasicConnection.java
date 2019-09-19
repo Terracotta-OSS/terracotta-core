@@ -284,7 +284,9 @@ public class BasicConnection implements TCConnection {
     if (interrupted) {
       Thread.currentThread().interrupt();
     }
-    LOGGER.debug("connected", new Exception());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("connected", new Exception());
+    }
     return src;
   }
 

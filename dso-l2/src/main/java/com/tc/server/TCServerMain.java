@@ -38,7 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.ServiceLoader;
 
 public class TCServerMain {
 
@@ -69,6 +68,7 @@ public class TCServerMain {
           commandLineParser.getServerName(),
           configurationProvider.getConfiguration(),
           commandLineParser.consistentStartup(),
+          commandLineParser.upgradeCompatibility(),
           systemLoader,
           args
       );

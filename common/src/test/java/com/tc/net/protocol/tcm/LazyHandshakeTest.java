@@ -35,6 +35,7 @@ import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
@@ -94,7 +95,7 @@ public class LazyHandshakeTest extends TCTestCase {
             new NullConnectionPolicy());
 
     listener = serverComms.createListener(new TCSocketAddress(0), true,
-                                          new DefaultConnectionIdFactory(), (t)->true);
+                                          new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
     try {
       listener.start(new HashSet<ConnectionID>());

@@ -60,6 +60,15 @@ limitations under the License.
       <artifactId>galvan</artifactId>
       <version>${galvan.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-l2</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

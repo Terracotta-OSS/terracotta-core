@@ -50,6 +50,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   private final Configuration configuration;
   private final GroupConfiguration groupConfiguration;
   private final boolean consistentStartup;
+  private final boolean upgrade;
   private final ServerConfiguration serverConfiguration;
   private final ServiceLocator serviceLocator;
   private final String[] startUpArgs;
@@ -57,6 +58,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   public ServerConfigurationManager(String serverName,
                                     Configuration configuration,
                                     boolean consistentStartup,
+                                    boolean upgrade,
                                     ClassLoader classLoader,
                                     String[] startUpArgs) throws ConfigurationSetupException {
     Objects.requireNonNull(configuration);
@@ -86,6 +88,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
     this.groupConfiguration = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
 
     this.consistentStartup = consistentStartup;
+    this.upgrade = upgrade;
 
     this.startUpArgs = Arrays.copyOf(startUpArgs, startUpArgs.length);
 
@@ -115,6 +118,10 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public boolean consistentStartup() {
     return this.consistentStartup;
+  }
+  
+  public boolean upgradeCompatiblity() {
+    return this.upgrade;
   }
 
   public boolean isPartialConfiguration() {

@@ -33,8 +33,8 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
-import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.protocol.transport.TransportHandshakeException;
@@ -180,7 +180,7 @@ try {
         }, null, (t)->true);
       } else {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
-            new DefaultConnectionIdFactory(), (t)->true);
+            new DefaultConnectionIdFactory(), (MessageTransport t)->true);
       }
       lsnr.start(new HashSet<ConnectionID>());
       connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
@@ -351,7 +351,7 @@ try {
                                        }, null, (t)->true);
     } else {
       rv = serverComms1.createListener(new TCSocketAddress(0), false,
-                                       new DefaultConnectionIdFactory(), (t)->true);
+                                       new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     }
 
     rv.start(new HashSet<ConnectionID>());

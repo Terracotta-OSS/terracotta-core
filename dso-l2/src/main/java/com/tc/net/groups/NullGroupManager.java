@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnectionManager;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -141,6 +142,11 @@ public class NullGroupManager implements GroupManager<AbstractGroupMessage> {
   @Override
   public void closeMember(ServerID serverID) {
 
+  }
+
+  @Override
+  public TCConnectionManager getConnectionManager() {
+    return null;
   }
 
   @Override

@@ -37,6 +37,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
@@ -132,7 +133,7 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
                                                                    Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                                    Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
-                                                       new DefaultConnectionIdFactory(), (t)->true);
+                                                       new DefaultConnectionIdFactory(), (MessageTransport  t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 

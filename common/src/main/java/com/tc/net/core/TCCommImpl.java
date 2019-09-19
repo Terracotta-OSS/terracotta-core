@@ -120,5 +120,15 @@ class TCCommImpl implements TCComm {
     }
     return map;
   }
+  
+  @Override
+  public void pause() {
+    workerCommMgr.pause();
+  }
+  
+  @Override
+  public void unpause() {
+    workerCommMgr.unpause();
+  }
 
 }

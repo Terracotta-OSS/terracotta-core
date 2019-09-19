@@ -23,7 +23,6 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
-import com.tc.operatorevent.NodeNameProvider;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ProductID;
 import java.util.function.Predicate;
@@ -60,5 +59,5 @@ public interface CommunicationsManager extends PrettyPrintable {
                                         ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation);
 
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
-                                        ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider);
+                                        ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider);
 }

@@ -151,6 +151,11 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   }
 
   @Override
+  public void setCurrentTerm(long term) {
+    consistencyManager.setCurrentTerm(term);
+  }
+
+  @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
     return consistencyManager.createVerificationEnrollment(lastActive, weightFactory);
   }

@@ -305,7 +305,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     transport.setRemoteCallbackPort(TransportHandshakeMessage.NO_CALLBACK_PORT);
     updateConfigFactor(CONFIG_UPGRADE_FACTOR);
     changeState(START);
-    logger.error("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc + "(callbackport: " + callbackPort
+    logger.debug("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc + "(callbackport: " + callbackPort
                 + ")");
   }
 

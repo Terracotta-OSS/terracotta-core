@@ -31,8 +31,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.stats.api.ClientMBean;
-import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.util.Arrays;
 import java.util.Map;

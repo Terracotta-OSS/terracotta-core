@@ -16,30 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.tc.net.protocol.tcm;
+
+import java.net.InetSocketAddress;
 
 /**
- * The common interface for TCComm instances. A TCComm instance is used for managing the lowest level network details
- * (ie. reading/writing bytes, and opening/closing connections)
- * 
- * @author teck
  */
-public interface TCComm {
-
-  public void stop();
-
-  public void start();
-
-  public boolean isStarted();
-
-  public boolean isStopped();
-  
-  public static boolean hasPendingRead() {
-    return CoreNIOServices.hasPendingReads();
-  }
-  
-  void pause();
-  
-  void unpause();
-
+public interface RedirectAddressProvider {
+  String redirectTo(InetSocketAddress source);
 }

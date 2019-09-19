@@ -16,30 +16,21 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.tc.spi;
+
+import java.net.InetSocketAddress;
 
 /**
- * The common interface for TCComm instances. A TCComm instance is used for managing the lowest level network details
- * (ie. reading/writing bytes, and opening/closing connections)
- * 
- * @author teck
  */
-public interface TCComm {
-
-  public void stop();
-
-  public void start();
-
-  public boolean isStarted();
-
-  public boolean isStopped();
-  
-  public static boolean hasPendingRead() {
-    return CoreNIOServices.hasPendingReads();
-  }
-  
-  void pause();
-  
-  void unpause();
-
+public interface NetworkTranslator {
+  /**
+   * Translate a server host:port advertisement to something new.Used for 
+ heterogeneous network environments where internal addresses can be translated to 
+ external addresses.
+   * 
+   * @param srcOfRequest where the request is coming from 
+   * @param serverHostPort the advertisement that will be sent
+   * @return the address to advertise to the client
+   */
+  String redirectTo(InetSocketAddress srcOfRequest, String serverHostPort);
 }

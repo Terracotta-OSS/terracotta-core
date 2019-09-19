@@ -5,6 +5,7 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -16,6 +17,7 @@ import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author vmad
@@ -24,9 +26,12 @@ public class ClientHandshakeMessageImplTest {
 
     @Test
     public void testGetResendMessages() throws Exception {
-
+        MessageChannel channel = mock(MessageChannel.class);
+        TCSocketAddress socket = new TCSocketAddress(65432);
+        when(channel.getLocalAddress()).thenReturn(socket);
+    
         ClientHandshakeMessageImpl chm = new ClientHandshakeMessageImpl(mock(SessionID.class), mock(MessageMonitor.class),
-                new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+                new TCByteBufferOutputStream(), channel, TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         ResendVoltronEntityMessage msg1 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(1),
                 mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
         ResendVoltronEntityMessage msg2 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(10),

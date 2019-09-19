@@ -59,7 +59,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, NodeNameProvider activeNameProvider) {
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
     throw new UnsupportedOperationException(); 
   }
 

@@ -46,13 +46,13 @@ class NetworkListenerImpl implements NetworkListener {
   private final boolean reuseAddr;
   private final ConnectionIDFactory connectionIdFactory;
   private final WireProtocolMessageSink wireProtoMsgSnk;
-  private final NodeNameProvider activeProvider;
+  private final RedirectAddressProvider activeProvider;
   private final Predicate<MessageTransport> validation;
 
   // this constructor is intentionally not public, only the Comms Manager should be creating them
   NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
                       TCMessageFactory msgFactory, boolean reuseAddr, ConnectionIDFactory connectionIdFactory,
-                      WireProtocolMessageSink wireProtoMsgSnk, NodeNameProvider activeProvider, Predicate<MessageTransport> validation) {
+                      WireProtocolMessageSink wireProtoMsgSnk, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation) {
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
     this.addr = addr;
