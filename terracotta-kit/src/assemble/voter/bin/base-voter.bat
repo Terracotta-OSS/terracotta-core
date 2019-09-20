@@ -32,11 +32,10 @@ set TC_KIT_ROOT=%TC_VOTER_DIR%\..
 set TC_LOGGING_ROOT=%TC_KIT_ROOT%\client\logging
 set TC_CLIENT_ROOT=%TC_KIT_ROOT%\client\lib
 
-set CLASSPATH="%TC_VOTER_DIR%\lib\*;%TC_CLIENT_ROOT%\*;%TC_LOGGING_ROOT%\*;%TC_LOGGING_ROOT%\impl\*;%TC_LOGGING_ROOT%\impl"
-set JAVA="%JAVA_HOME%\bin\java.exe"
-set JAVA="%JAVA:"=%"
+set CLASSPATH=%TC_VOTER_DIR%\lib\*;%TC_CLIENT_ROOT%\*;%TC_LOGGING_ROOT%\*;%TC_LOGGING_ROOT%\impl\*;%TC_LOGGING_ROOT%\impl
+set JAVA=%JAVA_HOME%\bin\java.exe
 
-%JAVA% %JAVA_OPTS% -cp %CLASSPATH% %TC_VOTER_MAIN% %*
+"%JAVA%" %JAVA_OPTS% -cp "%CLASSPATH%" %TC_VOTER_MAIN% %*
 
 exit /b %ERRORLEVEL%
 
