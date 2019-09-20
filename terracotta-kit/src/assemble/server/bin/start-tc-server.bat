@@ -33,13 +33,12 @@ exit /b 0
 :start
 setlocal enabledelayedexpansion enableextensions
 
-set TC_INSTALL_DIR=%~d0%~p0..\..
-set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
+set TC_INSTALL_DIR=%~dp0..\..
 set PLUGIN_LIB_DIR=%TC_INSTALL_DIR%\plugins\lib
 set PLUGIN_API_DIR=%TC_INSTALL_DIR%\plugins\api
 
-if exist %TC_INSTALL_DIR%\server\bin\setenv.bat (
-  call %TC_INSTALL_DIR%\server\bin\setenv.bat
+if exist "%TC_INSTALL_DIR%\server\bin\setenv.bat" (
+  call "%TC_INSTALL_DIR%\server\bin\setenv.bat"
 )
 
 if not defined JAVA_HOME (
@@ -47,37 +46,35 @@ if not defined JAVA_HOME (
   exit /b 1
 )
 
-set JAVA_HOME="%JAVA_HOME:"=%"
-for %%C in ("\bin\java -d64 -server -XX:MaxDirectMemorySize=9223372036854775807" ^
-			"\bin\java -server -XX:MaxDirectMemorySize=9223372036854775807" ^
-			"\bin\java -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" ^
-			"\bin\java -client -XX:MaxDirectMemorySize=9223372036854775807" ^
-			"\bin\java -XX:MaxDirectMemorySize=9223372036854775807") ^
+for %%C in ("-d64 -server -XX:MaxDirectMemorySize=9223372036854775807" ^
+			"-server -XX:MaxDirectMemorySize=9223372036854775807" ^
+			"-d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" ^
+			"-client -XX:MaxDirectMemorySize=9223372036854775807" ^
+			"-XX:MaxDirectMemorySize=9223372036854775807") ^
 do (
-
-  set JAVA_COMMAND=%JAVA_HOME%%%~C
-  %JAVA_HOME%%%~C -version > NUL 2>&1
+  set JAVA_COMMAND="%JAVA_HOME%\bin\java" %%~C
+  !JAVA_COMMAND! -version > NUL
 
   if not errorlevel 1 (  
 	goto setJavaOptsAndClasspath
+  ) else (
+    echo [!JAVA_COMMAND!] failed - trying further options
   )
 )
+echo No executable Java environment found in [%JAVA_HOME%]
 exit /b 1
 
 :setJavaOptsAndClasspath
 
-REM $ENV{NULLGLOB} = 1; 
-REM todo do i still need to enable nullglob?
+for %%I in ("%PLUGIN_LIB_DIR%" "%PLUGIN_API_DIR%") do (
 
-for %%I in (%PLUGIN_LIB_DIR% %PLUGIN_API_DIR%) do (
-
-	if exist %%I (
-		for %%J in (%%I\*.jar) do (
+	if exist "%%I" (
+		for %%J in ("%%I"\*.jar) do (
 			
 			if defined PLUGIN_CLASSPATH (
-			  set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;"%%J"
+			  set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;%%J
 			) else (
-			  set PLUGIN_CLASSPATH="%%J"
+			  set PLUGIN_CLASSPATH=%%J
 			)
 
 		)
@@ -88,31 +85,25 @@ for %%I in (%PLUGIN_LIB_DIR% %PLUGIN_API_DIR%) do (
 
 REM   Adding SLF4j libraries to the classpath of the server to 
 REM   support services that may use SLF4j for logging
-if exist %TC_INSTALL_DIR%\server\lib (
-	for %%K in (%TC_INSTALL_DIR%\server\lib\slf4j*.jar) do (
-		set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;"%%K"
+if exist "%TC_INSTALL_DIR%\server\lib" (
+	for %%K in ("%TC_INSTALL_DIR%\server\lib"\slf4j*.jar) do (
+		set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;%%K
 	)
 ) else (
-		echo %TC_INSTALL_DIR%\server\lib does not exist!
-	)
+	echo %TC_INSTALL_DIR%\server\lib does not exist!
+)
 	
-REM todo do i still need to enable nullglob?
-REM $ENV{NULLGLOB} = 0;
-
 set CLASSPATH=%TC_INSTALL_DIR%\server\lib\tc.jar;%PLUGIN_CLASSPATH%
 set OPTS=%SERVER_OPT% -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 rem rmi.dgc.server.gcInterval is set as year to avoid system gc in case authentication is enabled
 rem users may change it accordingly
 set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000000
-set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
+set OPTS=%OPTS% "-Dtc.install-root=%TC_INSTALL_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
-
 :START_TCSERVER
-REM echo START_TCSERVER: %JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
-
-%JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
+%JAVA_COMMAND% %JAVA_OPTS% -cp "%CLASSPATH%" com.tc.server.TCServerMain %*
 if %ERRORLEVEL% EQU 11 (
 	echo start-tc-server: Restarting the server...
 	goto START_TCSERVER
