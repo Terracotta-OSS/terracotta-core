@@ -1,33 +1,32 @@
 @echo off
 
-REM 
+REM
 REM The contents of this file are subject to the Terracotta Public License Version
 REM 2.0 (the "License"); You may not use this file except in compliance with the
-REM License. You may obtain a copy of the License at 
-REM 
+REM License. You may obtain a copy of the License at
+REM
 REM      http://terracotta.org/legal/terracotta-public-license.
-REM 
+REM
 REM Software distributed under the License is distributed on an "AS IS" basis,
 REM WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 REM the specific language governing rights and limitations under the License.
-REM 
+REM
 REM The Covered Software is Terracotta Platform.
-REM 
-REM The Initial Developer of the Covered Software is 
+REM
+REM The Initial Developer of the Covered Software is
 REM     Terracotta, Inc., a Software AG company
 REM
 
 setlocal enabledelayedexpansion enableextensions
 
-pushd "%~d0%~p0.."
+pushd "%~dp0.."
 set TC_SERVER_DIR=%CD%
 popd
-set TC_SERVER_DIR="%TC_SERVER_DIR:"=%"
 set PLUGIN_LIB_DIR=%TC_SERVER_DIR%\plugins\lib
 set PLUGIN_API_DIR=%TC_SERVER_DIR%\plugins\api
 
-if exist %TC_SERVER_DIR%\bin\setenv.bat (
-  call %TC_SERVER_DIR%\bin\setenv.bat
+if exist "%TC_SERVER_DIR%\bin\setenv.bat" (
+  call "%TC_SERVER_DIR%\bin\setenv.bat"
 )
 
 if not defined JAVA_HOME (
@@ -35,58 +34,49 @@ if not defined JAVA_HOME (
   exit /b 1
 )
 
-set JAVA_HOME="%JAVA_HOME:"=%"
-for %%C in ("\bin\java -d64 -server -XX:MaxDirectMemorySize=1048576g" ^
-			"\bin\java -server -XX:MaxDirectMemorySize=1048576g" ^
-			"\bin\java -d64 -client  -XX:MaxDirectMemorySize=1048576g" ^
-			"\bin\java -client -XX:MaxDirectMemorySize=1048576g" ^
-			"\bin\java -XX:MaxDirectMemorySize=1048576g") ^
+for %%C in ("-d64 -server -XX:MaxDirectMemorySize=1048576g" ^
+			"-server -XX:MaxDirectMemorySize=1048576g" ^
+			"-d64 -client  -XX:MaxDirectMemorySize=1048576g" ^
+			"-client -XX:MaxDirectMemorySize=1048576g" ^
+			"-XX:MaxDirectMemorySize=1048576g") ^
 do (
+  set JAVA_COMMAND="%JAVA_HOME%\bin\java" %%~C
+  !JAVA_COMMAND! -version > NUL
 
-  set JAVA_COMMAND=%JAVA_HOME%%%~C
-  %JAVA_HOME%%%~C -version > NUL 2>&1
-
-  if not errorlevel 1 (  
+  if not errorlevel 1 (
 	goto setJavaOptsAndClasspath
+  ) else (
+    echo [!JAVA_COMMAND!] failed - trying further options
   )
 )
+echo No executable Java environment found in [%JAVA_HOME%]
 exit /b 1
 
 :setJavaOptsAndClasspath
 
-REM $ENV{NULLGLOB} = 1; 
-REM todo do i still need to enable nullglob?
-
 REM fixes bug when command length exceeds max windows command length of 8191
-set PLUGIN_CLASSPATH="%PLUGIN_LIB_DIR%\*;%PLUGIN_API_DIR%\*"
-REM allows whitespace in directories
-set PLUGIN_CLASSPATH="%PLUGIN_CLASSPATH:"=%"
+set PLUGIN_CLASSPATH=%PLUGIN_LIB_DIR%\*;%PLUGIN_API_DIR%\*
 
-REM   Adding SLF4j libraries to the classpath of the server to 
+REM   Adding SLF4j libraries to the classpath of the server to
 REM   support services that may use SLF4j for logging
-if exist %TC_SERVER_DIR%\lib (
-	for %%K in (%TC_SERVER_DIR%\lib\slf4j*.jar) do (
-		set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;"%%K"
-	)
+if exist "%TC_SERVER_DIR%\lib" (
+  for %%K in ("%TC_SERVER_DIR%\lib"\slf4j*.jar) do (
+    set PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;%%K
+  )
 ) else (
-		echo %TC_SERVER_DIR%\lib does not exist!
-	)
-	
-REM todo do i still need to enable nullglob?
-REM $ENV{NULLGLOB} = 0;
+  echo %TC_SERVER_DIR%\lib does not exist!
+)
 
 set CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%;%TC_SERVER_DIR%\lib
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 rem rmi.dgc.server.gcInterval is set as year to avoid system gc in case authentication is enabled
 rem users may change it accordingly
-set OPTS=%OPTS% -Dtc.install-root=%TC_SERVER_DIR%
+set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
 
 :START_TCSERVER
-REM echo START_TCSERVER: %JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
-
-%JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
+%JAVA_COMMAND% %JAVA_OPTS% -cp "%CLASSPATH%" com.tc.server.TCServerMain %*
 if %ERRORLEVEL% EQU 11 (
 	echo start-tc-server: Restarting the server...
 	goto START_TCSERVER

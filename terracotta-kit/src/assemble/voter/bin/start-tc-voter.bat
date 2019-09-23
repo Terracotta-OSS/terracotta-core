@@ -19,7 +19,9 @@ REM
 
 setlocal
 
-set TC_VOTER_DIR=%~d0%~p0..
+pushd "%~dp0.."
+set TC_VOTER_DIR=%CD%
+popd
 set TC_VOTER_MAIN=org.terracotta.voter.TCVoterMain
 
 call "%TC_VOTER_DIR%\bin\base-voter.bat"
