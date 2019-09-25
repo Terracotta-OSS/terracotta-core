@@ -21,7 +21,7 @@ limitations under the License.
 
   <groupId>org.terracotta</groupId>
   <artifactId>passthrough-testing-root</artifactId>
-  <version>1.6-SNAPSHOT</version>
+  <version>1.7-SNAPSHOT</version>
   <name>passthrough-testing-root</name>
   <packaging>pom</packaging>
 
