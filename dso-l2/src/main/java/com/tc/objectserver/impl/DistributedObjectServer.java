@@ -329,22 +329,24 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     try {
       if (pp == null) {
         DiagnosticFormat format = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
-        pp = new PrettyPrinter() {
-          @Override
-          public PrettyPrinter println(Object o) {
-            format.print(o);
-            return this;
-          }
+        if (format != null) {
+            pp = new PrettyPrinter() {
+            @Override
+            public PrettyPrinter println(Object o) {
+              format.print(o);
+              return this;
+            }
 
-          @Override
-          public void flush() {
-          }
+            @Override
+            public void flush() {
+            }
 
-          @Override
-          public String toString() {
-            return format.toString();
-          }
-        };
+            @Override
+            public String toString() {
+              return format.toString();
+            }
+          };
+        }
       }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
