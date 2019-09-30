@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # 
 # The contents of this file are subject to the Terracotta Public License Version
@@ -43,9 +43,7 @@ do
     "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1 && break
 done
 
-function setPluginClasspath {
-
-    shopt -s nullglob
+setPluginClasspath() {
 
     for pluginDir in "${PLUGIN_LIB_DIR}" "${PLUGIN_API_DIR}"
     do
@@ -64,8 +62,6 @@ function setPluginClasspath {
     do
         PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${jarFile}"
     done
-
-    shopt -u nullglob
 
 }
 
