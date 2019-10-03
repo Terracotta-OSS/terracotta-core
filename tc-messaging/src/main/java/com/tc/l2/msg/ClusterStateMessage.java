@@ -25,6 +25,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.net.protocol.transport.ConnectionID;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,6 +44,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   private ConnectionID           connectionID;
   private long                   nextAvailableChannelID;
   private Set<ConnectionID>      connectionIDs;
+  private byte[]                 configuration = new byte[0];
 
   // To make serialization happy
   public ClusterStateMessage() {
@@ -79,6 +81,16 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (int i = 0; i < size; i++) {
           connectionIDs.add(ConnectionID.readFrom(in));
         }
+
+        int configurationSize = 0;
+        try {
+          configurationSize = in.readInt();
+        } catch (EOFException e) {
+          // ignore
+        }
+        configuration = new byte[configurationSize];
+        in.read(configuration);
+
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -104,6 +116,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (ConnectionID id : connectionIDs) {
           id.writeTo(out);
         }
+        out.writeInt(configuration.length);
+        out.write(configuration);
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -135,6 +149,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableChannelID = state.getNextAvailableChannelID();
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
+        configuration = state.getConfiguration();
         break;
       default:
         throw new AssertionError("Wrong Type : " + getType());
@@ -150,6 +165,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         }
         // trigger local stripeID ready event after StripeIDMap loaded.
         state.setStripeID(clusterID);
+        state.setConfiguration(configuration);
         break;
       case NEW_CONNECTION_CREATED:
         state.addNewConnection(connectionID);

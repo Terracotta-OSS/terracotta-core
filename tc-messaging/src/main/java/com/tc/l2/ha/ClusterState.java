@@ -51,4 +51,8 @@ public interface ClusterState {
   
   void reportStateToMap(Map<String, Object> state);
 
+  byte[] getConfiguration();
+
+  void setConfiguration(byte[] configuration);
+
 }

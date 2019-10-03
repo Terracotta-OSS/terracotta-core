@@ -27,6 +27,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.terracotta.config.Configuration;
+import com.terracotta.config.ConfigurationProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -47,6 +48,7 @@ import java.util.Set;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 
+  private final ConfigurationProvider configurationProvider;
   private final Configuration configuration;
   private final GroupConfiguration groupConfiguration;
   private final boolean consistentStartup;
@@ -56,16 +58,17 @@ public class ServerConfigurationManager implements PrettyPrintable {
   private final String[] startUpArgs;
 
   public ServerConfigurationManager(String serverName,
-                                    Configuration configuration,
+                                    ConfigurationProvider configurationProvider,
                                     boolean consistentStartup,
                                     boolean upgrade,
                                     ClassLoader classLoader,
                                     String[] startUpArgs) throws ConfigurationSetupException {
-    Objects.requireNonNull(configuration);
+    Objects.requireNonNull(configurationProvider);
     Objects.requireNonNull(classLoader);
     Objects.requireNonNull(startUpArgs);
 
-    this.configuration = configuration;
+    this.configurationProvider = configurationProvider;
+    this.configuration = configurationProvider.getConfiguration();
     this.serviceLocator = new ServiceLocator(classLoader);
 
     Servers servers = configuration.getPlatformConfiguration().getServers();
@@ -134,6 +137,10 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public Configuration getConfiguration() {
     return configuration;
+  }
+
+  public ConfigurationProvider getConfigurationProvider() {
+    return configurationProvider;
   }
 
   private static Server findServer(Servers servers, String serverName) throws ConfigurationSetupException {
