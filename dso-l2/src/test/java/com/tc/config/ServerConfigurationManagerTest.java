@@ -32,6 +32,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.properties.TCPropertiesImpl;
 import com.terracotta.config.Configuration;
+import com.terracotta.config.ConfigurationProvider;
 
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -52,7 +53,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testSingleServerValidConfiguration() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
 
     TcConfig tcConfig = new TcConfig();
     when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
@@ -65,7 +68,7 @@ public class ServerConfigurationManagerTest {
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
     ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[0],
-                                                                        configuration,
+                                                                        configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         Thread.currentThread().getContextClassLoader(),
@@ -90,7 +93,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testSingleServerWithServerNameNull() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
 
     TcConfig tcConfig = new TcConfig();
     when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
@@ -103,7 +108,7 @@ public class ServerConfigurationManagerTest {
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
     ServerConfigurationManager manager = new ServerConfigurationManager(null,
-                                                                        configuration,
+                                                                        configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         Thread.currentThread().getContextClassLoader(),
@@ -115,7 +120,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testSingleServerWithInvalidServerName() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
 
     TcConfig tcConfig = new TcConfig();
     when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
@@ -131,7 +138,7 @@ public class ServerConfigurationManagerTest {
     expectedException.expectMessage("does not exist in the specified configuration");
 
     new ServerConfigurationManager("not-a-server-name",
-                                                                        configuration,
+                                                                        configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         Thread.currentThread().getContextClassLoader(),
@@ -140,7 +147,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testMultipleServersValidConfiguration() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
     int currentServerIndex = 1;
 
     TcConfig tcConfig = new TcConfig();
@@ -155,7 +164,7 @@ public class ServerConfigurationManagerTest {
     boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
     ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
-                                                                        configuration,
+                                                                        configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         Thread.currentThread().getContextClassLoader(),
@@ -180,7 +189,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testMultipleServersWithServerNameNull() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
 
     TcConfig tcConfig = new TcConfig();
     when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
@@ -195,7 +206,7 @@ public class ServerConfigurationManagerTest {
     expectedException.expect(ConfigurationSetupException.class);
     expectedException.expectMessage("The script can not automatically choose between the following server names");
     ServerConfigurationManager manager = new ServerConfigurationManager(null,
-                                                                        configuration,
+                                                                        configurationProvider,
                                                                         true,
                                                                         false,
                                                                         Thread.currentThread().getContextClassLoader(),
@@ -204,7 +215,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testMultipleServersWithInvalidServerName() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
 
     TcConfig tcConfig = new TcConfig();
     when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
@@ -220,7 +233,7 @@ public class ServerConfigurationManagerTest {
     expectedException.expectMessage("does not exist in the specified configuration");
 
     new ServerConfigurationManager("not-a-server-name",
-                                   configuration,
+                                   configurationProvider,
                                    true,
                                    false,
                                    Thread.currentThread().getContextClassLoader(),
@@ -229,7 +242,9 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testTcProperties() throws Exception {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
     int currentServerIndex = 1;
 
     TcConfig tcConfig = new TcConfig();
@@ -252,7 +267,7 @@ public class ServerConfigurationManagerTest {
     boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
     ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
-                                                                        configuration,
+                                                                        configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         Thread.currentThread().getContextClassLoader(),

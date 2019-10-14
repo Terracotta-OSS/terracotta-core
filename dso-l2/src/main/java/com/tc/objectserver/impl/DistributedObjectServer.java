@@ -1249,6 +1249,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return this.groupCommManager;
   }
 
+  public ServerConfigurationManager getConfigSetupManager() {
+    return configSetupManager;
+  }
+
   @Override
   public boolean isAlive(String name) {
     throw new UnsupportedOperationException();
