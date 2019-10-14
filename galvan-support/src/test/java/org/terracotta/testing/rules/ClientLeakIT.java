@@ -127,7 +127,7 @@ public class ClientLeakIT {
     Thread[] list = new Thread[Thread.activeCount()];
     Thread.enumerate(list);
     for (Thread t : list) {
-      if (t.getName().startsWith("ConnectionEstablisher")) {
+      if (t != null && t.getName().startsWith("ConnectionEstablisher")) {
         return t;
       }
     }
