@@ -35,14 +35,15 @@ public class HydrateHandlerTest extends TCTestCase {
 
     Sink<TCMessage> sink = mock(Sink.class);
     MessageChannel channel = mock(MessageChannel.class);
-    TCMessage message = when(mock(TCMessage.class).getChannel()).thenReturn(channel).getMock();
-    doThrow(new RuntimeException("bummer")).when(message).hydrate();
+    TCMessage msg = mock(TCMessage.class);
+    when(msg.getChannel()).thenReturn(channel);
+    doThrow(new RuntimeException("bummer")).when(msg).hydrate();
 
-    HydrateContext context = new HydrateContext(message, sink);
+    HydrateContext context = new HydrateContext(msg, sink);
 
     handler.handleEvent(context);
     verify(channel).close();
-    verify(message).hydrate();
+    verify(msg).hydrate();
     verify(sink, never()).addToSink(any(TCMessage.class));
   }
 }
