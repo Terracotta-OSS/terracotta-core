@@ -44,7 +44,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   private ConnectionID           connectionID;
   private long                   nextAvailableChannelID;
   private Set<ConnectionID>      connectionIDs;
-  private byte[]                 configuration = new byte[0];
+  private byte[]                 configSyncData = new byte[0];
 
   // To make serialization happy
   public ClusterStateMessage() {
@@ -82,14 +82,14 @@ public class ClusterStateMessage extends AbstractGroupMessage {
           connectionIDs.add(ConnectionID.readFrom(in));
         }
 
-        int configurationSize = 0;
+        int configSyncDataSize = 0;
         try {
-          configurationSize = in.readInt();
+          configSyncDataSize = in.readInt();
         } catch (EOFException e) {
           // ignore
         }
-        configuration = new byte[configurationSize];
-        in.read(configuration);
+        configSyncData = new byte[configSyncDataSize];
+        in.read(configSyncData);
 
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
@@ -116,8 +116,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (ConnectionID id : connectionIDs) {
           id.writeTo(out);
         }
-        out.writeInt(configuration.length);
-        out.write(configuration);
+        out.writeInt(configSyncData.length);
+        out.write(configSyncData);
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -149,7 +149,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableChannelID = state.getNextAvailableChannelID();
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
-        configuration = state.getConfiguration();
+        configSyncData = state.getConfigSyncData();
         break;
       default:
         throw new AssertionError("Wrong Type : " + getType());
@@ -165,7 +165,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         }
         // trigger local stripeID ready event after StripeIDMap loaded.
         state.setStripeID(clusterID);
-        state.setConfiguration(configuration);
+        state.setConfigSyncData(configSyncData);
         break;
       case NEW_CONNECTION_CREATED:
         state.addNewConnection(connectionID);
