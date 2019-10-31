@@ -29,7 +29,6 @@ import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.State;
 import com.tc.util.UUID;
-import com.terracotta.config.ConfigurationProvider;
 
 import java.util.ArrayList;
 
@@ -50,7 +49,7 @@ public class ClusterStateImpl implements ClusterState {
   private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<ConnectionID>());
   private long                                      nextAvailChannelID     = -1;
   private State                                     currentState;
-  private byte[]                                    configuration = new byte[0];
+  private byte[]                                    configSyncData = new byte[0];
 
   public ClusterStateImpl(Persistor persistor, 
                           ConnectionIDFactory connectionIdFactory, StripeIDStateManager stripeIDStateManager) {
@@ -184,12 +183,12 @@ public class ClusterStateImpl implements ClusterState {
   }
 
   @Override
-  public byte[] getConfiguration() {
-    return configuration;
+  public byte[] getConfigSyncData() {
+    return configSyncData;
   }
 
   @Override
-  public void setConfiguration(byte[] configuration) {
-    this.configuration = configuration;
+  public void setConfigSyncData(byte[] configSyncData) {
+    this.configSyncData = configSyncData;
   }
 }

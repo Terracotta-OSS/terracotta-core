@@ -42,27 +42,20 @@ public interface ConfigurationProvider {
   void close();
 
   /**
-   * Starts the configuration sync
+   * Provides the data to sync configuration
    *
-   * @return the serialized configuration to sync
+   * @return the sync data
    */
-  default byte[] startSync() {
+  default byte[] getSyncData() {
     return new byte[0];
   }
 
   /**
-   * Syncs with the given configuration
+   * Syncs configuration with the given data
    *
-   * @param configuration the serialized configuration
+   * @param syncData the sync data
    */
-  default void sync(byte[] configuration) {
-    // no-op
-  }
-
-  /**
-   * Ends the ongoing configuration sync if any
-   */
-  default void endSync() {
+  default void sync(byte[] syncData) {
     // no-op
   }
 }

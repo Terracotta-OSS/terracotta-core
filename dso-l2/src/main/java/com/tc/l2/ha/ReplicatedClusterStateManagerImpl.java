@@ -77,12 +77,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
     others.clear();
     // Sync state to external passive servers
-    state.setConfiguration(configurationProvider.startSync());
-    try {
-      others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
-    } finally {
-      configurationProvider.endSync();
-    }
+    state.setConfigSyncData(configurationProvider.getSyncData());
+    others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
     isActive = true;
     notifyAll();
   }
@@ -90,14 +86,10 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   @Override
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
     waitUntilActive();
-    state.setConfiguration(configurationProvider.startSync());
-    try {
-      ClusterStateMessage msg = (ClusterStateMessage)groupManager
-          .sendToAndWaitForResponse(nodeID, ClusterStateMessage.createClusterStateMessage(state));
-      validateResponse(nodeID, msg);
-    } finally {
-      configurationProvider.endSync();
-    }
+    state.setConfigSyncData(configurationProvider.getSyncData());
+    ClusterStateMessage msg = (ClusterStateMessage)groupManager
+        .sendToAndWaitForResponse(nodeID, ClusterStateMessage.createClusterStateMessage(state));
+    validateResponse(nodeID, msg);
   }
 
   private void waitUntilActive() {
@@ -171,7 +163,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       }
       if (ServerMode.PASSIVE_STATES.contains(this.stateManager.getCurrentMode())) {
         msg.initState(state);
-        configurationProvider.sync(state.getConfiguration());
+        if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
+          configurationProvider.sync(state.getConfigSyncData());
+        }
         state.syncSequenceState();
         sendOKResponse(fromNode, msg);
       } else {
