@@ -78,11 +78,11 @@ public interface ConsistencyManager extends PrettyPrintable {
       System.exit(-1);
     }
     if (config.getFailoverPriority().getAvailability() != null) {
-      consoleLogger.warn("Running the server in AVAILABILITY mode with the risk of split brain scenarios.");
+      consoleLogger.info("Running the server in AVAILABILITY mode with the risk of split brain scenarios.");
       return -1;
     }
     try {
-      consoleLogger.warn("Running the server in CONSISTENCY mode with compromised availability of the cluster.");
+      consoleLogger.info("Running the server in CONSISTENCY mode with compromised availability of the cluster.");
       int voters = config.getFailoverPriority().getConsistency().getVoter().getCount();
       if (voters < 0) {
         throw new IllegalArgumentException("the voter count cannot be negative");
