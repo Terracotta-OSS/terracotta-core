@@ -27,6 +27,7 @@ import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageListener;
 import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.exception.TCServerRestartException;
@@ -55,6 +56,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final StageQueue<EC> stageQueue;
   private final WorkerThread[] threads;
   private final ThreadGroup    group;
+  private final StageListener  listener;
   private final Logger logger;
   private final int            sleepMs;
   private final boolean        pausable;
@@ -70,15 +72,17 @@ public class StageImpl<EC> implements Stage<EC> {
    * 
    * @param loggerProvider : logger
    * @param name : The stage name
+   * @param type
    * @param handler : Event handler for this stage
    * @param queueCount : Number of threads and queues working on this stage with 1 thread bound to 1 queue
    * @param group : The thread group to be used
    * @param queueFactory : Factory used to create the queues
+   * @param listener
    * @param queueSize : Max queue Size allowed
    */
   @SuppressWarnings("unchecked")
   public StageImpl(TCLoggerProvider loggerProvider, String name, Class<EC> type, EventHandler<EC> handler, int queueCount,
-                   ThreadGroup group, QueueFactory queueFactory, int queueSize, boolean canBeDirect) {
+                   ThreadGroup group, QueueFactory queueFactory, StageListener listener, int queueSize, boolean canBeDirect) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     if (queueCount > 1 && !MultiThreadedEventContext.class.isAssignableFrom(type)) {
@@ -88,6 +92,7 @@ public class StageImpl<EC> implements Stage<EC> {
     this.handler = handler;
     this.stageQueue = StageQueue.FACTORY.factory(queueCount, queueFactory, type, eventCreator(canBeDirect), loggerProvider, name, queueSize);
     this.group = group;
+    this.listener = listener;
     this.sleepMs = TCPropertiesImpl.getProperties().getInt("seda." + name + ".sleepMs", 0);
     if (this.sleepMs > 0) {
       logger.warn("Sleep of " + this.sleepMs + "ms enabled for stage " + name);
@@ -125,6 +130,9 @@ public class StageImpl<EC> implements Stage<EC> {
     if (now - lastWarnTime > 1000) {
       lastWarnTime = now;
       logger.warn("Stage: {} has stalled on event {} for {}ms", name, event, time);
+      if (listener != null) {
+        listener.stageStalled(name, time, inflight.get());
+      }
     }
   }
   

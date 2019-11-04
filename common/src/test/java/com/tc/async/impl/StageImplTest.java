@@ -33,7 +33,6 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,7 +52,6 @@ import static org.mockito.Mockito.when;
 
 /**
  *
- * @author mscott
  */
 public class StageImplTest {
   
@@ -91,7 +89,7 @@ public class StageImplTest {
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false);
     instance.destroy();
     verify(handler, never()).destroy();
     
@@ -115,7 +113,7 @@ public class StageImplTest {
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, 16, false);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false);
     Object event = new Object();
     instance.getSink().addToSink(context);
     instance.getSink().addToSink(context);
@@ -139,7 +137,7 @@ public class StageImplTest {
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, 16, false);
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, null, 16, false);
     MultiThreadedEventContext event = new MultiThreadedEventContext() {
       @Override
       public Object getSchedulingKey() {
@@ -189,18 +187,13 @@ public class StageImplTest {
     };
     
     QueueFactory context = mock(QueueFactory.class);
-    when(context.createInstance(ArgumentMatchers.any(), ArgumentMatchers.anyInt())).thenAnswer(new Answer<BlockingQueue<Object>>() {
-
-      @Override
-      public BlockingQueue<Object> answer(InvocationOnMock invocation) throws Throwable {
-//  spy each call to put of the queue to make sure each queue is getting hit.
-        BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<Object>((Integer)invocation.getArguments()[1]));
-        cxts.add(queue);
-        return queue;
-      }
-    
+    when(context.createInstance(ArgumentMatchers.any(), ArgumentMatchers.anyInt())).thenAnswer((InvocationOnMock invocation) -> {
+      //  spy each call to put of the queue to make sure each queue is getting hit.
+      BlockingQueue<Object> queue = Mockito.spy(new ArrayBlockingQueue<>((Integer)invocation.getArguments()[1]));
+      cxts.add(queue);
+      return queue;
     });
-    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, 16, false);
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, null, 16, false);
     assertEquals(cxts.size(), size);
     instance.start(null);
     
