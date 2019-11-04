@@ -74,7 +74,9 @@ PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib"
 while [ 1 ] ; do
 # the solaris 64-bit JVM has a bug that makes it fail to allocate more than 2GB of offheap when
 # the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
-    "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -Xms256m -Xmx2049m -XX:+HeapDumpOnOutOfMemoryError \
+    "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -Xms256m -Xmx2049m \
+	-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints \
+	-XX:+HeapDumpOnOutOfMemoryError \
         -Dtc.install-root="${TC_SERVER_DIR}" \
         ${JAVA_OPTS} \
         -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}" \

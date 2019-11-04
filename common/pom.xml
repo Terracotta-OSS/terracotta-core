@@ -82,7 +82,6 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
