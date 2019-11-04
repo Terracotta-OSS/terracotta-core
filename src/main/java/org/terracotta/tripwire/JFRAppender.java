@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.tripwire;
+package org.terracotta.tripwire;
 
 import ch.qos.logback.core.AppenderBase;
 import java.io.IOException;
