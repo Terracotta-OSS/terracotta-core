@@ -16,8 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.server;
+package com.tc.spi;
 
-public interface ServerConnectionValidator {
-  boolean isAlive(String name);
+/**
+ *
+ */
+public interface WarningHandler {
+  void warning(WarningDescription description);
 }

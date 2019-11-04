@@ -26,6 +26,8 @@ import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageListener;
+import com.tc.async.impl.NullStageListener;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.ServerMode;
@@ -72,7 +74,7 @@ import java.util.Map;
 public class TCServerImpl extends SEDA implements TCServer {
   private static final Logger logger = LoggerFactory.getLogger(TCServer.class);
   private static final Logger consoleLogger = TCLogging.getConsoleLogger();
-
+  
   private volatile long                     startTime                                    = -1;
   private volatile long                     activateTime                                 = -1;
 
@@ -101,10 +103,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
-  }
-
-  private boolean validateState(ServerMode state) {
-    return ServerMode.VALID_STATES.contains(state);
   }
 
   @Override
@@ -332,6 +330,10 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
     }
   }
+  
+  protected void warnOfStall(String name, long delay, int queueDepth) {
+    
+  }
 
   protected void startServer() throws Exception {
     new StartupHelper(getThreadGroup(), new StartAction()).startUp();
@@ -494,4 +496,16 @@ public class TCServerImpl extends SEDA implements TCServer {
   public Map<String, ?> getStateMap() {
     return this.getStageManager().getStateMap();
   }  
+
+  @Override
+  public void stageWarning(Object description) {
+    super.stageWarning(description);
+  }
+
+  @Override
+  public void warn(Object event) {
+    if (dsoServer != null) {
+      dsoServer.warning(event);
+    }
+  }
 }

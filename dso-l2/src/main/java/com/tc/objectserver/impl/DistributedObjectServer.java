@@ -157,7 +157,6 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import com.tc.services.CommunicatorService;
@@ -235,6 +234,8 @@ import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
 import com.tc.spi.DiagnosticFormat;
 import com.tc.spi.NetworkTranslator;
+import com.tc.spi.WarningDescription;
+import com.tc.spi.WarningHandler;
 import com.terracotta.config.Configuration;
 import java.net.InetSocketAddress;
 
@@ -244,7 +245,7 @@ import java.util.stream.Collectors;
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements ServerConnectionValidator {
+public class DistributedObjectServer {
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
@@ -281,6 +282,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
+  
+  private WarningHandler handleWarnings;
 
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
@@ -383,7 +386,9 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   public void dumpOnExit() {
     // this is on exit so do not guard
-    TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
+    String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
+    TCLogging.getDumpLogger().info(clusterState);
+    warning("dump on exit");
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
@@ -466,9 +471,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
     this.serviceRegistry.registerImplementationProvided(messengerProvider);
-    
-
-    
+        
     // See if we need to add an in-memory service for IPlatformPersistence.
     if (!this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class)) {
       // In this case, we do still need to provide an implementation of IPlatformPersistence, backed by memory, so that entities can request a service which is as persistent as this server is.
@@ -477,6 +480,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
     
+    try {
+      this.handleWarnings = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(WarningHandler.class));
+    } catch (ServiceException se) {
+      
+    }
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
     String hostAddress = "";
@@ -1246,11 +1254,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return configSetupManager;
   }
 
-  @Override
-  public boolean isAlive(String name) {
-    throw new UnsupportedOperationException();
-  }
-
   protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, ConsistencyManager cm) {
     return new ClientHandshakeHandler(this.configSetupManager.getServerConfiguration().getName(), entities,
                                       processTransactionHandler, cm);
@@ -1265,4 +1268,20 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return persistor;
   }
 
+  public void warning(Object description) {
+    if (handleWarnings != null) {
+      handleWarnings.warning(new WarningDescription() {
+        @Override
+        public String getCause() {
+          return description.toString();
+        }
+
+        @Override
+        public String getClusterDump() {
+          String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
+          return clusterState;
+        }
+      });
+    }
+  }
 }
