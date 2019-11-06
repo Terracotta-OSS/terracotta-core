@@ -237,6 +237,26 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>toolchain</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <toolchains>
+            <jdk>
+              <version>${java.build.version}</version>
+              <vendor>${java.build.vendor}</vendor>
+            </jdk>
+          </toolchains>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <profiles>

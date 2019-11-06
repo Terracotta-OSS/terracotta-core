@@ -31,7 +31,6 @@ import com.tc.exception.VoltronEntityUserExceptionWrapper;
 import com.tc.exception.VoltronWrapperException;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -99,6 +98,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import jdk.jfr.Event;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -1250,6 +1250,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final Runnable original;
     private final int concurrency;
     private ActivePassiveAckWaiter  waitFor;
+    private MessageEvent event;
 
     public SchedulingRunnable(ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
       this.request = request;
@@ -1259,6 +1260,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
         
     private void start() {
+      event = new MessageEvent(id, concurrency, request.getAction(), request.getClientInstance(), request.getTransaction(), request.getTraceID());
       if (concurrency == ConcurrencyStrategy.MANAGEMENT_KEY) {
         if (logger.isDebugEnabled()) {
           try {
@@ -1308,6 +1310,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     public void accept(ActivePassiveAckWaiter waiter) {
       try {
         setWaitFor(waiter);
+        event.begin();
         original.run();
       } finally {
         this.end();
@@ -1326,6 +1329,10 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         flushLocalPipeline.completed(id, fetchID, action);
       }
+      event.setDebug(payload.getDebugId());
+      event.setType(payload.getType());
+      event.end();
+      event.commit();
     }
     
     private synchronized ActivePassiveAckWaiter waitForPassives() {

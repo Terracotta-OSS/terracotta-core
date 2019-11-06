@@ -67,6 +67,8 @@ public class StageImpl<EC> implements Stage<EC> {
                                                      .getLong(TCPropertiesConsts.L2_SEDA_STAGE_STALL_WARNING, 500);
   private volatile long lastWarnTime = 0;
   private int spinning = 0;
+  
+  private StageMonitorEvent event;
   /**
    * The Constructor.
    * 
@@ -101,6 +103,7 @@ public class StageImpl<EC> implements Stage<EC> {
     if (this.pausable) {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
+    this.event = new StageMonitorEvent(this, queueCount);
   }
   
   private EventCreator<EC> eventCreator(boolean direct) {
@@ -164,6 +167,7 @@ public class StageImpl<EC> implements Stage<EC> {
       shutdown = true;
     }
     stageQueue.close();
+    event.unregister();
     stopThreads();
     handler.destroy();
   }
@@ -178,6 +182,7 @@ public class StageImpl<EC> implements Stage<EC> {
     }
     handler.initializeContext(context);
     startThreads();
+    event.register();
   }
 
   @Override
@@ -313,8 +318,10 @@ public class StageImpl<EC> implements Stage<EC> {
             handleStageDebugPauses();
             idleTime += (running - stopped);
             ctxt.call();
-            runTime += (System.nanoTime() - running);
+            long finishRun = System.nanoTime();
+            runTime += (finishRun - running);
             count += 1;
+            event.addItem((running - stopped), (finishRun - running));
             spinCount = 0;
             spinner = spinning > 0;
           } else {
