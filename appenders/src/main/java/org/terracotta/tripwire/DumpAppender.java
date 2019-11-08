@@ -29,15 +29,15 @@ import java.time.format.DateTimeFormatter;
 import jdk.jfr.Configuration;
 import jdk.jfr.Recording;
 
-public class JFRAppender<E> extends AppenderBase<E> {
+public class DumpAppender<E> extends AppenderBase<E> {
   
   private final Recording continuous;
   private String path;
   private int maxAgeMinutes = 5;
 
-  public JFRAppender() {
+  public DumpAppender() {
     try {
-      continuous = new Recording(Configuration.getConfiguration("custom"));
+      continuous = new Recording(Configuration.getConfiguration("default"));
       continuous.setToDisk(true);
       continuous.setMaxAge(Duration.ofMinutes(5));
     } catch (IOException | ParseException boot) {

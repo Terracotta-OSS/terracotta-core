@@ -25,9 +25,9 @@ import jdk.jfr.StackTrace;
 import jdk.jfr.Threshold;
 
 
-@Category("Java Application")
+@Category("Tripwire")
 @StackTrace(false)
-@Label("TC Message")
+@Label("Message")
 @Threshold("250 ms")
 class MessageEvent extends Event implements org.terracotta.tripwire.Event {
 

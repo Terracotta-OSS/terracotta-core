@@ -28,9 +28,9 @@ import jdk.jfr.Timespan;
 /**
  * The SEDA Stage
  */
-@Category("Java Application")
+@Category("Tripwire")
 @Period("1 s")
-@Label("TC Stage")
+@Label("Stage")
 @StackTrace(false)
 class StageEvent extends Event implements org.terracotta.tripwire.Event {
 

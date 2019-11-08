@@ -21,24 +21,17 @@ package org.terracotta.tripwire;
 import jdk.jfr.Category;
 import jdk.jfr.Event;
 import jdk.jfr.Label;
-import jdk.jfr.Threshold;
-/**
- *
- */
+
+@Label("Log")
 @Category("Tripwire")
-@Label("SEDA Event")
-@Threshold("200 ms")
-class MonitoringEvent extends Event implements org.terracotta.tripwire.Event {
-  private final String stage;
-  private String description;
-
-  MonitoringEvent(String stage, String description) {
-    this.stage = stage;
-    this.description = description;
-  }
-
-  @Override
-  public void setDescription(String description) {
-    this.description = description;
+public class LogEvent extends Event {
+  private final String level;
+  private final String name;
+  private final String statement;
+  
+  public LogEvent(String name, String level, String statement) {
+    this.name = name;
+    this.level = level;
+    this.statement = statement;
   }
 }

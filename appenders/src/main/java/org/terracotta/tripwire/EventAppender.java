@@ -18,27 +18,16 @@
  */
 package org.terracotta.tripwire;
 
-import jdk.jfr.Category;
-import jdk.jfr.Event;
-import jdk.jfr.Label;
-import jdk.jfr.Threshold;
-/**
- *
- */
-@Category("Tripwire")
-@Label("SEDA Event")
-@Threshold("200 ms")
-class MonitoringEvent extends Event implements org.terracotta.tripwire.Event {
-  private final String stage;
-  private String description;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.AppenderBase;
 
-  MonitoringEvent(String stage, String description) {
-    this.stage = stage;
-    this.description = description;
+public class EventAppender extends AppenderBase<ILoggingEvent> {
+  
+  public EventAppender() {
   }
 
   @Override
-  public void setDescription(String description) {
-    this.description = description;
+  protected void append(ILoggingEvent e) {
+    new LogEvent(e.getLoggerName(), e.getLevel().toString(), e.getFormattedMessage()).commit();
   }
 }
