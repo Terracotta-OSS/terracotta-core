@@ -18,6 +18,7 @@
  */
 package org.terracotta.tripwire;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,7 +30,7 @@ import java.time.format.DateTimeFormatter;
 import jdk.jfr.Configuration;
 import jdk.jfr.Recording;
 
-public class DumpAppender<E> extends AppenderBase<E> {
+public class DumpAppender extends AppenderBase<ILoggingEvent> {
   
   private final Recording continuous;
   private String path;
@@ -39,7 +40,6 @@ public class DumpAppender<E> extends AppenderBase<E> {
     try {
       continuous = new Recording(Configuration.getConfiguration("default"));
       continuous.setToDisk(true);
-      continuous.setMaxAge(Duration.ofMinutes(5));
     } catch (IOException | ParseException boot) {
       throw new RuntimeException(boot);
     }
@@ -83,7 +83,7 @@ public class DumpAppender<E> extends AppenderBase<E> {
   }
 
   @Override
-  protected void append(E eventObject) {
+  protected void append(ILoggingEvent eventObject) {
     String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now());
     if (path == null) {
       path = System.getProperty("user.dir");
