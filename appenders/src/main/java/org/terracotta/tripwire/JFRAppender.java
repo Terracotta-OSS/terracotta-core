@@ -37,7 +37,7 @@ public class JFRAppender<E> extends AppenderBase<E> {
 
   public JFRAppender() {
     try {
-      continuous = new Recording(Configuration.getConfiguration("default"));
+      continuous = new Recording(Configuration.getConfiguration("custom"));
       continuous.setToDisk(true);
       continuous.setMaxAge(Duration.ofMinutes(5));
     } catch (IOException | ParseException boot) {
@@ -85,11 +85,17 @@ public class JFRAppender<E> extends AppenderBase<E> {
   @Override
   protected void append(E eventObject) {
     String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now());
-    Path dest = (path == null) ? Paths.get(System.getProperty("user.dir"), timestamp + ".jfr") : Paths.get(path, timestamp + ".jfr");
+    if (path == null) {
+      path = System.getProperty("user.dir");
+    }
+    Path dest = Paths.get(path);
+    if (!dest.toFile().exists()) {
+      dest.toFile().mkdirs();
+    }
     try {
-      continuous.dump(dest);
+      continuous.dump(dest.resolve(timestamp + ".jfr"));
     } catch (IOException ioe) {
-      
+      throw new RuntimeException(ioe);
     }
   }
 }
