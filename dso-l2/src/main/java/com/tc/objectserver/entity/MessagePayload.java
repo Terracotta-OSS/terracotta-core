@@ -20,16 +20,10 @@ package com.tc.objectserver.entity;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import jdk.jfr.Category;
-import jdk.jfr.Label;
-import jdk.jfr.StackTrace;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
 
-@Category("Java Application")
-@StackTrace(false)
-@Label("workload")
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
     MessagePayload payload = new MessagePayload(TCByteBufferFactory.getInstance(false, 0), null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);

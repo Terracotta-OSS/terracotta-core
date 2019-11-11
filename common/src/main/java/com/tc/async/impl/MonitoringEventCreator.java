@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
+import org.terracotta.tripwire.TripwireFactory;
 
 /**
  */
@@ -62,7 +63,7 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
   
   @Override
   public Event createEvent(EC event) {
-    MonitorStats stats = new MonitorStats();
+    MonitorStats stats = new MonitorStats(name, event.toString());
     PipelineMonitor running = CURRENT.get();
     if (running != null) {
       running.action(name, PipelineMonitor.Type.ENQUEUE, event);
@@ -114,13 +115,16 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     private long queue = 0;
     private long run = 0;
     private long end = 0;
-
-    public MonitorStats() {
+    private final org.terracotta.tripwire.Event event;
+    
+    public MonitorStats(String name, String debugging) {
       queue();
+      event = TripwireFactory.createStageEvent(name, debugging);
     }
     
     void run() {
       run = System.nanoTime();
+      event.begin();
     }
     
     final void queue() {
@@ -129,6 +133,8 @@ public class MonitoringEventCreator<EC> implements EventCreator<EC> {
     
     void end() {
       end = System.nanoTime();
+      event.end();
+      event.commit();
     }
     
     long queueTime() {

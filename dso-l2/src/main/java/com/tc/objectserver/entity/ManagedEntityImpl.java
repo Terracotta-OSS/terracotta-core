@@ -98,7 +98,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import jdk.jfr.Event;
+import org.terracotta.tripwire.Event;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -1249,18 +1250,19 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final MessagePayload payload;
     private final Runnable original;
     private final int concurrency;
+    private final Event event;
+
     private ActivePassiveAckWaiter  waitFor;
-    private MessageEvent event;
 
     public SchedulingRunnable(ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
       this.request = request;
       this.payload = payload;
       this.original = r;
       this.concurrency = concurrency;
+      this.event = TripwireFactory.createMessageEvent(id.toString(), concurrency, request.getAction().toString(), request.getNodeID().toLong(), request.getClientInstance().toString(), request.getTransaction().toLong(), request.getTraceID());
     }
         
     private void start() {
-      event = new MessageEvent(id, concurrency, request.getAction(), request.getClientInstance(), request.getTransaction(), request.getTraceID());
       if (concurrency == ConcurrencyStrategy.MANAGEMENT_KEY) {
         if (logger.isDebugEnabled()) {
           try {
@@ -1329,8 +1331,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         flushLocalPipeline.completed(id, fetchID, action);
       }
-      event.setDebug(payload.getDebugId());
-      event.setType(payload.getType());
+      event.setDescription(payload.getDebugId());
       event.end();
       event.commit();
     }

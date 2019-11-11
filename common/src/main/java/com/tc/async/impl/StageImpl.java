@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.terracotta.tripwire.Monitor;
+import org.terracotta.tripwire.TripwireFactory;
 
 /**
  * The SEDA Stage
@@ -68,7 +70,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private volatile long lastWarnTime = 0;
   private int spinning = 0;
   
-  private StageMonitorEvent event;
+  private Monitor event;
   /**
    * The Constructor.
    * 
@@ -103,7 +105,7 @@ public class StageImpl<EC> implements Stage<EC> {
     if (this.pausable) {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
-    this.event = new StageMonitorEvent(this, queueCount);
+    this.event = TripwireFactory.createStageMonitor(name, queueCount);
   }
   
   private EventCreator<EC> eventCreator(boolean direct) {
@@ -321,7 +323,7 @@ public class StageImpl<EC> implements Stage<EC> {
             long finishRun = System.nanoTime();
             runTime += (finishRun - running);
             count += 1;
-            event.addItem((running - stopped), (finishRun - running));
+            event.addItem(size(), (finishRun - running));
             spinCount = 0;
             spinner = spinning > 0;
           } else {
