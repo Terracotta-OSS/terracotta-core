@@ -117,6 +117,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public void setReconnectWindowTimeout(int value) {
+
+  }
+
+  @Override
   public int getReconnectWindowTimeout() {
     return 0;
   }

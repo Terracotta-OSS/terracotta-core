@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -68,7 +69,7 @@ public class ServerClientHandshakeManagerTest {
     this.transactionHandler = mock(ProcessTransactionHandler.class);
     StageManager stageManager = mock(StageManager.class);
     Timer timer = mock(Timer.class);
-    long reconnectTimeout = 1000;
+    Supplier<Long> reconnectTimeoutSupplier = () -> 1000L;
     Logger consoleLogger = mock(Logger.class);
     voltronStage = mock(Stage.class);
     voltronSink = mock(Sink.class);
@@ -76,7 +77,7 @@ public class ServerClientHandshakeManagerTest {
     when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
     ConsistencyManager consistency = mock(ConsistencyManager.class);
     when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), any(ConsistencyManager.Transition.class))).thenReturn(Boolean.TRUE);
-    this.manager = new ServerClientHandshakeManager(logger, consistency, this.channelManager, timer, reconnectTimeout, voltronSink, consoleLogger);
+    this.manager = new ServerClientHandshakeManager(logger, consistency, this.channelManager, timer, reconnectTimeoutSupplier, voltronSink, consoleLogger);
   }
 
   @Test

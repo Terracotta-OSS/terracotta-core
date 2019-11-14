@@ -76,6 +76,8 @@ public interface TCServer extends Pauseable {
   
   int getReconnectWindowTimeout();
 
+  void setReconnectWindowTimeout(int value);
+
   void waitUntilShutdown();
 
   void dump();

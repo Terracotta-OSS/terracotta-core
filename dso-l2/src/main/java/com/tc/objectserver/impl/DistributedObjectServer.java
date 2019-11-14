@@ -646,10 +646,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       Assert.fail("Multiple IMonitoringProducer implementations found!");
     }
 
-    long reconnectTimeout = l2DSOConfig.getClientReconnectWindow();
-    logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
-    reconnectTimeout *= 1000;
-
     boolean USE_DIRECT = !tcProperties.getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_DISABLE_DIRECT_SINKS, false);
     if (!USE_DIRECT) {
       logger.info("disabling the use for direct sinks");
@@ -791,19 +787,16 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
     dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
-    
 
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                                 LoggerFactory
-                                                                                                     .getLogger(ServerClientHandshakeManager.class),
-                                                                                                consistencyMgr,  
-                                                                                                channelManager,
-                                                                                                 new Timer(
-                                                                                                           "Reconnect timer",
-                                                                                                           true),
-                                                                                                 reconnectTimeout,
-                                                                                                 fast.getSink(),
-                                                                                                 consoleLogger);
+        LoggerFactory.getLogger(ServerClientHandshakeManager.class),
+        consistencyMgr,
+        channelManager,
+        new Timer("Reconnect timer", true),
+        () -> l2DSOConfig.getClientReconnectWindow() * 1000L, //need to pass reconnect window as milliseconds
+        fast.getSink(),
+        consoleLogger
+    );
     
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,

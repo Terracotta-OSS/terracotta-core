@@ -95,6 +95,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   
   int getReconnectWindowTimeout();
 
+  void setReconnectWindowTimeout(int value);
+
   void setVerboseGC(boolean verboseGC);
 
   void gc();

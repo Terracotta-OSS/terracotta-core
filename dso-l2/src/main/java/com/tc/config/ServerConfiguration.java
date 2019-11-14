@@ -37,7 +37,7 @@ public class ServerConfiguration {
   private final String host;
   private final String serverName;
   private final String logs;
-  private final int clientReconnectWindow;
+  private volatile int clientReconnectWindow;
 
   ServerConfiguration(Server server, int clientReconnectWindow) {
     String bindAddress = server.getBind();
@@ -83,6 +83,10 @@ public class ServerConfiguration {
 
   public int getClientReconnectWindow() {
     return this.clientReconnectWindow;
+  }
+
+  public void setClientReconnectWindow(int value) {
+    this.clientReconnectWindow = value;
   }
 
   public File getLogsLocation() {

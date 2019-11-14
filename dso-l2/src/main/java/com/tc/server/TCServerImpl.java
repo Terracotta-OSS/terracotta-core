@@ -39,7 +39,6 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
-import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -278,7 +277,12 @@ public class TCServerImpl extends SEDA implements TCServer {
   public int getReconnectWindowTimeout() {
     return configurationSetupManager.getServerConfiguration().getClientReconnectWindow();
   }
-  
+
+  @Override
+  public void setReconnectWindowTimeout(int value) {
+    configurationSetupManager.getServerConfiguration().setClientReconnectWindow(value);
+  }
+
   @Override
   public State getState() {
     return this.stateManager.getCurrentMode().getState();
