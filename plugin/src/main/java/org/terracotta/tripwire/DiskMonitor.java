@@ -18,10 +18,7 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-public interface Monitor {
-  void register();
-  void unregister();
+
+public interface DiskMonitor extends Monitor {
+
 }

@@ -18,10 +18,8 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-public interface Monitor {
-  void register();
-  void unregister();
+
+public interface StageMonitor extends Monitor {
+
+  public void eventOccurred(int backlog, long value);
 }

@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.LongAdder;
 import jdk.jfr.FlightRecorder;
 
 
-class StageMonitorEvent implements Monitor {
+class StageMonitorImpl implements StageMonitor {
 
   private final String stage;
   private final int threads;
@@ -36,13 +36,15 @@ class StageMonitorEvent implements Monitor {
       StageEvent e = newEvent();
       if (e != null) {
         e.setStats(getCount(), min, max, getRuntime());
+        min = Integer.MAX_VALUE;
+        max = 0;
         if (e.hasCount()) {
           e.commit();
         }
       }
     };
 
-  StageMonitorEvent(String target, int threads) {
+  StageMonitorImpl(String target, int threads) {
     this.stage = target;
     this.threads = threads;
   }
@@ -54,13 +56,12 @@ class StageMonitorEvent implements Monitor {
     return e;
   }
   
-  @Override
-  public void addItem(int backlog, long run) {
-    count.increment();
-    runtime.add(run);
+  public void eventOccurred(int backlog, long run) {
     //  just need approx. here
-    min = Math.min(min, backlog);
-    max = Math.max(max, backlog);
+    min = (int)Math.min(min, backlog);
+    max = (int)Math.max(max, backlog); 
+    runtime.add(run);
+    count.increment();
   }
   
   private int getCount() {

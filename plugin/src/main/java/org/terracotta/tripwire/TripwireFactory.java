@@ -18,6 +18,8 @@
  */
 package org.terracotta.tripwire;
 
+import java.nio.file.Path;
+
 /**
  *
  */
@@ -43,8 +45,48 @@ public class TripwireFactory {
     return (ENABLED) ? new MonitoringEvent(stage, debug) : new NullEvent();
   }
   
-  public static org.terracotta.tripwire.Monitor createStageMonitor(String stage, int threads) {
-    return (ENABLED) ? new StageMonitorEvent(stage, threads) : new NullMonitor();
+  public static org.terracotta.tripwire.StageMonitor createStageMonitor(String stage, int threads) {
+    return (ENABLED) ? new StageMonitorImpl(stage, threads) : new StageMonitor() {
+      @Override
+      public void eventOccurred(int backlog, long value) {
+      }
+
+      @Override
+      public void register() {
+      }
+
+      @Override
+      public void unregister() {
+      }
+    };
+  }
+  
+  public static org.terracotta.tripwire.DiskMonitor createDiskMonitor(Path path) {
+    return (ENABLED) ? new DiskMonitorImpl(path) : new org.terracotta.tripwire.DiskMonitor() {
+      @Override
+      public void register() {
+      }
+
+      @Override
+      public void unregister() {
+      }
+    };
+  }
+
+  public static org.terracotta.tripwire.MemoryMonitor createMemoryMonitor(String name) {
+    return (ENABLED) ? new MemoryMonitorImpl(name) : new MemoryMonitor() {
+      @Override
+      public void sample(long free, long used) {
+      }
+
+      @Override
+      public void register() {
+      }
+
+      @Override
+      public void unregister() {
+      }
+    };
   }
   
   public static TripwireRecording createTripwireRecording(String configuration) {

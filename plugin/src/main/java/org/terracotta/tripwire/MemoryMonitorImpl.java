@@ -18,16 +18,40 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-class NullMonitor implements Monitor {
+import jdk.jfr.FlightRecorder;
 
+
+class MemoryMonitorImpl implements MemoryMonitor {
+
+  private final String description;
+  private volatile long free = Long.MAX_VALUE;
+  private volatile long used = Long.MIN_VALUE;
+
+  private final Runnable runnable = ()-> {
+    newEvent().commit();
+  };
+
+  MemoryMonitorImpl(String name) {
+    this.description = name;
+  }
+  
+  private MemoryEvent newEvent() {
+    return new MemoryEvent(description, free, used);
+  }
+  
+  @Override
+  public void sample(long free, long used) {
+    this.free = Math.min(this.free, free);
+    this.used = Math.max(this.used, used);
+  }
+  
   @Override
   public void register() {
+    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
   }
 
   @Override
   public void unregister() {
+    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
   }
 }

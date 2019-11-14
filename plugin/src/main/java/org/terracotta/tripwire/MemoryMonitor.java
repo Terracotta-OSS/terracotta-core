@@ -18,10 +18,8 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-public interface Monitor {
-  void register();
-  void unregister();
+
+public interface MemoryMonitor extends Monitor {
+  
+  public void sample(long free, long used);
 }

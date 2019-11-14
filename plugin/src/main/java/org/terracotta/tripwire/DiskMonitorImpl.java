@@ -18,10 +18,33 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-public interface Monitor {
-  void register();
-  void unregister();
+import java.nio.file.Path;
+import jdk.jfr.FlightRecorder;
+
+
+class DiskMonitorImpl implements DiskMonitor {
+
+  private final Path diskPath;
+
+  private final Runnable runnable = ()-> {
+    newEvent().commit();
+  };
+
+  DiskMonitorImpl(Path path) {
+    diskPath = path;
+  }
+  
+  private DiskEvent newEvent() {
+    return new DiskEvent(diskPath);
+  }
+  
+  @Override
+  public void register() {
+    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
+  }
+
+  @Override
+  public void unregister() {
+    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
+  }
 }

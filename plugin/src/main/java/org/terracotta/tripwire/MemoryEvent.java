@@ -18,10 +18,33 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-public interface Monitor {
-  void register();
-  void unregister();
+import jdk.jfr.Category;
+import jdk.jfr.DataAmount;
+import jdk.jfr.Event;
+import jdk.jfr.Label;
+import jdk.jfr.Period;
+import jdk.jfr.StackTrace;
+
+@Category("Tripwire")
+@Period("1 s")
+@Label("Offheap Memory")
+@StackTrace(false)
+class MemoryEvent extends Event implements org.terracotta.tripwire.Event {
+
+  private String name;
+  @DataAmount(DataAmount.BYTES)
+  private final long free;
+  @DataAmount(DataAmount.BYTES)
+  private final long used;
+
+  MemoryEvent(String name, long free, long used) {
+    this.name = name;
+    this.free = free;
+    this.used = used;
+  }
+
+  @Override
+  public void setDescription(String description) {
+
+  }
 }

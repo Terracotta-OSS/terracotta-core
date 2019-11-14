@@ -18,10 +18,33 @@
  */
 package org.terracotta.tripwire;
 
-/**
- *
- */
-public interface Monitor {
-  void register();
-  void unregister();
+import java.io.File;
+import java.nio.file.Path;
+import jdk.jfr.Category;
+import jdk.jfr.DataAmount;
+import jdk.jfr.Event;
+import jdk.jfr.Label;
+import jdk.jfr.Period;
+import jdk.jfr.StackTrace;
+
+@Category("Tripwire")
+@Period("1 s")
+@Label("Disk")
+@StackTrace(false)
+class DiskEvent extends Event implements org.terracotta.tripwire.Event {
+
+  private String path;
+  @DataAmount(DataAmount.BYTES)
+  private final long free;
+
+  DiskEvent(Path path) {
+    File f = path.toFile();
+    this.path = path.toString();
+    this.free = f.getFreeSpace();
+  }
+
+  @Override
+  public void setDescription(String description) {
+
+  }
 }
