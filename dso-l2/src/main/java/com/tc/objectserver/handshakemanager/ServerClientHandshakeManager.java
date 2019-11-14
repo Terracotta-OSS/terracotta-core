@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 
 public class ServerClientHandshakeManager {
@@ -68,8 +69,7 @@ public class ServerClientHandshakeManager {
   private final List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
 
   private final Timer                    timer;
-  private final ReconnectTimerTask       reconnectTimerTask;
-  private final long                     reconnectTimeout;
+  private final Supplier<Long>           reconnectTimeoutSupplier;
   private final DSOChannelManager        channelManager;
   private final ConsistencyManager       consistency;
   private final Logger logger;
@@ -78,15 +78,14 @@ public class ServerClientHandshakeManager {
   private final Sink<VoltronEntityMessage> voltron;
 
   public ServerClientHandshakeManager(Logger logger, ConsistencyManager consistency, DSOChannelManager channelManager,
-                                      Timer timer, long reconnectTimeout,Sink<VoltronEntityMessage> voltron,
+                                      Timer timer, Supplier<Long> reconnectTimeoutSupplier, Sink<VoltronEntityMessage> voltron,
                                       Logger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.reconnectTimeout = reconnectTimeout;
+    this.reconnectTimeoutSupplier = reconnectTimeoutSupplier;
     this.timer = timer;
     this.voltron = voltron;
     this.consoleLogger = consoleLogger;
-    this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
     this.consistency = consistency;
   }
 
@@ -246,17 +245,19 @@ public class ServerClientHandshakeManager {
   }
 
   public void startReconnectWindow() {
-    String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+    long reconnectTimeout = reconnectTimeoutSupplier.get();
+    String message = "Starting reconnect window: " + reconnectTimeout + " ms. Waiting for "
                      + this.existingUnconnectedClients.size() + " clients to connect.";
     if (this.existingUnconnectedClients.size() <= 10) {
       message += " Unconnected Clients - " + this.existingUnconnectedClients;
     }
     this.consoleLogger.info(message);
 
-    if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
-      this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
+    ReconnectTimerTask reconnectTimerTask = new ReconnectTimerTask(this, timer, reconnectTimeout);
+    if (reconnectTimeout < RECONNECT_WARN_INTERVAL) {
+      this.timer.schedule(reconnectTimerTask, reconnectTimeout);
     } else {
-      this.timer.schedule(this.reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
+      this.timer.schedule(reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
     }
   }
 
@@ -283,13 +284,9 @@ public class ServerClientHandshakeManager {
     private final ServerClientHandshakeManager handshakeManager;
     private long                               timeToWait;
 
-    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer) {
+    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer, long timeToWait) {
       this.handshakeManager = handshakeManager;
       this.timer = timer;
-      this.timeToWait = handshakeManager.reconnectTimeout;
-    }
-
-    public void setTimeToWait(long timeToWait) {
       this.timeToWait = timeToWait;
     }
 
@@ -307,8 +304,7 @@ public class ServerClientHandshakeManager {
 
         if (this.timeToWait < RECONNECT_WARN_INTERVAL) {
           cancel();
-          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer);
-          task.setTimeToWait(this.timeToWait);
+          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer, this.timeToWait);
           this.timer.schedule(task, this.timeToWait);
         }
       } else {

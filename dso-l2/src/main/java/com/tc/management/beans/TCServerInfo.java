@@ -125,6 +125,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public void setReconnectWindowTimeout(int value) {
+    server.setReconnectWindowTimeout(value);
+  }
+
+  @Override
   public long getStartTime() {
     return server.getStartTime();
   }
