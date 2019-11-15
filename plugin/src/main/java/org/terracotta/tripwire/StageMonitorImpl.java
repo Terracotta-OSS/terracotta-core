@@ -79,6 +79,6 @@ class StageMonitorImpl implements StageMonitor {
 
   @Override
   public void unregister() {
-    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
+    FlightRecorder.removePeriodicEvent(runnable);
   }
 }

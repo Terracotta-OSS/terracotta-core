@@ -45,6 +45,6 @@ class DiskMonitorImpl implements DiskMonitor {
 
   @Override
   public void unregister() {
-    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
+    FlightRecorder.removePeriodicEvent(runnable);
   }
 }

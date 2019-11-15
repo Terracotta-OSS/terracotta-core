@@ -52,6 +52,6 @@ class MemoryMonitorImpl implements MemoryMonitor {
 
   @Override
   public void unregister() {
-    FlightRecorder.addPeriodicEvent(StageEvent.class, runnable);
+    FlightRecorder.removePeriodicEvent(runnable);
   }
 }
