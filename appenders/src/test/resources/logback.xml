@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+  Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+  -->
+
+<configuration scan="false" scanPeriod="20 seconds" debug="false">
+
+  <property name="CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%15.15t] %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%ex{full}}}"/>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+      <charset>utf8</charset>
+    </encoder>
+  </appender>
+  <!--logger name="com.terracottatech.store.client.DatasetCollector" level="debug"/-->
+
+  <appender name="JFREvent" class="org.terracotta.tripwire.EventAppender"/>
+  
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="JFREvent"/>
+  </root>
+
+  <appender name="JFR" class="org.terracotta.tripwire.DumpAppender">
+     <path>client-artifacts</path>
+  </appender>
+
+  <logger name="com.mycompany.testdatasets" level="INFO">
+     <appender-ref ref="JFR"/>
+  </logger>
+
+</configuration>
