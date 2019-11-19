@@ -95,4 +95,11 @@ public class TripwireFactory {
     }
     return new TripwireRecording(configuration);
   }
+  
+  public static TripwireRecording createTripwireRecording(String configuration, Path dest) {
+    if (!ENABLED) {
+      throw new UnsupportedOperationException("tripwire is unavailable");    
+    }
+    return new TripwireRecording(configuration, dest);
+  }
 }

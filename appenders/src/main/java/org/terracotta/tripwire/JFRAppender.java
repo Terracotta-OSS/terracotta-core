@@ -35,13 +35,16 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
   
   private final Recording continuous;
   private String path;
+  private Path recordings;
   private int maxAgeMinutes = 5;
   private Pattern dumpRegex;
+  private LocalDateTime lastsave = LocalDateTime.MIN;
 
   public JFRAppender() {
     try {
       continuous = new Recording(Configuration.getConfiguration("default"));
       continuous.setToDisk(true);
+      continuous.setDumpOnExit(true);
     } catch (IOException | ParseException boot) {
       throw new RuntimeException(boot);
     }
@@ -59,6 +62,22 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
       continuous.setMaxAge(Duration.ofMinutes(maxAgeMinutes));
     } else {
       continuous.setMaxAge(null);
+    }
+    if (path == null) {
+      path = System.getProperty("user.dir");
+    }
+    recordings = Paths.get(path);
+    if (!recordings.toFile().exists()) {
+      recordings.toFile().mkdirs();
+    }
+    Path inflight = recordings.resolve("inflight.jfr");
+    if (inflight.toFile().exists()) {
+      inflight.toFile().delete();
+    }
+    try {
+      continuous.setDestination(inflight);
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
     }
     continuous.start();
     super.start();
@@ -103,16 +122,16 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
         return;
       }
     }
-    String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now());
-    if (path == null) {
-      path = System.getProperty("user.dir");
+    LocalDateTime now = LocalDateTime.now();
+    if (lastsave.plus(Duration.ofMinutes(1)).isAfter(now)) {
+      //  only dump at a maximum of every minute
+      return;
+    } else {
+      lastsave = now;
     }
-    Path dest = Paths.get(path);
-    if (!dest.toFile().exists()) {
-      dest.toFile().mkdirs();
-    }
+    String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now);
     try {
-      continuous.dump(dest.resolve(timestamp + ".jfr"));
+      continuous.dump(recordings.resolve(timestamp + ".jfr"));
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     }
