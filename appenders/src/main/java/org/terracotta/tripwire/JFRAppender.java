@@ -21,6 +21,8 @@ package org.terracotta.tripwire;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -67,12 +69,20 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
       path = System.getProperty("user.dir");
     }
     recordings = Paths.get(path);
-    if (!recordings.toFile().exists()) {
-      recordings.toFile().mkdirs();
+    if (Files.notExists(recordings)) {
+      try {
+        Files.createDirectories(recordings);
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
-    Path inflight = recordings.resolve("inflight.jfr");
-    if (inflight.toFile().exists()) {
-      inflight.toFile().delete();
+    Path inflight = recordings.resolve("inflight-" + getPID() + ".jfr");
+    if (Files.exists(inflight)) {
+      try {
+        Files.delete(inflight);
+      } catch (IOException ioe) {
+        throw new RuntimeException(ioe);
+      }
     }
     try {
       continuous.setDestination(inflight);
@@ -136,4 +146,13 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
       throw new RuntimeException(ioe);
     }
   }
+  
+  private int getPID() {
+    String vmName = ManagementFactory.getRuntimeMXBean().getName();
+    int index = vmName.indexOf('@');
+
+    if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
+
+    return Integer.parseInt(vmName.substring(0, index));
+  }  
 }

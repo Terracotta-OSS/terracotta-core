@@ -18,10 +18,11 @@
  */
 package org.terracotta.tripwire;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.time.Duration;
@@ -78,7 +79,7 @@ public class TripwireRecording {
   
   private void writeToPath(InputStream is, Path dest) throws IOException {
     byte[] buffer = new byte[1024];
-    try (FileOutputStream fos = new FileOutputStream(dest.toFile())) {
+    try (OutputStream fos = Files.newOutputStream(dest)) {
       int amt = is.read(buffer);
       while (amt >= 0) {
         fos.write(buffer, 0, amt);

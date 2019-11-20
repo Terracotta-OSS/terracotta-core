@@ -19,6 +19,8 @@
 package org.terracotta.tripwire;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import jdk.jfr.Category;
 import jdk.jfr.DataAmount;
@@ -40,7 +42,11 @@ class DiskEvent extends Event implements org.terracotta.tripwire.Event {
   DiskEvent(Path path) {
     File f = path.toFile();
     this.path = path.toString();
-    this.free = f.getFreeSpace();
+    try {
+      this.free = Files.getFileStore(path).getUsableSpace();
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    }
   }
 
   @Override
