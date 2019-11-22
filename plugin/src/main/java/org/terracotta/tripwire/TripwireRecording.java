@@ -34,19 +34,21 @@ import jdk.jfr.Recording;
 
 public class TripwireRecording {
   private final Recording flightRecording;
-
-  TripwireRecording(String flightRecording) {
-    this(flightRecording, null);
-  }
-
-  TripwireRecording(String configuration, Path sendTo) {
+  
+  TripwireRecording(String configuration, Path sendTo, int maxAge, long maxSize) {
     try {
       Configuration c = Configuration.create(new InputStreamReader(getClass().getResourceAsStream("/" + configuration + ".jfc")));
       flightRecording = new Recording(c);
-      flightRecording.setMaxAge(Duration.ofMinutes(5));
+      if (maxAge > 0) {
+        flightRecording.setMaxAge(Duration.ofMinutes(maxAge));
+      }
+      if (maxSize > 0) {
+        flightRecording.setMaxSize(maxSize);
+      }
       flightRecording.setToDisk(true);
       if (sendTo != null) {
         flightRecording.setDestination(sendTo);
+        flightRecording.setDumpOnExit(true);
       }
       flightRecording.start();
     } catch (IOException | ParseException ioe) {

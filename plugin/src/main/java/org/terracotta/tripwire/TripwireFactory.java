@@ -90,16 +90,17 @@ public class TripwireFactory {
   }
   
   public static TripwireRecording createTripwireRecording(String configuration) {
-    if (!ENABLED) {
-      throw new UnsupportedOperationException("tripwire is unavailable");    
-    }
-    return new TripwireRecording(configuration);
+    return TripwireFactory.createTripwireRecording(configuration, null, 5, 0);
   }
   
   public static TripwireRecording createTripwireRecording(String configuration, Path dest) {
+    return TripwireFactory.createTripwireRecording(configuration, dest, 5, 0);
+  }
+
+  public static TripwireRecording createTripwireRecording(String configuration, Path dest, int maxAge, long maxSize) {
     if (!ENABLED) {
       throw new UnsupportedOperationException("tripwire is unavailable");    
     }
-    return new TripwireRecording(configuration, dest);
+    return new TripwireRecording(configuration, dest, maxAge, maxSize);
   }
 }
