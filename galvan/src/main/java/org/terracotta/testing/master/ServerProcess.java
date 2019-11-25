@@ -196,6 +196,10 @@ public class ServerProcess {
     this.isCrashExpected = expect;
   }
   
+  public synchronized boolean isRunning() {
+    return this.isRunning;
+  }
+  
   private synchronized long waitForPid(){
     try {
       while (this.isRunning && this.pid == 0) {
@@ -415,8 +419,14 @@ public class ServerProcess {
     // Can't stop something not running.
       if (this.stateInterlock.isServerRunning(this)) {      
         // Can't stop something unless we determined the PID.
-        long localPid = waitForPid();
-        Assert.assertTrue(localPid > 0);
+        long localPid = 0;
+        while (localPid == 0) {
+          localPid = waitForPid();
+          if (!isRunning()) {
+            //  PID could be zero if the server stops running while waiting for the PID
+            return;
+          }
+        }
         // Log the intent.
         this.harnessLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
         // Mark this as expected.
@@ -436,7 +446,7 @@ public class ServerProcess {
      //  give up the synchronized lock while waiting for the kill process to 
      //  do it's job.  This can deadlock since the event bus will need this lock 
      //  to log events
-          process.waitFor(1, TimeUnit.SECONDS);
+          process.waitFor(5, TimeUnit.SECONDS);
         }
         int result = process.exitValue();
         harnessLogger.output("Attempt to kill server process resulted in:" + result);
