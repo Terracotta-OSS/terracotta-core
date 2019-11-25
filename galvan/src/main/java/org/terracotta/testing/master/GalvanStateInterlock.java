@@ -373,7 +373,7 @@ private final ITestWaiter sharedLockState;
       this.isShuttingDown = true;
     }
 //  trying to debug a Galvan hang where not all the servers are seen
-      long timeExpired = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1);
+      long timeExpired = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2);
       // We wait until there is no active, no passives, no unknown servers, and no running clients.
       while (timeExpired > System.currentTimeMillis() && !checkIfEmpty()) {
         synchronized (this.sharedLockState) {
