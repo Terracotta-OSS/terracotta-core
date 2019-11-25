@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.terracotta.tripwire.Monitor;
+import org.terracotta.tripwire.StageMonitor;
 import org.terracotta.tripwire.TripwireFactory;
 
 /**
@@ -70,7 +70,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private volatile long lastWarnTime = 0;
   private int spinning = 0;
   
-  private Monitor event;
+  private StageMonitor event;
   /**
    * The Constructor.
    * 
@@ -323,7 +323,7 @@ public class StageImpl<EC> implements Stage<EC> {
             long finishRun = System.nanoTime();
             runTime += (finishRun - running);
             count += 1;
-            event.addItem(size(), (finishRun - running));
+            event.eventOccurred(size(), (finishRun - running));
             spinCount = 0;
             spinner = spinning > 0;
           } else {
