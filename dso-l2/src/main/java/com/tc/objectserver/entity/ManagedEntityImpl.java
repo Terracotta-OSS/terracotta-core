@@ -1259,7 +1259,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.payload = payload;
       this.original = r;
       this.concurrency = concurrency;
-      this.event = TripwireFactory.createMessageEvent(id.toString(), concurrency, request.getAction().toString(), request.getNodeID().toLong(), request.getClientInstance().toString(), request.getTransaction().toLong(), request.getTraceID());
+      this.event = TripwireFactory.createMessageEvent(id.toString(), 
+              concurrency, 
+              request.getAction().toString(), 
+              request.getNodeID().toLong(), 
+              request.getClientInstance().toString(), 
+              request.getTransaction().toLong(), 
+              request.getTraceID());
     }
         
     private void start() {
