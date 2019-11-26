@@ -23,11 +23,25 @@ import ch.qos.logback.core.AppenderBase;
 
 public class EventAppender extends AppenderBase<ILoggingEvent> {
   
+  private final static boolean ENABLED;
+  
+  static {
+    boolean check = false;
+    try {
+      Class.forName("java.jfr.Event");
+      check = true;
+    } catch (ClassNotFoundException cnf) {
+    }
+    ENABLED = check;
+  }
+  
   public EventAppender() {
   }
 
   @Override
   protected void append(ILoggingEvent e) {
-    new LogEvent(e.getLoggerName(), e.getLevel().toString(), e.getFormattedMessage()).commit();
+    if (ENABLED) {
+      new LogEvent(e.getLoggerName(), e.getLevel().toString(), e.getFormattedMessage()).commit();
+    }
   }
 }
