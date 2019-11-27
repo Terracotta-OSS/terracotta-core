@@ -458,6 +458,7 @@ public class ServerProcess {
   }
 
   private Process killProcessWindows(long pid) throws InterruptedException {
+    Assert.assertTrue(pid != 0);
     harnessLogger.output("killing windows process");
     Process p = startStandardProcess("taskkill", "/F", "/t", "/pid", String.valueOf(pid));
     // We don't care about the output but we want to make sure that the process can be terminated.
