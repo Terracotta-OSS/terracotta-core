@@ -128,6 +128,7 @@ public class ManagedEntityImplTest {
   @Before
   public void setUp() throws Exception {
     nodeID = mock(ClientID.class);
+    when(nodeID.toLong()).thenReturn(1L);
     entityID = new EntityID(TestEntity.class.getName(), "foo");
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
@@ -152,7 +153,14 @@ public class ManagedEntityImplTest {
     
     Mockito.doAnswer((invoke)->{
       System.out.println(invoke.getArguments()[0]);
-      exec.submit((Runnable)invoke.getArguments()[0]);
+      exec.submit(()->{
+        try {
+          ((Runnable)invoke.getArguments()[0]).run();
+        } catch (Exception e) {
+          e.printStackTrace();
+          throw e;
+        }
+      });
       return null;
     }).when(executionSink).addToSink(ArgumentMatchers.any());
     
@@ -175,7 +183,12 @@ public class ManagedEntityImplTest {
   
   private void invokeOnTransactionHandler(Runnable r) throws ExecutionException, InterruptedException {
     pth.submit((Callable)()->{
-      r.run();
+      try {
+        r.run();
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+      }
       return null;
     }).get();
   }
@@ -871,10 +884,14 @@ public class ManagedEntityImplTest {
   private TestingResponse mockResponse() {
     TestingResponse response = mock(TestingResponse.class);
     CountDownLatch latch = new CountDownLatch(1);
-    doAnswer((invoke)->{System.out.println("complete " + latch);latch.countDown();return null;}).when(response).complete();
-    doAnswer((invoke)->{System.out.println("complete " + latch);latch.countDown();return null;}).when(response).complete(Mockito.any(byte[].class));
-    doAnswer((invoke)->{System.out.println("failure " + latch);latch.countDown();return null;}).when(response).failure(Mockito.any());
-    doAnswer((invoke)->{System.out.println("waitFor " + latch);latch.await();flush();return null;}).when(response).waitFor();
+    doAnswer((invoke)->{
+      System.out.println("complete " + latch);latch.countDown();return null;}).when(response).complete();
+    doAnswer((invoke)->{
+      System.out.println("complete " + latch);latch.countDown();return null;}).when(response).complete(Mockito.any(byte[].class));
+    doAnswer((invoke)->{
+      System.out.println("failure " + latch);latch.countDown();return null;}).when(response).failure(Mockito.any());
+    doAnswer((invoke)->{
+      System.out.println("waitFor " + latch);latch.await();flush();return null;}).when(response).waitFor();
     return response;
   }
 
@@ -940,6 +957,7 @@ public class ManagedEntityImplTest {
     ServerEntityRequest request = mock(ServerEntityRequest.class);
     when(request.getClientInstance()).thenReturn(ClientInstanceID.NULL_ID);
     when(request.getAction()).thenReturn(ServerEntityAction.LOCAL_FLUSH);
+    when(request.getNodeID()).thenReturn(nodeID);
     when(request.getTransaction()).thenReturn(new TransactionID(1));
     when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     return request;

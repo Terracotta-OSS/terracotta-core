@@ -56,6 +56,21 @@ Apache Ivy version: 2.2.0 20100923230623
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <version>${terracotta-apis.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-tripwire-plugin</artifactId>
+      <version>${tc-tripwire.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-tripwire-appenders</artifactId>
+      <version>${tc-tripwire.version}</version>
+    </dependency>
     <!-- tests dependencies -->
     <dependency>
       <groupId>junit</groupId>
@@ -78,17 +93,15 @@ Apache Ivy version: 2.2.0 20100923230623
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- XXX should we even do this -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>packaging-support</artifactId>
-      <version>${terracotta-apis.version}</version>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>

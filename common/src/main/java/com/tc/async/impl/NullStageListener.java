@@ -16,20 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.l2.logging;
+package com.tc.async.impl;
 
-import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
+import com.tc.async.api.StageListener;
 
-import java.io.File;
-import java.util.concurrent.atomic.AtomicBoolean;
+/**
+ *
+ */
+public class NullStageListener implements StageListener {
 
-public class StartupAndSizeBasedTriggeringPolicy<E> extends SizeBasedTriggeringPolicy<E> {
-    private final AtomicBoolean firstTime = new AtomicBoolean();
-
-    public boolean isTriggeringEvent(final File activeFile, final E event) {
-        if (firstTime.compareAndSet(false, true) && activeFile.length() > 0) {
-            return true;
-        }
-        return super.isTriggeringEvent(activeFile, event);
-    }
+  @Override
+  public void stageStalled(String name, long delay, int queueDepth) {
+    // do nothing
+  }
+  
 }

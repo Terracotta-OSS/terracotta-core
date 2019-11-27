@@ -53,7 +53,7 @@ public class ClientConnectionEstablisher {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientConnectionEstablisher.class);
 
   private static final long                 CONNECT_RETRY_INTERVAL;
-  private static final long                 MIN_RETRY_INTERVAL    = 10;
+  private static final long                 MIN_RETRY_INTERVAL    = 1000;
   public static final String                RECONNECT_THREAD_NAME = "ConnectionEstablisher";
 
   private final LinkedHashSet<ConnectionInfo>   connAddressProvider;
@@ -321,6 +321,9 @@ public class ClientConnectionEstablisher {
           Assert.fail();
         } catch (NoActiveException noactive) {
           Assert.fail();
+        } catch (IllegalStateException closed) {
+          callback.restoreConnectionFailed(cmt);
+          reset();
         } catch (MaxConnectionsExceededException e) {
           callback.restoreConnectionFailed(cmt);
           reset();

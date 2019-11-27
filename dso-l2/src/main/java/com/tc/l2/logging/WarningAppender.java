@@ -16,8 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.server;
+package com.tc.l2.logging;
 
-public interface ServerConnectionValidator {
-  boolean isAlive(String name);
+import ch.qos.logback.core.AppenderBase;
+import com.tc.server.TCServerMain;
+
+public class WarningAppender<E> extends AppenderBase<E> {
+
+  public WarningAppender() {
+  }
+
+  @Override
+  protected void append(E eventObject) {
+    TCServerMain.getServer().warn(eventObject);
+  }
 }

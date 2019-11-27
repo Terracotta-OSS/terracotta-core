@@ -16,20 +16,11 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.l2.logging;
+package com.tc.spi;
 
-import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy;
-
-import java.io.File;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-public class StartupAndSizeBasedTriggeringPolicy<E> extends SizeBasedTriggeringPolicy<E> {
-    private final AtomicBoolean firstTime = new AtomicBoolean();
-
-    public boolean isTriggeringEvent(final File activeFile, final E event) {
-        if (firstTime.compareAndSet(false, true) && activeFile.length() > 0) {
-            return true;
-        }
-        return super.isTriggeringEvent(activeFile, event);
-    }
+/**
+ *
+ */
+public interface WarningHandler {
+  void warning(WarningDescription description);
 }

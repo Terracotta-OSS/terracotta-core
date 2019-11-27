@@ -87,4 +87,6 @@ public interface TCServer extends Pauseable {
   String getResourceState();
 
   String getClusterState(PrettyPrinter form);
+  
+  void warn(Object event);
 }

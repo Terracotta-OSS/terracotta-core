@@ -43,7 +43,7 @@ public class ServerConfiguration {
     String bindAddress = server.getBind();
     this.host = server.getHost();
     if (this.host.equalsIgnoreCase(LOCALHOST)) {
-      logger.warn("The specified hostname \"" + this.host
+      logger.info("The specified hostname \"" + this.host
                   + "\" may not work correctly if clients and operator console are connecting from other hosts. " + "Replace \""
                   + this.host + "\" with an appropriate hostname in configuration.");
     }

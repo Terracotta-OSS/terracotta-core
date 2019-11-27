@@ -19,7 +19,6 @@
 package org.terracotta.voter;
 
 import java.util.Arrays;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -32,8 +31,8 @@ public class OverrideVote {
     if (args.length != 1) {
       throw new IllegalArgumentException(Arrays.toString(args));
     }
-    ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("root");
-    logger.setLevel(ch.qos.logback.classic.Level.INFO);
+//    ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("root");
+//    logger.setLevel(ch.qos.logback.classic.Level.INFO);
     new TCVoterImpl().overrideVote(args[0]);
   }
   

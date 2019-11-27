@@ -14,9 +14,13 @@
       <pattern>%d %p - %m%n</pattern>
     </encoder>
   </appender>
+  
+  <appender name="LogToJFR" class="org.terracotta.tripwire.EventAppender">
+  </appender>
 
   <root level="INFO">
     <appender-ref ref="TC_BASE" />
+    <appender-ref ref="LogToJFR" />
   </root>
 
   <logger name="org.terracotta.console" level="INFO">

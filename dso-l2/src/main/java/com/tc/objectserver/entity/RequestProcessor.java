@@ -23,7 +23,6 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;

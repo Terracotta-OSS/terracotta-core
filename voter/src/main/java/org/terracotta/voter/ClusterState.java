@@ -22,7 +22,6 @@ import com.terracotta.connection.api.DiagnosticConnectionService;
 import com.terracotta.diagnostic.Diagnostics;
 import java.net.URI;
 import java.util.Properties;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -33,8 +32,6 @@ public class ClusterState {
   /**
    */
   public static void main(String[] args) throws Exception {
-    ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("root");
-    logger.setLevel(ch.qos.logback.classic.Level.INFO);
     URI uri = URI.create("diagnostic://" + args[0]);
     System.out.println(
         CONNECTION_SERVICE.connect(uri, new Properties()).getEntityRef(Diagnostics.class, 1, "root").fetchEntity(null).getClusterState()

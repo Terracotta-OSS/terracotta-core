@@ -364,8 +364,6 @@ public class ActiveVoter implements AutoCloseable {
   }
 
   public static void main(String[] args) {
-    ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("root");
-    logger.setLevel(ch.qos.logback.classic.Level.INFO);
     TCVoter voter = new TCVoterImpl();
     voter.register(UUID.getUUID().toString(), args);
   }
