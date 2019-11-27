@@ -63,6 +63,12 @@
       <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-tripwire-plugin</artifactId>
+      <version>${tripwire.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
