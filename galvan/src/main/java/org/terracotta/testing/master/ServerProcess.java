@@ -422,7 +422,7 @@ public class ServerProcess {
         long localPid = 0;
         while (localPid == 0) {
           localPid = waitForPid();
-          if (!isRunning()) {
+          if (localPid == 0 && !isRunning()) {
             //  PID could be zero if the server stops running while waiting for the PID
             return;
           }
@@ -437,9 +437,9 @@ public class ServerProcess {
         // Destroy the process.
         if (TestHelpers.isWindows()){
           //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
-          process = killProcessWindows(this.pid);
+          process = killProcessWindows(localPid);
         } else {
-          process = killProcessUnix(this.pid);
+          process = killProcessUnix(localPid);
         }
         while (process.isAlive()) {
           harnessLogger.output("Waiting for server to exit PID:" + localPid);
@@ -469,6 +469,7 @@ public class ServerProcess {
   }
 
   private Process killProcessUnix(long pid) throws InterruptedException {
+    Assert.assertTrue(pid != 0);
     Process killProcess = startStandardProcess("kill", String.valueOf(pid));
     // We don't care about the output but we want to make sure that the process can be terminated.
     discardProcessOutput(killProcess);
