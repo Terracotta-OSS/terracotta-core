@@ -30,7 +30,7 @@ import jdk.jfr.Period;
 import jdk.jfr.StackTrace;
 
 @Category("Tripwire")
-@Period("1 s")
+@Period("5 s")
 @Label("Disk")
 @StackTrace(false)
 class DiskEvent extends Event implements org.terracotta.tripwire.Event {

@@ -26,7 +26,7 @@ import jdk.jfr.Period;
 import jdk.jfr.StackTrace;
 
 @Category("Tripwire")
-@Period("1 s")
+@Period("5 s")
 @Label("Offheap Memory")
 @StackTrace(false)
 class MemoryEvent extends Event implements org.terracotta.tripwire.Event {
