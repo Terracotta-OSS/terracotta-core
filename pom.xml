@@ -39,7 +39,7 @@ limitations under the License.
     <junit.version>4.11</junit.version>
     <mockito.version>1.10.19</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
-    <tripwire.version>1.0.0-pre3</tripwire.version>
+    <tripwire.version>1.0.0-pre4</tripwire.version>
   </properties>
 
   <modules>
