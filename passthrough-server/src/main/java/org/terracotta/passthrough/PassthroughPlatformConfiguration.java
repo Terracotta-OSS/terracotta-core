@@ -18,6 +18,8 @@
  */
 package org.terracotta.passthrough;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Vector;
 
@@ -30,7 +32,7 @@ import org.terracotta.entity.PlatformConfiguration;
  * In the future, message execution will likely be split out into other threads to better support entity read-write locking
  * and also test concurrency strategy.
  */
-public class PassthroughPlatformConfiguration implements PlatformConfiguration {
+public class PassthroughPlatformConfiguration implements PlatformConfiguration, AutoCloseable {
   private final int port;
   private final String serverName;
   private final Collection<Object> extendedConfigurationObjects;
@@ -65,5 +67,26 @@ public class PassthroughPlatformConfiguration implements PlatformConfiguration {
       }
     }
     return filtered;
+  }
+
+  @Override
+  public void close() {
+    for (Object instance : this.extendedConfigurationObjects) {
+      if (instance instanceof Closeable) {
+        try {
+          ((Closeable)instance).close();
+        } catch (IOException ioe) {
+          // We do not permit exceptions here since that would imply a bug in the service being tested.
+          Assert.unexpected(ioe);
+        }
+      } else if (instance instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable)instance).close();
+        } catch (Exception e) {
+          // We do not permit exceptions here since that would imply a bug in the service being tested.
+          Assert.unexpected(e);
+        }
+      }
+    }
   }
 }
