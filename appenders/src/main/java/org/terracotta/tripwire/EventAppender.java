@@ -44,4 +44,8 @@ public class EventAppender extends AppenderBase<ILoggingEvent> {
       new LogEvent(e.getLoggerName(), e.getLevel().toString(), e.getFormattedMessage()).commit();
     }
   }
+  
+  public static boolean isEnabled() {
+    return ENABLED;
+  }
 }

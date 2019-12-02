@@ -29,42 +29,56 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import jdk.jfr.Configuration;
 import jdk.jfr.Recording;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JFRAppender extends AppenderBase<ILoggingEvent> {
   
-  private final Recording continuous;
+  private Recording continuous;
   private String path;
+  private String configuration = "default";
   private Path recordings;
   private int maxAgeMinutes = 5;
   private Pattern dumpRegex;
   private LocalDateTime lastsave = LocalDateTime.MIN;
+  private static final Logger LOGGER = LoggerFactory.getLogger(JFRAppender.class);
 
   public JFRAppender() {
-    try {
-      continuous = new Recording(Configuration.getConfiguration("default"));
-      continuous.setToDisk(true);
-      continuous.setDumpOnExit(true);
-    } catch (IOException | ParseException boot) {
-      throw new RuntimeException(boot);
-    }
+    super();
+
   }
 
   @Override
   public void stop() {
-    continuous.stop();
+    if (continuous != null) {
+      continuous.stop();
+    }
     super.stop();
   }
-
-  @Override
-  public void start() {
-    if (maxAgeMinutes > 0) {
-      continuous.setMaxAge(Duration.ofMinutes(maxAgeMinutes));
-    } else {
-      continuous.setMaxAge(null);
+  
+  private Recording createRecording() {
+    try {
+      continuous = new Recording(Configuration.getConfiguration(configuration));
+      continuous.setToDisk(true);
+      continuous.setDumpOnExit(true);
+      if (maxAgeMinutes > 0) {
+        continuous.setMaxAge(Duration.ofMinutes(maxAgeMinutes));
+      } else {
+        continuous.setMaxAge(null);
+      }
+      continuous.setDestination(resolveFilePath());
+    } catch (IOException | ParseException boot) {
+      throw new RuntimeException(boot);
     }
+
+    return continuous;
+  }
+  
+  private Path resolveFilePath() {
     if (path == null) {
       path = System.getProperty("user.dir");
     }
@@ -84,12 +98,17 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
         throw new RuntimeException(ioe);
       }
     }
-    try {
-      continuous.setDestination(inflight);
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
+    return inflight;
+  }
+
+  @Override
+  public void start() {
+    if (EventAppender.isEnabled()) {
+      createRecording().start();
+    } else {
+      LOGGER.info("JFRAppender disabled, Java Flight Recorder not found");
+      continuous = null;
     }
-    continuous.start();
     super.start();
   }
 
@@ -105,6 +124,14 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     return maxAgeMinutes;
   }
 
+  public String getConfiguration() {
+    return configuration;
+  }
+
+  public void setConfiguration(String configuration) {
+    this.configuration = configuration;
+  }
+
   public void setMaxAgeMinutes(int maxAgeMinutes) {
     if (maxAgeMinutes > 0) {
       this.maxAgeMinutes = maxAgeMinutes;
@@ -113,7 +140,7 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     }
   }
   
-  public void setDumpRegex(String regex) {
+  public void setRegex(String regex) {
     if (regex != null) {
       dumpRegex = Pattern.compile(regex);
     } else {
@@ -121,7 +148,7 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     }
   }
   
-  public String getDumpRegex() {
+  public String getRegex() {
     return dumpRegex != null ? dumpRegex.pattern() : null;
   }
 
@@ -141,7 +168,9 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     }
     String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now);
     try {
-      continuous.dump(recordings.resolve(timestamp + ".jfr"));
+      if (continuous != null) {
+        continuous.dump(recordings.resolve(timestamp + ".jfr"));
+      }
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);
     }
