@@ -64,12 +64,6 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-tripwire-plugin</artifactId>
-      <version>${tc-tripwire.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tc-tripwire-appenders</artifactId>
-      <version>${tc-tripwire.version}</version>
     </dependency>
     <!-- tests dependencies -->
     <dependency>

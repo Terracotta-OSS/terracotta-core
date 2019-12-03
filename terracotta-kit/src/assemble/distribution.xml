@@ -117,12 +117,8 @@ The Initial Developer of the Covered Software is
       <outputDirectory>client/logging/impl</outputDirectory>
       <includes>
         <include>ch.qos.logback:logback-core</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
-      <outputDirectory>client/logging/impl</outputDirectory>
-      <includes>
         <include>ch.qos.logback:logback-classic</include>
+        <include>org.terracotta:tc-tripwire-appenders</include>
       </includes>
     </dependencySet>
   </dependencySets>
