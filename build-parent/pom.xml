@@ -138,7 +138,16 @@
         <artifactId>logback-classic</artifactId>
         <version>${logback.version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>tc-tripwire-plugin</artifactId>
+        <version>${tc-tripwire.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>tc-tripwire-appenders</artifactId>
+        <version>${tc-tripwire.version}</version>
+      </dependency>
       <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
         <groupId>org.terracotta.internal</groupId>
