@@ -98,14 +98,10 @@ public class TripwireFactory {
   }
 
   public static TripwireRecording createTripwireRecording(String configuration, Path dest, int maxAge, long maxSize) {
-    if (!ENABLED) {
+    if (ENABLED) {
       return new TripwireRecording(configuration, dest, maxAge, maxSize);
     } else {
       throw new UnsupportedOperationException("tripwire is unavailable");    
     }
-  }
-  
-  public static void main(String[] args) {
-    System.out.println(TripwireFactory.createStageEvent("test", "test"));
   }
 }
