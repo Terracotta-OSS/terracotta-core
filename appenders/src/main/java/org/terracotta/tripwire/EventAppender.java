@@ -28,7 +28,7 @@ public class EventAppender extends AppenderBase<ILoggingEvent> {
   static {
     boolean check = false;
     try {
-      Class.forName("java.jfr.Event");
+      Class.forName("jdk.jfr.Event");
       check = true;
     } catch (ClassNotFoundException cnf) {
     }
