@@ -32,6 +32,8 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -97,7 +99,7 @@ public class DefaultConfigurationProviderTest {
 
   @Test
   public void testExplicitConfigWithRealProvider() throws ConfigurationException {
-    String configurationPath = this.getClass().getResource("/simple-tc-config.xml").getPath();
+    String configurationPath = getFilePath(this.getClass().getResource("/simple-tc-config.xml"));
     String[] args = {CONFIG_PATH.getShortOption(), configurationPath };
 
     systemOutRule.clearLog();
@@ -113,7 +115,7 @@ public class DefaultConfigurationProviderTest {
 
   @Test
   public void testExplicitConfigWithShortOption() throws ConfigurationException {
-    String[] args = {CONFIG_PATH.getShortOption(), this.getClass().getResource("/simple-tc-config.xml").getPath()};
+    String[] args = {CONFIG_PATH.getShortOption(), getFilePath(this.getClass().getResource("/simple-tc-config.xml")) };
     provider.initialize(asList(args));
 
     validateConfiguration(provider.getConfiguration());
@@ -121,7 +123,7 @@ public class DefaultConfigurationProviderTest {
 
   @Test
   public void testExplicitConfigWithLongOption() throws ConfigurationException {
-    String[] args = {CONFIG_PATH.getLongOption(), this.getClass().getResource("/simple-tc-config.xml").getPath()};
+    String[] args = {CONFIG_PATH.getLongOption(), getFilePath(this.getClass().getResource("/simple-tc-config.xml"))};
     provider.initialize(asList(args));
 
     validateConfiguration(provider.getConfiguration());
@@ -142,7 +144,7 @@ public class DefaultConfigurationProviderTest {
   @Test
   public void testExplicitConfigWithSystemProperty() throws ConfigurationException {
     System.setProperty(CONFIG_FILE_PROPERTY_NAME,
-                       this.getClass().getResource("/simple-tc-config.xml").getPath());
+                       getFilePath(this.getClass().getResource("/simple-tc-config.xml")));
     try {
       provider.initialize(Collections.emptyList());
 
@@ -213,11 +215,19 @@ public class DefaultConfigurationProviderTest {
 
   @Test
   public void testGetConfigurationParamsDescription() throws Exception {
-    String[] args = {CONFIG_PATH.getShortOption(), this.getClass().getResource("/simple-tc-config.xml").getPath()};
+    String[] args = {CONFIG_PATH.getShortOption(), getFilePath(this.getClass().getResource("/simple-tc-config.xml"))};
 
     provider.initialize(asList(args));
 
     assertThat(provider.getConfigurationParamsDescription(), containsString(CONFIG_PATH.getShortOption()));
+  }
+
+  private String getFilePath(URL resource) {
+    try {
+      return Paths.get(resource.toURI()).toString();
+    } catch (URISyntaxException e) {
+      throw new AssertionError("Unexpected URL parsing error", e);
+    }
   }
 
   private void validateConfiguration(Configuration configuration) {
@@ -230,11 +240,11 @@ public class DefaultConfigurationProviderTest {
   private static class ThrowableCauseMatcher extends BaseMatcher<Throwable> {
 
     private final Class<? extends Throwable> exceptionType;
-    private final String errorMessage;
+    private final Pattern errorMessage;
 
     private ThrowableCauseMatcher(Class<? extends Throwable> exceptionType, String errorMessage) {
       this.exceptionType = exceptionType;
-      this.errorMessage = errorMessage;
+      this.errorMessage = Pattern.compile(errorMessage);
     }
 
     @Override
@@ -249,7 +259,7 @@ public class DefaultConfigurationProviderTest {
       if (cause == null) return false;
       if (cause.getMessage() == null) return false;
 
-      return cause.getClass().equals(exceptionType) && Pattern.compile(cause.getMessage()).matcher(cause.getMessage()).matches();
+      return cause.getClass().equals(exceptionType) && errorMessage.matcher(cause.getMessage()).matches();
     }
   }
 }
