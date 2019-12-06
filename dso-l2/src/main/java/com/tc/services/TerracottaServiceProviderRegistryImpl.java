@@ -23,14 +23,13 @@ import com.tc.server.TCServerMain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.util.Assert;
-import com.terracotta.config.Configuration;
+import org.terracotta.config.Configuration;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

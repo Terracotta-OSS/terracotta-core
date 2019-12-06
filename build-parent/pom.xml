@@ -153,13 +153,19 @@
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${terracotta-configuration.version}</version>
+        <classifier>jar-with-dependencies</classifier>
+        <!-- dependencies shaded inside the jar -->
+        <exclusions>
+            <exclusion>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.terracotta</groupId>
+                <artifactId>tcconfig-schema</artifactId>
+            </exclusion>
+        </exclusions>
       </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>tcconfig-schema</artifactId>
-        <version>${terracotta-configuration.version}</version>
-      </dependency>
-
       <!-- tests -->
       <dependency>
         <groupId>org.mockito</groupId>

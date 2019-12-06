@@ -22,29 +22,28 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.terracotta.config.service.ServiceConfigParser;
 
 /**
  *
  */
-public class ServiceClassLoader extends ClassLoader {
+public class ServiceClassLoader<T> extends ClassLoader {
   
-  private final Map<String, Class<?>> cached;
+  private final Map<String, Class<? extends T>> cached;
   
-  public ServiceClassLoader(List<Class<? extends ServiceConfigParser>> svcs) {
-    Map<String, Class<?>> set = new HashMap<>();
-    for (Class<?> svc : svcs) {
+  public ServiceClassLoader(List<Class<? extends T>> svcs) {
+    Map<String, Class<? extends T>> set = new HashMap<>();
+    for (Class<? extends T> svc : svcs) {
       set.put(svc.getName(), svc);
     }
     cached = Collections.unmodifiableMap(set);
   }
 
   @Override
-  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    Class<?> get = cached.get(name);
+  protected Class<? extends T> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    Class<? extends T> get = cached.get(name);
     if (get != null) {
       return get;
     }
-    return super.loadClass(name, resolve);
+    return (Class<? extends T>)super.loadClass(name, resolve);
   }
 }

@@ -17,34 +17,25 @@
  */
 package com.tc.config;
 
-import org.terracotta.config.Property;
-import org.terracotta.config.Server;
-import org.terracotta.config.Servers;
-import org.terracotta.config.TcProperties;
 
 import com.tc.classloader.ServiceLocator;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
-import com.terracotta.config.Configuration;
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.Configuration;
+import org.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.ServerConfiguration;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Properties;
+import org.terracotta.config.ConfigurationException;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 
@@ -61,32 +52,27 @@ public class ServerConfigurationManager implements PrettyPrintable {
                                     ConfigurationProvider configurationProvider,
                                     boolean consistentStartup,
                                     boolean upgrade,
-                                    ClassLoader classLoader,
-                                    String[] startUpArgs) throws ConfigurationSetupException {
+                                    ServiceLocator classLoader,
+                                    String[] startUpArgs) throws ConfigurationException {
     Objects.requireNonNull(configurationProvider);
     Objects.requireNonNull(classLoader);
     Objects.requireNonNull(startUpArgs);
 
     this.configurationProvider = configurationProvider;
     this.configuration = configurationProvider.getConfiguration();
-    this.serviceLocator = new ServiceLocator(classLoader);
+    this.serviceLocator = classLoader;
 
-    Servers servers = configuration.getPlatformConfiguration().getServers();
-
-    if (servers == null || servers.getServer() == null) {
-      throw new NullPointerException("servers is null");
+    this.serverConfiguration = this.configuration.getDefaultServerConfiguration(serverName);
+    
+    if (this.serverConfiguration == null) {
+      if (serverName != null) {
+        throw new ConfigurationException("server:" + serverName + " is not a valid server");
+      } else {
+        throw new ConfigurationException("unable to determine a valid default server");
+      } 
     }
 
-    Server defaultServer;
-    if (serverName != null) {
-      defaultServer = findServer(servers, serverName);
-    } else {
-      defaultServer = getDefaultServer(servers);
-    }
-
-    this.serverConfiguration = new ServerConfiguration(defaultServer, servers.getClientReconnectWindow());
-
-    Map<String, ServerConfiguration> serverConfigurationMap = getServerConfigurationMap(servers);
+    Map<String, ServerConfiguration> serverConfigurationMap = getServerConfigurationMap(configuration.getServerConfigurations());
 
     this.groupConfiguration = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
 
@@ -95,7 +81,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
     this.startUpArgs = Arrays.copyOf(startUpArgs, startUpArgs.length);
 
-    processTcProperties(configuration.getPlatformConfiguration().getTcProperties());
+    processTcProperties(configuration.getTcProperties());
   }
 
   public String[] getProcessArguments() {
@@ -143,81 +129,21 @@ public class ServerConfigurationManager implements PrettyPrintable {
     return configurationProvider;
   }
 
-  private static Server findServer(Servers servers, String serverName) throws ConfigurationSetupException {
-    for (Server server : servers.getServer()) {
-      if (server.getName().equals(serverName)) {
-        return server;
-      }
-    }
-
-    throw new ConfigurationSetupException("You have specified server name '" + serverName
-                                          + "' which does not exist in the specified configuration. \n\n"
-                                          + "Please check your settings and try again.");
-  }
-
-  private Server getDefaultServer(Servers servers) throws ConfigurationSetupException {
-    List<Server> serverList = servers.getServer();
-    if (serverList.size() == 1) {
-      return serverList.get(0);
-    }
-
-    try {
-      Set<InetAddress> allLocalInetAddresses = getAllLocalInetAddresses();
-      Server defaultServer = null;
-      for (Server server : serverList) {
-        if (allLocalInetAddresses.contains(InetAddress.getByName(server.getHost()))) {
-          if (defaultServer == null) {
-            defaultServer = server;
-          } else {
-            throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and" + " there are "
-                                                  + serverList.size() + " servers defined in the Terracotta configuration file. "
-                                                  + "The script can not automatically choose between the following server names: "
-                                                  + defaultServer.getName() + ", " + server.getName()
-                                                  + ". Pass the desired server name to the script using " + "the -n flag.");
-
-          }
-        }
-      }
-      return defaultServer;
-    } catch (UnknownHostException uhe) {
-      throw new ConfigurationSetupException("Exception when trying to find the default server configuration", uhe);
-    }
-  }
-
-  private Set<InetAddress> getAllLocalInetAddresses() {
-    Set<InetAddress> localAddresses = new HashSet<>();
-    Enumeration<NetworkInterface> networkInterfaces;
-    try {
-      networkInterfaces = NetworkInterface.getNetworkInterfaces();
-    } catch (SocketException e) {
-      throw new RuntimeException(e);
-    }
-    while (networkInterfaces.hasMoreElements()) {
-      Enumeration<InetAddress> inetAddresses = networkInterfaces.nextElement().getInetAddresses();
-      while (inetAddresses.hasMoreElements()) {
-        localAddresses.add(inetAddresses.nextElement());
-      }
-    }
-    return localAddresses;
-  }
-
-  private Map<String, ServerConfiguration> getServerConfigurationMap(Servers servers) {
+  private Map<String, ServerConfiguration> getServerConfigurationMap(Collection<ServerConfiguration> servers) {
     Map<String, ServerConfiguration> serverConfigurationMap = new HashMap<>();
-    for (Server server : servers.getServer()) {
+    for (ServerConfiguration server : servers) {
       if (server.getName() != null) {
-        serverConfigurationMap.put(server.getName(), new ServerConfiguration(server, servers.getClientReconnectWindow()));
+        serverConfigurationMap.put(server.getName(), server);
       }
     }
     return serverConfigurationMap;
   }
 
-  private static void processTcProperties(TcProperties tcProperties) {
+  private static void processTcProperties(Properties tcProperties) {
     Map<String, String> propMap = new HashMap<>();
 
     if (tcProperties != null) {
-      for (Property tcp : tcProperties.getProperty()) {
-        propMap.put(tcp.getName().trim(), tcp.getValue().trim());
-      }
+      tcProperties.forEach((k, v)->propMap.put(k.toString().trim(), v.toString().trim()));
     }
 
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(propMap);

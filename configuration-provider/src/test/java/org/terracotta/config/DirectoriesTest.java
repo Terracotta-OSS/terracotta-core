@@ -17,7 +17,7 @@
  *
  */
 
-package com.tc.config;
+package org.terracotta.config;
 
 import org.junit.After;
 import org.junit.Before;

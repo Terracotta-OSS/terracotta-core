@@ -16,12 +16,16 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tcconfig-schema</artifactId>
-      <version>${terracotta-configuration.version}</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

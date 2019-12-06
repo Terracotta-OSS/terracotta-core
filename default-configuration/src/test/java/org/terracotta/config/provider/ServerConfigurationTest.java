@@ -15,7 +15,7 @@
  * Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package org.terracotta.config.provider;
 
 import org.junit.Test;
 import org.terracotta.config.BindPort;
@@ -39,13 +39,13 @@ public class ServerConfigurationTest {
   @Test
   public void testConfiguration() {
     int reconnectWindow = 100;
-    ServerConfiguration serverConfiguration =
-        new ServerConfiguration(createServer(false), reconnectWindow);
+    ServerConfigurationImpl serverConfiguration =
+        new ServerConfigurationImpl(createServer(false), reconnectWindow);
 
-    assertThat(serverConfiguration.getTsaPort().getBind(), is(LOCALHOST));
-    assertThat(serverConfiguration.getGroupPort().getBind(), is(LOCALHOST));
-    assertThat(serverConfiguration.getTsaPort().getValue(), is(TSA_PORT));
-    assertThat(serverConfiguration.getGroupPort().getValue(), is(GROUP_PORT));
+    assertThat(serverConfiguration.getTsaPort().getHostName(), is(LOCALHOST));
+    assertThat(serverConfiguration.getGroupPort().getHostName(), is(LOCALHOST));
+    assertThat(serverConfiguration.getTsaPort().getPort(), is(TSA_PORT));
+    assertThat(serverConfiguration.getGroupPort().getPort(), is(GROUP_PORT));
     assertThat(serverConfiguration.getName(), is(SERVER_NAME));
     assertThat(serverConfiguration.getHost(), is(LOCALHOST));
     assertThat(serverConfiguration.getLogsLocation(), is(new File(LOGS)));
@@ -54,11 +54,11 @@ public class ServerConfigurationTest {
 
   @Test
   public void testConfigurationWithWildcards() {
-    ServerConfiguration serverConfiguration =
-        new ServerConfiguration(createServer(true), 100);
+    ServerConfigurationImpl serverConfiguration =
+        new ServerConfigurationImpl(createServer(true), 100);
 
-    assertThat(serverConfiguration.getTsaPort().getBind(), is(LOCALHOST));
-    assertThat(serverConfiguration.getGroupPort().getBind(), is(LOCALHOST));
+    assertThat(serverConfiguration.getTsaPort().getHostName(), is(LOCALHOST));
+    assertThat(serverConfiguration.getGroupPort().getHostName(), is(LOCALHOST));
   }
 
   private static Server createServer(boolean wildcards) {

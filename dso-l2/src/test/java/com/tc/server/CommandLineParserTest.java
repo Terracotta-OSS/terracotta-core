@@ -23,7 +23,7 @@ import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.ExpectedException;
 
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.ConfigurationProvider;
 
 import static com.tc.server.CommandLineParser.Opt.CONSISTENT_STARTUP;
 import static com.tc.server.CommandLineParser.Opt.SERVER_NAME;

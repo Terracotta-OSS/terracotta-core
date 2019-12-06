@@ -67,6 +67,10 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/server</outputDirectory>
     </fileSet>
     <fileSet>
+      <directory>src/assemble/init</directory>
+      <outputDirectory>/init</outputDirectory>
+    </fileSet>
+    <fileSet>
       <directory>src/assemble/client</directory>
       <outputDirectory>/client</outputDirectory>
     </fileSet>
@@ -80,8 +84,6 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/server/lib</outputDirectory>
       <excludes>
         <exclude>terracotta-${project.version}.jar</exclude>
-        <exclude>client**</exclude>
-        <exclude>entity-client**</exclude>
       </excludes>      
     </fileSet>
   </fileSets>
@@ -91,10 +93,16 @@ The Initial Developer of the Covered Software is
     <file>
       <source>${project.build.directory}/server-lib/terracotta-${project.version}.jar</source>
       <outputDirectory>/server/lib</outputDirectory>
-      <destName>tc.jar</destName>      
+      <destName>tc.jar</destName>    
     </file>
   </files>
   <dependencySets>
+    <dependencySet>
+      <outputDirectory>server/plugins/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta.internal:default-configuration</include>
+      </includes>
+    </dependencySet>
     <dependencySet>
       <outputDirectory>client/lib</outputDirectory>
       <includes>

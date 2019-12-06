@@ -16,27 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.cli;
+package org.terracotta.config;
 
-import org.terracotta.config.util.DefaultSubstitutor;
-public class JaxbUtil {
 
-  /**
-   * Make a new instance of the given type and populate any defaults declared from the schema. NOTE: This method is expensive, invoke at your own risk
-   */
-  public static <T> T newInstanceWithDefaults(Class<T> type) {
-    T instance;
-    try {
-      instance = type.newInstance();
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    DefaultSubstitutor.applyDefaults(instance);
-    return instance;
-  }
+import java.io.File;
+import java.net.InetSocketAddress;
 
-  private JaxbUtil() {
-    //
-  }
+public interface ServerConfiguration {
+  InetSocketAddress getTsaPort();
 
+  InetSocketAddress getGroupPort();
+
+  String getHost();
+
+  String getName();
+  
+  int getClientReconnectWindow();
+
+  void setClientReconnectWindow(int value);
+
+  File getLogsLocation();
 }

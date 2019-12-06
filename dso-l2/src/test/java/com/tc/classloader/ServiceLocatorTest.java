@@ -4,9 +4,9 @@
  */
 package com.tc.classloader;
 
-import static com.tc.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
+import static org.terracotta.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
-import com.tc.config.Directories;
+import org.terracotta.config.Directories;
 import com.tc.util.Assert;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;

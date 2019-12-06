@@ -15,24 +15,38 @@
  * Terracotta, Inc., a Software AG company
  *
  */
+package org.terracotta.config;
 
-package com.terracotta.config;
-
-import org.terracotta.config.TcConfig;
-import org.terracotta.entity.ServiceProviderConfiguration;
-
-import java.util.List;
-
-public interface Configuration {
-  TcConfig getPlatformConfiguration();
-
-  List<ServiceProviderConfiguration> getServiceConfigurations();
-
-  <T> List<T> getExtendedConfiguration(Class<T> type);
-
-  String getRawConfiguration();
-
-  default boolean isPartialConfiguration() {
-    return false;
+/**
+ *
+ */
+public class FailoverBehavior {
+  public enum Type {
+    AVAILABILITY, CONSISTENCY;
   }
+  
+  private final Type type;
+  private final int voters;
+
+  public FailoverBehavior(Type type, int voters) {
+    this.type = type;
+    this.voters = voters;
+  }
+  
+  public Type getBehaviorType() {
+    return type;
+  }
+  
+  public int getExternalVoters() {
+    return voters;
+  }
+  
+  public boolean isAvailability() {
+    return type == Type.AVAILABILITY;
+  }
+  
+  
+  public boolean isConsistency() {
+    return type == Type.CONSISTENCY;
+  }  
 }

@@ -16,22 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package com.tc.server;
 
-public class TcProperty {
-  private String name;
-  private String value;
-
-  public TcProperty(String name, String value) {
-    this.name = name;
-    this.value = value;
-  }
-
-  public String getPropertyName() {
-    return name;
-  }
-
-  public String getPropertyValue() {
-    return value;
-  }
+/**
+ *
+ * @author mscott
+ */
+public interface TestInterface {
+  public Object child();
 }

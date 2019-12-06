@@ -15,8 +15,10 @@
  * Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package org.terracotta.config.provider;
 
+import com.tc.classloader.ServiceLocator;
+import com.tc.util.Assert;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Before;
@@ -29,8 +31,8 @@ import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import com.terracotta.config.Configuration;
-import com.terracotta.config.ConfigurationException;
+import org.terracotta.config.Configuration;
+import org.terracotta.config.ConfigurationException;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -41,17 +43,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.tc.config.DefaultConfigurationProvider.CONFIG_FILE_PROPERTY_NAME;
-import static com.tc.config.DefaultConfigurationProvider.DEFAULT_CONFIG_NAME;
-import static com.tc.config.DefaultConfigurationProvider.Opt.CONFIG_PATH;
+
 import java.nio.file.FileAlreadyExistsException;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.Directories;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.CONFIG_FILE_PROPERTY_NAME;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.DEFAULT_CONFIG_NAME;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
 
 public class DefaultConfigurationProviderTest {
 
@@ -83,7 +88,7 @@ public class DefaultConfigurationProviderTest {
 
   @Before
   public void setUp() throws Exception {
-    TcConfiguration tcConfiguration = mock(TcConfiguration.class);
+    final TcConfiguration tcConfiguration = mock(TcConfiguration.class);
     when(tcConfiguration.getServiceConfigurations()).thenReturn(serviceProviderConfigurations);
     when(tcConfiguration.getPlatformConfiguration()).thenReturn(tcConfig);
     when(tcConfiguration.getExtendedConfiguration(any())).thenReturn(extendedConfigurations);
@@ -96,6 +101,24 @@ public class DefaultConfigurationProviderTest {
       }
     };
   }
+  
+  @Test
+  public void testServiceLoad() throws Exception {
+    List<Class<? extends ConfigurationProvider>> loader = new ServiceLocator(this.getClass().getClassLoader()).getImplementations(ConfigurationProvider.class);
+    Assert.assertTrue(loader.size() > 0);
+  }
+  
+  @Test
+  public void testJaxbLoad() throws Exception {
+    ServiceLocator locate = new ServiceLocator(this.getClass().getClassLoader());
+    List<Class<? extends ConfigurationProvider>> loader = locate.getImplementations(ConfigurationProvider.class);
+    for (Class<? extends ConfigurationProvider> check : loader) {
+      if (check.getName().contains("Test")) {
+        check.newInstance().initialize(Collections.emptyList());
+      }
+    }
+    Assert.assertTrue(loader.size() > 0);
+  }  
 
   @Test
   public void testExplicitConfigWithRealProvider() throws ConfigurationException {
@@ -146,7 +169,7 @@ public class DefaultConfigurationProviderTest {
     System.setProperty(CONFIG_FILE_PROPERTY_NAME,
                        getFilePath(this.getClass().getResource("/simple-tc-config.xml")));
     try {
-      provider.initialize(Collections.emptyList());
+      provider.initialize(Collections.<String>emptyList());
 
       validateConfiguration(provider.getConfiguration());
     } finally {
@@ -164,7 +187,7 @@ public class DefaultConfigurationProviderTest {
     try {
       String errorMessage = ".*using the system property.*not found";
       expectedException.expect(new ThrowableCauseMatcher(RuntimeException.class, errorMessage));
-      provider.initialize(Collections.emptyList());
+      provider.initialize(Collections.<String>emptyList());
     } finally {
       System.clearProperty(CONFIG_FILE_PROPERTY_NAME);
     }
@@ -176,7 +199,7 @@ public class DefaultConfigurationProviderTest {
     Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), configurationFile);
 
     try {
-      provider.initialize(Collections.emptyList());
+      provider.initialize(Collections.<String>emptyList());
 
       validateConfiguration(provider.getConfiguration());
     } finally {
@@ -191,7 +214,7 @@ public class DefaultConfigurationProviderTest {
       Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), configurationFile);
 
       try {
-        provider.initialize(Collections.emptyList());
+        provider.initialize(Collections.<String>emptyList());
 
         validateConfiguration(provider.getConfiguration());
       } finally {
@@ -208,7 +231,7 @@ public class DefaultConfigurationProviderTest {
     System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, temporaryDirectory.getParent().toString());
     Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), Directories.getDefaultConfigFile().toPath());
 
-    provider.initialize(Collections.emptyList());
+    provider.initialize(Collections.<String>emptyList());
 
     validateConfiguration(provider.getConfiguration());
   }
@@ -231,7 +254,6 @@ public class DefaultConfigurationProviderTest {
   }
 
   private void validateConfiguration(Configuration configuration) {
-    assertThat(configuration.getPlatformConfiguration(), is(tcConfig));
     assertThat(configuration.getServiceConfigurations(), is(serviceProviderConfigurations));
     assertThat(configuration.getRawConfiguration(), is(rawConfiguration));
     assertThat(configuration.getExtendedConfiguration(Configuration.class), is(extendedConfigurations));

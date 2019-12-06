@@ -22,6 +22,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
 import com.tc.properties.TCPropertiesImpl;
+import org.terracotta.config.ServerConfiguration;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -38,22 +39,22 @@ public class GroupConfiguration {
 
   GroupConfiguration(Map<String, ServerConfiguration> configMap, String serverName) {
     this.members.addAll(configMap.keySet());
-    Node currentNode = null;
+    Node current = null;
     for (Map.Entry<String, ServerConfiguration> member : configMap.entrySet()) {
       ServerConfiguration serverConfiguration = member.getValue();
-      String bindAddress = serverConfiguration.getGroupPort().getBind();
+      String bindAddress = serverConfiguration.getGroupPort().getHostName();
       if (TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
         bindAddress = serverConfiguration.getHost();
       }
       Node node = new Node(bindAddress,
-                           serverConfiguration.getTsaPort().getValue(),
-                           serverConfiguration.getGroupPort().getValue());
+                           serverConfiguration.getTsaPort().getPort(),
+                           serverConfiguration.getGroupPort().getPort());
       if (serverName.equals(member.getKey())) {
-        currentNode = node;
+        current = node;
       }
       nodes.add(node);
     }
-    this.currentNode = currentNode;
+    this.currentNode = current;
     if (MULTI_SERVER_ELECTION_TIMEOUT < 0) {
       throw new AssertionError("server election timeout cannot be less than zero");
     }

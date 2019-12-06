@@ -18,10 +18,11 @@
 package com.tc.config;
 
 import org.junit.Test;
-import org.terracotta.config.BindPort;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
+import org.terracotta.config.ServerConfiguration;
+import java.net.InetSocketAddress;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -115,13 +116,8 @@ public class GroupConfigurationTest {
                                                       int groupPort) {
     ServerConfiguration serverConfiguration = mock(ServerConfiguration.class);
 
-    BindPort tsaPortMock = mock(BindPort.class);
-    when(tsaPortMock.getBind()).thenReturn(tsaBindAddress);
-    when(tsaPortMock.getValue()).thenReturn(tsaPort);
-
-    BindPort groupPortMock = mock(BindPort.class);
-    when(groupPortMock.getBind()).thenReturn(groupBindAddress);
-    when(groupPortMock.getValue()).thenReturn(groupPort);
+    InetSocketAddress tsaPortMock = InetSocketAddress.createUnresolved(tsaBindAddress, tsaPort);
+    InetSocketAddress groupPortMock = InetSocketAddress.createUnresolved(groupBindAddress, groupPort);
 
     when(serverConfiguration.getTsaPort()).thenReturn(tsaPortMock);
     when(serverConfiguration.getGroupPort()).thenReturn(groupPortMock);

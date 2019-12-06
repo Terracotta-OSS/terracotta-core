@@ -16,8 +16,10 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package org.terracotta.config.provider;
 
+import com.tc.classloader.ServiceLocator;
+import com.tc.server.ServiceClassLoader;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -26,16 +28,12 @@ import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.TCConfigurationParser;
-import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
-import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import com.tc.classloader.ServiceLocator;
-import com.tc.server.ServiceClassLoader;
-import com.terracotta.config.Configuration;
-import com.terracotta.config.ConfigurationException;
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.Configuration;
+import org.terracotta.config.ConfigurationException;
+import org.terracotta.config.ConfigurationProvider;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -46,10 +44,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.tc.config.DefaultConfigurationProvider.Opt.CONFIG_PATH;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
 import com.tc.services.MappedStateCollector;
 import com.tc.text.PrettyPrintable;
+import org.terracotta.config.FailoverBehavior;
+import org.terracotta.config.ServerConfiguration;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import org.terracotta.config.Consistency;
+import org.terracotta.config.Directories;
+import org.terracotta.config.FailoverPriority;
+import org.terracotta.config.Property;
+import org.terracotta.config.Server;
+import org.terracotta.config.Servers;
+import org.terracotta.config.TcProperties;
+import org.terracotta.config.service.ServiceConfigParser;
 
 public class DefaultConfigurationProvider implements ConfigurationProvider {
 
@@ -99,9 +115,10 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       LOGGER.info("Attempting to load configuration from the file at '{}'...", configurationPath);
 
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      ServiceLocator serviceLocator = new ServiceLocator(classLoader);
+//  using the service class loader because plugin implementations need to be isolated 
+//  when grabbing ServiceConfigParsers in xml parsing code through services.
       ServiceClassLoader serviceClassLoader =
-          new ServiceClassLoader(serviceLocator.getImplementations(ServiceConfigParser.class, classLoader));
+          new ServiceClassLoader(new ServiceLocator(classLoader).getImplementations(ServiceConfigParser.class));
 
       this.configuration = getTcConfiguration(configurationPath, serviceClassLoader);
 
@@ -125,9 +142,9 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   @Override
   public String getConfigurationParamsDescription() {
     StringWriter stringWriter = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(stringWriter);
-    new HelpFormatter().printOptions(printWriter, HelpFormatter.DEFAULT_WIDTH, createOptions(), 1, 5);
-    printWriter.close();
+    try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+      new HelpFormatter().printOptions(printWriter, HelpFormatter.DEFAULT_WIDTH, createOptions(), 1, 5);
+    }
     return stringWriter.toString();
   }
 
@@ -214,8 +231,53 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     }
 
     @Override
-    public TcConfig getPlatformConfiguration() {
-      return this.configuration.getPlatformConfiguration();
+    public ServerConfiguration getDefaultServerConfiguration(String serverName) throws ConfigurationException {
+      Server defaultServer;
+      Servers servers = configuration.getPlatformConfiguration().getServers();
+      if (serverName != null) {
+        defaultServer = findServer(servers, serverName);
+      } else {
+        defaultServer = getDefaultServer(servers);
+      }
+      return new ServerConfigurationImpl(defaultServer, servers.getClientReconnectWindow());
+    }
+
+    @Override
+    public List<ServerConfiguration> getServerConfigurations() {
+      Servers servers = configuration.getPlatformConfiguration().getServers();
+      int reconnect = servers.getClientReconnectWindow();
+      List<Server> list = servers.getServer();
+      List<ServerConfiguration> configs = new ArrayList<>(list.size());
+      list.forEach(s->configs.add(new ServerConfigurationImpl(s, reconnect)));
+      return configs;
+    }
+
+    @Override
+    public Properties getTcProperties() {
+      TcProperties props = configuration.getPlatformConfiguration().getTcProperties();
+        Properties converted = new Properties();
+      if (props != null) {
+        List<Property> list = props.getProperty();
+        list.forEach(p->converted.setProperty(p.getName().trim(), p.getValue().trim()));
+      }
+      return converted;
+    }
+
+    @Override
+    public FailoverBehavior getFailoverPriority() {
+      FailoverPriority priority = configuration.getPlatformConfiguration().getFailoverPriority();
+      String available = priority.getAvailability();
+      Consistency consistent = priority.getConsistency();
+      if (consistent != null) {
+        int votes = consistent.getVoter().getCount();
+        return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, votes);
+      } else {
+        if (available == null) {
+          return null;
+        } else {
+          return new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0);
+        }
+      }
     }
 
     @Override
@@ -239,5 +301,62 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       this.configuration.addStateTo(mappedStateCollector);
       return mappedStateCollector.getMap();
     }
+    
+    private Server getDefaultServer(Servers servers) throws ConfigurationException {
+      List<Server> serverList = servers.getServer();
+      if (serverList.size() == 1) {
+        return serverList.get(0);
+      }
+
+      try {
+        Set<InetAddress> allLocalInetAddresses = getAllLocalInetAddresses();
+        Server defaultServer = null;
+        for (Server server : serverList) {
+          if (allLocalInetAddresses.contains(InetAddress.getByName(server.getHost()))) {
+            if (defaultServer == null) {
+              defaultServer = server;
+            } else {
+              throw new ConfigurationException("You have not specified a name for your Terracotta server, and" + " there are "
+                                                    + serverList.size() + " servers defined in the Terracotta configuration file. "
+                                                    + "The script can not automatically choose between the following server names: "
+                                                    + defaultServer.getName() + ", " + server.getName()
+                                                    + ". Pass the desired server name to the script using " + "the -n flag.");
+
+            }
+          }
+        }
+        return defaultServer;
+      } catch (UnknownHostException uhe) {
+        throw new ConfigurationException("Exception when trying to find the default server configuration", uhe);
+      }
+    }
+    
+    private Set<InetAddress> getAllLocalInetAddresses() {
+      Set<InetAddress> localAddresses = new HashSet<>();
+      Enumeration<NetworkInterface> networkInterfaces;
+      try {
+        networkInterfaces = NetworkInterface.getNetworkInterfaces();
+      } catch (SocketException e) {
+        throw new RuntimeException(e);
+      }
+      while (networkInterfaces.hasMoreElements()) {
+        Enumeration<InetAddress> inetAddresses = networkInterfaces.nextElement().getInetAddresses();
+        while (inetAddresses.hasMoreElements()) {
+          localAddresses.add(inetAddresses.nextElement());
+        }
+      }
+      return localAddresses;
+    }
+  }
+  
+  private static Server findServer(Servers servers, String serverName) throws ConfigurationException {
+    for (Server server : servers.getServer()) {
+      if (server.getName().equals(serverName)) {
+        return server;
+      }
+    }
+    throw new ConfigurationException("You have specified server name '" + serverName
+                                          + "' which does not exist in the specified configuration. \n\n"
+                                          + "Please check your settings and try again.");
   }
 }

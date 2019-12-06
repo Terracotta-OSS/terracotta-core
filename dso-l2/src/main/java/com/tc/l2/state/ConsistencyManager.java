@@ -22,8 +22,9 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.text.PrettyPrintable;
+import org.terracotta.config.FailoverBehavior;
+import org.terracotta.config.ServerConfiguration;
 import org.slf4j.Logger;
-import org.terracotta.config.TcConfig;
 
 import java.util.Collection;
 
@@ -66,24 +67,24 @@ public interface ConsistencyManager extends PrettyPrintable {
   
   Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory);
   
-  static int parseVoteCount(TcConfig config) {
+  static int parseVoteCount(FailoverBehavior priority, Collection<ServerConfiguration> config) {
     Logger consoleLogger = TCLogging.getConsoleLogger();
-    if (config.getServers().getServer().size() == 1) {
+    if (config.size() == 1) {
       return -1;
     }
-    if (config.getFailoverPriority() == null) {
+    if (priority == null) {
       consoleLogger.error("*****************************************************************************");
       consoleLogger.error("* Failover priority is not specified and it is a mandatory configuration. *");
       consoleLogger.error("*****************************************************************************");
       System.exit(-1);
     }
-    if (config.getFailoverPriority().getAvailability() != null) {
+    if (priority.isAvailability()) {
       consoleLogger.info("Running the server in AVAILABILITY mode with the risk of split brain scenarios.");
       return -1;
     }
     try {
       consoleLogger.info("Running the server in CONSISTENCY mode with compromised availability of the cluster.");
-      int voters = config.getFailoverPriority().getConsistency().getVoter().getCount();
+      int voters = priority.getExternalVoters();
       if (voters < 0) {
         throw new IllegalArgumentException("the voter count cannot be negative");
       }

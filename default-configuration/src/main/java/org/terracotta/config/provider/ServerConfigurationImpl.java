@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package org.terracotta.config.provider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +24,13 @@ import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 
 import com.tc.net.TCSocketAddress;
+import org.terracotta.config.ServerConfiguration;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 
-public class ServerConfiguration {
-  private static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
+public class ServerConfigurationImpl implements ServerConfiguration {
+  private static final Logger logger = LoggerFactory.getLogger(ServerConfigurationImpl.class);
 
   private static final String LOCALHOST = "localhost";
 
@@ -39,7 +41,7 @@ public class ServerConfiguration {
   private final String logs;
   private volatile int clientReconnectWindow;
 
-  ServerConfiguration(Server server, int clientReconnectWindow) {
+  ServerConfigurationImpl(Server server, int clientReconnectWindow) {
     String bindAddress = server.getBind();
     this.host = server.getHost();
     if (this.host.equalsIgnoreCase(LOCALHOST)) {
@@ -65,30 +67,37 @@ public class ServerConfiguration {
     this.logs = server.getLogs();
   }
 
-  public BindPort getTsaPort() {
-    return this.tsaPort;
+  @Override
+  public InetSocketAddress getTsaPort() {
+    return InetSocketAddress.createUnresolved(this.tsaPort.getBind(), this.tsaPort.getValue());
   }
 
-  public BindPort getGroupPort() {
-    return this.tsaGroupPort;
+  @Override
+  public InetSocketAddress getGroupPort() {
+    return InetSocketAddress.createUnresolved(this.tsaGroupPort.getBind(), this.tsaGroupPort.getValue());
   }
 
+  @Override
   public String getHost() {
     return host;
   }
 
+  @Override
   public String getName() {
     return this.serverName;
   }
 
+  @Override
   public int getClientReconnectWindow() {
     return this.clientReconnectWindow;
   }
 
+  @Override
   public void setClientReconnectWindow(int value) {
     this.clientReconnectWindow = value;
   }
 
+  @Override
   public File getLogsLocation() {
     return new File(this.logs);
   }

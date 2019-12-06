@@ -24,7 +24,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.ConfigurationProvider;
 
 import java.util.ArrayList;
 import java.util.Arrays;

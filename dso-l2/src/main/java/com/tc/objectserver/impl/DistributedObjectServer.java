@@ -30,7 +30,6 @@ import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.config.ServerConfiguration;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
@@ -236,7 +235,8 @@ import com.tc.spi.DiagnosticFormat;
 import com.tc.spi.NetworkTranslator;
 import com.tc.spi.WarningDescription;
 import com.tc.spi.WarningHandler;
-import com.terracotta.config.Configuration;
+import org.terracotta.config.Configuration;
+import org.terracotta.config.ServerConfiguration;
 import java.net.InetSocketAddress;
 
 import java.util.stream.Collectors;
@@ -443,7 +443,7 @@ public class DistributedObjectServer {
       System.exit(-1);
     }
 
-    String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getBind();
+    String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getHostName();
 
     final InetAddress jmxBind = InetAddress.getByName(bindAddress);
     final AddressChecker addressChecker = new AddressChecker();
@@ -465,7 +465,7 @@ public class DistributedObjectServer {
     // Set up the ServiceRegistry.
     Configuration configuration = this.configSetupManager.getConfiguration();
     PlatformConfiguration platformConfiguration =
-        new PlatformConfigurationImpl(this.configSetupManager.getServerConfiguration(), configuration);
+        new PlatformConfigurationImpl(configSetupManager.getServerConfiguration(), configuration);
     serviceRegistry.initialize(platformConfiguration, configuration, Thread.currentThread().getContextClassLoader());
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
@@ -493,9 +493,9 @@ public class DistributedObjectServer {
     } catch (UnknownHostException unknown) {
       // ignore
     }
-    final int serverPort = l2DSOConfig.getTsaPort().getValue();
+    final int serverPort = l2DSOConfig.getTsaPort().getPort();
     final ProductInfo pInfo = ProductInfo.getInstance();
-    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
     
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
@@ -578,7 +578,7 @@ public class DistributedObjectServer {
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(this.configSetupManager.getConfiguration().getPlatformConfiguration());
+        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -591,7 +591,7 @@ public class DistributedObjectServer {
 
     ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
 
-    final String dsoBind = l2DSOConfig.getTsaPort().getBind();
+    final String dsoBind = l2DSOConfig.getTsaPort().getHostName();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
                                                                 this.connectionIdFactory, (MessageTransport t)->{
                                                                   return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
@@ -1110,11 +1110,11 @@ public class DistributedObjectServer {
   }
 
   private ServerID makeServerNodeID(ServerConfiguration l2DSOConfig) {
-    String host = l2DSOConfig.getGroupPort().getBind();
+    String host = l2DSOConfig.getGroupPort().getHostName();
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2DSOConfig.getHost();
     }
-    final Node node = new Node(host, l2DSOConfig.getTsaPort().getValue());
+    final Node node = new Node(host, l2DSOConfig.getTsaPort().getPort());
     final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
@@ -1209,10 +1209,11 @@ public class DistributedObjectServer {
   /**
    * Since this is accessed via JMX and l1Listener isn't initialed when a secondary is waiting on the lock file, use the
    * config value unless the special value 0 is specified for use in the tests to get a random port.
+   * @return 
    */
   public int getListenPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
-    final int configValue = l2DSOConfig.getTsaPort().getValue();
+    final int configValue = l2DSOConfig.getTsaPort().getPort();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
       try {
@@ -1229,7 +1230,7 @@ public class DistributedObjectServer {
 
   public int getGroupPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
-    final int configValue = l2DSOConfig.getGroupPort().getValue();
+    final int configValue = l2DSOConfig.getGroupPort().getPort();
     if (configValue != 0) { return configValue; }
     return -1;
   }

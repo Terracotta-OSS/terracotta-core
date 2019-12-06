@@ -24,6 +24,7 @@ import com.tc.util.Assert;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -154,6 +155,13 @@ public class TCSocketAddress {
     this.addr = addr;
     this.port = port;
 
+    Assert.eval(this.addr != null);
+  }
+  
+  public TCSocketAddress(InetSocketAddress socket) {
+    this.addr = socket.getAddress();
+    this.port = socket.getPort();
+    
     Assert.eval(this.addr != null);
   }
 

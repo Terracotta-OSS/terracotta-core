@@ -22,7 +22,7 @@ package com.tc.classloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.config.Directories;
+import org.terracotta.config.Directories;
 import com.tc.util.ManagedServiceLoader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,15 +45,6 @@ public class ServiceLocator extends ManagedServiceLoader {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
   
   private final ClassLoader defaultClassLoader;
-
-  static {
-    try {
-      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
-      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   public ServiceLocator(ClassLoader parent) {
     defaultClassLoader = parent;
@@ -137,6 +128,8 @@ public class ServiceLocator extends ManagedServiceLoader {
   
   private static ClassLoader createPlatformClassLoader() {
     try {
+      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
+      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
       URLClassLoader purls = new URLClassLoader(findPluginURLS());
       ApiClassLoader apis = createApiClassLoader(purls);
       return apis;
