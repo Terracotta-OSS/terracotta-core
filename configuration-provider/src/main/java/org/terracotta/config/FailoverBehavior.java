@@ -16,22 +16,38 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package org.terracotta.config;
 
-public class TcProperty {
-  private String name;
-  private String value;
-
-  public TcProperty(String name, String value) {
-    this.name = name;
-    this.value = value;
+/**
+ *
+ */
+public class FailoverBehavior {
+  public enum Type {
+    AVAILABILITY, CONSISTENCY;
   }
+  
+  private final Type type;
+  private final int voters;
 
-  public String getPropertyName() {
-    return name;
+  public FailoverBehavior(Type type, int voters) {
+    this.type = type;
+    this.voters = voters;
   }
-
-  public String getPropertyValue() {
-    return value;
+  
+  public Type getBehaviorType() {
+    return type;
   }
+  
+  public int getExternalVoters() {
+    return voters;
+  }
+  
+  public boolean isAvailability() {
+    return type == Type.AVAILABILITY;
+  }
+  
+  
+  public boolean isConsistency() {
+    return type == Type.CONSISTENCY;
+  }  
 }

@@ -18,32 +18,14 @@
  */
 package com.tc.server;
 
-import java.io.IOException;
-import java.net.URI;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.entity.ServiceProviderConfiguration;
-import org.w3c.dom.Element;
-
 /**
  *
  */
-public class TestServiceConfigParser implements ServiceConfigParser {
+public class TestInterfaceImpl implements TestInterface {
 
   @Override
-  public Source getXmlSchema() throws IOException {
-    return new StreamSource(getClass().getResource("/test.xsd").openStream());
-  }
-
-  @Override
-  public URI getNamespace() {
-    return URI.create("http://www.terracotta.org/config/test");
-  }
-
-  @Override
-  public ServiceProviderConfiguration parse(Element fragment, String source) {
-    return new TestServiceProviderConfiguration();
+  public Object child() {
+    return new TestChild();
   }
   
 }

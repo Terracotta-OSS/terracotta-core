@@ -44,7 +44,7 @@
     <terracotta-apis.version>1.7.0-pre1</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre1</terracotta-configuration.version>
     <galvan.version>1.4.4-pre3</galvan.version>
-    <tc-tripwire.version>1.0.0-pre4</tc-tripwire.version>
+    <tc-tripwire.version>1.0.0-pre5</tc-tripwire.version>
   </properties>
 
   <modules>
@@ -64,6 +64,7 @@
     <module>client-runtime</module>
     <module>galvan-support</module>
     <module>configuration-provider</module>
+    <module>default-configuration</module>
   </modules>
 
   <build>
@@ -80,6 +81,42 @@
             <!-- The server "id" element from settings to use authentication from -->
             <serverId>terracotta-nexus-staging</serverId>
             <skipNexusStagingDeployMojo>${skip.deploy}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+        <plugin>
+          <inherited>false</inherited>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>3.0.rc1</version>
+          <configuration>
+            <keywords>
+              <keyword>License</keyword>
+            </keywords>
+            <aggregate>true</aggregate>
+            <header>header.txt</header>
+            <mapping>
+              <java>SLASHSTAR_STYLE</java>
+            </mapping>
+            <excludes>
+              <exclude>**/README</exclude>
+              <exclude>**/LICENSE</exclude>
+              <exclude>src/test/resources/**</exclude>
+              <exclude>src/main/resources/**</exclude>
+              <!-- if you only import management in your ide, it will generate its metadata under management/ -->
+              <exclude>**/.idea/**</exclude>
+              <exclude>**/*.html</exclude>
+              <exclude>**/*.txt</exclude>
+              <exclude>**/*.yml</exclude>
+              <exclude>**/*.properties</exclude>
+              <exclude>**/*.xsd</exclude>
+              <exclude>**/*.sh</exclude>
+              <exclude>**/*.bat</exclude>
+              <exclude>**/nbproject/**</exclude>
+              <exclude>**/*.adoc</exclude>
+              <exclude>**/*.xml</exclude>
+              <exclude>mvnw</exclude>
+              <exclude>mvnw.cmd</exclude>
+            </excludes>
           </configuration>
         </plugin>
       </plugins>

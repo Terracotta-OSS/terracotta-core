@@ -26,7 +26,7 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.util.ManagedServiceLoader;
 import com.tc.util.ProductInfo;
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.config.ConfigurationProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +35,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -58,7 +59,7 @@ public class TCServerMain {
       ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
       Thread.currentThread().setContextClassLoader(systemLoader);
 
-      ConfigurationProvider configurationProvider = getConfigurationProvider(systemLoader);
+      ConfigurationProvider configurationProvider = getConfigurationProvider();
 
       CommandLineParser commandLineParser = new CommandLineParser(args, configurationProvider);
 
@@ -69,7 +70,7 @@ public class TCServerMain {
           configurationProvider,
           commandLineParser.consistentStartup(),
           commandLineParser.upgradeCompatibility(),
-          systemLoader,
+          new ServiceLocator(systemLoader),
           args
       );
 
@@ -81,28 +82,20 @@ public class TCServerMain {
       server.start();
 
       server.waitUntilShutdown();
-
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
     }
   }
 
-  private static ConfigurationProvider getConfigurationProvider(ClassLoader systemLoader) {
-    ConfigurationProvider configurationProvider = null;
-    for (ConfigurationProvider provider : ManagedServiceLoader.loadServices(ConfigurationProvider.class,
-                                                                            systemLoader)) {
-      if (configurationProvider == null) {
-        configurationProvider = provider;
-      } else {
-        throw new RuntimeException("Found multiple implementations of ConfigurationProvider");
-      }
+  private static ConfigurationProvider getConfigurationProvider() {
+    Collection<ConfigurationProvider> pl = ManagedServiceLoader.loadServices(ConfigurationProvider.class, TCServerMain.class.getClassLoader());
+    if (pl.isEmpty()) {
+      throw new RuntimeException("No ConfigurationProvider found");
+    } else if (pl.size() == 1) {
+      return pl.iterator().next();
+    } else {
+      throw new RuntimeException("Found multiple implementations of ConfigurationProvider");
     }
-
-    if (configurationProvider == null) {
-      throw new RuntimeException("No ConfigurationProvider implementation found");
-    }
-
-    return configurationProvider;
   }
 
   public static TCServer getServer() {

@@ -36,9 +36,8 @@ public class ComponentURLClassLoader extends URLClassLoader {
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     Class<?> target = findLoadedClass(name);
-//  if it's already loaded in this loader, return it, decision has already been made about where 
-//  to load in previous iteration
-    if (target == null) {
+//  if it's already loaded, check to make sure the classloader is the same
+    if (target == null || target.getClassLoader() != this) {
       target = super.loadClass(name, resolve);
 // if the class is not found, ClassNotFoundException will be thrown and that is fine, class is nowhere
       if (!commonComponentChecker.check(target)) {

@@ -16,27 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.cli;
+package com.tc.server;
 
-import org.terracotta.config.util.DefaultSubstitutor;
-public class JaxbUtil {
-
-  /**
-   * Make a new instance of the given type and populate any defaults declared from the schema. NOTE: This method is expensive, invoke at your own risk
-   */
-  public static <T> T newInstanceWithDefaults(Class<T> type) {
-    T instance;
-    try {
-      instance = type.newInstance();
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    DefaultSubstitutor.applyDefaults(instance);
-    return instance;
-  }
-
-  private JaxbUtil() {
-    //
-  }
-
+/**
+ *
+ * @author mscott
+ */
+public interface TestInterface {
+  public Object child();
 }

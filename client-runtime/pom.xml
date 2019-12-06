@@ -16,16 +16,19 @@
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
       <version>${terracotta-apis.version}</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>dso-l1</artifactId>
       <version>${project.version}</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>connection-loader</artifactId>
       <version>${project.version}</version>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 

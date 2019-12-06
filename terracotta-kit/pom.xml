@@ -32,12 +32,19 @@
           <artifactId>voter</artifactId>
           <version>${project.version}</version>
         </dependency>
+        <dependency>
+          <groupId>org.terracotta.internal</groupId>
+          <artifactId>default-configuration</artifactId>  
+          <classifier>jar-with-dependencies</classifier>
+          <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.0.1</version>
                 <executions>
                     <execution>
                         <id>prepare-server-lib</id>
@@ -47,16 +54,15 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
-                            <excludeArtifactIds>dso-l1</excludeArtifactIds>  <!-- inside the client runtime -->
+                            <excludeArtifactIds>default-configuration,voter,client-runtime</excludeArtifactIds>  <!-- inside the client runtime -->
                         </configuration>
-
                     </execution>
                 </executions>
             </plugin>
 
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.2.0</version>
                 <configuration>
                     <finalName>terracotta-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>

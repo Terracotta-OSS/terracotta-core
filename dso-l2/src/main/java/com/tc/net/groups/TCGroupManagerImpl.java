@@ -68,7 +68,6 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
-import com.tc.config.ServerConfiguration;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
@@ -89,6 +88,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
+import org.terracotta.config.ServerConfiguration;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -173,7 +173,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.allCurrentlyKnownServers().length;
     
-    this.groupPort = l2DSOConfig.getGroupPort().getValue();
+    this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
 
     TCSocketAddress socketAddress;
@@ -185,7 +185,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       groupConnectPort = TCPropertiesImpl.getProperties()
           .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
 
-      socketAddress = new TCSocketAddress(l2DSOConfig.getTsaPort().getBind(), groupConnectPort);
+      socketAddress = new TCSocketAddress(l2DSOConfig.getTsaPort().getHostName(), groupConnectPort);
     } catch (UnknownHostException e) {
       throw new TCRuntimeException(e);
     }

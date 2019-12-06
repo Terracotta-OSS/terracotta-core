@@ -1,21 +1,22 @@
 /*
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
  *
- * http://terracotta.org/legal/terracotta-public-license.
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
+ *  http://terracotta.org/legal/terracotta-public-license.
  *
- * The Covered Software is Terracotta Configuration.
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
  *
- * The Initial Developer of the Covered Software is
- * Terracotta, Inc., a Software AG company
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config;
+package org.terracotta.config.provider;
 
 import org.junit.Test;
 import org.terracotta.config.BindPort;
@@ -39,13 +40,13 @@ public class ServerConfigurationTest {
   @Test
   public void testConfiguration() {
     int reconnectWindow = 100;
-    ServerConfiguration serverConfiguration =
-        new ServerConfiguration(createServer(false), reconnectWindow);
+    ServerConfigurationImpl serverConfiguration =
+        new ServerConfigurationImpl(createServer(false), reconnectWindow);
 
-    assertThat(serverConfiguration.getTsaPort().getBind(), is(LOCALHOST));
-    assertThat(serverConfiguration.getGroupPort().getBind(), is(LOCALHOST));
-    assertThat(serverConfiguration.getTsaPort().getValue(), is(TSA_PORT));
-    assertThat(serverConfiguration.getGroupPort().getValue(), is(GROUP_PORT));
+    assertThat(serverConfiguration.getTsaPort().getHostName(), is(LOCALHOST));
+    assertThat(serverConfiguration.getGroupPort().getHostName(), is(LOCALHOST));
+    assertThat(serverConfiguration.getTsaPort().getPort(), is(TSA_PORT));
+    assertThat(serverConfiguration.getGroupPort().getPort(), is(GROUP_PORT));
     assertThat(serverConfiguration.getName(), is(SERVER_NAME));
     assertThat(serverConfiguration.getHost(), is(LOCALHOST));
     assertThat(serverConfiguration.getLogsLocation(), is(new File(LOGS)));
@@ -54,11 +55,11 @@ public class ServerConfigurationTest {
 
   @Test
   public void testConfigurationWithWildcards() {
-    ServerConfiguration serverConfiguration =
-        new ServerConfiguration(createServer(true), 100);
+    ServerConfigurationImpl serverConfiguration =
+        new ServerConfigurationImpl(createServer(true), 100);
 
-    assertThat(serverConfiguration.getTsaPort().getBind(), is(LOCALHOST));
-    assertThat(serverConfiguration.getGroupPort().getBind(), is(LOCALHOST));
+    assertThat(serverConfiguration.getTsaPort().getHostName(), is(LOCALHOST));
+    assertThat(serverConfiguration.getGroupPort().getHostName(), is(LOCALHOST));
   }
 
   private static Server createServer(boolean wildcards) {

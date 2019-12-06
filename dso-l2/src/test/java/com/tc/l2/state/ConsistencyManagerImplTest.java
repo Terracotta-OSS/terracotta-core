@@ -21,6 +21,8 @@ package com.tc.l2.state;
 import com.tc.net.NodeID;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.Assert;
+import org.terracotta.config.Configuration;
+import org.terracotta.config.FailoverBehavior;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,11 +36,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
-import org.terracotta.config.Consistency;
-import org.terracotta.config.FailoverPriority;
-import org.terracotta.config.Servers;
-import org.terracotta.config.TcConfig;
-import org.terracotta.config.Voter;
 
 /**
  *
@@ -104,34 +101,14 @@ public class ConsistencyManagerImplTest {
   
   @Test
   public void testVoteConfig() throws Exception {
-    List serverList = mock(List.class);
-    when(serverList.size()).thenReturn(2);
-    Servers servers = mock(Servers.class);
-    when(servers.getServer()).thenReturn(serverList);
-    TcConfig conf = mock(TcConfig.class);
-    when(conf.getServers()).thenReturn(servers);
-    FailoverPriority fail = mock(FailoverPriority.class);
-    String avail = "Availability";
-    when(fail.getAvailability()).thenReturn(avail);
-    when(conf.getFailoverPriority()).thenReturn(fail);
+    List servers = mock(List.class);
+    when(servers.size()).thenReturn(1);
     
-    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0), servers));
+    when(servers.size()).thenReturn(2);
     
-    when(conf.getFailoverPriority()).thenReturn(fail);
-    
-    Consistency c = mock(Consistency.class);
-    Voter voter = mock(Voter.class);
-    when(voter.getCount()).thenReturn(1);
-    
-    when(c.getVoter()).thenReturn(voter);
-    when(fail.getConsistency()).thenReturn(c);
-    when(fail.getAvailability()).thenReturn(null);
-    
-    Assert.assertEquals(1, ConsistencyManager.parseVoteCount(conf));
-    when(voter.getCount()).thenReturn(2);
-    
-    Assert.assertEquals(2, ConsistencyManager.parseVoteCount(conf));
-
+    Assert.assertEquals(1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), servers));    
+    Assert.assertEquals(2, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 2), servers));
   }
   
   @Test
@@ -149,23 +126,15 @@ public class ConsistencyManagerImplTest {
   public void testVoteConfigMandatoryForMultiNode() throws Exception {
     List serverList = mock(List.class);
     when(serverList.size()).thenReturn(2);
-    Servers servers = mock(Servers.class);
-    when(servers.getServer()).thenReturn(serverList);
-    TcConfig conf = mock(TcConfig.class);
-    when(conf.getServers()).thenReturn(servers);
     exit.expectSystemExitWithStatus(-1);
-    ConsistencyManager.parseVoteCount(conf);
+    ConsistencyManager.parseVoteCount(null, serverList);
   }
 
   @Test
   public void testVoteConfigNotMandatoryForSingleNode() throws Exception {
     List serverList = mock(List.class);
     when(serverList.size()).thenReturn(1);
-    Servers servers = mock(Servers.class);
-    when(servers.getServer()).thenReturn(serverList);
-    TcConfig conf = mock(TcConfig.class);
-    when(conf.getServers()).thenReturn(servers);
-    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), serverList));
   }
 
 }
