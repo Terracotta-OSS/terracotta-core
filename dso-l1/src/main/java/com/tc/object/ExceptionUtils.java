@@ -19,9 +19,9 @@
 package com.tc.object;
 
 import com.tc.exception.EntityBusyException;
-import com.tc.exception.VoltronWrapperException;
-import com.tc.exception.VoltronEntityUserExceptionWrapper;
-import com.tc.util.Assert;
+import com.tc.exception.EntityReferencedException;
+import com.tc.exception.ServerException;
+import com.tc.exception.WrappedEntityException;
 
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -33,59 +33,63 @@ import org.terracotta.exception.EntityServerException;
 import org.terracotta.exception.EntityServerUncaughtException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
-import org.terracotta.exception.RuntimeEntityException;
-
-import java.util.Arrays;
-
 
 public class ExceptionUtils {
-  public static EntityException addLocalStackTraceToEntityException(EntityID eid, EntityException e) throws RuntimeEntityException {
-    EntityException wrappedException;
-    String entityType = eid.getClassName();
-    String enityName = eid.getEntityName();
-    if(e instanceof VoltronEntityUserExceptionWrapper) {
-      //should we add local stack trace here?
-      wrappedException = new EntityServerException(entityType, enityName, e.getDescription(), e.getCause());
-    } else if(e instanceof EntityNotFoundException) {
-      wrappedException = new EntityNotFoundException(entityType, enityName, e);
-    } else if(e instanceof VoltronWrapperException) {
-      throwRuntimeExceptionWithLocalStack(eid, ((VoltronWrapperException)e).getWrappedException());
-      // We won't reach this point.
-      wrappedException = null;
-    } else if(e instanceof EntityNotProvidedException) {
-      wrappedException = new EntityNotProvidedException(entityType, enityName, e);
-    } else if(e instanceof EntityVersionMismatchException) {
-      EntityVersionMismatchException vme = (EntityVersionMismatchException) e;
-      wrappedException = new EntityVersionMismatchException(entityType, enityName, vme.getExpectedVersion(), vme.getAttemptedVersion(), e);
-    } else if(e instanceof EntityAlreadyExistsException) {
-      wrappedException = new EntityAlreadyExistsException(entityType, enityName, e);
-    } else if(e instanceof EntityConfigurationException) {
-      wrappedException = new EntityConfigurationException(entityType, enityName, e);
-    } else if(e instanceof EntityBusyException) {
-      wrappedException = new EntityBusyException(entityType, enityName, e);
+  public static EntityException throwEntityException(Exception exp) {
+    if (exp instanceof RuntimeException) {
+      throw (RuntimeException)exp;
     } else {
-//  just return the remote exception with remote stack, don't want to hide the type of the
-//  exception in these cases.
-      return e;
+      return convert(exp);
     }
-    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-    //strip last two recent elements - getStackTrace() and this method
-    wrappedException.setStackTrace(Arrays.copyOfRange(stackTrace, 2, stackTrace.length));
-    return wrappedException;
   }
-
-  private static void throwRuntimeExceptionWithLocalStack(EntityID eid, RuntimeEntityException wrappedException) throws RuntimeEntityException {
-    String entityType = eid.getClassName();
-    String enityName = eid.getEntityName();
-    if (wrappedException instanceof PermanentEntityException) {
-      throw new PermanentEntityException(entityType, enityName, wrappedException);
-    } else if (wrappedException instanceof ConnectionClosedException) {
-      throw wrappedException;
-    } else if (wrappedException instanceof EntityServerUncaughtException) {
-      throw new EntityServerUncaughtException(entityType, enityName, wrappedException.getDescription(), wrappedException);
+  
+  public static EntityException convert(Exception server) {
+    if (server instanceof ServerException) {
+      return convertServerException((ServerException)server);
+    } else if (server instanceof EntityException) {
+      return (EntityException)server;
     } else {
-      // Unknown exception - this must be populated.
-      Assert.fail("Unhandled runtime exception type");
+      return new WrappedEntityException("", "", server.getMessage(), server);
+    }
+  }
+  
+  private static EntityException convertServerException(ServerException exp) {
+    switch (exp.getType()) {
+      case CONNECTION_CLOSED:
+      case CONNECTION_SHUTDOWN:
+        return new WrappedEntityException(new ConnectionClosedException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), true, exp));
+      case ENTITY_ALREADY_EXISTS:
+        return new EntityAlreadyExistsException(exp.getClassName(), exp.getEntityName(), exp.getCause());
+      case ENTITY_BUSY_EXCEPTION:
+        return new EntityBusyException(exp.getClassName(), exp.getEntityName(), exp.getCause());
+      case ENTITY_CONFIGURATION:
+        return new EntityConfigurationException(exp.getClassName(), exp.getEntityName(), exp.getCause());
+      case ENTITY_NOT_FOUND:
+        return new EntityNotFoundException(exp.getClassName(), exp.getEntityName(), exp.getCause());
+      case ENTITY_NOT_PROVIDED:
+        return new EntityNotProvidedException(exp.getClassName(), exp.getEntityName(), exp.getCause());
+      case ENTITY_REFERENCED:
+        return new EntityReferencedException(exp.getClassName(), exp.getEntityName());
+      case ENTITY_SERVER:
+        return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
+      case ENTITY_SERVER_UNCAUGHT:
+        return new WrappedEntityException(new EntityServerUncaughtException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause()));
+      case ENTITY_USER_EXCEPTION:
+        return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
+      case ENTITY_VERSION_MISMATCH:
+        return new EntityVersionMismatchException(exp.getClassName(), exp.getEntityName(), 0, 0, exp.getCause());
+      case MESSAGE_CODEC:
+        return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
+      case PERMANENT_ENTITY:
+        return new WrappedEntityException(new PermanentEntityException(exp.getClassName(), exp.getEntityName(), exp.getCause()));
+      case PERMISSION_DENIED:
+        return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
+      case RECONNECT_REJECTED:
+        return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
+      case WRAPPED_EXCEPTION:
+        return new EntityServerException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), exp.getCause());
+      default:
+        return null;
     }
   }
 }

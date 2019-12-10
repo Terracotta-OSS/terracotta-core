@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
@@ -39,7 +40,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.exception.EntityException;
 import org.terracotta.persistence.IPlatformPersistence;
 
 
@@ -130,7 +130,7 @@ public class EntityPersistor {
    * If an attempt was made, true is returned (on success) or EntityException is thrown (if it was a failure).
    * False is returned if this clientID and transactionID seem new.
    */
-  public synchronized boolean wasEntityCreatedInJournal(ClientID clientID, long transactionID) throws EntityException {
+  public synchronized boolean wasEntityCreatedInJournal(EntityID eid, ClientID clientID, long transactionID) throws ServerException {
     boolean didSucceed = false;
     LOGGER.debug("wasEntityCreatedInJournal " + clientID + " " + transactionID);
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
@@ -138,13 +138,18 @@ public class EntityPersistor {
       if (null == entry.failure) {
         didSucceed = true;
       } else {
-        throw entry.failure;
+        Exception e = entry.failure;
+        if (e instanceof ServerException) {
+          throw (ServerException)e;
+        } else {
+          throw ServerException.wrapException(eid, e);
+        }
       }
     }
     return didSucceed;
   }
 
-  public synchronized void entityCreateFailed(EntityID eid, ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityCreateFailed(EntityID eid, ClientID clientID, long transactionID, long oldestTransactionOnClient, ServerException error) {
     LOGGER.debug("createFailed " + clientID + " " + transactionID, error);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.CREATE, null, error);
     if (clientID.isNull()) {
@@ -176,7 +181,7 @@ public class EntityPersistor {
    * If an attempt was made, true is returned (on success) or EntityAlreadyExistsException is thrown.
    * False is returned if this clientID and transactionID seem new.
    */
-  public synchronized boolean wasEntityDestroyedInJournal(ClientID clientID, long transactionID) throws EntityException {
+  public synchronized boolean wasEntityDestroyedInJournal(EntityID eid, ClientID clientID, long transactionID) throws ServerException {
     LOGGER.debug("wasEntityDestroyedInJournal " + clientID + " " + transactionID);
     boolean didSucceed = false;
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
@@ -184,13 +189,18 @@ public class EntityPersistor {
       if (null == entry.failure) {
         didSucceed = true;
       } else {
-        throw entry.failure;
+        Exception e = entry.failure;
+        if (e instanceof ServerException) {
+          throw (ServerException)e;
+        } else {
+          throw ServerException.wrapException(eid, e);
+        }
       }
     }
     return didSucceed;
   }
 
-  public synchronized void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityDestroyFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, ServerException error) {
     LOGGER.debug("entityDestroyFailed " + clientID + " " + transactionID);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, error);
   }
@@ -210,7 +220,7 @@ public class EntityPersistor {
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.DESTROY, null, null);
   }
 
-  public synchronized byte[] reconfiguredResultInJournal(ClientID clientID, long transactionID) throws EntityException {
+  public synchronized byte[] reconfiguredResultInJournal(EntityID eid, ClientID clientID, long transactionID) throws ServerException {
     LOGGER.debug("reconfiguredResultInJournal " + clientID + " " + transactionID);
     byte[] cachedResult = null;
     EntityData.JournalEntry entry = getEntryForTransaction(clientID, transactionID);
@@ -219,13 +229,18 @@ public class EntityPersistor {
         Assert.assertNotNull(entry.reconfigureResponse);
         cachedResult = entry.reconfigureResponse;
       } else {
-        throw entry.failure;
+        Exception e = entry.failure;
+        if (e instanceof ServerException) {
+          throw (ServerException)e;
+        } else {
+          throw ServerException.wrapException(eid, e);
+        }
       }
     }
     return cachedResult;
   }
 
-  public synchronized void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityException error) {
+  public synchronized void entityReconfigureFailed(ClientID clientID, long transactionID, long oldestTransactionOnClient, ServerException error) {
     LOGGER.debug("entityReconfigureFailed " + clientID + " " + transactionID);
     addToJournal(clientID, transactionID, oldestTransactionOnClient, EntityData.Operation.RECONFIGURE, null, error);
   }
@@ -320,7 +335,7 @@ public class EntityPersistor {
     return newList;
   }
 
-  private void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, EntityException error) {
+  private void addToJournal(ClientID clientID, long transactionID, long oldestTransactionOnClient, EntityData.Operation operation, byte[] reconfigureResult, ServerException error) {
     if (!clientID.isNull()) {
       List<EntityData.JournalEntry> rawJournal = this.entityLifeJournal.get(clientID);
       // If the list is not here, the client has already left the custer, don't bother saving the result

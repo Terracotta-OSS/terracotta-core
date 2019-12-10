@@ -34,7 +34,6 @@ import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
@@ -86,7 +85,7 @@ public class EntityManagerImplTest {
         new ServiceLocator(this.getClass().getClassLoader())
     );
     entityManager.setMessageSink(mock(Sink.class));
-    id = new EntityID(TestEntity.class.getName(), "foo");
+    id = new EntityID("com.tc.objectserver.testentity.TestEntity", "foo");
     consumerID = 1L;
     fetch = new FetchID(consumerID);
     version = 1;

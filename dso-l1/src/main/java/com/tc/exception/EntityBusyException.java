@@ -18,12 +18,19 @@
  */
 package com.tc.exception;
 
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.exception.EntityException;
 
-public class VoltronEntityUserExceptionWrapper extends EntityException {
+/**
+ *  Internal exception to tell the client that the server is busy and to retry
+ */
+public class EntityBusyException extends EntityException {
 
-  public VoltronEntityUserExceptionWrapper(EntityUserException cause) {
-    super(null, null, cause.getMessage(), cause);
+  public EntityBusyException(String className, String entityName, String description) {
+    super(className, entityName, description, null);
+  }  
+  
+  public EntityBusyException(String className, String entityName, Throwable cause) {
+    super(className, entityName, cause != null ? cause.getMessage() : null, cause);
   }
+
 }

@@ -53,10 +53,6 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>connection-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>entity-common-api</artifactId>
       <version>${terracotta-apis.version}</version>
       <scope>provided</scope>

@@ -23,7 +23,7 @@ import org.terracotta.exception.EntityException;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
-import com.tc.exception.VoltronWrapperException;
+import com.tc.exception.WrappedEntityException;
 import com.tc.util.Assert;
 
 import java.util.Collections;
@@ -54,7 +54,7 @@ public class InFlightMessageTest extends TestCase {
       public void run() {
         try {
           TimeUnit.SECONDS.sleep(1);
-          inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException(true, "test")));
+          inf.setResult(null, new WrappedEntityException(new ConnectionClosedException(true, "test")));
         } catch (InterruptedException ie) {
           
         }
@@ -115,7 +115,7 @@ public class InFlightMessageTest extends TestCase {
     t.start();
     
     TimeUnit.SECONDS.sleep(1);
-    inf.setResult(null, new VoltronWrapperException(new ConnectionClosedException(true, "test")));
+    inf.setResult(null, new WrappedEntityException(new ConnectionClosedException(true, "test")));
 
     t.join(3000);
     Assert.assertFalse(t.isAlive());

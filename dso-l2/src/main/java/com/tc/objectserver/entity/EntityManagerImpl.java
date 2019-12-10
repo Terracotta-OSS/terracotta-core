@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.classloader.ServiceLocator;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -29,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityVersionMismatchException;
 
 import com.tc.object.EntityID;
 import com.tc.object.FetchID;
@@ -53,7 +52,6 @@ import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.exception.EntityNotProvidedException;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import java.util.LinkedHashMap;
@@ -159,7 +157,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
+  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws ServerException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     EntityServerService service = getVersionCheckedService(id, version);
@@ -179,7 +177,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
+  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws ServerException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
     EntityServerService service = getVersionCheckedService(entityID, recordedVersion);
@@ -226,7 +224,7 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public Optional<ManagedEntity> getEntity(EntityDescriptor descriptor) throws EntityException {
+  public Optional<ManagedEntity> getEntity(EntityDescriptor descriptor) throws ServerException {
     if (descriptor.isIndexed()) {
       return getEntity(descriptor.getFetchID());
     } else {
@@ -239,7 +237,7 @@ public class EntityManagerImpl implements EntityManager {
     return Optional.ofNullable(this.entityIndex.get(idx));
   }
   
-  private Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
+  private Optional<ManagedEntity> getEntity(EntityID id, long version) throws ServerException {
     Assert.assertNotNull(id);
     if (EntityID.NULL_ID == id) {
 //  just do instance check, believe it or not, equality check is expensive due to frequency called
@@ -253,7 +251,7 @@ public class EntityManagerImpl implements EntityManager {
       //  if the version in the descriptor is not valid, don't check 
       //  check the provided version against the version of the entity
       if (version > 0 && entity.getVersion() != version) {
-        throw new EntityVersionMismatchException(id.getClassName(), id.getEntityName(), entity.getVersion(), version);
+        throw ServerException.createEntityVersionMismatch(id, entity.getVersion() + " does not match " + version);
       }
     }
     return Optional.ofNullable(entity);
@@ -279,7 +277,7 @@ public class EntityManagerImpl implements EntityManager {
     }
   }
 
-  private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
+  private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws ServerException {
     // Valid entity versions start at 1.
     Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
@@ -288,7 +286,7 @@ public class EntityManagerImpl implements EntityManager {
       try {
         service = (EntityServerService)this.creationLoader.getService(typeName);
       } catch (ClassNotFoundException notfound) {
-        throw new EntityNotProvidedException(typeName, entityID.getEntityName());
+        throw ServerException.createEntityNotProvided(entityID);
       }
       // getService only fails to resolve by throwing.
       Assert.assertNotNull(service);
@@ -301,7 +299,7 @@ public class EntityManagerImpl implements EntityManager {
     Assert.assertNotNull(service);
     long serviceVersion = service.getVersion();
     if (serviceVersion != version) {
-      throw new EntityVersionMismatchException(typeName, entityID.getEntityName(), serviceVersion, version);
+        throw ServerException.createEntityVersionMismatch(entityID, serviceVersion + " does not match " + version);
     }
     return service;
   }

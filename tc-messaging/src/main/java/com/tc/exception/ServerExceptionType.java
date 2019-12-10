@@ -16,11 +16,15 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.testentity;
+package com.tc.exception;
 
-import org.terracotta.connection.entity.Entity;
-
-
-public interface TestEntity extends Entity {
-  public static final long VERSION = 1;
+/**
+ *
+ */
+public enum ServerExceptionType {
+  CONNECTION_CLOSED,CONNECTION_SHUTDOWN,ENTITY_REFERENCED,ENTITY_ALREADY_EXISTS,
+  ENTITY_CONFIGURATION,ENTITY_NOT_FOUND,ENTITY_NOT_PROVIDED,ENTITY_SERVER,
+  ENTITY_SERVER_UNCAUGHT,ENTITY_VERSION_MISMATCH,ENTITY_USER_EXCEPTION,
+  ENTITY_BUSY_EXCEPTION,PERMISSION_DENIED,RECONNECT_REJECTED,MESSAGE_CODEC,
+  WRAPPED_EXCEPTION,PERMANENT_ENTITY;
 }

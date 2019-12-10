@@ -21,6 +21,7 @@ package com.terracotta.diagnostic;
 import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
+import com.tc.exception.ServerException;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientEntityManager;
@@ -118,7 +119,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public void failed(TransactionID id, EntityException e) {
+  public void failed(TransactionID id, Exception e) {
 
   }
 

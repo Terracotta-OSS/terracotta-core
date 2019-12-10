@@ -22,6 +22,7 @@ import org.terracotta.exception.EntityException;
 
 import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.text.PrettyPrintable;
@@ -78,7 +79,7 @@ public class InFlightMessage implements PrettyPrintable {
   private final Set<Thread> waitingThreads;
 
   private boolean isSent;
-  private EntityException exception;
+  private Exception exception;
   private byte[] value;
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
@@ -307,7 +308,7 @@ public class InFlightMessage implements PrettyPrintable {
     timedWait(() -> getCanComplete, timeout, unit);
     this.got = System.nanoTime();
     if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
+      throw ExceptionUtils.throwEntityException(exception);
     } else {
       if (this.message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
         Assert.assertNotNull(value);
@@ -316,7 +317,7 @@ public class InFlightMessage implements PrettyPrintable {
     }
   }
 
-  public synchronized void setResult(byte[] value, EntityException error) {
+  public synchronized void setResult(byte[] value, Exception error) {
     if (Trace.isTraceEnabled()) {
       trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
     }
@@ -336,7 +337,7 @@ public class InFlightMessage implements PrettyPrintable {
       this.exception = error;
       this.getCanComplete = true;
       if (asyncMode) {
-        handleException(error);
+        handleException(this.exception);
       }
       notifyAll();
     } else {
@@ -352,9 +353,9 @@ public class InFlightMessage implements PrettyPrintable {
     }
   }
   
-  synchronized void handleException(EntityException ee) {
+  synchronized void handleException(Exception ee) {
       if (monitor != null) {
-        monitor.exception(ee);
+        monitor.exception(ExceptionUtils.convert(ee));
       } 
   }
 

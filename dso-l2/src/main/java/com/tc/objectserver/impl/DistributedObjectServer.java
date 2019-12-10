@@ -407,7 +407,6 @@ public class DistributedObjectServer {
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
-
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler());
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {

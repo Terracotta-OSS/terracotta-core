@@ -18,12 +18,12 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.ServerException;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
-import org.terracotta.exception.EntityException;
 
 /**
  *
@@ -62,7 +62,7 @@ public class NoopResultCapture implements ResultCapture {
   }
 
   @Override
-  public void failure(EntityException ee) {
+  public void failure(ServerException ee) {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
     }

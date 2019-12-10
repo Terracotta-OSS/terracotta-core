@@ -18,17 +18,16 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.ServerException;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.exception.EntityException;
 
 /**
  *
@@ -38,13 +37,13 @@ public class ResultCaptureImpl implements ResultCapture {
   private final Runnable received;
   private final Consumer<byte[]> result;
   private final Consumer<byte[]> message;
-  private final Consumer<EntityException> error;
+  private final Consumer<ServerException> error;
   private final SetOnceFlag receivedSent = new SetOnceFlag();
   private static final Logger LOGGER = LoggerFactory.getLogger(ResultCaptureImpl.class);
 
   Supplier<ActivePassiveAckWaiter> setOnce;
   
-  public ResultCaptureImpl(Runnable received, Consumer<byte[]> result, Consumer<byte[]> message, Consumer<EntityException> error) {
+  public ResultCaptureImpl(Runnable received, Consumer<byte[]> result, Consumer<byte[]> message, Consumer<ServerException> error) {
     this.received = received;
     this.result = result;
     this.error = error;
@@ -99,7 +98,7 @@ public class ResultCaptureImpl implements ResultCapture {
   }
 
   @Override
-  public void failure(EntityException ee) {
+  public void failure(ServerException ee) {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
     }
