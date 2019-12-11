@@ -29,7 +29,6 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import jdk.jfr.Configuration;
 import jdk.jfr.Recording;
@@ -42,6 +41,7 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
   private String path;
   private String configuration = "default";
   private Path recordings;
+  private boolean dumpOnExit = true;
   private int maxAgeMinutes = 5;
   private Pattern dumpRegex;
   private LocalDateTime lastsave = LocalDateTime.MIN;
@@ -64,13 +64,18 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     try {
       continuous = new Recording(Configuration.getConfiguration(configuration));
       continuous.setToDisk(true);
-      continuous.setDumpOnExit(true);
       if (maxAgeMinutes > 0) {
         continuous.setMaxAge(Duration.ofMinutes(maxAgeMinutes));
       } else {
         continuous.setMaxAge(null);
       }
-      continuous.setDestination(resolveFilePath());
+      Path inflight = resolveFilePath();
+      if (inflight != null) {
+        continuous.setDestination(inflight);
+        continuous.setDumpOnExit(true);
+      } else {
+        continuous.setDumpOnExit(false);
+      }
     } catch (IOException | ParseException boot) {
       throw new RuntimeException(boot);
     }
@@ -90,15 +95,18 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
         throw new RuntimeException(ioe);
       }
     }
-    Path inflight = recordings.resolve("inflight-" + getPID() + ".jfr");
-    if (Files.exists(inflight)) {
-      try {
-        Files.delete(inflight);
-      } catch (IOException ioe) {
-        throw new RuntimeException(ioe);
+    if (dumpOnExit) {
+      Path inflight = recordings.resolve("inflight-" + getPID() + ".jfr");
+      if (Files.exists(inflight)) {
+        try {
+          Files.delete(inflight);
+        } catch (IOException ioe) {
+          throw new RuntimeException(ioe);
+        }
       }
+      return inflight;
     }
-    return inflight;
+    return null;
   }
 
   @Override
@@ -138,6 +146,14 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     } else {
       this.maxAgeMinutes = -1;
     }
+  }
+
+  public boolean isDumpOnExit() {
+    return dumpOnExit;
+  }
+
+  public void setDumpOnExit(boolean dumpOnExit) {
+    this.dumpOnExit = dumpOnExit;
   }
   
   public void setRegex(String regex) {
