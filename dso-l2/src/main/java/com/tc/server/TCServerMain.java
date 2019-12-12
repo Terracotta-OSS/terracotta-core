@@ -24,6 +24,7 @@ import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
+import com.tc.logging.TCLogging;
 import com.tc.util.ManagedServiceLoader;
 import com.tc.util.ProductInfo;
 import org.terracotta.config.ConfigurationProvider;
@@ -43,6 +44,7 @@ import java.util.Properties;
 public class TCServerMain {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCServerMain.class);
+  private static final Logger CONSOLE = TCLogging.getConsoleLogger();
 
   public static TCServer server;
   public static ServerConfigurationManager setup;
@@ -129,9 +131,9 @@ public class TCServerMain {
     try {
       String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
       long pid = Long.parseLong(processName.split("@")[0]);
-      LOGGER.info("PID is {}", pid);
+      CONSOLE.info("PID is {}", pid);
     } catch (Throwable t) {
-      LOGGER.warn("Unable to fetch the PID of this process.");
+      CONSOLE.warn("Unable to fetch the PID of this process.");
     }
   }
 
