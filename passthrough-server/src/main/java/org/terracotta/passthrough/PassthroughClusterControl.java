@@ -189,14 +189,14 @@ public class PassthroughClusterControl implements IClusterControl {
 
   public void tearDown() {
     this.crasher.waitForStop();
+    PassthroughServer removedServer = PassthroughServerRegistry.getSharedInstance().unregisterServer(this.stripeName);
+    Assert.assertTrue(this.activeServer == removedServer);
     for (PassthroughServer passthroughServer : passthroughServers) {
       // don't stop twice
       if(!stoppedPassthroughServers.contains(passthroughServer)) {
         passthroughServer.stop();
       }
     }
-    PassthroughServer removedServer = PassthroughServerRegistry.getSharedInstance().unregisterServer(this.stripeName);
-    Assert.assertTrue(this.activeServer == removedServer);
   }
 
   private synchronized void bootstrapCluster() {
