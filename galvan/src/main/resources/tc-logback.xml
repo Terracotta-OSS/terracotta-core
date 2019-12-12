@@ -15,9 +15,20 @@
     </encoder>
   </appender>
 
+  <appender name="LogToJFR" class="org.terracotta.tripwire.EventAppender">
+  </appender>
+
+  <appender name="JFR" class="org.terracotta.tripwire.JFRAppender">
+    <path>artifacts</path>
+    <dumpOnExit>false</dumpOnExit>
+    <regex>Server dump:|dump on exit</regex>
+  </appender>
+
   <root level="INFO">
     <appender-ref ref="TC_BASE" />
     <appender-ref ref="SYSOUT" />
+    <appender-ref ref="JFR"/>
+    <appender-ref ref="LogToJFR"/>
   </root>
 
   <include optional="true" resource="logback-ext.xml"/>
