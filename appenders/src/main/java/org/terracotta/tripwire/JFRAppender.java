@@ -171,7 +171,8 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
   @Override
   protected void append(ILoggingEvent eventObject) {
     if (dumpRegex != null) {
-      if (!dumpRegex.matcher(eventObject.getFormattedMessage()).matches()) {
+      String checking = eventObject.getMessage();
+      if (!dumpRegex.matcher(checking).find()) {
         return;
       }
     }
