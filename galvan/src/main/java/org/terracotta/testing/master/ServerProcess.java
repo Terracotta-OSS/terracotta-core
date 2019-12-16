@@ -55,6 +55,7 @@ public class ServerProcess {
   private final int debugPort;
   private final Properties serverProperties;
   private final File serverWorkingDirectory;
+  private final File serverKitDirectory;
   private final String eyeCatcher;
 // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
@@ -75,7 +76,7 @@ public class ServerProcess {
   private OutputStream errorStream;
 
   public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, int heapInM,
+                       ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, File serverKitPath, int heapInM,
                        int debugPort, Properties serverProperties) {
     this.stateInterlock = stateInterlock; 
     this.stateManager = stateManager;
@@ -90,6 +91,7 @@ public class ServerProcess {
     this.debugPort = debugPort;
     this.serverProperties = serverProperties;
     this.serverWorkingDirectory = serverWorkingDirectory;
+    this.serverKitDirectory = serverKitPath;
     // Create our eye-catcher for looking up sub-processes.
     this.eyeCatcher = UUID.randomUUID().toString();
     
@@ -159,9 +161,9 @@ public class ServerProcess {
 
     String[] command;
     if (consistentStart) {
-      command = new String[]{startScript, "-c", "-n", this.serverName, this.eyeCatcher};
+      command = new String[]{startScript, "-c",  "-f", "tc-config.xml", "-n", this.serverName,this.eyeCatcher};
     } else {
-      command = new String[]{startScript, "-n", this.serverName, this.eyeCatcher};
+      command = new String[]{startScript, "-f", "tc-config.xml", "-n", this.serverName, this.eyeCatcher};
     }
     // Start the inferior process.
     AnyProcess process = AnyProcess.newBuilder()
@@ -223,9 +225,9 @@ public class ServerProcess {
     if (TestHelpers.isWindows()){
       //There are illegal characters "(" and ")" in folder names that cause the path to be truncated and the server won't start.
       //So we need to wrap double quotes around startScript absolute file path.
-      startScript = "\"" + new File(this.serverWorkingDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath() + "\"";
+      startScript = "\"" + new File(this.serverKitDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath() + "\"";
     }else {
-      startScript = "server/bin/start-tc-server.sh";
+      startScript = this.serverKitDirectory + "/server/bin/start-tc-server.sh";
     }
     return startScript;
   }

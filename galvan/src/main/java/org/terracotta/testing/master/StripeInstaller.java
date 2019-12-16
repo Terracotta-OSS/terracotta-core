@@ -19,9 +19,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Properties;
@@ -63,12 +63,18 @@ public class StripeInstaller {
     // Create the logger for the intallation.
     ContextualLogger fileHelperLogger = this.stripeVerboseManager.createFileHelpersLogger();
     // Create a copy of the server for this installation.
-    String installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
-    // Copy the extra jars this test needs into the new installation.
-    FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
-
+    String installPath = null;
+    String kitPath = this.kitOriginDirectory;
+    if (this.extraJarPaths.isEmpty()) {
+      installPath = FileHelpers.createTempEmptyDirectory(this.stripeInstallDirectory, serverName);
+    } else {
+      installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, this.stripeInstallDirectory, serverName, this.kitOriginDirectory);
+// Copy the extra jars this test needs into the new installation.
+      FileHelpers.copyJarsToServer(fileHelperLogger, installPath, this.extraJarPaths);
+      kitPath = installPath;
+    }
     //Copy a cutom logback configuration
-    Path serverPath = FileSystems.getDefault().getPath(installPath, "server", "lib");
+    Path serverPath = Paths.get(installPath);
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverPath.resolve("logback-test.xml"));
 
     InputStream logExt = this.getClass().getResourceAsStream("/" + logConfigExt);
@@ -78,7 +84,7 @@ public class StripeInstaller {
 
     // Create the object representing this single installation and add it to the list for this stripe.
     ServerInstallation installation = new ServerInstallation(this.interlock, this.stateManager, this.stripeVerboseManager,
-        serverName, new File(installPath), heapInM, debugPort, serverProperties);
+        serverName, new File(installPath), new File(kitPath), heapInM, debugPort, serverProperties);
     this.installedServers.add(installation);
   }
   
