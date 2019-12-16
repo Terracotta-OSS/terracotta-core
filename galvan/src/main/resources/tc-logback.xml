@@ -14,7 +14,17 @@
       <pattern>%d [%t] %p %c - %m%n</pattern>
     </encoder>
   </appender>
-
+  
+  <appender name="IPC" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <encoder>
+      <pattern>%d [%t] %p %c - %m%n</pattern>
+    </encoder>
+  </appender>
+  
   <appender name="LogToJFR" class="org.terracotta.tripwire.EventAppender">
   </appender>
 
@@ -26,11 +36,18 @@
 
   <root level="INFO">
     <appender-ref ref="TC_BASE" />
-    <appender-ref ref="SYSOUT" />
+    <appender-ref ref="IPC"/>
     <appender-ref ref="JFR"/>
     <appender-ref ref="LogToJFR"/>
   </root>
-
+  
+  <logger name="org.terracotta.console" level="INFO">
+    <appender-ref ref="SYSOUT" />
+  </logger>
+  <logger name="org.terracotta.dump" level="INFO">
+    <appender-ref ref="SYSOUT" />
+  </logger>
+    
   <include optional="true" resource="logback-ext.xml"/>
 
 </configuration>
