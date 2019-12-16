@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.ServerException;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.tracing.Trace;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -27,7 +28,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.exception.EntityException;
 
 /**
  *
@@ -36,11 +36,11 @@ import org.terracotta.exception.EntityException;
 public class PassiveResultCapture implements ResultCapture {
   private final Runnable received;
   private final Consumer<byte[]> result;
-  private final Consumer<EntityException> error;
+  private final Consumer<ServerException> error;
   private final SetOnceFlag receivedSent = new SetOnceFlag();
   private static final Logger LOGGER = LoggerFactory.getLogger(PassiveResultCapture.class);
   
-  public PassiveResultCapture(Runnable received, Consumer<byte[]> result, Consumer<EntityException> error) {
+  public PassiveResultCapture(Runnable received, Consumer<byte[]> result, Consumer<ServerException> error) {
     this.received = received;
     this.result = result;
     this.error = error;
@@ -86,7 +86,7 @@ public class PassiveResultCapture implements ResultCapture {
   }
 
   @Override
-  public void failure(EntityException ee) {
+  public void failure(ServerException ee) {
     if (Trace.isTraceEnabled()) {
       Trace.activeTrace().log("Failure - exception: " + ee.getLocalizedMessage());
     }

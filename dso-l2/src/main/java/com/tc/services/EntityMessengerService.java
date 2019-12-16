@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -43,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.exception.EntityException;
 
 /**
  * Implements the IEntityMessenger interface by maintaining a "fake" EntityDescriptor (as there is no actual reference from
@@ -242,7 +242,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       });
     }
     
-    public Consumer<EntityException> getExceptionHandler() {
+    public Consumer<ServerException> getExceptionHandler() {
       return response == null ? null : (exception)->this.response.accept(new MessageResponse() {
         @Override
         public boolean wasExceptionThrown() {

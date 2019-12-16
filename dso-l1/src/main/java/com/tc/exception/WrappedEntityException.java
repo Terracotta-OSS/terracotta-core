@@ -19,18 +19,18 @@
 package com.tc.exception;
 
 import org.terracotta.exception.EntityException;
+import org.terracotta.exception.RuntimeEntityException;
 
 /**
- *  Internal exception to tell the client that the server is busy and to retry
+ *
  */
-public class EntityBusyException extends EntityException {
+public class WrappedEntityException extends EntityException {
 
-  public EntityBusyException(String className, String entityName, String description) {
-    super(className, entityName, description, null);
-  }  
-  
-  public EntityBusyException(String className, String entityName, Throwable cause) {
-    super(className, entityName, cause.getMessage(), cause);
+  public WrappedEntityException(String className, String entityName, String description, Throwable cause) {
+    super(className, entityName, description, cause);
   }
-
+  
+  public WrappedEntityException(RuntimeEntityException runtimeE) {
+    super(runtimeE == null ? null : runtimeE.getClassName(), runtimeE == null ? null : runtimeE.getEntityName(), "wrapped runtime", runtimeE);
+  }
 }

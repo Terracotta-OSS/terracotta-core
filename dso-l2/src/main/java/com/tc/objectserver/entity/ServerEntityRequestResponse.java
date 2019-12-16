@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.entity.VoltronEntityResponse;
+import com.tc.exception.ServerException;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -28,7 +29,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.terracotta.exception.EntityException;
 
 
 /**
@@ -45,7 +45,7 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   public ServerEntityRequestResponse(ServerEntityRequest request, 
       Consumer<VoltronEntityResponse> sender,
       Supplier<Optional<MessageChannel>> returnChannel, 
-      Consumer<byte[]> completion, Consumer<EntityException> exception, boolean isReplicatedMessage) {
+      Consumer<byte[]> completion, Consumer<ServerException> exception, boolean isReplicatedMessage) {
     super(request, sender, completion, exception);
     this.returnChannel = returnChannel;
     this.isReplicatedMessage = isReplicatedMessage;
@@ -88,7 +88,7 @@ public class ServerEntityRequestResponse extends AbstractServerEntityRequestResp
   }
 
   @Override
-  public synchronized void failure(EntityException e) {
+  public synchronized void failure(ServerException e) {
     if (isComplete()) throw new AssertionError("Double-sending response " + this.getAction(), e);
     super.failure(e); 
   }

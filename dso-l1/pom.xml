@@ -47,13 +47,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
-      <exclusions>
-        <!-- connection-api needs to come in from the app class loader layer -->
-        <exclusion>
-          <groupId>org.terracotta</groupId>
-          <artifactId>connection-api</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

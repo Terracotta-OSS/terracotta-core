@@ -26,6 +26,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.exception.ServerException;
 import com.tc.objectserver.entity.MessagePayload;
 import com.tc.l2.msg.ReplicationAckTuple;
 import com.tc.l2.msg.ReplicationMessage;
@@ -78,7 +79,6 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
-import org.terracotta.exception.EntityException;
 
 
 public class ReplicatedTransactionHandler {
@@ -112,7 +112,7 @@ public class ReplicatedTransactionHandler {
     this.groupManager = groupManager;
     try {
       platform = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, PlatformEntity.VERSION)).get();
-    } catch (EntityException ee) {
+    } catch (ServerException ee) {
       throw new RuntimeException(ee);
     }
   }
@@ -197,7 +197,7 @@ public class ReplicatedTransactionHandler {
     return eventHorizon;
   }
 
-  private void processMessage(ReplicationMessage rep) throws EntityException {
+  private void processMessage(ReplicationMessage rep) throws ServerException {
     if (PLOGGER.isDebugEnabled()) {
       PLOGGER.debug("RECEIVED:" + rep.getDebugId());
     }
@@ -244,7 +244,7 @@ public class ReplicatedTransactionHandler {
     }
   }
 
-  private void syncBeginEntityListReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
+  private void syncBeginEntityListReceived(ServerID activeSender, SyncReplicationActivity activity) throws ServerException {
     ackReceived(activeSender, activity, null);
     beforeSyncAction(activity);
     
@@ -273,7 +273,7 @@ public class ReplicatedTransactionHandler {
   }
 
 //  don't need to worry about resends here for lifecycle messages.  active will filer them  
-  private void replicatedActivityReceived(ServerID activeSender, SyncReplicationActivity activity) throws EntityException {
+  private void replicatedActivityReceived(ServerID activeSender, SyncReplicationActivity activity) throws ServerException {
     Trace trace = new Trace(String.valueOf(activity.getActivityID().id), "Replication");
     trace.start();
     ClientID sourceNodeID = activity.getSource();
@@ -317,7 +317,7 @@ public class ReplicatedTransactionHandler {
             LOGGER.debug("create fail:" + temp.getID());
             acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
           }));
-      } catch (EntityException ee) {
+      } catch (ServerException ee) {
         acknowledge(activeSender, activity, ReplicationResultCode.FAIL);
         this.persistor.getEntityPersistor().entityCreateFailed(activity.getEntityID(), sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), ee);
       }
@@ -394,7 +394,7 @@ public class ReplicatedTransactionHandler {
     trace.end();
   }
   
-  private ResultCapture createCapture(Runnable received, Consumer<byte[]> completed, Consumer<EntityException> failure) {
+  private ResultCapture createCapture(Runnable received, Consumer<byte[]> completed, Consumer<ServerException> failure) {
     return new PassiveResultCapture(received, completed, failure);
   }
   
@@ -440,7 +440,7 @@ public class ReplicatedTransactionHandler {
           null, 
           (result)->{/* do nothing - this in-between state is temporary*/}, 
           (exception)->{acknowledge(activeSender, activity, ReplicationResultCode.FAIL);}));
-      } catch (EntityException exception) {
+      } catch (ServerException exception) {
 //  TODO: this needs to be controlled.  
         LOGGER.warn("entity has already been created", exception);
       }
@@ -484,7 +484,7 @@ public class ReplicatedTransactionHandler {
           }, (exception)->acknowledge(activeSender, activity, ReplicationResultCode.FAIL)));
         }
       }
-    } catch (EntityException ee) {
+    } catch (ServerException ee) {
       throw new RuntimeException(ee);
     } finally {
       afterSyncAction(activity);
@@ -522,7 +522,7 @@ public class ReplicatedTransactionHandler {
         DeferredContainer r = deferred.pop();
         try {
           replicatedActivityReceived(r.activeSender, r.activity);
-        } catch (EntityException ee) {
+        } catch (ServerException ee) {
           throw new RuntimeException(ee);
         }
       }

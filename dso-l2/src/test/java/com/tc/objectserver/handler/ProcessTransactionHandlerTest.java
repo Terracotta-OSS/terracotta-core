@@ -66,7 +66,6 @@ import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
-import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
@@ -74,7 +73,6 @@ import com.tc.util.Assert;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
-import org.mockito.ArgumentMatchers;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -190,8 +188,8 @@ public class ProcessTransactionHandlerTest {
   public void testLoadExisting() throws Exception {
     // Set up a believable collection of persistent entities.
     EntityData.Value data = new EntityData.Value();
-    data.className = TestEntity.class.getCanonicalName();
-    data.version = TestEntity.VERSION;
+    data.className = TEST_ENTITY_CLASS_NAME;
+    data.version = 1L;
     data.consumerID = 1;
     data.entityName = "foo";
     data.configuration = new byte[0];
@@ -205,7 +203,7 @@ public class ProcessTransactionHandlerTest {
   public void testFailOnLoadVersionMismatch() throws Exception {
     EntityData.Value data = new EntityData.Value();
     data.className = TEST_ENTITY_CLASS_NAME;
-    data.version = TestEntity.VERSION + 1;
+    data.version = 1 + 1;
     data.consumerID = 1;
     data.entityName = "foo";
     data.configuration = new byte[0];

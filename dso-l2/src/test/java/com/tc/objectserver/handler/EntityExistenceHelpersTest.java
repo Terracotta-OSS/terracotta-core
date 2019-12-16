@@ -73,7 +73,7 @@ public class EntityExistenceHelpersTest {
     boolean result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration, true);
 // first run through should be false
     Assert.assertFalse(result);
-    when(persistor.wasEntityCreatedInJournal(any(), anyLong())).thenReturn(Boolean.TRUE);
+    when(persistor.wasEntityCreatedInJournal(any(), any(), anyLong())).thenReturn(Boolean.TRUE);
     result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration, true);
 // if the persistor thinks the entity was created, the entity return was cached
     Assert.assertTrue(result);

@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
@@ -35,7 +36,6 @@ import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.RequestProcessor.EntityRequest;
-import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.util.Assert;
 import org.junit.AfterClass;
@@ -60,7 +60,6 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.exception.EntityAlreadyExistsException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -129,7 +128,7 @@ public class ManagedEntityImplTest {
   public void setUp() throws Exception {
     nodeID = mock(ClientID.class);
     when(nodeID.toLong()).thenReturn(1L);
-    entityID = new EntityID(TestEntity.class.getName(), "foo");
+    entityID = new EntityID("com.tc.objectserver.testentity.TestEntity", "foo");
     clientInstanceID = new ClientInstanceID(1);
     version = 1;
     consumerID = 1;
@@ -400,7 +399,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), null));
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), response));
     response.waitFor();
-    verify(response).failure(any(EntityAlreadyExistsException.class));
+    verify(response).failure(any(ServerException.class));
     // No retire on passive.
     verify(response, never()).complete();
   }
@@ -414,7 +413,7 @@ public class ManagedEntityImplTest {
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(mockCreateEntityRequest(), mockCreatePayload("foo"), response));
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, mockCreatePayload("bar"), response));
     response.waitFor();
-    verify(response).failure(any(EntityAlreadyExistsException.class));
+    verify(response).failure(any(ServerException.class));
     verify(response, never()).complete();
   }
 
@@ -787,7 +786,7 @@ public class ManagedEntityImplTest {
     TestingResponse response2 = mockResponse();
     invokeOnTransactionHandler(()->managedEntity.addRequestMessage(failedCreateRequest, MessagePayload.emptyPayload(), response2));
     response2.waitFor();
-    verify(response2).failure(any(EntityAlreadyExistsException.class));
+    verify(response2).failure(any(ServerException.class));
     verify(response2, never()).complete(Mockito.any());
     
     // Verify that we can get and release, just like with any other active.

@@ -22,10 +22,10 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
 
 import org.slf4j.Logger;
-import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
@@ -127,7 +127,7 @@ public class ServerClientHandshakeManager {
           EntityDescriptor descriptor = EntityDescriptor.createDescriptorForFetch(referenceContext.getEntityID(), referenceContext.getEntityVersion(), referenceContext.getClientInstanceID());
           try {
             entity = entityManager.getEntity(descriptor);
-          } catch (EntityException e) {
+          } catch (ServerException e) {
             // We don't expect to fail at this point.
             // TODO:  Determine if we have a meaningful way to handle this error.
             throw Assert.failure("Unexpected failure to get entity in handshake", e);

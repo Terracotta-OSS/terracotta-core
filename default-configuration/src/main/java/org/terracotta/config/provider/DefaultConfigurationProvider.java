@@ -223,7 +223,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     return options;
   }
   
-  private static class TcConfigurationWrapper implements Configuration, PrettyPrintable {
+  public static class TcConfigurationWrapper implements Configuration, PrettyPrintable {
     private final TcConfiguration  configuration;
 
     public TcConfigurationWrapper(TcConfiguration configuration) {
@@ -266,18 +266,21 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     @Override
     public FailoverBehavior getFailoverPriority() {
       FailoverPriority priority = configuration.getPlatformConfiguration().getFailoverPriority();
-      String available = priority.getAvailability();
-      Consistency consistent = priority.getConsistency();
-      if (consistent != null) {
-        int votes = consistent.getVoter().getCount();
-        return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, votes);
-      } else {
-        if (available == null) {
-          return null;
+      if (priority != null) {
+        String available = priority.getAvailability();
+        Consistency consistent = priority.getConsistency();
+        if (consistent != null) {
+          int votes = consistent.getVoter().getCount();
+          return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, votes);
         } else {
-          return new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0);
+          if (available == null) {
+            return null;
+          } else {
+            return new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0);
+          }
         }
       }
+      return null;
     }
 
     @Override

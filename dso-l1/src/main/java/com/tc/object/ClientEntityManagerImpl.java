@@ -18,6 +18,8 @@
  */
 package com.tc.object;
 
+import com.tc.exception.EntityReferencedException;
+import com.tc.exception.WrappedEntityException;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.bytes.TCByteBufferFactory;
@@ -39,8 +41,6 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.EntityBusyException;
-import com.tc.exception.EntityReferencedException;
-import com.tc.exception.VoltronWrapperException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -383,7 +383,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public void failed(TransactionID id, EntityException error) {
+  public void failed(TransactionID id, Exception error) {
     // Note that this call comes the platform, potentially concurrently with received().
     InFlightMessage inFlight = inFlightMessages.get(id);
     if (inFlight != null) {
@@ -490,7 +490,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private void throwClosedExceptionOnMessage(InFlightMessage msg, String description) {
     msg.received();
     // Synthesize the disconnect runtime exception for this message.
-    msg.setResult(null, new VoltronWrapperException(new ConnectionClosedException(msg.getEntityID().getClassName(), msg.getEntityID().getEntityName(), description, msg.isSent(), null)));
+    ConnectionClosedException closed = new ConnectionClosedException(msg.getEntityID().getClassName(), msg.getEntityID().getEntityName(), description, false, null);
+    msg.setResult(null, closed);
     msg.retired();
   }
 
@@ -582,10 +583,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException in) {
-          throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", in));
+          throw new WrappedEntityException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", in));
         }
       } catch (InterruptedException | TimeoutException ie) {
-        throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
+        throw new WrappedEntityException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
       } 
     }
   }
