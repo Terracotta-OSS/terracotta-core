@@ -67,7 +67,7 @@ setPluginClasspath() {
 
 setPluginClasspath;
 
-PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib"
+PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib/"
 
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
@@ -78,7 +78,7 @@ while [ 1 ] ; do
 	-XX:+HeapDumpOnOutOfMemoryError \
         -Dtc.install-root="${TC_SERVER_DIR}" \
         ${JAVA_OPTS} \
-        -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}" \
+        -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}:." \
         com.tc.server.TCServerMain "$@"
     exitValue=$?
 

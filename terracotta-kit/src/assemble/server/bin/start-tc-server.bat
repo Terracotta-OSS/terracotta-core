@@ -73,7 +73,7 @@ if exist "!TC_SERVER_DIR!\lib" (
   echo !TC_SERVER_DIR!\lib does not exist!
 )
 
-set "CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%;%TC_SERVER_DIR%\lib"
+set "CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%;%TC_SERVER_DIR%\lib\;."
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
