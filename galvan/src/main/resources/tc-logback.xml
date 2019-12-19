@@ -48,6 +48,6 @@
     <appender-ref ref="SYSOUT" />
   </logger>
     
-  <include optional="true" resource="logback-ext.xml"/>
+  <include optional="true" resource="logback-ext-test.xml"/>
 
 </configuration>
