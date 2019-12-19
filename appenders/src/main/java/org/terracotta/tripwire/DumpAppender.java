@@ -84,7 +84,7 @@ public class DumpAppender extends AppenderBase<ILoggingEvent> {
 
   @Override
   protected void append(ILoggingEvent eventObject) {
-    String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now());
+    String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(LocalDateTime.now()).replace(':', '_');
     if (path == null) {
       path = System.getProperty("user.dir");
     }

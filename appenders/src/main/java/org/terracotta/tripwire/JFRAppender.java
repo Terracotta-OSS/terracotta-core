@@ -40,6 +40,7 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
   private Recording continuous;
   private String path;
   private String configuration = "default";
+  private String filePattern;
   private Path recordings;
   private boolean dumpOnExit = true;
   private int maxAgeMinutes = 5;
@@ -148,6 +149,14 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     }
   }
 
+  public String getFilePattern() {
+    return filePattern;
+  }
+
+  public void setFilePattern(String filePattern) {
+    this.filePattern = filePattern;
+  }
+
   public boolean isDumpOnExit() {
     return dumpOnExit;
   }
@@ -183,7 +192,8 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
     } else {
       lastsave = now;
     }
-    String timestamp = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now);
+    String timestamp = filePattern != null ? DateTimeFormatter.ofPattern(filePattern).format(now) : 
+      DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now).replace(':', '_');
     try {
       if (continuous != null) {
         continuous.dump(recordings.resolve(timestamp + ".jfr"));
