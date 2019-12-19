@@ -489,7 +489,7 @@ public class StateManagerImpl implements StateManager {
   
   private void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won msg: " + clusterMsg);
-    boolean peerWins = checkIfPeerWinsVerificationElection(clusterMsg);
+    boolean peerWins = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
     boolean transition = peerWins && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
     if (transition) {
       moveToPassiveReady(clusterMsg);
@@ -569,7 +569,7 @@ public class StateManagerImpl implements StateManager {
   }
   
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
-    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg);
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
     boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
     if (transition) {
