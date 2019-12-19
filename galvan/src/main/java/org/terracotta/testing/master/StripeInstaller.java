@@ -79,7 +79,7 @@ public class StripeInstaller {
 
     InputStream logExt = this.getClass().getResourceAsStream("/" + logConfigExt);
     if (logExt != null) {
-      Files.copy(logExt, serverPath.resolve("logback-ext.xml"), StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(logExt, serverPath.resolve("logback-ext-test.xml"), StandardCopyOption.REPLACE_EXISTING);
     }
 
     // Create the object representing this single installation and add it to the list for this stripe.
