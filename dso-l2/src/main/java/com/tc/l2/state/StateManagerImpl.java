@@ -516,8 +516,8 @@ public class StateManagerImpl implements StateManager {
   
   private void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won msg: " + clusterMsg);
-    boolean peerWins = checkIfPeerWinsVerificationElection(clusterMsg);
-    boolean transition = peerWins && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
+    boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
     if (transition) {
       moveToPassiveReady(clusterMsg);
     } else {
@@ -538,8 +538,16 @@ public class StateManagerImpl implements StateManager {
   private boolean checkIfPeerWinsVerificationElection(L2StateMessage clusterMsg) {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     Enrollment verify = getVerificationEnrollment();
-    boolean peerWins = (Arrays.equals(winningEnrollment.getWeights(), verify.getWeights())) ||
-            winningEnrollment.wins(verify);
+    int len = Math.min(winningEnrollment.getWeights().length, verify.getWeights().length);
+    // if weights are equal, the default is for the active to continue as active
+    boolean peerWins = !isActiveCoordinator();
+    for (int x=0;x<len;x++) {
+      if (winningEnrollment.getWeights()[x] != verify.getWeights()[x]) {
+        peerWins = false;
+        break;
+      }
+    }
+    peerWins |= winningEnrollment.wins(verify);
     logger.info("verifying election won results isActive:{} remote:{} local:{} remoteWins:{}", isActiveCoordinator(), winningEnrollment, verify, peerWins);
     return peerWins;
   }
@@ -589,7 +597,7 @@ public class StateManagerImpl implements StateManager {
   }
   
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
-    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg);
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
     boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
     if (transition) {
