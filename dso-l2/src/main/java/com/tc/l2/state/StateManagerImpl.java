@@ -489,10 +489,11 @@ public class StateManagerImpl implements StateManager {
   
   private void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won msg: " + clusterMsg);
-    boolean peerWins = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
-    boolean transition = peerWins && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    boolean transition = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
     if (transition) {
-      moveToPassiveReady(clusterMsg);
+      if (availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE)) {
+        moveToPassiveReady(clusterMsg);
+      }
     } else {
       groupManager.closeMember((ServerID)clusterMsg.messageFrom());
     }
@@ -512,7 +513,8 @@ public class StateManagerImpl implements StateManager {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     Enrollment verify = getVerificationEnrollment();
     int len = Math.min(winningEnrollment.getWeights().length, verify.getWeights().length);
-    boolean peerWins = true;
+    // if weights are equal, the default is for the active to continue as active
+    boolean peerWins = !isActiveCoordinator();
     for (int x=0;x<len;x++) {
       if (winningEnrollment.getWeights()[x] != verify.getWeights()[x]) {
         peerWins = false;
