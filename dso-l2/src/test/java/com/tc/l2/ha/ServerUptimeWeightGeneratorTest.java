@@ -33,7 +33,7 @@ public class ServerUptimeWeightGeneratorTest extends TCTestCase {
       // The sleep is added to spread the numbers a little but it will also slow the test to take at least 2 seconds.
       Thread.sleep(2);
       long next = generator.getWeight();
-      Assert.assertTrue(next >= previous);
+      Assert.assertTrue(next == previous || next > previous);
       previous = next;
     }
   }
