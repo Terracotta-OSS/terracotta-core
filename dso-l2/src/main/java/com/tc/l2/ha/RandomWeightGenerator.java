@@ -24,17 +24,15 @@ import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
 
 
 public class RandomWeightGenerator implements WeightGenerator {
-  private final SecureRandom generator;
-  private final boolean isAvailable;
+  private final long randomNumber;
 
   public RandomWeightGenerator(SecureRandom generator, boolean isAvailable) {
-    this.generator = generator;
-    this.isAvailable = isAvailable;
+    this.randomNumber = generator.nextLong();
   }
 
   @Override
   public long getWeight() {
-    return this.generator.nextLong();
+    return this.randomNumber;
   }
   
   @Override
