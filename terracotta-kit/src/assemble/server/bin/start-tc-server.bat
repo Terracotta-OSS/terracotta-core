@@ -44,7 +44,7 @@ for %%C in ("-d64 -server -XX:MaxDirectMemorySize=1048576g" ^
 			"-XX:MaxDirectMemorySize=1048576g") ^
 do (
   set JAVA_COMMAND="%JAVA_HOME%\bin\java" %%~C
-  !JAVA_COMMAND! -version > NUL
+  !JAVA_COMMAND! -version > NUL 2>&1
 
   if not errorlevel 1 (
 	goto setJavaOptsAndClasspath
