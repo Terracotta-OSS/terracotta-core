@@ -31,10 +31,9 @@ public class RandomWeightGeneratorTest extends TCTestCase {
     // overwhelming and there seems to be no way to force deterministic values from SecureRandom, even with a seed.
     
     SecureRandom random = new SecureRandom();
-    RandomWeightGenerator generator = new RandomWeightGenerator(random, true);
-    long weight1 = generator.getWeight();
-    long weight2 = generator.getWeight();
-    long weight3 = generator.getWeight();
+    long weight1 = new RandomWeightGenerator(random, true).getWeight();
+    long weight2 = new RandomWeightGenerator(random, true).getWeight();
+    long weight3 = new RandomWeightGenerator(random, true).getWeight();
     Assert.assertTrue(weight1 != weight2);
     Assert.assertTrue(weight1 != weight3);
     Assert.assertTrue(weight2 != weight3);
