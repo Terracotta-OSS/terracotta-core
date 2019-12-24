@@ -108,7 +108,9 @@ public class ClientLeakIT {
     if (maker != null) {
       for (int x=0;x<1000 && maker.isAlive();x++) {
         System.gc();
-        System.out.println("trying to join:" + x);
+        Exception printer = new Exception("trying to join:" + x);
+        printer.setStackTrace(maker.getStackTrace());
+        printer.printStackTrace();
         maker.join(1000);
       }
       assertFalse(maker.isAlive());
