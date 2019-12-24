@@ -17,13 +17,36 @@ REM The Initial Developer of the Covered Software is
 REM     Terracotta, Inc., a Software AG company
 REM
 
-setlocal
-
-pushd "%~dp0.."
-set TC_VOTER_DIR=%CD%
-popd
+setlocal EnableExtensions EnableDelayedExpansion
 set TC_VOTER_MAIN=org.terracotta.voter.TCVoterMain
 
-call "%TC_VOTER_DIR%\bin\base-voter.bat"
+pushd "%~dp0.."
+set "TC_VOTER_DIR=%CD%"
+popd
+
+if exist "!TC_VOTER_DIR!\bin\setenv.bat" (
+  pushd "!TC_VOTER_DIR!\bin" && (
+    call .\setenv.bat
+    popd
+  )
+)
+
+if not defined JAVA_HOME (
+  echo Environment variable JAVA_HOME needs to be set
+  exit /b 1
+)
+
+pushd "%TC_VOTER_DIR%\.."
+set "TC_KIT_ROOT=%CD%"
+popd
+set "TC_LOGGING_ROOT=%TC_KIT_ROOT%\client\logging"
+set "TC_CLIENT_ROOT=%TC_KIT_ROOT%\client\lib"
+
+set "CLASSPATH=%TC_VOTER_DIR%\lib\*;%TC_CLIENT_ROOT%\*;%TC_LOGGING_ROOT%\*;%TC_LOGGING_ROOT%\impl\*;%TC_LOGGING_ROOT%\impl"
+set "JAVA=%JAVA_HOME%\bin\java.exe"
+
+"%JAVA%" %JAVA_OPTS% -cp "%CLASSPATH%" %TC_VOTER_MAIN% %*
+
+exit /b %ERRORLEVEL%
 
 endlocal

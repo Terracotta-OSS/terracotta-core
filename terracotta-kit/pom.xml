@@ -15,7 +15,6 @@
     <packaging>pom</packaging>
     <name>Terracotta Kit</name>
 
-
     <dependencies>
         <dependency>
             <groupId>org.terracotta.internal</groupId>
@@ -38,6 +37,22 @@
           <classifier>jar-with-dependencies</classifier>
           <version>${project.version}</version>
         </dependency>
+        <dependency>
+          <groupId>org.terracotta.test</groupId>
+          <artifactId>test-common</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest-all</artifactId>
+          <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -55,12 +70,63 @@
                         <configuration>
                             <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
                             <excludeArtifactIds>default-configuration,voter,client-runtime</excludeArtifactIds>  <!-- inside the client runtime -->
+                            <includeScope>runtime</includeScope>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
             <plugin>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>3.1.0</version>
+              <executions>
+                <execution>
+                  <id>copy-tests</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                    <goal>testResources</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+            <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>3.8.1</version>
+              <executions>
+                <execution>
+                  <id>compile-tests</id>
+                  <phase>test-compile</phase>
+                  <goals>
+                    <goal>testCompile</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>${surefire.version}</version>
+              <executions>
+                <execution>
+                  <id>test-scripts</id>
+                  <phase>test</phase>
+                  <goals>
+                    <goal>test</goal>
+                  </goals>
+                  <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                    <additionalClasspathElements>
+                      <!-- Enable scripts to be found as resources. -->
+                      <element>${project.basedir}${file.separator}src${file.separator}assemble</element>
+                    </additionalClasspathElements>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+          <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
