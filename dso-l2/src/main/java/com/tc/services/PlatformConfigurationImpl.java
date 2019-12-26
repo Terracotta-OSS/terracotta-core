@@ -22,8 +22,8 @@ import java.util.Collection;
 
 import org.terracotta.entity.PlatformConfiguration;
 
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ServerConfiguration;
 
 /**
  * @author vmad

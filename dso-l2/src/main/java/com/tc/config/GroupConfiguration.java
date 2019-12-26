@@ -22,7 +22,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
 import com.tc.properties.TCPropertiesImpl;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.ServerConfiguration;
 
 import java.util.HashSet;
 import java.util.Map;

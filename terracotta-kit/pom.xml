@@ -25,17 +25,20 @@
             <groupId>org.terracotta.internal</groupId>
             <artifactId>client-runtime</artifactId>
             <version>${project.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
           <groupId>org.terracotta.internal</groupId>
           <artifactId>voter</artifactId>
           <version>${project.version}</version>
+          <scope>runtime</scope>
         </dependency>
         <dependency>
-          <groupId>org.terracotta.internal</groupId>
+          <groupId>org.terracotta</groupId>
           <artifactId>default-configuration</artifactId>  
           <classifier>jar-with-dependencies</classifier>
           <version>${project.version}</version>
+          <scope>runtime</scope>
         </dependency>
         <dependency>
           <groupId>org.terracotta.test</groupId>
@@ -69,8 +72,7 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
-                            <excludeArtifactIds>default-configuration,voter,client-runtime</excludeArtifactIds>  <!-- inside the client runtime -->
-                            <includeScope>runtime</includeScope>
+                            <includeScope>compile</includeScope>
                         </configuration>
                     </execution>
                 </executions>
@@ -133,7 +135,7 @@
                     <finalName>terracotta-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <attach>true</attach>
-                    <tarLongFileMode>gnu</tarLongFileMode>
+                    <tarLongFileMode>posix</tarLongFileMode>
                     <descriptors>
                         <descriptor>${basedir}/src/assemble/distribution.xml</descriptor>
                     </descriptors>

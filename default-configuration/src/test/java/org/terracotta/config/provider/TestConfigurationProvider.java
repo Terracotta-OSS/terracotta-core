@@ -18,9 +18,9 @@
  */
 package org.terracotta.config.provider;
 
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ConfigurationException;
-import org.terracotta.config.ConfigurationProvider;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationException;
+import org.terracotta.configuration.ConfigurationProvider;
 
 import java.util.List;
 import javax.xml.bind.JAXBContext;

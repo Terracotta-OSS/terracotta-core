@@ -16,29 +16,38 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.config;
+package org.terracotta.configuration;
 
-import org.terracotta.entity.ServiceProviderConfiguration;
-
-import java.util.List;
-import java.util.Properties;
-
-public interface Configuration {
-  ServerConfiguration getDefaultServerConfiguration(String serverName)throws ConfigurationException;
-
-  List<ServerConfiguration> getServerConfigurations();
-  
-  List<ServiceProviderConfiguration> getServiceConfigurations();
-
-  <T> List<T> getExtendedConfiguration(Class<T> type);
-
-  String getRawConfiguration();
-
-  Properties getTcProperties();
-  
-  FailoverBehavior getFailoverPriority();
-  
-  default boolean isPartialConfiguration() {
-    return false;
+/**
+ *
+ */
+public class FailoverBehavior {
+  public enum Type {
+    AVAILABILITY, CONSISTENCY;
   }
+  
+  private final Type type;
+  private final int voters;
+
+  public FailoverBehavior(Type type, int voters) {
+    this.type = type;
+    this.voters = voters;
+  }
+  
+  public Type getBehaviorType() {
+    return type;
+  }
+  
+  public int getExternalVoters() {
+    return voters;
+  }
+  
+  public boolean isAvailability() {
+    return type == Type.AVAILABILITY;
+  }
+  
+  
+  public boolean isConsistency() {
+    return type == Type.CONSISTENCY;
+  }  
 }

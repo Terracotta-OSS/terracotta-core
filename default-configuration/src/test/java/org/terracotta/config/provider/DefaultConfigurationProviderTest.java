@@ -32,8 +32,8 @@ import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ConfigurationException;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationException;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -53,8 +53,8 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.config.ConfigurationProvider;
-import org.terracotta.config.Directories;
+import org.terracotta.configuration.ConfigurationProvider;
+import org.terracotta.configuration.Directories;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.CONFIG_FILE_PROPERTY_NAME;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.DEFAULT_CONFIG_NAME;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;

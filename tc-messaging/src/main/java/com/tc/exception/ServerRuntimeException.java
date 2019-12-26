@@ -36,8 +36,8 @@ public class ServerRuntimeException extends RuntimeException {
    * @param description
    * @param cause
    */
-  private ServerRuntimeException(EntityID eid, String description, ServerExceptionType cause) {
-    super(description);
+  private ServerRuntimeException(EntityID eid, String description, ServerExceptionType cause, Exception e) {
+    super(description, e);
     this.eid = eid;
     this.type = cause;
   }
@@ -59,6 +59,6 @@ public class ServerRuntimeException extends RuntimeException {
   }
 
   public static ServerRuntimeException createServerUncaught(EntityID eid, Exception cause) {
-    return new ServerRuntimeException(eid, null, ServerExceptionType.ENTITY_SERVER_UNCAUGHT);
+    return new ServerRuntimeException(eid, null, ServerExceptionType.ENTITY_SERVER_UNCAUGHT, cause);
   }
 }

@@ -37,7 +37,7 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import org.terracotta.config.ConfigurationProvider;
+import org.terracotta.configuration.ConfigurationProvider;
 
 import java.util.Collection;
 import java.util.HashSet;

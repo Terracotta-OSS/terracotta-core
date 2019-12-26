@@ -39,24 +39,25 @@ import org.terracotta.monitoring.PlatformServer;
 import com.tc.classloader.BuiltinService;
 import com.tc.net.ServerID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.server.ServiceClassLoader;
 import java.util.Arrays;
 
 
 /**
  * Manages the redirection of data over IStripeMonitoring.
- * 
+ *
  * When the server is active, the instance passes all local or remote data directly to the underlying IStripeMonitoring.
  * When the server is passive, the instance caches all local data, internally, and copies it to the active.
  * When the server changes from passive to active, it copies its local data to the underlying IStripeMonitoring and stops
  *  caching.
  * When the server is passive and is told to send its local data to the new active, it copies its cached data to the new
  *  active.
- * 
+ *
  * NOTE:  Due to the way that this is directly referenced by ManagementTopologyEventCollector, we expect the consumerID
  *  instance to be long-lived (we can't rely on it being re-requested after active promotion, as we can for most services).
  *  In the future, we may have a better solution to this problem by treating the platform's "fake" entity as something more
  *  real, and accessing it through that.
- * 
+ *
  * XXX: The synchronization through this class should be re-thought since it introduces bottlenecks and brittle code which
  *  probably has better solutions.
  */
@@ -71,6 +72,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   // (the tree is per-consumerID).
   private Map<Long, CacheNode> cachedTreeRoot;
   private BestEffortsMonitoring bestEfforts;
+  private final ServiceClassLoader classLoader;
 
   public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ISimpleTimer timer) {
     this.globalRegistry = globalRegistry;
@@ -78,6 +80,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     this.otherServers = new HashMap<>();
     this.cachedTreeRoot = new HashMap<>();
     this.bestEfforts = new BestEffortsMonitoring(timer);
+    this.classLoader = new ServiceClassLoader(Thread.currentThread().getContextClassLoader());
   }
 
   @Override
@@ -91,8 +94,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
       this.cachedTreeRoot.remove(sender.getConsumerID());
     }
   }
-  
-  
+
+  public ClassLoader getWireLoader() {
+    return this.classLoader;
+  }
 
   public PlatformServer getLocalServerInfo() {
     return this.thisServer;
@@ -112,7 +117,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
           owningEntity.addLifecycleListener(this);
         }
       }
-      
+
       service = type.cast(new IMonitoringProducer() {
         @Override
         public boolean addNode(String[] parents, String name, Serializable value) {
@@ -145,15 +150,15 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   public synchronized void serverDidBecomeActive() {
  //  avoid this notification,  it happens too early.  the method below will be called directly in the correct sequence
   }
-  
+
   public synchronized void serverIsActive() {
     // Tell the ID0 instance that the server is active.
     IStripeMonitoring platformCollector = getIStripeMonitoringService(ServiceProvider.PLATFORM_CONSUMER_ID);
-    
+
     // Note that the underlying collector will be present for all or none of the consumerIDs.
     if (null != platformCollector) {
       platformCollector.serverDidBecomeActive(this.thisServer);
-      
+
       // Pass our cached state into the underlying services and then drop our cache and pipe to the active
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
         long consumerID = entry.getKey();
@@ -164,11 +169,11 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
             underlyingCollector.addNode(LocalMonitoringProducer.this.thisServer, parents, name, value);
           }});
       }
-      
+
       // Flush any remaining best-efforts data to the collector.
       this.bestEfforts.flushAfterActivePromotion(this.thisServer, this.globalRegistry);
     }
-    
+
     this.cachedTreeRoot = null;
     this.bestEfforts = null;
     this.activeWrapper = null;
@@ -176,13 +181,13 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 
   /**
    * Called on a passive entity when an active has been elected.  The receiver is expected to send its cached data to this new active and send any updates there, going forward.
-   * 
+   *
    * @param activeWrapper
    */
   public synchronized void sendToNewActive(ActivePipeWrapper activeWrapper) {
     // Store the new wrapper.
     this.activeWrapper = activeWrapper;
-    
+
     // Send our cached state to the new active.
     if (this.cachedTreeRoot != null) {
       for (Map.Entry<Long, CacheNode> entry : this.cachedTreeRoot.entrySet()) {
@@ -199,7 +204,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 //  split brain.  one of the actives will die shortly.
     }
   }
-  
+
   private void debugOut(CacheNode node) {
     if (node != null) {
       walkCacheChildren(new String[0], node.children, (String[] parents, String name, Serializable value) -> {
@@ -214,7 +219,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     if (oldValue != null) {
       LOGGER.warn("multiple copies of server information are being reported.old=" + oldValue + " new=" + platformServer);
     }
-    
+
     // Notify the platform collector.
     IStripeMonitoring platformCollector = getIStripeMonitoringService(ServiceProvider.PLATFORM_CONSUMER_ID);
     if (null != platformCollector) {
@@ -255,7 +260,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     // If we are getting these, we MUST be in active mode.
     if (this.cachedTreeRoot != null) {
       LOGGER.error("tree root is not null");
-    } else {    
+    } else {
       IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerID);
       if (null != underlyingCollector) {
         PlatformServer sendingServer = this.otherServers.get(sender);
@@ -272,7 +277,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
     // If we are getting these, we MUST be in active mode.
     if (this.cachedTreeRoot != null) {
       LOGGER.error("tree root is not null");
-    } else {       
+    } else {
       for (int i = 0; i < consumerIDs.length; ++i) {
         IStripeMonitoring underlyingCollector = getIStripeMonitoringService(consumerIDs[i]);
         if (null != underlyingCollector) {
@@ -303,7 +308,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
         return new IStripeMonitoringWrapper(collector, LOGGER);
       }
     } catch (ServiceException e) {
-      LOGGER.error("service error", e);  
+      LOGGER.error("service error", e);
     }
     return null;
   }
@@ -311,6 +316,10 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
 
   private synchronized boolean addNodeFromShim(long consumerID, IStripeMonitoring underlyingCollector, String[] parents, String name, Serializable value) {
     boolean didStore = false;
+    if (value instanceof Class) {
+      this.classLoader.addServiceClass((Class)value);
+      return true;
+    }
     // First off, see if we have a cache - this determines if we are in active or passive mode.
     if (null != LocalMonitoringProducer.this.cachedTreeRoot) {
       // This means we are passive.
@@ -414,7 +423,7 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   private static class CacheNode {
     public final Serializable data;
     public final Map<String, CacheNode> children;
-    
+
     public CacheNode(Serializable data) {
       this.data = data;
       this.children = new HashMap<String, CacheNode>();

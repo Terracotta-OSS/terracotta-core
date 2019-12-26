@@ -18,7 +18,6 @@
  */
 package org.terracotta.config.provider;
 
-import com.tc.classloader.ServiceLocator;
 import com.tc.server.ServiceClassLoader;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -31,9 +30,9 @@ import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ConfigurationException;
-import org.terracotta.config.ConfigurationProvider;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationException;
+import org.terracotta.configuration.ConfigurationProvider;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -47,8 +46,8 @@ import java.util.Objects;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
 import com.tc.services.MappedStateCollector;
 import com.tc.text.PrettyPrintable;
-import org.terracotta.config.FailoverBehavior;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.FailoverBehavior;
+import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -59,12 +58,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import org.terracotta.config.Consistency;
-import org.terracotta.config.Directories;
+import org.terracotta.configuration.Directories;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.Property;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcProperties;
+import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 
 public class DefaultConfigurationProvider implements ConfigurationProvider {
@@ -117,8 +117,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 //  using the service class loader because plugin implementations need to be isolated 
 //  when grabbing ServiceConfigParsers in xml parsing code through services.
-      ServiceClassLoader serviceClassLoader =
-          new ServiceClassLoader(new ServiceLocator(classLoader).getImplementations(ServiceConfigParser.class));
+      ServiceClassLoader serviceClassLoader = new ServiceClassLoader(classLoader, ExtendedConfigParser.class, ServiceConfigParser.class);
 
       this.configuration = getTcConfiguration(configurationPath, serviceClassLoader);
 

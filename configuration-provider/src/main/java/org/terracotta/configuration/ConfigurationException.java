@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.config;
+package org.terracotta.configuration;
 
 public class ConfigurationException extends Exception {
   public ConfigurationException(String message) {

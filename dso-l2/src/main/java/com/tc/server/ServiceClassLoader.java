@@ -18,7 +18,7 @@
  */
 package com.tc.server;
 
-import java.util.Collections;
+import com.tc.classloader.ServiceLocator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,14 +28,25 @@ import java.util.Map;
  */
 public class ServiceClassLoader<T> extends ClassLoader {
   
-  private final Map<String, Class<? extends T>> cached;
+  private final Map<String, Class<? extends T>> cached = new HashMap<>();
   
-  public ServiceClassLoader(List<Class<? extends T>> svcs) {
-    Map<String, Class<? extends T>> set = new HashMap<>();
-    for (Class<? extends T> svc : svcs) {
-      set.put(svc.getName(), svc);
+  public ServiceClassLoader(ClassLoader loader, Class<T>...serviceTypes) {
+    super(loader);
+    ServiceLocator locator = new ServiceLocator(loader);
+    for (Class<T> serviceType : serviceTypes) {
+      List<Class<? extends T>> svcs = locator.getImplementations(serviceType);
+      loadServiceClasses(svcs);
     }
-    cached = Collections.unmodifiableMap(set);
+  }
+  
+  public void addServiceClass(Class<? extends T> svc) {
+    cached.put(svc.getName(), svc);
+  }
+  
+  private void loadServiceClasses(List<Class<? extends T>> svcs) {
+    for (Class<? extends T> svc : svcs) {
+      cached.put(svc.getName(), svc);
+    }
   }
 
   @Override

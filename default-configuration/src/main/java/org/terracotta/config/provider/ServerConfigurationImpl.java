@@ -24,7 +24,7 @@ import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 
 import com.tc.net.TCSocketAddress;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.ServerConfiguration;
 
 import java.io.File;
 import java.net.InetSocketAddress;

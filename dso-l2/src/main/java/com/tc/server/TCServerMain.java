@@ -27,7 +27,7 @@ import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.util.ManagedServiceLoader;
 import com.tc.util.ProductInfo;
-import org.terracotta.config.ConfigurationProvider;
+import org.terracotta.configuration.ConfigurationProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class TCServerMain {
       ClassLoader systemLoader = ServiceLocator.getPlatformLoader();
       Thread.currentThread().setContextClassLoader(systemLoader);
 
-      ConfigurationProvider configurationProvider = getConfigurationProvider();
+      ConfigurationProvider configurationProvider = getConfigurationProvider(systemLoader);
 
       CommandLineParser commandLineParser = new CommandLineParser(args, configurationProvider);
 
@@ -89,8 +89,8 @@ public class TCServerMain {
     }
   }
 
-  private static ConfigurationProvider getConfigurationProvider() {
-    Collection<ConfigurationProvider> pl = ManagedServiceLoader.loadServices(ConfigurationProvider.class, TCServerMain.class.getClassLoader());
+  private static ConfigurationProvider getConfigurationProvider(ClassLoader loader) {
+    Collection<ConfigurationProvider> pl = ManagedServiceLoader.loadServices(ConfigurationProvider.class, loader);
     if (pl.isEmpty()) {
       throw new RuntimeException("No ConfigurationProvider found");
     } else if (pl.size() == 1) {

@@ -27,8 +27,10 @@ import com.tc.util.Assert;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamClass;
 import java.io.Serializable;
 
 
@@ -127,7 +129,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
       Assert.assertTrue(valueSize > 0);
       byte[] valueArray = new byte[valueSize];
       in.readFully(valueArray);
-      this.serverInfo = deserialize(valueArray);
+      this.serverInfo = deserializeByteArray(this.getClass().getClassLoader(), valueArray);
       break;
     }
     case RESPONSE_ADD: {
@@ -143,7 +145,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
       if (valueSize > 0) {
         byte[] valueArray = new byte[valueSize];
         in.readFully(valueArray);
-        this.nodeValue = deserialize(valueArray);
+        this.nodeValue = valueArray;
       } else {
         this.nodeValue = null;
       }
@@ -174,7 +176,7 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
         if (valueSize > 0) {
           byte[] valueArray = new byte[valueSize];
           in.readFully(valueArray);
-          values[i] = deserialize(valueArray);
+          values[i] = valueArray;
         } else {
           values[i] = null;
         }
@@ -263,7 +265,10 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     return this.nodeName;
   }
 
-  public Serializable getNodeValue() {
+  public Serializable getNodeValue(ClassLoader loader) {
+    if (this.nodeValue instanceof byte[]) {
+      this.nodeValue = deserializeByteArray(loader, (byte[])this.nodeValue);
+    }
     return this.nodeValue;
   }
 
@@ -279,7 +284,12 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     return this.keys;
   }
 
-  public Serializable[] getValues() {
+  public Serializable[] getValues(ClassLoader loader) {
+    for (int x=0;x<this.values.length;x++) {
+      if (this.values[x] instanceof byte[]) {
+        this.values[x] = deserializeByteArray(loader, (byte[])this.values[x]);
+      }
+    }
     return this.values;
   }
 
@@ -297,20 +307,25 @@ public class PlatformInfoRequest extends AbstractGroupMessage {
     }
     return result;
   }
-
-  private Serializable deserialize(byte[] valueArray) {
+  
+  private Serializable deserializeByteArray(ClassLoader loader, byte[] valueArray) {
     ByteArrayInputStream byteStream = new ByteArrayInputStream(valueArray);
-    Serializable object = null;
     try {
-      ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-      object = (Serializable) objectStream.readObject();
+      ObjectInputStream objectStream = new ObjectInputStream(byteStream) {
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+          String name = desc.getName();
+          return Class.forName(name, true, loader);
+        }
+      };
+      return (Serializable) objectStream.readObject();
     } catch (IOException e) {
       // We don't expect to fail to deserialize monitoring data.
       Assert.fail();
     } catch (ClassNotFoundException e) {
       // We don't expect to fail to deserialize monitoring data.
-      Assert.fail();
+      throw Assert.failure("platform info request", e);
     }
-    return object;
+    return null;
   }
 }

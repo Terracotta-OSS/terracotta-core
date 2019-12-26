@@ -22,9 +22,9 @@ package com.tc.config;
 import com.tc.classloader.ServiceLocator;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ConfigurationProvider;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationProvider;
+import org.terracotta.configuration.ServerConfiguration;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import org.terracotta.config.ConfigurationException;
+import org.terracotta.configuration.ConfigurationException;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 

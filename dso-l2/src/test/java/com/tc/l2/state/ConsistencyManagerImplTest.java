@@ -21,8 +21,8 @@ package com.tc.l2.state;
 import com.tc.net.NodeID;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.Assert;
-import org.terracotta.config.Configuration;
-import org.terracotta.config.FailoverBehavior;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.FailoverBehavior;
 
 import java.util.List;
 import java.util.UUID;

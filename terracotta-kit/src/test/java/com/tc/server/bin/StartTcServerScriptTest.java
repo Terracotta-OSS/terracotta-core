@@ -19,6 +19,7 @@ package com.tc.server.bin;
 import com.tc.test.BaseScriptTest;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -30,7 +31,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyString;
+import org.junit.Assert;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@code start-tc-server} scripts.
@@ -74,7 +77,7 @@ public class StartTcServerScriptTest extends BaseScriptTest {
       assertThat(scriptResult.arguments(), is(arrayContaining(arguments)));
 
       Map<String, String> properties = scriptResult.properties();
-      assertThat(properties, hasEntry("user.dir", installRoot.toString()));
+      assertTrue(Files.isSameFile(Paths.get(properties.get("user.dir")), Paths.get(installRoot.toString())));
       assertThat(properties, hasEntry("tc.install-root", installRoot.toPath().resolve(basePath).toString()));
       assertThat(properties, hasEntry("foo", "bar"));
 

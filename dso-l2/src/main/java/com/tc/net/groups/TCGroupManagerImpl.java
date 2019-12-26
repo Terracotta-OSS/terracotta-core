@@ -88,7 +88,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.sequence.Sequence;
 import com.tc.util.sequence.SimpleSequence;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.ServerConfiguration;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
