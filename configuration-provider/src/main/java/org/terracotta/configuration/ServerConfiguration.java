@@ -16,38 +16,24 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.config;
+package org.terracotta.configuration;
 
-/**
- *
- */
-public class FailoverBehavior {
-  public enum Type {
-    AVAILABILITY, CONSISTENCY;
-  }
-  
-  private final Type type;
-  private final int voters;
 
-  public FailoverBehavior(Type type, int voters) {
-    this.type = type;
-    this.voters = voters;
-  }
+import java.io.File;
+import java.net.InetSocketAddress;
+
+public interface ServerConfiguration {
+  InetSocketAddress getTsaPort();
+
+  InetSocketAddress getGroupPort();
+
+  String getHost();
+
+  String getName();
   
-  public Type getBehaviorType() {
-    return type;
-  }
-  
-  public int getExternalVoters() {
-    return voters;
-  }
-  
-  public boolean isAvailability() {
-    return type == Type.AVAILABILITY;
-  }
-  
-  
-  public boolean isConsistency() {
-    return type == Type.CONSISTENCY;
-  }  
+  int getClientReconnectWindow();
+
+  void setClientReconnectWindow(int value);
+
+  File getLogsLocation();
 }

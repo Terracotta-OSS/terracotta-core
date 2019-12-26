@@ -65,6 +65,9 @@ The Initial Developer of the Covered Software is
     <fileSet>
       <directory>src/assemble/server</directory>
       <outputDirectory>/server</outputDirectory>
+      <excludes>
+        <exclude>bin/windowsBatchCoding.adoc</exclude>
+      </excludes> 
     </fileSet>
     <fileSet>
       <directory>src/assemble/init</directory>
@@ -98,12 +101,6 @@ The Initial Developer of the Covered Software is
   </files>
   <dependencySets>
     <dependencySet>
-      <outputDirectory>server/plugins/lib</outputDirectory>
-      <includes>
-        <include>org.terracotta.internal:default-configuration</include>
-      </includes>
-    </dependencySet>
-    <dependencySet>
       <outputDirectory>client/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-*</include>
@@ -127,6 +124,12 @@ The Initial Developer of the Covered Software is
         <include>ch.qos.logback:logback-core</include>
         <include>ch.qos.logback:logback-classic</include>
         <include>org.terracotta:tc-tripwire-appenders</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>server/plugins/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta:default-configuration:jar:jar-with-dependencies</include>
       </includes>
     </dependencySet>
   </dependencySets>

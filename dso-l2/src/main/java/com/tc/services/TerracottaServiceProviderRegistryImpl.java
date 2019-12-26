@@ -29,7 +29,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.util.Assert;
-import org.terracotta.config.Configuration;
+import org.terracotta.configuration.Configuration;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -91,8 +91,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
             }
           }
         }
-      } catch (IllegalAccessException | InstantiationException i) {
-        logger.error("caught exception while initializing service " + clazz, i);
+      } catch (Throwable i) {
+        logger.error("caught exception while initializing service {} from loader {}", clazz, clazz.getClassLoader());
+        throw new Error(i);
       }
     }
   }

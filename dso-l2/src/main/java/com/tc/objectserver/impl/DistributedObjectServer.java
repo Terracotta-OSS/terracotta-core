@@ -235,8 +235,8 @@ import com.tc.spi.DiagnosticFormat;
 import com.tc.spi.NetworkTranslator;
 import com.tc.spi.WarningDescription;
 import com.tc.spi.WarningHandler;
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 
 import java.util.stream.Collectors;

@@ -26,9 +26,9 @@ import org.junit.rules.ExpectedException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.properties.TCPropertiesImpl;
-import org.terracotta.config.Configuration;
-import org.terracotta.config.ConfigurationProvider;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationProvider;
+import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ import static org.junit.Assert.assertThat;
 import org.mockito.ArgumentMatchers;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.config.ConfigurationException;
+import org.terracotta.configuration.ConfigurationException;
 
 public class ServerConfigurationManagerTest {
 

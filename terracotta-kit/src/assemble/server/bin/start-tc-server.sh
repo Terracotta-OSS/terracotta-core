@@ -18,8 +18,6 @@
 #
 
 TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
-PLUGIN_LIB_DIR="${TC_SERVER_DIR}/plugins/lib"
-PLUGIN_API_DIR="${TC_SERVER_DIR}/plugins/api"
 
 # this will only happen if using sag installer
 if [ -r "${TC_SERVER_DIR}/bin/setenv.sh" ] ; then
@@ -43,32 +41,6 @@ do
     "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1 && break
 done
 
-setPluginClasspath() {
-
-    for pluginDir in "${PLUGIN_LIB_DIR}" "${PLUGIN_API_DIR}"
-    do
-        if [ -d "${pluginDir}" ]
-        then
-            for jarFile in "${pluginDir}"/*.jar
-            do
-                PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${jarFile}"
-            done
-
-        fi
-    done
-    #  Adding SLF4j libraries to the classpath of the server to
-    #  support services that may use SLF4j for logging
-    for jarFile in "${TC_SERVER_DIR}"/lib/slf4j*.jar
-    do
-        PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${jarFile}"
-    done
-
-}
-
-setPluginClasspath;
-
-PLUGIN_CLASSPATH="${PLUGIN_CLASSPATH}:${TC_SERVER_DIR}/lib/"
-
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
 while [ 1 ] ; do
@@ -78,7 +50,7 @@ while [ 1 ] ; do
 	-XX:+HeapDumpOnOutOfMemoryError \
         -Dtc.install-root="${TC_SERVER_DIR}" \
         ${JAVA_OPTS} \
-        -cp "${TC_SERVER_DIR}/lib/tc.jar:${PLUGIN_CLASSPATH}:." \
+        -cp "${TC_SERVER_DIR}/lib/tc.jar:${TC_SERVER_DIR}/lib/:." \
         com.tc.server.TCServerMain "$@"
     exitValue=$?
 

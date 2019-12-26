@@ -70,13 +70,13 @@ public class PlatformInfoRequestHandler {
               handleServerRemove(context);
               break;
             case PlatformInfoRequest.RESPONSE_ADD:
-              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteAdd((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName(), context.getNodeValue());
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteAdd((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName(), context.getNodeValue(monitoringSupport.getWireLoader()));
               break;
             case PlatformInfoRequest.RESPONSE_REMOVE:
               PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteRemove((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName());
               break;
             case PlatformInfoRequest.BEST_EFFORTS_BATCH:
-              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteBestEffortsBatch((ServerID)context.messageFrom(), context.getConsumerIDs(), context.getKeys(), context.getValues());
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteBestEffortsBatch((ServerID)context.messageFrom(), context.getConsumerIDs(), context.getKeys(), context.getValues(monitoringSupport.getWireLoader()));
               break;
             default:
               break;

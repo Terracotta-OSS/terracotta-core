@@ -16,24 +16,29 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.config;
+package org.terracotta.configuration;
 
+import org.terracotta.entity.ServiceProviderConfiguration;
 
-import java.io.File;
-import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Properties;
 
-public interface ServerConfiguration {
-  InetSocketAddress getTsaPort();
+public interface Configuration {
+  ServerConfiguration getDefaultServerConfiguration(String serverName)throws ConfigurationException;
 
-  InetSocketAddress getGroupPort();
-
-  String getHost();
-
-  String getName();
+  List<ServerConfiguration> getServerConfigurations();
   
-  int getClientReconnectWindow();
+  List<ServiceProviderConfiguration> getServiceConfigurations();
 
-  void setClientReconnectWindow(int value);
+  <T> List<T> getExtendedConfiguration(Class<T> type);
 
-  File getLogsLocation();
+  String getRawConfiguration();
+
+  Properties getTcProperties();
+  
+  FailoverBehavior getFailoverPriority();
+  
+  default boolean isPartialConfiguration() {
+    return false;
+  }
 }

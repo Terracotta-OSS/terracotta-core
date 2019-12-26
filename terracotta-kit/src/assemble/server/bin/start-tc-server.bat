@@ -22,8 +22,6 @@ setlocal enabledelayedexpansion enableextensions
 pushd "%~dp0.."
 set "TC_SERVER_DIR=%CD%"
 popd
-set "PLUGIN_LIB_DIR=%TC_SERVER_DIR%\plugins\lib"
-set "PLUGIN_API_DIR=%TC_SERVER_DIR%\plugins\api"
 
 if exist "!TC_SERVER_DIR!\bin\setenv.bat" (
   pushd "!TC_SERVER_DIR!\bin" && (
@@ -57,23 +55,15 @@ exit /b 1
 
 :setJavaOptsAndClasspath
 
-REM fixes bug when command length exceeds max windows command length of 8191
-set "PLUGIN_CLASSPATH=%PLUGIN_LIB_DIR%\*;%PLUGIN_API_DIR%\*"
-
 REM   Adding SLF4j libraries to the classpath of the server to
 REM   support services that may use SLF4j for logging
 if exist "!TC_SERVER_DIR!\lib" (
-  pushd "!TC_SERVER_DIR!\lib" && (
-    for %%K in ( slf4j*.jar ) do (
-      set "PLUGIN_CLASSPATH=!PLUGIN_CLASSPATH!;!CD!\%%K"
-    )
-    popd
-  )
+
 ) else (
   echo !TC_SERVER_DIR!\lib does not exist!
 )
 
-set "CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%PLUGIN_CLASSPATH%;%TC_SERVER_DIR%\lib\;."
+set "CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%TC_SERVER_DIR%\lib\;."
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%

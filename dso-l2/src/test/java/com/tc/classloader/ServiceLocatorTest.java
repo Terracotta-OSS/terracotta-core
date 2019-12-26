@@ -22,9 +22,9 @@
  */
 package com.tc.classloader;
 
-import static org.terracotta.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
+import static org.terracotta.configuration.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
-import org.terracotta.config.Directories;
+import org.terracotta.configuration.Directories;
 import com.tc.util.Assert;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;
@@ -94,7 +94,7 @@ public class ServiceLocatorTest {
      FileOutputStream services2 = new FileOutputStream(new File(meta, "java.lang.Runnable"));
      services2.write("com.tc.classloader.TestInterfaceHandle".getBytes());
      services2.close();
-     ComponentURLClassLoader component = new ComponentURLClassLoader(new URL[] {impl.toURI().toURL()}, 
+     ComponentURLClassLoader component = new ComponentURLClassLoader("", new URL[] {impl.toURI().toURL()}, 
          apiLoader, 
          new AnnotationOrDirectoryStrategyChecker());
      Class<?> interf = component.loadClass("com.tc.classloader.TestInterface");

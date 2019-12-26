@@ -10,6 +10,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
+  <groupId>org.terracotta</groupId>
   <artifactId>default-configuration</artifactId>
 
   <dependencies>
@@ -17,7 +18,11 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
       <version>${terracotta-configuration.version}</version>
-      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tcconfig-schema</artifactId>
+      <version>${terracotta-configuration.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
@@ -57,6 +62,12 @@
       <artifactId>slf4j-api</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.1</version>
+      <scope>runtime</scope>
+    </dependency>
   </dependencies>
   <build>
   <plugins>
@@ -88,7 +99,6 @@
                 </execution>
             </executions>
         </plugin>
-
         <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <version>3.2.0</version>

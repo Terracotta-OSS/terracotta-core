@@ -22,8 +22,8 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.text.PrettyPrintable;
-import org.terracotta.config.FailoverBehavior;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.FailoverBehavior;
+import org.terracotta.configuration.ServerConfiguration;
 import org.slf4j.Logger;
 
 import java.util.Collection;

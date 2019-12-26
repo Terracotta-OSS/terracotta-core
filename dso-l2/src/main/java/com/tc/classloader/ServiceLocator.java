@@ -22,7 +22,7 @@ package com.tc.classloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.terracotta.config.Directories;
+import org.terracotta.configuration.Directories;
 import com.tc.util.ManagedServiceLoader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,6 +46,8 @@ public class ServiceLocator extends ManagedServiceLoader {
   
   private final ClassLoader defaultClassLoader;
 
+  private final boolean compatibility = false;
+
   public ServiceLocator(ClassLoader parent) {
     defaultClassLoader = parent;
   }
@@ -53,7 +55,11 @@ public class ServiceLocator extends ManagedServiceLoader {
   @Override
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {
     try {
-      return Class.forName(className, false, new ComponentURLClassLoader(new URL[] {new URL(location)}, getApiClassLoader(loader), new AnnotationOrDirectoryStrategyChecker()));
+      if (compatibility) {
+        return Class.forName(className, false, defaultClassLoader);
+      } else {
+        return Class.forName(className, false, new ComponentURLClassLoader(className, new URL[] {new URL(location)}, loader, new AnnotationOrDirectoryStrategyChecker()));
+      }
     } catch (MalformedURLException aml) {
       LOG.warn("unable to load " + className + " from " + location, aml);
     } catch  (ClassNotFoundException nf) {
@@ -61,37 +67,7 @@ public class ServiceLocator extends ManagedServiceLoader {
     }
     return super.loadClass(className, location, loader);
   }
-  
-  
-  private final Map<ClassLoader, ApiClassLoader> API_LOADERS = new WeakHashMap<>();
-  
-  private synchronized ApiClassLoader getApiClassLoader(ClassLoader parent) {
-    ClassLoader chainCheck = parent;
-// first walk the chain to see if there are any ApiClassLoaders.  If so, Use that
-    while (chainCheck != null) {
-      if (chainCheck instanceof ApiClassLoader) {
-        return (ApiClassLoader)chainCheck;
-      } else {
-        chainCheck = chainCheck.getParent();
-      }
-    }
-//  remove a possible ComponentURLClassLoader
-    chainCheck = parent;
-    while (chainCheck instanceof ComponentURLClassLoader) {
-      chainCheck = chainCheck.getParent();
-    }
-    if (chainCheck == null) {
-      chainCheck = ClassLoader.getSystemClassLoader();
-    }
-// see if there is already a class
-    ApiClassLoader loader = API_LOADERS.get(chainCheck);
-    if (loader == null) {
-      loader = createApiClassLoader(chainCheck);
-      API_LOADERS.put(chainCheck, loader);
-    }
-    return loader;
-  }
-  
+    
   private static boolean fileFilter(File target) {
     String name = target.getName().toLowerCase();
     return name.endsWith(".jar") || name.endsWith(".zip");
@@ -130,9 +106,8 @@ public class ServiceLocator extends ManagedServiceLoader {
     try {
       LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
       LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
-      URLClassLoader purls = new URLClassLoader(findPluginURLS());
-      ApiClassLoader apis = createApiClassLoader(purls);
-      return apis;
+      URLClassLoader purls = new URLClassLoader(findPluginURLS(), createApiClassLoader(ServiceLocator.class.getClassLoader()));
+      return purls;
     } catch (FileNotFoundException file) {
       return ClassLoader.getSystemClassLoader();
     }

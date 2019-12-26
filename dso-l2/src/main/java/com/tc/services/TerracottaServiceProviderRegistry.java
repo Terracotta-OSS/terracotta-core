@@ -19,7 +19,7 @@
 package com.tc.services;
 
 import com.tc.text.PrettyPrintable;
-import org.terracotta.config.Configuration;
+import org.terracotta.configuration.Configuration;
 
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;

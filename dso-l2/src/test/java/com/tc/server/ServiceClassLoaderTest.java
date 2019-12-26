@@ -18,7 +18,6 @@
  */
 package com.tc.server;
 
-import com.tc.classloader.ServiceLocator;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -26,8 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
+import static java.util.Collections.list;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -77,19 +77,22 @@ public class ServiceClassLoaderTest {
      zip.finish();
      // copy to remove dynamic nature of class building in the loader
      System.out.println(TestInterface.class.getClassLoader());
-     List<Class<? extends TestInterface>> list = new ArrayList(new ServiceLocator(new URLClassLoader(new URL[] {test.toURI().toURL()}, ClassLoader.getSystemClassLoader())).getImplementations(TestInterface.class));
      // XXX: depending on the other resources are on the classpath, it is possible that we will see other parsers.  We
      //  should figure out a better way to restrict this since the index otherwise needs to be manually updated when new
      //  resources change the order of the ServiceConfigParser instances in the list.
      int listIndexToTest = 0;
-     ClassLoader baseLoader = new ServiceClassLoader(list);
+     ClassLoader baseLoader = new ServiceClassLoader(new URLClassLoader(new URL[] {test.toURI().toURL()}, ClassLoader.getSystemClassLoader()), TestInterface.class);
+     ServiceLoader<TestInterface>  serviceList = ServiceLoader.load(TestInterface.class, baseLoader);
      Class<? extends TestInterface> check = baseLoader.loadClass("com.tc.server.TestInterfaceImpl").asSubclass(TestInterface.class);
      TestInterface parser = check.newInstance();
+     Iterator<TestInterface> i = serviceList.iterator();
+     TestInterface ref = i.next();
+     
      Assert.assertTrue(parser.getClass().getClassLoader() != this.getClass().getClassLoader());
-     Assert.assertTrue(parser.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
+     Assert.assertTrue(parser.getClass().getClassLoader() == ref.getClass().getClassLoader());
      Object config = parser.child();
      Assert.assertTrue(config.getClass().getClassLoader() != this.getClass().getClassLoader());
-     Assert.assertTrue(config.getClass().getClassLoader() == list.get(listIndexToTest).getClassLoader());
+     Assert.assertTrue(config.getClass().getClassLoader() == ref.getClass().getClassLoader());
    }
 
    private byte[] resourceToBytes(String loc) throws IOException {

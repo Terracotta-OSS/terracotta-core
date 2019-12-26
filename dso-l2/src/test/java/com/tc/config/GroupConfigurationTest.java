@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
-import org.terracotta.config.ServerConfiguration;
+import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 
 import java.util.HashMap;
