@@ -144,6 +144,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void stop(RestartMode restartMode) {
+    TCLogging.getConsoleLogger().info("Stopping server with restartMode: {}", restartMode);
     dsoServer.getContext().getL2Coordinator().getStateManager().moveToStopState();
     if (restartMode == RestartMode.STOP_ONLY) {
       exitWithStatus(0);
