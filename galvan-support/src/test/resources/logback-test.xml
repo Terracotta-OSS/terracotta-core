@@ -9,6 +9,8 @@
     </encoder>
   </appender>
 
+  <logger name="com.tc.object.DistributedObjectClient" level="DEBUG"/>
+
   <root level="INFO">
     <appender-ref ref="CONSOLE"/>
   </root>

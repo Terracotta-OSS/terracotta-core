@@ -2,6 +2,11 @@
   <logger name="com.tc.net.protocol.transport" level="DEBUG">
           <appender-ref ref="TC_BASE" />
   </logger>
+
+  <logger name="com.tc.object.DistributedObjectClient" level="DEBUG">
+    <appender-ref ref="TC_BASE" />
+  </logger>
+
   <root level="INFO">
     <appender-ref ref="TC_BASE" />
   </root>
