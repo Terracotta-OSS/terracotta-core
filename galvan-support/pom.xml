@@ -114,6 +114,7 @@ limitations under the License.
           </execution>
         </executions>
         <configuration>
+          <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <kitInstallationPath>${kitUnzipLocation}/terracotta-${project.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
