@@ -15,6 +15,8 @@ import java.util.Set;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
+import static java.lang.String.join;
+
 public class TopologyManager {
 
   private Topology topology;
@@ -84,6 +86,8 @@ public class TopologyManager {
     boolean addPassive(String hostPort);
 
     boolean removePassive(String hostPort);
+
+    String getTopology();
   }
 
   private static class TopologyMbeanImpl extends AbstractTerracottaMBean implements TopologyMbean {
@@ -110,6 +114,11 @@ public class TopologyManager {
 
     public boolean removePassive(String hostPort) {
       return this.topologyManager.removePassive(hostPort);
+    }
+
+    @Override
+    public String getTopology() {
+      return join(",", this.topologyManager.getTopology().getServers());
     }
 
     @Override
