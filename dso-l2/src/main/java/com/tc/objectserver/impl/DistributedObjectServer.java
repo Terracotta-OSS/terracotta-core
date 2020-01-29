@@ -215,7 +215,6 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ClientID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
-import com.tc.net.groups.NullGroupManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
@@ -682,14 +681,10 @@ public class DistributedObjectServer {
     messengerProvider.setMessageSink(fast.getSink());
     entityManager.setMessageSink(fast.getSink());    
             
-    this.groupCommManager = (knownPeers == 0) ? new NullGroupManager(thisServerNodeID) : this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
                                                                       bufferManagerFactory);
-    
-    if (knownPeers == 0) {
-      Assert.assertTrue(this.groupCommManager instanceof NullGroupManager);
-    }
         
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
