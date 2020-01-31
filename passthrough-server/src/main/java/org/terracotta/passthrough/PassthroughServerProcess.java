@@ -446,11 +446,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
     };
     container.message = message;
-    if (resending.isRaised()) {
+    if (!resending.executeIfRaised(()->{
       long connectionID = sender.getNewInstanceID();
       long transactionID = PassthroughMessageCodec.decodeTransactionIDFromRawMessage(message);
       this.transactionOrderManager.handleResend(connectionID, transactionID, container);
-    } else {
+    })) {
       this.messageQueue.add(container);
     }
   }
@@ -1197,10 +1197,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   public void endReceivingResends() {
     // We can only exit specialized re-send processing mode if we have order persistence.
     if (null != this.transactionOrderManager) {
-      Assert.assertTrue(resending.isRaised());
-      List<PassthroughMessageContainer> list = this.transactionOrderManager.stopHandlingResends();
-      this.messageQueue.addAll(list);
-      resending.lower();
+      resending.executeIfRaised(()->{
+        List<PassthroughMessageContainer> list = this.transactionOrderManager.stopHandlingResends();
+        this.messageQueue.addAll(list);
+        resending.lower();
+      });
     }
   }
 
@@ -1401,10 +1402,24 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     public synchronized void lower() {
       Assert.assertTrue(flagged);
       flagged = false;
+      notifyAll();
     }
 
     public synchronized boolean isRaised() {
       return flagged;
+    }
+
+    public synchronized boolean executeIfRaised(Runnable r) {
+      if (flagged) {
+        r.run();
+      }
+      return flagged;
+    }
+
+    public synchronized void waitForLower() throws InterruptedException {
+      while (flagged) {
+        wait();
+      }
     }
   }
 
