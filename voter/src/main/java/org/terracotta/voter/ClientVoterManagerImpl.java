@@ -139,6 +139,11 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     return processInvocation(diagnostics.getConfig());
   }
 
+  @Override
+  public String getTopology() throws TimeoutException {
+    return processInvocation(diagnostics.invoke("TopologyMBean", "getTopology"));
+  }
+
   String processInvocation(String invocation) throws TimeoutException {
     if (invocation == null) {
       return "UNKNOWN";

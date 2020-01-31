@@ -51,6 +51,8 @@ public interface ClientVoterManager extends VoterManager {
    */
   String getServerConfig() throws TimeoutException;
 
+  String getTopology() throws TimeoutException;
+
   /**
    * Close the connection with the server.
    */
