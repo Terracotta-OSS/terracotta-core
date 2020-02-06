@@ -109,13 +109,16 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
 
   @Override
   public void initialize(List<String> configurationParams) throws ConfigurationException {
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    ClassLoader oldloader = Thread.currentThread().getContextClassLoader();
+
     try {
       Path configurationPath = getConfiguration(configurationParams.toArray(new String[0])).toAbsolutePath();
 
       LOGGER.info("Attempting to load configuration from the file at '{}'...", configurationPath);
 
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-//  using the service class loader because plugin implementations need to be isolated 
+      Thread.currentThread().setContextClassLoader(classLoader);
+//  using the service class loader because plugin implementations need to be isolated
 //  when grabbing ServiceConfigParsers in xml parsing code through services.
       ServiceClassLoader serviceClassLoader = new ServiceClassLoader(classLoader, ExtendedConfigParser.class, ServiceConfigParser.class);
 
@@ -130,6 +133,8 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     } catch (Exception e) {
       throw new ConfigurationException("Unable to initialize DefaultConfigurationProvider with " + configurationParams,
                                        e);
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldloader);
     }
   }
 

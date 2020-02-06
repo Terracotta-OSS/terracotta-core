@@ -90,11 +90,15 @@ public class TCServerMain {
   }
 
   private static ConfigurationProvider getConfigurationProvider(ClassLoader loader) {
-    Collection<ConfigurationProvider> pl = ManagedServiceLoader.loadServices(ConfigurationProvider.class, loader);
+    Collection<Class<? extends ConfigurationProvider>> pl = new ServiceLocator(loader).getImplementations(ConfigurationProvider.class);
     if (pl.isEmpty()) {
       throw new RuntimeException("No ConfigurationProvider found");
     } else if (pl.size() == 1) {
-      return pl.iterator().next();
+      try {
+        return pl.iterator().next().newInstance();
+      } catch (IllegalAccessException | InstantiationException ii) {
+        throw new RuntimeException("unable to load configuration");
+      }
     } else {
       throw new RuntimeException("Found multiple implementations of ConfigurationProvider");
     }

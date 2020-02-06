@@ -39,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -147,6 +148,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   private void registerNewServiceProvider(ServiceProvider service) {
     logger.info("Initializing " + service);
+    Objects.requireNonNull(service);
     serviceProviders.add(service);
   }
 

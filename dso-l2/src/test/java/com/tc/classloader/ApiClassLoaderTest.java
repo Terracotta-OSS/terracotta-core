@@ -34,11 +34,11 @@ public class ApiClassLoaderTest {
 
     @Test
     public void testLoadClass() throws Exception {
-        URLClassLoader urlClassLoader = new URLClassLoader(new URL[] { implJar }, Thread.currentThread().getContextClassLoader());
-        ApiClassLoader apiClassLoader = new ApiClassLoader(new URL[] { apiJar }, urlClassLoader);
-        Class<?> apiClass = apiClassLoader.loadClass("com.terracotta.test.api.MyService", false);
+        ApiClassLoader apiClassLoader = new ApiClassLoader(new URL[] { apiJar }, Thread.currentThread().getContextClassLoader());
+        URLClassLoader urlClassLoader = new URLClassLoader(new URL[] { implJar }, apiClassLoader);
+        Class<?> apiClass = Class.forName("com.terracotta.test.api.MyService", true, urlClassLoader);
         Assert.assertEquals(apiClass.getClassLoader(), apiClassLoader);
-        Class<?> nonApiClass = apiClassLoader.loadClass("com.terracotta.test.impl.SomeNonApiClass", false);
+        Class<?> nonApiClass = Class.forName("com.terracotta.test.impl.SomeNonApiClass", true, urlClassLoader);
         Assert.assertEquals(nonApiClass.getClassLoader(), urlClassLoader);
     }
 

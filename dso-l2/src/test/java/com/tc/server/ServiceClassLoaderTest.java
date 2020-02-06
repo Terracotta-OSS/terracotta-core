@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import static java.util.Collections.list;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 import org.junit.After;
@@ -81,7 +80,17 @@ public class ServiceClassLoaderTest {
      //  should figure out a better way to restrict this since the index otherwise needs to be manually updated when new
      //  resources change the order of the ServiceConfigParser instances in the list.
      int listIndexToTest = 0;
-     ClassLoader baseLoader = new ServiceClassLoader(new URLClassLoader(new URL[] {test.toURI().toURL()}, ClassLoader.getSystemClassLoader()), TestInterface.class);
+     URLClassLoader special = new URLClassLoader(new URL[] {test.toURI().toURL()}, ClassLoader.getSystemClassLoader()) {
+       @Override
+       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+         if (name.startsWith("com/tc/server/Test")) {
+           return findClass(name);
+         } else {
+           return super.loadClass(name, resolve);
+         }
+       }
+     };
+     ClassLoader baseLoader = new ServiceClassLoader(special, TestInterface.class);
      ServiceLoader<TestInterface>  serviceList = ServiceLoader.load(TestInterface.class, baseLoader);
      Class<? extends TestInterface> check = baseLoader.loadClass("com.tc.server.TestInterfaceImpl").asSubclass(TestInterface.class);
      TestInterface parser = check.newInstance();
