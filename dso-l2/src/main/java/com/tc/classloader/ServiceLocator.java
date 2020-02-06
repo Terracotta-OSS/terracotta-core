@@ -19,6 +19,8 @@
 
 package com.tc.classloader;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +35,6 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 
 /**
@@ -43,10 +43,8 @@ import java.util.WeakHashMap;
 public class ServiceLocator extends ManagedServiceLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
-  
+  private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_CLASSLOADER_COMPATIBILITY);
   private final ClassLoader defaultClassLoader;
-
-  private final boolean compatibility = false;
 
   public ServiceLocator(ClassLoader parent) {
     defaultClassLoader = parent;
@@ -55,11 +53,7 @@ public class ServiceLocator extends ManagedServiceLoader {
   @Override
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {
     try {
-      if (compatibility) {
-        return Class.forName(className, false, defaultClassLoader);
-      } else {
-        return Class.forName(className, false, new ComponentURLClassLoader(className, new URL[] {new URL(location)}, loader, new AnnotationOrDirectoryStrategyChecker()));
-      }
+      return Class.forName(className, true, new ComponentURLClassLoader(className, new URL[] {new URL(location)}, loader,new AnnotationOrDirectoryStrategyChecker()));
     } catch (MalformedURLException aml) {
       LOG.warn("unable to load " + className + " from " + location, aml);
     } catch  (ClassNotFoundException nf) {
@@ -106,7 +100,7 @@ public class ServiceLocator extends ManagedServiceLoader {
     try {
       LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
       LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
-      URLClassLoader purls = new URLClassLoader(findPluginURLS(), createApiClassLoader(ServiceLocator.class.getClassLoader()));
+      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(ServiceLocator.class.getClassLoader()),new AnnotationOrDirectoryStrategyChecker(),STRICT);
       return purls;
     } catch (FileNotFoundException file) {
       return ClassLoader.getSystemClassLoader();

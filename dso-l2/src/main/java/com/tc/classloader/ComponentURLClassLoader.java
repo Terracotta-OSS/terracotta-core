@@ -31,34 +31,25 @@ public class ComponentURLClassLoader extends URLClassLoader {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ComponentURLClassLoader.class);
   private final CommonComponentChecker commonComponentChecker;
-  private static final boolean STRICT = Boolean.getBoolean("plugin.strict");
-  private final ApiClassLoader apiLoader;
   private final String root;
 
   public ComponentURLClassLoader(String root, URL[] urls, ClassLoader parent, CommonComponentChecker commonComponentChecker) {
     super(urls, parent);
     this.root = root;
     this.commonComponentChecker = commonComponentChecker;
-    this.apiLoader = findApiLoader();
-  }
-  
-  private ApiClassLoader findApiLoader() {
-    ClassLoader parent = getParent();
-    while (parent != null) {
-      if (parent instanceof ApiClassLoader) {
-        return (ApiClassLoader)parent;
-      } else {
-        parent = parent.getParent();
-      }
-    }
-    return null;
   }
 
   @Override
-  protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {    
-    Class<?> target = super.loadClass(name, resolve);
+  protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    Class<?> target = null;
+
+    try {
+      target = super.loadClass(name, resolve);
+    } catch (ClassNotFoundException notfound) {
+      
+    }
 // if the class is not found, ClassNotFoundException will be thrown and that is fine, class is nowhere
-    if (!commonComponentChecker.check(target) && target.getClassLoader() != this) {
+    if (target == null || (!commonComponentChecker.check(target) && target.getClassLoader() != this)) {
 //  not a common class as designated by annotation, see if the class is in this specific class loader for preference if it is
       try {
         synchronized (getClassLoadingLock(name)) {
@@ -68,18 +59,16 @@ public class ComponentURLClassLoader extends URLClassLoader {
           }
         }
       } catch (ClassNotFoundException notfound) {
-        if (STRICT && target.getClassLoader() != apiLoader) {
-// in strict mode, throw the exception if the class was not loaded by the apiLoader
-          throw notfound;
-        } else {
-//  it's not here in this loader, revert back to the common (already set)          
-        }
+//  it's not here in this loader, revert back to the common (already set)
       }
     } else {
-//  this is a designated common component, return it no matter where it came from 
+//  this is a designated common component, return it no matter where it came from
 //  (default implementation always uses the parent classloader if the class is available there)
     }
-
+    if (target == null) {
+      throw new ClassNotFoundException(name);
+    }
+  
     return target;
   }
   

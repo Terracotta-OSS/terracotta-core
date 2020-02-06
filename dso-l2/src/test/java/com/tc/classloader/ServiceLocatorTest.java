@@ -22,6 +22,8 @@
  */
 package com.tc.classloader;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import static org.terracotta.configuration.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
 import org.terracotta.configuration.Directories;
@@ -85,8 +87,8 @@ public class ServiceLocatorTest {
      File testApi = writeZip(new File(api, "test.jar"), "com.tc.classloader.TestInterface");
      System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
      
-     ClassLoader testloader = new URLClassLoader(new URL[] {impl.toURI().toURL()}, this.getClass().getClassLoader());
-     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, testloader);
+     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, null);
+     ClassLoader testloader = new StrictURLClassLoader(new URL[] {impl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), true);
      
      FileOutputStream services1 = new FileOutputStream(new File(meta, "com.tc.classloader.TestInterface"));
      services1.write("com.tc.classloader.TestInterfaceImpl".getBytes());
@@ -95,8 +97,7 @@ public class ServiceLocatorTest {
      services2.write("com.tc.classloader.TestInterfaceHandle".getBytes());
      services2.close();
      ComponentURLClassLoader component = new ComponentURLClassLoader("", new URL[] {impl.toURI().toURL()}, 
-         apiLoader, 
-         new AnnotationOrDirectoryStrategyChecker());
+         testloader, new AnnotationOrDirectoryStrategyChecker());
      Class<?> interf = component.loadClass("com.tc.classloader.TestInterface");
      Class<?> interi = component.loadClass("com.tc.classloader.TestInterfaceImpl");
      Assert.assertTrue(interf.getClassLoader() instanceof ApiClassLoader);
@@ -108,6 +109,38 @@ public class ServiceLocatorTest {
      for (Class<? extends Runnable> r : list) {
        r.newInstance().run();
      }
+   }
+
+   @Test
+   public void testStrictMode() throws Exception {
+     File f = folder.newFolder();
+     File impl = new File(f, Directories.SERVER_PLUGIN_LIB_DIR);
+     impl.mkdirs();
+     File api = new File(f, Directories.SERVER_PLUGIN_API_DIR);
+     api.mkdirs();
+     File overload = writeZip(new File(impl, "overload.jar"), "com.tc.classloader.OverloadTestInterfaceImpl");
+     File testImpl = writeZip(new File(impl, "impl.jar"), "com.tc.classloader.TestInterfaceImpl", "com.tc.classloader.TestInterfaceHandle");
+     File testApi = writeZip(new File(api, "test.jar"), "com.tc.classloader.TestInterface");
+     System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
+
+     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, null);
+     ClassLoader testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), true);
+     ComponentURLClassLoader component = new ComponentURLClassLoader("", new URL[] {overload.toURI().toURL()},
+         testloader,new AnnotationOrDirectoryStrategyChecker());
+     try {
+      Class<?> interf = component.loadClass("com.tc.classloader.OverloadTestInterfaceImpl");
+      Assert.fail("class should not load");
+     } catch (NoClassDefFoundError err) {
+       //
+     }
+     testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), false);
+     component = new ComponentURLClassLoader("", new URL[] {overload.toURI().toURL()}, testloader,new AnnotationOrDirectoryStrategyChecker());
+      try {
+        Class<?> interf = component.loadClass("com.tc.classloader.OverloadTestInterfaceImpl");
+        Assert.assertEquals(testloader, interf.getClassLoader());
+      } catch (Error e) {
+        e.printStackTrace();
+      }
    }
    
    @Test

@@ -18,15 +18,10 @@
  */
 package com.tc.classloader;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-
 /**
- * @author vmad
+ *
+ * @author mscott
  */
-public class ApiClassLoader extends URLClassLoader {
-    public ApiClassLoader(URL[] urls, ClassLoader parent) {
-        super(urls, parent);
-    }
-
+public class OverloadTestInterfaceImpl extends TestInterfaceImpl {
+  
 }

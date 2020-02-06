@@ -25,10 +25,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.net.MalformedURLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.AbstractList;
 import java.util.Collection;
@@ -242,9 +244,12 @@ public class ManagedServiceLoader {
   
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {
     try {
-      return loader.loadClass(className);
+      ClassLoader l2 = new URLClassLoader(new URL[] {new URL(location)}, loader);
+      return Class.forName(className, true, l2);
     } catch (ClassNotFoundException c) {
       LOG.warn("No implementations found for " + className, c);
+    } catch (MalformedURLException m) {
+      LOG.warn("No implementations found for " + className, m);
     }
     return null;
   }

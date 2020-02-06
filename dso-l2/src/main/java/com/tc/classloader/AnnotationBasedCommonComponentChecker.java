@@ -18,8 +18,6 @@
  */
 package com.tc.classloader;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author vmad
  */
@@ -33,6 +31,6 @@ public class AnnotationBasedCommonComponentChecker implements CommonComponentChe
 
     @Override
     public boolean check(Class<?> clazz) {
-        return clazz.getAnnotation(CommonComponent.class) != null;
+      return clazz.getAnnotation(CommonComponent.class) != null;
     }
 }
