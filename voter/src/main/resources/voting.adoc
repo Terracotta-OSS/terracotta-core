@@ -1,0 +1,86 @@
+= Test Cases For Notifying Voter about Topology changes
+
+=== Test addition of passive in a one active, one passive stripe which gets committed to the both servers
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** The newly added passive should be reflected in the topology
+continously polled from the active and the voter should start
+doing heartbeating with this newly added passive as well.
+
+=== Test addition of passive in a one active, one passive stripe which gets committed to only active.
+
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** The newly added passive should be reflected in the topology
+continously polled from the active and the voter should start
+doing heartbeating with this newly added passive as well.
+* TODO
+** What will happen when active gets killed old passive will
+become active which has prepared changes and which doesn't have
+info about the new passive.
+
+=== Test addition of passive in a one active, one passive stripe which gets committed to only passive.
+
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** The newly added passive won't be reflected in the topology
+continously polled from the active.
+* TODO
+** What will happen when active gets killed old passive will
+become active which has prepared changes and which doesn't have
+info about the new passive.
+
+=== Test removal of passive in a one active one passive stripe which gets committed to all the servers.
+ * GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** Removed passive will be updated in the topology polled from active.
+
+=== Test removal of passive in a one active one passive stripe which gets committed to active server only.
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** Removed passive will be updated in the topology polled from active.
+
+=== Test removal of passive in a one active one passive stripe which gets committed to passive server only.
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** Removed passive will not be updated in the topology polled from active.
+
+=== Test addition of passive where the nomad change for addition gets committed to active only and active dies.
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** What to do will one of the passive will become active?
+
+=== Test removal of passive where the nomad change for removal gets committed to active only and active dies.
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** What to do, will one of the passive will become active?
+
+=== Test addition of passive where the nomad change for addition gets committed to active only and active is partitioned with voter.
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** What to do, voter will start voting for one of the passive.
+
+=== Test removal of passive where the nomad change for removal gets committed to active only and active is partitioned with voter.
+* GIVEN
+** Active and Passive was running and the voter is continuously
+hearbeating with the both servers.
+* THEN
+** What to do, voter will start voting for one of the passive.
