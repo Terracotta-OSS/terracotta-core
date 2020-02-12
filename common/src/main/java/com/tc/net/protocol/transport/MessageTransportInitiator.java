@@ -20,15 +20,14 @@ package com.tc.net.protocol.transport;
 
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
-import java.util.Collection;
+import java.net.InetSocketAddress;
 
 /**
  *
  */
 public interface MessageTransportInitiator {
-  NetworkStackID openMessageTransport(Collection<ConnectionInfo> dest, ConnectionID connection)  throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException;
+  NetworkStackID openMessageTransport(Iterable<InetSocketAddress> serverAddresses, ConnectionID connection)  throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException;
 }

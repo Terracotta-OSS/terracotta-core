@@ -64,6 +64,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.net.core.ProductID;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -132,12 +133,12 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageTransport client2 = createClient("client2");
     ClientMessageTransport client3 = createClient("client3");
     ClientMessageTransport client4 = createClient("client4");
-    ConnectionInfo info = new ConnectionInfo("localhost", port);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", port);
 
-    client1.open(info);
-    client2.open(info);
-    client3.open(info);
-    client4.open(info);
+    client1.open(serverAddress);
+    client2.open(serverAddress);
+    client3.open(serverAddress);
+    client4.open(serverAddress);
     
     waitForConnected(client1, client2, client3, client4);
     
@@ -182,15 +183,15 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
     
-    ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", port);
 
     ClientMessageChannel client1 = createClientMsgCh(false);
     ClientMessageChannel client2 = createClientMsgCh(false);
     ClientMessageChannel client3 = createClientMsgCh(false);
 
-    client1.open(connectTo);
-    client2.open(connectTo);
-    client3.open(connectTo);
+    client1.open(serverAddress);
+    client2.open(serverAddress);
+    client3.open(serverAddress);
 
     waitForConnected(client1, client2, client3);
 
@@ -210,8 +211,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageChannel client5 = createClientMsgCh(false);
 
     // two clients open new connection
-    client4.open(connectTo);
-    client5.open(connectTo);
+    client4.open(serverAddress);
+    client5.open(serverAddress);
 
     waitForConnected(client4, client5);
 
@@ -244,20 +245,20 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
     
-    ConnectionInfo connectTo = new ConnectionInfo("localhost", port);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", port);
 
     ClientMessageChannel client1 = createClientMsgCh(false);
     ClientMessageChannel client2 = createClientMsgCh(false);
     ClientMessageChannel client3 = createClientMsgCh(false);
 
-    client1.open(connectTo);
+    client1.open(serverAddress);
     waitForConnected(client1);
 
     TCConnection conns[] = commsMgr.getConnectionManager().getAllConnections();
     Assert.eval(conns.length == 1);
 
-    client2.open(connectTo);
-    client3.open(connectTo);
+    client2.open(serverAddress);
+    client3.open(serverAddress);
 
     waitForConnected(client2, client3);
 
@@ -270,8 +271,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageChannel client5 = createClientMsgCh(false);
 
     // four clients open new connection
-    client4.open(connectTo);
-    client5.open(connectTo);
+    client4.open(serverAddress);
+    client5.open(serverAddress);
 
     waitForConnected(client4, client5);
 
@@ -283,9 +284,9 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     ClientMessageChannel client7 = createClientMsgCh(false);
     ClientMessageChannel client8 = createClientMsgCh(false);
 
-    client6.open(connectTo);
-    client7.open(connectTo);
-    client8.open(connectTo);
+    client6.open(serverAddress);
+    client7.open(serverAddress);
+    client8.open(serverAddress);
 
     waitForConnected(client6, client7, client8);
 
@@ -353,15 +354,15 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
       proxy.start();
 
-      ConnectionInfo connectTo = new ConnectionInfo("localhost", proxyPort);
+      InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", proxyPort);
 
       ClientMessageChannel client1 = createClientMsgCh();
       ClientMessageChannel client2 = createClientMsgCh();
       ClientMessageChannel client3 = createClientMsgCh();
 
-      client1.open(connectTo);
-      client2.open(connectTo);
-      client3.open(connectTo);
+      client1.open(serverAddress);
+      client2.open(serverAddress);
+      client3.open(serverAddress);
 
       waitForConnected(client1, client2, client3);
 
@@ -398,11 +399,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       ClientMessageChannel client5 = createClientMsgCh();
       ClientMessageChannel client6 = createClientMsgCh();
 
-      connectTo = new ConnectionInfo("localhost", serverPort);
+      serverAddress = InetSocketAddress.createUnresolved("localhost", serverPort);
 
-      client4.open(connectTo);
-      client5.open(connectTo);
-      client6.open(connectTo);
+      client4.open(serverAddress);
+      client5.open(serverAddress);
+      client6.open(serverAddress);
 
       waitForConnected(client4, client5, client6);
 

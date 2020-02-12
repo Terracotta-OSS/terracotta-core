@@ -25,7 +25,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
@@ -45,6 +44,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Timer;
@@ -291,10 +291,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   @Override
-  public NetworkStackID open(ConnectionInfo info) throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(InetSocketAddress serverAddress) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     Assert.assertNotNull(sendLayer);
-    return sendLayer.open(info);
+    return sendLayer.open(serverAddress);
   }
 
   @Override

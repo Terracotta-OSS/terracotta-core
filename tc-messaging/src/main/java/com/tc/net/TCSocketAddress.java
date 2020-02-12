@@ -19,7 +19,6 @@
 package com.tc.net;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.util.Assert;
 
 import java.net.Inet6Address;
@@ -104,13 +103,6 @@ public class TCSocketAddress {
   private String                  stringForm;
   private String                  canonicalStringForm;
 
-  // TODO: add a constructor that takes the output of toStringForm() and
-  // reconstitutes a TCSocketAddress instance
-
-  public TCSocketAddress(ConnectionInfo connInfo) throws UnknownHostException {
-    this(connInfo.getHostname(), connInfo.getPort());
-  }
-
   /**
    * Creates an address for localhost on the given port
    * 
@@ -158,11 +150,8 @@ public class TCSocketAddress {
     Assert.eval(this.addr != null);
   }
   
-  public TCSocketAddress(InetSocketAddress socket) {
-    this.addr = socket.getAddress();
-    this.port = socket.getPort();
-    
-    Assert.eval(this.addr != null);
+  public TCSocketAddress(InetSocketAddress socket) throws UnknownHostException {
+    this(socket.getHostString(), socket.getPort());
   }
 
   public InetAddress getAddress() {

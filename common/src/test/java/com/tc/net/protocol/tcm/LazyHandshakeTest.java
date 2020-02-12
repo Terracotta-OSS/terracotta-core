@@ -27,7 +27,6 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -47,6 +46,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 
@@ -72,7 +72,7 @@ public class LazyHandshakeTest extends TCTestCase {
   private PortChooser           pc;
   private TCPProxy              proxy;
   private int                   proxyPort;
-  private ConnectionInfo        connectTo;
+  private InetSocketAddress serverAddress;
 
   private NetworkListener       listener;
   private final ClientMessageChannel  channel[]          = new ClientMessageChannel[CLIENT_COUNT];
@@ -106,8 +106,7 @@ public class LazyHandshakeTest extends TCTestCase {
     proxyPort = pc.chooseRandomPort();
     proxy = new TCPProxy(proxyPort, listener.getBindAddress(), listener.getBindPort(), PROXY_SYNACK_DELAY, false, null);
 
-    connectTo = new ConnectionInfo(listener
-                                 .getBindAddress().getHostAddress(), proxyPort);
+    serverAddress = InetSocketAddress.createUnresolved(listener.getBindAddress().getHostAddress(), proxyPort);
     try {
       proxy.start();
     } catch (Exception e) {
@@ -161,7 +160,7 @@ public class LazyHandshakeTest extends TCTestCase {
         public void run() {
           channel[currentClient] = createClientMessageChannel();
           try {
-            channel[currentClient].open(connectTo);
+            channel[currentClient].open(serverAddress);
           } catch (UnknownHostException e) {
             // who am I, then
           } catch (MaxConnectionsExceededException e) {

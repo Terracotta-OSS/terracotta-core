@@ -44,7 +44,7 @@ public class DiagnosticConnectionServiceTest {
   @Test
   public void connect() throws Exception {
     TerracottaInternalClientFactory clientFactoryMock = mock(TerracottaInternalClientFactory.class);
-    when(clientFactoryMock.createL1Client(any())).thenReturn(mock(TerracottaInternalClient.class));
+    when(clientFactoryMock.createL1Client(any(), any())).thenReturn(mock(TerracottaInternalClient.class));
     DiagnosticConnectionService diagnosticConnectionService =
         new DiagnosticConnectionService(mock(EndpointConnector.class), clientFactoryMock);
     Connection connection =
@@ -55,7 +55,7 @@ public class DiagnosticConnectionServiceTest {
   @Test
   public void connectWithNonDiagnosticScheme() throws Exception {
     TerracottaInternalClientFactory clientFactoryMock = mock(TerracottaInternalClientFactory.class);
-    when(clientFactoryMock.createL1Client(any())).thenReturn(mock(TerracottaInternalClient.class));
+    when(clientFactoryMock.createL1Client(any(), any())).thenReturn(mock(TerracottaInternalClient.class));
     DiagnosticConnectionService diagnosticConnectionService =
         new DiagnosticConnectionService(mock(EndpointConnector.class), clientFactoryMock);
     expectedException.expect(IllegalArgumentException.class);

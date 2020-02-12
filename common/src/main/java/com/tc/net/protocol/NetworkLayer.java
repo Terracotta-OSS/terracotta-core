@@ -22,12 +22,12 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.ProductID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -84,7 +84,7 @@ public interface NetworkLayer {
 
   public boolean isConnected();
 
-  public NetworkStackID open(ConnectionInfo info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException,
       IOException, CommStackMismatchException;
 
   public void reset();

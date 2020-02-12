@@ -39,7 +39,6 @@ import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -95,6 +94,7 @@ import org.terracotta.configuration.ServerConfiguration;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -601,7 +601,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return groupResponse;
   }
 
-  private void openChannel(ConnectionInfo info, ChannelEventListener listener)
+  private void openChannel(InetSocketAddress serverAddress, ChannelEventListener listener)
       throws TCTimeoutException, MaxConnectionsExceededException, IOException,
       CommStackMismatchException {
 
@@ -621,14 +621,14 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 10000 /*  timeout */);
 
     channel.addListener(listener);
-    channel.open(Collections.singleton(info));
+    channel.open(serverAddress);
 
     handshake(channel);
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
       MaxConnectionsExceededException, IOException, CommStackMismatchException {
-    openChannel(new ConnectionInfo(hostname, port), listener);
+    openChannel(InetSocketAddress.createUnresolved(hostname, port), listener);
   }
 
   /*

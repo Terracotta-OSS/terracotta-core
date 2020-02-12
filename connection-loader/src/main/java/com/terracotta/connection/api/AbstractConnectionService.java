@@ -29,11 +29,12 @@ import com.terracotta.connection.TerracottaConnection;
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
-import com.terracotta.connection.client.TerracottaClientConfigParams;
 import java.net.InetSocketAddress;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import org.terracotta.entity.EndpointConnector;
@@ -72,8 +73,9 @@ abstract class AbstractConnectionService implements ConnectionService {
       throw new IllegalArgumentException("Unknown URI " + uri);
     }
 
+    List<InetSocketAddress> serverAddresses = new ArrayList<>();
+
     // We may be specifying a comma-delimited list of servers in the stripe so parse the URI with this possibility in mind.
-    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams();
     String[] hosts = uri.getSchemeSpecificPart().split(",");
     for(String host : hosts) {
       // Note that we will need the "//" prefix in order to make sure that the URI is parsed correctly (only the first in
@@ -92,33 +94,28 @@ abstract class AbstractConnectionService implements ConnectionService {
       } catch (URISyntaxException e) {
         throw new IllegalArgumentException("Unable to parse uri " + uri, e);
       }
-      int port = oneHost.getPort() < 0 ? 0 : oneHost.getPort();
-      InetSocketAddress address = InetSocketAddress.createUnresolved(oneHost.getHost(), port);
-      clientConfig.addStripeMember(address);
+      int port = Math.max(oneHost.getPort(), 0);
+      serverAddresses.add(InetSocketAddress.createUnresolved(oneHost.getHost(), port));
     }
 
-    return createConnection(properties, clientConfig);
+    return createConnection(serverAddresses, properties);
   }
 
   @Override
-  public final Connection connect(Iterable<InetSocketAddress> servers, Properties properties) throws ConnectionException {
+  public final Connection connect(Iterable<InetSocketAddress> serverAddresses, Properties properties) throws ConnectionException {
     String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, "terracotta");
     if (!handlesConnectionType(connectionType)) {
       throw new IllegalArgumentException("Unknown connectionType " + connectionType);
     }
 
-    TerracottaClientConfigParams clientConfig = new TerracottaClientConfigParams();
-    servers.forEach(clientConfig::addStripeMember);
-    return createConnection(properties, clientConfig);
+    return createConnection(serverAddresses, properties);
   }
 
-  private Connection createConnection(Properties properties, TerracottaClientConfigParams clientConfig) throws DetailedConnectionException {
+  private Connection createConnection(Iterable<InetSocketAddress> serverAddresses, Properties properties) throws DetailedConnectionException {
     properties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.of(scheme));
     
-    clientConfig.addGenericProperties(properties);
-
-    properties.put("connection", clientConfig.getStripeMemberUris().stream().map(i->i.toString()).collect(Collectors.joining(", ")));
-    final TerracottaInternalClient client = clientFactory.createL1Client(clientConfig);
+    final TerracottaInternalClient client = clientFactory.createL1Client(serverAddresses, properties);
+    properties.put("connection", serverAddresses);
     client.init();
     return new TerracottaConnection(properties, client.getClientEntityManager(), endpointConnector, client::shutdown);
   }
