@@ -73,8 +73,8 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testVoteThreshold() throws Exception {
     String voter = UUID.randomUUID().toString();
-    TopologyManager.get().initialize(new HashSet<>(asList("localhost:9410", "localhost:9510")));
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
     JMXSubsystem caller = new JMXSubsystem();
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
@@ -117,8 +117,8 @@ public class ConsistencyManagerImplTest {
   
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
-    TopologyManager.get().initialize(new HashSet<>(asList("localhost:9410", "localhost:9510")));
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertFalse(granted);

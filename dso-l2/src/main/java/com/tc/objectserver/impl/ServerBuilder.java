@@ -33,7 +33,6 @@ import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
-import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -47,7 +46,7 @@ public interface ServerBuilder extends PostInit {
   GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
                                                             StageManager stageManager, ServerID serverNodeID,
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
-                                                            BufferManagerFactory bufferManagerFactory);
+                                                            BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,

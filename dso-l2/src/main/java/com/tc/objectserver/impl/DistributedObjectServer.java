@@ -94,6 +94,8 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.SyncReplicationActivity;
 import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE;
+import static java.lang.Math.max;
+
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerImpl;
@@ -252,6 +254,7 @@ public class DistributedObjectServer {
 
   private static final Logger logger = LoggerFactory.getLogger(DistributedObjectServer.class);
   private static final Logger consoleLogger = TCLogging.getConsoleLogger();
+  private final TopologyManager topologyManager;
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
@@ -309,6 +312,7 @@ public class DistributedObjectServer {
     this.timer = new SingleThreadedTimer(null);
     this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
+    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts());
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -579,8 +583,6 @@ public class DistributedObjectServer {
         ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
-    TopologyManager.get().initialize(this.configSetupManager.getGroupConfiguration().getHostPorts());
-
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
       consoleLogger.warn("It is recommended to keep the total number of servers and external voters to be an odd number");
     }
@@ -684,7 +686,7 @@ public class DistributedObjectServer {
     this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory);
+                                                                      bufferManagerFactory, this.topologyManager);
         
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -704,11 +706,11 @@ public class DistributedObjectServer {
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
-        createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager,
+        createStageController(processTransactionHandler), eventCollector, stageManager,
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
-        this.globalWeightGeneratorFactory, consistencyMgr, 
-        this.persistor.getClusterStatePersistor());
+        this.globalWeightGeneratorFactory, consistencyMgr,
+        this.persistor.getClusterStatePersistor(), this.topologyManager);
     
     // And the stage for handling their response batching/serialization.
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 
@@ -736,12 +738,13 @@ public class DistributedObjectServer {
 
     connectServerStateToReplicatedState(monitoringShimService, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Sink<ReplicationSendingAction> replicationSenderStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationSendingAction.class, new GenericHandler<ReplicationSendingAction>(), knownPeers, maxStageSize).getSink() :
-            (context) -> {throw new AssertionError("no messages to replication");};
+    final Sink<ReplicationSendingAction> replicationSenderStage =
+        stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
-    final Sink<ReplicationReceivingAction> replicationReceivingStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE, ReplicationReceivingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
-            (context) -> {throw new AssertionError("no messages to replication");};
-    
+    final Sink<ReplicationReceivingAction> replicationReceivingStage =
+        stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
+                                 ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives); 
 
@@ -825,7 +828,7 @@ public class DistributedObjectServer {
     setLoggerOnExit();
   }
 
-  private static ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
+  private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
                                                              int knownPeers,
                                                              int voteCount) {
     // start the server in diagnostic mode if the configuration is not complete
@@ -840,7 +843,8 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl(configSetupManager.upgradeCompatiblity()) : new ConsistencyManagerImpl(voteCount)
+        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl(configSetupManager.upgradeCompatiblity()) :
+            new ConsistencyManagerImpl(this.topologyManager, voteCount)
     );
   }
 
@@ -965,7 +969,7 @@ public class DistributedObjectServer {
         .getSink().addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
-  private StageController createStageController(ProcessTransactionHandler pth, boolean knownPeers) {
+  private StageController createStageController(ProcessTransactionHandler pth) {
     StageController control = new StageController(this::getContext);
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
@@ -992,10 +996,8 @@ public class DistributedObjectServer {
     });
     // these need to be started after startActiveMode is called since replication is only active after permanement 
     // entities are create or existing entities are reloaded
-    if (knownPeers) {
-      control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
-      control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
-    }
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     return control;
   }
   

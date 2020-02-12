@@ -47,6 +47,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsistencyManagerImpl.class);
+  private final TopologyManager topologyManager;
   private boolean activeVote = false;
   private boolean blocked = false;
   private Set<Transition> actions = EnumSet.noneOf(Transition.class);
@@ -60,7 +61,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("type", "Consistency");
-    map.put("peerServers", TopologyManager.get().getTopology().getServers().size() - 1);
+    map.put("peerServers", this.topologyManager.getTopology().getServers().size() - 1);
     map.put("activeVote", activeVote);
     map.put("blocked", blocked);
     map.put("actions", new HashSet<>(actions).stream().map(Transition::toString).collect(Collectors.toList()));
@@ -77,7 +78,8 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return map;
   }
   
-  public ConsistencyManagerImpl(int voters) {
+  public ConsistencyManagerImpl(TopologyManager topologyManager, int voters) {
+    this.topologyManager = topologyManager;
     try {
       this.voter = new ServerVoterManagerImpl(voters);
     } catch (Exception e) {
@@ -110,6 +112,9 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
         
   @Override
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
+    if (topology == null) {
+      topology = this.topologyManager.getTopology();
+    }
     if (newMode == Transition.ADD_PASSIVE) {
  //  starting passive sync to a new node, at this point the passive can be consisdered a
  //  vote for the current active and the passive sync rules will make sure all the data is replicated      

@@ -144,6 +144,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
   private final BufferManagerFactory                        bufferManagerFactory;
+  private final TopologyManager topologyManager;
 
   private CommunicationsManager                             communicationsManager;
   private TCConnectionManager                               connectionManager;
@@ -160,17 +161,20 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    */
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, StageManager stageManager,
                             ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator, bufferManagerFactory);
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, thisNode, weightGenerator,
+         bufferManagerFactory, topologyManager);
   }
 
   public TCGroupManagerImpl(ServerConfigurationManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, Node thisNode,
-                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory) {
+                            WeightGeneratorFactory weightGenerator, BufferManagerFactory bufferManagerFactory,
+                            TopologyManager topologyManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
+    this.topologyManager = topologyManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
@@ -195,7 +199,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     init(socketAddress);
     Assert.assertNotNull(thisNodeID);
     setDiscover(new TCGroupMemberDiscoveryStatic(this, thisNode));
-    TopologyManager.get().addListener(this);
+    this.topologyManager.addListener(this);
   }
 
   protected final String getVersion() {
@@ -212,10 +216,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * for testing purpose only. Tester needs to do setDiscover().
    */
   public TCGroupManagerImpl(ConnectionPolicy connectionPolicy, String hostname, int port, int groupPort,
-                            StageManager stageManager, WeightGeneratorFactory weightGenerator) {
+                            StageManager stageManager, WeightGeneratorFactory weightGenerator, TopologyManager topologyManager) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextBufferManagerFactory();
+    this.topologyManager = topologyManager;
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;

@@ -36,7 +36,6 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.Node;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
@@ -45,7 +44,7 @@ import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.util.Arrays;
+
 import java.util.EnumSet;
 
 import java.util.LinkedHashMap;
@@ -61,6 +60,7 @@ public class StateManagerImpl implements StateManager {
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final ElectionManagerImpl        electionMgr;
   private final ConsistencyManager     availabilityMgr;
+  private final TopologyManager topologyManager;
   private final StageController stateChangeSink;
   private final ManagementTopologyEventCollector eventCollector;
   private final Sink<ElectionContext> electionSink;
@@ -82,17 +82,18 @@ public class StateManagerImpl implements StateManager {
   private Enrollment verification = null;
 
   public StateManagerImpl(Logger consoleLogger, GroupManager<AbstractGroupMessage> groupManager,
-                          StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr, 
+                          StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr,
                           int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
-                          ConsistencyManager availabilityMgr, 
-                          ClusterStatePersistor clusterStatePersistor) {
+                          ConsistencyManager availabilityMgr,
+                          ClusterStatePersistor clusterStatePersistor, TopologyManager topologyManager) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = controller;
     this.eventCollector = eventCollector;
     this.weightsFactory = weightFactory;
     this.availabilityMgr = availabilityMgr;
-    this.electionMgr = new ElectionManagerImpl(groupManager, expectedServers, electionTimeInSec);
+    this.topologyManager = topologyManager;
+    this.electionMgr = new ElectionManagerImpl(groupManager, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
@@ -205,7 +206,7 @@ public class StateManagerImpl implements StateManager {
     }
 
     // This topology will be used throughout the election process
-    Topology topology = TopologyManager.get().getTopology();
+    Topology lockedTopology = this.topologyManager.getTopology();
 
     NodeID myNodeID = getLocalNodeID();
     // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
@@ -213,13 +214,13 @@ public class StateManagerImpl implements StateManager {
     boolean isNew = isFreshServer();
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      electionSink.addToSink(new ElectionContext(myNodeID, topology, isNew, weightsFactory, state.getState(), (nodeid)-> {
+      electionSink.addToSink(new ElectionContext(myNodeID, lockedTopology.getServers(), isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
           if (getCurrentMode().canBeActive() && clusterStatePersistor.isDBClean() && 
-              this.availabilityMgr.requestTransition(this.state, nodeid, topology, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
-            moveToActiveState(electionMgr.passiveStandbys(), topology);
+              this.availabilityMgr.requestTransition(this.state, nodeid, lockedTopology, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
+            moveToActiveState(electionMgr.passiveStandbys(), lockedTopology);
           } else {
             if (!clusterStatePersistor.isDBClean()) {
               logger.info("rerunning election because " + nodeid + " must be synced to an active");

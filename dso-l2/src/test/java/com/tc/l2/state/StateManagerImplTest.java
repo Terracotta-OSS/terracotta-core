@@ -43,7 +43,6 @@ import com.tc.net.groups.TCGroupMemberDiscoveryStatic;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
-import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.server.TCServer;
@@ -92,6 +91,7 @@ public class StateManagerImplTest {
   private final Node[] nodes = new Node[NUM_OF_SERVERS];
   private final TCGroupManagerImpl[] groupManagers = new TCGroupManagerImpl[NUM_OF_SERVERS];
   private final Set<Node> nodeSet = new HashSet<>();
+  private TopologyManager topologyManager;
 
 //  private final TCServer[] tcServers = new TCServer[NUM_OF_SERVERS];
   private final StageController[] stageControllers = new StageController[NUM_OF_SERVERS];
@@ -122,7 +122,7 @@ public class StateManagerImplTest {
       servers.add("localhost:" + ports[i]);
     }
     
-    TopologyManager.get().initialize(servers);
+    this.topologyManager = new TopologyManager(servers);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
       nodeSet.add(nodes[i]);
@@ -132,10 +132,11 @@ public class StateManagerImplTest {
       when(clusterStatePersistorMock.isDBClean()).thenReturn(Boolean.TRUE);
 //      tcServers[i] = mock(TCServer.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
-      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManagers[i], weightGeneratorFactory);
+      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i],
+                                                stageManagers[i], weightGeneratorFactory, topologyManager);
 
       stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mgr,
-                                              clusterStatePersistorMock);
+                                              clusterStatePersistorMock, topologyManager);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
       groupManagers[i].setDiscover(new TCGroupMemberDiscoveryStatic(groupManagers[i], nodes[i]));
@@ -250,8 +251,8 @@ public class StateManagerImplTest {
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
-    StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController,  stageManager, 1, 5, weightGeneratorFactory, mgr,
-                                                  statePersistor);
+    StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
+                                                  statePersistor, topologyManager);
     state.initializeAndStartElection();
     
     state.startElectionIfNecessary(mock(NodeID.class));
@@ -311,7 +312,7 @@ public class StateManagerImplTest {
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
     StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
-                                                  statePersistor);
+                                                  statePersistor, topologyManager);
     state.initializeAndStartElection();
     
     state.startElectionIfNecessary(mock(NodeID.class));
@@ -378,7 +379,7 @@ public class StateManagerImplTest {
     ClusterStatePersistor persistor = mock(ClusterStatePersistor.class);
     when(persistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);
-    StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stageController, mgmtController, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor);
+    StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stageController, mgmtController, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor, this.topologyManager);
     mgr.initializeAndStartElection();
     Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
     Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));

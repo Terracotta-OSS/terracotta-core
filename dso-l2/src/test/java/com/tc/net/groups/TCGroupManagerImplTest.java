@@ -36,6 +36,8 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.SessionID;
+import com.tc.objectserver.impl.Topology;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
@@ -94,7 +96,9 @@ public class TCGroupManagerImplTest extends TCTestCase {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i],
+                                         stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                         mock(TopologyManager.class));
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
       groupEventListeners[i] = new TestGroupEventListener(groups[i]);
       groups[i].registerForGroupEvents(groupEventListeners[i]);

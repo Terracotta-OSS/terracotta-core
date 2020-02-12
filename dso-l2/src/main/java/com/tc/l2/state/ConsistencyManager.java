@@ -56,7 +56,7 @@ public interface ConsistencyManager extends PrettyPrintable {
   }
 
   default boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
-    return requestTransition(mode, sourceNode, TopologyManager.get().getTopology(), newMode);
+    return requestTransition(mode, sourceNode, null, newMode);
   }
 
   boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException;

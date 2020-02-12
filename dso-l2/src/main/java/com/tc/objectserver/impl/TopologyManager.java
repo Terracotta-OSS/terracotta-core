@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.TerracottaManagement;
 
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -13,8 +12,8 @@ import java.util.List;
 import java.util.Set;
 
 import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
 
+import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.lang.String.join;
 
 public class TopologyManager {
@@ -23,22 +22,13 @@ public class TopologyManager {
   private volatile TopologyMbean topologyMbean;
   private final List<TopologyListener> listeners = new ArrayList<>();
 
-  private TopologyManager() {
-  }
-
-  private static final TopologyManager INSTANCE = new TopologyManager();
-
-  public static TopologyManager get() {
-    return INSTANCE;
+  public TopologyManager(Set<String> hostPorts) {
+    this.topology = new Topology(hostPorts);
+    initializeMbean();
   }
 
   public synchronized Topology getTopology() {
     return topology;
-  }
-
-  public synchronized void initialize(Set<String> hostPorts) {
-    this.topology = new Topology(hostPorts);
-    initializeMbean();
   }
 
   private void initializeMbean() {
@@ -92,7 +82,6 @@ public class TopologyManager {
 
   private static class TopologyMbeanImpl extends AbstractTerracottaMBean implements TopologyMbean {
     private static final Logger LOGGER = LoggerFactory.getLogger(TopologyMbeanImpl.class);
-    private static final String MBEAN_NAME = "TopologyMBean";
     private final TopologyManager topologyManager;
 
     TopologyMbeanImpl(TopologyManager topologyManager) throws NotCompliantMBeanException {
@@ -100,11 +89,9 @@ public class TopologyManager {
       this.topologyManager = topologyManager;
 
       try {
-        ObjectName topologyObjectName =
-            TerracottaManagement.createObjectName(null, MBEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC);
-        ManagementFactory.getPlatformMBeanServer().registerMBean(this, topologyObjectName);
+        ManagementFactory.getPlatformMBeanServer().registerMBean(this, TOPOLOGY_MBEAN);
       } catch (Exception e) {
-        LOGGER.warn("Problem registering MBean with name " + MBEAN_NAME, e);
+        LOGGER.warn("Problem registering MBean with name " + TOPOLOGY_MBEAN.getCanonicalName(), e);
       }
     }
 
