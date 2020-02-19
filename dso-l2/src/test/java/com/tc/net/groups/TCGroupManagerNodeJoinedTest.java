@@ -36,6 +36,7 @@ import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -54,6 +55,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 
@@ -128,7 +130,10 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                     stages.createStageManager(),
+                                                     RandomWeightGenerator.createTestingFactory(2),
+                                                     mock(TopologyManager.class));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -181,7 +186,9 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                     stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                                     mock(TopologyManager.class));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -247,7 +254,9 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                     stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                                     mock(TopologyManager.class));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;

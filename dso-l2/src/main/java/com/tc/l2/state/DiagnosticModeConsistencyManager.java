@@ -21,6 +21,7 @@ package com.tc.l2.state;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.objectserver.impl.Topology;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -29,7 +30,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class DiagnosticModeConsistencyManager implements ConsistencyManager {
   @Override
-  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
+  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
 
     TCLogging.getConsoleLogger().info("Started the server in diagnostic mode");
 

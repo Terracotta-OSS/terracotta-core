@@ -32,6 +32,7 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupResponse;
+import com.tc.objectserver.impl.Topology;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.Collections;
@@ -64,12 +65,11 @@ public class ElectionManagerImpl implements ElectionManager {
   private Set<NodeID>           passiveStandbys;
 
   private final long            electionTime;
-  private final int             expectedServers;
+  private int             expectedServers;
 
-  public ElectionManagerImpl(GroupManager groupManager, int expectedServers, int electionTimeInSec) {
+  public ElectionManagerImpl(GroupManager groupManager, int electionTimeInSec) {
     this.groupManager = groupManager;
     this.electionTime = electionTimeInSec * 1000;
-    this.expectedServers = expectedServers;
     this.groupManager.registerForGroupEvents(new GroupEventsListener() {
       @Override
       public void nodeJoined(NodeID nodeID) {
@@ -87,7 +87,8 @@ public class ElectionManagerImpl implements ElectionManager {
     return new AbstractEventHandler<ElectionContext> () {
       @Override
       public void handleEvent(ElectionContext context) throws EventHandlerException {
-          context.setWinner(runElection(context.getNode(), context.isNew(), context.getFactory(), context.getCurrentState()));
+          context.setWinner(runElection(context.getNode(), context.getServers(), context.isNew(), context.getFactory(),
+                                        context.getCurrentState()));
       }
     };
   }
@@ -203,7 +204,7 @@ public class ElectionManagerImpl implements ElectionManager {
     notifyAll();
   }
 
-  private NodeID runElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
+  private NodeID runElection(NodeID myNodeId, Set<String> servers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState) {
     NodeID winnerID = ServerID.NULL_ID;
     int count = 0;
     while (winnerID.isNull()) {
@@ -211,7 +212,7 @@ public class ElectionManagerImpl implements ElectionManager {
         logger.info("Requesting Re-election !!! count = " + count);
       }
       try {
-        winnerID = doElection(myNodeId, isNew, weightsFactory, currentState);
+        winnerID = doElection(myNodeId, servers, isNew, weightsFactory, currentState);
       } catch (InterruptedException e) {
         logger.error("Interrupted during election : ", e);
         reset(ServerID.NULL_ID, null);
@@ -237,9 +238,10 @@ public class ElectionManagerImpl implements ElectionManager {
     }
   }
 
-  private synchronized void electionStarted(Enrollment e, State serverState) {
+  private synchronized void electionStarted(Enrollment e, State serverState, int expectedServers) {
     if (this.state == ELECTION_IN_PROGRESS) { throw new AssertionError("Election Already in Progress"); }
     this.state = ELECTION_IN_PROGRESS;
+    this.expectedServers = expectedServers;
     this.myVote = e;
     this.serverState = serverState;
     this.winner = null;
@@ -249,16 +251,16 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election Started : " + e);
   }
 
-  private NodeID doElection(NodeID myNodeId, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState)
+  private NodeID doElection(NodeID myNodeId, Set<String> servers, boolean isNew, WeightGeneratorFactory weightsFactory, State currentState)
       throws GroupException, InterruptedException {
 
     // Step 1: publish to cluster NodeID, weight and election start
     Enrollment e = EnrollmentFactory.createEnrollment(myNodeId, isNew, weightsFactory);
-    electionStarted(e, currentState);
+    electionStarted(e, currentState, servers.size());
 
     L2StateMessage msg = L2StateMessage.createElectionStartedMessage(e, currentState);
     debugInfo("Sending my election vote to all members");
-    groupManager.sendAll(msg);
+    groupManager.sendTo(servers, msg);
 
     // Step 2: Wait for election completion
     long waited = waitTillElectionComplete();
@@ -274,7 +276,7 @@ public class ElectionManagerImpl implements ElectionManager {
     // Step 4 : local host won the election, so notify world for acceptance
     msg = L2StateMessage.createElectionResultMessage(e, currentState);
     debugInfo("Won election, announcing to world and waiting for response...");
-    GroupResponse<L2StateMessage> responses = groupManager.sendAllAndWaitForResponse(msg);
+    GroupResponse<L2StateMessage> responses = groupManager.sendToAndWaitForResponse(servers, msg);
     Set<NodeID> passives = new HashSet<>();
     for (L2StateMessage response : responses.getResponses()) {
       Assert.assertEquals(msg.getMessageID(), response.inResponseTo());

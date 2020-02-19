@@ -24,6 +24,7 @@ import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
 import com.tc.properties.TCPropertiesImpl;
 import org.terracotta.configuration.ServerConfiguration;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ public class GroupConfiguration {
 
   private final Set<String> members = new HashSet<>();
   private final Set<Node> nodes = new HashSet<>();
+  private final Set<String> hostPorts = new HashSet<>();
   private final Node currentNode;
 
   GroupConfiguration(Map<String, ServerConfiguration> configMap, String serverName) {
@@ -49,6 +51,7 @@ public class GroupConfiguration {
       Node node = new Node(bindAddress,
                            serverConfiguration.getTsaPort().getPort(),
                            serverConfiguration.getGroupPort().getPort());
+      hostPorts.add(node.getServerNodeName());
       if (serverName.equals(member.getKey())) {
         current = node;
       }
@@ -72,6 +75,10 @@ public class GroupConfiguration {
     //TODO fix the election time
     // If there is only one server, always going to win so no reason to wait
     return (members.size() == 1) ? SINGLE_SERVER_ELECTION_TIMEOUT : MULTI_SERVER_ELECTION_TIMEOUT;
+  }
+
+  public Set<String> getHostPorts() {
+    return Collections.unmodifiableSet(hostPorts);
   }
 
   public String[] getMembers() {

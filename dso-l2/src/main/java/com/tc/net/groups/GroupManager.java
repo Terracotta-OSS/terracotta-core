@@ -43,9 +43,13 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public void sendTo(NodeID node, M msg) throws GroupException;
 
+  public void sendTo(Set<String> nodes, M msg);
+
   public void sendToWithSentCallback(NodeID node, M msg, Runnable sentCallback) throws GroupException;
 
   public M sendToAndWaitForResponse(NodeID nodeID, M msg) throws GroupException;
+
+  public GroupResponse<M> sendToAndWaitForResponse(Set<String> nodes, M msg) throws GroupException;
 
   public <N extends M> void registerForMessages(Class<? extends N> msgClass, GroupMessageListener<N> listener);
 

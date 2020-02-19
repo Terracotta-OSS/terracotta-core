@@ -21,6 +21,8 @@ package com.tc.l2.state;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.objectserver.impl.Topology;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.text.PrettyPrintable;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
@@ -53,7 +55,11 @@ public interface ConsistencyManager extends PrettyPrintable {
     }
   }
 
-  boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException;
+  default boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
+    return requestTransition(mode, sourceNode, null, newMode);
+  }
+
+  boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException;
 
   boolean lastTransitionSuspended();
 
