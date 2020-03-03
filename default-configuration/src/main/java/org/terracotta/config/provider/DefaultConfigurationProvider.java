@@ -274,7 +274,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
         String available = priority.getAvailability();
         Consistency consistent = priority.getConsistency();
         if (consistent != null) {
-          int votes = consistent.getVoter().getCount();
+          int votes = (consistent.getVoter() != null) ? consistent.getVoter().getCount() : 0;
           return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, votes);
         } else {
           if (available == null) {

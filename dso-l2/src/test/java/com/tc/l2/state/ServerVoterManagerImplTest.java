@@ -24,6 +24,7 @@ import org.junit.Test;
 import static com.tc.voter.VoterManager.INVALID_VOTER_RESPONSE;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 
 public class ServerVoterManagerImplTest {
 
@@ -143,7 +144,7 @@ public class ServerVoterManagerImplTest {
     assertThat(manager.overrideVoteReceived(), is(true));
   }
 
-  @Test
+  @Test @Ignore("not a valid test any longer, overrides are always accepted and reset on new vote")
   public void testOverrideVoteIgnoredWhenNotInElection() throws Exception {
     ServerVoterManagerImpl manager = new ServerVoterManagerImpl(1, timeSource, false);
     assertThat(manager.overrideVote("foo"), is(false));

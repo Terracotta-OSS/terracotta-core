@@ -49,15 +49,19 @@ import java.nio.file.FileAlreadyExistsException;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.config.Consistency;
+import org.terracotta.config.FailoverPriority;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.Directories;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.CONFIG_FILE_PROPERTY_NAME;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.DEFAULT_CONFIG_NAME;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
+import static org.terracotta.configuration.Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME;
 
 public class DefaultConfigurationProviderTest {
 
@@ -101,6 +105,37 @@ public class DefaultConfigurationProviderTest {
         return tcConfiguration;
       }
     };
+  }
+
+  @Test
+  public void testNoVoterCount() throws Exception {
+    final TcConfiguration tcConfiguration = mock(TcConfiguration.class);
+    TcConfig config = mock(TcConfig.class);
+    when(tcConfiguration.getPlatformConfiguration()).thenReturn(config);
+    FailoverPriority priority = mock(FailoverPriority.class);
+    when(config.getFailoverPriority()).thenReturn(priority);
+    Consistency consistency = mock(Consistency.class);
+    when(priority.getConsistency()).thenReturn(consistency);
+    when(consistency.getVoter()).thenReturn(null);
+    DefaultConfigurationProvider dp = new DefaultConfigurationProvider() {
+      @Override
+      protected TcConfiguration getTcConfiguration(Path configurationPath, ClassLoader serviceClassLoader) {
+        return tcConfiguration;
+      }
+    };
+    String old = System.setProperty(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, "true");
+    try {
+      dp.initialize(Collections.emptyList());
+
+      int count = dp.getConfiguration().getFailoverPriority().getExternalVoters();
+      assertEquals(0, count);
+    } finally {
+      if (old == null) {
+        System.getProperties().remove(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME);
+      } else {
+        System.setProperty(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME, old);
+      }
+    }
   }
   
   @Test
