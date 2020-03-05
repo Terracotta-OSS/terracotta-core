@@ -15,13 +15,11 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
-import java.util.Vector;
-
+import org.terracotta.testing.config.ClientsConfiguration;
+import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.VerboseManager;
 
+import java.io.IOException;
 
 /**
  * This class is meant to be a container of helpers and testing idioms which are common to different entry-points into the framework.
@@ -29,84 +27,18 @@ import org.terracotta.testing.logging.VerboseManager;
  */
 public class CommonIdioms {
   public static ReadyStripe setupConfigureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager,
-                                                         VerboseManager verboseManager, StripeConfiguration stripeConfiguration)
+                                                         VerboseManager verboseManager, StripeConfiguration stripeConfig)
       throws IOException, GalvanFailureException {
-    VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfiguration.stripeName + "]");
-    // We want to create a sub-directory per-stripe.
-    String stripeParentDirectory = FileHelpers.createTempEmptyDirectory(stripeConfiguration.testParentDirectory, stripeConfiguration.stripeName);
-    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager,
-        stripeConfiguration.kitOriginPath, stripeParentDirectory, stripeConfiguration.serversToCreate,
-        stripeConfiguration.serverHeapInM, stripeConfiguration.serverStartPort, stripeConfiguration.serverDebugPortStart,
-        stripeConfiguration.serverStartNumber, stripeConfiguration.extraJarPaths, stripeConfiguration.namespaceFragment,
-        stripeConfiguration.serviceFragment, stripeConfiguration.failoverPriorityVoterCount, stripeConfiguration.clientReconnectWindowTime,
-        stripeConfiguration.tcProperties, stripeConfiguration.serverProperties, stripeConfiguration.logConfigExtension, stripeConfiguration.consistentStart);
+    VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeConfig.getStripeName() + "]");
+    return ReadyStripe.configureAndStartStripe(interlock, stateManager, stripeVerboseManager, stripeConfig);
   }
+
   /**
    * Note that the clients will be run in another thread, logging to the given logger and returning their state in stateManager.
    */
-  public static void installAndRunClients(IGalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager, ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) throws IOException {
-    ClientSubProcessManager manager = new ClientSubProcessManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration.testParentDirectory, clientsConfiguration.clientClassPath, clientsConfiguration.setupClientDebugPort, clientsConfiguration.destroyClientDebugPort, clientsConfiguration.testClientDebugPortStart, clientsConfiguration.failOnLog, clientsConfiguration.clientsToCreate, clientsConfiguration.clientArgumentBuilder, clientsConfiguration.connectUri, clientsConfiguration.clusterInfo, clientsConfiguration.numberOfStripes, clientsConfiguration.numberOfServersPerStripe);
+  public static void installAndRunClients(IGalvanStateInterlock interlock, ITestStateManager stateManager, VerboseManager verboseManager,
+                                          ClientsConfiguration clientsConfiguration, IMultiProcessControl processControl) {
+    ClientSubProcessManager manager = new ClientSubProcessManager(interlock, stateManager, verboseManager, processControl, clientsConfiguration);
     manager.start();
-  }
-
-  public static <T> List<T> uniquifyList(List<T> list) {
-    Vector<T> newList = new Vector<>();
-    for (T element : list) {
-      if (!newList.contains(element)) {
-        newList.add(element);
-      }
-    }
-    return newList;
-  }
-
-
-  /**
-   * This class is essentially a struct containing the data which describes how the servers in the stripe are to be
-   * configured, where they are sourced, and how they should be run.
-   * It exists to give context to the parameters in CommonIdioms.
-   */
-  public static class StripeConfiguration {
-    public String kitOriginPath;
-    public String testParentDirectory;
-    public int serversToCreate;
-    public int serverHeapInM;
-    public int serverStartPort;
-    public int serverDebugPortStart;
-    public int serverStartNumber;
-    public int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
-    public int failoverPriorityVoterCount = ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
-    public Properties tcProperties;
-    public Properties serverProperties;
-    public List<String> extraJarPaths;
-    public String namespaceFragment;
-    public String serviceFragment;
-    public String stripeName;
-    public String logConfigExtension;
-    public boolean consistentStart;
-  }
-
-
-  /**
-   * This class is essentially a struct containing the data which describes how the client for a test are to be
-   * configured and how they should be run.
-   * Additionally, it also provides much of the environment description and other meta-data which tests can use
-   * to calibrate themselves.
-   * It exists to give context to the parameters in CommonIdioms.
-   */
-  public static class ClientsConfiguration {
-    public String testParentDirectory;
-    public String clientClassPath;
-    public int clientsToCreate;
-    public IClientArgumentBuilder clientArgumentBuilder;
-    public String connectUri;
-    public int numberOfStripes;
-    public int numberOfServersPerStripe;
-    
-    // Debug options specific to clients.
-    public int setupClientDebugPort;
-    public int destroyClientDebugPort;
-    public int testClientDebugPortStart;
-    public boolean failOnLog;
-    public ClusterInfo clusterInfo;
   }
 }

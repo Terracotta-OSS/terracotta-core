@@ -15,86 +15,78 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
-
+import org.terracotta.testing.config.ClusterInfo;
+import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
 public class ReadyStripe {
+  private final IMultiProcessControl stripeControl;
+  private final String stripeUri;
+  private final ClusterInfo clusterInfo;
+  private final List<InetSocketAddress> serverAddresses;
+
+  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo, List<InetSocketAddress> serverAddresses) {
+    this.stripeControl = stripeControl;
+    this.stripeUri = stripeUri;
+    this.clusterInfo = clusterInfo;
+    this.serverAddresses = serverAddresses;
+  }
+
+  public IMultiProcessControl getStripeControl() {
+    return stripeControl;
+  }
+
+  public String getStripeUri() {
+    return stripeUri;
+  }
+
+  public ClusterInfo getClusterInfo() {
+    return clusterInfo;
+  }
+
+  public List<InetSocketAddress> getServerAddresses() {
+    return Collections.unmodifiableList(serverAddresses);
+  }
+
   /**
    * Installs, configures, and starts the described stripe.
    * When this call returns, all the servers in the stripe will be installed an running (at least in an "unknownRunning"
-   *  state within the given interlock.
-   * 
-   * @param interlock Coordinates the relationship between the test and its inferior processes.
-   * @param stateManager The object where test externals can wait for the result of a test.
-   * @param stripeVerboseManager Controls verbose output for the servers within the stripe.
-   * @param serverInstallDirectory The top-level directory under which all servers are installed.
-   * @param kitOriginDirectory The location where the clean kit is installed.
-   * @param serversToCreate The number of servers to install and start within the stripe.
-   * @param heapInM The heap size to specify to the server JVM (both -Xms and -Xmx).
-   * @param serverStartPort The port where servers will start being assigned.  Each server is assigned a port after the
-   *  last, starting at this number.
-   * @param serverDebugPortStart The port where servers will start looking for debug connections.  Each server is assigned a
-   *  port after the last, starting at this number.  0 means "no debug".
-   * @param serverStartNumber The server number to use.  This is so different stripes or configs don't collide with each
-   *  other on disk.
-   * @param extraJarPaths The full paths to additional jars which need to be installed in each server.
-   * @param namespaceFragment The namespace declaration string which must be injected into each config.
-   * @param serviceFragment The service definition string which must be injected into each config.
-   * @param serverProperties the Java system properties to apply to to each stripe server
+   * state within the given interlock.
+   *
    * @return The objects required to interact with and control the stripe.
-   * @throws IOException Thrown in case something went wrong during server installation.
+   * @throws IOException            Thrown in case something went wrong during server installation.
    * @throws GalvanFailureException Thrown in case starting the servers in the stripe experienced a failure.
    */
   public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager,
-                                                    VerboseManager stripeVerboseManager, String serverInstallDirectory,
-                                                    String kitOriginDirectory, int serversToCreate, int heapInM,
-                                                    int serverStartPort, int serverDebugPortStart, int serverStartNumber,
-                                                    List<String> extraJarPaths, String namespaceFragment,
-                                                    String serviceFragment, int failoverPriorityVoterCount,
-                                                    int clientReconnectWindowTime, Properties tcProperties,
-                                                    Properties serverProperties, String logConfigExt, boolean consistentStart)
+                                                    VerboseManager stripeVerboseManager, StripeConfiguration stripeConfig)
       throws IOException, GalvanFailureException {
-    ContextualLogger configLogger = stripeVerboseManager.createComponentManager("[ConfigBuilder]").createHarnessLogger();
-    // Create the config builder.
-    ConfigBuilder configBuilder = ConfigBuilder.buildStartPort(configLogger, serverStartPort);
-    // Set fixed config details.
-    configBuilder.setNamespaceSnippet(namespaceFragment);
-    configBuilder.setServiceSnippet(serviceFragment);
-    configBuilder.setClientReconnectWindowTime(clientReconnectWindowTime);
-    configBuilder.setFailoverPriorityVoterCount(failoverPriorityVoterCount);
-    configBuilder.addTcProperties(tcProperties);
-    // Create the stripe installer.
-    StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, kitOriginDirectory, serverInstallDirectory, extraJarPaths);
+    StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
-    for (int i = 0; i < serversToCreate; ++i) {
-      String serverName = "testServer" + (i + serverStartNumber);
+    for (int i = 0; i < stripeConfig.getServerNames().size(); ++i) {
+      String serverName = stripeConfig.getServerNames().get(i);
       // Determine if we want a debug port.
-      int debugPort = (serverDebugPortStart > 0)
-          ? (serverDebugPortStart + i)
-          : 0;
-      configBuilder.addServer(serverName);
-      installer.installNewServer(serverName, heapInM, debugPort, (serverProperties == null ? new Properties() : serverProperties), logConfigExt);
+      int debugPort = stripeConfig.getServerDebugPorts().get(i);
+      installer.installNewServer(serverName, debugPort);
     }
-    // The config is built and stripe has been installed so write the config to the stripe.
-    String configText = configBuilder.buildConfig();
-    installer.installConfig(configText);
-    
+
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
     // Register the stripe into it and start up the server in the stripe.
-    installer.startServers(consistentStart);
-    
+    installer.startServers(stripeConfig.isConsistentStart());
+
     // Before we return, we want to wait for all the servers in the stripe to come up.
     interlock.waitForAllServerRunning();
-    
+
     // Also, so we don't start the test in a racy state, wait for all the now-running servers to enter a meaningful state.
     try {
       interlock.waitForAllServerReady();
@@ -102,23 +94,9 @@ public class ReadyStripe {
 //  failed to start normally but some later interaction with the framework should catch this
       System.err.println("Galvan cluster failed to start:" + failed.getMessage());
     }
-    
+
     // We can now create the information required by the ReadyStripe and return control to the caller to run the test or install clients.
     SynchronousProcessControl processControl = new SynchronousProcessControl(interlock, processControlLogger);
-    String connectUri = configBuilder.buildUri();
-    ClusterInfo clusterInfo = configBuilder.getClusterInfo();
-    return new ReadyStripe(processControl, connectUri, clusterInfo, configText);
-  }
-
-  public final IMultiProcessControl stripeControl;
-  public final String stripeUri;
-  public final ClusterInfo clusterInfo;
-  public final String configText;
-  
-  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo, String configText) {
-    this.stripeControl = stripeControl;
-    this.stripeUri = stripeUri;
-    this.clusterInfo = clusterInfo;
-    this.configText = configText;
+    return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo(), stripeConfig.getServerAddresses());
   }
 }

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.testing.master;
+package org.terracotta.testing.config;
+
+import org.terracotta.testing.client.TestClientStub;
 
 import java.util.List;
 import java.util.Vector;
-
-import org.terracotta.testing.client.TestClientStub;
 
 
 /**
@@ -27,7 +27,6 @@ import org.terracotta.testing.client.TestClientStub;
 public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
   private final String testClassName;
   private final String errorClassName;
-
 
   public BasicClientArgumentBuilder(String testClassName, String errorClassName) {
     this.testClassName = testClassName;
@@ -69,12 +68,12 @@ public class BasicClientArgumentBuilder implements IClientArgumentBuilder {
     args.add(Integer.toString(numberOfStripes));
     args.add("--numberOfServersPerStripe");
     args.add(Integer.toString(numberOfServersPerStripe));
-    
+
     args.add("--totalClientCount");
     args.add(Integer.toString(totalClientCount));
     args.add("--thisClientIndex");
     args.add(Integer.toString(thisClientIndex));
-    
+
     if (null != this.errorClassName) {
       args.add("--errorClass");
       args.add(this.errorClassName);

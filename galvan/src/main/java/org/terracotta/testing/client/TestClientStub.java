@@ -27,8 +27,8 @@ import org.terracotta.passthrough.IServerInfo;
 import org.terracotta.passthrough.SimpleClientTestEnvironment;
 import org.terracotta.testing.api.IClientErrorHandler;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.master.ClusterInfo;
-import org.terracotta.testing.master.ServerInfo;
+import org.terracotta.testing.config.ClusterInfo;
+import org.terracotta.testing.config.ServerInfo;
 
 
 /**

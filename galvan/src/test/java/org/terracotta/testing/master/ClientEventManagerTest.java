@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.io.PipedOutputStream;
 import org.junit.Assert;
 import org.junit.Test;
+import org.terracotta.testing.config.ClusterInfo;
 
 import java.util.regex.Pattern;
 import static org.mockito.Mockito.mock;

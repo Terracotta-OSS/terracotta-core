@@ -15,16 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.List;
-import java.util.Vector;
-
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 import org.terracotta.testing.common.Assert;
@@ -32,32 +22,40 @@ import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.logging.VerboseOutputStream;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientRunner extends Thread {
   private final ContextualLogger harnessLogger;
   private final ContextualLogger clientProcessLogger;
   private final IMultiProcessControl control;
-  private final File clientWorkingDirectory;
+  private final Path clientWorkingDirectory;
   private final String clientClassPath;
   private final int debugPort;
   private final boolean failOnLog;
   private final String clientClassName;
   private final List<String> extraArguments;
-  
+
   // TODO:  Manage these files at a higher-level, much like ServerProcess does, so that open/close isn't done here.
-  private FileOutputStream logFileOutput;
-  private FileOutputStream logFileError;
+  private OutputStream logFileOutput;
+  private OutputStream logFileError;
   private VerboseOutputStream stdoutLog;
   private VerboseOutputStream stderrLog;
   private AnyProcess process;
   private Listener listener;
   private boolean initialized;
 
-  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, File clientWorkingDirectory, String clientClassPath, int debugPort, boolean failOnLog, String clientClassName, List<String> extraArguments) {
+  public ClientRunner(VerboseManager clientVerboseManager, IMultiProcessControl control, Path clientWorkingDirectory, String clientClassPath, int debugPort, boolean failOnLog, String clientClassName, List<String> extraArguments) {
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = clientVerboseManager.createHarnessLogger();
     this.clientProcessLogger = clientVerboseManager.createClientLogger();
-    
+
     this.control = control;
     this.clientWorkingDirectory = clientWorkingDirectory;
     this.clientClassPath = clientClassPath;
@@ -67,13 +65,13 @@ public class ClientRunner extends Thread {
     this.extraArguments = extraArguments;
   }
 
-  public void openStandardLogFiles() throws FileNotFoundException {
+  public void openStandardLogFiles() throws IOException {
     Assert.assertNull(this.logFileOutput);
     Assert.assertNull(this.logFileError);
-    
+
     // We want to create an output log file for both STDOUT and STDERR.
-    this.logFileOutput = new FileOutputStream(new File(this.clientWorkingDirectory, "stdout.log"));
-    this.logFileError = new FileOutputStream(new File(this.clientWorkingDirectory, "stderr.log"));
+    this.logFileOutput = Files.newOutputStream(clientWorkingDirectory.resolve("stdout.log"));
+    this.logFileError = Files.newOutputStream(clientWorkingDirectory.resolve("stderr.log"));
   }
 
   public void closeStandardLogFiles() throws IOException {
@@ -81,7 +79,7 @@ public class ClientRunner extends Thread {
     Assert.assertNull(this.stdoutLog);
     Assert.assertNotNull(this.logFileOutput);
     Assert.assertNotNull(this.logFileError);
-    
+
     this.logFileOutput.close();
     this.logFileOutput = null;
     this.logFileError.close();
@@ -93,7 +91,7 @@ public class ClientRunner extends Thread {
     // We over-ride the Thread.run() since we want to provide a few synchronization points, thus requiring that we _are_ a Thread instead of just a Runnable.
     // We assume that the listener must have been set, prior to starting the thread.
     Assert.assertNotNull(this.listener);
-    
+
     // First step is we need to set up the verbose output stream to point at the log files.
     Assert.assertNull(this.stderrLog);
     Assert.assertNull(this.stdoutLog);
@@ -101,16 +99,16 @@ public class ClientRunner extends Thread {
     Assert.assertNotNull(this.logFileError);
     this.stdoutLog = new VerboseOutputStream(this.logFileOutput, this.clientProcessLogger, false);
     this.stderrLog = new VerboseOutputStream(this.logFileError, this.clientProcessLogger, true);
-    
+
     // Start the process, passing back the pid.
     long thePid = startProcess();
     notifyInitializationCompletion();
     // Report our PID.
     this.harnessLogger.output("PID: " + thePid);
-    
+
     // Note that the ClientEventManager will synthesize actual events from the output stream within ITS OWN THREAD.
     // That means that here we just need to wait on termination.
-    
+
     // Wait for the process to complete, passing back the return value.
     int theResult = waitForTermination();
     if (0 == theResult) {
@@ -118,18 +116,18 @@ public class ClientRunner extends Thread {
     } else {
       this.harnessLogger.error("Return value (ERROR): " + theResult);
     }
-    
+
     // Drop our verbose output stream shims.
     this.stdoutLog = null;
     this.stderrLog = null;
-    
+
     // Report the termination details, before exiting (the receiver will also know that they can join on us).
     this.listener.clientDidTerminate(this, theResult);
   }
 
   /**
    * Called to force the client process to terminate.
-   * 
+   * <p>
    * NOTE:  The caller is still expected to join on the thread shutting down.
    */
   public void forceTerminate() {
@@ -138,7 +136,7 @@ public class ClientRunner extends Thread {
     waitForInitializationCompletion();
     this.process.destroyForcibly();
   }
-  
+
   public synchronized void setListener(Listener listener) {
     Assert.assertNull(this.listener);
     this.listener = listener;
@@ -148,7 +146,7 @@ public class ClientRunner extends Thread {
   private long startProcess() {
     Assert.assertNotNull(this.stdoutLog);
     Assert.assertNotNull(this.stderrLog);
-    
+
     PipedInputStream readingEnd = new PipedInputStream();
     // Note that ClientEventManager will be responsible for closing writingEnd.
     PipedOutputStream writingEnd = null;
@@ -178,7 +176,7 @@ public class ClientRunner extends Thread {
       this.harnessLogger.output("Starting: " + condenseCommandLine(commandLine));
     }
     this.process = processBuilder
-        .workingDir(this.clientWorkingDirectory)
+        .workingDir(clientWorkingDirectory.toFile())
         .pipeStdin(readingEnd)
         .pipeStdout(outputStream)
         .pipeStderr(this.stderrLog)
@@ -188,7 +186,7 @@ public class ClientRunner extends Thread {
   }
 
   private String[] buildCommandLine(String debugArg) {
-    List<String> fullCommandLine = new Vector<String>();
+    List<String> fullCommandLine = new ArrayList<>();
     fullCommandLine.add("java");
     // Note that we will currently set the clients at 64m.
     // TODO:  Find a way to expose the heap sizing options to the test configuration.
@@ -202,7 +200,7 @@ public class ClientRunner extends Thread {
     fullCommandLine.add(this.clientClassPath);
     fullCommandLine.add(this.clientClassName);
     fullCommandLine.addAll(this.extraArguments);
-    return fullCommandLine.toArray(new String[fullCommandLine.size()]);
+    return fullCommandLine.toArray(new String[0]);
   }
 
   private int waitForTermination() {
@@ -223,11 +221,11 @@ public class ClientRunner extends Thread {
 
   private static String condenseCommandLine(String[] args) {
     // We always start with the raw command.
-    String command = args[0];
+    StringBuilder command = new StringBuilder(args[0]);
     for (int i = 1; i < args.length; ++i) {
-      command += " \"" + args[i] + "\"";
+      command.append(" \"").append(args[i]).append("\"");
     }
-    return command;
+    return command.toString();
   }
 
 
@@ -250,7 +248,7 @@ public class ClientRunner extends Thread {
   /**
    * NOTE:  Messages related to the client life-cycle are all posted within the client's thread.
    */
-  public static interface Listener {
+  public interface Listener {
     void clientDidTerminate(ClientRunner clientRunner, int theResult);
   }
 }

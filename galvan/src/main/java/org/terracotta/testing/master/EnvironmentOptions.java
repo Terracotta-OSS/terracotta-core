@@ -16,6 +16,8 @@
 package org.terracotta.testing.master;
 
 
+import java.nio.file.Path;
+
 /**
  * Just a struct to batch together the harness configuration data related to the testing environment (paths, etc).
  */
@@ -28,21 +30,18 @@ public class EnvironmentOptions {
    * The path to where the template kit is located.  This location will not be modified but it will be copied as the basis
    * for every server install used by the harness.
    */
-  public String serverInstallDirectory;
+  public Path serverInstallDirectory;
   /**
    * The directory which is given to the test harness for it to store arbitrary data and install different components.
    */
-  public String testParentDirectory;
+  public Path testParentDirectory;
 
   /**
    * A helper to validate that all the options are set and non-empty.
    */
   public boolean isValid() {
-    return (null != this.clientClassPath)
-        && (this.clientClassPath.length() > 0)
-        && (null != this.serverInstallDirectory)
-        && (this.serverInstallDirectory.length() > 0)
-        && (null != this.testParentDirectory)
-        && (this.testParentDirectory.length() > 0);
+    return (null != this.clientClassPath && this.clientClassPath.length() > 0)
+        && (null != this.serverInstallDirectory && this.serverInstallDirectory.toString().length() > 0)
+        && (null != this.testParentDirectory && this.testParentDirectory.toString().length() > 0);
   }
 }

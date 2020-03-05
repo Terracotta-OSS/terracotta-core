@@ -15,16 +15,18 @@
  */
 package org.terracotta.testing.api;
 
-import org.terracotta.testing.master.ConfigBuilder;
-
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 
 public interface ITestMaster<C extends ITestClusterConfiguration> {
-  public String getConfigNamespaceSnippet();
+  String getConfigNamespaceSnippet();
 
-  public String getServiceConfigXMLSnippet();
+  String getServiceConfigXMLSnippet();
 
   /**
    * @return tc properties to be used with server
@@ -41,31 +43,31 @@ public interface ITestMaster<C extends ITestClusterConfiguration> {
    * @return client reconnect window time in seconds
    */
   default int getClientReconnectWindowTime() {
-    return ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
+    return DEFAULT_CLIENT_RECONNECT_WINDOW;
   }
 
   default int getFailoverPriorityVoterCount() {
-    return ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
+    return DEFAULT_VOTER_COUNT;
   }
 
   /**
    * @return A list of paths to JARs which must be copied to the server kit being used in the test.
    */
-  public List<String> getExtraServerJarPaths();
+  Set<Path> getExtraServerJarPaths();
 
-  public String getTestClassName();
+  String getTestClassName();
 
   /**
    * The error class must implement IClientErrorHandler but is optional so null can be returned here.
-   * 
+   *
    * @return The name of the IClientErrorHandler implementation to use in the client.  Null if none desired.
    */
-  public String getClientErrorHandlerClassName();
+  String getClientErrorHandlerClassName();
 
-  public int getClientsToStart();
+  int getClientsToStart();
 
   /**
    * The test will be run for each of these server-side cluster configurations.
    */
-  public List<C> getRunConfigurations();
+  List<C> getRunConfigurations();
 }

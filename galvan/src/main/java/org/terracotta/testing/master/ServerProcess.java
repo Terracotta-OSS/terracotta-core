@@ -15,13 +15,23 @@
  */
 package org.terracotta.testing.master;
 
+import org.terracotta.ipceventbus.event.Event;
+import org.terracotta.ipceventbus.event.EventBus;
+import org.terracotta.ipceventbus.event.EventListener;
+import org.terracotta.ipceventbus.proc.AnyProcess;
+import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.common.SimpleEventingStream;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.testing.logging.VerboseOutputStream;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -31,18 +41,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.terracotta.ipceventbus.event.Event;
-import org.terracotta.ipceventbus.event.EventBus;
-import org.terracotta.ipceventbus.event.EventListener;
-import org.terracotta.ipceventbus.proc.AnyProcess;
-import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.common.SimpleEventingStream;
-import org.terracotta.testing.demos.TestHelpers;
-import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseManager;
-import org.terracotta.testing.logging.VerboseOutputStream;
-
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
 import static java.util.stream.Collectors.joining;
+import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 
 public class ServerProcess {
@@ -51,57 +53,58 @@ public class ServerProcess {
   private final ContextualLogger harnessLogger;
   private final ContextualLogger serverLogger;
   private final String serverName;
+  private final Path tcConfig;
   private final int heapInM;
   private final int debugPort;
   private final Properties serverProperties;
-  private final File serverWorkingDirectory;
-  private final File serverKitDirectory;
+  private final Path serverWorkingDir;
+  private final Path serverKitDirectory;
   private final String eyeCatcher;
-// make sure only one caller is messing around on the process
+  // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
-  
+
   private UUID userToken;
-  
+
   //  flag if the server was zapped so it can be logged
   private boolean wasZapped;
-  
+
   private boolean isRunning;
   // The PID of the actual server, underneath the start script.  This is 0 until we are killable and can tell the interlock that we are running.
   private long pid;
   // When we are going to bring down the server, we need to record that we expected the crash so we don't conclude the test failed.
   private boolean isCrashExpected;
-  
+
   // OutputStreams to close when the server is down.
   private OutputStream outputStream;
   private OutputStream errorStream;
 
   public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       ServerInstallation underlyingInstallation, String serverName, File serverWorkingDirectory, File serverKitPath, int heapInM,
-                       int debugPort, Properties serverProperties) {
-    this.stateInterlock = stateInterlock; 
+                       String serverName, Path serverWorkingDir, Path serverKitPath, Path tcConfig, int heapInM, int debugPort, Properties serverProperties) {
+    this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = serverVerboseManager.createHarnessLogger();
     this.serverLogger = serverVerboseManager.createServerLogger();
-    
+
     this.serverName = serverName;
+    this.tcConfig = tcConfig;
     // We need to specify a positive integer as the heap size.
-    Assert.assertTrue(heapInM > 0);
     this.heapInM = heapInM;
     this.debugPort = debugPort;
     this.serverProperties = serverProperties;
-    this.serverWorkingDirectory = serverWorkingDirectory;
+    this.serverWorkingDir = serverWorkingDir;
     this.serverKitDirectory = serverKitPath;
     // Create our eye-catcher for looking up sub-processes.
     this.eyeCatcher = UUID.randomUUID().toString();
-    
+
     // We start up in the shutdown state so notify the interlock.
     this.stateInterlock.registerNewServer(this);
   }
 
   /**
    * enter/exit is used by start and stop to make sure those methods are called one
-   * at a time.  
+   * at a time.
+   *
    * @return a unique token used to make sure the starter is the finisher (passed to exit)
    */
   private UUID enter() {
@@ -113,6 +116,7 @@ public class ServerProcess {
       throw new RuntimeException(ie);
     }
   }
+
   private void exit(UUID token) {
     Assert.assertTrue(token.equals(this.userToken));
     oneUser.release();
@@ -120,89 +124,81 @@ public class ServerProcess {
 
   /**
    * Starts the server, in the background, using its constructed name to find its config in the stripe's config file.
-   * 
+   * <p>
    * Note that the start attempt returns, immediately, and the server will report its state transition through the
    * GalvanStateInterlock.  Specifically, the server starts as "terminated" when it is first registered.  Once the
    * sub-process is able to start up and we know its PID, it will become "unknownRunning".
    * Note that it is possible for the server to fail to start up, signalling a test failure in the interlock.
-   * 
+   * <p>
    * Note that we synchronize this call so that so that no events can come in, asynchronously, while we are starting this up (since all events which originate in this server should be in a well-defined order).
-   * 
+   *
    * @throws FileNotFoundException The logs couldn't be created since the server's working directory is missing.
    */
-  public void start(boolean consistentStart) throws FileNotFoundException {
+  public void start(boolean consistentStart) throws IOException {
     UUID token = enter();
     try {
-    // First thing we need to do is make sure that we aren't already running.
-    Assert.assertFalse(this.stateInterlock.isServerRunning(this));
-    
-    // Now, open the log files.
-    // We want to create an output log file for both STDOUT and STDERR.
-    // rawOut closed by stdout
-    FileOutputStream rawOut = new FileOutputStream(new File(this.serverWorkingDirectory, "stdout.log"), true);
-    // rawErr closed by stderr
-    FileOutputStream rawErr = new FileOutputStream(new File(this.serverWorkingDirectory, "stderr.log"), true);
-    // We also want to stream output going to these files to the server's logger.
-    // stdout closed by outputStream
-    VerboseOutputStream stdout = new VerboseOutputStream(rawOut, this.serverLogger, false);
-    VerboseOutputStream stderr = new VerboseOutputStream(rawErr, this.serverLogger, true);
-    
-    // Additionally, any information going through the stdout needs to be watched by the eventing stream for events.
-    SimpleEventingStream outputStream = buildEventingStream(stdout);
-    
-    // Check to see if we need to explicitly set the JAVA_HOME environment variable or it if already exists.
-    String javaHome = getJavaHome();
-    
-    // Put together any additional options we wanted to pass to the VM under the start script.
-    String javaArguments = getJavaArguments(this.debugPort);
-    
-    // Get the command to invoke the script.
-    String startScript = getStartScriptCommand();
+      // First thing we need to do is make sure that we aren't already running.
+      Assert.assertFalse(this.stateInterlock.isServerRunning(this));
 
-    String[] command;
-    if (consistentStart) {
-      command = new String[]{startScript, "-c",  "-f", "tc-config.xml", "-n", this.serverName,this.eyeCatcher};
-    } else {
-      command = new String[]{startScript, "-f", "tc-config.xml", "-n", this.serverName, this.eyeCatcher};
-    }
-    // Start the inferior process.
-    AnyProcess process = AnyProcess.newBuilder()
-        .command(command)
-        .workingDir(this.serverWorkingDirectory)
-        .env("JAVA_HOME", javaHome)
-        .env("JAVA_OPTS", javaArguments)
-        .pipeStdout(outputStream)
-        .pipeStderr(stderr)
-        .build();
-    
-    reset(true);
-    this.stateInterlock.serverDidStartup(this);
-    Assert.assertNull(this.outputStream);
-    this.outputStream = outputStream;
-    Assert.assertNull(this.errorStream);
-    this.errorStream = stderr;
-    
-    // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
-    ExitWaiter exitWaiter = new ExitWaiter(process);
-    exitWaiter.start();
+      // Now, open the log files.
+      // We want to create an output log file for both STDOUT and STDERR.
+      // rawOut closed by stdout
+      OutputStream rawOut = Files.newOutputStream(serverWorkingDir.resolve("stdout.log"), CREATE, APPEND);
+      OutputStream rawErr = Files.newOutputStream(serverWorkingDir.resolve("stderr.log"), CREATE, APPEND);
+      // We also want to stream output going to these files to the server's logger.
+      // stdout closed by outputStream
+      VerboseOutputStream stdout = new VerboseOutputStream(rawOut, this.serverLogger, false);
+      VerboseOutputStream stderr = new VerboseOutputStream(rawErr, this.serverLogger, true);
+
+      // Additionally, any information going through the stdout needs to be watched by the eventing stream for events.
+      SimpleEventingStream outputStream = buildEventingStream(stdout);
+
+      // Check to see if we need to explicitly set the JAVA_HOME environment variable or it if already exists.
+      String javaHome = getJavaHome();
+
+      // Put together any additional options we wanted to pass to the VM under the start script.
+      String javaArguments = getJavaArguments(this.debugPort);
+
+      String[] command = buildCommand(consistentStart);
+
+      // Start the inferior process.
+      AnyProcess process = AnyProcess.newBuilder()
+          .command(command)
+          .workingDir(this.serverWorkingDir.toFile())
+          .env("JAVA_HOME", javaHome)
+          .env("JAVA_OPTS", javaArguments)
+          .pipeStdout(outputStream)
+          .pipeStderr(stderr)
+          .build();
+
+      reset(true);
+      this.stateInterlock.serverDidStartup(this);
+      Assert.assertNull(this.outputStream);
+      this.outputStream = outputStream;
+      Assert.assertNull(this.errorStream);
+      this.errorStream = stderr;
+
+      // The "build()" starts the process so wrap it in an exit waiter.  We can then drop it since we will can't explicitly terminate it until it reports our PID (at which point we will declare it "running").
+      ExitWaiter exitWaiter = new ExitWaiter(process);
+      exitWaiter.start();
     } finally {
       exit(token);
     }
   }
-  
+
   private synchronized boolean isCrashExpected() {
     return this.isCrashExpected;
   }
-  
+
   public synchronized void setCrashExpected(boolean expect) {
     this.isCrashExpected = expect;
   }
-  
+
   public synchronized boolean isRunning() {
     return this.isRunning;
   }
-  
-  private synchronized long waitForPid(){
+
+  private synchronized long waitForPid() {
     try {
       while (this.isRunning && this.pid == 0) {
         this.wait();
@@ -212,7 +208,7 @@ public class ServerProcess {
     }
     return this.pid;
   }
-  
+
   private synchronized void reset(boolean running) {
     this.pid = 0;
     this.wasZapped = this.isRunning;
@@ -220,16 +216,20 @@ public class ServerProcess {
     notifyAll();
   }
 
-  private String getStartScriptCommand() {
-    String startScript;
-    if (TestHelpers.isWindows()){
-      //There are illegal characters "(" and ")" in folder names that cause the path to be truncated and the server won't start.
-      //So we need to wrap double quotes around startScript absolute file path.
-      startScript = "\"" + new File(this.serverKitDirectory,"server\\bin\\start-tc-server.bat").getAbsolutePath() + "\"";
-    }else {
-      startScript = this.serverKitDirectory + "/server/bin/start-tc-server.sh";
+  private String[] buildCommand(boolean consistentStart) {
+    String startScript = getStartTcServerScript();
+    String[] command;
+    if (consistentStart) {
+      command = new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName, eyeCatcher};
+    } else {
+      command = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName, eyeCatcher};
     }
-    return startScript;
+    return command;
+  }
+
+  private String getStartTcServerScript() {
+    Path basePath = serverKitDirectory.resolve("server").resolve("bin").resolve("start-tc-server");
+    return isWindows() ? basePath + ".bat" : basePath + ".sh";
   }
 
   private String getJavaArguments(int debugPort) {
@@ -276,14 +276,14 @@ public class ServerProcess {
     String zapEventName = "ZAP";
     String warn = "WARN";
     String err = "ERROR";
-    Map<String, String> eventMap = new HashMap<String, String>();
+    Map<String, String> eventMap = new HashMap<>();
     eventMap.put("PID is", pidEventName);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
     eventMap.put("Restarting the server", zapEventName);
     eventMap.put("WARN", warn);
     eventMap.put("ERROR", err);
-    
+
     // We will attach the event stream to the stdout.
     SimpleEventingStream outputStream = new SimpleEventingStream(serverBus, eventMap, stdout);
     serverBus.on(pidEventName, new EventListener() {
@@ -302,37 +302,42 @@ public class ServerProcess {
           // This is a little unusual, since it is a partial match, so at least log it in case something is wrong.
           ServerProcess.this.harnessLogger.error("Unexpected PID-like line from server: " + line);
         }
-      }});
+      }
+    });
     serverBus.on(activeReadyName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
         ServerProcess.this.didBecomeActive(true);
-      }});
+      }
+    });
     serverBus.on(passiveReadyName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
         ServerProcess.this.didBecomeActive(false);
-      }});
+      }
+    });
     serverBus.on(zapEventName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
         ServerProcess.this.instanceWasZapped();
-      }});
-    serverBus.on(warn, (event)->handleWarnLog(event));
-    serverBus.on(warn, (event)->handleErrorLog(event));
+      }
+    });
+    serverBus.on(warn, (event) -> handleWarnLog(event));
+    serverBus.on(warn, (event) -> handleErrorLog(event));
     return outputStream;
   }
-  
+
   private void handleWarnLog(Event e) {
-    
+
   }
-  
+
   private void handleErrorLog(Event e) {
-    
+
   }
+
   /**
    * Called by the inline EventListener implementations when the server becomes either active or passive.
-   * 
+   *
    * @param isActive True if active, false if passive.
    */
   private void didBecomeActive(boolean isActive) {
@@ -357,7 +362,7 @@ public class ServerProcess {
 
   /**
    * Called by the inline EventListener implementations when the server under the script reports its PID.
-   * 
+   *
    * @param pid The PID of the server process.
    */
   private synchronized void didStartWithPid(long pid) {
@@ -368,7 +373,7 @@ public class ServerProcess {
 
   /**
    * Called by the exit waiter when the underlying process terminates.
-   * 
+   *
    * @param exitStatus The exit code of the underlying process.
    */
   private void didTerminateWithStatus(int exitStatus) {
@@ -400,7 +405,7 @@ public class ServerProcess {
 
     this.stateInterlock.serverDidShutdown(this);
     // In either case, we are not running.
-    
+
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
@@ -412,14 +417,14 @@ public class ServerProcess {
    * Called from outside to asynchronously kill the underlying process.
    * Note that this does do some interruptable blocking, since it interacts with some sub-processes to discover the server process.
    * The termination of the actual server process, itself, is reported to the interlock, when it happens.
-   * 
+   *
    * @throws InterruptedException
    */
   public void stop() throws InterruptedException {
     UUID token = enter();
     try {
-    // Can't stop something not running.
-      if (this.stateInterlock.isServerRunning(this)) {      
+      // Can't stop something not running.
+      if (this.stateInterlock.isServerRunning(this)) {
         // Can't stop something unless we determined the PID.
         long localPid = 0;
         while (localPid == 0) {
@@ -437,7 +442,7 @@ public class ServerProcess {
         Process process = null;
 
         // Destroy the process.
-        if (TestHelpers.isWindows()){
+        if (isWindows()) {
           //kill process using taskkill command as process.destroy() doesn't terminate child processes on windows.
           process = killProcessWindows(localPid);
         } else {
@@ -445,9 +450,9 @@ public class ServerProcess {
         }
         while (process.isAlive()) {
           harnessLogger.output("Waiting for server to exit PID:" + localPid);
-     //  give up the synchronized lock while waiting for the kill process to 
-     //  do it's job.  This can deadlock since the event bus will need this lock 
-     //  to log events
+          //  give up the synchronized lock while waiting for the kill process to
+          //  do it's job.  This can deadlock since the event bus will need this lock
+          //  to log events
           process.waitFor(5, TimeUnit.SECONDS);
         }
         int result = process.exitValue();
@@ -465,7 +470,7 @@ public class ServerProcess {
     Process p = startStandardProcess("taskkill", "/F", "/t", "/pid", String.valueOf(pid));
     // We don't care about the output but we want to make sure that the process can be terminated.
     discardProcessOutput(p);
-    
+
     //not checking exit code here..taskkill may faill if server process was crashed during the test.
     harnessLogger.output("killed server with PID " + pid);
     return p;
@@ -509,10 +514,11 @@ public class ServerProcess {
 
   private class ExitWaiter extends Thread {
     private AnyProcess process;
-    
+
     public ExitWaiter(AnyProcess process) {
       this.process = process;
     }
+
     @Override
     public void run() {
       int returnValue = -1;

@@ -15,7 +15,7 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -33,7 +33,7 @@ import org.terracotta.testing.logging.ContextualLogger;
 public class SynchronousProcessControl implements IMultiProcessControl {
   private final GalvanStateInterlock stateInterlock;
   private final ContextualLogger logger;
-  
+
   public SynchronousProcessControl(GalvanStateInterlock stateInterlock, ContextualLogger logger) {
     this.stateInterlock = stateInterlock;
     this.logger = logger;
@@ -182,7 +182,7 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   private void safeStart(ServerProcess server, boolean consistentStart) {
     try {
       server.start(consistentStart);
-    } catch (FileNotFoundException e) {
+    } catch (IOException e) {
       // Unexpected, given that this server was already started, at one point.
       Assert.unexpected(e);
     }

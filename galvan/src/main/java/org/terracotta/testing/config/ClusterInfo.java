@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.testing.master;
+package org.terracotta.testing.config;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -38,22 +38,22 @@ public class ClusterInfo {
   }
 
   public String encode() {
-    StringBuffer stringBuffer = new StringBuffer();
+    StringBuilder stringBuilder = new StringBuilder();
 
-    for(ServerInfo serverInfo : servers.values()) {
-      stringBuffer.append(serverInfo.encode());
-      stringBuffer.append(SERVER_INFO_DELIM);
+    for (ServerInfo serverInfo : servers.values()) {
+      stringBuilder.append(serverInfo.encode());
+      stringBuilder.append(SERVER_INFO_DELIM);
     }
 
-    return stringBuffer.toString();
+    return stringBuilder.toString();
   }
 
   public static ClusterInfo decode(String from) {
     String[] serverInfoTokens = from.split(SERVER_INFO_DELIM);
     Map<String, ServerInfo> servers = new HashMap<>();
 
-    for(int i = 0; i < serverInfoTokens.length; i++) {
-      ServerInfo serverInfo = ServerInfo.decode(serverInfoTokens[i]);
+    for (String serverInfoToken : serverInfoTokens) {
+      ServerInfo serverInfo = ServerInfo.decode(serverInfoToken);
       servers.put(serverInfo.getName(), serverInfo);
     }
 
