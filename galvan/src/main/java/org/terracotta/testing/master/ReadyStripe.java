@@ -20,7 +20,6 @@ import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
@@ -64,25 +63,14 @@ public class ReadyStripe {
    * state within the given interlock.
    *
    * @return The objects required to interact with and control the stripe.
-   * @throws IOException            Thrown in case something went wrong during server installation.
    * @throws GalvanFailureException Thrown in case starting the servers in the stripe experienced a failure.
    */
-  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, ITestStateManager stateManager,
-                                                    VerboseManager stripeVerboseManager, StripeConfiguration stripeConfig)
-      throws IOException, GalvanFailureException {
-    StripeInstaller installer = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
-    // Configure and install each server in the stripe.
-    for (int i = 0; i < stripeConfig.getServerNames().size(); ++i) {
-      String serverName = stripeConfig.getServerNames().get(i);
-      // Determine if we want a debug port.
-      int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      installer.installNewServer(serverName, debugPort);
-    }
-
+  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, VerboseManager stripeVerboseManager,
+                                                    StripeConfiguration stripeConfig, StripeInstaller stripeInstaller) throws GalvanFailureException {
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
     // Register the stripe into it and start up the server in the stripe.
-    installer.startServers(stripeConfig.isConsistentStart());
+    stripeInstaller.startServers();
 
     // Before we return, we want to wait for all the servers in the stripe to come up.
     interlock.waitForAllServerRunning();

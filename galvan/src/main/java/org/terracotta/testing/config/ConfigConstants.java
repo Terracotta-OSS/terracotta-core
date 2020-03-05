@@ -18,5 +18,6 @@ package org.terracotta.testing.config;
 public class ConfigConstants {
   public static final int DEFAULT_CLIENT_RECONNECT_WINDOW = 120;
   public static final int DEFAULT_VOTER_COUNT = -1;
-  public static final int DEFALT_SERVER_HEAP_MB = 128;
+  public static final int DEFAULT_SERVER_HEAP_MB = 128;
+  public static final String DEFAULT_CLUSTER_NAME = "tc-cluster";
 }

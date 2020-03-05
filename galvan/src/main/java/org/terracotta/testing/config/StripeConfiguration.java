@@ -37,9 +37,7 @@ public class StripeConfiguration {
   private final Path stripeInstallationDir;
   private final int serverHeapInM;
   private final String stripeName;
-  private final Path tcConfig;
   private final String logConfigExtension;
-  private final boolean consistentStart;
   private final String uri;
   private final ClusterInfo clusterInfo;
   private final List<String> serverNames;
@@ -52,8 +50,7 @@ public class StripeConfiguration {
 
   public StripeConfiguration(Path kitOriginDir, Path stripeInstallationDir, List<Integer> serverDebugPorts, List<Integer> serverPorts,
                              List<Integer> serverGroupPorts, List<String> serverNames, String stripeName, Set<Path> extraJarPaths,
-                             int serverHeapInM, String logConfigExt, Properties serverProperties, boolean consistentStart,
-                             Path tcConfig) {
+                             int serverHeapInM, String logConfigExt, Properties serverProperties) {
     this.kitOriginDir = kitOriginDir;
     this.stripeInstallationDir = stripeInstallationDir;
     this.serverDebugPorts = serverDebugPorts;
@@ -61,11 +58,9 @@ public class StripeConfiguration {
     this.serverGroupPorts = serverGroupPorts;
     this.serverNames = serverNames;
     this.stripeName = stripeName;
-    this.tcConfig = tcConfig;
     this.extraJarPaths.addAll(extraJarPaths);
     this.serverHeapInM = serverHeapInM;
     this.logConfigExtension = logConfigExt;
-    this.consistentStart = consistentStart;
     this.clusterInfo = buildClusterInfo(serverNames, serverPorts, serverGroupPorts);
     this.uri = buildUri(this.serverPorts);
     this.serverProperties.putAll(serverProperties);
@@ -100,10 +95,6 @@ public class StripeConfiguration {
     return logConfigExtension;
   }
 
-  public boolean isConsistentStart() {
-    return consistentStart;
-  }
-
   public String getUri() {
     return uri;
   }
@@ -130,10 +121,6 @@ public class StripeConfiguration {
 
   public Path getStripeInstallationDir() {
     return stripeInstallationDir;
-  }
-
-  public Path getTcConfig() {
-    return tcConfig;
   }
 
   private String buildUri(List<Integer> serverPorts) {

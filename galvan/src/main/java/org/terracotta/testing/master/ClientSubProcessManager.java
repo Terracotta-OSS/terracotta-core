@@ -36,22 +36,21 @@ import java.util.List;
 public class ClientSubProcessManager extends Thread {
   private final IGalvanStateInterlock stateInterlock;
   private final ITestStateManager stateManager;
-  private final VerboseManager verboseManager;
+  private final VerboseManager clientsVerboseManager;
   private final IMultiProcessControl processControl;
   private final ClientsConfiguration clientsConfig;
 
-  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager,
-                                 IMultiProcessControl processControl, ClientsConfiguration clientsConfig) {
+  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager clientsVerboseManager,
+                                 ClientsConfiguration clientsConfig, IMultiProcessControl processControl) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
-    this.verboseManager = verboseManager;
-    this.processControl = processControl;
+    this.clientsVerboseManager = clientsVerboseManager;
     this.clientsConfig = clientsConfig;
+    this.processControl = processControl;
   }
 
   @Override
   public void run() {
-    VerboseManager clientsVerboseManager = this.verboseManager.createComponentManager("[Clients]");
     ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, clientsConfig.getTestParentDirectory(),
         clientsConfig.getClientClassPath(), clientsConfig.getClientArgumentBuilder().getMainClassName());
 

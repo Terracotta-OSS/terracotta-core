@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -47,7 +48,8 @@ public class StripeInstaller {
     this.stripeConfig = stripeConfig;
   }
 
-  public void installNewServer(String serverName, int debugPort) throws IOException {
+  public void installNewServer(String serverName, int debugPort, Supplier<String[]> startupCommandSupplier,
+                               Supplier<String[]> consistentStartupCommandSupplier) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // Create the logger for the installation.
@@ -74,18 +76,18 @@ public class StripeInstaller {
 
     // Create the object representing this single installation and add it to the list for this stripe.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + serverName + "]");
-
-    ServerProcess serverProcess = new ServerProcess(this.interlock, this.stateManager, serverVerboseManager,
-        serverName, installPath, kitPath, stripeConfig.getTcConfig(), stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties());
+    ServerProcess serverProcess = new ServerProcess(this.interlock, this.stateManager, serverVerboseManager, serverName,
+        installPath, stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties(), startupCommandSupplier,
+        consistentStartupCommandSupplier);
     serverProcesses.add(serverProcess);
   }
 
-  public void startServers(boolean consistentStart) {
+  public void startServers() {
     Assert.assertFalse(this.isBuilt);
     for (ServerProcess newProcess : serverProcesses) {
       try {
         // Note that starting the process will put it into the interlock and the server will notify it of state changes.
-        newProcess.start(consistentStart);
+        newProcess.start(false);
       } catch (IOException e) {
         Assert.unexpected(e);
       }

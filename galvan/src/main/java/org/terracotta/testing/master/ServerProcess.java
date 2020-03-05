@@ -26,7 +26,6 @@ import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.logging.VerboseOutputStream;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -38,6 +37,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,13 +53,12 @@ public class ServerProcess {
   private final ContextualLogger harnessLogger;
   private final ContextualLogger serverLogger;
   private final String serverName;
-  private final Path tcConfig;
   private final int heapInM;
   private final int debugPort;
   private final Properties serverProperties;
   private final Path serverWorkingDir;
-  private final Path serverKitDirectory;
-  private final String eyeCatcher;
+  private final Supplier<String[]> startupCommandSupplier;
+  private final Supplier<String[]> consistentStartCommandSupplier;
   // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
 
@@ -79,7 +78,8 @@ public class ServerProcess {
   private OutputStream errorStream;
 
   public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       String serverName, Path serverWorkingDir, Path serverKitPath, Path tcConfig, int heapInM, int debugPort, Properties serverProperties) {
+                       String serverName, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties,
+                       Supplier<String[]> startupCommandSupplier, Supplier<String[]> consistentStartCommandSupplier) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -87,16 +87,13 @@ public class ServerProcess {
     this.serverLogger = serverVerboseManager.createServerLogger();
 
     this.serverName = serverName;
-    this.tcConfig = tcConfig;
     // We need to specify a positive integer as the heap size.
     this.heapInM = heapInM;
     this.debugPort = debugPort;
     this.serverProperties = serverProperties;
     this.serverWorkingDir = serverWorkingDir;
-    this.serverKitDirectory = serverKitPath;
-    // Create our eye-catcher for looking up sub-processes.
-    this.eyeCatcher = UUID.randomUUID().toString();
-
+    this.startupCommandSupplier = startupCommandSupplier;
+    this.consistentStartCommandSupplier = consistentStartCommandSupplier;
     // We start up in the shutdown state so notify the interlock.
     this.stateInterlock.registerNewServer(this);
   }
@@ -132,7 +129,7 @@ public class ServerProcess {
    * <p>
    * Note that we synchronize this call so that so that no events can come in, asynchronously, while we are starting this up (since all events which originate in this server should be in a well-defined order).
    *
-   * @throws FileNotFoundException The logs couldn't be created since the server's working directory is missing.
+   * @throws IOException The logs couldn't be created since the server's working directory is missing.
    */
   public void start(boolean consistentStart) throws IOException {
     UUID token = enter();
@@ -159,8 +156,7 @@ public class ServerProcess {
       // Put together any additional options we wanted to pass to the VM under the start script.
       String javaArguments = getJavaArguments(this.debugPort);
 
-      String[] command = buildCommand(consistentStart);
-
+      String[] command = consistentStart ? consistentStartCommandSupplier.get() : startupCommandSupplier.get();
       // Start the inferior process.
       AnyProcess process = AnyProcess.newBuilder()
           .command(command)
@@ -214,22 +210,6 @@ public class ServerProcess {
     this.wasZapped = this.isRunning;
     this.isRunning = running;
     notifyAll();
-  }
-
-  private String[] buildCommand(boolean consistentStart) {
-    String startScript = getStartTcServerScript();
-    String[] command;
-    if (consistentStart) {
-      command = new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName, eyeCatcher};
-    } else {
-      command = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName, eyeCatcher};
-    }
-    return command;
-  }
-
-  private String getStartTcServerScript() {
-    Path basePath = serverKitDirectory.resolve("server").resolve("bin").resolve("start-tc-server");
-    return isWindows() ? basePath + ".bat" : basePath + ".sh";
   }
 
   private String getJavaArguments(int debugPort) {
@@ -537,6 +517,6 @@ public class ServerProcess {
 
   @Override
   public String toString() {
-    return "Server \"" + this.serverName + "\": " + this.eyeCatcher + " (has been zapped: " + this.wasZapped + ")";
+    return "Server " + this.serverName + " (has been zapped: " + this.wasZapped + ")";
   }
 }

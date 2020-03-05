@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.terracotta.testing.config.ConfigConstants.DEFALT_SERVER_HEAP_MB;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 
 
@@ -165,7 +165,7 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
      * This constructor only exists to set convenient defaults.
      */
     public CommonHarnessOptions() {
-      serverHeapInM = DEFALT_SERVER_HEAP_MB;
+      serverHeapInM = DEFAULT_SERVER_HEAP_MB;
       voterCount = DEFAULT_VOTER_COUNT;
     }
   }
