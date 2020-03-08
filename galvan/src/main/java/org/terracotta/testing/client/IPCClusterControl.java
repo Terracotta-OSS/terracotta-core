@@ -29,27 +29,27 @@ public class IPCClusterControl implements IClusterControl {
   }
 
   @Override
-  public void waitForActive() throws Exception {
+  public void waitForActive() {
     ipcManager.waitForActive();
   }
 
   @Override
-  public void waitForRunningPassivesInStandby() throws Exception {
+  public void waitForRunningPassivesInStandby() {
     ipcManager.waitForPassive();
   }
 
   @Override
-  public void startOneServer() throws Exception {
+  public void startOneServer() {
     ipcManager.startOneServer();
   }
 
   @Override
   public void startOneServerWithConsistency() {
-    ipcManager.startOneServer();
+    ipcManager.startOneServerWithConsistency();
   }
 
   @Override
-  public void startAllServers() throws Exception {
+  public void startAllServers() {
     ipcManager.startAllServers();
   }
 
@@ -59,12 +59,12 @@ public class IPCClusterControl implements IClusterControl {
   }
 
   @Override
-  public void terminateActive() throws Exception {
+  public void terminateActive() {
     ipcManager.terminateActive();
   }
 
   @Override
-  public void terminateOnePassive() throws Exception {
+  public void terminateOnePassive() {
     ipcManager.terminateOnePassive();
   }
 
