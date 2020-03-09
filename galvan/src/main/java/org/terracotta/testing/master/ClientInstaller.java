@@ -16,6 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.terracotta.testing.logging.VerboseManager;
@@ -28,11 +29,11 @@ import org.terracotta.testing.logging.VerboseManager;
 public class ClientInstaller {
   private final VerboseManager clientsVerboseManager;
   private final IMultiProcessControl control;
-  private final String testParentDirectory;
+  private final Path testParentDirectory;
   private final String clientAbsoluteClassPath;
   private final String clientMainClassName;
   
-  public ClientInstaller(VerboseManager clientsVerboseManager, IMultiProcessControl control, String testParentDirectory, String clientClassPath, String clientMainClassName) {
+  public ClientInstaller(VerboseManager clientsVerboseManager, IMultiProcessControl control, Path testParentDirectory, String clientClassPath, String clientMainClassName) {
     this.clientsVerboseManager = clientsVerboseManager;
     this.control = control;
     this.testParentDirectory = testParentDirectory;
@@ -44,8 +45,8 @@ public class ClientInstaller {
   
   public ClientRunner installClient(String clientName, int debugPort, boolean failOnLog, List<String> extraArguments) {
     VerboseManager clientVerboseManager = this.clientsVerboseManager.createComponentManager("[" + clientName + "]");
-    String clientWorkingDirectory = FileHelpers.createTempEmptyDirectory(this.testParentDirectory, clientName);
-    return new ClientRunner(clientVerboseManager, this.control, new File(clientWorkingDirectory), this.clientAbsoluteClassPath, debugPort, failOnLog, this.clientMainClassName, extraArguments);
+    Path clientWorkingDirectory = FileHelpers.createTempEmptyDirectory(this.testParentDirectory, clientName);
+    return new ClientRunner(clientVerboseManager, this.control, clientWorkingDirectory, this.clientAbsoluteClassPath, debugPort, failOnLog, this.clientMainClassName, extraArguments);
   }
   
   
@@ -54,16 +55,16 @@ public class ClientInstaller {
    */
   private static String makePathsAbsolute(String parsedClientClassPath) {
     String[] relativePaths = parsedClientClassPath.split(File.pathSeparator);
-    String concatenatedAbsolutePaths = "";
+    StringBuilder concatenatedAbsolutePaths = new StringBuilder();
     boolean doesNeedSeparator = false;
     for (String oneRelativePath : relativePaths) {
       String oneAbsolutePath = new File(oneRelativePath).getAbsolutePath();
       if (doesNeedSeparator) {
-        concatenatedAbsolutePaths += File.pathSeparator;
+        concatenatedAbsolutePaths.append(File.pathSeparator);
       }
-      concatenatedAbsolutePaths += oneAbsolutePath;
+      concatenatedAbsolutePaths.append(oneAbsolutePath);
       doesNeedSeparator = true;
     }
-    return concatenatedAbsolutePaths;
+    return concatenatedAbsolutePaths.toString();
   }
 }

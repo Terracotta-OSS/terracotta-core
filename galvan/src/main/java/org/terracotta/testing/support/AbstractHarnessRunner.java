@@ -15,8 +15,8 @@
  */
 package org.terracotta.testing.support;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import org.junit.runner.Description;
 import org.junit.runner.Runner;
@@ -64,8 +64,8 @@ public abstract class AbstractHarnessRunner<C extends ITestClusterConfiguration>
     Assert.assertNotNull(thisTestName);
     EnvironmentOptions environmentOptions = new EnvironmentOptions();
     environmentOptions.clientClassPath = System.getProperty("java.class.path");
-    environmentOptions.serverInstallDirectory = System.getProperty("kitInstallationPath");
-    environmentOptions.testParentDirectory = allTestParentDirectory + File.separator + thisTestName;
+    environmentOptions.serverInstallDirectory = Paths.get(System.getProperty("kitInstallationPath"));
+    environmentOptions.testParentDirectory = Paths.get(allTestParentDirectory).resolve(thisTestName);
     Assert.assertTrue(environmentOptions.isValid());
     
     // Get the test master implementation.

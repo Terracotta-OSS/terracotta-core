@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.testing.master;
+package org.terracotta.testing.config;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public interface IClientArgumentBuilder {
 
   /**
    * Creates the argument list for a "setup" client run.
-   * 
+   *
    * @param connectUri The URI of the test stripe
    * @param numberOfStripes The number of stripes in the test environment
    * @param numberOfServersPerStripe The number of servers in each stripe in the test environment
@@ -41,7 +41,7 @@ public interface IClientArgumentBuilder {
 
   /**
    * Creates the argument list for a regular "test" client run.
-   * 
+   *
    * @param connectUri The URI of the test stripe
    * @param numberOfStripes The number of stripes in the test environment
    * @param numberOfServersPerStripe The number of servers in each stripe in the test environment
@@ -53,7 +53,7 @@ public interface IClientArgumentBuilder {
 
   /**
    * Creates the argument list for a "destroy" client run.
-   * 
+   *
    * @param connectUri The URI of the test stripe
    * @param numberOfStripes The number of stripes in the test environment
    * @param numberOfServersPerStripe The number of servers in each stripe in the test environment

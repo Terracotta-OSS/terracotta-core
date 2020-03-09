@@ -17,6 +17,7 @@ package org.terracotta.testing.master;
 
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
 
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
@@ -34,8 +35,8 @@ public class CommandLineSupport {
   public static EnvironmentOptions parseEnvironmentOptions(String[] args) {
     EnvironmentOptions environmentOptions = new EnvironmentOptions();
     environmentOptions.clientClassPath = getArg(args, "--clientClassPath");
-    environmentOptions.serverInstallDirectory = getArg(args, "--serverInstallDirectory");
-    environmentOptions.testParentDirectory = getArg(args, "--testParentDirectory");
+    environmentOptions.serverInstallDirectory = Paths.get(getArg(args, "--serverInstallDirectory"));
+    environmentOptions.testParentDirectory = Paths.get(getArg(args, "--testParentDirectory"));
     return environmentOptions;
   }
 

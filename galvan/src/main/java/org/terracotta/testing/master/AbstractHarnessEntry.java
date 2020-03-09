@@ -15,11 +15,6 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.IOException;
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.List;
-import java.util.Properties;
-
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
@@ -27,15 +22,25 @@ import org.terracotta.testing.common.PortChooser;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
+import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
+
 
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
   private final PortChooser chooser = new PortChooser();
-  
+
   public void runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions,
                              VerboseManager verboseManager) throws IOException, GalvanFailureException {
     // Before anything, set the default exception handler - since we create threads to manage the sub-processes.
     Thread.setDefaultUncaughtExceptionHandler(new GalvanExceptionHandler());
-    
+
     // We wrap the actual call in a try-catch since the normal SureFire runner discards all exception data and we want to
     // see our assertion failures.
     try {
@@ -55,13 +60,13 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
                                       VerboseManager verboseManager) throws IOException, GalvanFailureException {
     // Validate the parameters.
     Assert.assertTrue(environmentOptions.isValid());
-    
+
     // Create a logger to describe the test configuration.
     ContextualLogger configurationLogger = verboseManager.createComponentManager("[Configuration]").createHarnessLogger();
     configurationLogger.output("Client class path: " + environmentOptions.clientClassPath);
     configurationLogger.output("Kit installation directory: " + environmentOptions.serverInstallDirectory);
     configurationLogger.output("Test parent directory: " + environmentOptions.testParentDirectory);
-    
+
     // Create a copy of the server installation.
     ContextualLogger fileHelperLogger = verboseManager.createFileHelpersLogger();
     FileHelpers.ensureDirectoryExists(fileHelperLogger, environmentOptions.testParentDirectory);
@@ -71,11 +76,10 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     // Note that we want to uniquify the JAR list since different packaging options might result in the test config
     // redundantly specifying JARs.
     // First, however, make sure that there are no nulls in the list (since that implies we failed to look something up).
-    List<String> extraServerJarPaths = master.getExtraServerJarPaths();
-    for (String path : extraServerJarPaths) {
+    Set<Path> extraJarPaths = master.getExtraServerJarPaths();
+    for (Path path : extraJarPaths) {
       Assert.assertNotNull(path);
     }
-    List<String> extraJarPaths = CommonIdioms.uniquifyList(extraServerJarPaths);
     String namespaceFragment = master.getConfigNamespaceSnippet();
     String serviceFragment = master.getServiceConfigXMLSnippet();
     int clientReconnectWindowTime = master.getClientReconnectWindowTime();
@@ -87,12 +91,12 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     for (C runConfiguration : runConfigurations) {
       String configurationName = runConfiguration.getName();
       // We want to create a sub-directory per-configuration.
-      String configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
-      
+      Path configTestDirectory = FileHelpers.createTempEmptyDirectory(environmentOptions.testParentDirectory, configurationName);
+
       // Create the common configuration structure.
       CommonHarnessOptions harnessOptions = new CommonHarnessOptions();
       harnessOptions.kitOriginPath = environmentOptions.serverInstallDirectory;
-      harnessOptions.configTestDirectory = configTestDirectory;
+      harnessOptions.configTestDir = configTestDirectory;
       harnessOptions.clientClassPath = environmentOptions.clientClassPath;
       harnessOptions.clientsToCreate = clientsToCreate;
       harnessOptions.failOnLog = true;
@@ -101,11 +105,11 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
       harnessOptions.extraJarPaths = extraJarPaths;
       harnessOptions.namespaceFragment = namespaceFragment;
       harnessOptions.serviceFragment = serviceFragment;
-      harnessOptions.clientReconnectWindowTime = clientReconnectWindowTime;
-      harnessOptions.failoverPriorityVoterCount = failoverPriorityVoterCount;
+      harnessOptions.clientReconnectWindow = clientReconnectWindowTime;
+      harnessOptions.voterCount = failoverPriorityVoterCount;
       harnessOptions.tcProperties = tcProperties;
       harnessOptions.serverProperties = serverProperties;
-      
+
       // NOTE:  runOneConfiguration() throws GalvanFailureException on failure.
       runOneConfiguration(verboseManager, debugOptions, harnessOptions, runConfiguration);
     }
@@ -113,12 +117,12 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
 
   /**
    * Runs a single test configuration.
-   * 
-   * @param verboseManager A description of the verbose options for the framework and test run.
-   * @param debugOptions The options for any sub-processes which should wait for debugger connections.
+   *
+   * @param verboseManager       A description of the verbose options for the framework and test run.
+   * @param debugOptions         The options for any sub-processes which should wait for debugger connections.
    * @param commonHarnessOptions Information describing the resources the harness needs to create sub-processes.
-   * @param runConfiguration The description of the configuration to run.
-   * @throws IOException An error in the test run.
+   * @param runConfiguration     The description of the configuration to run.
+   * @throws IOException            An error in the test run.
    * @throws GalvanFailureException A failure in the test run.
    */
   protected abstract void runOneConfiguration(VerboseManager verboseManager, DebugOptions debugOptions, CommonHarnessOptions commonHarnessOptions, C runConfiguration) throws IOException, GalvanFailureException;
@@ -141,28 +145,28 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
 
 
   protected static class CommonHarnessOptions {
-    public String kitOriginPath;
-    public String configTestDirectory;
+    public Path kitOriginPath;
+    public Path configTestDir;
     public String clientClassPath;
     public int clientsToCreate;
     public boolean failOnLog;
     public String testClassName;
     public String errorClassName;
     public int serverHeapInM;
-    public List<String> extraJarPaths;
-    public int clientReconnectWindowTime;
-    public int failoverPriorityVoterCount = ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
+    public Set<Path> extraJarPaths;
+    public int clientReconnectWindow;
+    public int voterCount;
     public String namespaceFragment;
     public String serviceFragment;
     public Properties tcProperties;
     public Properties serverProperties;
-    
+
     /**
      * This constructor only exists to set convenient defaults.
      */
     public CommonHarnessOptions() {
-      // By default, we will configure a server with a 128M heap.
-      this.serverHeapInM = 128;
+      serverHeapInM = DEFAULT_SERVER_HEAP_MB;
+      voterCount = DEFAULT_VOTER_COUNT;
     }
   }
 }

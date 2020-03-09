@@ -15,12 +15,13 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.IOException;
-import java.util.List;
-
 import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.config.ClientsConfiguration;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
+
+import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -29,67 +30,38 @@ import org.terracotta.testing.logging.VerboseManager;
  * -n test clients
  * -1 destroy client
  * An internal thread is used to manage the progression from one to another, instead of relying on purely asynchronous
- *  machinery to describe where the test is, in that sequence.
+ * machinery to describe where the test is, in that sequence.
  * The client process states are managed within the given IGalvanStateInterlock, however.
  */
 public class ClientSubProcessManager extends Thread {
   private final IGalvanStateInterlock stateInterlock;
   private final ITestStateManager stateManager;
-  private final VerboseManager verboseManager;
+  private final VerboseManager clientsVerboseManager;
   private final IMultiProcessControl processControl;
-  private final String testParentDirectory;
-  private final String clientClassPath;
-  private final int setupClientDebugPort;
-  private final int destroyClientDebugPort;
-  private final int testClientDebugPortStart;
-  private final boolean failOnLog;
-  private final int clientsToCreate;
-  private final IClientArgumentBuilder clientArgumentBuilder;
-  private final String connectUri;
-  private final ClusterInfo clusterInfo;
-  private final int numberOfStripes;
-  private final int numberOfServersPerStripe;
+  private final ClientsConfiguration clientsConfig;
 
-  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager verboseManager, IMultiProcessControl processControl, String testParentDirectory, String clientClassPath, int setupClientDebugPort, int destroyClientDebugPort, int testClientDebugPortStart, boolean failOnLog, int clientsToCreate, IClientArgumentBuilder clientArgumentBuilder, String connectUri, ClusterInfo clusterInfo, int numberOfStripes, int numberOfServersPerStripe) {
-    Assert.assertTrue(clientsToCreate > 0);
-    Assert.assertTrue(connectUri.length() > 0);
-    Assert.assertNotNull(clusterInfo);
-    Assert.assertTrue(numberOfStripes > 0);
-    Assert.assertTrue(numberOfServersPerStripe > 0);
-    
+  public ClientSubProcessManager(IGalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager clientsVerboseManager,
+                                 ClientsConfiguration clientsConfig, IMultiProcessControl processControl) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
-    this.verboseManager = verboseManager;
+    this.clientsVerboseManager = clientsVerboseManager;
+    this.clientsConfig = clientsConfig;
     this.processControl = processControl;
-    
-    this.testParentDirectory = testParentDirectory;
-    this.clientClassPath = clientClassPath;
-    
-    this.setupClientDebugPort = setupClientDebugPort;
-    this.destroyClientDebugPort = destroyClientDebugPort;
-    this.testClientDebugPortStart = testClientDebugPortStart;
-    this.failOnLog = failOnLog;
-    
-    this.clientsToCreate = clientsToCreate;
-    this.clientArgumentBuilder = clientArgumentBuilder;
-    this.connectUri = connectUri;
-    this.clusterInfo = clusterInfo;
-    this.numberOfStripes = numberOfStripes;
-    this.numberOfServersPerStripe = numberOfServersPerStripe;
   }
 
   @Override
   public void run() {
-    VerboseManager clientsVerboseManager = this.verboseManager.createComponentManager("[Clients]");
-    ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, this.testParentDirectory, this.clientClassPath, this.clientArgumentBuilder.getMainClassName());
-    
+    ClientInstaller clientInstaller = new ClientInstaller(clientsVerboseManager, this.processControl, clientsConfig.getTestParentDirectory(),
+        clientsConfig.getClientClassPath(), clientsConfig.getClientArgumentBuilder().getMainClassName());
+
     ContextualLogger harnessLogger = clientsVerboseManager.createHarnessLogger();
-    
+
     // Run the setup client, synchronously.
-    List<String> extraSetupArguments = this.clientArgumentBuilder.getArgumentsForSetupRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, this.clientsToCreate);
-    ClientRunner setupClient = clientInstaller.installClient("client_setup", this.setupClientDebugPort, failOnLog, extraSetupArguments);
+    List<String> extraSetupArguments = clientsConfig.getClientArgumentBuilder().getArgumentsForSetupRun(
+        clientsConfig.getConnectUri(), clientsConfig.getClusterInfo(), clientsConfig.getNumberOfStripes(), clientsConfig.getNumberOfServersPerStripe(), clientsConfig.getClientsToCreate());
+    ClientRunner setupClient = clientInstaller.installClient("client_setup", clientsConfig.getSetupClientDebugPort(), clientsConfig.isFailOnLog(), extraSetupArguments);
     boolean setupWasClean = runClientLifeCycle(setupClient);
-    
+
     boolean didRunCleanly = true;
     boolean destroyWasClean = true;
     String errorMessage = null;
@@ -97,8 +69,9 @@ public class ClientSubProcessManager extends Thread {
       didRunCleanly = runTestClients(clientInstaller);
       if (didRunCleanly) {
         // Run the destroy client, synchronously.
-        List<String> extraDestroyArguments = this.clientArgumentBuilder.getArgumentsForDestroyRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, this.clientsToCreate);
-        ClientRunner destroyClient = clientInstaller.installClient("client_destroy", this.destroyClientDebugPort, failOnLog, extraDestroyArguments);
+        List<String> extraDestroyArguments = clientsConfig.getClientArgumentBuilder().getArgumentsForDestroyRun(
+            clientsConfig.getConnectUri(), clientsConfig.getClusterInfo(), clientsConfig.getNumberOfStripes(), clientsConfig.getNumberOfServersPerStripe(), clientsConfig.getClientsToCreate());
+        ClientRunner destroyClient = clientInstaller.installClient("client_destroy", clientsConfig.getDestroyClientDebugPort(), clientsConfig.isFailOnLog(), extraDestroyArguments);
         destroyWasClean = runClientLifeCycle(destroyClient);
         if (!destroyWasClean) {
           errorMessage = "ERROR encountered in destroy client.  This is a failure";
@@ -118,8 +91,8 @@ public class ClientSubProcessManager extends Thread {
   }
 
   private boolean runTestClients(ClientInstaller clientInstaller) {
-    ClientRunner[] concurrentTests = installTestClients(this.testClientDebugPortStart, this.clientsToCreate, clientInstaller);
-    
+    ClientRunner[] concurrentTests = installTestClients(clientsConfig.getTestClientDebugPortStart(), clientsConfig.getClientsToCreate(), clientInstaller);
+
     // Create a listener.
     ClientListener listener = new ClientListener(this.stateInterlock, this.stateManager);
     // Start them.
@@ -141,14 +114,14 @@ public class ClientSubProcessManager extends Thread {
       }
     }
     // Now, wait for them to finish.
-    boolean didTerminateWithoutError = false;
+    boolean didTerminateWithoutError;
     try {
       this.stateInterlock.waitForClientTermination();
       didTerminateWithoutError = true;
     } catch (Exception e) {
       didTerminateWithoutError = false;
     }
-    
+
     boolean didRunCleanly = didRegisterAndStart && didTerminateWithoutError;
     shutDownAndCleanUpClients(!didRunCleanly, concurrentTests);
     return didRunCleanly;
@@ -161,7 +134,7 @@ public class ClientSubProcessManager extends Thread {
         oneClient.forceTerminate();
       }
     }
-    
+
     // Join all the threads and close log files.
     for (ClientRunner oneClient : concurrentTests) {
       try {
@@ -233,8 +206,9 @@ public class ClientSubProcessManager extends Thread {
       int debugPort = (0 != testClientDebugPortStart)
           ? (testClientDebugPortStart + i)
           : 0;
-      List<String> extraArguments = this.clientArgumentBuilder.getArgumentsForTestRun(this.connectUri, this.clusterInfo, this.numberOfStripes, this.numberOfServersPerStripe, clientsToCreate, i);
-      testClients[i] = clientInstaller.installClient(clientName, debugPort, failOnLog, extraArguments);
+      List<String> extraArguments = clientsConfig.getClientArgumentBuilder().getArgumentsForTestRun(
+          clientsConfig.getConnectUri(), clientsConfig.getClusterInfo(), clientsConfig.getNumberOfStripes(), clientsConfig.getNumberOfServersPerStripe(), clientsToCreate, i);
+      testClients[i] = clientInstaller.installClient(clientName, debugPort, clientsConfig.isFailOnLog(), extraArguments);
     }
     return testClients;
   }
@@ -243,12 +217,12 @@ public class ClientSubProcessManager extends Thread {
   private static class ClientListener implements ClientRunner.Listener {
     private final IGalvanStateInterlock interlock;
     private final ITestStateManager stateManager;
-    
+
     public ClientListener(IGalvanStateInterlock interlock, ITestStateManager stateManager) {
       this.interlock = interlock;
       this.stateManager = stateManager;
     }
-    
+
     @Override
     public void clientDidTerminate(ClientRunner clientRunner, int theResult) {
       // NOTE:  We need to set the fail state before we terminate the client or the waiting thread may see the clients finish before it sees the error.

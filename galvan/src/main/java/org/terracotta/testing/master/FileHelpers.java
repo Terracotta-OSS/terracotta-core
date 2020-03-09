@@ -15,24 +15,21 @@
  */
 package org.terracotta.testing.master;
 
+import org.terracotta.testing.common.Assert;
+import org.terracotta.testing.logging.ContextualLogger;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-
-import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.logging.ContextualLogger;
+import java.util.Set;
 
 
 public class FileHelpers {
-  public static void cleanDirectory(final ContextualLogger logger, String directoryToClean) throws IOException {
-    final Path start = FileSystems.getDefault().getPath(directoryToClean);
+  public static void cleanDirectory(final ContextualLogger logger, Path start) throws IOException {
     // We will assume that we are intended to create the directory, if it doesn't already exist.
     if (!start.toFile().exists()) {
       boolean didMake = start.toFile().mkdir();
@@ -41,12 +38,13 @@ public class FileHelpers {
     // We need the directory to be a directory (as we don't want to follow symlinks anywhere in this delete operation).
     Assert.assertTrue(start.toFile().isDirectory());
     // We don't want to delete the starting directory, but we do want to delete everything in it.
-    Files.walkFileTree(start, new FileVisitor<Path>(){
+    Files.walkFileTree(start, new FileVisitor<Path>() {
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
             // Do nothing.
             return FileVisitResult.CONTINUE;
           }
+
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             // This clearly can't be the start.
@@ -56,11 +54,13 @@ public class FileHelpers {
             logger.output("Deleted file " + file);
             return FileVisitResult.CONTINUE;
           }
+
           @Override
           public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
             logger.error("visitFileFailed: \"" + file + "\"");
             throw exc;
           }
+
           @Override
           public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
             if (null == exc) {
@@ -78,45 +78,39 @@ public class FileHelpers {
     );
   }
 
-  public static String createTempCopyOfDirectory(ContextualLogger logger, String targetParentDirectoryString, String newDirectoryName, String sourceDirectoryString) throws IOException {
-    FileSystem fileSystem = FileSystems.getDefault();
-    Path targetParentDirectory = fileSystem.getPath(targetParentDirectoryString);
-    logger.output(" Target directory: " + targetParentDirectoryString);
-    Assert.assertTrue(targetParentDirectory.toFile().isDirectory());
-    logger.output(" Source directory: " + sourceDirectoryString);
-    Path sourceDirectory = fileSystem.getPath(sourceDirectoryString);
-    Assert.assertTrue(sourceDirectory.toFile().exists());
-    Assert.assertTrue(sourceDirectory.toFile().isDirectory());
-    // Create the target directory path.
-    Path targetDirectory = targetParentDirectory.resolve(newDirectoryName);
-    boolean didMake = targetDirectory.toFile().mkdir();
+  public static Path createTempCopyOfDirectory(ContextualLogger logger, Path targetParentDir,
+                                               String newDirectoryName, Path sourceDir) throws IOException {
+    logger.output(" Target directory: " + targetParentDir);
+    Assert.assertTrue(Files.isDirectory(targetParentDir));
+    logger.output(" Source directory: " + sourceDir);
+    Assert.assertTrue(Files.exists(sourceDir));
+    Assert.assertTrue(Files.isDirectory(sourceDir));
+
+    Path targetDir = targetParentDir.resolve(newDirectoryName);
+    boolean didMake = targetDir.toFile().mkdir();
     Assert.assertTrue(didMake);
-    DirectoryCopier copier = new DirectoryCopier(logger, targetDirectory, sourceDirectory);
-    Files.walkFileTree(sourceDirectory, copier);
-    return targetDirectory.toAbsolutePath().toString();
+    DirectoryCopier copier = new DirectoryCopier(logger, targetDir, sourceDir);
+    Files.walkFileTree(sourceDir, copier);
+    return targetDir.toAbsolutePath();
   }
 
-  public static String createTempEmptyDirectory(String targetParentDirectoryString, String newDirectoryName) {
-    FileSystem fileSystem = FileSystems.getDefault();
-    Path targetParentDirectory = fileSystem.getPath(targetParentDirectoryString);
+  public static Path createTempEmptyDirectory(Path targetParentDirectory, String newDirectoryName) {
     Assert.assertTrue(targetParentDirectory.toFile().isDirectory());
     Path targetDirectory = targetParentDirectory.resolve(newDirectoryName);
     boolean didMake = targetDirectory.toFile().mkdir();
     Assert.assertTrue(didMake);
-    return targetDirectory.toAbsolutePath().toString();
+    return targetDirectory.toAbsolutePath();
   }
 
-  public static void copyJarsToServer(ContextualLogger logger, String instanceServerInstallPath, List<String> extraJarPaths) throws IOException {
+  public static void copyJarsToServer(ContextualLogger logger, Path instanceServerInstallPath, Set<Path> extraJarPaths) throws IOException {
     // We know we want to copy these into plugins/lib.
-    FileSystem fileSystem = FileSystems.getDefault();
-    Path pluginsLibDirectory = fileSystem.getPath(instanceServerInstallPath, "server", "plugins", "lib");
+    Path pluginsLibDirectory = instanceServerInstallPath.resolve("server").resolve("plugins").resolve("lib");
     // This needs to be a directory.
-    Assert.assertTrue(pluginsLibDirectory.toFile().isDirectory());
-    for (String oneJarPath : extraJarPaths) {
-      Path sourcePath = fileSystem.getPath(oneJarPath);
+    Assert.assertTrue(Files.isDirectory(pluginsLibDirectory));
+    for (Path sourcePath : extraJarPaths) {
       // This file must exist.
-      if (!sourcePath.toFile().isFile()) {
-        throw new IllegalArgumentException("JAR path is not a file: " + oneJarPath);
+      if (Files.isRegularFile(sourcePath)) {
+        throw new IllegalArgumentException("JAR path is not a file: " + sourcePath);
       }
       Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
       // This must not exist.
@@ -127,10 +121,9 @@ public class FileHelpers {
     }
   }
 
-  public static void ensureDirectoryExists(ContextualLogger logger, String directoryPath) {
+  public static void ensureDirectoryExists(ContextualLogger logger, Path directoryPath) {
     logger.output(" Ensure directory: " + directoryPath);
-    File asFile = new File(directoryPath);
-    ensureExistsRecursive(asFile);
+    ensureExistsRecursive(directoryPath);
   }
 
   public static void touchEmptyFile(ContextualLogger logger, String parentDirectoryPath, String fileName) throws IOException {
@@ -147,7 +140,7 @@ public class FileHelpers {
     private final Path targetDirectory;
     private final Path sourceDirectory;
     private Path currentTargetDirectory;
-    
+
     public DirectoryCopier(ContextualLogger logger, Path targetDirectory, Path sourceDirectory) {
       this.logger = logger;
       this.targetDirectory = targetDirectory;
@@ -194,14 +187,13 @@ public class FileHelpers {
     }
   }
 
-
-  private static void ensureExistsRecursive(File directoryToCreate) {
-    if (directoryToCreate.exists()) {
+  private static void ensureExistsRecursive(Path directoryToCreate) {
+    if (Files.exists(directoryToCreate)) {
       // This exists so it must be a directory.
-      Assert.assertTrue(directoryToCreate.isDirectory());
+      Assert.assertTrue(Files.isDirectory(directoryToCreate));
     } else {
-      ensureExistsRecursive(directoryToCreate.getParentFile());
-      boolean didMake = directoryToCreate.mkdir();
+      ensureExistsRecursive(directoryToCreate.getParent());
+      boolean didMake = directoryToCreate.toFile().mkdir();
       Assert.assertTrue(didMake);
     }
   }
