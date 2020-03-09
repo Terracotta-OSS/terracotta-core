@@ -18,26 +18,31 @@
  */
 package org.terracotta.testing.rules;
 
-import org.terracotta.testing.master.ConfigBuilder;
+import org.terracotta.testing.config.DefaultStartupBuilder;
+import org.terracotta.testing.config.StartupBuilder;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 
 public class BasicExternalClusterBuilder {
   private final int stripeSize;
 
-  private File clusterDirectory = new File("target" + File.separator + "cluster");
-  private List<File> serverJars = Collections.emptyList();
+  private Path clusterDirectory = Paths.get("target").resolve("galvan");
+  private Set<Path> serverJars = Collections.emptySet();
   private String namespaceFragment = "";
   private String serviceFragment = "";
-  private int clientReconnectWindowTime = ConfigBuilder.DEFAULT_CLIENT_RECONNECT_WINDOW_TIME;
-  private int failoverPriorityVoterCount = ConfigBuilder.FAILOVER_PRIORITY_AVAILABILITY;
+  private int clientReconnectWindowTime = DEFAULT_CLIENT_RECONNECT_WINDOW;
+  private int failoverPriorityVoterCount = DEFAULT_VOTER_COUNT;
   private Properties tcProperties = new Properties();
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
-
+  private StartupBuilder startupBuilder = new DefaultStartupBuilder();
 
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
@@ -48,13 +53,13 @@ public class BasicExternalClusterBuilder {
   }
 
   public static BasicExternalClusterBuilder newCluster(int stripeSize) {
-    if(stripeSize < 1) {
+    if (stripeSize < 1) {
       throw new IllegalArgumentException("Must be at least one server in the cluster");
     }
     return new BasicExternalClusterBuilder(stripeSize);
   }
 
-  public BasicExternalClusterBuilder in(File clusterDirectory) {
+  public BasicExternalClusterBuilder in(Path clusterDirectory) {
     if (clusterDirectory == null) {
       throw new NullPointerException("Cluster directory must be non-null");
     }
@@ -62,7 +67,7 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
-  public BasicExternalClusterBuilder withServerJars(final List<File> serverJars) {
+  public BasicExternalClusterBuilder withServerJars(Set<Path> serverJars) {
     if (serverJars == null) {
       throw new NullPointerException("Server JARs list must be non-null");
     }
@@ -119,14 +124,19 @@ public class BasicExternalClusterBuilder {
     this.systemProperties.put(key, value);
     return this;
   }
-  
+
   public BasicExternalClusterBuilder logConfigExtensionResourceName(String logConfigExt) {
     this.logConfigExt = logConfigExt;
     return this;
   }
 
+  public BasicExternalClusterBuilder startupBuilder(StartupBuilder startupBuilder) {
+    this.startupBuilder = startupBuilder;
+    return this;
+  }
+
   public BasicExternalCluster build() {
     return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
-        clientReconnectWindowTime, failoverPriorityVoterCount, tcProperties, systemProperties, logConfigExt);
+        clientReconnectWindowTime, failoverPriorityVoterCount, tcProperties, systemProperties, logConfigExt, startupBuilder);
   }
 }

@@ -18,8 +18,10 @@
  */
 package org.terracotta.testing.support;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.IClusterControl;
@@ -43,9 +45,9 @@ public abstract class MultiProcessGalvanTest extends BasicHarnessTest implements
   }
 
   @Override
-  public List<String> getExtraServerJarPaths() {
+  public Set<Path> getExtraServerJarPaths() {
     // We expect the client code to be in the same location as the harness.
-    return Collections.emptyList();
+    return Collections.emptySet();
   }
 
   @Override
