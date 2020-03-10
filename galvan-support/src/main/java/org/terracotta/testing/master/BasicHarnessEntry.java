@@ -70,7 +70,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
     Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir, harnessOptions);
     List<Supplier<String[]>> startupCommands = new ArrayList<>(stripeSize);
-    List<Supplier<String[]>> debugStartupCommands = new ArrayList<>(stripeSize);
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
     for (int i = 0; i < stripeSize; i++) {
       Path serverKitDirectory = harnessOptions.kitOriginPath;
@@ -79,7 +78,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
         serverKitDirectory = stripeInstallationDir.resolve(serverName);
       }
       startupCommands.add(buildCommand(tcConfig, serverKitDirectory, serverName, false));
-      debugStartupCommands.add(buildCommand(tcConfig, serverKitDirectory, serverName, true));
     }
 
     StripeConfiguration stripeConfig = new StripeConfiguration(harnessOptions.kitOriginPath.toAbsolutePath(),
@@ -93,7 +91,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       String serverName = stripeConfig.getServerNames().get(i);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      stripeInstaller.installNewServer(serverName, debugPort, startupCommands.get(i), debugStartupCommands.get(i));
+      stripeInstaller.installNewServer(serverName, debugPort, startupCommands.get(i));
     }
     ReadyStripe oneStripe = ReadyStripe.configureAndStartStripe(interlock, verboseManager, stripeConfig, stripeInstaller);
     // We just want to unwrap this, directly.

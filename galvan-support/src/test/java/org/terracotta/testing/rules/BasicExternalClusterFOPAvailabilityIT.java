@@ -28,7 +28,8 @@ import java.util.concurrent.TimeoutException;
 public class BasicExternalClusterFOPAvailabilityIT {
 
   @ClassRule
-  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2).withFailoverPriorityVoterCount(-1).build();
+  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2)
+          .withFailoverPriorityVoterCount(-1).withConsistentStartup(true).build();
 
   @Test
   public void testDirectConnection() throws Exception {

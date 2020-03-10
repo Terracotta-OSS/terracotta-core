@@ -27,6 +27,8 @@ public class DefaultStartupBuilder implements StartupBuilder {
   private Path tcConfig;
   private Path serverInstallationDir;
   private String serverName;
+  private boolean consistent;
+  private boolean built;
 
   public DefaultStartupBuilder() {
   }
@@ -66,18 +68,24 @@ public class DefaultStartupBuilder implements StartupBuilder {
   }
 
   @Override
-  public StartupBuilder build() {
-    return new DefaultStartupBuilder(tcConfig, serverInstallationDir, serverName);
+  public StartupBuilder consistentStartup(boolean consistent) {
+    this.consistent = consistent;
+    return this;
   }
-
+  
   @Override
-  public Supplier<String[]> getStartupCommand(boolean consistentStart) {
-    Path basePath = serverInstallationDir.resolve("server").resolve("bin").resolve("start-tc-server");
-    String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
-    if (consistentStart) {
-      return () -> new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
+  public String[] build() {
+    if (!built) {
+      Path basePath = serverInstallationDir.resolve("server").resolve("bin").resolve("start-tc-server");
+      String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
+      built = true;
+      if (this.consistent) {
+        return new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
+      } else {
+        return new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName};
+      }
     } else {
-      return () -> new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName};
+      throw new AssertionError("startup already built");
     }
   }
 }

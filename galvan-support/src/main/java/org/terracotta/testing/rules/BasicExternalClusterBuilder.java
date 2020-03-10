@@ -26,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
@@ -39,10 +40,11 @@ public class BasicExternalClusterBuilder {
   private String serviceFragment = "";
   private int clientReconnectWindowTime = DEFAULT_CLIENT_RECONNECT_WINDOW;
   private int failoverPriorityVoterCount = DEFAULT_VOTER_COUNT;
+  private boolean consistentStart = false;
   private Properties tcProperties = new Properties();
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
-  private StartupBuilder startupBuilder = new DefaultStartupBuilder();
+  private Supplier<StartupBuilder> startupBuilder = DefaultStartupBuilder::new;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
@@ -130,13 +132,18 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
-  public BasicExternalClusterBuilder startupBuilder(StartupBuilder startupBuilder) {
+  public BasicExternalClusterBuilder startupBuilder(Supplier<StartupBuilder> startupBuilder) {
     this.startupBuilder = startupBuilder;
     return this;
   }
 
-  public BasicExternalCluster build() {
+  public BasicExternalClusterBuilder withConsistentStartup(boolean consistent) {
+    this.consistentStart = consistent;
+    return this;
+  }
+
+  public Cluster build() {
     return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
-        clientReconnectWindowTime, failoverPriorityVoterCount, tcProperties, systemProperties, logConfigExt, startupBuilder);
+        clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties, logConfigExt, startupBuilder);
   }
 }
