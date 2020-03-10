@@ -65,7 +65,7 @@ public class ClientEventManager {
     installEventHandler(subBus, eventMap, control, IPCMessageConstants.START_ONE_SERVER_WITH_CONSISTENCY, new ControlCaller() {
       @Override
       public void runWithControl(IMultiProcessControl control) throws Throwable {
-        control.startOneServerWithConsistency();
+        control.startOneServer();
       }}, processStdin);
 
     installEventHandler(subBus, eventMap, control, IPCMessageConstants.START_ALL_SERVERS, new ControlCaller() {
@@ -77,7 +77,7 @@ public class ClientEventManager {
     installEventHandler(subBus, eventMap, control, IPCMessageConstants.START_ALL_SERVERS_WITH_CONSISTENCY, new ControlCaller() {
       @Override
       public void runWithControl(IMultiProcessControl control) throws Throwable {
-        control.startAllServersWithConsistency();
+        control.startAllServers();
       }}, processStdin);
 
     installEventHandler(subBus, eventMap, control, IPCMessageConstants.SHUT_DOWN_STRIPE, new ControlCaller() {

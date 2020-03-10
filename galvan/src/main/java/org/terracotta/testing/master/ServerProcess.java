@@ -58,7 +58,6 @@ public class ServerProcess {
   private final Properties serverProperties;
   private final Path serverWorkingDir;
   private final Supplier<String[]> startupCommandSupplier;
-  private final Supplier<String[]> consistentStartCommandSupplier;
   // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
 
@@ -79,7 +78,7 @@ public class ServerProcess {
 
   public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
                        String serverName, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties,
-                       Supplier<String[]> startupCommandSupplier, Supplier<String[]> consistentStartCommandSupplier) {
+                       Supplier<String[]> startupCommandSupplier) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -93,7 +92,6 @@ public class ServerProcess {
     this.serverProperties = serverProperties;
     this.serverWorkingDir = serverWorkingDir;
     this.startupCommandSupplier = startupCommandSupplier;
-    this.consistentStartCommandSupplier = consistentStartCommandSupplier;
     // We start up in the shutdown state so notify the interlock.
     this.stateInterlock.registerNewServer(this);
   }
@@ -131,7 +129,7 @@ public class ServerProcess {
    *
    * @throws IOException The logs couldn't be created since the server's working directory is missing.
    */
-  public void start(boolean consistentStart) throws IOException {
+  public void start() throws IOException {
     UUID token = enter();
     try {
       // First thing we need to do is make sure that we aren't already running.
@@ -156,7 +154,7 @@ public class ServerProcess {
       // Put together any additional options we wanted to pass to the VM under the start script.
       String javaArguments = getJavaArguments(this.debugPort);
 
-      String[] command = consistentStart ? consistentStartCommandSupplier.get() : startupCommandSupplier.get();
+      String[] command = startupCommandSupplier.get();
       // Start the inferior process.
       AnyProcess process = AnyProcess.newBuilder()
           .command(command)

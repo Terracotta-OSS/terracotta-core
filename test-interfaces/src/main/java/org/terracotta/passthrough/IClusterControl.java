@@ -54,7 +54,10 @@ public interface IClusterControl {
    * If all servers are running, does nothing.
    *
    * @throws Exception Implementation-defined failure.
+   *
+   * Deprecated: same as @link #startOneServer.  consistency should be set in the startup
    */
+  @Deprecated()
   public void startOneServerWithConsistency() throws Exception;
 
   /**
@@ -70,7 +73,10 @@ public interface IClusterControl {
    * If all servers are running, does nothing.
    *
    * @throws Exception Implementation-defined failure.
+   * 
+   * Deprecated: same as @link #startAllServers.  consistency should be set in the startup
    */
+  @Deprecated
   public void startAllServersWithConsistency() throws Exception;
 
   /**

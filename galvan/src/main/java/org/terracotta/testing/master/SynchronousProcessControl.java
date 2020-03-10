@@ -84,23 +84,16 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void startOneServer() throws GalvanFailureException {
     this.logger.output(">>> startOneServer");
-    startOneServer(false);
+    startServer();
     this.logger.output("<<< startOneServer");
   }
 
-  @Override
-  public synchronized void startOneServerWithConsistency() throws GalvanFailureException {
-    this.logger.output(">>> startOneServerWithConsistency");
-    startOneServer(true);
-    this.logger.output("<<< startOneServerWithConsistency");
-  }
-
-  public synchronized void startOneServer(boolean unsafe) throws GalvanFailureException {
+  public synchronized void startServer() throws GalvanFailureException {
     ServerProcess server = this.stateInterlock.getOneTerminatedServer();
     if (null == server) {
       throw new IllegalStateException("Tried to start one server when none are terminated");
     }
-    safeStart(server, unsafe);
+    safeStart(server);
     
     // Wait for it to start up (otherwise, later calls to wait for the servers to become ready may not know that
     //  this one was still expected, just not started).
@@ -110,21 +103,14 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   @Override
   public synchronized void startAllServers() throws GalvanFailureException {
     this.logger.output(">>> startAllServers");
-    startAllServers(false);
+    startServers();
     this.logger.output("<<< startAllServers");
   }
 
-  @Override
-  public synchronized void startAllServersWithConsistency() throws GalvanFailureException {
-    this.logger.output(">>> startAllServersWithConsistency");
-    startAllServers(false);
-    this.logger.output("<<< startAllServersWithConsistency");
-  }
-
-  private void startAllServers(boolean consistentStart) throws GalvanFailureException {
+  private void startServers() throws GalvanFailureException {
     ServerProcess server = this.stateInterlock.getOneTerminatedServer();
     while (null != server) {
-      safeStart(server, consistentStart);
+      safeStart(server);
 
       // Wait for it to start up (since we need to grab a different one in the next call).
       this.stateInterlock.waitForServerRunning(server);
@@ -179,9 +165,9 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
 
-  private void safeStart(ServerProcess server, boolean consistentStart) {
+  private void safeStart(ServerProcess server) {
     try {
-      server.start(consistentStart);
+      server.start();
     } catch (IOException e) {
       // Unexpected, given that this server was already started, at one point.
       Assert.unexpected(e);
