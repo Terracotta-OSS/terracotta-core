@@ -26,35 +26,36 @@ import java.util.Map;
 /**
  *
  */
-public class ServiceClassLoader<T> extends ClassLoader {
+public class ServiceClassLoader extends ClassLoader {
   
-  private final Map<String, Class<? extends T>> cached = new HashMap<>();
-  
-  public ServiceClassLoader(ClassLoader loader, Class<T>...serviceTypes) {
+  private final Map<String, Class<?>> cached = new HashMap<>();
+
+  @SuppressWarnings({"rawtypes","unchecked"})
+  public ServiceClassLoader(ClassLoader loader, Class<?>...serviceTypes) {
     super(loader);
     ServiceLocator locator = new ServiceLocator(loader);
-    for (Class<T> serviceType : serviceTypes) {
-      List<Class<? extends T>> svcs = locator.getImplementations(serviceType);
+    for (Class serviceType : serviceTypes) {
+      List<Class<?>> svcs = locator.getImplementations(serviceType);
       loadServiceClasses(svcs);
     }
   }
   
-  public void addServiceClass(Class<? extends T> svc) {
+  public void addServiceClass(Class<?> svc) {
     cached.put(svc.getName(), svc);
   }
   
-  private void loadServiceClasses(List<Class<? extends T>> svcs) {
-    for (Class<? extends T> svc : svcs) {
+  private void loadServiceClasses(List<Class<?>> svcs) {
+    for (Class<?> svc : svcs) {
       cached.put(svc.getName(), svc);
     }
   }
 
   @Override
-  protected Class<? extends T> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    Class<? extends T> get = cached.get(name);
+  protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+    Class<?> get = cached.get(name);
     if (get != null) {
       return get;
     }
-    return (Class<? extends T>)super.loadClass(name, resolve);
+    return (Class<?>)super.loadClass(name, resolve);
   }
 }
