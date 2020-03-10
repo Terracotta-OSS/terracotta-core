@@ -48,8 +48,7 @@ public class StripeInstaller {
     this.stripeConfig = stripeConfig;
   }
 
-  public void installNewServer(String serverName, int debugPort, Supplier<String[]> startupCommandSupplier,
-                               Supplier<String[]> consistentStartupCommandSupplier) throws IOException {
+  public void installNewServer(String serverName, int debugPort, Supplier<String[]> startupCommandSupplier) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // Create the logger for the installation.
@@ -77,8 +76,7 @@ public class StripeInstaller {
     // Create the object representing this single installation and add it to the list for this stripe.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + serverName + "]");
     ServerProcess serverProcess = new ServerProcess(this.interlock, this.stateManager, serverVerboseManager, serverName,
-        installPath, stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties(), startupCommandSupplier,
-        consistentStartupCommandSupplier);
+        installPath, stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties(), startupCommandSupplier);
     serverProcesses.add(serverProcess);
   }
 
@@ -87,7 +85,7 @@ public class StripeInstaller {
     for (ServerProcess newProcess : serverProcesses) {
       try {
         // Note that starting the process will put it into the interlock and the server will notify it of state changes.
-        newProcess.start(false);
+        newProcess.start();
       } catch (IOException e) {
         Assert.unexpected(e);
       }
