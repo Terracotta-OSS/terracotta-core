@@ -20,7 +20,6 @@ package com.tc.classloader;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.jar.Manifest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,21 +52,20 @@ public class StrictURLClassLoader extends URLClassLoader {
     
     try {
       target = super.loadClass(name, resolve);
+      if (target != null) {
+        boolean thisLoader = target.getClassLoader() == this;
+        if (thisLoader) {
+          boolean common = strict && top == null ? checker.check(target) : true;
+          if (!common) {
+            target = null;
+          }
+        }
+      }
     } catch (NoClassDefFoundError err) {
       target = null;
     } finally {
       if (top == null) {
         topname.remove();
-      }
-    }
-
-    if (target != null) {
-      boolean thisLoader = target.getClassLoader() == this;
-      if (thisLoader) {
-        boolean common = strict && top == null ? checker.check(target) : true;
-        if (!common) {
-          target = null;
-        }
       }
     }
 
