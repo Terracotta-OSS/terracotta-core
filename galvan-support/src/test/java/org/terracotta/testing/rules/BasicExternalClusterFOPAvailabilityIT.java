@@ -53,7 +53,7 @@ public class BasicExternalClusterFOPAvailabilityIT {
   public void testConsistentStartup() throws Exception {
     CLUSTER.getClusterControl().terminateAllServers();
 
-    CLUSTER.getClusterControl().startOneServerWithConsistency();
+    CLUSTER.getClusterControl().startOneServer();
 
     CompletableFuture<Void> connectionFuture = CompletableFuture.runAsync(() -> {
       try {

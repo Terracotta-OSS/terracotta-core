@@ -38,6 +38,8 @@ import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import org.terracotta.testing.config.DefaultStartupBuilder;
+import org.terracotta.testing.config.StartupBuilder;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 /**
@@ -69,29 +71,29 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     Files.createDirectory(stripeInstallationDir);
 
     Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir, harnessOptions);
-    List<Supplier<String[]>> startupCommands = new ArrayList<>(stripeSize);
     VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
-    for (int i = 0; i < stripeSize; i++) {
-      Path serverKitDirectory = harnessOptions.kitOriginPath;
-      String serverName = serverNames.get(i);
-      if (!harnessOptions.extraJarPaths.isEmpty()) {
-        serverKitDirectory = stripeInstallationDir.resolve(serverName);
-      }
-      startupCommands.add(buildCommand(tcConfig, serverKitDirectory, serverName, false));
-    }
 
-    StripeConfiguration stripeConfig = new StripeConfiguration(harnessOptions.kitOriginPath.toAbsolutePath(),
-        stripeInstallationDir, serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName,
-        harnessOptions.extraJarPaths, DEFAULT_SERVER_HEAP_MB, "logback-ext.xml", harnessOptions.serverProperties);
+    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName,
+        DEFAULT_SERVER_HEAP_MB, "logback-ext.xml", harnessOptions.serverProperties);
     TestStateManager stateManager = new TestStateManager();
     GalvanStateInterlock interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeConfig.getServerNames().size(); ++i) {
       String serverName = stripeConfig.getServerNames().get(i);
+      Path serverInstallDir = stripeInstallationDir.resolve(serverName);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      stripeInstaller.installNewServer(serverName, debugPort, startupCommands.get(i));
+      StartupBuilder builder = new DefaultStartupBuilder()
+          .tcConfig(tcConfig)
+          .serverName(serverName)
+          .stripeName(stripeName)
+          .serverWorkingDirectory(serverInstallDir)
+          .serverKitDir(harnessOptions.kitOriginPath)
+          .serverLoggingExtension("logback-ext.xml")
+          .consistentStartup(false);
+
+      stripeInstaller.installNewServer(serverName, serverInstallDir, debugPort, builder::build);
     }
     ReadyStripe oneStripe = ReadyStripe.configureAndStartStripe(interlock, verboseManager, stripeConfig, stripeInstaller);
     // We just want to unwrap this, directly.
@@ -129,16 +131,6 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       return tcConfigPath;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
-    }
-  }
-
-  private Supplier<String[]> buildCommand(Path tcConfig, Path serverKitDirectory, String serverName, boolean consistentStart) {
-    Path basePath = serverKitDirectory.resolve("server").resolve("bin").resolve("start-tc-server");
-    String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
-    if (consistentStart) {
-      return () -> new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
-    } else {
-      return () -> new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName};
     }
   }
 }

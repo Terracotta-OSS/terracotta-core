@@ -52,6 +52,8 @@ import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.master.FileHelpers;
 
 /**
  * @author cdennis
@@ -180,18 +182,16 @@ class BasicExternalCluster extends Cluster {
 
     Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
 
-    StripeConfiguration stripeConfig = new StripeConfiguration(kitDir.toAbsolutePath(), stripeInstallationDir,
-        serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName, serverJars, DEFAULT_SERVER_HEAP_MB,
+    Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
+
+    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName, DEFAULT_SERVER_HEAP_MB,
         logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeConfig.getServerNames().size(); ++i) {
       String serverName = serverNames.get(i);
-      Path serverInstallationDir = stripeInstallationDir.resolve(serverName);
-      Path serverKit = kitDir;
-      if (!serverJars.isEmpty()) {
-        serverKit = serverInstallationDir;
-      }
+      Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
+
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
@@ -199,11 +199,12 @@ class BasicExternalCluster extends Cluster {
           .tcConfig(tcConfig)
           .serverName(serverName)
           .stripeName(stripeName)
-          .testParentDir(serverInstallationDir)
-          .serverInstallationDir(serverKit)
+          .serverWorkingDirectory(serverWorkingDir)
+          .serverKitDir(kitLocation)
+          .serverLoggingExtension(logConfigExt)
           .consistentStartup(consistentStart);
 
-      stripeInstaller.installNewServer(serverName, debugPort, builder::build);
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -262,6 +263,17 @@ class BasicExternalCluster extends Cluster {
       return tcConfigPath;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+
+  private Path installKit(VerboseManager logger, Path srcKit, Set<Path> extraJars, Path stripeInstall) throws IOException {
+    if (extraJars.isEmpty()) {
+      return srcKit;
+    } else {
+      ContextualLogger clogger = logger.createFileHelpersLogger();
+      Path stripeKit = FileHelpers.createTempCopyOfDirectory(clogger, stripeInstall, "installedKit", srcKit);
+      FileHelpers.copyJarsToServer(clogger, stripeKit, extraJars);
+      return stripeKit;
     }
   }
 
@@ -330,24 +342,12 @@ class BasicExternalCluster extends Cluster {
       }
 
       @Override
-      @Deprecated
-      public void startOneServerWithConsistency() throws Exception {
-        cluster.getStripeControl().startOneServer();
-      }
-
-      @Override
       public void startOneServer() throws Exception {
         cluster.getStripeControl().startOneServer();
       }
 
       @Override
       public void startAllServers() throws Exception {
-        cluster.getStripeControl().startAllServers();
-      }
-
-      @Override
-      @Deprecated
-      public void startAllServersWithConsistency() throws Exception {
         cluster.getStripeControl().startAllServers();
       }
 
