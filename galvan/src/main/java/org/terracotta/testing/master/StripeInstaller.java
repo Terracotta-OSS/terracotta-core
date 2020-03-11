@@ -17,18 +17,15 @@ package org.terracotta.testing.master;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.config.StripeConfiguration;
-import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * Handles the description, installation, and start-up of a stripe of servers in a cluster.
@@ -48,35 +45,15 @@ public class StripeInstaller {
     this.stripeConfig = stripeConfig;
   }
 
-  public void installNewServer(String serverName, int debugPort, Supplier<String[]> startupCommandSupplier) throws IOException {
+  public void installNewServer(String serverName, Path workingDir, int debugPort, Supplier<String[]> startupCommandSupplier) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
-    // Create the logger for the installation.
-    ContextualLogger fileHelperLogger = this.stripeVerboseManager.createFileHelpersLogger();
-    // Create a copy of the server for this installation.
-    Path installPath;
-    Path kitPath = stripeConfig.getKitOriginDir();
-    if (stripeConfig.getExtraJarPaths().isEmpty()) {
-      installPath = FileHelpers.createTempEmptyDirectory(stripeConfig.getStripeInstallationDir(), serverName);
-    } else {
-      installPath = FileHelpers.createTempCopyOfDirectory(fileHelperLogger, stripeConfig.getStripeInstallationDir(), serverName, stripeConfig.getKitOriginDir());
-      // Copy the extra jars this test needs into the new installation.
-      FileHelpers.copyJarsToServer(fileHelperLogger, installPath, stripeConfig.getExtraJarPaths());
-      kitPath = installPath;
-    }
-
-    //Copy a custom logback configuration
-    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), kitPath.resolve("logback-test.xml"), REPLACE_EXISTING);
-
-    InputStream logExt = this.getClass().getResourceAsStream("/" + stripeConfig.getLogConfigExtension());
-    if (logExt != null) {
-      Files.copy(logExt, kitPath.resolve("logback-ext-test.xml"), REPLACE_EXISTING);
-    }
-
+    // server install is now at the stripe level to use less disk
+    Files.createDirectories(workingDir);
     // Create the object representing this single installation and add it to the list for this stripe.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + serverName + "]");
     ServerProcess serverProcess = new ServerProcess(this.interlock, this.stateManager, serverVerboseManager, serverName,
-        installPath, stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties(), startupCommandSupplier);
+        workingDir, stripeConfig.getServerHeapInM(), debugPort, stripeConfig.getServerProperties(), startupCommandSupplier);
     serverProcesses.add(serverProcess);
   }
 

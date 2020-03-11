@@ -21,11 +21,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * This class is essentially a struct containing the data which describes how the servers in the stripe are to be
@@ -33,8 +31,6 @@ import java.util.Set;
  * It exists to give context to the parameters in CommonIdioms.
  */
 public class StripeConfiguration {
-  private final Path kitOriginDir;
-  private final Path stripeInstallationDir;
   private final int serverHeapInM;
   private final String stripeName;
   private final String logConfigExtension;
@@ -45,20 +41,16 @@ public class StripeConfiguration {
   private final Properties serverProperties = new Properties();
   private final List<Integer> serverPorts;
   private final List<Integer> serverGroupPorts;
-  private final Set<Path> extraJarPaths = new HashSet<>();
   private final List<InetSocketAddress> serverAddresses;
 
-  public StripeConfiguration(Path kitOriginDir, Path stripeInstallationDir, List<Integer> serverDebugPorts, List<Integer> serverPorts,
-                             List<Integer> serverGroupPorts, List<String> serverNames, String stripeName, Set<Path> extraJarPaths,
+  public StripeConfiguration(List<Integer> serverDebugPorts, List<Integer> serverPorts,
+                             List<Integer> serverGroupPorts, List<String> serverNames, String stripeName,
                              int serverHeapInM, String logConfigExt, Properties serverProperties) {
-    this.kitOriginDir = kitOriginDir;
-    this.stripeInstallationDir = stripeInstallationDir;
     this.serverDebugPorts = serverDebugPorts;
     this.serverPorts = serverPorts;
     this.serverGroupPorts = serverGroupPorts;
     this.serverNames = serverNames;
     this.stripeName = stripeName;
-    this.extraJarPaths.addAll(extraJarPaths);
     this.serverHeapInM = serverHeapInM;
     this.logConfigExtension = logConfigExt;
     this.clusterInfo = buildClusterInfo(serverNames, serverPorts, serverGroupPorts);
@@ -66,11 +58,7 @@ public class StripeConfiguration {
     this.serverProperties.putAll(serverProperties);
     this.serverAddresses = buildServerAddresses(this.serverPorts);
   }
-
-  public Path getKitOriginDir() {
-    return kitOriginDir;
-  }
-
+  
   public int getServerHeapInM() {
     return serverHeapInM;
   }
@@ -111,16 +99,8 @@ public class StripeConfiguration {
     return serverProperties;
   }
 
-  public Set<Path> getExtraJarPaths() {
-    return Collections.unmodifiableSet(extraJarPaths);
-  }
-
   public List<String> getServerNames() {
     return Collections.unmodifiableList(serverNames);
-  }
-
-  public Path getStripeInstallationDir() {
-    return stripeInstallationDir;
   }
 
   private String buildUri(List<Integer> serverPorts) {

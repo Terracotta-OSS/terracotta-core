@@ -135,6 +135,7 @@ public class ServerProcess {
       // First thing we need to do is make sure that we aren't already running.
       Assert.assertFalse(this.stateInterlock.isServerRunning(this));
 
+      String[] command = startupCommandSupplier.get();
       // Now, open the log files.
       // We want to create an output log file for both STDOUT and STDERR.
       // rawOut closed by stdout
@@ -153,8 +154,6 @@ public class ServerProcess {
 
       // Put together any additional options we wanted to pass to the VM under the start script.
       String javaArguments = getJavaArguments(this.debugPort);
-
-      String[] command = startupCommandSupplier.get();
       // Start the inferior process.
       AnyProcess process = AnyProcess.newBuilder()
           .command(command)
