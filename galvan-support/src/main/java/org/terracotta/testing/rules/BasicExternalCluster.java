@@ -188,7 +188,7 @@ class BasicExternalCluster extends Cluster {
         logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
-    for (int i = 0; i < stripeConfig.getServerNames().size(); ++i) {
+    for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
 
@@ -200,8 +200,8 @@ class BasicExternalCluster extends Cluster {
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDirectory(serverWorkingDir)
-          .serverKitDir(kitLocation)
-          .serverLoggingExtension(logConfigExt)
+          .kitDir(kitLocation)
+          .loggingExtension(logConfigExt)
           .consistentStartup(consistentStart);
 
       stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);

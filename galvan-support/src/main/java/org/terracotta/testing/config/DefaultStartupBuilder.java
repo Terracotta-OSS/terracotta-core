@@ -74,13 +74,13 @@ public class DefaultStartupBuilder implements StartupBuilder {
   }
 
   @Override
-  public StartupBuilder serverKitDir(Path kitDir) {
+  public StartupBuilder kitDir(Path kitDir) {
     this.kitDir = kitDir;
     return this;
   }
 
   @Override
-  public StartupBuilder serverLoggingExtension(String logging) {
+  public StartupBuilder loggingExtension(String logging) {
     this.logbackExtension = logging;
     return this;
   }

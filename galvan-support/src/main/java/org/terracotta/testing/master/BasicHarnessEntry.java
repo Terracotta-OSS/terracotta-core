@@ -89,8 +89,8 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDirectory(serverInstallDir)
-          .serverKitDir(harnessOptions.kitOriginPath)
-          .serverLoggingExtension("logback-ext.xml")
+          .kitDir(harnessOptions.kitOriginPath)
+          .loggingExtension("logback-ext.xml")
           .consistentStartup(false);
 
       stripeInstaller.installNewServer(serverName, serverInstallDir, debugPort, builder::build);

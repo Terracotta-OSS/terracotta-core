@@ -22,8 +22,8 @@ import java.nio.file.Path;
 
 public interface StartupBuilder {
   StartupBuilder tcConfig(Path tcConfig);
-  StartupBuilder serverKitDir(Path serverInstallationDir);
-  StartupBuilder serverLoggingExtension(String logging);
+  StartupBuilder kitDir(Path serverInstallationDir);
+  StartupBuilder loggingExtension(String logging);
   StartupBuilder serverWorkingDirectory(Path serverInstallationDir);
   StartupBuilder serverName(String serverName);
   StartupBuilder stripeName(String stripeName);
