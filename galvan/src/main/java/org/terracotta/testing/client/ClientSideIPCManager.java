@@ -88,14 +88,8 @@ public class ClientSideIPCManager {
 
   public void startOneServer() { sendAndWait(IPCMessageConstants.START_ONE_SERVER); }
 
-  public void startOneServerWithConsistency() { sendAndWait(IPCMessageConstants.START_ONE_SERVER_WITH_CONSISTENCY); }
-
   public void startAllServers() {
     sendAndWait(IPCMessageConstants.START_ALL_SERVERS);
-  }
-
-  public void startAllServersWithConsistency() {
-    sendAndWait(IPCMessageConstants.START_ALL_SERVERS_WITH_CONSISTENCY);
   }
 
   public void terminateActive() { sendAndWait(IPCMessageConstants.TERMINATE_ACTIVE); }

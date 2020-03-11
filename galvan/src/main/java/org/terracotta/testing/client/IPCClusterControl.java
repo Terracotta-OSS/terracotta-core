@@ -44,18 +44,8 @@ public class IPCClusterControl implements IClusterControl {
   }
 
   @Override
-  public void startOneServerWithConsistency() {
-    ipcManager.startOneServerWithConsistency();
-  }
-
-  @Override
   public void startAllServers() {
     ipcManager.startAllServers();
-  }
-
-  @Override
-  public void startAllServersWithConsistency() {
-    ipcManager.startAllServersWithConsistency();
   }
 
   @Override
