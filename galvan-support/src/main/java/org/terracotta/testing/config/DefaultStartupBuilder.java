@@ -18,22 +18,29 @@
  */
 package org.terracotta.testing.config;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Supplier;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 public class DefaultStartupBuilder implements StartupBuilder {
   private Path tcConfig;
-  private Path serverInstallationDir;
+  private Path kitDir;
+  private Path serverWorkingDirectory;
+  private String logbackExtension;
   private String serverName;
+  private boolean consistent;
+  private String[] built;
 
   public DefaultStartupBuilder() {
   }
 
-  private DefaultStartupBuilder(Path tcConfig, Path serverInstallationDir, String serverName) {
+  private DefaultStartupBuilder(Path tcConfig, Path serverWorkingDirectory, String serverName) {
     this.tcConfig = tcConfig;
-    this.serverInstallationDir = serverInstallationDir;
+    this.serverWorkingDirectory = serverWorkingDirectory;
     this.serverName = serverName;
   }
 
@@ -44,13 +51,8 @@ public class DefaultStartupBuilder implements StartupBuilder {
   }
 
   @Override
-  public StartupBuilder serverInstallationDir(Path serverInstallationDir) {
-    this.serverInstallationDir = serverInstallationDir;
-    return this;
-  }
-
-  @Override
-  public StartupBuilder testParentDir(Path testParentDir) {
+  public StartupBuilder serverWorkingDirectory(Path serverInstallationDir) {
+    this.serverWorkingDirectory = serverInstallationDir;
     return this;
   }
 
@@ -66,18 +68,54 @@ public class DefaultStartupBuilder implements StartupBuilder {
   }
 
   @Override
-  public StartupBuilder build() {
-    return new DefaultStartupBuilder(tcConfig, serverInstallationDir, serverName);
+  public StartupBuilder consistentStartup(boolean consistent) {
+    this.consistent = consistent;
+    return this;
   }
 
   @Override
-  public Supplier<String[]> getStartupCommand(boolean consistentStart) {
-    Path basePath = serverInstallationDir.resolve("server").resolve("bin").resolve("start-tc-server");
-    String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
-    if (consistentStart) {
-      return () -> new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
-    } else {
-      return () -> new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName};
+  public StartupBuilder kitDir(Path kitDir) {
+    this.kitDir = kitDir;
+    return this;
+  }
+
+  @Override
+  public StartupBuilder loggingExtension(String logging) {
+    this.logbackExtension = logging;
+    return this;
+  }
+
+  protected void installServer() throws IOException {
+    // Create a copy of the server for this installation.
+    Files.createDirectories(this.serverWorkingDirectory);
+
+    //Copy a custom logback configuration
+    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), this.serverWorkingDirectory.resolve("logback-test.xml"), REPLACE_EXISTING);
+
+    if (this.logbackExtension != null) {
+      InputStream logExt = this.getClass().getResourceAsStream("/" + this.logbackExtension);
+      if (logExt != null) {
+        Files.copy(logExt, this.serverWorkingDirectory.resolve("logback-ext-test.xml"), REPLACE_EXISTING);
+      }    
     }
+  }
+  
+  @Override
+  public String[] build() {
+    if (built == null) {
+      try {
+        installServer();
+        Path basePath = kitDir.resolve("server").resolve("bin").resolve("start-tc-server");
+        String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
+        if (this.consistent) {
+          built = new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
+        } else {
+          built = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName};
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return built;
   }
 }

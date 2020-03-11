@@ -52,6 +52,8 @@ import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.master.FileHelpers;
 
 /**
  * @author cdennis
@@ -65,10 +67,11 @@ class BasicExternalCluster extends Cluster {
   private final String serviceFragment;
   private final int clientReconnectWindow;
   private final int voterCount;
+  private final boolean consistentStart;
   private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
   private final String logConfigExt;
-  private final StartupBuilder startupBuilder;
+  private final Supplier<StartupBuilder> startupBuilder;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -83,8 +86,8 @@ class BasicExternalCluster extends Cluster {
   private boolean isSafe;
 
   BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
-                       String serviceFragment, int clientReconnectWindow, int voterCount, Properties tcProperties,
-                       Properties systemProperties, String logConfigExt, StartupBuilder startupBuilder) {
+                       String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
+                       Properties systemProperties, String logConfigExt, Supplier<StartupBuilder> startupBuilder) {
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
@@ -103,6 +106,7 @@ class BasicExternalCluster extends Cluster {
     this.serverJars = serverJars;
     this.clientReconnectWindow = clientReconnectWindow;
     this.voterCount = voterCount;
+    this.consistentStart = consistentStart;
     this.tcProperties.putAll(tcProperties);
     this.systemProperties.putAll(systemProperties);
     this.logConfigExt = logConfigExt;
@@ -175,36 +179,32 @@ class BasicExternalCluster extends Cluster {
     Files.createDirectory(stripeInstallationDir);
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
-    List<Supplier<String[]>> startupCommands = new ArrayList<>(stripeSize);
-    List<Supplier<String[]>> consistentStartupCommands = new ArrayList<>(stripeSize);
-    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
-    for (int i = 0; i < stripeSize; i++) {
-      Path serverInstallationDir = kitDir;
-      String serverName = serverNames.get(i);
-      if (!serverJars.isEmpty()) {
-        serverInstallationDir = stripeInstallationDir.resolve(serverName);
-      }
-      StartupBuilder startupBuilder = this.startupBuilder
-          .tcConfig(tcConfig)
-          .serverName(serverName)
-          .stripeName(stripeName)
-          .testParentDir(serverInstallationDir)
-          .serverInstallationDir(serverInstallationDir)
-          .build();
-      startupCommands.add(startupBuilder.getStartupCommand(false));
-      consistentStartupCommands.add(startupBuilder.getStartupCommand(true));
-    }
 
-    StripeConfiguration stripeConfig = new StripeConfiguration(kitDir.toAbsolutePath(), stripeInstallationDir,
-        serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName, serverJars, DEFAULT_SERVER_HEAP_MB,
+    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
+
+    Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
+
+    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName, DEFAULT_SERVER_HEAP_MB,
         logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
-    for (int i = 0; i < stripeConfig.getServerNames().size(); ++i) {
+    for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
+      Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
+
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      stripeInstaller.installNewServer(serverName, debugPort, startupCommands.get(i), consistentStartupCommands.get(i));
+
+      StartupBuilder builder = this.startupBuilder.get()
+          .tcConfig(tcConfig)
+          .serverName(serverName)
+          .stripeName(stripeName)
+          .serverWorkingDirectory(serverWorkingDir)
+          .kitDir(kitLocation)
+          .loggingExtension(logConfigExt)
+          .consistentStartup(consistentStart);
+
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -263,6 +263,17 @@ class BasicExternalCluster extends Cluster {
       return tcConfigPath;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+
+  private Path installKit(VerboseManager logger, Path srcKit, Set<Path> extraJars, Path stripeInstall) throws IOException {
+    if (extraJars.isEmpty()) {
+      return srcKit;
+    } else {
+      ContextualLogger clogger = logger.createFileHelpersLogger();
+      Path stripeKit = FileHelpers.createTempCopyOfDirectory(clogger, stripeInstall, "installedKit", srcKit);
+      FileHelpers.copyJarsToServer(clogger, stripeKit, extraJars);
+      return stripeKit;
     }
   }
 
@@ -331,11 +342,6 @@ class BasicExternalCluster extends Cluster {
       }
 
       @Override
-      public void startOneServerWithConsistency() throws Exception {
-        cluster.getStripeControl().startOneServerWithConsistency();
-      }
-
-      @Override
       public void startOneServer() throws Exception {
         cluster.getStripeControl().startOneServer();
       }
@@ -343,11 +349,6 @@ class BasicExternalCluster extends Cluster {
       @Override
       public void startAllServers() throws Exception {
         cluster.getStripeControl().startAllServers();
-      }
-
-      @Override
-      public void startAllServersWithConsistency() throws Exception {
-        cluster.getStripeControl().startAllServersWithConsistency();
       }
 
       @Override
