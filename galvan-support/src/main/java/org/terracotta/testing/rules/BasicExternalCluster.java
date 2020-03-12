@@ -127,7 +127,7 @@ class BasicExternalCluster extends Cluster {
     } else if (testClass == null) {
       this.displayName = description.getDisplayName();
     } else {
-      this.displayName = methodName + "(" + testClass.getSimpleName() + ")";
+      this.displayName = testClass.getSimpleName() + "-" + methodName;
     }
     return super.apply(base, description);
   }
