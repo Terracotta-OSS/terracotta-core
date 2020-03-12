@@ -175,32 +175,32 @@ class BasicExternalCluster extends Cluster {
     }
 
     String stripeName = "stripe1";
-    Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName).toAbsolutePath();
+    Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
     Files.createDirectory(stripeInstallationDir);
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
 
     Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
-
     Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
 
-    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames, stripeName, DEFAULT_SERVER_HEAP_MB,
-        logConfigExt, systemProperties);
+    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
+        stripeName, DEFAULT_SERVER_HEAP_MB, logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
-
+      Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
+      Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
-      StartupCommandBuilder builder = this.startupBuilder.get()
-          .tcConfig(tcConfig)
+      StartupCommandBuilder builder = startupBuilder.get()
+          .tcConfig(tcConfigRelative)
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDir(serverWorkingDir)
-          .kitDir(kitLocation)
+          .kitDir(kitLocationRelative)
           .logConfigExtension(logConfigExt)
           .consistentStartup(consistentStart);
 
@@ -252,10 +252,14 @@ class BasicExternalCluster extends Cluster {
     waitForSafe();
   }
 
+  private Path relativize(Path root, Path other) {
+    return root.toAbsolutePath().relativize(other.toAbsolutePath());
+  }
+
   private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                               Path stripeInstallationDir) {
     TcConfigBuilder configBuilder = new TcConfigBuilder(serverNames, serverPorts, serverGroupPorts, tcProperties,
-        stripeInstallationDir, namespaceFragment, serviceFragment, clientReconnectWindow, voterCount);
+        namespaceFragment, serviceFragment, clientReconnectWindow, voterCount);
     String tcConfig = configBuilder.build();
     try {
       Path tcConfigPath = Files.createFile(stripeInstallationDir.resolve("tc-config.xml"));

@@ -16,6 +16,7 @@
 package org.terracotta.testing.config;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -24,7 +25,6 @@ public class TcConfigBuilder {
   private final List<String> serverNames;
   private final List<Integer> serverPorts;
   private final List<Integer> serverGroupPorts;
-  private final Path serverWorkingDir;
   private final String namespaceFragment;
   private final String serviceFragment;
   private final int clientReconnectWindow;
@@ -32,13 +32,11 @@ public class TcConfigBuilder {
   private final Properties tcProperties = new Properties();
 
   public TcConfigBuilder(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
-                         Properties tcProperties, Path serverWorkingDir, String namespaceFragment, String serviceFragment,
-                         int clientReconnectWindow, int voterCount) {
+                         Properties tcProperties, String namespaceFragment, String serviceFragment, int clientReconnectWindow, int voterCount) {
     this.serverNames = serverNames;
     this.serverPorts = serverPorts;
     this.serverGroupPorts = serverGroupPorts;
     this.tcProperties.putAll(tcProperties);
-    this.serverWorkingDir = serverWorkingDir;
     this.namespaceFragment = namespaceFragment;
     this.serviceFragment = serviceFragment;
     this.clientReconnectWindow = clientReconnectWindow;
@@ -68,7 +66,7 @@ public class TcConfigBuilder {
       Integer groupPort = serverGroupPorts.get(i);
       String oneServer =
           "    <server host=\"localhost\" name=\"" + serverName + "\">\n"
-              + "      <logs>" + serverWorkingDir.resolve(serverName).resolve("logs") + "</logs>\n"
+              + "      <logs>" + Paths.get(serverName, "logs").toString() + "</logs>\n"
               + "      <tsa-port>" + port + "</tsa-port>\n"
               + "      <tsa-group-port>" + groupPort + "</tsa-group-port>\n"
               + "    </server>\n";
