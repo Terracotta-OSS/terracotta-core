@@ -18,8 +18,8 @@
  */
 package org.terracotta.testing.rules;
 
-import org.terracotta.testing.config.DefaultStartupBuilder;
-import org.terracotta.testing.config.StartupBuilder;
+import org.terracotta.testing.config.DefaultStartupCommandBuilder;
+import org.terracotta.testing.config.StartupCommandBuilder;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,7 +44,7 @@ public class BasicExternalClusterBuilder {
   private Properties tcProperties = new Properties();
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
-  private Supplier<StartupBuilder> startupBuilder = DefaultStartupBuilder::new;
+  private Supplier<StartupCommandBuilder> startupBuilder = DefaultStartupCommandBuilder::new;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
@@ -132,7 +132,7 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
-  public BasicExternalClusterBuilder startupBuilder(Supplier<StartupBuilder> startupBuilder) {
+  public BasicExternalClusterBuilder startupBuilder(Supplier<StartupCommandBuilder> startupBuilder) {
     this.startupBuilder = startupBuilder;
     return this;
   }

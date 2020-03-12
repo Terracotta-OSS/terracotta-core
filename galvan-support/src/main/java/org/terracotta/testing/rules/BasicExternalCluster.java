@@ -26,7 +26,7 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
-import org.terracotta.testing.config.StartupBuilder;
+import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseLogger;
@@ -71,7 +71,7 @@ class BasicExternalCluster extends Cluster {
   private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
   private final String logConfigExt;
-  private final Supplier<StartupBuilder> startupBuilder;
+  private final Supplier<StartupCommandBuilder> startupBuilder;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -87,7 +87,7 @@ class BasicExternalCluster extends Cluster {
 
   BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
-                       Properties systemProperties, String logConfigExt, Supplier<StartupBuilder> startupBuilder) {
+                       Properties systemProperties, String logConfigExt, Supplier<StartupCommandBuilder> startupBuilder) {
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
@@ -195,13 +195,13 @@ class BasicExternalCluster extends Cluster {
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
-      StartupBuilder builder = this.startupBuilder.get()
+      StartupCommandBuilder builder = this.startupBuilder.get()
           .tcConfig(tcConfig)
           .serverName(serverName)
           .stripeName(stripeName)
-          .serverWorkingDirectory(serverWorkingDir)
+          .serverWorkingDir(serverWorkingDir)
           .kitDir(kitLocation)
-          .loggingExtension(logConfigExt)
+          .logConfigExtension(logConfigExt)
           .consistentStartup(consistentStart);
 
       stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);

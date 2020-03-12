@@ -20,13 +20,20 @@ package org.terracotta.testing.config;
 
 import java.nio.file.Path;
 
-public interface StartupBuilder {
-  StartupBuilder tcConfig(Path tcConfig);
-  StartupBuilder kitDir(Path serverInstallationDir);
-  StartupBuilder loggingExtension(String logging);
-  StartupBuilder serverWorkingDirectory(Path serverInstallationDir);
-  StartupBuilder serverName(String serverName);
-  StartupBuilder stripeName(String stripeName);
-  StartupBuilder consistentStartup(boolean consistent);
+public interface StartupCommandBuilder {
+  StartupCommandBuilder tcConfig(Path tcConfig);
+
+  StartupCommandBuilder kitDir(Path serverInstallationDir);
+
+  StartupCommandBuilder logConfigExtension(String logging);
+
+  StartupCommandBuilder serverWorkingDir(Path serverWorkingDir);
+
+  StartupCommandBuilder serverName(String serverName);
+
+  StartupCommandBuilder stripeName(String stripeName);
+
+  StartupCommandBuilder consistentStartup(boolean consistentStartup);
+
   String[] build();
 }

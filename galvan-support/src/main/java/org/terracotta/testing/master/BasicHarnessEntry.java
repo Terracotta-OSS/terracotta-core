@@ -34,13 +34,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
-import org.terracotta.testing.config.DefaultStartupBuilder;
-import org.terracotta.testing.config.StartupBuilder;
-import static org.terracotta.testing.demos.TestHelpers.isWindows;
+import org.terracotta.testing.config.DefaultStartupCommandBuilder;
+import org.terracotta.testing.config.StartupCommandBuilder;
 
 /**
  * The harness entry-point for the harness running {@link BasicTestClusterConfiguration} tests.
@@ -84,13 +82,13 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       Path serverInstallDir = stripeInstallationDir.resolve(serverName);
       // Determine if we want a debug port.
       int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      StartupBuilder builder = new DefaultStartupBuilder()
+      StartupCommandBuilder builder = new DefaultStartupCommandBuilder()
           .tcConfig(tcConfig)
           .serverName(serverName)
           .stripeName(stripeName)
-          .serverWorkingDirectory(serverInstallDir)
+          .serverWorkingDir(serverInstallDir)
           .kitDir(harnessOptions.kitOriginPath)
-          .loggingExtension("logback-ext.xml")
+          .logConfigExtension("logback-ext.xml")
           .consistentStartup(false);
 
       stripeInstaller.installNewServer(serverName, serverInstallDir, debugPort, builder::build);
