@@ -52,6 +52,8 @@ public class ServerConfigurationManagerTest {
   private static final String[] TEST_SERVER_NAMES = {"test-server-1", "test-server-2"};
   private static final int[] TEST_SERVER_PORTS = {9410, 9510};
   private static final int[] TEST_GROUP_PORTS = {9430, 9530};
+
+  private volatile String currentServer;
   
   private ConfigurationProvider mockServers(int length) throws ConfigurationException {
     ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
@@ -64,9 +66,9 @@ public class ServerConfigurationManagerTest {
     }
     
     when(configuration.getServerConfigurations()).thenReturn(servers);
-    
-    when(configuration.getDefaultServerConfiguration(ArgumentMatchers.any())).then(a->{
-      Object value = a.getArgument(0);
+
+    when(configuration.getServerConfiguration()).then(a->{
+      Object value = currentServer;
       if (value == null) {
         return servers.size() == 1 ? servers.get(0) : null;
       }
@@ -85,8 +87,8 @@ public class ServerConfigurationManagerTest {
     ConfigurationProvider configurationProvider = mockServers(1);
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[0],
-                                                                        configurationProvider,
+    currentServer = TEST_SERVER_NAMES[0];
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
@@ -116,8 +118,8 @@ public class ServerConfigurationManagerTest {
     
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(null,
-                                                                        configurationProvider,
+    currentServer = null;
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
@@ -134,10 +136,9 @@ public class ServerConfigurationManagerTest {
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
     expectedException.expect(ConfigurationException.class);
-    expectedException.expectMessage("server:not-a-server-name is not a valid server");
-
-    new ServerConfigurationManager("not-a-server-name",
-                                                                        configurationProvider,
+    expectedException.expectMessage("unable to determine server configuration");
+    currentServer = "not-a-server-name";
+    new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
@@ -152,8 +153,8 @@ public class ServerConfigurationManagerTest {
 
     boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
-                                                                        configurationProvider,
+    currentServer = TEST_SERVER_NAMES[currentServerIndex];
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
@@ -182,9 +183,9 @@ public class ServerConfigurationManagerTest {
 
     String[] processArgs = new String[] {"arg1", "arg2"};
     expectedException.expect(ConfigurationException.class);
-    expectedException.expectMessage("unable to determine a valid default server");
-    ServerConfigurationManager manager = new ServerConfigurationManager(null,
-                                                                        configurationProvider,
+    expectedException.expectMessage("unable to determine server configuration");
+    currentServer = null;
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         true,
                                                                         false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
@@ -197,10 +198,10 @@ public class ServerConfigurationManagerTest {
 
     String[] processArgs = new String[] {"arg1", "arg2"};
     expectedException.expect(ConfigurationException.class);
-    expectedException.expectMessage("server:not-a-server-name is not a valid server");
+    expectedException.expectMessage("unable to determine server configuration");
 
-    new ServerConfigurationManager("not-a-server-name",
-                                   configurationProvider,
+    currentServer = "not-a-server-name";
+    new ServerConfigurationManager(configurationProvider,
                                    true,
                                    false,
                                    new ServiceLocator(Thread.currentThread().getContextClassLoader()),
@@ -227,8 +228,8 @@ public class ServerConfigurationManagerTest {
 
     boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
-                                                                        configurationProvider,
+    currentServer = TEST_SERVER_NAMES[currentServerIndex];
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
                                                                         false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),

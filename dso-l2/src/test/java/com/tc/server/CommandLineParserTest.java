@@ -27,7 +27,6 @@ import org.junit.rules.ExpectedException;
 import org.terracotta.configuration.ConfigurationProvider;
 
 import static com.tc.server.CommandLineParser.Opt.CONSISTENT_STARTUP;
-import static com.tc.server.CommandLineParser.Opt.SERVER_NAME;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
@@ -54,7 +53,6 @@ public class CommandLineParserTest {
   public void testParserWithShortNames() {
     String[] args = {
         "provider-option-1",
-        SERVER_NAME.getShortOption(), TEST_SERVER,
         "provider-option-2",
         CONSISTENT_STARTUP.getShortOption()
     };
@@ -63,7 +61,6 @@ public class CommandLineParserTest {
 
     CommandLineParser parser = new CommandLineParser(args, configurationProvider);
 
-    assertThat(parser.getServerName(), is(TEST_SERVER));
     assertThat(parser.consistentStartup(), is(true));
     assertThat(parser.getProviderArgs(), containsInAnyOrder("provider-option-1", "provider-option-2"));
   }
@@ -72,14 +69,12 @@ public class CommandLineParserTest {
   public void testParserWithLongNames() {
     String[] args = {
         "provider-option-1",
-        SERVER_NAME.getLongOption(), TEST_SERVER,
         "provider-option-2",
         CONSISTENT_STARTUP.getLongOption()
     };
 
     CommandLineParser parser = new CommandLineParser(args, mock(ConfigurationProvider.class));
 
-    assertThat(parser.getServerName(), is(TEST_SERVER));
     assertThat(parser.consistentStartup(), is(true));
     assertThat(parser.getProviderArgs(), containsInAnyOrder("provider-option-1", "provider-option-2"));
   }
@@ -88,18 +83,6 @@ public class CommandLineParserTest {
   public void testParserWithEmptyArgs() {
     CommandLineParser parser = new CommandLineParser(new String[0], mock(ConfigurationProvider.class));
 
-    assertThat(parser.getServerName(), nullValue());
-    assertThat(parser.consistentStartup(), is(false));
-    assertThat(parser.getProviderArgs(), empty());
-  }
-
-  @Test
-  public void testParserWithOnlyServerNameOption() {
-    String[] args = {SERVER_NAME.getShortOption(), TEST_SERVER };
-
-    CommandLineParser parser = new CommandLineParser(args, mock(ConfigurationProvider.class));
-
-    assertThat(parser.getServerName(), is(TEST_SERVER));
     assertThat(parser.consistentStartup(), is(false));
     assertThat(parser.getProviderArgs(), empty());
   }
@@ -110,7 +93,6 @@ public class CommandLineParserTest {
 
     CommandLineParser parser = new CommandLineParser(args, mock(ConfigurationProvider.class));
 
-    assertThat(parser.getServerName(), nullValue());
     assertThat(parser.consistentStartup(), is(true));
     assertThat(parser.getProviderArgs(), empty());
   }
@@ -121,17 +103,8 @@ public class CommandLineParserTest {
 
     CommandLineParser parser = new CommandLineParser(args, mock(ConfigurationProvider.class));
 
-    assertThat(parser.getServerName(), nullValue());
     assertThat(parser.consistentStartup(), is(false));
     assertThat(parser.getProviderArgs(), containsInAnyOrder("provider-option-1", "provider-option-2"));
-  }
-
-  @Test
-  public void testParserWithNoServerNameOptions() {
-    String[] args = {SERVER_NAME.getShortOption()};
-
-    expectedException.expectMessage("Unable to parse command-line arguments");
-    new CommandLineParser(args, mock(ConfigurationProvider.class));
   }
 
   @Test
@@ -165,9 +138,8 @@ public class CommandLineParserTest {
   @Test
   public void testParserWithHelpWithOtherOptions() {
     String[] args = {
-        SERVER_NAME.getShortOption(),
-        TEST_SERVER,
-        CommandLineParser.Opt.HELP.getLongOption()
+      CommandLineParser.Opt.UPGRADE_MODE.getLongOption(),
+      CommandLineParser.Opt.HELP.getLongOption()
     };
     ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
     when(configurationProvider.getConfigurationParamsDescription()).thenReturn("test help");

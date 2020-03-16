@@ -49,8 +49,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   private final ServiceLocator serviceLocator;
   private final String[] startUpArgs;
 
-  public ServerConfigurationManager(String serverName,
-                                    ConfigurationProvider configurationProvider,
+  public ServerConfigurationManager(ConfigurationProvider configurationProvider,
                                     boolean consistentStartup,
                                     boolean upgrade,
                                     ServiceLocator classLoader,
@@ -63,14 +62,10 @@ public class ServerConfigurationManager implements PrettyPrintable {
     this.configuration = configurationProvider.getConfiguration();
     this.serviceLocator = classLoader;
 
-    this.serverConfiguration = this.configuration.getDefaultServerConfiguration(serverName);
+    this.serverConfiguration = this.configuration.getServerConfiguration();
     
     if (this.serverConfiguration == null) {
-      if (serverName != null) {
-        throw new ConfigurationException("server:" + serverName + " is not a valid server");
-      } else {
-        throw new ConfigurationException("unable to determine a valid default server");
-      } 
+      throw new ConfigurationException("unable to determine server configuration");
     }
 
     Map<String, ServerConfiguration> serverConfigurationMap = getServerConfigurationMap(configuration.getServerConfigurations());

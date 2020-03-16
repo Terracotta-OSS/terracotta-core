@@ -37,13 +37,11 @@ import java.util.Set;
 
 import static com.tc.server.CommandLineParser.Opt.CONSISTENT_STARTUP;
 import static com.tc.server.CommandLineParser.Opt.HELP;
-import static com.tc.server.CommandLineParser.Opt.SERVER_NAME;
 import static com.tc.server.CommandLineParser.Opt.UPGRADE_MODE;
 
 class CommandLineParser {
 
   enum Opt {
-    SERVER_NAME("n", "name"),
     CONSISTENT_STARTUP("c", "consistency-on-startup"),
     UPGRADE_MODE("u","upgrade-compatiblity"),
     HELP("h", "help");
@@ -79,8 +77,6 @@ class CommandLineParser {
     }
   }
 
-  private final String serverName;
-
   private final boolean consistentStartup;
   
   private final boolean upgradeCompatibility;
@@ -108,16 +104,11 @@ class CommandLineParser {
         System.exit(0);
       }
 
-      this.serverName = commandLine.getOptionValue(SERVER_NAME.getShortName());
       this.consistentStartup = commandLine.hasOption(CONSISTENT_STARTUP.getShortName());
       this.upgradeCompatibility = commandLine.hasOption(UPGRADE_MODE.getShortName());
     } catch (ParseException pe) {
       throw new RuntimeException("Unable to parse command-line arguments: " + Arrays.toString(args), pe);
     }
-  }
-
-  String getServerName() {
-    return this.serverName;
   }
 
   boolean consistentStartup() {
@@ -144,15 +135,6 @@ class CommandLineParser {
 
   private static Options createOptions() {
     Options options = new Options();
-
-    options.addOption(
-        Option.builder(SERVER_NAME.getShortName())
-              .longOpt(SERVER_NAME.getLongName())
-              .hasArg()
-              .argName("server-name")
-              .desc("specifies the server name, defaults to the host name")
-              .build()
-    );
 
     options.addOption(
         Option.builder(CONSISTENT_STARTUP.getShortName())
@@ -182,13 +164,7 @@ class CommandLineParser {
 
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
-      if (SERVER_NAME.same(arg)) {
-        filteredArgs.add(i);
-        if (i + 1 < args.length) {
-          filteredArgs.add(i + 1);
-          i++;
-        }
-      } else if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg) || UPGRADE_MODE.same(arg)) {
+      if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg) || UPGRADE_MODE.same(arg)) {
         filteredArgs.add(i);
       }
     }

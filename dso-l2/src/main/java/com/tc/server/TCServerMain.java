@@ -68,7 +68,6 @@ public class TCServerMain {
       configurationProvider.initialize(commandLineParser.getProviderArgs());
 
       setup = new ServerConfigurationManager(
-          commandLineParser.getServerName(),
           configurationProvider,
           commandLineParser.consistentStartup(),
           commandLineParser.upgradeCompatibility(),

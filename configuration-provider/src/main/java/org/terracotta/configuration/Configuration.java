@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Properties;
 
 public interface Configuration {
-  ServerConfiguration getDefaultServerConfiguration(String serverName)throws ConfigurationException;
+  ServerConfiguration getServerConfiguration() throws ConfigurationException;
 
   List<ServerConfiguration> getServerConfigurations();
   
