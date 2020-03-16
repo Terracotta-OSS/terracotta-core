@@ -64,6 +64,7 @@ import org.terracotta.config.Property;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcProperties;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.SERVER_NAME;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 
@@ -76,6 +77,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   static final String CONFIG_FILE_PROPERTY_NAME = "tc.config";
 
   enum Opt {
+    SERVER_NAME("n", "name"),
     CONFIG_PATH("f", "config");
 
     String shortName;
@@ -105,6 +107,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     }
   }
 
+  private volatile String serverName;
   private volatile TcConfiguration configuration;
 
   @Override
@@ -140,7 +143,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
 
   @Override
   public Configuration getConfiguration() {
-    return new TcConfigurationWrapper(configuration);
+    return new TcConfigurationWrapper(serverName, configuration);
   }
 
   @Override
@@ -169,6 +172,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   private Path getConfiguration(String[] args) throws Exception {
     CommandLine commandLine = new DefaultParser().parse(createOptions(), args);
 
+    serverName = commandLine.getOptionValue(SERVER_NAME.getShortName());
     String cmdConfigurationFileName = commandLine.getOptionValue(CONFIG_PATH.getShortName());
     if (cmdConfigurationFileName != null && !cmdConfigurationFileName.isEmpty()) {
       Path path = Paths.get(cmdConfigurationFileName);
@@ -216,6 +220,14 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     Options options = new Options();
 
     options.addOption(
+        Option.builder(SERVER_NAME.getShortName())
+              .longOpt(SERVER_NAME.getLongName())
+              .hasArg()
+              .argName("server-name")
+              .desc("specifies the server name, defaults to the host name")
+              .build()
+    );
+    options.addOption(
         Option.builder(CONFIG_PATH.getShortName())
               .longOpt(CONFIG_PATH.getLongName())
               .hasArg()
@@ -228,14 +240,16 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   }
   
   public static class TcConfigurationWrapper implements Configuration, PrettyPrintable {
+    private final String serverName;
     private final TcConfiguration  configuration;
 
-    public TcConfigurationWrapper(TcConfiguration configuration) {
+    public TcConfigurationWrapper(String serverName, TcConfiguration configuration) {
+      this.serverName = serverName;
       this.configuration = configuration;
     }
 
     @Override
-    public ServerConfiguration getDefaultServerConfiguration(String serverName) throws ConfigurationException {
+    public ServerConfiguration getServerConfiguration() throws ConfigurationException {
       Server defaultServer;
       Servers servers = configuration.getPlatformConfiguration().getServers();
       if (serverName != null) {
