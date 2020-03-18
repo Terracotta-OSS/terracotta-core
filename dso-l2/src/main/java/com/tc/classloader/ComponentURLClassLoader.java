@@ -31,11 +31,9 @@ public class ComponentURLClassLoader extends URLClassLoader {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ComponentURLClassLoader.class);
   private final CommonComponentChecker commonComponentChecker;
-  private final String root;
 
-  public ComponentURLClassLoader(String root, URL[] urls, ClassLoader parent, CommonComponentChecker commonComponentChecker) {
+  public ComponentURLClassLoader(URL[] urls, ClassLoader parent, CommonComponentChecker commonComponentChecker) {
     super(urls, parent);
-    this.root = root;
     this.commonComponentChecker = commonComponentChecker;
   }
 
@@ -74,6 +72,6 @@ public class ComponentURLClassLoader extends URLClassLoader {
   
   @Override
   public String toString() {
-    return "ComponentURLClassLoader{root:" + root + " from "+ Arrays.toString(this.getURLs()) + '}';
+    return "ComponentURLClassLoader{from:"+ Arrays.toString(this.getURLs()) + '}';
   }
 }

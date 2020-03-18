@@ -34,17 +34,23 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
  * Top level service locator class used to identify and isolate service dependencies in its own classloader.
+ * Caching will allow for one classloader per root jar.
  */
 public class ServiceLocator extends ManagedServiceLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
   private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_CLASSLOADER_COMPATIBILITY);
   private final ClassLoader defaultClassLoader;
+  private final Map<String, ClassLoader> locationCache = new ConcurrentHashMap<>();
 
   public ServiceLocator(ClassLoader parent) {
     defaultClassLoader = parent;
@@ -53,13 +59,23 @@ public class ServiceLocator extends ManagedServiceLoader {
   @Override
   protected Class<?> loadClass(String className, String location, ClassLoader loader) {
     try {
-      return Class.forName(className, true, new ComponentURLClassLoader(className, new URL[] {new URL(location)}, loader,new AnnotationOrDirectoryStrategyChecker()));
-    } catch (MalformedURLException aml) {
-      LOG.warn("unable to load " + className + " from " + location, aml);
+      ClassLoader component = locationCache.computeIfAbsent(location, loc->createComponentClassLoader(loc, loader));
+      if (component != null) {
+        return Class.forName(className, true, component);
+      }
     } catch  (ClassNotFoundException nf) {
       LOG.warn("unable to load " + className + " from " + location, nf);
     }
     return super.loadClass(className, location, loader);
+  }
+
+  private ClassLoader createComponentClassLoader(String location, ClassLoader parent) {
+    try {
+      return new ComponentURLClassLoader(new URL[] {new URL(location)}, parent,new AnnotationOrDirectoryStrategyChecker());
+    } catch (MalformedURLException aml) {
+      LOG.warn("unable to load " + location, aml);
+    }
+    return null;
   }
     
   private static boolean fileFilter(File target) {
