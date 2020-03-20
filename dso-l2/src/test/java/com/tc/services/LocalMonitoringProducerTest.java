@@ -63,7 +63,7 @@ public class LocalMonitoringProducerTest {
     InternalServiceRegistry internal = mock(InternalServiceRegistry.class);
     when(internal.getService(any(ServiceConfiguration.class))).thenReturn(mock(IStripeMonitoring.class));
     when(reg.subRegistry(anyLong())).thenReturn(internal);
-    producer = new LocalMonitoringProducer(reg, server, timer);
+    producer = new LocalMonitoringProducer(getClass().getClassLoader(), reg, server, timer);
   }
   
   @After
