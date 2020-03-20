@@ -56,7 +56,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private boolean hasCreatedSubRegistries;
 
   @Override
-  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration, ClassLoader loader) {
+  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration) {
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
     if(serviceProviderConfigurationList != null) {
@@ -73,11 +73,11 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         }
       }
     }
-    loadClasspathBuiltins(loader, platformConfiguration);
+    loadClasspathBuiltins(platformConfiguration);
   }
   
-  private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
-    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class, loader);
+  private void loadClasspathBuiltins(PlatformConfiguration platformConfiguration) {
+    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {

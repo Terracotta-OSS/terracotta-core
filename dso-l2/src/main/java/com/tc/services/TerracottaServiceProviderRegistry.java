@@ -40,7 +40,7 @@ public interface TerracottaServiceProviderRegistry extends PrettyPrintable {
    * @param loader the classloader used for all services
    *
    */
-  void initialize(PlatformConfiguration platformConfiguration, Configuration configuration, ClassLoader loader);
+  void initialize(PlatformConfiguration platformConfiguration, Configuration configuration);
 
   /**
    * Method to register platform level service provider which don't have life-cycle using SPI interface but otherwise act

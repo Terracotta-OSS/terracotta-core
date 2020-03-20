@@ -468,7 +468,7 @@ public class DistributedObjectServer {
     Configuration configuration = this.configSetupManager.getConfiguration();
     PlatformConfiguration platformConfiguration =
         new PlatformConfigurationImpl(configSetupManager.getServerConfiguration(), configuration);
-    serviceRegistry.initialize(platformConfiguration, configuration, Thread.currentThread().getContextClassLoader());
+    serviceRegistry.initialize(platformConfiguration, configuration);
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
@@ -499,7 +499,7 @@ public class DistributedObjectServer {
     final ProductInfo pInfo = ProductInfo.getInstance();
     PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
     
-    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer, this.timer);
+    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
     
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!

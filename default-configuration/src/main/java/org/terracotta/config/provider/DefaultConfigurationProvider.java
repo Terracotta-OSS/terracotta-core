@@ -313,7 +313,13 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
 
     @Override
     public String getRawConfiguration() {
-      return configuration.toString();
+      ClassLoader loader = Thread.currentThread().getContextClassLoader();
+      try {
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+        return configuration.toString();
+      } finally {
+        Thread.currentThread().setContextClassLoader(loader);
+      }
     }
     
     @Override

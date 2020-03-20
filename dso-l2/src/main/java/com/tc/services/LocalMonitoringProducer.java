@@ -74,13 +74,13 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   private BestEffortsMonitoring bestEfforts;
   private final ServiceClassLoader classLoader;
 
-  public LocalMonitoringProducer(TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ISimpleTimer timer) {
+  public LocalMonitoringProducer(ClassLoader loader, TerracottaServiceProviderRegistry globalRegistry, PlatformServer thisServer, ISimpleTimer timer) {
     this.globalRegistry = globalRegistry;
     this.thisServer = thisServer;
     this.otherServers = new HashMap<>();
     this.cachedTreeRoot = new HashMap<>();
     this.bestEfforts = new BestEffortsMonitoring(timer);
-    this.classLoader = new ServiceClassLoader(Thread.currentThread().getContextClassLoader());
+    this.classLoader = new ServiceClassLoader(loader);
   }
 
   @Override

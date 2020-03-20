@@ -34,10 +34,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -137,5 +135,9 @@ public class ServiceLocator extends ManagedServiceLoader {
 
   public <T> List<Class<? extends T>> getImplementations(Class<T> interfaceClass) {
     return super.getImplementations(interfaceClass, defaultClassLoader); 
+  }
+
+  public ClassLoader getServiceLoader() {
+    return defaultClassLoader;
   }
 }
