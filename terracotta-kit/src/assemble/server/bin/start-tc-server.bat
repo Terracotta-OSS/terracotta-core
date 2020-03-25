@@ -55,14 +55,6 @@ exit /b 1
 
 :setJavaOptsAndClasspath
 
-REM   Adding SLF4j libraries to the classpath of the server to
-REM   support services that may use SLF4j for logging
-if exist "!TC_SERVER_DIR!\lib" (
-
-) else (
-  echo !TC_SERVER_DIR!\lib does not exist!
-)
-
 set "CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%TC_SERVER_DIR%\lib\;."
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
