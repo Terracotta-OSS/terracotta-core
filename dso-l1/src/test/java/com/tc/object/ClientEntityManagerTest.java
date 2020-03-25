@@ -68,6 +68,9 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import org.mockito.Mockito;
+
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
@@ -377,7 +380,7 @@ public class ClientEntityManagerTest extends TestCase {
       fail();
     }
   }
-  
+
   public void testFullQueueTimesOut() throws Exception {
     // Set the target for success.
     final byte[] resultObject = new byte[8];
@@ -552,8 +555,8 @@ public class ClientEntityManagerTest extends TestCase {
     byte[] last = result.get();
     assertTrue(resultObject == last);
   }
-  
-  
+
+
   @Test
   public void testSingleInvokeTimeout() throws Exception {
     byte[] resultObject = new byte[0];
@@ -619,6 +622,23 @@ public class ClientEntityManagerTest extends TestCase {
     
     t.join();
     assertThat(t.isAlive(), is(false));
+  }
+
+  @Test
+  public void testLowWaterMarkOnPostQueueFailure() {
+    byte[] resultObject = new byte[0];
+    EntityException resultException = null;
+    TestRequestBatchMessage message = new TestRequestBatchMessage(this.manager, resultObject, resultException, true);
+    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE)).thenReturn(message);
+    InFlightMonitor<?> monitor = mock(InFlightMonitor.class);
+    doThrow(new RuntimeException("BOOM")).when(monitor).ackDelivered(eq(Acks.SENT));
+    try {
+      this.manager.invokeAction(entityID, descriptor, EnumSet.of(Acks.SENT), monitor, false, true, new byte[0]);
+      fail("Expected AssertionError");
+    } catch (RuntimeException e) {
+      assertThat(e.getMessage(), is("BOOM"));
+    }
+    this.manager.invokeAction(entityID, descriptor, EnumSet.noneOf(Acks.class), null, false, true, new byte[0]);
   }
 
   private boolean didFindEndpoint(TestFetcher fetcher) throws Exception {

@@ -119,7 +119,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       wasBusy = false;
     }
   } 
-  
+
   private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
     boolean enqueued = true;
     boolean interrupted = false;
@@ -551,31 +551,35 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
+    boolean queued;
     InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
     try {
       msgCount.increment();
       inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
       // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
-      if (enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
-        inFlight.sent();
-        if (inFlight.send()) {
-          //  when encountering a send for anything other than an invoke, wait here before sending anything else
-          //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
-          //  make sure those complete before sending any new invokes or lifecycle messages
-          if (inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
-            inFlight.waitForAcks();
-          }
-        } else {
-          logger.debug("message not sent.  Make sure resend happens " + inFlight);
-        }
-      } else {
-        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
-      }
-      return inFlight;
+      queued = enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION);
     } catch (Throwable t) {
       transactionSource.retire(inFlight.getTransactionID());
       throw t;
     }
+
+    if (queued) {
+      inFlight.sent();
+      if (inFlight.send()) {
+        //  when encountering a send for anything other than an invoke, wait here before sending anything else
+        //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
+        //  make sure those complete before sending any new invokes or lifecycle messages
+        if (inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
+          inFlight.waitForAcks();
+        }
+      } else {
+        logger.debug("message not sent.  Make sure resend happens " + inFlight);
+      }
+    } else {
+      transactionSource.retire(inFlight.getTransactionID());
+      throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+    }
+    return inFlight;
   }
 
   private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type, Set<VoltronEntityMessage.Acks> acks) {
@@ -588,7 +592,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
     ClientID clientID = this.channel.getClientID();
     TransactionID transactionID = transactionSource.create();
-    TransactionID oldestTransactionPending = transactionSource.oldest();
+    TransactionID oldestTransactionPending = transactionSource.oldest();//either premature retirement or late (or missing) removal from inflight
     //this is expensive -- only assert when testing
     TransactionID oldestTransactionInFlight;
     assert (oldestTransactionInFlight = oldestTransactionIn(inFlightMessages.keySet())) == null || (oldestTransactionPending.compareTo(oldestTransactionInFlight) <= 0);
