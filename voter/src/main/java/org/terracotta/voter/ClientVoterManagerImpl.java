@@ -31,8 +31,10 @@ import org.terracotta.exception.EntityVersionMismatchException;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import static com.tc.voter.VoterManagerMBean.MBEAN_NAME;
@@ -137,6 +139,17 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   @Override
   public String getServerConfig() throws TimeoutException {
     return processInvocation(diagnostics.getConfig());
+  }
+
+  @Override
+  public Set<String> getTopology() throws TimeoutException {
+    Set<String> resServers = new HashSet<>();
+    String res = processInvocation(diagnostics.invoke("TopologyMBean", "getTopology"));
+    String[] resHostPorts = res.split(",");
+    for (int i = 0; i < resHostPorts.length; ++i) {
+      resServers.add(resHostPorts[i]);
+    }
+    return resServers;
   }
 
   String processInvocation(String invocation) throws TimeoutException {

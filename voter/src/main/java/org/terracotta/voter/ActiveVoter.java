@@ -22,12 +22,15 @@ import com.tc.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Map;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.tc.voter.VoterManager.HEARTBEAT_RESPONSE;
@@ -42,6 +45,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 /**
  * ActiveVoter votes only for the active it originally connects to.  If the active disconnects,
@@ -57,17 +62,30 @@ public class ActiveVoter implements AutoCloseable {
 
   private static final long HEARTBEAT_INTERVAL = 1000L;
   private static final long REG_RETRY_INTERVAL = 5000L;
+  private static final long DEFAULT_TOPOLOGY_FETCH_TIME = 300000L;
+  public static final String TOPOLOGY_FETCH_TIME_PROPERTY = "org.terracotta.voter.topology.fetch.interval";
+  private static final long topologyFetchInterval = Long.getLong(TOPOLOGY_FETCH_TIME_PROPERTY, DEFAULT_TOPOLOGY_FETCH_TIME);
 
   private final Thread voter;
   private final String id;
-  private final String[] servers;
-
+  private final Function<String, ClientVoterManager> clientVoterManagerFactory;
   private volatile boolean active = false;
+  private volatile ClientVoterManager activeClientVoterManager = null;
+  private volatile Future<?> topologyFetchingFuture = null;
+  private final Set<String> existingTopology = new HashSet<>();
+  private final List<ClientVoterManager> voterManagers = new CopyOnWriteArrayList<>();
+  private final Set<String> registrationLatch = new HashSet<>();
+  private final Map<String, Future<?>> heartbeatFutures = new ConcurrentHashMap<>();
 
   public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
+    this(id, voterStatus, connectionProps, ClientVoterManagerImpl::new, hostPorts);
+  }
+  
+  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps,
+                     Function<String, ClientVoterManager> clientVoterManagerFactory, String... hostPorts) {
     this.voter = voterThread(voterStatus, connectionProps, hostPorts);
     this.id = id;
-    this.servers = hostPorts;
+    this.clientVoterManagerFactory = clientVoterManagerFactory;
   }
   
   public ActiveVoter start() {
@@ -77,14 +95,15 @@ public class ActiveVoter implements AutoCloseable {
 
   private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
     return new Thread(() -> {
-      ScheduledExecutorService executorService = Executors.newScheduledThreadPool(hostPorts.length);
-      Set<String> registrationLatch = new HashSet<>();
-      registrationLatch.addAll(Arrays.asList(hostPorts));
-      List<ClientVoterManager> voterManagers = Stream.of(hostPorts).map(ClientVoterManagerImpl::new).collect(toList());
+      ExecutorService executorService = Executors.newCachedThreadPool();
+      List<ClientVoterManager> clientVoterManagers = Stream.of(hostPorts).map(clientVoterManagerFactory).collect(toList());
+      existingTopology.addAll(new HashSet<>(asList(hostPorts)));
+      voterManagers.addAll(clientVoterManagers);
+      registrationLatch.addAll(new HashSet<>(asList(hostPorts)));
       try {
         while (!Thread.currentThread().isInterrupted()) {
-          ClientVoterManager currentActive = registerWithActive(id, executorService, voterManagers, connectionProps);
-
+          ClientVoterManager currentActive = registerWithActive(id, clientVoterManagers, connectionProps);
+          activeClientVoterManager = currentActive;
           active = true;
           LOGGER.info("{} registered with the active: {}", this, currentActive.getTargetHostPort());
           voterStatus.complete(new VoterStatus() {
@@ -118,13 +137,16 @@ public class ActiveVoter implements AutoCloseable {
             }
           });
 
-          registerAndHeartbeat(executorService, currentActive, voterManagers, connectionProps, registrationLatch);
+          registerAndHeartbeat(executorService, currentActive, connectionProps);
           active = false;
+          activeClientVoterManager = null;
         }
       } catch (InterruptedException e) {
         LOGGER.warn("{} interrupted", this);
       }
       active = false;
+      activeClientVoterManager = null;
+      cleanHeartBeatingAndPollingFutures();
       executorService.shutdownNow();
       try {
         executorService.awaitTermination(5, TimeUnit.SECONDS);
@@ -134,9 +156,10 @@ public class ActiveVoter implements AutoCloseable {
     });
   }
 
-  ClientVoterManager registerWithActive(String id, ScheduledExecutorService executorService,
+  ClientVoterManager registerWithActive(String id,
                                         List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps) throws InterruptedException {
     CompletableFuture<ClientVoterManager> registrationLatch = new CompletableFuture<>();
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(voterManagers.size());
 
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       if (!voterManager.isConnected()) {
@@ -169,16 +192,17 @@ public class ActiveVoter implements AutoCloseable {
       throw new RuntimeException(e);
     } finally {
       futures.forEach(f->f.cancel(true));
+      executorService.shutdownNow();
+      try {
+        executorService.awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException ie) {
+        LOGGER.warn("{} interrupted", this);
+      }
     }
   }
 
-  public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive,
-                                   List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps,
-                                   Set<String> registrationLatch) throws InterruptedException {
-    AtomicReference<ClientVoterManager> voteOwner = new AtomicReference<>();
-    //Try to connect and register with all the servers
-    voteOwner.set(currentActive);
-    List<Future<?>> futures = voterManagers.stream().map(voterManager -> executorService.submit(() -> {
+  private Runnable heartbeat(ExecutorService executorService, ClientVoterManager voterManager, Optional<Properties> connectionProps, AtomicReference<ClientVoterManager> voteOwner) {
+    return () -> {
       try {
         ClientVoterManager owner = voteOwner.get();
         while (owner != null && !executorService.isShutdown()) {          
@@ -254,6 +278,7 @@ public class ActiveVoter implements AutoCloseable {
                 // stole ownership of the vote
                 owner.zombie();
                 long result = voterManager.vote(id, election);
+                activeClientVoterManager = voterManager;
                 LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
                 break;
               } else {
@@ -278,8 +303,17 @@ public class ActiveVoter implements AutoCloseable {
       } finally {
         voterManager.close();
       }
-    })).collect(Collectors.toList());
+    };
+  }
 
+  public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive,
+                                   Optional<Properties> connectionProps) throws InterruptedException {
+    AtomicReference<ClientVoterManager> voteOwner = new AtomicReference<>();
+    //Try to connect and register with all the servers
+    voteOwner.set(currentActive);
+    voterManagers.forEach(voterManager ->
+        heartbeatFutures.put(voterManager.getTargetHostPort(), executorService.submit(heartbeat(executorService, voterManager, connectionProps, voteOwner))));
+    startTopologyPolling(executorService, connectionProps, voteOwner); // Adding the polling job
     int tryCount = 0;
     String state;
     while (tryCount < 10) {
@@ -316,7 +350,9 @@ public class ActiveVoter implements AutoCloseable {
 //  by here, the server being voted for seems to not have won the election.  
 //  reset everything and start over
     voteOwner.set(null);
-    futures.forEach(f->f.cancel(true));
+    heartbeatFutures.forEach((server,f)->f.cancel(true));
+    topologyFetchingFuture.cancel(true);
+    cleanHeartBeatingAndPollingFutures();
     voterManagers.stream().forEach(ClientVoterManager::close);
     LOGGER.warn("Rejected by all servers. Attempting to re-register");
   }
@@ -353,6 +389,75 @@ public class ActiveVoter implements AutoCloseable {
     this.voter.interrupt();
   }
 
+  private void startTopologyPolling(ExecutorService executorService, Optional<Properties> connectionProps,
+                                    AtomicReference<ClientVoterManager> voteOwner) {
+    topologyFetchingFuture = executorService.submit(() -> {
+      try {
+        while (activeClientVoterManager.isConnected()) {
+          Set<String> newTopology = activeClientVoterManager.getTopology();
+          LOGGER.info("Topology is {}.", newTopology);
+          if (!existingTopology.equals(newTopology)) {
+            LOGGER.info("New Topology detected {}.", newTopology);
+            // Start heartbeating with new servers
+            Set<String> addedServers = getAddedServers(newTopology);
+            synchronized (registrationLatch) {
+              registrationLatch.addAll(addedServers);
+            }
+            addedServers.forEach(server -> {
+              existingTopology.add(server);
+              ClientVoterManager clientVoterManager = clientVoterManagerFactory.apply(server);
+              voterManagers.add(clientVoterManager);
+              heartbeatFutures.put(clientVoterManager.getTargetHostPort(),
+                  executorService.submit(heartbeat(executorService, clientVoterManager, connectionProps, voteOwner)));
+            });
+
+            // Do removal of old servers from topology
+            Set<String> removedServers = getRemovedServers(newTopology);
+            synchronized (registrationLatch) {
+              registrationLatch.removeAll(removedServers);
+              if (registrationLatch.isEmpty()) {
+                registrationLatch.notifyAll();
+              }
+            }
+            removedServers.forEach(server -> {
+              existingTopology.remove(server);
+              heartbeatFutures.remove(server).cancel(true);
+            });
+          }
+          sleepForTopologyFetchInterval();
+        }
+      } catch (TimeoutException | RuntimeException e) {
+        activeClientVoterManager.close();
+        sleepFor10();
+      }
+    });
+  }
+
+  private Set<String> getRemovedServers(Set<String> newTopology) {
+    Set<String> res = new HashSet<>(existingTopology);
+    res.removeAll(newTopology);
+    return res;
+  }
+
+  private Set<String> getAddedServers(Set<String> newTopology) {
+    Set<String> res = new HashSet<>(newTopology);
+    res.removeAll(existingTopology);
+    return res;
+  }
+
+  private void sleepForTopologyFetchInterval() {
+    try {
+      Thread.sleep(topologyFetchInterval);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private void cleanHeartBeatingAndPollingFutures() {
+    heartbeatFutures.clear();
+    topologyFetchingFuture = null;
+  }
+  
   @Override
   public void close() {
     stop();
@@ -360,7 +465,16 @@ public class ActiveVoter implements AutoCloseable {
 
   @Override
   public String toString() {
-    return "ActiveVoter{" + Arrays.toString(servers) + "}";
+    return "ActiveVoter{" + existingTopology + "}";
+  }
+
+  // For testing purposes
+  public Set<String> getExistingTopology() {
+    return existingTopology;
+  }
+
+  public Map<String, Future<?>> getHeartbeatFutures() {
+    return heartbeatFutures;
   }
 
   public static void main(String[] args) {

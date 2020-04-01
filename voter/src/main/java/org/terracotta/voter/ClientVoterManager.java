@@ -22,6 +22,7 @@ import com.tc.voter.VoterManager;
 
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 public interface ClientVoterManager extends VoterManager {
@@ -50,6 +51,8 @@ public interface ClientVoterManager extends VoterManager {
    * @throws java.util.concurrent.TimeoutException
    */
   String getServerConfig() throws TimeoutException;
+
+  Set<String> getTopology() throws TimeoutException;
 
   /**
    * Close the connection with the server.
