@@ -540,10 +540,18 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     Thread.currentThread().setName("Server thread isActive: " + ((null != this.activeEntities) ? "active" : "passive"));
     PassthroughMessageContainer toRun = getNextMessage();
     while (null != toRun) {
-      IMessageSenderWrapper sender = toRun.sender;
-      byte[] message = toRun.message;
-      serverThreadHandleMessage(sender, message);
-      
+      try {
+        IMessageSenderWrapper sender = toRun.sender;
+        byte[] message = toRun.message;
+        serverThreadHandleMessage(sender, message);
+      } catch (Throwable t) {
+        // thread interrupt signals a shutdown of the server, some entity code
+        // may not like this, catch everything here and make sure the server is running,
+        // if not, rethrow.
+        if (running.isRaised()) {
+          throw t;
+        }
+      }
       toRun = getNextMessage();
     }
   }
