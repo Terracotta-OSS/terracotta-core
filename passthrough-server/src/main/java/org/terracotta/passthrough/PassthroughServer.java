@@ -35,7 +35,6 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Assert;
-import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityServerService;
 import org.terracotta.entity.ServiceProvider;
@@ -229,6 +228,14 @@ public class PassthroughServer implements PassthroughDumper {
 
     // Install the user-created services.
     internalInstallServiceProvider();
+    //  if this is the active, try and disconnect the clients
+    this.serverProcess.setCrashHandler((Thread t, Throwable e) -> {
+      System.err.println("FATAL EXCEPTION IN PASSTHROUGH SERVER THREAD: " + t);
+      e.printStackTrace();
+      if (isActive) {
+        disconnectClients();
+      }
+    });
   }
 
   private void internalInstallServiceProvider() {

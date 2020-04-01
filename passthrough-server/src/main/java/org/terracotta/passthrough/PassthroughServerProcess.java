@@ -99,6 +99,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private final Flag running = new Flag();
   private final List<EntityServerService<?, ?>> entityServices;
   private Thread serverThread;
+  private Thread.UncaughtExceptionHandler crashHandler;
   private final BlockingQueue<PassthroughMessageContainer> messageQueue;
   // Currently, for simplicity, we will resolve entities by name.
   // Technically, these should be resolved by class+name.
@@ -152,6 +153,10 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.retirementManager = new PassthroughRetirementManager();
     Assert.assertTrue(null != crasher);
     this.crasher = crasher;
+  }
+
+  void setCrashHandler(Thread.UncaughtExceptionHandler handler) {
+    this.crashHandler = handler;
   }
   
   public boolean isServerThread() {
@@ -276,7 +281,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   private void startServerThreadRunning() {
     Assert.assertTrue(null == this.serverThread);
     this.serverThread = new Thread(this::runServerThread);
-    this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
+    if (this.crashHandler != null) {
+      this.serverThread.setUncaughtExceptionHandler(this.crashHandler);
+    } else {
+      this.serverThread.setUncaughtExceptionHandler(PassthroughUncaughtExceptionHandler.sharedInstance);
+    }
 
     this.running.raise();
     // We want to now set the server info for this instance.
@@ -549,6 +558,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         // may not like this, catch everything here and make sure the server is running,
         // if not, rethrow.
         if (running.isRaised()) {
+          running.lower();
           throw t;
         }
       }
