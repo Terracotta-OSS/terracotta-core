@@ -208,7 +208,6 @@ public class PassthroughClusterControl implements IClusterControl {
     boolean shouldStorageLoaded = false;
 
     electedActive.start(isActive, shouldStorageLoaded, Collections.<Long>emptySet());
-    electedActive.addPermanentEntities();
 
     for (PassthroughServer passthroughServer : passthroughServers) {
       if(!electedActive.equals(passthroughServer)) {
