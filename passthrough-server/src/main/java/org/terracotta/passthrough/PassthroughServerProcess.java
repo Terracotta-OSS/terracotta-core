@@ -550,7 +550,9 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
   
   private PassthroughMessageContainer getNextMessage() {
     try {
-      return messageQueue.take();
+      if (running.isRaised()) {
+        return messageQueue.take();
+      }
     } catch (InterruptedException ie) {
       if (running.isRaised()) {
         Assert.unexpected(ie);
