@@ -32,6 +32,5 @@ public class PassthroughUncaughtExceptionHandler implements UncaughtExceptionHan
   public void uncaughtException(Thread arg0, Throwable arg1) {
     System.err.println("FATAL EXCEPTION IN PASSTHROUGH THREAD:");
     arg1.printStackTrace();
-    System.exit(1);
   }
 }

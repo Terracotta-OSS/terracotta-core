@@ -22,6 +22,7 @@ import com.tc.classloader.BuiltinService;
 import com.tc.classloader.OverrideService;
 import com.tc.classloader.OverrideServiceType;
 import com.tc.classloader.PermanentEntity;
+import com.tc.classloader.PermanentEntityType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -184,15 +185,28 @@ public class PassthroughServer implements PassthroughDumper {
         int version = pe.version();
         for (String name : names) {
           try {
-            pseudoConnection.getEntityRef((Class)Class.forName(type), (long)version, name).create(null);
-          } catch (ClassNotFoundException not) {
-            throw new RuntimeException(not);
+            pseudoConnection.getEntityRef(type, (long)version, name).create(null);
           } catch (EntityException exp) {
             throw new RuntimeException(exp);
           }
         }
       }
-    }     
+    }
+    for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
+      if (serverEntityService.getClass().isAnnotationPresent(PermanentEntityType.class)) {
+        PermanentEntityType pe = serverEntityService.getClass().getAnnotation(PermanentEntityType.class);
+        Class type = pe.type();
+        String[] names = pe.names();
+        int version = pe.version();
+        for (String name : names) {
+          try {
+            pseudoConnection.getEntityRef(type, (long)version, name).create(null);
+          } catch (EntityException exp) {
+            throw new RuntimeException(exp);
+          }
+        }
+      }
+    }
   }
 
   private void bootstrapProcess(boolean active) {
@@ -214,6 +228,14 @@ public class PassthroughServer implements PassthroughDumper {
 
     // Install the user-created services.
     internalInstallServiceProvider();
+    //  if this is the active, try and disconnect the clients
+    this.serverProcess.setCrashHandler((Thread t, Throwable e) -> {
+      System.err.println("FATAL EXCEPTION IN PASSTHROUGH SERVER THREAD: " + t);
+      e.printStackTrace();
+      if (isActive) {
+        disconnectClients();
+      }
+    });
   }
 
   private void internalInstallServiceProvider() {

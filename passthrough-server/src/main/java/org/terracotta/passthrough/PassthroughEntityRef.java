@@ -45,11 +45,11 @@ import org.terracotta.exception.EntityVersionMismatchException;
 public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
   private final PassthroughConnection passthroughConnection;
   private final EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service;
-  private final Class<T> clazz;
+  private final String clazz;
   private final long version;
   private final String name;
   
-  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service, Class<T> clazz, long version, String name) {
+  public PassthroughEntityRef(PassthroughConnection passthroughConnection, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service, String clazz, long version, String name) {
     this.passthroughConnection = passthroughConnection;
     this.service = service;
     this.clazz = clazz;
@@ -60,7 +60,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
   @Override
   public T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
-    PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz.getCanonicalName(), this.name, clientInstanceID, this.version);
+    PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
     received.blockGetOnRetire();
     // Wait for the config on the response.
@@ -80,7 +80,12 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
     } catch (InterruptedException e) {
       Assert.unexpected(e);
     }
-    return this.passthroughConnection.createEntityInstance(this.clazz, this.name, clientInstanceID, this.version, rawConfig, userData);
+    try {
+      Class<T> type = (Class<T>)Class.forName(this.clazz);
+      return this.passthroughConnection.createEntityInstance(type, this.name, clientInstanceID, this.version, rawConfig, userData);
+    } catch (ClassNotFoundException notfound) {
+      throw new EntityNotFoundException(clazz, name, notfound);
+    }
   }
 
   @Override
@@ -95,7 +100,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
       // NOTE:  We use a try-lock so that we can emulate the "fast fail" semantics now desired for create() - failure to acquire the lock
       // assumes that the entity already exists.
       byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-      PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
+      PassthroughMessage getMessage = PassthroughMessageCodec.createCreateMessage(this.clazz, this.name, this.version, serializedConfiguration);
       PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
       received.blockGetOnRetire();
       try {
@@ -118,7 +123,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
         Assert.unexpected(e);
       }
     } else {
-      throw new EntityNotProvidedException(this.clazz.getName(), this.name);
+      throw new EntityNotProvidedException(this.clazz, this.name);
     }
   }
   
@@ -129,7 +134,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
     // Make sure that we have a service provider.
     if (null != this.service) {
       byte[] serializedConfiguration = this.service.serializeConfiguration(configuration);
-      PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz.getCanonicalName(), this.name, this.version, serializedConfiguration);
+      PassthroughMessage reconfig = PassthroughMessageCodec.createReconfigureMessage(this.clazz, this.name, this.version, serializedConfiguration);
       PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(reconfig);
       received.blockGetOnRetire();
       try {
@@ -150,7 +155,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
         throw new RuntimeException(e);
       }
     } else {
-      throw new EntityNotProvidedException(this.clazz.getName(), this.name);
+      throw new EntityNotProvidedException(this.clazz, this.name);
     }
     return result;
   }
@@ -161,7 +166,7 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
   }
 
   private boolean destroyEntity() throws EntityNotProvidedException, EntityNotFoundException {
-    PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz.getCanonicalName(), this.name);
+    PassthroughMessage getMessage = PassthroughMessageCodec.createDestroyMessage(this.clazz, this.name);
     PassthroughWait received = this.passthroughConnection.sendInternalMessageAfterAcks(getMessage);
     received.blockGetOnRetire();
     try {

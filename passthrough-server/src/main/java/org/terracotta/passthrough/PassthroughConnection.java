@@ -414,23 +414,38 @@ public class PassthroughConnection implements Connection {
     }
   }
 
+  @SuppressWarnings({ "rawtypes"})
+  public EntityRef<?,?,?> getEntityRef(String type, long version, String name) {
+    Class<?> clazz = loadEntityType(type);
+    EntityClientService service = (clazz != null) ? getEntityClientService(clazz) : null;
+    return new PassthroughEntityRef(this, service, type, version, name);
+  }
+
   @Override
   public <T extends Entity, C, U> EntityRef<T, C, U> getEntityRef(Class<T> cls, long version, String name) {
     @SuppressWarnings("unchecked")
     EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U>) getEntityClientService(cls);
-    return new PassthroughEntityRef<T, C, U>(this, service, cls, version, name);
+    return new PassthroughEntityRef<>(this, service, cls.getCanonicalName(), version, name);
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> getEntityClientService(Class rawClass) {
+  private EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> getEntityClientService(Class type) {
     EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> selected = null;
     for (EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?> service : this.entityClientServices) {
-      if (service.handlesEntityType(rawClass)) {
+      if (service.handlesEntityType(type)) {
         Assert.assertTrue(null == selected);
         selected = service;
       }
     }
     return selected;
+  }
+
+  private Class<?> loadEntityType(String typeName) {
+    try {
+      return Class.forName(typeName);
+    } catch (ClassNotFoundException notfound) {
+      return null;
+    }
   }
 
   public synchronized long getNewInstanceID() {
