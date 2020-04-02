@@ -64,7 +64,6 @@ public class PassthroughServer implements PassthroughDumper {
   private PassthroughServerProcess serverProcess;
   private boolean hasStarted;
   private final List<EntityClientService<?, ?, ? extends EntityMessage, ? extends EntityResponse, ?>> entityClientServices;
-  private PassthroughConnection pseudoConnection;
   private PassthroughMonitoringProducer monitoringProducer;
   
   private IAsynchronousServerCrasher crasher;
@@ -142,21 +141,6 @@ public class PassthroughServer implements PassthroughDumper {
     return connection;
   }
 
-  private PassthroughConnection internalConnectNewPseudoConnection() {
-    final long thisConnectionID = nextConnectionID.incrementAndGet();
-    // Note that we need to track the connections for reconnect so pass in this cleanup routine to remove it from our tracking.
-    Runnable onClose = new Runnable() {
-      @Override
-      public void run() {
-        // We do nothing in this case.
-      }
-    };
-    String readerThreadName = "Pseudo-connection " + thisConnectionID;
-    PassthroughConnection passthroughConnection = new PassthroughConnection("internal pseudo-connection", readerThreadName, this.serverProcess, this.entityClientServices, onClose, thisConnectionID);
-    passthroughConnection.startProcessingRequests();
-    return passthroughConnection;
-  }
-
   public void start(boolean isActive, boolean shouldLoadStorage) {
     start(isActive, shouldLoadStorage, Collections.<Long>emptySet());
   }
@@ -170,14 +154,17 @@ public class PassthroughServer implements PassthroughDumper {
     
     // If we are active, tell the monitoring system.
     if (this.isActive) {
+      if (!shouldLoadStorage) {
+        addPermanentEntities();
+      }
       this.monitoringProducer.didBecomeActive(this.serverProcess.getServerInfo());
     }
   }
 
   @SuppressWarnings("unchecked")
-  public void addPermanentEntities() {
+  private void addPermanentEntities() {
     // Populate the server with its services.
-    for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
+    for (EntityServerService<?,?> serverEntityService : this.savedServerEntityServices) {
       if (serverEntityService.getClass().isAnnotationPresent(PermanentEntity.class)) {
         PermanentEntity pe = serverEntityService.getClass().getAnnotation(PermanentEntity.class);
         String type = pe.type();
@@ -185,7 +172,7 @@ public class PassthroughServer implements PassthroughDumper {
         int version = pe.version();
         for (String name : names) {
           try {
-            pseudoConnection.getEntityRef(type, (long)version, name).create(null);
+            serverProcess.create(type, name, version, new byte[0]);
           } catch (EntityException exp) {
             throw new RuntimeException(exp);
           }
@@ -200,7 +187,7 @@ public class PassthroughServer implements PassthroughDumper {
         int version = pe.version();
         for (String name : names) {
           try {
-            pseudoConnection.getEntityRef(type, (long)version, name).create(null);
+            serverProcess.create(type.getCanonicalName(), name, version, new byte[0]);
           } catch (EntityException exp) {
             throw new RuntimeException(exp);
           }
@@ -216,10 +203,6 @@ public class PassthroughServer implements PassthroughDumper {
     for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
       this.serverProcess.registerEntityService(serverEntityService);
     }
-    
-    // Create the pseudo-connection, life-cycled within the server, which can be used by services.
-    Assert.assertNull(this.pseudoConnection);
-    this.pseudoConnection = internalConnectNewPseudoConnection();
     
     // Register built-in services.
     registerImplementationProvidedServices();
@@ -258,9 +241,6 @@ public class PassthroughServer implements PassthroughDumper {
     this.serverProcess.shutdownServices();
     this.serverProcess.stop();
     this.monitoringProducer.serverDidStop();
-    Assert.assertNotNull(this.pseudoConnection);
-    this.pseudoConnection.close();
-    this.pseudoConnection = null;
   }
 
   @Deprecated
