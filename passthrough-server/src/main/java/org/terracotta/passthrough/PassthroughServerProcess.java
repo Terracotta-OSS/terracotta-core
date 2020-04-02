@@ -558,7 +558,6 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
         // may not like this, catch everything here and make sure the server is running,
         // if not, rethrow.
         if (running.isRaised()) {
-          running.lower();
           throw t;
         }
       }
