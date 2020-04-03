@@ -89,8 +89,8 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
     if (builtCommand == null) {
       try {
         installServer();
-        Path basePath = kitDir.resolve("server").resolve("bin").resolve("start-tc-server");
-        String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
+        Path basePath = serverWorkingDir.resolve(kitDir).resolve("server").resolve("bin").resolve("start-tc-server").toAbsolutePath().normalize();
+        String startScript = isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
         if (consistentStartup) {
           builtCommand = new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
         } else {
