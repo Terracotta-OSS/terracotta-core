@@ -15,8 +15,6 @@
  */
 package org.terracotta.testing.config;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -66,7 +64,7 @@ public class TcConfigBuilder {
       Integer groupPort = serverGroupPorts.get(i);
       String oneServer =
           "    <server host=\"localhost\" name=\"" + serverName + "\">\n"
-              + "      <logs>" + Paths.get(serverName, "logs").toString() + "</logs>\n"
+              + "      <logs>logs</logs>\n"
               + "      <tsa-port>" + port + "</tsa-port>\n"
               + "      <tsa-group-port>" + groupPort + "</tsa-group-port>\n"
               + "    </server>\n";
