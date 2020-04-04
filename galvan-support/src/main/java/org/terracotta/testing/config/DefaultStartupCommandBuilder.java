@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
@@ -84,13 +85,22 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
     }
   }
 
+  /**
+   * Returns a normalized absolute path to the shell/bat script, and quotes the windows path to avoid issues with special path chars.
+   * @param scriptPath path to the script from the base kit
+   * @return string representation of processed path
+   */
+  protected String getAbsolutePath(Path scriptPath) {
+    Path basePath =  getServerWorkingDir().resolve(getKitDir()).resolve(scriptPath).toAbsolutePath().normalize();
+    return isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
+  }
+
   @Override
   public String[] build() {
     if (builtCommand == null) {
       try {
         installServer();
-        Path basePath = serverWorkingDir.resolve(kitDir).resolve("server").resolve("bin").resolve("start-tc-server").toAbsolutePath().normalize();
-        String startScript = isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
+        String startScript = getAbsolutePath(Paths.get("server","bin", "start-tc-server"));
         if (consistentStartup) {
           builtCommand = new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
         } else {
