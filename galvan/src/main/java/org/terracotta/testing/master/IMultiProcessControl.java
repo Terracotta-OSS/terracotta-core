@@ -37,6 +37,8 @@ public interface IMultiProcessControl {
 
   public void terminateOnePassive() throws GalvanFailureException;
 
+  public void terminateOneDiagnostic() throws GalvanFailureException;
+
   /**
    * Starts one terminated server, waiting for it to start.
    * 

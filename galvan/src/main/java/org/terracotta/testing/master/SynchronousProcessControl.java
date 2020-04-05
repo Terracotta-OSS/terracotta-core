@@ -82,6 +82,23 @@ public class SynchronousProcessControl implements IMultiProcessControl {
   }
 
   @Override
+  public synchronized void terminateOneDiagnostic() throws GalvanFailureException {
+    this.logger.output(">>> terminateOneDiagnostic");
+
+    // Pick an arbitrary server.
+    ServerProcess oneDiagnosticServer = this.stateInterlock.getOneDiagnosticServer();
+    // It is acceptable to call this in the case where there is no diagnostic server. That is a "do nothing" situation.
+    if (null != oneDiagnosticServer) {
+      // Stop the server
+      safeStop(oneDiagnosticServer);
+      // Wait until the server has gone down.
+      this.stateInterlock.waitForServerTermination(oneDiagnosticServer);
+    }
+
+    this.logger.output("<<< terminateOneDiagnostic");
+  }
+
+  @Override
   public synchronized void startOneServer() throws GalvanFailureException {
     this.logger.output(">>> startOneServer");
     startServer();
@@ -142,7 +159,14 @@ public class SynchronousProcessControl implements IMultiProcessControl {
       safeStop(active);
       this.stateInterlock.waitForServerTermination(active);
     }
-    
+
+    ServerProcess diagnosticServer = this.stateInterlock.getOneDiagnosticServer();
+    while (null != diagnosticServer) {
+      safeStop(diagnosticServer);
+      this.stateInterlock.waitForServerTermination(diagnosticServer);
+      diagnosticServer = this.stateInterlock.getOneDiagnosticServer();
+    }
+
     this.logger.output("<<< terminateAllServers");
   }
 

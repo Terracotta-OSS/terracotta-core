@@ -101,6 +101,15 @@ public interface IGalvanStateInterlock {
    */
   public ServerProcess getOnePassiveServer() throws GalvanFailureException;
   /**
+   * Gets one diagnostic server, if there is one.  Note that there may be multiple such servers and this method can choose
+   * which one it returns.
+   *
+   * @return A diagnostic server instance or null, if there isn't one.
+   * @throws GalvanFailureException The test failure description, if it already failed.
+   */
+  public ServerProcess getOneDiagnosticServer() throws GalvanFailureException;
+
+  /**
    * Gets a terminated server, if there is one.  Note that there may be multiple terminated server and this method can
    *  choose which one it returns.
    * 
@@ -124,6 +133,14 @@ public interface IGalvanStateInterlock {
    * @param server The newly-passive server.
    */
   public void serverBecamePassive(ServerProcess server);
+  /**
+   * Notifies the interlock that the given server reached diagnostic state. Note that it must have already been registered
+   * with the interlock.
+   *
+   * @param server The newly-diagnostic server.
+   */
+  public void serverBecameDiagnostic(ServerProcess server);
+
   /**
    * Notifies the interlock that the given server went offline (became terminated).  Note that it must have already been
    *  registered with the interlock.
