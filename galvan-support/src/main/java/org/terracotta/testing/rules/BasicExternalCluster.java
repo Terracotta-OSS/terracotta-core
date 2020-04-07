@@ -71,6 +71,7 @@ class BasicExternalCluster extends Cluster {
   private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
   private final String logConfigExt;
+  private final int serverHeapSize;
   private final Supplier<StartupCommandBuilder> startupBuilder;
 
   private String displayName;
@@ -87,7 +88,7 @@ class BasicExternalCluster extends Cluster {
 
   BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
-                       Properties systemProperties, String logConfigExt, Supplier<StartupCommandBuilder> startupBuilder) {
+                       Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
@@ -110,6 +111,7 @@ class BasicExternalCluster extends Cluster {
     this.tcProperties.putAll(tcProperties);
     this.systemProperties.putAll(systemProperties);
     this.logConfigExt = logConfigExt;
+    this.serverHeapSize = serverHeapSize;
     this.startupBuilder = startupBuilder;
     this.clientThread = Thread.currentThread();
   }
@@ -184,7 +186,7 @@ class BasicExternalCluster extends Cluster {
     Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
 
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
-        stripeName, DEFAULT_SERVER_HEAP_MB, logConfigExt, systemProperties);
+        stripeName, serverHeapSize, logConfigExt, systemProperties);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {
