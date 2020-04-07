@@ -250,6 +250,7 @@ public class ServerProcess {
     String pidEventName = "PID";
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
+    String diagnosticReadyName = "DIAGNOSTIC";
     String zapEventName = "ZAP";
     String warn = "WARN";
     String err = "ERROR";
@@ -257,6 +258,7 @@ public class ServerProcess {
     eventMap.put("PID is", pidEventName);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
+    eventMap.put("Started the server in diagnostic mode", diagnosticReadyName);
     eventMap.put("Restarting the server", zapEventName);
     eventMap.put("WARN", warn);
     eventMap.put("ERROR", err);
@@ -291,6 +293,12 @@ public class ServerProcess {
       @Override
       public void onEvent(Event event) throws Throwable {
         ServerProcess.this.didBecomeActive(false);
+      }
+    });
+    serverBus.on(diagnosticReadyName, new EventListener() {
+      @Override
+      public void onEvent(Event event) throws Throwable {
+        stateInterlock.serverBecameDiagnostic(ServerProcess.this);
       }
     });
     serverBus.on(zapEventName, new EventListener() {
