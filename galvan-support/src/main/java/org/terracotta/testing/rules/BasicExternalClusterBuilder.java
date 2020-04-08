@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 
 public class BasicExternalClusterBuilder {
@@ -44,6 +45,7 @@ public class BasicExternalClusterBuilder {
   private Properties tcProperties = new Properties();
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
+  private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
   private Supplier<StartupCommandBuilder> startupBuilder = DefaultStartupCommandBuilder::new;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
@@ -127,6 +129,11 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
+  public BasicExternalClusterBuilder withServerHeap(int heapSize) {
+    this.serverHeapSize = heapSize;
+    return this;
+  }
+
   public BasicExternalClusterBuilder logConfigExtensionResourceName(String logConfigExt) {
     this.logConfigExt = logConfigExt;
     return this;
@@ -144,6 +151,7 @@ public class BasicExternalClusterBuilder {
 
   public Cluster build() {
     return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
-        clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties, logConfigExt, startupBuilder);
+        clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
+        logConfigExt, serverHeapSize, startupBuilder);
   }
 }
