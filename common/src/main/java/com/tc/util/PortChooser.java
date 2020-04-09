@@ -21,26 +21,56 @@ package com.tc.util;
 import com.tc.net.EphemeralPorts;
 import com.tc.net.EphemeralPorts.Range;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
 public final class PortChooser {
+  private static final Logger LOGGER = LoggerFactory.getLogger(PortChooser.class);
+
   public static final int           MAX          = 65535;
 
   private static final Object       VM_WIDE_LOCK = (PortChooser.class.getName() + "LOCK").intern();
   private static final Set<Integer> chosen       = new HashSet<Integer>();
   private static final Random       random       = new Random();
   private static final Range        exclude      = EphemeralPorts.getRange();
+  static {
+    int candidatePortCount = 65536 - (exclude.getUpper() - exclude.getLower() + 1) - 1024;
+    if (candidatePortCount < 1024) {
+      LOGGER.warn("*********************************************************************************************" +
+          "\nOnly {} ports available for " + PortChooser.class.getSimpleName() + " assignment" +
+          "\n    Ephemeral range: {}, {}" +
+          "\n*********************************************************************************************",
+          candidatePortCount, exclude.getLower(), exclude.getUpper());
+    }
+  }
+
+  private static final InetAddress LOCALHOST;
+  static {
+    InetAddress localHost = null;
+    try {
+      // Tests use "localhost" as the server host name which _does_ go through name resolution ...
+      localHost = InetAddress.getByName("localhost");
+    } catch (UnknownHostException e) {
+      LOGGER.warn("Unable to obtain an InetAddress for localhost via InetAddress.getByName(\"localhost\")", e);
+    }
+    LOCALHOST = localHost;
+  }
 
   public int chooseRandomPort() {
     synchronized (VM_WIDE_LOCK) {
       int portNum = choose();
-      Assert.assertTrue(chosen.add(Integer.valueOf(portNum)));
+      Assert.assertTrue(chosen.add(portNum));
       return portNum;
     }
   }
@@ -52,8 +82,8 @@ public final class PortChooser {
         port = choose();
         if (port + 1 >= MAX) continue;
         if (!isPortUsed(port + 1)) {
-          Assert.assertTrue(chosen.add(Integer.valueOf(port)));
-          Assert.assertTrue(chosen.add(Integer.valueOf(port + 1)));
+          Assert.assertTrue(chosen.add(port));
+          Assert.assertTrue(chosen.add(port + 1));
           break;
         }
       } while (true);
@@ -81,23 +111,39 @@ public final class PortChooser {
       } while (true);
 
       for (int i = 0; i < numOfPorts; i++) {
-        Assert.assertTrue(chosen.add(Integer.valueOf(port + i)));
+        Assert.assertTrue(chosen.add(port + i));
       }
     }
     return port;
   }
 
   public boolean isPortUsed(int portNum) {
-    final Integer port = Integer.valueOf(portNum);
+    final Integer port = portNum;
     if (chosen.contains(port)) return true;
-    return !canBind(portNum) && !canConnect(portNum);
+    // A port is free iff a server socket can bind to the port AND a client connection is rejected
+    return !(canBind(portNum) && rejectsConnect(portNum));
   }
 
-  private boolean canConnect(int portNumber) {
+  // This method was added to address MNK-5621; it seems that some ports may appear free
+  // (by canBind) on Windows and not really be free.  Some services on Windows, like Remote
+  // Desktop (RDP) according to the issue, don't establish an open listener but do respond
+  // to connection requests on their assigned port(s).
+  // (See https://support.microsoft.com/en-us/help/832017/service-overview-and-network-port-requirements-for-windows.)
+  // A "failure to connect" is necessary to determine if the port is actually available.
+  // This check presumes firewall rules are not responsible for dropping the connection
+  // request -- not much we can do about that.
+  private boolean rejectsConnect(int portNumber) {
     Socket sock = null;
     boolean isFree = false;
     try {
-      sock = new Socket("localhost", portNumber);
+      sock = new Socket();
+      InetSocketAddress endpoint;
+      if (LOCALHOST == null) {
+        endpoint = new InetSocketAddress("localhost", portNumber);
+      } else {
+        endpoint = new InetSocketAddress(LOCALHOST, portNumber);
+      }
+      sock.connect(endpoint, 50);
       isFree = false;
     } catch (IOException e) {
       isFree = true;
@@ -141,10 +187,11 @@ public final class PortChooser {
   private synchronized int choose() {
     while (true) {
       final int attempt = getNonEphemeralPort();
-      if (chosen.contains(Integer.valueOf(attempt))) {
+      if (chosen.contains(attempt)) {
         continue; // already picked at some point, try again
       }
-      if (canBind(attempt) && canConnect(attempt)) return attempt;
+      // A port is free iff a server socket can bind to the port AND a client connection is rejected
+      if (canBind(attempt) && rejectsConnect(attempt)) return attempt;
     }
   }
 
