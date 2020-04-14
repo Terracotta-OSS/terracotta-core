@@ -102,6 +102,12 @@ public class ReplicatedTransactionHandler {
   private NodeID cachedMessageAckFrom;
   private GroupMessageBatchContext<ReplicationMessageAck, ReplicationAckTuple> cachedBatchAck;
   private final Sink<Runnable> sentToActive;
+
+  private volatile long currentSequence = 0;
+
+  public long getCurrentSequence() {
+    return currentSequence;
+  }
   
   public ReplicatedTransactionHandler(StateManager state, Stage<Runnable> sendToActive, Persistor persistor, 
       EntityManager manager, GroupManager<AbstractGroupMessage> groupManager) {
@@ -121,6 +127,7 @@ public class ReplicatedTransactionHandler {
     @Override
     public void handleEvent(ReplicationMessage message) throws EventHandlerException {
       try {
+        currentSequence = message.getSequenceID();
         processMessage(message);
       } catch (Throwable t) {
         // We don't expect to see an exception executing a replicated message.

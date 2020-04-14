@@ -81,6 +81,7 @@ import com.tc.l2.ha.GenerationWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
+import com.tc.l2.ha.SequenceIDWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -627,13 +628,16 @@ public class DistributedObjectServer {
     // 4)  InitialStateWeightGenerator - If it gets down to here, give some weight to a persistent server that went down as active
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
     weightGeneratorFactory.add(initialState);
-    // 5)  ServerUptimeWeightGenerator.
+    // 5)  SequenceID weight is the number of replication activities handled by this passive server
+    final SequenceIDWeightGenerator sequenceWeight = new SequenceIDWeightGenerator();
+    weightGeneratorFactory.add(sequenceWeight);
+    // 6)  ServerUptimeWeightGenerator.
     final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator(availableMode);
     weightGeneratorFactory.add(serverUptimeWeightGenerator);
-    // 6)  RandomWeightGenerator.
+    // 7)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom(), availableMode);
     weightGeneratorFactory.add(randomWeightGenerator);
-    // 7)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
+    // 8)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
     final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
     weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
@@ -717,7 +721,8 @@ public class DistributedObjectServer {
         new GenericHandler<>(), 1, maxStageSize);
 //  routing for passive to receive replication    
     ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
-    // This requires both the stage for handling the replication/sync messages.
+    sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
+// This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
     
