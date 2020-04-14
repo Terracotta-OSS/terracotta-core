@@ -67,7 +67,6 @@
     <surefire.min-memory>64m</surefire.min-memory>
     <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args/>
-    <should_skip_tests>true</should_skip_tests>
     <surefire.jvm.mode>-server</surefire.jvm.mode>
     <surefire.argLine>${surefire.jvm.mode}
       -Xms${surefire.min-memory}
