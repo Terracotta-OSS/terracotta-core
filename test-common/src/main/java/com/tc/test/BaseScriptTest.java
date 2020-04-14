@@ -65,6 +65,9 @@ import static com.tc.test.ScriptTestUtil.extractArguments;
 import static com.tc.test.ScriptTestUtil.extractEnvironment;
 import static com.tc.test.ScriptTestUtil.extractProperties;
 import static java.lang.System.arraycopy;
+import java.nio.file.CopyOption;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 
 /**
  * Test harness for testing Java launch scripts.
@@ -372,8 +375,15 @@ public abstract class BaseScriptTest {
     } catch (Exception e) {
       throw new AssertionError("Unexpected error converting \"" + scriptFile + "\" to a Path; uri=" + uri, e);
     }
-
-    return Files.copy(scriptPath, binPath.resolve(scriptPath.getFileName()));
+    Set<PosixFilePermission> perms = EnumSet.of(PosixFilePermission.GROUP_EXECUTE,
+            PosixFilePermission.GROUP_READ,
+            PosixFilePermission.OWNER_EXECUTE,
+            PosixFilePermission.OWNER_READ,
+            PosixFilePermission.OWNER_WRITE
+            );
+    Path f = Files.copy(scriptPath, binPath.resolve(scriptPath.getFileName()), StandardCopyOption.COPY_ATTRIBUTES);
+    Files.setPosixFilePermissions(f, perms);
+    return f;
   }
 
   /**

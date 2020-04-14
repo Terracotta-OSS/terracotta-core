@@ -50,6 +50,7 @@ public class ActiveVoterTest {
       } else {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
+        when(mockClientVoterManager.isConnected()).thenReturn(true);
         return mockClientVoterManager;
       }
     };
@@ -95,6 +96,7 @@ public class ActiveVoterTest {
       } else {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
+        when(mockClientVoterManager.isConnected()).thenReturn(true);
         return mockClientVoterManager;
       }
     };
@@ -143,6 +145,7 @@ public class ActiveVoterTest {
       } else {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
+        when(mockClientVoterManager.isConnected()).thenReturn(true);
         return mockClientVoterManager;
       }
     };
@@ -192,6 +195,7 @@ public class ActiveVoterTest {
       } else {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
+        when(mockClientVoterManager.isConnected()).thenReturn(true);
         return mockClientVoterManager;
       }
     };
