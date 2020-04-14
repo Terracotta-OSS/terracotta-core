@@ -41,7 +41,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
-import org.terracotta.connection.Diagnostics;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -63,7 +62,10 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
 
   @Override
   public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
-    Assert.assertEquals(Diagnostics.class.getName(), entity.getClassName());
+    if (!entity.getClassName().equals(com.terracotta.diagnostic.Diagnostics.class.getName())
+            && !entity.getClassName().equals(org.terracotta.connection.Diagnostics.class.getName())) {
+      throw new AssertionError("wrong entity type " + entity.getClassName());
+    }
     Assert.assertEquals("root", entity.getEntityName());
     return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook, null);
   }

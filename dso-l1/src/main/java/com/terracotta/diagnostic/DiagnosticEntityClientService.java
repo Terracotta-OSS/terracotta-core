@@ -25,7 +25,6 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.DiagnosticsConfig;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
@@ -41,7 +40,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
 
   @Override
   public boolean handlesEntityType(Class<Diagnostics> type) {
-    return type.isAssignableFrom(org.terracotta.connection.Diagnostics.class);
+    return type.isAssignableFrom(com.terracotta.diagnostic.Diagnostics.class);
   }
 
   @Override

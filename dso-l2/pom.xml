@@ -139,7 +139,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
-            <forkCount>1C</forkCount>
+            <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
             <argLine>-Djava.awt.headless=true</argLine>
