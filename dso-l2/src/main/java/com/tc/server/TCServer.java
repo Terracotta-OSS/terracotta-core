@@ -83,6 +83,4 @@ public interface TCServer extends Pauseable {
   void reloadConfiguration() throws ConfigurationSetupException;
 
   String getClusterState(PrettyPrinter form);
-  
-  void warn(Object event);
 }

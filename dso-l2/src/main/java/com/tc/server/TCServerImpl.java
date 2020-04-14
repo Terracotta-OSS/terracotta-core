@@ -497,11 +497,4 @@ public class TCServerImpl extends SEDA implements TCServer {
   public void stageWarning(Object description) {
     super.stageWarning(description);
   }
-
-  @Override
-  public void warn(Object event) {
-    if (dsoServer != null) {
-      dsoServer.warning(event);
-    }
-  }
 }

@@ -236,8 +236,6 @@ import static com.tc.spi.Guardian.Op.SERVER_DUMP;
 import static com.tc.spi.Guardian.Op.SERVER_EXIT;
 import com.tc.spi.NetworkTranslator;
 import com.tc.spi.ProductCapabilities;
-import com.tc.spi.WarningDescription;
-import com.tc.spi.WarningHandler;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
@@ -289,8 +287,6 @@ public class DistributedObjectServer {
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
   
-  private WarningHandler handleWarnings;
-
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -395,7 +391,6 @@ public class DistributedObjectServer {
     // this is on exit so do not guard
     String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
     TCLogging.getDumpLogger().info(clusterState);
-    warning("dump on exit");
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
@@ -486,11 +481,6 @@ public class DistributedObjectServer {
       serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
     
-    try {
-      this.handleWarnings = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(WarningHandler.class));
-    } catch (ServiceException se) {
-      
-    }
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
     String hostAddress = "";
@@ -1272,22 +1262,5 @@ public class DistributedObjectServer {
 
   public Persistor getPersistor() {
     return persistor;
-  }
-
-  public void warning(Object description) {
-    if (handleWarnings != null) {
-      handleWarnings.warning(new WarningDescription() {
-        @Override
-        public String getCause() {
-          return description.toString();
-        }
-
-        @Override
-        public String getClusterDump() {
-          String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
-          return clusterState;
-        }
-      });
-    }
   }
 }
