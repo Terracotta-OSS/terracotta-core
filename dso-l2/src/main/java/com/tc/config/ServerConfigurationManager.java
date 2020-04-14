@@ -21,7 +21,6 @@ package com.tc.config;
 
 import com.tc.classloader.ServiceLocator;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrintable;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.ServerConfiguration;
@@ -37,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
+import com.tc.text.PrettyPrintable;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 

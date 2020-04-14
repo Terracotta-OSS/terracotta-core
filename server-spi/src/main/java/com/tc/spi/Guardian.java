@@ -10,13 +10,13 @@
  *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
  *  the specific language governing rights and limitations under the License.
  *
- *  The Covered Software is Terracotta Core.
+ *  The Covered Software is Terracotta API.
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.core.api;
+package com.tc.spi;
 
 import java.util.Properties;
 
@@ -25,7 +25,7 @@ import java.util.Properties;
  */
 public interface Guardian {
   public enum Op {
-    // these entity operations cannout be validated, they are only here 
+    // these entity operations cannot be validated, they are only here 
     // for logging purposes. a false return on validation will not be honored
     ENTITY_CREATE,
     ENTITY_FETCH,

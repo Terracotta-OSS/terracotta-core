@@ -37,7 +37,7 @@ public class SingleThreadedTimerTest {
   @Before
   public void setUp() throws Exception {
     this.source = new TestTimeSource(1);
-    this.timer = new SingleThreadedTimer(this.source);
+    this.timer = new SingleThreadedTimer(this.source, null);
     this.timer.start();
   }
 

@@ -51,7 +51,7 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.object.session.NullSessionManager;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.util.State;
 import com.tc.util.UUID;
 

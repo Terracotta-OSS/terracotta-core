@@ -28,7 +28,6 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
 import com.tc.object.ClientBuilderFactory;
-import com.terracotta.connection.EndpointConnector;
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.client.TerracottaClientConfigParams;
@@ -45,6 +44,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.EndpointConnector;
 
 public class AbstractConnectionServiceTest {
 

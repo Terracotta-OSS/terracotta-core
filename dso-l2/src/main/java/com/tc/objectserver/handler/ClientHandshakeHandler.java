@@ -28,12 +28,12 @@ import com.tc.l2.state.StateManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.objectserver.api.EntityManager;
-import com.tc.objectserver.core.api.Guardian;
-import com.tc.objectserver.core.api.GuardianContext;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
+import com.tc.spi.Guardian;
 
 public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshakeMessage> {
 

@@ -815,6 +815,9 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   private static final class MyGroupEventListener implements GroupEventsListener {
 
+    public MyGroupEventListener() {
+    }
+
     @Override
     public void nodeJoined(NodeID nodeID) {
       System.err.println("\n### nodeJoined -> " + nodeID);

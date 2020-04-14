@@ -26,11 +26,11 @@ import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.entity.EntityRef;
 
-import com.terracotta.diagnostic.Diagnostics;
 
 import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.connection.Diagnostics;
 
 
 public class DynamicPassiveRemovalIT {

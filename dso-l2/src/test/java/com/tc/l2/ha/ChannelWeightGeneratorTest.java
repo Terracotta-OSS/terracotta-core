@@ -24,7 +24,7 @@ import org.junit.Assert;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.test.TCTestCase;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

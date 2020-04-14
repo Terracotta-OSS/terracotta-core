@@ -34,7 +34,7 @@ import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.util.Collection;

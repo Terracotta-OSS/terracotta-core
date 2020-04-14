@@ -19,9 +19,9 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.text.PrettyPrintable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.tc.text.PrettyPrintable;
 
 public class ClientHandshakePrettyPrintable implements PrettyPrintable {
 

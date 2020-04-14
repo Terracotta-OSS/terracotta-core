@@ -19,7 +19,6 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;

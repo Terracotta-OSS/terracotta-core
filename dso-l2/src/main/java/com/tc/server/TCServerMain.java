@@ -25,7 +25,8 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
-import com.tc.util.ManagedServiceLoader;
+import com.tc.objectserver.core.impl.GuardianContext;
+import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.ProductInfo;
 import org.terracotta.configuration.ConfigurationProvider;
 
@@ -40,6 +41,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.terracotta.monitoring.PlatformStopException;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
+import org.terracotta.server.StopAction;
 
 public class TCServerMain {
 
@@ -79,12 +85,175 @@ public class TCServerMain {
       writeSystemProperties();
 
       server = ServerFactory.createServer(setup, threadGroup);
+      setServerEnvironment();
       server.start();
 
       server.waitUntilShutdown();
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
     }
+  }
+
+  private static void setServerEnvironment() {
+    ServerEnv.setDefaultServer(new Server() {
+      @Override
+      public int getServerCount() {
+        return setup.getConfiguration().getServerConfigurations().size();
+      }
+
+      @Override
+      public String[] processArguments() {
+        return setup.getProcessArguments();
+      }
+
+      @Override
+      public void stop(StopAction... modes) {
+        server.stop(modes);
+      }
+
+      @Override
+      public boolean stopIfPassive(StopAction... modes) {
+        try {
+          server.stopIfPassive(modes);
+        } catch (PlatformStopException stop) {
+          warn("unable to stop server", stop);
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      public boolean stopIfActive(StopAction... modes) {
+        try {
+          server.stopIfActive(modes);
+        } catch (PlatformStopException stop) {
+          warn("unable to stop server", stop);
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      public boolean isActive() {
+        return server.isActive();
+      }
+
+      @Override
+      public boolean isStopped() {
+        return server.isStopped();
+      }
+
+      @Override
+      public boolean isPassiveUnitialized() {
+        return server.isPassiveUnitialized();
+      }
+
+      @Override
+      public boolean isPassiveStandby() {
+        return server.isPassiveStandby();
+      }
+
+      @Override
+      public boolean isReconnectWindow() {
+        return server.isReconnectWindow();
+      }
+
+      @Override
+      public String getState() {
+        return server.getState().toString();
+      }
+
+      @Override
+      public long getStartTime() {
+        return server.getStartTime();
+      }
+
+      @Override
+      public long getActivateTime() {
+        return server.getActivateTime();
+      }
+
+      @Override
+      public String getIdentifier() {
+        return server.getL2Identifier();
+      }
+
+      @Override
+      public int getClientPort() {
+        return setup.getServerConfiguration().getTsaPort().getPort();
+      }
+
+      @Override
+      public int getServerPort() {
+        return setup.getServerConfiguration().getGroupPort().getPort();
+      }
+
+      @Override
+      public int getReconnectWindowTimeout() {
+        return setup.getServerConfiguration().getClientReconnectWindow();
+      }
+
+      @Override
+      public void waitUntilShutdown() {
+        server.waitUntilShutdown();
+      }
+
+      @Override
+      public void dump() {
+        server.dump();
+      }
+
+      @Override
+      public String getClusterState() {
+        return server.getClusterState(null);
+      }
+
+      @Override
+      public String getConfiguration() {
+        return setup.getConfiguration().getRawConfiguration();
+      }
+
+      @Override
+      public ClassLoader getServiceClassLoader(ClassLoader parent, Class<?>... serviceClasses) {
+        return new ServiceClassLoader(setup.getConfigurationProvider().getClass().getClassLoader(), serviceClasses);
+      }
+
+      @Override
+      public <T> List<Class<? extends T>> getImplementations(Class<T> serviceClasses) {
+        return setup.getServiceLocator().getImplementations(serviceClasses);
+      }
+
+      @Override
+      public ServerJMX getManagement() {
+        JMXSubsystem system = new JMXSubsystem();
+        return new ServerJMX() {
+          @Override
+          public String get(String target, String attr) {
+            return system.get(target, attr);
+          }
+
+          @Override
+          public String set(String target, String attr, String val) {
+            return system.set(target, attr, val);
+          }
+
+          @Override
+          public String call(String target, String cmd, String arg) {
+            return system.call(target, cmd, arg);
+          }
+        };
+      }
+
+      @Override
+      public Properties getCurrentChannelProperties() {
+        return GuardianContext.getCurrentChannelProperties();
+      }
+
+      @Override
+      public void warn(String warning, Object...event) {
+        LOGGER.warn(warning,event[0]);
+      }
+    });
   }
 
   private static ConfigurationProvider getConfigurationProvider(ClassLoader loader) {

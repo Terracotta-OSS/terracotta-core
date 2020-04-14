@@ -19,9 +19,9 @@
 
 package com.terracotta.connection.api;
 
-import com.terracotta.connection.EndpointConnector;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
+import org.terracotta.entity.EndpointConnector;
 
 /**
  * This connection service handles the cases of connecting to a single stripe:  one active and potentially multiple passives

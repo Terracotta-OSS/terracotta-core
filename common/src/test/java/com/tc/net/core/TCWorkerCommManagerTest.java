@@ -61,7 +61,7 @@ import com.tc.util.CallableWaiter;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.properties.TCPropertiesConsts;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -69,7 +69,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 import org.junit.Ignore;
 
 public class TCWorkerCommManagerTest extends TCTestCase {

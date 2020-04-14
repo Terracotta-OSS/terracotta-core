@@ -18,21 +18,34 @@
  */
 package com.tc.object;
 
+import com.tc.net.core.BufferManagerFactorySupplier;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.terracotta.diagnostic.DiagnosticClientBuilder;
 
 import java.util.Arrays;
 import java.util.Properties;
 
 public class StandardClientBuilderFactory implements ClientBuilderFactory {
+
+  private final BufferManagerFactorySupplier supplier;
+
+  public StandardClientBuilderFactory() {
+    BufferManagerFactorySupplier s = ClientBuilderFactory.get(BufferManagerFactorySupplier.class);
+    if (s == null) {
+      s = (p)->new ClearTextBufferManagerFactory();
+    }
+    supplier = s;
+  }
+  
   @Override
   public ClientBuilder create(Properties connectionProperties) {
     Object clientBuilderTypeValue = connectionProperties.get(CLIENT_BUILDER_TYPE);
     if (clientBuilderTypeValue instanceof ClientBuilderType) {
       ClientBuilderType connectionType = (ClientBuilderType)clientBuilderTypeValue;
       if (connectionType == ClientBuilderType.TERRACOTTA) {
-        return new StandardClientBuilder(connectionProperties);
+        return new StandardClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
       } else if (connectionType == ClientBuilderType.DIAGNOSTIC) {
-        return new DiagnosticClientBuilder(connectionProperties);
+        return new DiagnosticClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
       } else {
         throw new IllegalArgumentException(connectionType + " is not a valid client builder type, valid client " +
                                            "builder types " + Arrays.toString(ClientBuilderType.values()));

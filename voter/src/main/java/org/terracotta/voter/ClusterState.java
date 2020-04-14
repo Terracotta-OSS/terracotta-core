@@ -19,9 +19,9 @@
 package org.terracotta.voter;
 
 import com.terracotta.connection.api.DiagnosticConnectionService;
-import com.terracotta.diagnostic.Diagnostics;
 import java.net.URI;
 import java.util.Properties;
+import org.terracotta.connection.Diagnostics;
 
 /**
  *

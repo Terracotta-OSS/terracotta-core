@@ -23,11 +23,15 @@ import com.tc.logging.TCLogging;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import java.io.InputStream;
+import java.util.EnumSet;
 
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.monitoring.PlatformStopException;
+import org.terracotta.server.StopAction;
+import static org.terracotta.server.StopAction.RESTART;
+import static org.terracotta.server.StopAction.ZAP;
 
 /**
  * @author vmad
@@ -66,19 +70,34 @@ public class PlatformServiceImpl implements PlatformService, StateDumpable {
       return TCServerMain.getSetupManager().rawConfigFile();
     }
 
+    private StopAction[] convert(RestartMode mode) {
+      switch (mode) {
+        case STOP_AND_RESTART:
+          return EnumSet.of(RESTART).toArray(new StopAction[0]);
+        case STOP_ONLY:
+          return EnumSet.noneOf(StopAction.class).toArray(new StopAction[0]);
+        case ZAP_AND_RESTART:
+          return EnumSet.of(ZAP,RESTART).toArray(new StopAction[0]);
+        case ZAP_AND_STOP:
+          return EnumSet.of(ZAP).toArray(new StopAction[0]);
+        default:
+          return EnumSet.noneOf(StopAction.class).toArray(new StopAction[0]);
+      }
+    }
+
     @Override
     public void stopPlatformIfPassive(RestartMode restartMode) throws PlatformStopException {
-      tcServer.stopIfPassive(restartMode);
+      tcServer.stopIfPassive(convert(restartMode));
     }
 
     @Override
     public void stopPlatformIfActive(RestartMode restartMode) throws PlatformStopException {
-      tcServer.stopIfActive(restartMode);
+      tcServer.stopIfActive(convert(restartMode));
     }
 
     @Override
     public void stopPlatform(RestartMode restartMode) {
-      tcServer.stop(restartMode);
+      tcServer.stop(convert(restartMode));
     }
 
   @Override

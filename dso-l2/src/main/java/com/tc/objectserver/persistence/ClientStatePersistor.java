@@ -21,7 +21,7 @@ package com.tc.objectserver.persistence;
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;

@@ -51,7 +51,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;

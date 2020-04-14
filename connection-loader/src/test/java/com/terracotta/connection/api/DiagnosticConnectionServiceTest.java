@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.terracotta.connection.Connection;
 
-import com.terracotta.connection.EndpointConnector;
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 
@@ -35,6 +34,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.entity.EndpointConnector;
 
 public class DiagnosticConnectionServiceTest {
 

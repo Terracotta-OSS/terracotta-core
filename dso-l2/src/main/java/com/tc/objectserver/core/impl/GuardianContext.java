@@ -16,7 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.objectserver.core.api;
+package com.tc.objectserver.core.impl;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -29,6 +29,7 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
 import com.tc.server.TCServerMain;
+import com.tc.spi.Guardian;
 import com.tc.util.Assert;
 import java.util.Map;
 import java.util.Properties;

@@ -10,21 +10,20 @@
  *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
  *  the specific language governing rights and limitations under the License.
  *
- *  The Covered Software is Terracotta Core.
+ *  The Covered Software is common SPI.
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.text;
+package com.tc.net.core;
 
-import java.util.Map;
+import java.util.Properties;
 
-public interface PrettyPrintable {
+/**
+ */
+public interface BufferManagerFactorySupplier {
 
-  default PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return out.println(getStateMap());
-  }
-  
-  public Map<String, ?> getStateMap();
+  BufferManagerFactory createBufferManagerFactory(Properties properties);
+
 }

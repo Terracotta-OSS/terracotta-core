@@ -37,7 +37,6 @@ import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.lang.TCThreadGroup;
-import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.management.TCClient;
@@ -87,7 +86,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.text.MapListPrettyPrint;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
@@ -102,12 +100,14 @@ import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
@@ -167,7 +167,7 @@ public class DistributedObjectClient implements TCClient {
   public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
                                  PreparedComponentsFromL2Connection connectionComponents,
                                  Properties properties) {
-    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents,
+    this(config, ClientBuilderFactory.get(ClientBuilderFactory.class).create(properties), threadGroup, connectionComponents,
          UUID.NULL_ID.toString(), "", false);
   }
 

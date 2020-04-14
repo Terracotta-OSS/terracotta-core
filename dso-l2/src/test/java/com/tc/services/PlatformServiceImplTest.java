@@ -23,9 +23,19 @@ import org.junit.Test;
 import org.terracotta.monitoring.PlatformService.RestartMode;
 
 import com.tc.server.TCServer;
+import java.util.Arrays;
+import java.util.List;
+import org.mockito.ArgumentMatcher;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import org.mockito.internal.matchers.VarargMatcher;
+import org.terracotta.monitoring.PlatformStopException;
+import org.terracotta.server.StopAction;
+import static org.terracotta.server.StopAction.RESTART;
+import static org.terracotta.server.StopAction.ZAP;
 
 public class PlatformServiceImplTest {
 
@@ -38,30 +48,75 @@ public class PlatformServiceImplTest {
     platformService = new PlatformServiceImpl(tcServerMock);
   }
 
-  @Test
+  @Test(expected=PlatformStopException.class)
   public void stopPlatformIfPassive() throws Exception {
     platformService.stopPlatformIfPassive(RestartMode.STOP_ONLY);
-    verify(tcServerMock).stopIfPassive(RestartMode.STOP_ONLY);
+    verify(tcServerMock).stopIfPassive();
 
     platformService.stopPlatformIfPassive(RestartMode.STOP_AND_RESTART);
-    verify(tcServerMock).stopIfPassive(RestartMode.STOP_AND_RESTART);
+    verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.RESTART));
+
+    platformService.stopPlatformIfPassive(RestartMode.ZAP_AND_RESTART);
+//    verify(tcServerMock).stopIfPassive(Mockito.argThat(varargs(RestartMode.ZAP_AND_RESTART)));
+    verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+
+    platformService.stopPlatformIfPassive(RestartMode.ZAP_AND_STOP);
+    verify(tcServerMock).stopIfPassive(Mockito.eq(StopAction.ZAP));
+
+    Mockito.doThrow(new PlatformStopException("not passive")).when(tcServerMock).stopIfPassive(any());
+    platformService.stopPlatformIfPassive(RestartMode.STOP_ONLY);
   }
 
-  @Test
+  @Test(expected=PlatformStopException.class)
   public void stopPlatformIfActive() throws Exception {
     platformService.stopPlatformIfActive(RestartMode.STOP_ONLY);
-    verify(tcServerMock).stopIfActive(RestartMode.STOP_ONLY);
+    verify(tcServerMock).stopIfActive();
 
     platformService.stopPlatformIfActive(RestartMode.STOP_AND_RESTART);
-    verify(tcServerMock).stopIfActive(RestartMode.STOP_AND_RESTART);
+    verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.RESTART));
+
+    platformService.stopPlatformIfActive(RestartMode.ZAP_AND_RESTART);
+//    verify(tcServerMock).stopIfActive(Mockito.argThat(varargs(RestartMode.ZAP_AND_RESTART)));
+    verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+
+    platformService.stopPlatformIfActive(RestartMode.ZAP_AND_STOP);
+    verify(tcServerMock).stopIfActive(Mockito.eq(StopAction.ZAP));
+
+    Mockito.doThrow(new PlatformStopException("not active")).when(tcServerMock).stopIfActive(any());
+    platformService.stopPlatformIfActive(RestartMode.STOP_ONLY);
   }
 
   @Test
   public void stopPlatform() {
     platformService.stopPlatform(RestartMode.STOP_ONLY);
-    verify(tcServerMock).stop(RestartMode.STOP_ONLY);
+    verify(tcServerMock).stop();
 
     platformService.stopPlatform(RestartMode.STOP_AND_RESTART);
-    verify(tcServerMock).stop(RestartMode.STOP_AND_RESTART);
+    verify(tcServerMock).stop(Mockito.eq(StopAction.RESTART));
+
+    platformService.stopPlatform(RestartMode.ZAP_AND_RESTART);
+//    verify(tcServerMock).stop(Mockito.argThat(varargs(RestartMode.ZAP_AND_RESTART)));
+    verify(tcServerMock).stop(Mockito.eq(StopAction.ZAP), Mockito.eq(StopAction.RESTART));
+
+    platformService.stopPlatform(RestartMode.ZAP_AND_STOP);
+    verify(tcServerMock).stop(Mockito.eq(StopAction.ZAP));
+  }
+
+  private ArgumentMatcher<StopAction[]> varargs(RestartMode mode) {
+    switch (mode) {
+      case STOP_AND_RESTART:
+        return a->false;
+      case STOP_ONLY:
+        return a->false;
+      case ZAP_AND_RESTART:
+        return o->{
+          List<StopAction> l = Arrays.asList(o);
+          return l.remove(RESTART) && l.remove(ZAP) && l.isEmpty();
+        };
+      case ZAP_AND_STOP:
+        return a->false;
+      default:
+        return null;
+    }
   }
 }

@@ -50,7 +50,7 @@ import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 
 import java.net.InetAddress;
 import java.util.ArrayList;

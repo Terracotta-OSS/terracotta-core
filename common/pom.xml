@@ -45,6 +45,11 @@ Apache Ivy version: 2.2.0 20100923230623
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-messaging</artifactId>
     </dependency>
     <dependency>

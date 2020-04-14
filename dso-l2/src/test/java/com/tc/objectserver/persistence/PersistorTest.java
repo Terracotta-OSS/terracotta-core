@@ -21,7 +21,7 @@ package com.tc.objectserver.persistence;
 import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.junit.After;

@@ -19,7 +19,7 @@
 package com.tc.objectserver.impl;
 
 import com.tc.net.StripeID;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;

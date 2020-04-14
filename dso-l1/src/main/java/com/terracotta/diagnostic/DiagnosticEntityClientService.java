@@ -22,8 +22,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.connection.Diagnostics;
+import org.terracotta.connection.DiagnosticsConfig;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
@@ -34,11 +37,11 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 
-public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Properties>{
+public class DiagnosticEntityClientService implements EntityClientService<Diagnostics, Object, EntityMessage, EntityResponse, Object>{
 
   @Override
   public boolean handlesEntityType(Class<Diagnostics> type) {
-    return type == Diagnostics.class;
+    return type.isAssignableFrom(org.terracotta.connection.Diagnostics.class);
   }
 
   @Override
@@ -52,7 +55,9 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
   }
 
   @Override
-  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Properties possible) {
+  public Diagnostics create(final EntityClientEndpoint<EntityMessage, EntityResponse> ece, Object config) {
+    Properties possible = getRequestProperties(config);
+    Runnable closeHook = getCloseHook(ece, config);
     final int timeoutInMillis = possible != null ? Integer.parseInt(possible.getProperty("request.timeout", "2000")) : 2000;
     final String timeoutMessage = possible != null ? possible.getProperty("request.timeoutMessage", "Request Timeout") : "Request Timeout";
     return (Diagnostics)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {Diagnostics.class},
@@ -61,28 +66,32 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
       public Object invoke(Object proxy, Method method, final Object[] args) throws Throwable {
         try {
           final String methodName = method.getName();
-          InvokeFuture returnValue = ece.beginInvoke().message(new EntityMessage() {
-            @Override
-            public String toString() {
-              if (methodName.equals("get")) {
-                return "getJMX " + args[0] + " " + args[1];
-              } else if (methodName.equals("set")) {
-                return "setJMX " + args[0] + " " + args[1] + " " + args[2];
-              } else if (methodName.equals("invoke")) {
-                return "invokeJMX " + args[0] + " " + args[1];
-              } else if (methodName.equals("invokeWithArg")) {
-                return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
-              } else {
-                return methodName;
+          if (methodName.equals("close")) {
+            closeHook.run();
+          } else {
+            InvokeFuture returnValue = ece.beginInvoke().message(new EntityMessage() {
+              @Override
+              public String toString() {
+                if (methodName.equals("get")) {
+                  return "getJMX " + args[0] + " " + args[1];
+                } else if (methodName.equals("set")) {
+                  return "setJMX " + args[0] + " " + args[1] + " " + args[2];
+                } else if (methodName.equals("invoke")) {
+                  return "invokeJMX " + args[0] + " " + args[1];
+                } else if (methodName.equals("invokeWithArg")) {
+                  return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
+                } else {
+                  return methodName;
+                }
               }
-            }
-          }).invoke();
-          // if the server is terminating, never going to get a message back.  just return null
-          if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer")) {
-            try {
-              return returnValue.getWithTimeout(timeoutInMillis, TimeUnit.MILLISECONDS).toString();
-            } catch (TimeoutException timeout) {
-              return timeoutMessage;
+            }).invoke();
+            // if the server is terminating, never going to get a message back.  just return null
+            if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer")) {
+              try {
+                return returnValue.getWithTimeout(timeoutInMillis, TimeUnit.MILLISECONDS).toString();
+              } catch (TimeoutException timeout) {
+                return timeoutMessage;
+              }
             }
           }
         } catch (EntityException ee) {
@@ -95,7 +104,23 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
         return null;
       }}
     );
-      
+  }
+
+  private Properties getRequestProperties(Object props) {
+    if (props instanceof Properties) {
+      return (Properties)props;
+    } else if (props instanceof DiagnosticsConfig) {
+      return ((DiagnosticsConfig)props).getProperties();
+    }
+    return new Properties();
+  }
+
+  private Runnable getCloseHook(EntityClientEndpoint endpoint, Object props) {
+    CompletableFuture<Void> closer = new CompletableFuture<>().thenRun(endpoint::close);
+    if (props instanceof DiagnosticsConfig) {
+      closer.thenRun(((DiagnosticsConfig)props).getClose());
+    }
+    return ()->closer.complete(null);
   }
 
   @Override

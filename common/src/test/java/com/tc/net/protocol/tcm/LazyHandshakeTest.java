@@ -39,10 +39,10 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
+import com.tc.net.core.ProductID;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 

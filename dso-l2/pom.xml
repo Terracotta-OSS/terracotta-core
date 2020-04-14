@@ -46,6 +46,11 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>configuration-provider</artifactId>
       <version>${project.version}</version>
     </dependency>

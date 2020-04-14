@@ -26,7 +26,7 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;

@@ -227,11 +227,6 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
-  public String getResourceState() {
-    return "";
-  }
-
-  @Override
   public String getClusterState(boolean shortForm) {
     return "";
   }

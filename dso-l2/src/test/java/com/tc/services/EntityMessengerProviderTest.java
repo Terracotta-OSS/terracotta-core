@@ -68,7 +68,7 @@ public class EntityMessengerProviderTest {
     
     // Build the timer we will use in the provider.
     this.timeSource = new TestTimeSource(1L);
-    this.timer = new SingleThreadedTimer(this.timeSource);
+    this.timer = new SingleThreadedTimer(this.timeSource, null);
     this.timer.start();
     
     // Build the test subject.

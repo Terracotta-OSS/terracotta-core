@@ -37,10 +37,10 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.properties.ReconnectConfig;
+import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
 import com.tc.util.CallStackTrace;
 import com.tc.util.DebugUtil;
-import com.tc.util.ProductID;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 
