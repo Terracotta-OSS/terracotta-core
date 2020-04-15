@@ -47,7 +47,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toCollection;
+
 /**
  * ActiveVoter votes only for the active it originally connects to.  If the active disconnects,
  * vote for the next server requesting vote.  If the server with the new vote becomes the new active, 
@@ -96,13 +97,12 @@ public class ActiveVoter implements AutoCloseable {
   private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
     return new Thread(() -> {
       ExecutorService executorService = Executors.newCachedThreadPool();
-      List<ClientVoterManager> clientVoterManagers = Stream.of(hostPorts).map(clientVoterManagerFactory).collect(toList());
+      Stream.of(hostPorts).map(clientVoterManagerFactory).collect(toCollection(() -> voterManagers));
       existingTopology.addAll(new HashSet<>(asList(hostPorts)));
-      voterManagers.addAll(clientVoterManagers);
       registrationLatch.addAll(new HashSet<>(asList(hostPorts)));
       try {
         while (!Thread.currentThread().isInterrupted()) {
-          ClientVoterManager currentActive = registerWithActive(id, clientVoterManagers, connectionProps);
+          ClientVoterManager currentActive = registerWithActive(id, voterManagers, connectionProps);
           activeClientVoterManager = currentActive;
           active = true;
           LOGGER.info("{} registered with the active: {}", this, currentActive.getTargetHostPort());
