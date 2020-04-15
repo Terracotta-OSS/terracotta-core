@@ -30,6 +30,8 @@ import java.util.Arrays;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.properties.TCPropertiesImpl;
+import java.util.Collections;
 
 /**
  * TODO Jan 13, 2005: comment describing what this class is for.
@@ -43,6 +45,7 @@ public class TCConnectionManagerTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(Collections.emptyMap());
     this.clientConnMgr = new TCConnectionManagerImpl();
     this.serverConnMgr = new TCConnectionManagerImpl();
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
@@ -160,14 +163,14 @@ public class TCConnectionManagerTest extends TestCase {
       System.out.println("Waiting for client conns");
       ThreadUtil.reallySleep(500);
     }
-    
+    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
+
     conns = serverConnMgr.getAllConnections();
     assertTrue(2 <= conns.length);
     
     for (TCConnection conn : conns) {
       conn.setTransportEstablished();
     }
-    assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
     conns = clientConnMgr.getAllConnections();
     assertEquals(2, conns.length);
@@ -191,7 +194,7 @@ public class TCConnectionManagerTest extends TestCase {
   }
 
   public void testInActiveClientConnections() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(250, 250, 2, "testInActiveClientConnections", false);
     this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, new ClearTextBufferManagerFactory());
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       @Override
@@ -222,7 +225,7 @@ public class TCConnectionManagerTest extends TestCase {
 
     assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
-    long sleepTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(hcConfig, false) + 2000 /* buffer sleep time */;
+    long sleepTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(hcConfig, false) * 2; /* buffer sleep time */;
     System.out.println("making client connections inactive. sleeping for " + sleepTime + "ms.");
     ThreadUtil.reallySleep(sleepTime);
 
