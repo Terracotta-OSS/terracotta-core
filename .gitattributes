@@ -3,3 +3,4 @@
 
 # Batch scripts should have Windows endings
 *.bat eol=crlf
+*.cmd eol=crlf

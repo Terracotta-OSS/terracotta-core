@@ -382,7 +382,10 @@ public abstract class BaseScriptTest {
             PosixFilePermission.OWNER_WRITE
             );
     Path f = Files.copy(scriptPath, binPath.resolve(scriptPath.getFileName()), StandardCopyOption.COPY_ATTRIBUTES);
-    Files.setPosixFilePermissions(f, perms);
+    try {
+      Files.setPosixFilePermissions(f, perms);
+    } catch (UnsupportedOperationException ignored) {
+    }
     return f;
   }
 
