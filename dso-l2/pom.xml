@@ -46,6 +46,11 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>configuration-provider</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -134,7 +139,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
-            <forkCount>1C</forkCount>
+            <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
             <argLine>-Djava.awt.headless=true</argLine>

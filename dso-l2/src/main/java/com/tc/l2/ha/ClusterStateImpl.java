@@ -48,6 +48,7 @@ public class ClusterStateImpl implements ClusterState {
 
   private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<ConnectionID>());
   private long                                      nextAvailChannelID     = -1;
+  private long                                      globalMessageID = -1;
   private State                                     currentState;
   private byte[]                                    configSyncData = new byte[0];
 
@@ -62,6 +63,15 @@ public class ClusterStateImpl implements ClusterState {
   @Override
   public long getNextAvailableChannelID() {
     return nextAvailChannelID;
+  }
+
+  @Override
+  public long getStartGlobalMessageID() {
+    return globalMessageID;
+  }
+
+  public void setStartGlobalMessageID(long id) {
+    globalMessageID = id;
   }
 
   @Override

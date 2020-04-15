@@ -23,9 +23,9 @@ import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.text.PrettyPrintable;
 
 import java.util.Set;
+import com.tc.text.PrettyPrintable;
 
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 

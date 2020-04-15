@@ -19,8 +19,6 @@
 
 package com.terracotta.connection.entity;
 
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
@@ -29,7 +27,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.terracotta.connection.EndpointConnector;
 import com.terracotta.connection.EndpointConnectorImpl;
 import org.junit.Test;
 import org.terracotta.connection.entity.Entity;
@@ -46,6 +43,7 @@ import com.tc.util.Assert;
 
 import java.util.concurrent.atomic.AtomicLong;
 import org.mockito.Mockito;
+import org.terracotta.entity.EndpointConnector;
 
 
 public class TerracottaEntityRefTest {

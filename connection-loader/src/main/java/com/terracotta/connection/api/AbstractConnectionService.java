@@ -24,7 +24,6 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
 import com.tc.object.ClientBuilderFactory;
-import com.terracotta.connection.EndpointConnector;
 import com.terracotta.connection.EndpointConnectorImpl;
 import com.terracotta.connection.TerracottaConnection;
 import com.terracotta.connection.TerracottaInternalClient;
@@ -37,6 +36,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.stream.Collectors;
+import org.terracotta.entity.EndpointConnector;
 
 abstract class AbstractConnectionService implements ConnectionService {
 

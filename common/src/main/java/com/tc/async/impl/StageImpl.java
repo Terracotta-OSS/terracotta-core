@@ -119,10 +119,14 @@ public class StageImpl<EC> implements Stage<EC> {
       return ()-> {
         long exec = System.nanoTime();
         if (exec - start > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
-          warnIfWarranted(event, TimeUnit.NANOSECONDS.toMillis(exec-start));
+          warnIfWarranted("queue", event, TimeUnit.NANOSECONDS.toMillis(exec-start));
         }
         try {
           handler.handleEvent(event);
+          long end = System.nanoTime();;
+          if (end - exec > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
+            warnIfWarranted("executed", event, TimeUnit.NANOSECONDS.toMillis(end-exec));
+          }
         } finally {
           inflight.decrementAndGet();
         }
@@ -130,11 +134,11 @@ public class StageImpl<EC> implements Stage<EC> {
     };
   }
   
-  private void warnIfWarranted(Object event, long time) {
+  private void warnIfWarranted(String type, Object event, long time) {
     long now = System.currentTimeMillis();
     if (now - lastWarnTime > 1000) {
       lastWarnTime = now;
-      logger.warn("Stage: {} has stalled on event {} for {}ms", name, event, time);
+      logger.warn("Stage: {} has {} event {} for {}ms", name, type, event, time);
       if (listener != null) {
         listener.stageStalled(name, time, inflight.get());
       }

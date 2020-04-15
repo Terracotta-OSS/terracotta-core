@@ -10,24 +10,22 @@
  *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
  *  the specific language governing rights and limitations under the License.
  *
- *  The Covered Software is Terracotta Core.
+ *  The Covered Software is common SPI.
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.l2.logging;
+package com.tc.net.core;
 
-import ch.qos.logback.core.AppenderBase;
-import com.tc.server.TCServerMain;
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 
-public class WarningAppender<E> extends AppenderBase<E> {
+/**
+ * @author Ludovic Orban
+ */
+public interface BufferManagerFactory {
 
-  public WarningAppender() {
-  }
+  BufferManager createBufferManager(SocketChannel socketChannel, boolean client) throws IOException;
 
-  @Override
-  protected void append(E eventObject) {
-    TCServerMain.getServer().warn(eventObject);
-  }
 }

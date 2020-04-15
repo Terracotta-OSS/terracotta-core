@@ -150,6 +150,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
         configSyncData = state.getConfigSyncData();
+        nextAvailableGID = state.getStartGlobalMessageID();
         break;
       default:
         throw new AssertionError("Wrong Type : " + getType());
@@ -166,6 +167,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         // trigger local stripeID ready event after StripeIDMap loaded.
         state.setStripeID(clusterID);
         state.setConfigSyncData(configSyncData);
+        state.setStartGlobalMessageID(nextAvailableGID);
         break;
       case NEW_CONNECTION_CREATED:
         state.addNewConnection(connectionID);

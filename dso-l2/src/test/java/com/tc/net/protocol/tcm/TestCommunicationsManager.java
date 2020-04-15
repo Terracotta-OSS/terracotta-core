@@ -24,7 +24,7 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
 import com.tc.operatorevent.NodeNameProvider;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Predicate;

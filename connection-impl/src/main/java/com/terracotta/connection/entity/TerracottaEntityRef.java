@@ -18,9 +18,6 @@
  */
 package com.terracotta.connection.entity;
 
-import com.tc.object.ExceptionUtils;
-import com.terracotta.connection.EndpointConnector;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.entity.Entity;
@@ -46,6 +43,7 @@ import com.tc.util.Throwables;
 import com.tc.util.Util;
 
 import java.util.concurrent.atomic.AtomicLong;
+import org.terracotta.entity.EndpointConnector;
 
 
 public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {

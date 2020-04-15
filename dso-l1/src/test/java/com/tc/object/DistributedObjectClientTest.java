@@ -24,6 +24,7 @@ import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.management.TCClient;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -33,7 +34,7 @@ import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
@@ -161,7 +162,7 @@ public class DistributedObjectClientTest extends TestCase {
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     Properties connectionProperties = new Properties();
     connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
-    ClientBuilder builder = new StandardClientBuilder(connectionProperties) {
+    ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextBufferManagerFactory()) {
       @Override
       public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);

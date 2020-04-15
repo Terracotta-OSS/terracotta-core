@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 
 import org.junit.Test;
 

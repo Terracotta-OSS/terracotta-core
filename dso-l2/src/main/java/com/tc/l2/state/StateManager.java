@@ -22,9 +22,9 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
-import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
 import java.util.Set;
+import com.tc.text.PrettyPrintable;
 
 
 public interface StateManager extends PrettyPrintable {

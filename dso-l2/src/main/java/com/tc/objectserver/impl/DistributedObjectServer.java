@@ -28,7 +28,6 @@ import com.tc.l2.state.AvailabilityManagerImpl;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
@@ -81,6 +80,7 @@ import com.tc.l2.ha.GenerationWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
+import com.tc.l2.ha.SequenceIDWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -166,7 +166,6 @@ import com.tc.services.LocalMonitoringProducer;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
@@ -199,9 +198,7 @@ import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.text.MapListPrettyPrint;
-import com.tc.util.ProductCapabilities;
-import com.tc.text.PrettyPrinter;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.net.BindException;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
@@ -215,6 +212,7 @@ import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ClientID;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -227,20 +225,24 @@ import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
 import com.tc.spi.DiagnosticFormat;
+import com.tc.spi.Guardian;
+import static com.tc.spi.Guardian.Op.CONNECT_CLIENT;
+import static com.tc.spi.Guardian.Op.SERVER_DUMP;
+import static com.tc.spi.Guardian.Op.SERVER_EXIT;
 import com.tc.spi.NetworkTranslator;
-import com.tc.spi.WarningDescription;
-import com.tc.spi.WarningHandler;
+import com.tc.spi.ProductCapabilities;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 
 import java.util.stream.Collectors;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 
 
 /**
@@ -285,8 +287,6 @@ public class DistributedObjectServer {
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
   
-  private WarningHandler handleWarnings;
-
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -309,7 +309,7 @@ public class DistributedObjectServer {
     this.seda = seda;
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
-    this.timer = new SingleThreadedTimer(null);
+    this.timer = new SingleThreadedTimer(null, threadGroup);
     this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts());
@@ -391,7 +391,6 @@ public class DistributedObjectServer {
     // this is on exit so do not guard
     String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
     TCLogging.getDumpLogger().info(clusterState);
-    warning("dump on exit");
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
@@ -482,11 +481,6 @@ public class DistributedObjectServer {
       serviceRegistry.registerExternal(nullPlatformStorageServiceProvider);
     }
     
-    try {
-      this.handleWarnings = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(WarningHandler.class));
-    } catch (ServiceException se) {
-      
-    }
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
     String hostAddress = "";
@@ -627,13 +621,16 @@ public class DistributedObjectServer {
     // 4)  InitialStateWeightGenerator - If it gets down to here, give some weight to a persistent server that went down as active
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
     weightGeneratorFactory.add(initialState);
-    // 5)  ServerUptimeWeightGenerator.
+    // 5)  SequenceID weight is the number of replication activities handled by this passive server
+    final SequenceIDWeightGenerator sequenceWeight = new SequenceIDWeightGenerator();
+    weightGeneratorFactory.add(sequenceWeight);
+    // 6)  ServerUptimeWeightGenerator.
     final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator(availableMode);
     weightGeneratorFactory.add(serverUptimeWeightGenerator);
-    // 6)  RandomWeightGenerator.
+    // 7)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom(), availableMode);
     weightGeneratorFactory.add(randomWeightGenerator);
-    // 7)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
+    // 8)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
     final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
     weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
@@ -717,7 +714,8 @@ public class DistributedObjectServer {
         new GenericHandler<>(), 1, maxStageSize);
 //  routing for passive to receive replication    
     ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
-    // This requires both the stage for handling the replication/sync messages.
+    sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
+// This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
     
@@ -1264,22 +1262,5 @@ public class DistributedObjectServer {
 
   public Persistor getPersistor() {
     return persistor;
-  }
-
-  public void warning(Object description) {
-    if (handleWarnings != null) {
-      handleWarnings.warning(new WarningDescription() {
-        @Override
-        public String getCause() {
-          return description.toString();
-        }
-
-        @Override
-        public String getClusterDump() {
-          String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
-          return clusterState;
-        }
-      });
-    }
   }
 }

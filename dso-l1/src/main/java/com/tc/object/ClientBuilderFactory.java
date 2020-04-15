@@ -24,24 +24,20 @@ import java.util.Properties;
 
 public interface ClientBuilderFactory {
 
-  static ClientBuilderFactory get() {
+  static <T> T get(Class<T> type) {
 
-    ClientBuilderFactory clientBuilderFactory = null;
+    T finalFactory = null;
 
-    for (ClientBuilderFactory factory : ManagedServiceLoader.loadServices(ClientBuilderFactory.class,
+    for (T factory : ManagedServiceLoader.loadServices(type,
                                                            ClientBuilderFactory.class.getClassLoader())) {
-      if (clientBuilderFactory == null) {
-        clientBuilderFactory = factory;
+      if (finalFactory == null) {
+        finalFactory = factory;
       } else {
-        throw new RuntimeException("Found multiple implementations of ClientBuilderFactory");
+        throw new RuntimeException("Found multiple implementations of " + type.getName());
       }
     }
-
-    if (clientBuilderFactory == null) {
-      throw new RuntimeException("No ClientBuilderFactory implementation found");
-    }
-
-    return clientBuilderFactory;
+    
+    return finalFactory;
   }
 
 

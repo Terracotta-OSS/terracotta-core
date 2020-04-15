@@ -21,8 +21,8 @@ package com.tc.net.protocol.transport;
 import com.tc.io.TCDataInput;
 import com.tc.io.TCDataOutput;
 import com.tc.net.ClientID;
-import com.tc.util.ProductID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.core.ProductID;
 
 import java.io.IOException;
 

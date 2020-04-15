@@ -18,7 +18,6 @@
  */
 package org.terracotta.testing.rules;
 
-import com.terracotta.diagnostic.Diagnostics;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -33,6 +32,7 @@ import org.terracotta.connection.ConnectionException;
 
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;

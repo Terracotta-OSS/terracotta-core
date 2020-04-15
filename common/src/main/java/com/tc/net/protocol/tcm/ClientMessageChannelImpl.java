@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -37,6 +36,7 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
+import com.tc.net.core.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;

@@ -18,7 +18,6 @@
  */
 package org.terracotta.voter;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,6 +29,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.connection.Diagnostics;
 import static org.terracotta.voter.ClientVoterManagerImpl.REQUEST_TIMEOUT;
 
 public class ClientVoterManagerImplTest {

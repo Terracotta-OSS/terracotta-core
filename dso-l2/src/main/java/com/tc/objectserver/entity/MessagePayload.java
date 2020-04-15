@@ -61,7 +61,7 @@ public class MessagePayload {
   private final TCByteBuffer raw;
   private EntityMessage message;
   private MessageCodecException exception;
-  private int concurrency;
+  private final int concurrency;
   private final int referenceCount;
   private final boolean replicate;
   private final boolean canBeBusy;

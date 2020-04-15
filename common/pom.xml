@@ -45,6 +45,11 @@ Apache Ivy version: 2.2.0 20100923230623
   <dependencies>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-messaging</artifactId>
     </dependency>
     <dependency>
@@ -104,7 +109,7 @@ Apache Ivy version: 2.2.0 20100923230623
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
-            <forkCount>2C</forkCount>
+            <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
             <argLine>-Xmx2G -Djava.awt.headless=true</argLine>

@@ -32,15 +32,15 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.tc.text.PrettyPrintable;
 
 public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMessage> implements PrettyPrintable {
   private Sink<VoltronEntityMessage> destSink;

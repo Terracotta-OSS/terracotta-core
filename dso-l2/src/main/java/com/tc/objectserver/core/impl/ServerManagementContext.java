@@ -21,12 +21,12 @@ package com.tc.objectserver.core.impl;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
-import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.VoltronMessageHandler;
-import com.tc.text.PrettyPrintable;
+import com.tc.spi.Guardian;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.tc.text.PrettyPrintable;
 
 public class ServerManagementContext implements PrettyPrintable {
 

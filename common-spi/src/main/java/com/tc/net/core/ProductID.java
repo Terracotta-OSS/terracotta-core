@@ -17,16 +17,15 @@
  *
  */
 
-package com.tc.util;
+package com.tc.net.core;
 
 /**
- * @author tim
  */
 public enum ProductID {
-  DIAGNOSTIC(true, false, false, false), 
-  INFORMATIONAL(true, true, true, false), 
-  STRIPE(false, true, true, false), 
-  SERVER(false, false, true, false), 
+  DIAGNOSTIC(true, false, false, false),
+  INFORMATIONAL(true, true, true, false),
+  STRIPE(false, true, true, false),
+  SERVER(false, false, true, false),
   PERMANENT(false, true, true, true);
 
   private final boolean internal;
@@ -44,7 +43,7 @@ public enum ProductID {
   public boolean isInternal() {
     return internal;
   }
-  
+
   public boolean isReconnectEnabled() {
     return reconnect;
   }
@@ -52,11 +51,11 @@ public enum ProductID {
   public boolean isRedirectEnabled() {
     return redirect;
   }
-  
+
   public boolean isPermanent() {
     return permanent;
   }
-  
+
   @Override
   public String toString() {
     return name().charAt(0) + name().substring(1).toLowerCase();

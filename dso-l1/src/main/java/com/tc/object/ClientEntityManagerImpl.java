@@ -351,6 +351,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     sub.put("remote", channel.getRemoteAddress());
     sub.put("product", channel.getProductID());
     sub.put("client", channel.getClientID());
+    sub.put("pendingMessages", this.requestTickets.messagesPending);
     map.put("channel", sub);
     if (stats instanceof PrettyPrintable) {
       sub.put("stats", ((PrettyPrintable)stats).getStateMap());

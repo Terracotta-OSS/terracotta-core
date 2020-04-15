@@ -23,7 +23,7 @@ import org.terracotta.persistence.IPlatformPersistence;
 import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 
 import java.io.IOException;
 import java.util.ArrayList;

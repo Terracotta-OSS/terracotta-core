@@ -51,7 +51,10 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
   
   private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    ClientBuilder clientBuilder = ClientBuilderFactory.get().create(props);
+    ClientBuilder clientBuilder = ClientBuilderFactory.get(ClientBuilderFactory.class).create(props);
+    if (clientBuilder == null) {
+      throw new RuntimeException("unable to build the client");
+    }
     clientBuilder.setClientConnectionErrorListener(errorListener);
     return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(), clientBuilder, props);
   }

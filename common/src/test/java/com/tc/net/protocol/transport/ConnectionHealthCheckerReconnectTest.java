@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
-import com.tc.net.core.ClearTextBufferManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
@@ -47,9 +46,9 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.net.core.ProductID;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
-import com.tc.util.ProductID;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
 

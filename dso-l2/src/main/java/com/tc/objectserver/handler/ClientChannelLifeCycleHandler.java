@@ -30,13 +30,13 @@ import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.FetchID;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.core.api.GuardianContext;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

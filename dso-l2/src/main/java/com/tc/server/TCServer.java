@@ -18,13 +18,13 @@
  */
 package com.tc.server;
 
-import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.spi.Pauseable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
+import org.terracotta.server.StopAction;
 
 
 public interface TCServer extends Pauseable {
@@ -32,13 +32,11 @@ public interface TCServer extends Pauseable {
 
   void start() throws Exception;
 
-  void stop();
+  void stop(StopAction...restartMode);
 
-  void stop(RestartMode restartMode);
+  void stopIfPassive(StopAction...restartMode) throws PlatformStopException;
 
-  void stopIfPassive(RestartMode restartMode) throws PlatformStopException;
-
-  void stopIfActive(RestartMode restartMode) throws PlatformStopException;
+  void stopIfActive(StopAction...restartMode) throws PlatformStopException;
 
   boolean isStarted();
 
@@ -84,9 +82,5 @@ public interface TCServer extends Pauseable {
 
   void reloadConfiguration() throws ConfigurationSetupException;
 
-  String getResourceState();
-
   String getClusterState(PrettyPrinter form);
-  
-  void warn(Object event);
 }

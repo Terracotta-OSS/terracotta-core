@@ -16,14 +16,15 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.terracotta.connection;
+package com.tc.spi;
 
-import org.terracotta.connection.entity.Entity;
-import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityClientService;
-import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
+import com.tc.net.core.ProductID;
+import java.util.Set;
 
-public interface EndpointConnector {
-  <T extends Entity, C, M extends EntityMessage, R extends EntityResponse, U> T connect(EntityClientEndpoint<M, R> endpoint, EntityClientService<T, C, M, R, U> entityClientService, U userData);
+/**
+ *  If a component of the server wants to limit the types of clients supported, implement
+ *  this interface as a service and the server will lookup.
+ */
+public interface ProductCapabilities {
+  Set<ProductID> supportedClients();
 }

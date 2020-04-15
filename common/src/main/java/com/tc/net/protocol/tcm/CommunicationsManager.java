@@ -23,8 +23,8 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
+import com.tc.net.core.ProductID;
 import com.tc.text.PrettyPrintable;
-import com.tc.util.ProductID;
 import java.util.function.Predicate;
 
 /**

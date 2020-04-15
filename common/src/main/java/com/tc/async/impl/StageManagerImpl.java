@@ -86,7 +86,7 @@ public class StageManagerImpl implements StageManager {
   
   private void startMonitor() {
     final Logger logger = loggerProvider.getLogger(getClass());
-    Thread t = new Thread("SEDA Stage Monitor") {
+    Thread t = new Thread(group, "SEDA Stage Monitor") {
       @Override
       public void run() {
         while (true) {

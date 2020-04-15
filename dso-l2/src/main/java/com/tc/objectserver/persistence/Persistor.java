@@ -20,12 +20,12 @@ package com.tc.objectserver.persistence;
 
 import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.text.PrettyPrintable;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.terracotta.persistence.IPlatformPersistence;
+import com.tc.text.PrettyPrintable;
 
 
 public class Persistor implements PrettyPrintable {

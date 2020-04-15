@@ -19,8 +19,9 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.net.StripeID;
+import com.tc.net.core.ProductID;
+import static com.tc.net.core.ProductID.DIAGNOSTIC;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {

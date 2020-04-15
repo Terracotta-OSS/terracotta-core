@@ -18,7 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.objectserver.core.api.GuardianContext;
+import com.tc.objectserver.core.impl.GuardianContext;
 import java.util.Properties;
 import java.util.function.Consumer;
 import org.terracotta.entity.ActiveInvokeChannel;

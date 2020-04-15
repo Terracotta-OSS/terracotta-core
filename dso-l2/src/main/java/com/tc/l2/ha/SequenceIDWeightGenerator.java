@@ -16,16 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.core;
+package com.tc.l2.ha;
 
-import java.io.IOException;
-import java.nio.channels.SocketChannel;
+import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
+import com.tc.objectserver.handler.ReplicatedTransactionHandler;
 
-/**
- * @author Ludovic Orban
- */
-public interface BufferManagerFactory {
 
-  BufferManager createBufferManager(SocketChannel socketChannel, boolean client) throws IOException;
+public class SequenceIDWeightGenerator implements WeightGenerator {
 
+  private ReplicatedTransactionHandler handler;
+
+  public SequenceIDWeightGenerator() {
+  }
+
+  public void setReplicatedTransactionHandler(ReplicatedTransactionHandler handler) {
+    this.handler = handler;
+  }
+
+  @Override
+  public long getWeight() {
+    return handler.getCurrentSequence();
+  }
 }

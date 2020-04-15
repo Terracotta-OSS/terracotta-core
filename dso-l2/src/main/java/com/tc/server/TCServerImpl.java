@@ -21,20 +21,15 @@ package com.tc.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Stage;
-import com.tc.async.api.StageListener;
-import com.tc.async.impl.NullStageListener;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.ServerExitStatus;
-import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
@@ -64,11 +59,14 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
-import com.tc.objectserver.core.api.Guardian;
-import com.tc.objectserver.core.api.GuardianContext;
+import com.tc.objectserver.core.impl.GuardianContext;
+import com.tc.spi.Guardian;
 import com.tc.text.PrettyPrinter;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import org.terracotta.server.StopAction;
 
 
 public class TCServerImpl extends SEDA implements TCServer {
@@ -120,12 +118,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void stop() {
-    stop(RestartMode.STOP_ONLY);
-  }
-
-  @Override
-  public void stopIfPassive(RestartMode restartMode) throws PlatformStopException {
+  public void stopIfPassive(StopAction...restartMode) throws PlatformStopException {
     if (stateManager.moveToStopStateIf(ServerMode.PASSIVE_STATES)) {
       stop(restartMode);
     } else {
@@ -134,7 +127,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void stopIfActive(RestartMode restartMode) throws PlatformStopException {
+  public void stopIfActive(StopAction...restartMode) throws PlatformStopException {
     if (stateManager.moveToStopStateIf(EnumSet.of(ServerMode.ACTIVE))) {
       stop(restartMode);
     } else {
@@ -143,23 +136,30 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void stop(RestartMode restartMode) {
-    TCLogging.getConsoleLogger().info("Stopping server with restartMode: {}", restartMode);
+  public void stop(StopAction...restartMode) {
+    TCLogging.getConsoleLogger().info("Stopping server");
     dsoServer.getContext().getL2Coordinator().getStateManager().moveToStopState();
-    if (restartMode == RestartMode.STOP_ONLY) {
-      exitWithStatus(0);
-    } else if (restartMode == RestartMode.STOP_AND_RESTART) {
+    EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+    for (StopAction s : restartMode) {
+      set.add(s);
+    }
+    if (set.contains(StopAction.ZAP)) {
+      TCLogging.getConsoleLogger().info("Setting data to dirty");
+      dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
+    }
+    if (set.contains(StopAction.RESTART)) {
+      TCLogging.getConsoleLogger().info("Requesting restart");
       exitWithStatus(ServerExitStatus.EXITCODE_RESTART_REQUEST);
     } else {
-      throw new IllegalArgumentException("Unknown RestartMode: " + restartMode);
+      exitWithStatus(0);
     }
   }
 
   @Override
-  public synchronized void start() {
+  public void start() {
     if (!this.isStarted()) {
       try {
-        startServer();
+        startServer().get();
       } catch (Throwable t) {
         if (t instanceof RuntimeException) { throw (RuntimeException) t; }
         throw new RuntimeException(t);
@@ -303,9 +303,14 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
 
-  private class StartAction implements StartupAction {
-    @Override
-    public void execute() throws Throwable {
+  private class StartAction implements Runnable {
+    private final CompletableFuture<Void> finish;
+
+    public StartAction(CompletableFuture<Void> finish) {
+      this.finish = finish;
+    }
+
+    public void run() {
       if (logger.isDebugEnabled()) {
         logger.debug("Starting Terracotta server instance...");
       }
@@ -317,18 +322,18 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       // the following code starts the jmx server as well
-      startDSOServer();
-
-      if (isActive()) {
-        if (TCServerImpl.this.activationListener != null) {
-          TCServerImpl.this.activationListener.serverActivated();
-        }
+      try {
+        startDSOServer();
+      } catch (Exception e) {
+        finish.completeExceptionally(e);
       }
 
       String serverName = TCServerImpl.this.configurationSetupManager.getServerConfiguration().getName();
       if (serverName != null) {
         logger.info("Server started as " + serverName);
       }
+
+      finish.complete(null);
     }
   }
   
@@ -336,8 +341,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     
   }
 
-  protected void startServer() throws Exception {
-    new StartupHelper(getThreadGroup(), new StartAction()).startUp();
+  protected Future<Void> startServer() throws Exception {
+    CompletableFuture<Void> complete = new CompletableFuture<>();
+    new Thread(getThreadGroup(), new StartAction(complete), "Server Startup Thread").start();
+    return complete;
   }
 
   private void startDSOServer() throws Exception {
@@ -398,13 +405,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     mbs.unregisterMBean(L2MBeanNames.DSO);
   }
 
-  // TODO: check that this is not needed then remove
-  private TCServerActivationListener activationListener;
-
-  public void setActivationListener(TCServerActivationListener listener) {
-    this.activationListener = listener;
-  }
-
   private synchronized void notifyShutdown() {
     shutdown = true;
     notifyAll();
@@ -430,12 +430,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   public String[] processArguments() {
     return configurationSetupManager.getProcessArguments();
   }
-
-  @Override
-  public String getResourceState() {
-    return "";
-  }
-
+  
   private void exitWithStatus(int status) {
     if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "stop")) {
       Runtime.getRuntime().exit(status);
@@ -501,12 +496,5 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public void stageWarning(Object description) {
     super.stageWarning(description);
-  }
-
-  @Override
-  public void warn(Object event) {
-    if (dsoServer != null) {
-      dsoServer.warning(event);
-    }
   }
 }

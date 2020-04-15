@@ -18,7 +18,6 @@
  */
 package org.terracotta.voter;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
@@ -38,6 +37,7 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import static com.tc.voter.VoterManagerMBean.MBEAN_NAME;
+import org.terracotta.connection.Diagnostics;
 
 public class ClientVoterManagerImpl implements ClientVoterManager {
 

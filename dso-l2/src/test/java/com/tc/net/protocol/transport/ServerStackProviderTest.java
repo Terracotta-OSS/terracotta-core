@@ -33,7 +33,7 @@ import com.tc.objectserver.impl.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import com.tc.util.sequence.MutableSequence;
 import org.mockito.Mockito;
 
