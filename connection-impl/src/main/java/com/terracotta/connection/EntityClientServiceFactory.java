@@ -14,9 +14,7 @@
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
- *
  */
-
 /*
  *
  *  The contents of this file are subject to the Terracotta Public License Version

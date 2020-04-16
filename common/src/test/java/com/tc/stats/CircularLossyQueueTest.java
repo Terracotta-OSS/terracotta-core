@@ -14,9 +14,7 @@
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
- *
  */
-
 package com.tc.stats;
 
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
