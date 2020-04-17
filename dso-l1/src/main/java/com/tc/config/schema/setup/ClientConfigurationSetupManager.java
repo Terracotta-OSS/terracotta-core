@@ -14,9 +14,7 @@
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
- *
  */
-
 package com.tc.config.schema.setup;
 
 import com.tc.config.schema.CommonL1Config;

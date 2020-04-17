@@ -14,9 +14,7 @@
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
- *
  */
-
 package com.tc.object.request;
 
 import com.tc.async.api.AbstractEventHandler;

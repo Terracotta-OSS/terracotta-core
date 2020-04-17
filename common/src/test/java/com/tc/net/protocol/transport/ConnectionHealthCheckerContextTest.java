@@ -14,9 +14,7 @@
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
- *
  */
-
 package com.tc.net.protocol.transport;
 
 import org.junit.Assert;

@@ -14,9 +14,7 @@
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
- *
  */
-
 package com.tc.spi;
 /**
  * Receive objects from the server and hold print state until {@link java.lang.Object#toString()} 
