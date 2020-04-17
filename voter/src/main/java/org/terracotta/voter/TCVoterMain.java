@@ -24,6 +24,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -39,6 +41,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class TCVoterMain {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterMain.class);
+  
   private static final String HELP = "h";
   private static final String OVERRIDE = "o";
   protected static final String SERVER = "s";
@@ -145,7 +149,17 @@ public class TCVoterMain {
 
   public static void main(String[] args) throws ConfigurationSetupException, ParseException {
     TCVoterMain main = new TCVoterMain();
+    writePID();
     main.processArgs(args);
   }
 
+  private static void writePID() {
+    try {
+      String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+      long pid = Long.parseLong(processName.split("@")[0]);
+      LOGGER.info("PID is {}", pid);
+    } catch (Throwable t) {
+      LOGGER.warn("Unable to fetch the PID of this process.");
+    }
+  }
 }
