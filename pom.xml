@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.13</version>
+    <version>5.14-SNAPSHOT</version>
     <relativePath/>
   </parent>
 
@@ -38,12 +38,12 @@
   <properties>
     <build.edition>opensource</build.edition>
     <tc-shader.version>1.2</tc-shader.version>
-    <skip.deploy>false</skip.deploy>
-
     <terracotta-apis.version>1.7.0-pre2</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
     <galvan.version>1.5.0-pre3</galvan.version>
     <tc-tripwire.version>1.0.0-pre7</tc-tripwire.version>
+    <!-- legacy repo -->
+    <spotbugs.skip>true</spotbugs.skip>
   </properties>
 
   <modules>
