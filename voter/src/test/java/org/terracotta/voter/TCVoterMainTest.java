@@ -93,53 +93,17 @@ public class TCVoterMainTest {
     expectedException.expectMessage("Usage of multiple -s options not supported");
     voterMain.processArgs(args);
   }
-
-  @Test
-  public void testConfigFileOpt() throws Exception {
-    String hostPort1 = "foo:1234";
-    String hostPort2 = "bar:2345";
-    TCVoterMain voterMain = new TCVoterMain() {
-      @Override
-      protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
-        assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
-      }
-    };
-
-    String[] args = new String[] {"-f", "src/test/resources/tc-config.xml"};
-    voterMain.processArgs(args);
-  }
-
-  @Test
-  public void testMultipleConfigFileOpts() throws Exception {
-    TCVoterMain voterMain = new TCVoterMain();
-
-    String[] args = new String[] {"-f", "foo", "-f", "bar"};
-
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Usage of multiple -f options not supported");
-    voterMain.processArgs(args);
-  }
-
+  
   @Test
   public void testZeroArguments() throws Exception {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[0];
 
     expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Neither the override option -o nor the regular options -s or -f provided");
+    expectedException.expectMessage("Neither the override option -o nor the regular options -s provided");
     voterMain.processArgs(args);
   }
-
-  @Test
-  public void testTargetServerAndConfigFileOptions() throws Exception {
-    TCVoterMain voterMain = new TCVoterMain();
-    String[] args = new String[] {"-s", "bar:1234", "-f", "baz"};
-
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("Both -s and -f options provided. Use either one and not both together.");
-    voterMain.main(args);
-  }
-
+  
   @Test
   public void testInvalidTargetHostPort() throws Exception {
     TCVoterMain voterMain = new TCVoterMain();
