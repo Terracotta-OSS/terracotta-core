@@ -22,14 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
-import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.connection.entity.EntityRef;
-import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityNotProvidedException;
-import org.terracotta.exception.EntityVersionMismatchException;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;
@@ -37,7 +31,9 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import static com.tc.voter.VoterManagerMBean.MBEAN_NAME;
+import java.net.InetSocketAddress;
 import org.terracotta.connection.Diagnostics;
+import org.terracotta.connection.DiagnosticsFactory;
 
 public class ClientVoterManagerImpl implements ClientVoterManager {
 
@@ -46,7 +42,6 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public static final String REQUEST_TIMEOUT = "Request Timeout";
 
   private final String hostPort;
-  private Connection connection;
   Diagnostics diagnostics;
   
   private volatile boolean voting = false;
@@ -63,23 +58,19 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   @Override
   public void connect(Optional<Properties> connectionProps) {
-    if (connection != null) {
-      return;
-    }
-    URI uri = URI.create("diagnostic://" + hostPort);
+    String[] split = this.hostPort.split(":");
+    InetSocketAddress addr = InetSocketAddress.createUnresolved(split[0], Integer.parseInt(split[1]));
     Properties properties = connectionProps.orElse(new Properties());
     try {
-      Connection temp = ConnectionFactory.connect(uri, properties);
+      Diagnostics temp = DiagnosticsFactory.connect(addr, properties);
       synchronized (this) {
-        if (connection != null) {
-          connection.close();
+        if (diagnostics != null) {
+          diagnostics.close();
         }
-        connection = temp;
-        EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1L, "root");;
-        this.diagnostics = ref.fetchEntity(properties);        
+        diagnostics = temp;
       }
       LOGGER.info("Connected to {}", hostPort);
-    } catch (IOException | ConnectionException | EntityNotProvidedException | EntityNotFoundException | EntityVersionMismatchException e) {
+    } catch (ConnectionException e) {
       throw new RuntimeException("Unable to connect to " + hostPort, e);
     }
   }
@@ -165,20 +156,18 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   @Override
   public synchronized void close() {
     try {
-      if (this.connection != null) {
-        this.connection.close();
+      if (this.diagnostics != null) {
+        this.diagnostics.close();
         LOGGER.info("Connection closed to {}", hostPort);
       }
-    } catch (IOException e) {
-      LOGGER.error("Failed to close the connection: {}", connection);
     } finally {
-      this.connection = null;
+      this.diagnostics = null;
     }
   }
   
   @Override
   public synchronized boolean isConnected() {
-    return this.connection != null;
+    return this.diagnostics != null;
   }
   
   @Override
@@ -194,6 +183,6 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   @Override
   public String toString() {
-    return "ClientVoterManagerImpl{" + "hostPort=" + hostPort + ", connection=" + connection + '}';
+    return "ClientVoterManagerImpl{" + "hostPort=" + hostPort + ", connection=" + diagnostics + '}';
   }
 }
