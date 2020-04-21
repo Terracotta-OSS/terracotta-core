@@ -133,6 +133,11 @@ public class TCConnectionManagerTest extends TestCase {
     conn2.connect(lsnr.getBindSocketAddress(), 5000);
     conn3.connect(lsnr.getBindSocketAddress(), 5000);
 
+    while (serverConnMgr.getAllConnections().length < 3) {
+      System.out.println("Waiting for server conn");
+      ThreadUtil.reallySleep(500);
+    }
+
     conn1.setTransportEstablished();
     conn2.setTransportEstablished();
     conn3.setTransportEstablished();
@@ -140,6 +145,11 @@ public class TCConnectionManagerTest extends TestCase {
     TCConnection activeConns[] = clientConnMgr.getAllActiveConnections();
     assertEquals(3, activeConns.length);
     assertTrue(Arrays.asList(activeConns).containsAll(Arrays.asList(new Object[] { conn1, conn2, conn3 })));
+
+    while (serverConnMgr.getAllConnections().length < 3) {
+      System.out.println("Waiting for server conn");
+      ThreadUtil.reallySleep(500);
+    }
 
     clientConnMgr.closeAllConnections(5000);
     assertEquals(0, clientConnMgr.getAllConnections().length);
@@ -149,28 +159,32 @@ public class TCConnectionManagerTest extends TestCase {
       System.out.println("Waiting for server conn close");
       ThreadUtil.reallySleep(500);
     }
+    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
 
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     conn2 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     assertEquals(2, clientConnMgr.getAllConnections().length);
     conn1.connect(lsnr.getBindSocketAddress(), 5000);
     conn2.connect(lsnr.getBindSocketAddress(), 5000);
+
+    while (serverConnMgr.getAllConnections().length < 2) {
+      System.out.println("Waiting for server conn");
+      ThreadUtil.reallySleep(500);
+    }
+
     conn1.setTransportEstablished();
     conn2.setTransportEstablished();
     assertEquals(2, clientConnMgr.getAllActiveConnections().length);
 
-    while (serverConnMgr.getAllConnections().length < 2) {
+    for (TCConnection c : serverConnMgr.getAllConnections()) {
+      c.setTransportEstablished();
+    }
+
+    while (serverConnMgr.getAllActiveConnections().length < 2) {
       System.out.println("Waiting for client conns");
       ThreadUtil.reallySleep(500);
     }
-    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
-
-    conns = serverConnMgr.getAllConnections();
-    assertTrue(2 <= conns.length);
-    
-    for (TCConnection conn : conns) {
-      conn.setTransportEstablished();
-    }
+    assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
     conns = clientConnMgr.getAllConnections();
     assertEquals(2, conns.length);
