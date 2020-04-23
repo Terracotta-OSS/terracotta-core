@@ -83,6 +83,7 @@ import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.ha.SequenceIDWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
+import com.tc.l2.ha.TopologyWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
@@ -621,16 +622,19 @@ public class DistributedObjectServer {
     // 4)  InitialStateWeightGenerator - If it gets down to here, give some weight to a persistent server that went down as active
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
     weightGeneratorFactory.add(initialState);
-    // 5)  SequenceID weight is the number of replication activities handled by this passive server
+    // 5)  Topology weight is the number nodes this stripe believes are in the cluster
+    final TopologyWeightGenerator topoWeight = new TopologyWeightGenerator(this.configSetupManager.getConfiguration());
+    weightGeneratorFactory.add(topoWeight);
+    // 6)  SequenceID weight is the number of replication activities handled by this passive server
     final SequenceIDWeightGenerator sequenceWeight = new SequenceIDWeightGenerator();
     weightGeneratorFactory.add(sequenceWeight);
-    // 6)  ServerUptimeWeightGenerator.
+    // 7)  ServerUptimeWeightGenerator.
     final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator(availableMode);
     weightGeneratorFactory.add(serverUptimeWeightGenerator);
-    // 7)  RandomWeightGenerator.
+    // 8)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom(), availableMode);
     weightGeneratorFactory.add(randomWeightGenerator);
-    // 8)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
+    // 9)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
     final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
     weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
