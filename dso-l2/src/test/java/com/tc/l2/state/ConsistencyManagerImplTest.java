@@ -121,10 +121,28 @@ public class ConsistencyManagerImplTest {
     ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
-    Assert.assertFalse(granted);
+    Assert.assertTrue(granted);
     Assert.assertFalse(impl.isVoting());
     Assert.assertFalse(impl.isBlocked());
     Assert.assertEquals(cterm, impl.getCurrentTerm());
+  }
+
+  @Test
+  public void testAddClientDoesntVote() throws Exception {
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
+    long cterm = impl.getCurrentTerm();
+    boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
+    Assert.assertTrue(granted);
+    Assert.assertFalse(impl.isVoting());
+    Assert.assertFalse(impl.isBlocked());
+    Assert.assertEquals(cterm, impl.getCurrentTerm());
+    granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.REMOVE_PASSIVE);
+    Assert.assertFalse(granted);
+    Assert.assertTrue(impl.isVoting());
+    Assert.assertTrue(impl.isBlocked());
+    granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
+    Assert.assertFalse(granted);
   }
 
   @Test

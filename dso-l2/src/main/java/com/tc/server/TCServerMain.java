@@ -68,6 +68,8 @@ public class TCServerMain {
 
       ConfigurationProvider configurationProvider = getConfigurationProvider(systemLoader);
 
+      setServerEnvironment(configurationProvider);
+
       CommandLineParser commandLineParser = new CommandLineParser(args, configurationProvider);
 
       configurationProvider.initialize(commandLineParser.getProviderArgs());
@@ -85,7 +87,6 @@ public class TCServerMain {
       writeSystemProperties();
 
       server = ServerFactory.createServer(setup, threadGroup);
-      setServerEnvironment();
       server.start();
 
       server.waitUntilShutdown();
@@ -94,27 +95,41 @@ public class TCServerMain {
     }
   }
 
-  private static void setServerEnvironment() {
+  private static void setServerEnvironment(ConfigurationProvider config) {
     ServerEnv.setDefaultServer(new Server() {
+      private ServerConfigurationManager getConfigurationManager() {
+        if (setup == null) {
+          throw new RuntimeException("configuration is not bootstrapped yet");
+        }
+        return setup;
+      }
+
+      private TCServer getServer() {
+        if (server == null) {
+          throw new RuntimeException("server is not bootstrapped yet");
+        }
+        return server;
+      }
+
       @Override
       public int getServerCount() {
-        return setup.getConfiguration().getServerConfigurations().size();
+        return getConfigurationManager().getConfiguration().getServerConfigurations().size();
       }
 
       @Override
       public String[] processArguments() {
-        return setup.getProcessArguments();
+        return getConfigurationManager().getProcessArguments();
       }
 
       @Override
       public void stop(StopAction... modes) {
-        server.stop(modes);
+        getServer().stop(modes);
       }
 
       @Override
       public boolean stopIfPassive(StopAction... modes) {
         try {
-          server.stopIfPassive(modes);
+          getServer().stopIfPassive(modes);
         } catch (PlatformStopException stop) {
           warn("unable to stop server", stop);
           return false;
@@ -125,7 +140,7 @@ public class TCServerMain {
       @Override
       public boolean stopIfActive(StopAction... modes) {
         try {
-          server.stopIfActive(modes);
+          getServer().stopIfActive(modes);
         } catch (PlatformStopException stop) {
           warn("unable to stop server", stop);
           return false;
@@ -135,92 +150,92 @@ public class TCServerMain {
 
       @Override
       public boolean isActive() {
-        return server.isActive();
+        return getServer().isActive();
       }
 
       @Override
       public boolean isStopped() {
-        return server.isStopped();
+        return getServer().isStopped();
       }
 
       @Override
       public boolean isPassiveUnitialized() {
-        return server.isPassiveUnitialized();
+        return getServer().isPassiveUnitialized();
       }
 
       @Override
       public boolean isPassiveStandby() {
-        return server.isPassiveStandby();
+        return getServer().isPassiveStandby();
       }
 
       @Override
       public boolean isReconnectWindow() {
-        return server.isReconnectWindow();
+        return getServer().isReconnectWindow();
       }
 
       @Override
       public String getState() {
-        return server.getState().toString();
+        return getServer().getState().toString();
       }
 
       @Override
       public long getStartTime() {
-        return server.getStartTime();
+        return getServer().getStartTime();
       }
 
       @Override
       public long getActivateTime() {
-        return server.getActivateTime();
+        return getServer().getActivateTime();
       }
 
       @Override
       public String getIdentifier() {
-        return server.getL2Identifier();
+        return getServer().getL2Identifier();
       }
 
       @Override
       public int getClientPort() {
-        return setup.getServerConfiguration().getTsaPort().getPort();
+        return getConfigurationManager().getServerConfiguration().getTsaPort().getPort();
       }
 
       @Override
       public int getServerPort() {
-        return setup.getServerConfiguration().getGroupPort().getPort();
+        return getConfigurationManager().getServerConfiguration().getGroupPort().getPort();
       }
 
       @Override
       public int getReconnectWindowTimeout() {
-        return setup.getServerConfiguration().getClientReconnectWindow();
+        return getConfigurationManager().getServerConfiguration().getClientReconnectWindow();
       }
 
       @Override
       public void waitUntilShutdown() {
-        server.waitUntilShutdown();
+        getServer().waitUntilShutdown();
       }
 
       @Override
       public void dump() {
-        server.dump();
+        getServer().dump();
       }
 
       @Override
       public String getClusterState() {
-        return server.getClusterState(null);
+        return getServer().getClusterState(null);
       }
 
       @Override
       public String getConfiguration() {
-        return setup.getConfiguration().getRawConfiguration();
+        return config.getConfiguration().getRawConfiguration();
       }
 
       @Override
       public ClassLoader getServiceClassLoader(ClassLoader parent, Class<?>... serviceClasses) {
-        return new ServiceClassLoader(setup.getConfigurationProvider().getClass().getClassLoader(), serviceClasses);
+        return new ServiceClassLoader(config.getClass().getClassLoader(), serviceClasses);
       }
 
       @Override
       public <T> List<Class<? extends T>> getImplementations(Class<T> serviceClasses) {
-        return setup.getServiceLocator().getImplementations(serviceClasses);
+        return getConfigurationManager().getServiceLocator().getImplementations(serviceClasses);
       }
 
       @Override

@@ -106,6 +106,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return voteTerm;
   }
   
+  @Override
   public void setCurrentTerm(long term) {
     voteTerm = term;
   }
@@ -136,6 +137,10 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
  //  with a quorum of votes
       passives.remove(sourceNode);
       Assert.assertEquals(mode, ServerMode.ACTIVE);
+    }
+    if (!newMode.isStateTransition()) {
+      //  only reject a non-state transition if blocked on some other transition
+      return !isBlocked();
     }
     boolean allow = false;
     
@@ -240,12 +245,15 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     return activePeers.stream().filter(p -> topology.getServers().contains(((ServerID)p).getName())).collect(toSet());
   }
   
+  @SuppressWarnings("fallthrough")
   private synchronized void endVoting(boolean allowed, Transition moveTo, Topology topology) {
+    Assert.assertTrue(moveTo.isStateTransition());
     if (activeVote) {
-      if (allowed || !moveTo.isStateTransition()) {
+      if (allowed) {
         switch(moveTo) {
           case MOVE_TO_ACTIVE:
             promotePeers(filterActivePeers(activePeers, topology));
+            //  fallthrough is expected here
           case CONNECT_TO_ACTIVE:
             actions.remove(Transition.CONNECT_TO_ACTIVE);
             actions.remove(Transition.MOVE_TO_ACTIVE);
