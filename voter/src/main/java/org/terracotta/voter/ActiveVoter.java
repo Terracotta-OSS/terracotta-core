@@ -392,43 +392,45 @@ public class ActiveVoter implements AutoCloseable {
   private void startTopologyPolling(ExecutorService executorService, Optional<Properties> connectionProps,
                                     AtomicReference<ClientVoterManager> voteOwner) {
     topologyFetchingFuture = executorService.submit(() -> {
-      try {
-        while (activeClientVoterManager.isConnected()) {
-          Set<String> newTopology = activeClientVoterManager.getTopology();
-          LOGGER.info("Topology is {}.", newTopology);
-          if (!existingTopology.equals(newTopology)) {
-            LOGGER.info("New Topology detected {}.", newTopology);
-            // Start heartbeating with new servers
-            Set<String> addedServers = getAddedServers(newTopology);
-            synchronized (registrationLatch) {
-              registrationLatch.addAll(addedServers);
-            }
-            addedServers.forEach(server -> {
-              existingTopology.add(server);
-              ClientVoterManager clientVoterManager = clientVoterManagerFactory.apply(server);
-              voterManagers.add(clientVoterManager);
-              heartbeatFutures.put(clientVoterManager.getTargetHostPort(),
-                  executorService.submit(heartbeat(executorService, clientVoterManager, connectionProps, voteOwner)));
-            });
-
-            // Do removal of old servers from topology
-            Set<String> removedServers = getRemovedServers(newTopology);
-            synchronized (registrationLatch) {
-              registrationLatch.removeAll(removedServers);
-              if (registrationLatch.isEmpty()) {
-                registrationLatch.notifyAll();
+      while (!executorService.isShutdown()) {
+        try {
+          while (activeClientVoterManager.isConnected()) {
+            Set<String> newTopology = activeClientVoterManager.getTopology();
+            LOGGER.info("Topology is {}.", newTopology);
+            if (!existingTopology.equals(newTopology)) {
+              LOGGER.info("New Topology detected {}.", newTopology);
+              // Start heartbeating with new servers
+              Set<String> addedServers = getAddedServers(newTopology);
+              synchronized (registrationLatch) {
+                registrationLatch.addAll(addedServers);
               }
+              addedServers.forEach(server -> {
+                existingTopology.add(server);
+                ClientVoterManager clientVoterManager = clientVoterManagerFactory.apply(server);
+                voterManagers.add(clientVoterManager);
+                heartbeatFutures.put(clientVoterManager.getTargetHostPort(),
+                    executorService.submit(heartbeat(executorService, clientVoterManager, connectionProps, voteOwner)));
+              });
+
+              // Do removal of old servers from topology
+              Set<String> removedServers = getRemovedServers(newTopology);
+              synchronized (registrationLatch) {
+                registrationLatch.removeAll(removedServers);
+                if (registrationLatch.isEmpty()) {
+                  registrationLatch.notifyAll();
+                }
+              }
+              removedServers.forEach(server -> {
+                existingTopology.remove(server);
+                heartbeatFutures.remove(server).cancel(true);
+              });
             }
-            removedServers.forEach(server -> {
-              existingTopology.remove(server);
-              heartbeatFutures.remove(server).cancel(true);
-            });
+            sleepForTopologyFetchInterval();
           }
-          sleepForTopologyFetchInterval();
+        } catch (TimeoutException | RuntimeException e) {
+          activeClientVoterManager.close();
+          sleepFor10();
         }
-      } catch (TimeoutException | RuntimeException e) {
-        activeClientVoterManager.close();
-        sleepFor10();
       }
     });
   }
