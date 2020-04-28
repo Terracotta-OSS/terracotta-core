@@ -69,6 +69,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
@@ -77,6 +78,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
+import org.terracotta.server.StopAction;
 
 
 /**
@@ -545,8 +550,147 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.messageQueue.add(container);
   }
 
+  private void setServerEnv() {
+    ServerEnv.setServer(new Server() {
+      @Override
+      public int getServerCount() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public String[] processArguments() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public void stop(StopAction... actions) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean stopIfPassive(StopAction... actions) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean stopIfActive(StopAction... actions) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isActive() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isStopped() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isPassiveUnitialized() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isPassiveStandby() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isReconnectWindow() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public String getState() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public long getStartTime() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public long getActivateTime() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public String getIdentifier() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public int getClientPort() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public int getServerPort() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public int getReconnectWindowTimeout() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public void waitUntilShutdown() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public void dump() {
+        throw new UnsupportedOperationException("Not supported yet."); 
+      }
+
+      @Override
+      public String getClusterState() {
+        throw new UnsupportedOperationException("Not supported yet."); 
+      }
+
+      @Override
+      public String getConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet."); 
+      }
+
+      @Override
+      public ClassLoader getServiceClassLoader(ClassLoader cl, Class<?>... types) {
+        throw new UnsupportedOperationException("Not supported yet."); 
+      }
+
+      @Override
+      public <T> List<Class<? extends T>> getImplementations(Class<T> type) {
+        throw new UnsupportedOperationException("Not supported yet."); 
+      }
+
+      @Override
+      public ServerJMX getManagement() {
+        return null;
+      }
+
+      @Override
+      public Properties getCurrentChannelProperties() {
+        Properties props = new Properties();
+        props.setProperty("username", "<<unknown>>");
+        props.setProperty("address", "passthroough");
+        return props;
+      }
+
+      @Override
+      public void warn(String string, Object... os) {
+
+      }
+    });
+
+  }
+
   private void runServerThread() {
     Thread.currentThread().setName("Server thread isActive: " + ((null != this.activeEntities) ? "active" : "passive"));
+    setServerEnv();
     PassthroughMessageContainer toRun = getNextMessage();
     while (null != toRun) {
       try {
