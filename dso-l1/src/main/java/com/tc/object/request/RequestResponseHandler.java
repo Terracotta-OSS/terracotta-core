@@ -21,7 +21,6 @@ package com.tc.object.request;
 
 import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
-import org.terracotta.exception.EntityException;
 
 
 /**
