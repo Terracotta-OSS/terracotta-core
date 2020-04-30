@@ -29,7 +29,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.terracotta</groupId>
+  <groupId>org.terracotta.internal</groupId>
   <artifactId>server-spi</artifactId>
   <properties>
     <java.build.version>1.8</java.build.version>

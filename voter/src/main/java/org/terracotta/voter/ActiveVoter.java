@@ -71,7 +71,6 @@ public class ActiveVoter implements AutoCloseable {
   private final String id;
   private final Function<String, ClientVoterManager> clientVoterManagerFactory;
   private volatile boolean active = false;
-  private volatile ClientVoterManager activeClientVoterManager = null;
   private volatile Future<?> topologyFetchingFuture = null;
   private final Set<String> existingTopology = new HashSet<>();
   private final List<ClientVoterManager> voterManagers = new CopyOnWriteArrayList<>();
@@ -103,7 +102,6 @@ public class ActiveVoter implements AutoCloseable {
       try {
         while (!Thread.currentThread().isInterrupted()) {
           ClientVoterManager currentActive = registerWithActive(id, voterManagers, connectionProps);
-          activeClientVoterManager = currentActive;
           active = true;
           LOGGER.info("{} registered with the active: {}", this, currentActive.getTargetHostPort());
           voterStatus.complete(new VoterStatus() {
@@ -139,13 +137,11 @@ public class ActiveVoter implements AutoCloseable {
 
           registerAndHeartbeat(executorService, currentActive, connectionProps);
           active = false;
-          activeClientVoterManager = null;
         }
       } catch (InterruptedException e) {
         LOGGER.warn("{} interrupted", this);
       }
       active = false;
-      activeClientVoterManager = null;
       cleanHeartBeatingAndPollingFutures();
       executorService.shutdownNow();
       try {
@@ -278,7 +274,6 @@ public class ActiveVoter implements AutoCloseable {
                 // stole ownership of the vote
                 owner.zombie();
                 long result = voterManager.vote(id, election);
-                activeClientVoterManager = voterManager;
                 LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
                 break;
               } else {
@@ -392,9 +387,10 @@ public class ActiveVoter implements AutoCloseable {
   private void startTopologyPolling(ExecutorService executorService, Optional<Properties> connectionProps,
                                     AtomicReference<ClientVoterManager> voteOwner) {
     topologyFetchingFuture = executorService.submit(() -> {
-      try {
-        while (activeClientVoterManager.isConnected()) {
-          Set<String> newTopology = activeClientVoterManager.getTopology();
+        ClientVoterManager activeVoter = voteOwner.get();
+        while (activeVoter != null) {
+        try {
+          Set<String> newTopology = activeVoter.getTopology();
           LOGGER.info("Topology is {}.", newTopology);
           if (!existingTopology.equals(newTopology)) {
             LOGGER.info("New Topology detected {}.", newTopology);
@@ -425,10 +421,10 @@ public class ActiveVoter implements AutoCloseable {
             });
           }
           sleepForTopologyFetchInterval();
+        } catch (TimeoutException | RuntimeException e) {
+          sleepFor10();
         }
-      } catch (TimeoutException | RuntimeException e) {
-        activeClientVoterManager.close();
-        sleepFor10();
+        activeVoter = voteOwner.get();
       }
     });
   }
