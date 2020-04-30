@@ -388,7 +388,7 @@ public class ActiveVoter implements AutoCloseable {
                                     AtomicReference<ClientVoterManager> voteOwner) {
     topologyFetchingFuture = executorService.submit(() -> {
         ClientVoterManager activeVoter = voteOwner.get();
-        while (activeVoter != null) {
+        while (activeVoter != null && !executorService.isShutdown()) {
         try {
           Set<String> newTopology = activeVoter.getTopology();
           LOGGER.info("Topology is {}.", newTopology);
