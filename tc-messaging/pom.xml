@@ -58,7 +58,7 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>server-spi</artifactId>
       <version>${project.version}</version>
     </dependency>
