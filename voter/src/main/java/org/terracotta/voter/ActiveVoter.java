@@ -290,7 +290,8 @@ public class ActiveVoter implements AutoCloseable {
             voterManager.close();            
           } catch (RuntimeException run) {
             LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort());
-            voterManager.close(); 
+            voterManager.close();
+            sleepFor10();  // sleep for 10 here because the cause of the error is unknown
           }
           owner = voteOwner.get();
           LOGGER.info("owner is " + owner);

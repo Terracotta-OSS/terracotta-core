@@ -23,6 +23,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
@@ -278,7 +279,7 @@ public class ActiveVoterTest {
         Thread.sleep(500);
         return false;
       });
-      when(manager.registerVoter(VOTER_ID)).thenReturn(-1L);
+      Mockito.doReturn(-1L).when(manager).registerVoter(VOTER_ID);
     }
   }
 
