@@ -147,35 +147,35 @@
     <repository>
       <id>terracotta-os-releases</id>
       <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
+      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
     </repository>
     <snapshotRepository>
       <id>terracotta-os-snapshots</id>
       <uniqueVersion>false</uniqueVersion>
       <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
+      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
   <repositories>
     <repository>
       <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <url>https://www.terracotta.org/download/reflector/snapshots</url>
     </repository>
     <repository>
       <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <url>https://www.terracotta.org/download/reflector/snapshots</url>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </pluginRepository>
   </pluginRepositories>
 
