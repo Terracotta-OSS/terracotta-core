@@ -78,8 +78,12 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   @Override
   public long registerVoter(String id) throws TimeoutException {
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "registerVoter", id));
-    long nr = Long.parseLong(result);
-    return nr;
+    try {
+      return Long.parseLong(result);
+    } catch (NumberFormatException ne) {
+      LOGGER.info("unexpected value returned for register voter", result);
+      throw new RuntimeException("register voter error");
+    }
   }
 
   @Override
