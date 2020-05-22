@@ -352,17 +352,17 @@ public class TCServerImpl extends SEDA implements TCServer {
     DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
     server.start();
     registerDSOServer(server, ManagementFactory.getPlatformMBeanServer());
+    try {
+      registerServerMBeans(server, ManagementFactory.getPlatformMBeanServer());
+    } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
+      throw new RuntimeException(exp);
+    }
   }
 
   protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
                                                                   ConnectionPolicy policy,
                                                                   TCServerImpl serverImpl) {
     DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
-    try {
-      registerServerMBeans(dso, ManagementFactory.getPlatformMBeanServer());
-    } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
-      throw new RuntimeException(exp);
-    }
     return dso;
   }
 
