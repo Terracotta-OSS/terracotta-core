@@ -114,8 +114,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -154,7 +152,6 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
-import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -277,9 +274,7 @@ public class DistributedObjectServer {
 
   private final TCThreadGroup                    threadGroup;
   private final SEDA                            seda;
-
-  private ReconnectConfig                        l1ReconnectConfig;
-
+  
   private GroupManager<AbstractGroupMessage> groupCommManager;
   private StripeIDStateManagerImpl               stripeIDStateManager;
 
@@ -454,7 +449,6 @@ public class DistributedObjectServer {
                                                                              + addressChecker.getAllLocalAddresses()); }
 
     this.tcProperties = TCPropertiesImpl.getProperties();
-    this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
     TCByteBufferFactory.setPoolingEnabled(tcProperties.getBoolean(TCPropertiesConsts.BYTEBUFFER_POOLING, false));
     TCByteBufferFactory.setPoolingThreadMax(tcProperties.getInt(TCPropertiesConsts.BYTEBUFFER_POOLING_THREAD_MAX, 1024));
@@ -544,14 +538,7 @@ public class DistributedObjectServer {
     final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
-    final boolean useOOOLayer = this.l1ReconnectConfig.getReconnectEnabled();
-    if (useOOOLayer) {
-      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
-                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     this.l1ReconnectConfig);
-    } else {
-      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    }
+    networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 

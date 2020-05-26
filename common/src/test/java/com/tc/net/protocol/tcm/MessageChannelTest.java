@@ -95,13 +95,9 @@ public class MessageChannelTest extends TCTestCase {
     setUp(product, false);
   }
 
-  protected void setUp(ProductID product, boolean allowConnectionReplace) throws Exception {
-    setUp(product, allowConnectionReplace, false);
-  }
-
-  protected void setUp(ProductID product, boolean allowConnectionReplace, boolean dumbSink) throws Exception {
-    setUp(product, new PlainNetworkStackHarnessFactory(allowConnectionReplace),
-          new PlainNetworkStackHarnessFactory(allowConnectionReplace), dumbSink);
+  protected void setUp(ProductID product, boolean dumbSink) throws Exception {
+    setUp(product, new PlainNetworkStackHarnessFactory(),
+          new PlainNetworkStackHarnessFactory(), dumbSink);
   }
 
   protected void setUp(ProductID product, NetworkStackHarnessFactory clientStackHarnessFactory,
@@ -237,7 +233,7 @@ try {
   }
 
   public void testOpenRaceWithAutoReconnect() throws Exception {
-    setUp(ProductID.STRIPE, false, true);
+    setUp(ProductID.STRIPE, true);
 
     Thread t = new Thread() {
       @Override
@@ -386,33 +382,6 @@ try {
                 .addMessageSent(pong);
           }
         });
-  }
-
-  public void testAutomaticReconnect() throws Exception {
-    setUp(ProductID.STRIPE, true);
-    assertEquals(0, clientChannel.getConnectCount());
-    assertEquals(0, clientChannel.getConnectAttemptCount());
-    clientChannel.open(serverAddress);
-    assertEquals(1, clientChannel.getConnectCount());
-    assertEquals(1, clientChannel.getConnectAttemptCount());
-
-    final int closeCount = new Random().nextInt(MESSAGE_COUNT);
-
-    for (int i = 0; i < MESSAGE_COUNT; i++) {
-      if (i == closeCount) {
-        waitForArrivalOrFail(clientWatcher, i);
-        waitForArrivalOrFail(serverWatcher, i);
-        clientComms.getConnectionManager().closeAllConnections(WAIT);
-        if (!waitUntilReconnected()) {
-          fail("Didn't reconnect");
-        }
-      }
-      createAndSendMessage();
-    }
-    assertTrue(clientChannel.getConnectAttemptCount() > 1);
-    assertTrue(clientChannel.getConnectCount() > 1);
-
-    waitForMessages(MESSAGE_COUNT);
   }
 
   private void waitForMessages(int count) throws InterruptedException {

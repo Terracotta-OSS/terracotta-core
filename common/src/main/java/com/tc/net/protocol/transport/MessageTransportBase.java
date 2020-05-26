@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Implementation of MessaageTransport
  */
 abstract class MessageTransportBase extends AbstractMessageTransport implements TCConnectionEventListener {
-  private TCConnection                             connection;
+  private volatile TCConnection                             connection;
 
   private ConnectionID                           connectionId           = new ConnectionID(JvmIDUtil.getJvmID(),
                                                                                              ChannelID.NULL_ID.toLong());
@@ -52,9 +52,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private final TransportHandshakeErrorHandler     handshakeErrorHandler;
   private WeakReference<NetworkLayer>                             receiveLayer;
 
-  private final Object                             attachingNewConnection = new Object();
-  private final AtomicReference<TCConnectionEvent> connectionCloseEvent   = new AtomicReference<TCConnectionEvent>(null);
-  private boolean                                  allowConnectionReplace = false;
+  private final AtomicReference<TCConnectionEvent> connectionCloseEvent   = new AtomicReference<>();
   private volatile ConnectionHealthCheckerContext  healthCheckerContext   = new ConnectionHealthCheckerContextDummyImpl();
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
@@ -66,11 +64,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.handshakeErrorHandler = handshakeErrorHandler;
     this.messageFactory = messageFactory;
     this.status = new MessageTransportStatus(initialState, logger);
-  }
-
-  @Override
-  public void setAllowConnectionReplace(boolean allow) {
-    this.allowConnectionReplace = allow;
   }
 
   public synchronized void setHealthCheckerContext(ConnectionHealthCheckerContext context) {
@@ -106,14 +99,16 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     throw new UnsupportedOperationException("Transport layer has no send layer.");
   }
 
+  private boolean isSameConnection(TCConnection checkConn) {
+    return checkConn == this.getConnection();
+  }
+
   @Override
   public final void receiveTransportMessage(WireProtocolMessage message) {
-    synchronized (attachingNewConnection) {
-      if (message.getSource() == this.connection) {
-        receiveTransportMessageImpl(message);
-      } else {
-        getLogger().warn("Received message from an old connection: " + message.getSource() + "; " + message);
-      }
+    if (isSameConnection(message.getSource())) {
+      receiveTransportMessageImpl(message);
+    } else {
+      getLogger().warn("Received message from an old connection: " + message.getSource() + "; " + message);
     }
   }
 
@@ -216,12 +211,9 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   @Override
   public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
-    synchronized (attachingNewConnection) {
-      if ((this.connection != null) && !allowConnectionReplace) { throw new IllegalReconnectException(); }
-
-      getConnectionAttacher().attachNewConnection(this.connectionCloseEvent.get(), this.connection,
-                                                  newConnection);
-    }
+    if (this.connection != null) { throw new IllegalReconnectException(); }
+    getConnectionAttacher().attachNewConnection(this.connectionCloseEvent.getAndSet(null), this.connection,
+                                                newConnection);
   }
 
   protected ConnectionAttacher getConnectionAttacher() {
@@ -277,39 +269,31 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    boolean isSameConnection = false;
-
-    synchronized (attachingNewConnection) {
-      TCConnection src = event.getSource();
-      isSameConnection = (src == this.connection);
-      if (isSameConnection) {
-        this.connectionCloseEvent.set(event);
-      }
-    }
-
-    if (isSameConnection) {
-      boolean forcedDisconnect = false;
-      synchronized (status) {
-        getLogger().debug("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
-        if (status.isEnd()) {
-          return;
-          // do nothing, connection is already finished
-        } else if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
-          if (status.isDisconnected()) {
-            forcedDisconnect = true;
+    if (isSameConnection(event.getSource())) {
+      if (this.connectionCloseEvent.compareAndSet(null, event)) {
+        boolean forcedDisconnect = false;
+        synchronized (status) {
+          getLogger().debug("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
+          if (status.isEnd()) {
+            return;
+            // do nothing, connection is already finished
+          } else if (status.isConnected() || status.isEstablished() || status.isDisconnected()) {
+            if (status.isDisconnected()) {
+              forcedDisconnect = true;
+            }
+            status.reset();
+          } else {
+            status.reset();
+            getLogger().debug("closing down connection - " + event + " - " + status);
+            return;
           }
-          status.reset();
-        } else {
-          status.reset();
-          getLogger().debug("closing down connection - " + event + " - " + status);
-          return;
         }
-      }
 
-      if (forcedDisconnect) {
-        fireTransportForcedDisconnectEvent();
-      } else {
-        fireTransportDisconnectedEvent();
+        if (forcedDisconnect) {
+          fireTransportForcedDisconnectEvent();
+        } else {
+          fireTransportDisconnectedEvent();
+        }
       }
     } else {
         getLogger().debug("NOT SAME CONNECTION");
@@ -347,6 +331,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   protected void setConnection(TCConnection conn) {
     TCConnection old = this.connection;
     this.connection = conn;
+    this.connectionCloseEvent.set(null);
     this.connection.addListener(this);
     if (old != null) {
       old.removeListener(this);

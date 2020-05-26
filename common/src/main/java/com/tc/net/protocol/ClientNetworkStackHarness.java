@@ -42,12 +42,10 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
   protected ClientMessageChannel            channel;
   private final MessageTransportFactory     transportFactory;
   private final SetOnceFlag                 finalized = new SetOnceFlag();
-  private final boolean                     allowConnectionReplace;
 
-  public ClientNetworkStackHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel, boolean allowConnectionReplace) {
+  public ClientNetworkStackHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel) {
     this.transportFactory = transportFactory;
     this.channel = channel;
-    this.allowConnectionReplace = allowConnectionReplace;
   }
 
   /**
@@ -67,7 +65,6 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
       Assert.assertNotNull(this.channel);
       Assert.assertNotNull(this.transportFactory);
       this.transport = transportFactory.createNewTransport();
-      this.transport.setAllowConnectionReplace(allowConnectionReplace);
       connectStack();
     } else {
       throw Assert.failure("Attempt to finalize an already finalized stack");
