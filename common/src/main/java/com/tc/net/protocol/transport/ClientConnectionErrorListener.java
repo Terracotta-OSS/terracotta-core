@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.core.ConnectionInfo;
+import java.net.InetSocketAddress;
 
 /**
  * Any class implementing this interface can take appropriate action when a connection is not successfully established 
@@ -32,8 +32,8 @@ public interface ClientConnectionErrorListener {
 
   /**
    * 
-   * @param connInfo Contains host and port information where the connection was being established
+   * @param serverAddress Contains host and port information where the connection was being established
    * @param e Exception that client got while establishing the connection
    */
-  void onError(ConnectionInfo connInfo, Exception e);
+  void onError(InetSocketAddress serverAddress, Exception e);
 }

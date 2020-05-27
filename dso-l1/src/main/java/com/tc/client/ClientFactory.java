@@ -21,17 +21,16 @@ package com.tc.client;
 import com.tc.lang.TCThreadGroup;
 import com.tc.object.ClientBuilder;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.config.ClientConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
+
+import java.net.InetSocketAddress;
 
 
 public class ClientFactory {
   // Note that we don't currently use classProvider in this path but it is left here as a remnant from the old shape until
   //  we can verify that it won't be used here.
-  public static DistributedObjectClient createClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
-                                                     PreparedComponentsFromL2Connection connectionComponents,
+  public static DistributedObjectClient createClient(Iterable<InetSocketAddress> serverAddresses, ClientBuilder builder,
+                                                     TCThreadGroup threadGroup,
                                                      String uuid, String name, boolean async) {
-    return new DistributedObjectClient(config, builder, threadGroup, connectionComponents,
-        uuid, name, async);
+    return new DistributedObjectClient(serverAddresses, builder, threadGroup, uuid, name, async);
   }
 }

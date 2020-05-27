@@ -18,8 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.core.ConnectionInfo;
-
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,11 +28,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ClientConnectionErrorDetails implements ClientConnectionErrorListener {
 
-  private volatile ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> exceptionMap;
+  private volatile ConcurrentHashMap<InetSocketAddress, ConcurrentLinkedQueue<Exception>> exceptionMap;
 
   @Override
-  public void onError(ConnectionInfo connInfo, Exception e) {
-    ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> internalExceptionCollector = exceptionMap;
+  public void onError(InetSocketAddress serverAddress, Exception e) {
+    ConcurrentHashMap<InetSocketAddress, ConcurrentLinkedQueue<Exception>> internalExceptionCollector = exceptionMap;
     if (internalExceptionCollector != null) {
       /*
       Effectively Keeping only the last exception for a given connection info. Keeping the internal data-structure as 
@@ -41,16 +40,16 @@ public class ClientConnectionErrorDetails implements ClientConnectionErrorListen
        */
       ConcurrentLinkedQueue<Exception> exceptionList = new ConcurrentLinkedQueue<>();
       exceptionList.add(e);
-      internalExceptionCollector.put(connInfo, exceptionList);
+      internalExceptionCollector.put(serverAddress, exceptionList);
     }
   }
 
   public Map<String, List<Exception>> getErrors() {
     Map<String, List<Exception>> errorMessagesMap = new HashMap<>();
-    ConcurrentHashMap<ConnectionInfo, ConcurrentLinkedQueue<Exception>> internalExceptionCollector = exceptionMap;
+    ConcurrentHashMap<InetSocketAddress, ConcurrentLinkedQueue<Exception>> internalExceptionCollector = exceptionMap;
     if (internalExceptionCollector != null) {
-      for (Map.Entry<ConnectionInfo, ConcurrentLinkedQueue<Exception>> entry : internalExceptionCollector.entrySet()) {
-        ConnectionInfo connInfo = entry.getKey();
+      for (Map.Entry<InetSocketAddress, ConcurrentLinkedQueue<Exception>> entry : internalExceptionCollector.entrySet()) {
+        InetSocketAddress serverAddress = entry.getKey();
         ConcurrentLinkedQueue<Exception> exceptionList = entry.getValue();
         Object[] errorObjects = exceptionList.toArray();
         List<Exception> errorMessages = new ArrayList<>();
@@ -58,7 +57,7 @@ public class ClientConnectionErrorDetails implements ClientConnectionErrorListen
           Exception e = (Exception) errorObj;
           errorMessages.add(e);
         }
-        errorMessagesMap.put(connInfo.toString(), errorMessages);
+        errorMessagesMap.put(serverAddress.toString(), errorMessages);
       }
     }
     return errorMessagesMap;

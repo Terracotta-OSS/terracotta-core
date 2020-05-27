@@ -21,11 +21,12 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.util.Assert;
+
+import java.net.InetSocketAddress;
 
 public class ServerMessageTransport extends MessageTransportBase {
 
@@ -56,7 +57,7 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   @Override
-  public NetworkStackID open(ConnectionInfo info) {
+  public NetworkStackID open(InetSocketAddress serverAddress) {
     throw new UnsupportedOperationException("Server transport doesn't support open()");
   }
 

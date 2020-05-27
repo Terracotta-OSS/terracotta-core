@@ -26,7 +26,6 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ClientConnectionErrorListener;
@@ -40,8 +39,8 @@ import com.tc.net.core.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -78,7 +77,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info) throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
@@ -87,7 +86,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       // initialize the connection ID, using the local JVM ID
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()), productID);
 
-      final NetworkStackID id = this.initiator.openMessageTransport(info, cid);
+      final NetworkStackID id = this.initiator.openMessageTransport(serverAddresses, cid);
 
       this.channelSessionID = this.sessionProvider.getSessionID();
       channelOpened();
@@ -177,7 +176,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public void onError(ConnectionInfo connInfo, Exception e) {
-    errorListeners.forEach(l->l.onError(connInfo, e));
+  public void onError(InetSocketAddress serverAddress, Exception e) {
+    errorListeners.forEach(l->l.onError(serverAddress, e));
   }
 }

@@ -26,7 +26,6 @@ import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -55,6 +54,7 @@ import com.tc.net.core.ProductID;
 import com.tc.util.State;
 import com.tc.util.UUID;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -156,7 +156,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     channel = clientComms
         .createClientChannel(ProductID.SERVER, sessionManager,
                              3000);
-    channel.open(Collections.singleton(new ConnectionInfo(LOCALHOST, lsnr.getBindPort())));
+    channel.open(InetSocketAddress.createUnresolved(LOCALHOST, lsnr.getBindPort()));
 
     assertTrue(channel.isConnected());
 

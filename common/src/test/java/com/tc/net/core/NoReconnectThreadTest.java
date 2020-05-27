@@ -59,6 +59,7 @@ import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -143,16 +144,16 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     ClientMessageChannel client2 = createClientMsgCh();
     ClientMessageChannel client3 = createClientMsgCh();
     
-    ConnectionInfo info = new ConnectionInfo("localhost", proxyPort);
+    InetSocketAddress serverAddress = new InetSocketAddress("localhost", proxyPort);
 
     client1.addListener(this);
-    client1.open(info);
+    client1.open(serverAddress);
 
     client2.addListener(this);
-    client2.open(info);
+    client2.open(serverAddress);
 
     client3.addListener(this);
-    client3.open(info);
+    client3.open(serverAddress);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());
@@ -213,16 +214,16 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     ClientMessageChannel client2 = createClientMsgCh(true);
     ClientMessageChannel client3 = createClientMsgCh(true);
     
-    ConnectionInfo info = new ConnectionInfo("localhost", proxyPort);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", proxyPort);
 
     client1.addListener(this);
-    client1.open(info);
+    client1.open(serverAddress);
 
     client2.addListener(this);
-    client2.open(info);
+    client2.open(serverAddress);
 
     client3.addListener(this);
-    client3.open(info);
+    client3.open(serverAddress);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());

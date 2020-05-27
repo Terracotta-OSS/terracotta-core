@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 import com.tc.async.api.StageManager;
-import com.tc.management.TCClient;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
@@ -63,7 +62,7 @@ public class StandardClientBuilder implements ClientBuilder {
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
-                                                         int socketConnectTimeout, TCClient client) {
+                                                         int socketConnectTimeout) {
     ClientMessageChannel cmc = commMgr.createClientChannel(getTypeOfClient(), sessionProvider, socketConnectTimeout);
     if (listener != null){
       cmc.addClientConnectionErrorListener(listener);

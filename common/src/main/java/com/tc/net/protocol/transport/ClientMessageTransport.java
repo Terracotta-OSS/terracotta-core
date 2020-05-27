@@ -26,7 +26,6 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -41,6 +40,7 @@ import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import com.tc.net.protocol.TCProtocolAdaptor;
@@ -94,7 +94,7 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @throws MaxConnectionsExceededException
    */
   @Override
-  public NetworkStackID open(ConnectionInfo info) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
+  public NetworkStackID open(InetSocketAddress serverAddress) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
     // XXX: This extra boolean flag is dumb, but it's here because the close event can show up
     // while the lock on isOpen is held here. That will cause a deadlock because the close event is thrown on the
@@ -107,7 +107,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
     Assert.eval("can't open an already open transport", !this.status.isOpen());
     Assert.eval("can't open an already connected transport", !this.isConnected());
-    TCSocketAddress socket = new TCSocketAddress(info);
+    TCSocketAddress socket = new TCSocketAddress(serverAddress);
     boolean didOpen = false;
     TCConnection connection = null;
     try {
@@ -415,15 +415,15 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  void reopen(ConnectionInfo info) throws Exception {
+  void reopen(InetSocketAddress serverAddress) throws Exception {
 
     // don't do reconnect if open is still going on
     if (!wasOpened()) {
-      this.getLogger().info("Transport was opened already. Skip reconnect " + info);
+      this.getLogger().info("Transport was opened already. Skip reconnect " + serverAddress);
       return;
     }
     
-    TCSocketAddress socket = new TCSocketAddress(info);
+    TCSocketAddress socket = new TCSocketAddress(serverAddress);
     reconnect(socket);
   }
   

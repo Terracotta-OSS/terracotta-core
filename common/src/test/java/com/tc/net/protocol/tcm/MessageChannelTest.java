@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -50,6 +49,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -78,7 +78,7 @@ public class MessageChannelTest extends TCTestCase {
 
   Logger logger = LoggerFactory.getLogger(getClass());
   NetworkListener              lsnr;
-  ConnectionInfo               connectTo;
+  InetSocketAddress            serverAddress;
   TCConnectionManager         clientConns;
   TCConnectionManager         serverConns;
   CommunicationsManagerImpl        clientComms;
@@ -182,8 +182,8 @@ try {
         lsnr = serverComms.createListener(new TCSocketAddress(port), false,
             new DefaultConnectionIdFactory(), (MessageTransport t)->true);
       }
-      lsnr.start(new HashSet<ConnectionID>());
-      connectTo = new ConnectionInfo("localhost", lsnr.getBindPort());
+      lsnr.start(new HashSet<>());
+      serverAddress = InetSocketAddress.createUnresolved("localhost", lsnr.getBindPort());
   }
 
   private void initListener(MessageSendAndReceiveWatcher myClientSenderWatcher,
@@ -209,7 +209,7 @@ try {
   public void testAttachments() throws Exception {
     setUp(ProductID.STRIPE);
     try {
-      clientChannel.open(connectTo);
+      clientChannel.open(serverAddress);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -253,7 +253,7 @@ try {
     boolean justTimeout = true;
     while (justTimeout) {
       try {
-        clientChannel.open(connectTo);
+        clientChannel.open(serverAddress);
         fail();
       } catch(ConnectException ce) {
         // missed it
@@ -271,7 +271,7 @@ try {
     }
 
     try {
-      clientChannel.open(connectTo);
+      clientChannel.open(serverAddress);
       fail();
     } catch (ConnectException e) {
       // expected
@@ -317,7 +317,8 @@ try {
     this.clientChannel = createClientMessageChannel(ProductID.STRIPE, clComms);
 
     try {
-      clientChannel.open(Arrays.asList(new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort())));
+      clientChannel.open(Arrays.asList(InetSocketAddress.createUnresolved("localhost", lsnr1.getBindPort()),
+                                       InetSocketAddress.createUnresolved("localhost", lsnr2.getBindPort())));
     } catch (TCTimeoutException e) {
       Assert.eval("This is not suppose to happen", false);
     } catch (Throwable t) {
@@ -391,7 +392,7 @@ try {
     setUp(ProductID.STRIPE, true);
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
     assertEquals(1, clientChannel.getConnectCount());
     assertEquals(1, clientChannel.getConnectAttemptCount());
 
@@ -439,7 +440,7 @@ try {
 
     for (int i = 0; i < 10; i++) {
       try {
-        clientChannel.open(connectTo);
+        clientChannel.open(serverAddress);
         fail("Should have thrown an exception");
       } catch (TCTimeoutException e) {
         // expected
@@ -453,13 +454,13 @@ try {
     }
 
     initListener(this.clientWatcher, this.serverWatcher, false, port);
-    clientChannel.open(new ConnectionInfo("localhost", port));
+    clientChannel.open(InetSocketAddress.createUnresolved("localhost", port));
     assertTrue(clientChannel.isConnected());
   }
 
   public void testSendAfterDisconnect() throws Exception {
     setUp(ProductID.SERVER);
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
 
     createAndSendMessage();
     waitForArrivalOrFail(clientWatcher, 1);
@@ -476,7 +477,7 @@ try {
     assertEquals(0, clientChannel.getConnectAttemptCount());
     assertEquals(0, clientChannel.getConnectCount());
 
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
     assertEquals(1, clientChannel.getConnectAttemptCount());
     assertEquals(1, clientChannel.getConnectCount());
     clientComms.getConnectionManager().closeAllConnections(WAIT);
@@ -491,7 +492,7 @@ try {
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
 
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
 
     assertEquals(1, clientChannel.getConnectCount());
     assertEquals(1, clientChannel.getConnectAttemptCount());
@@ -538,7 +539,7 @@ try {
 
   public void testGetStatus() throws Exception {
     setUp(ProductID.SERVER);
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
     assertTrue(clientChannel.isOpen());
     clientChannel.close();
     assertTrue(clientChannel.isClosed());
@@ -546,7 +547,7 @@ try {
 
   public void testSend() throws Exception {
     setUp(ProductID.SERVER);
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
     int count = 100;
     List<PingMessage> messages = new LinkedList<PingMessage>();
     for (int i = 0; i < count; i++) {
@@ -562,7 +563,7 @@ try {
     assertNull(clientChannel.getRemoteAddress());
     assertNull(clientChannel.getLocalAddress());
 
-    clientChannel.open(connectTo);
+    clientChannel.open(serverAddress);
     createAndSendMessage();
     waitForMessages(1);
 

@@ -53,6 +53,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.net.core.ProductID;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -145,11 +146,11 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ClientMessageChannel client2 = createClientMsgCh();
     ClientMessageChannel client3 = createClientMsgCh();
     
-    ConnectionInfo connectTo = new ConnectionInfo("localhost", proxyPort);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", proxyPort);
 
-    client1.open(connectTo);
-    client2.open(connectTo);
-    client3.open(connectTo);
+    client1.open(serverAddress);
+    client2.open(serverAddress);
+    client3.open(serverAddress);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());
@@ -190,15 +191,15 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
       ThreadUtil.reallySleep(5000);
     }
 
-    connectTo = new ConnectionInfo("localhost", serverPort);
+    serverAddress = InetSocketAddress.createUnresolved("localhost", serverPort);
     // case 3: connecting three more clients through server ports
     ClientMessageChannel client4 = createClientMsgCh();
     ClientMessageChannel client5 = createClientMsgCh();
     ClientMessageChannel client6 = createClientMsgCh();
 
-    client4.open(connectTo);
-    client5.open(connectTo);
-    client6.open(connectTo);
+    client4.open(serverAddress);
+    client5.open(serverAddress);
+    client6.open(serverAddress);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client4.isConnected());

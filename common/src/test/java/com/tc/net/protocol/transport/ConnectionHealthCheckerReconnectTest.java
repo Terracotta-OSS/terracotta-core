@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -52,6 +51,7 @@ import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -71,7 +71,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   Logger logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class);
   TCPProxy                                                proxy        = null;
   int                                                     proxyPort    = 0;
-  ConnectionInfo                                          connectTo;
+  InetSocketAddress                                       serverAddress;
   private final LinkedBlockingQueue<ClientMessageChannel> channelQueue = new LinkedBlockingQueue<ClientMessageChannel>();
 
   protected void setUp(HealthCheckerConfig serverHCConf) throws Exception {
@@ -137,7 +137,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     proxy = new TCPProxy(proxyPort, serverLsnr.getBindAddress(), serverPort, 0, false, null);
     proxy.start();
     
-    connectTo = new ConnectionInfo(serverLsnr.getBindAddress().getHostAddress(), proxyPort);
+    serverAddress = InetSocketAddress.createUnresolved(serverLsnr.getBindAddress().getHostAddress(), proxyPort);
   }
 
   ClientMessageChannel createClientMsgCh() {
@@ -189,7 +189,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test11", false);
     this.setUp(hcConfig);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
-    clientMsgCh.open(connectTo);
+    clientMsgCh.open(serverAddress);
 
     // Verifications
     ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) serverComms)
@@ -238,7 +238,7 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(10000, 4000, 2, "ServerCommsHC-Test12", false);
     this.setUp(hcConfig);
     ClientMessageChannel clientMsgCh = createClientMsgCh();
-    clientMsgCh.open(connectTo);
+    clientMsgCh.open(serverAddress);
 
     // Verifications
     ConnectionHealthCheckerImpl connHC = (ConnectionHealthCheckerImpl) ((CommunicationsManagerImpl) serverComms)
