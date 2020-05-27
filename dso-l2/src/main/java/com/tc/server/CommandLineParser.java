@@ -27,6 +27,7 @@ import org.apache.commons.cli.ParseException;
 
 import org.terracotta.configuration.ConfigurationProvider;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -125,11 +126,18 @@ class CommandLineParser {
 
   private static void printHelp(ConfigurationProvider configurationProvider) {
     new HelpFormatter().printHelp(
-        "[start-tc-server.sh|bat] [options]",
-        "Options: " + System.lineSeparator(),
+        new PrintWriter(System.out, true),
+        100,
+        "start-tc-server [options]",
+        "Startup options: " + System.lineSeparator(),
         createOptions(),
+        4,
+        4,
         ""
     );
+
+    System.out.println();
+    System.out.println("Configuration options:");
     System.out.println(configurationProvider.getConfigurationParamsDescription());
   }
 
@@ -139,20 +147,21 @@ class CommandLineParser {
     options.addOption(
         Option.builder(CONSISTENT_STARTUP.getShortName())
               .longOpt(CONSISTENT_STARTUP.getLongName())
-              .desc("ensure that data consistency is preserved on startup")
+              .desc("preserve data consistency on startup")
               .build()
     );
     
     options.addOption(
         Option.builder(UPGRADE_MODE.getShortName())
               .longOpt(UPGRADE_MODE.getLongName())
-              .desc("enable rolling upgrade compatiblity mode")
+              .desc("enable rolling upgrade compatibility mode")
               .build()
     );
     
     options.addOption(
         Option.builder(HELP.getShortName())
               .longOpt(HELP.getLongName())
+              .desc("display help")
               .build()
     );
 
