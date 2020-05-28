@@ -150,7 +150,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   public String getConfigurationParamsDescription() {
     StringWriter stringWriter = new StringWriter();
     try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
-      new HelpFormatter().printOptions(printWriter, HelpFormatter.DEFAULT_WIDTH, createOptions(), 1, 5);
+      new HelpFormatter().printOptions(printWriter, 100, createOptions(), 4, 4);
     }
     return stringWriter.toString();
   }
@@ -224,7 +224,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
               .longOpt(SERVER_NAME.getLongName())
               .hasArg()
               .argName("server-name")
-              .desc("specifies the server name, defaults to the host name")
+              .desc("server name. Default: %h")
               .build()
     );
     options.addOption(
@@ -232,7 +232,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
               .longOpt(CONFIG_PATH.getLongName())
               .hasArg()
               .argName("config-file")
-              .desc("specifies the server configuration file path")
+              .desc("configuration file path")
               .build()
     );
 
