@@ -832,7 +832,7 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl(configSetupManager.upgradeCompatiblity()) :
+        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() :
             new ConsistencyManagerImpl(this.topologyManager, voteCount)
     );
   }

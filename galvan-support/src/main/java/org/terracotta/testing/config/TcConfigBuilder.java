@@ -64,7 +64,7 @@ public class TcConfigBuilder {
       Integer groupPort = serverGroupPorts.get(i);
       String oneServer =
           "    <server host=\"localhost\" name=\"" + serverName + "\">\n"
-              + "      <logs>logs</logs>\n"
+              + "      <logs>" + serverName + "/logs</logs>\n"
               + "      <tsa-port>" + port + "</tsa-port>\n"
               + "      <tsa-group-port>" + groupPort + "</tsa-group-port>\n"
               + "    </server>\n";

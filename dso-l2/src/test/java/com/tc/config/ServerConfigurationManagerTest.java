@@ -90,7 +90,6 @@ public class ServerConfigurationManagerTest {
     currentServer = TEST_SERVER_NAMES[0];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
@@ -121,7 +120,6 @@ public class ServerConfigurationManagerTest {
     currentServer = null;
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
@@ -140,7 +138,6 @@ public class ServerConfigurationManagerTest {
     currentServer = "not-a-server-name";
     new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
   }
@@ -156,7 +153,6 @@ public class ServerConfigurationManagerTest {
     currentServer = TEST_SERVER_NAMES[currentServerIndex];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
@@ -187,7 +183,6 @@ public class ServerConfigurationManagerTest {
     currentServer = null;
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         true,
-                                                                        false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
   }
@@ -203,7 +198,6 @@ public class ServerConfigurationManagerTest {
     currentServer = "not-a-server-name";
     new ServerConfigurationManager(configurationProvider,
                                    true,
-                                   false,
                                    new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                    processArgs);
   }
@@ -231,7 +225,6 @@ public class ServerConfigurationManagerTest {
     currentServer = TEST_SERVER_NAMES[currentServerIndex];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        false,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 

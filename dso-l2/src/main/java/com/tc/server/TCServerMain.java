@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.terracotta.configuration.ConfigurationException;
 import org.terracotta.monitoring.PlatformStopException;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
@@ -77,12 +78,11 @@ public class TCServerMain {
       setup = new ServerConfigurationManager(
           configurationProvider,
           commandLineParser.consistentStartup(),
-          commandLineParser.upgradeCompatibility(),
           new ServiceLocator(systemLoader),
           args
       );
 
-      TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation().getCanonicalPath());
+      TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation());
 
       writeSystemProperties();
 
@@ -97,28 +97,14 @@ public class TCServerMain {
 
   private static void setServerEnvironment(ConfigurationProvider config) {
     ServerEnv.setDefaultServer(new Server() {
-      private ServerConfigurationManager getConfigurationManager() {
-        if (setup == null) {
-          throw new RuntimeException("configuration is not bootstrapped yet");
-        }
-        return setup;
-      }
-
-      private TCServer getServer() {
-        if (server == null) {
-          throw new RuntimeException("server is not bootstrapped yet");
-        }
-        return server;
-      }
-
       @Override
       public int getServerCount() {
-        return getConfigurationManager().getConfiguration().getServerConfigurations().size();
+        return config.getConfiguration().getServerConfigurations().size();
       }
 
       @Override
       public String[] processArguments() {
-        return getConfigurationManager().getProcessArguments();
+        return setup.getProcessArguments();
       }
 
       @Override
@@ -195,17 +181,38 @@ public class TCServerMain {
 
       @Override
       public int getClientPort() {
-        return getConfigurationManager().getServerConfiguration().getTsaPort().getPort();
+        try {
+          return config.getConfiguration().getServerConfiguration().getTsaPort().getPort();
+        } catch (ConfigurationException ce) {
+          throw new RuntimeException(ce);
+        }
       }
 
       @Override
       public int getServerPort() {
-        return getConfigurationManager().getServerConfiguration().getGroupPort().getPort();
+        try {
+          return config.getConfiguration().getServerConfiguration().getGroupPort().getPort();
+        } catch (ConfigurationException ce) {
+          throw new RuntimeException(ce);
+        }
+      }
+
+      @Override
+      public String getServerHostName() {
+        try {
+          return config.getConfiguration().getServerConfiguration().getHost();
+        } catch (ConfigurationException ce) {
+          throw new RuntimeException(ce);
+        }
       }
 
       @Override
       public int getReconnectWindowTimeout() {
-        return getConfigurationManager().getServerConfiguration().getClientReconnectWindow();
+        try {
+          return config.getConfiguration().getServerConfiguration().getClientReconnectWindow();
+        } catch (ConfigurationException ce) {
+          throw new RuntimeException(ce);
+        }
       }
 
       @Override
@@ -235,7 +242,7 @@ public class TCServerMain {
 
       @Override
       public <T> List<Class<? extends T>> getImplementations(Class<T> serviceClasses) {
-        return getConfigurationManager().getServiceLocator().getImplementations(serviceClasses);
+        return setup.getServiceLocator().getImplementations(serviceClasses);
       }
 
       @Override
@@ -266,7 +273,12 @@ public class TCServerMain {
 
       @Override
       public void warn(String warning, Object...event) {
-        LOGGER.warn(warning,event[0]);
+        CONSOLE.warn(warning, event);
+      }
+
+      @Override
+      public void console(String message, Object... sub) {
+        CONSOLE.info(message, sub);
       }
     });
   }
@@ -299,17 +311,17 @@ public class TCServerMain {
 
     // Write build info always
     String longProductString = info.toLongString();
-    LOGGER.info(longProductString);
+    CONSOLE.info(longProductString);
 
     // Write patch info, if any
     if (info.isPatched()) {
       String longPatchString = info.toLongPatchString();
-      LOGGER.info(longPatchString);
+      CONSOLE.info(longPatchString);
     }
 
     String versionMessage = info.versionMessage();
     if (!versionMessage.isEmpty()) {
-      LOGGER.info(versionMessage);
+      CONSOLE.info(versionMessage);
     }
   }
 

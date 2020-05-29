@@ -38,13 +38,11 @@ import java.util.Set;
 
 import static com.tc.server.CommandLineParser.Opt.CONSISTENT_STARTUP;
 import static com.tc.server.CommandLineParser.Opt.HELP;
-import static com.tc.server.CommandLineParser.Opt.UPGRADE_MODE;
 
 class CommandLineParser {
 
   enum Opt {
     CONSISTENT_STARTUP("c", "consistency-on-startup"),
-    UPGRADE_MODE("u","upgrade-compatiblity"),
     HELP("h", "help");
 
     String shortName;
@@ -80,8 +78,6 @@ class CommandLineParser {
 
   private final boolean consistentStartup;
   
-  private final boolean upgradeCompatibility;
-
   private final List<String> providerArgs = new ArrayList<>();
 
   CommandLineParser(String[] args, ConfigurationProvider configurationProvider) {
@@ -106,7 +102,6 @@ class CommandLineParser {
       }
 
       this.consistentStartup = commandLine.hasOption(CONSISTENT_STARTUP.getShortName());
-      this.upgradeCompatibility = commandLine.hasOption(UPGRADE_MODE.getShortName());
     } catch (ParseException pe) {
       throw new RuntimeException("Unable to parse command-line arguments: " + Arrays.toString(args), pe);
     }
@@ -114,10 +109,6 @@ class CommandLineParser {
 
   boolean consistentStartup() {
     return this.consistentStartup;
-  }
-  
-  boolean upgradeCompatibility() {
-    return this.upgradeCompatibility;
   }
   
   List<String> getProviderArgs() {
@@ -152,13 +143,6 @@ class CommandLineParser {
     );
     
     options.addOption(
-        Option.builder(UPGRADE_MODE.getShortName())
-              .longOpt(UPGRADE_MODE.getLongName())
-              .desc("enable rolling upgrade compatibility mode")
-              .build()
-    );
-    
-    options.addOption(
         Option.builder(HELP.getShortName())
               .longOpt(HELP.getLongName())
               .desc("display help")
@@ -173,7 +157,7 @@ class CommandLineParser {
 
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
-      if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg) || UPGRADE_MODE.same(arg)) {
+      if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg)) {
         filteredArgs.add(i);
       }
     }

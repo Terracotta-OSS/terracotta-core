@@ -18,6 +18,7 @@
  */
 package org.terracotta.config.provider;
 
+import com.tc.logging.TCLogging;
 import com.tc.server.ServiceClassLoader;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -118,7 +119,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     try {
       Path configurationPath = getConfiguration(configurationParams.toArray(new String[0])).toAbsolutePath();
 
-      LOGGER.info("Attempting to load configuration from the file at '{}'...", configurationPath);
+      TCLogging.getConsoleLogger().info("Attempting to load configuration from the file at '{}'...", configurationPath);
 
       Thread.currentThread().setContextClassLoader(classLoader);
 //  using the service class loader because plugin implementations need to be isolated
@@ -127,7 +128,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
 
       this.configuration = getTcConfiguration(configurationPath, serviceClassLoader);
 
-      LOGGER.info("Successfully loaded configuration from the file at '{}'", configurationPath);
+      TCLogging.getConsoleLogger().info("Successfully loaded configuration from the file at '{}'", configurationPath);
 
       LOGGER.info("The configuration specified by the configuration file at '{}': \n\n{}",
                   configurationPath,

@@ -31,7 +31,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -138,7 +137,6 @@ public class CommandLineParserTest {
   @Test
   public void testParserWithHelpWithOtherOptions() {
     String[] args = {
-      CommandLineParser.Opt.UPGRADE_MODE.getLongOption(),
       CommandLineParser.Opt.HELP.getLongOption()
     };
     ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
