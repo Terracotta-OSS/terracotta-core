@@ -91,21 +91,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     nodesSetupAndJoined_DEV3101(2);
   }
 
-  public void testNoConnectionThreadLeakOnL2Reconnect() throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-    nodesSetupAndJoined_DEV3101(2);
-    TCPropertiesImpl.getProperties()
-        .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
-  }
-
-  // Test for DEV-4870
-  public void testNodeJoinAfterCloseMember() throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-    nodesSetupAndJoinedAfterCloseMember(2);
-    TCPropertiesImpl.getProperties()
-        .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
-  }
-
   public void testNodejoinedThreeServers() throws Exception {
     nodesSetupAndJoined(3);
   }
@@ -290,10 +275,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     groupManagers[0].addZappedNode(groupManagers[1].getLocalNodeID());
 
     System.out.println("XXX proxy stopped");
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED)) {
-      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties()
-          .getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT));
-    }
     ThreadUtil.reallySleep(5000);
 
     for (int i = 0; i < nodes; ++i) {
@@ -310,9 +291,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
 
     System.out.println("XXX Waiting for all restore connection close");
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED)) {
-      ThreadUtil.reallySleep(ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
-    }
 
     ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME, count);
     shutdown();

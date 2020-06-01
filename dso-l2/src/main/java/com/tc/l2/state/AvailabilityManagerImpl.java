@@ -29,10 +29,7 @@ import java.util.Map;
 
 public class AvailabilityManagerImpl implements ConsistencyManager {
   
-  private final boolean compatibility;
-
-  public AvailabilityManagerImpl(boolean uc) {
-    compatibility = uc;
+  public AvailabilityManagerImpl() {
   }
   
   @Override
@@ -67,10 +64,6 @@ public class AvailabilityManagerImpl implements ConsistencyManager {
   @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
     Enrollment e = EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
-    if (compatibility) {
-      // if in compatibility mode, make the term generator zero to be compatible with old versions
-      e.getWeights()[e.getWeights().length-1] = 0;
-    }
     return e;
   }
 

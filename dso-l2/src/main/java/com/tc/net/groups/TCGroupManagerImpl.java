@@ -43,9 +43,6 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
-import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
@@ -120,7 +117,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private static final Logger logger = LoggerFactory.getLogger(TCGroupManagerImpl.class);
 
   public static final String                                HANDSHAKE_STATE_MACHINE_TAG = "TcGroupCommHandshake";
-  private final ReconnectConfig                             l2ReconnectConfig;
   
   private final int                                         serverCount;
   
@@ -139,7 +135,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final Set<NodeID>                                 zappedSet                   = Collections
                                                                                             .synchronizedSet(new HashSet<NodeID>());
   private final StageManager                                stageManager;
-  private final boolean                                     isUseOOOLayer;
   private final AtomicBoolean                               alreadyJoined               = new AtomicBoolean(false);
   private final WeightGeneratorFactory                      weightGeneratorFactory;
   private final BufferManagerFactory                        bufferManagerFactory;
@@ -174,8 +169,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.topologyManager = topologyManager;
-    this.l2ReconnectConfig = new L2ReconnectConfigImpl();
-    this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
@@ -220,8 +213,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.stageManager = stageManager;
     this.bufferManagerFactory = new ClearTextBufferManagerFactory();
     this.topologyManager = topologyManager;
-    this.l2ReconnectConfig = new L2ReconnectConfigImpl();
-    this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.groupPort = groupPort;
     this.version = getVersion();
     this.weightGeneratorFactory = weightGenerator;
@@ -264,11 +255,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private NetworkStackHarnessFactory getNetworkStackHarnessFactory() {
-    if (isUseOOOLayer) {
-      return new OOONetworkStackHarnessFactory(new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(), l2ReconnectConfig);
-    } else {
-      return new PlainNetworkStackHarnessFactory();
-    }
+    return new PlainNetworkStackHarnessFactory();
   }
 
   private void createTCGroupManagerStages() {

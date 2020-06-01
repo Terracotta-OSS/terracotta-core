@@ -29,21 +29,13 @@ import com.tc.net.protocol.transport.MessageTransportListener;
  */
 public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFactory {
 
-  private final boolean allowConnectionReplace;
-
   public PlainNetworkStackHarnessFactory() {
-    this(false);
-  }
-
-  public PlainNetworkStackHarnessFactory(boolean allowConnectionReplace) {
-    this.allowConnectionReplace = allowConnectionReplace;
   }
 
   @Override
   public ServerNetworkStackHarness createServerHarness(ServerMessageChannelFactory channelFactory,
                                                  MessageTransport transport,
                                                  MessageTransportListener[] transportListeners) {
-    transport.setAllowConnectionReplace(allowConnectionReplace);
     return new ServerNetworkStackHarness(channelFactory, transport);
   }
 
@@ -51,6 +43,6 @@ public class PlainNetworkStackHarnessFactory implements NetworkStackHarnessFacto
   public ClientNetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new ClientNetworkStackHarness(transportFactory, channel, this.allowConnectionReplace);
+    return new ClientNetworkStackHarness(transportFactory, channel);
   }
 }

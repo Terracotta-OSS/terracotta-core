@@ -78,7 +78,7 @@ public class HASettingsChecker {
                                                                     l2l2SocketConnectTimeout);
     this.clientReconnectWindow = SECONDS.toMillis(config.getServerConfiguration().getClientReconnectWindow());
     this.electionTime = SECONDS.toMillis(config.getGroupConfiguration().getElectionTimeInSecs());
-    this.isHighAvailabilityEnabled = checkIfHighAvailabilityIsEnabled(tcConfig, tcProperties);
+    this.isHighAvailabilityEnabled = false;
   }
 
   /**
@@ -133,11 +133,5 @@ public class HASettingsChecker {
     // see http://www.terracotta.org/documentation/terracotta-server-array/high-availability
     return pingIdleTime + ((socketConnectCount) * (pingInterval * pingProbes + socketConnectTimeout * pingInterval));
 
-  }
-
-  private boolean checkIfHighAvailabilityIsEnabled(ServerConfigurationManager config, TCProperties tcprops) {
-    return (tcprops.getBoolean(TCPropertiesConsts.L1_HEALTHCHECK_L2_PING_ENABLED)
-            && tcprops.getBoolean(TCPropertiesConsts.L2_HEALTHCHECK_L2_PING_ENABLED) && tcprops
-        .getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED));
   }
 }

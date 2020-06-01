@@ -65,20 +65,14 @@ public class AvailabilityManagerImplTest {
    */
   @Test
   public void testCompatiblityMode() throws Exception {
-    AvailabilityManagerImpl impl = new AvailabilityManagerImpl(true);
     SecureRandom generator = new SecureRandom();
     WeightGeneratorFactory factory = new WeightGeneratorFactory();
     factory.add(new RandomWeightGenerator(generator, true));
     factory.add(new RandomWeightGenerator(generator, true));
     factory = factory.complete();
+    AvailabilityManagerImpl impl = new AvailabilityManagerImpl();
     Enrollment e = impl.createVerificationEnrollment(mock(NodeID.class), factory);
     long[] weights = e.getWeights();
-    Assert.assertEquals(2, weights.length);
-    Assert.assertEquals(Long.MAX_VALUE, weights[0]);
-    Assert.assertEquals(0L, weights[1]);
-    impl = new AvailabilityManagerImpl(false);
-    e = impl.createVerificationEnrollment(mock(NodeID.class), factory);
-    weights = e.getWeights();
     Assert.assertEquals(2, weights.length);
     Assert.assertEquals(Long.MAX_VALUE, weights[0]);
     Assert.assertEquals(Long.MAX_VALUE, weights[1]);

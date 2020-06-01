@@ -46,8 +46,6 @@ public interface MessageTransport extends NetworkLayer, PrettyPrintable {
 
   public void sendToConnection(TCNetworkMessage message) throws IOException;
 
-  public void setAllowConnectionReplace(boolean allow);
-
   public short getCommunicationStackFlags(NetworkLayer parentLayer);
 
   public String getCommunicationStackNames(NetworkLayer parentLayer);

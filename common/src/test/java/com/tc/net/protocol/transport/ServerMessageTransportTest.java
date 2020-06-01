@@ -100,6 +100,7 @@ public class ServerMessageTransportTest {
     when(msg.getConnectionId()).thenReturn(id);
     when(msg.getSource()).thenReturn(connection);
 
+    transport.wireNewConnection(connection);
     transport.connectEvent(event);
     transport.receiveTransportMessageImpl(msg);
     
@@ -109,6 +110,7 @@ public class ServerMessageTransportTest {
       trigger.closeEvent(event);
     }
         
+    transport.wireNewConnection(connection);
     transport.disconnect();
     
     Assert.assertTrue(transport.status.isDisconnected());

@@ -34,8 +34,6 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.delivery.OOOConnectionWatcher;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayer;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher.AsyncReconnect;
 import com.tc.util.TCAssertionError;
 import com.tc.util.TCTimeoutException;
@@ -62,8 +60,6 @@ public class ClientConnectionEstablisherTest {
   private ClientConnectionEstablisher         connEstablisher;
   @Mock
   private TCConnectionManager                 connManager;
-  @Mock
-  private OnceAndOnlyOnceProtocolNetworkLayer layer;
   @Mock
   private ReconnectionRejectedHandler         reconnectionRejectedHandler;
 
@@ -222,10 +218,9 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(logger).when(cmt).getLogger();
     Mockito.doReturn(true).when(cmt).wasOpened();
     Mockito.doReturn(connection).when(connManager).createConnection((TCProtocolAdaptor) any());
-    OOOConnectionWatcher watcher = new OOOConnectionWatcher(cmt, connEstablisher, layer, 0);
     connEstablisher.disableReconnectThreadSpawn();
 
-    connEstablisher.restoreConnection(cmt, sa, 0, watcher);
+    connEstablisher.restoreConnection(cmt, sa, 0, (transport) -> { });
     Assert.assertEquals(0, connEstablisher.connectionRequestQueueSize());
   }
 

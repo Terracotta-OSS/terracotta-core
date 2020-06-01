@@ -76,21 +76,11 @@ public interface TCPropertiesConsts {
    * tcgroupcomm.response.timelimit       - tc-group-comm message response timelimit millisecon RuntimeException
    *                                        thrown after timelimit
    * tcgroupcomm.discovery.interval       - tc-group-comm member discovery interval milliseconds
-   * tcgroupcomm.reconnect.timeout        - L2-L2 reconnect windows in milliseconds
-   * tcgroupcomm.reconnect.sendqueue.cap  - Sendqueue capacity, 0 for Integer.MAX_VALUE
-   * tcgroupcomm.reconnect.maxDelayedAcks - At least one ack per maxDelayedAcks messages received
-   * tcgroupcomm.reconnect.sendWindow     - Max outstanding messages before ack received
-   * tcgroupcomm.reconnect.enabled        - Enable L2-L2 reconnect
    * send.timeout.millis                  - Number of milliseconds to retry sending a message
    * dirtydb.backup.enabled               - Creates BackUp of DirtyDB only If it is set to true.
    * </code>
    ********************************************************************************************************************/
   public static final String L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                           = "l2.nha.tcgroupcomm.handshake.timeout";
-  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED                           = "l2.nha.tcgroupcomm.reconnect.enabled";
-  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT                           = "l2.nha.tcgroupcomm.reconnect.timeout";
-  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP                     = "l2.nha.tcgroupcomm.reconnect.sendqueue.cap";
-  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS                   = "l2.nha.tcgroupcomm.reconnect.maxDelayedAcks";
-  public static final String L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW                       = "l2.nha.tcgroupcomm.reconnect.sendWindow";
   public static final String L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL                          = "l2.nha.tcgroupcomm.discovery.interval";
   // a hidden tc.properties only used for l2 proxy testing purpose
   public static final String L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT                   = "l2.nha.tcgroupcomm.l2proxytoport";
@@ -139,29 +129,11 @@ public interface TCPropertiesConsts {
    * socket.connect.timeout            - Socket timeout (ms) when connecting to server
    * reconnect.waitInterval            - Sleep time (ms) between trying connections to the server
    *                                     (values less than 10ms will be set to 10ms)
+   * l2.l1redirect.enabled             - Allow the server to redirect the client to the current active
    * </code>
    ********************************************************************************************************************/
   public static final String L1_SOCKET_CONNECT_TIMEOUT                                      = "l1.socket.connect.timeout";
   public static final String L1_SOCKET_RECONNECT_WAIT_INTERVAL                              = "l1.socket.reconnect.waitInterval";
-  
-  /*********************************************************************************************************************
-   * <code>
-   * Section: L1 Reconnect Properties
-   * Description: This section contains properties controlling L1 reconnect feature Note that l1 get these properties from l2, so the local copy of l1 doesn't matter
-   * enabled        - If true, enables l1 reconnect feature (and Once-And-Only-Once protocol)
-   * timeout.millis - Number of milliseconds a disconnected L1 is allowed to
-   * sendqueue.cap  - Sendqueue capacity, 0 for Integer.MAX_VALUE
-   *                  reconnect to L2 that has not crashed
-   * maxDelayedAcks - Max number of messages received for which ack may not be sent
-   * sendWindow     - Max number of messages that can be sent without getting an ack back
-   * rejoin.sleep.millis - Number of milliseconds to sleep before retry rejoin, if rejoin attempt was unsuccessful for some reason
-   * </code>
-   ********************************************************************************************************************/
-  public static final String L2_L1RECONNECT_ENABLED                                         = "l2.l1reconnect.enabled";
-  public static final String L2_L1RECONNECT_TIMEOUT_MILLS                                   = "l2.l1reconnect.timeout.millis";
-  public static final String L2_L1RECONNECT_SENDQUEUE_CAP                                   = "l2.l1reconnect.sendqueue.cap";
-  public static final String L2_L1RECONNECT_MAX_DELAYEDACKS                                 = "l2.l1reconnect.maxDelayedAcks";
-  public static final String L2_L1RECONNECT_SEND_WINDOW                                     = "l2.l1reconnect.sendWindow";
   public static final String L2_L1REDIRECT_ENABLED                                          = "l2.l1redirect.enabled";
 
   /*********************************************************************************************************************
