@@ -684,6 +684,18 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       public void warn(String string, Object... os) {
 
       }
+
+      @Override
+      public String getServerHostName() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public void console(String string, Object... os) {
+
+      }
+
+
     });
 
   }
