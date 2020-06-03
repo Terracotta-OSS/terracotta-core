@@ -39,7 +39,7 @@ public class ServerConfigurationImpl implements ServerConfiguration {
   private final String host;
   private final String serverName;
   private final String logs;
-  private volatile int clientReconnectWindow;
+  private final int clientReconnectWindow;
 
   ServerConfigurationImpl(Server server, int clientReconnectWindow) {
     String bindAddress = server.getBind();
@@ -90,11 +90,6 @@ public class ServerConfigurationImpl implements ServerConfiguration {
   @Override
   public int getClientReconnectWindow() {
     return this.clientReconnectWindow;
-  }
-
-  @Override
-  public void setClientReconnectWindow(int value) {
-    this.clientReconnectWindow = value;
   }
 
   @Override

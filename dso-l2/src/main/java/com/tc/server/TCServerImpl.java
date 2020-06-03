@@ -278,11 +278,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void setReconnectWindowTimeout(int value) {
-    configurationSetupManager.getServerConfiguration().setClientReconnectWindow(value);
-  }
-
-  @Override
   public State getState() {
     return this.stateManager.getCurrentMode().getState();
   }
