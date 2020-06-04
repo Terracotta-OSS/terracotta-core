@@ -33,7 +33,5 @@ public interface ServerConfiguration {
   
   int getClientReconnectWindow();
 
-  void setClientReconnectWindow(int value);
-
   File getLogsLocation();
 }
