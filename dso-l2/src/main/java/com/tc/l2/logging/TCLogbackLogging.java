@@ -26,6 +26,7 @@ import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
 import com.tc.logging.TCLogging;
+import com.tc.util.Assert;
 import java.io.File;
 import java.io.IOException;
 
@@ -48,7 +49,7 @@ public class TCLogbackLogging {
       Appender<ILoggingEvent> continuingAppender = (logDir != null) ? installFileAppender(logDir, loggerContext) : consoleAppender(loggerContext);
       if (continuingAppender != null) {
         if (appender instanceof BufferingAppender) {
-          BufferingAppender<ILoggingEvent> base = (BufferingAppender) appender;
+          BufferingAppender base = (BufferingAppender)appender;
           base.sendContentsTo(continuingAppender);
           internalLogger.addAppender(continuingAppender);
           internalLogger.detachAppender(base);
@@ -56,6 +57,8 @@ public class TCLogbackLogging {
           TCLogging.getConsoleLogger().warn("Appender named TC_BASE in the overridden logging configuration is not a BufferingAppender. Logging will proceed to both TC_BASE and {}", logDir);
           internalLogger.addAppender(continuingAppender);
         }
+      } else {
+        throw new IllegalStateException("continuing log appender cannot be null");
       }
     } else {
       TCLogging.getConsoleLogger().warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
@@ -109,8 +112,20 @@ public class TCLogbackLogging {
 
   private static String getPathString(File logDir) {
     try {
-      return (logDir == null) ? null : logDir.getCanonicalPath();
+      if (logDir == null) {
+        LOGGER.info("Logging directory is not set.  Logging only to the console");
+        return null;
+      } else if (!logDir.exists()) {
+        LOGGER.warn("Logging directory {} does not exist.  Logging only to the console", logDir);
+        return null;
+      } else if (!logDir.isDirectory()) {
+        LOGGER.warn("Logging path {} is not a directory.  Logging only to the console", logDir);
+        return null;
+      } else {
+        return logDir.getCanonicalPath();
+      }
     } catch (IOException ioe) {
+      LOGGER.warn("Error setting the logging directory.  Logging only to the console", ioe);
       return null;
     }
   }
