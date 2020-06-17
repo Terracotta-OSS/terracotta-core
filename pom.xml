@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.10</version>
+    <version>5.17</version>
     <relativePath/>
   </parent>
 
@@ -38,7 +38,7 @@
   <properties>
     <build.edition>opensource</build.edition>
     <tc-shader.version>1.2</tc-shader.version>
-    <skip.deploy>false</skip.deploy>
+    <spotbugs.skip>true</spotbugs.skip>
 
     <terracotta-apis.version>1.7.0-pre3</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
@@ -68,56 +68,23 @@
     <module>default-configuration</module>
   </modules>
 
+  <repositories>
+    <repository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </repository>
+  </repositories>
+
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.1</version>
-          <extensions>true</extensions>
-          <configuration>
-            <!-- The Base URL of Nexus instance where we want to stage -->
-            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
-            <!-- The server "id" element from settings to use authentication from -->
-            <serverId>terracotta-nexus-staging</serverId>
-            <skipNexusStagingDeployMojo>${skip.deploy}</skipNexusStagingDeployMojo>
-          </configuration>
-        </plugin>
-        <plugin>
-          <inherited>false</inherited>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
-          <version>3.0.rc1</version>
           <configuration>
-            <keywords>
-              <keyword>License</keyword>
-            </keywords>
             <aggregate>true</aggregate>
             <header>header.txt</header>
-            <mapping>
-              <java>SLASHSTAR_STYLE</java>
-            </mapping>
-            <excludes>
-              <exclude>**/README</exclude>
-              <exclude>**/LICENSE</exclude>
-              <exclude>src/test/resources/**</exclude>
-              <exclude>src/main/resources/**</exclude>
-              <!-- if you only import management in your ide, it will generate its metadata under management/ -->
-              <exclude>**/.idea/**</exclude>
-              <exclude>**/*.html</exclude>
-              <exclude>**/*.txt</exclude>
-              <exclude>**/*.yml</exclude>
-              <exclude>**/*.properties</exclude>
-              <exclude>**/*.xsd</exclude>
-              <exclude>**/*.sh</exclude>
-              <exclude>**/*.bat</exclude>
-              <exclude>**/nbproject/**</exclude>
-              <exclude>**/*.adoc</exclude>
-              <exclude>**/*.xml</exclude>
-              <exclude>mvnw</exclude>
-              <exclude>mvnw.cmd</exclude>
-            </excludes>
+            <inlineHeader combine.self="override"></inlineHeader>
           </configuration>
         </plugin>
       </plugins>
@@ -142,42 +109,6 @@
       </plugin>
     </plugins>
   </build>
-
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
-
-  <repositories>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>https://www.terracotta.org/download/reflector/snapshots</url>
-    </repository>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>https://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-snapshots</id>
-      <url>https://www.terracotta.org/download/reflector/snapshots</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>terracotta-releases</id>
-      <url>https://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-core.git</connection>
