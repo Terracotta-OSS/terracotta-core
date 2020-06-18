@@ -103,10 +103,8 @@ limitations under the License.
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <kitInstallationPath>${kitUnzipLocation}/terracotta-${project.version}</kitInstallationPath>
             <kitTestDirectory>${project.build.testOutputDirectory}/testing_directory</kitTestDirectory>
