@@ -107,8 +107,7 @@
             </plugin>
 
             <plugin>
-              <groupId>org.terracotta</groupId>
-              <artifactId>maven-forge-plugin</artifactId>
+              <artifactId>maven-surefire-plugin</artifactId>
               <executions>
                 <execution>
                   <id>test-scripts</id>

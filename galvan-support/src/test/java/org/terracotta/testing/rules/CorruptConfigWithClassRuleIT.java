@@ -57,7 +57,9 @@ public class CorruptConfigWithClassRuleIT {
 
   @Test(expected=ConnectionException.class)
   public void testConnectionViaURI() throws Exception {
-    Connection connection = ConnectionFactory.connect(CLUSTER.getConnectionURI(), new Properties());
+    Properties connectionProps = new Properties();
+    connectionProps.put("connection.timeout", "10000");
+    Connection connection = ConnectionFactory.connect(CLUSTER.getConnectionURI(), new Properties(connectionProps));
     try {
       //do nothing
     } finally {

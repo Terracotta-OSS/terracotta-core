@@ -136,8 +136,7 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
+        <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
             <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
@@ -157,8 +156,7 @@
       <build>
     <plugins>
       <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
+        <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
             <debugForkedProcess>true</debugForkedProcess>
         </configuration>

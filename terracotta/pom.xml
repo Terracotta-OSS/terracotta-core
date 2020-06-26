@@ -31,21 +31,21 @@
             <plugin>
                 <groupId>org.terracotta</groupId>
                 <artifactId>maven-forge-plugin</artifactId>
-                <configuration>
-                    <rootPath>${basedir}/..</rootPath>
-                    <addClasspath>true</addClasspath>
-                    <excludeGroupIds>${excludeGroupIdsForClasspath}</excludeGroupIds>
-                    <manifestEntries>
-                        <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
-                        <Class-Path>resources/</Class-Path>
-                    </manifestEntries>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>manifest</goal>
                         </goals>
                         <phase>compile</phase>
+                        <configuration>
+                            <rootPath>${basedir}/..</rootPath>
+                            <addClasspath>true</addClasspath>
+                            <excludeGroupIds>${excludeGroupIdsForClasspath}</excludeGroupIds>
+                            <manifestEntries>
+                                <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
+                                <Class-Path>resources/</Class-Path>
+                            </manifestEntries>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
