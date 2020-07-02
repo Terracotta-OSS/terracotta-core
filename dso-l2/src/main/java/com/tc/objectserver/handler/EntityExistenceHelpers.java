@@ -80,7 +80,6 @@ public class EntityExistenceHelpers {
   public static void recordReconfigureEntity(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, byte[] configuration, ServerException exception) {
     // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
-    Assert.assertFalse(clientID.isNull());
     Assert.assertNotNull(transactionIDObject);
     Assert.assertNotNull(oldestTransactionOnClientObject);
     long transactionID = transactionIDObject.toLong();

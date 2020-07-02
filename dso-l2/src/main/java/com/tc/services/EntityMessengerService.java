@@ -31,6 +31,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
 import com.tc.objectserver.entity.DestroyMessage;
+import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 import org.terracotta.entity.EntityMessage;
@@ -84,6 +85,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   @Override
   public void destroySelf() {
     this.messageSink.addToSink(new DestroyMessage(lifecycleDescriptor));
+  }
+
+  @Override
+  public void reconfigureSelf(byte[] configuration) {
+    this.messageSink.addToSink(new ReconfigureMessage(lifecycleDescriptor, configuration));
   }
 
   @Override
