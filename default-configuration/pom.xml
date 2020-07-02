@@ -115,6 +115,7 @@
                     <goal>single</goal>
                   </goals>
                   <configuration>
+                    <tarLongFileMode>posix</tarLongFileMode>
                     <descriptorRefs>
                       <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>

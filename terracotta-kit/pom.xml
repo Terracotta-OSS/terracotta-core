@@ -133,7 +133,7 @@
                     <finalName>terracotta-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <attach>true</attach>
-                    <tarLongFileMode>gnu</tarLongFileMode>
+                    <tarLongFileMode>posix</tarLongFileMode>
                     <descriptors>
                         <descriptor>${basedir}/src/assemble/distribution.xml</descriptor>
                     </descriptors>
