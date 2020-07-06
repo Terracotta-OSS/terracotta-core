@@ -152,7 +152,6 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
-import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -220,6 +219,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
+import com.tc.objectserver.core.impl.MonitoringProducerMultiplexor;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -241,6 +241,11 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.Collection;
 
 
 /**
@@ -634,14 +639,19 @@ public class DistributedObjectServer {
 
     // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
     IMonitoringProducer serviceInterface = null;
-    try {
-      serviceInterface = platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>(){
-        @Override
-        public Class<IMonitoringProducer> getServiceType() {
-          return IMonitoringProducer.class;
-        }});
-    } catch (ServiceException e) {
-      Assert.fail("Multiple IMonitoringProducer implementations found!");
+
+    Collection<IMonitoringProducer> services = platformServiceRegistry.getServices(new ServiceConfiguration<IMonitoringProducer>(){
+      @Override
+      public Class<IMonitoringProducer> getServiceType() {
+        return IMonitoringProducer.class;
+      }});
+
+    if (!services.isEmpty()) {
+      if (services.size() == 1) {
+        serviceInterface = services.iterator().next();
+      } else {
+        serviceInterface = new MonitoringProducerMultiplexor(services);
+      }
     }
 
     boolean USE_DIRECT = !tcProperties.getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_DISABLE_DIRECT_SINKS, false);
