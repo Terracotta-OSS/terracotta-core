@@ -46,32 +46,31 @@ public class TCLogbackLogging {
 
     Appender<ILoggingEvent> appender = internalLogger.getAppender("TC_BASE");
     if (appender != null) {
-      Appender<ILoggingEvent> continuingAppender = (logDir != null) ? installFileAppender(logDir, loggerContext) : consoleAppender(loggerContext);
-      if (continuingAppender != null) {
-        if (appender instanceof BufferingAppender) {
-          BufferingAppender base = (BufferingAppender)appender;
-          base.sendContentsTo(continuingAppender);
-          internalLogger.addAppender(continuingAppender);
-          internalLogger.detachAppender(base);
+      if (logDir != null) {
+        Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
+        if (continuingAppender != null) {
+          if (appender instanceof BufferingAppender) {
+            BufferingAppender base = (BufferingAppender)appender;
+            base.sendContentsTo(continuingAppender);
+            internalLogger.addAppender(continuingAppender);
+            internalLogger.detachAppender(base);
+          } else {
+            TCLogging.getConsoleLogger().warn("Appender named TC_BASE in the overridden logging configuration is not a BufferingAppender. Logging will proceed to both TC_BASE and {}", logDir);
+            internalLogger.addAppender(continuingAppender);
+          }
         } else {
-          TCLogging.getConsoleLogger().warn("Appender named TC_BASE in the overridden logging configuration is not a BufferingAppender. Logging will proceed to both TC_BASE and {}", logDir);
-          internalLogger.addAppender(continuingAppender);
+          throw new IllegalStateException("continuing log appender cannot be null");
         }
       } else {
-        throw new IllegalStateException("continuing log appender cannot be null");
+        if (appender instanceof BufferingAppender) {
+          ((BufferingAppender)appender).disableBuffering();
+        } else {
+          throw new IllegalStateException("logging configuration has excluded a buffering appender");
+        }
       }
     } else {
       TCLogging.getConsoleLogger().warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
     }
-  }
-
-  private static Appender<ILoggingEvent> consoleAppender(LoggerContext loggerContext) {
-    ch.qos.logback.classic.Logger internalLogger = loggerContext.getLogger("org.terracotta.console");
-    Appender<ILoggingEvent> appender = null;
-    if (internalLogger == null) {
-      appender = internalLogger.getAppender("STDOUT");
-    }
-    return appender;
   }
 
   private static Appender<ILoggingEvent> installFileAppender(String logDir, LoggerContext loggerContext) {
@@ -116,8 +115,9 @@ public class TCLogbackLogging {
         LOGGER.info("Logging directory is not set.  Logging only to the console");
         return null;
       } else if (!logDir.exists()) {
-        LOGGER.warn("Logging directory {} does not exist.  Logging only to the console", logDir);
-        return null;
+        LOGGER.info("Logging directory {} does not exist.  Creating", logDir);
+        logDir.mkdirs();
+        return logDir.getCanonicalPath();
       } else if (!logDir.isDirectory()) {
         LOGGER.warn("Logging path {} is not a directory.  Logging only to the console", logDir);
         return null;

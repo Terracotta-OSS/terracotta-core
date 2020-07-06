@@ -33,6 +33,7 @@ public class BufferingAppender<E> extends ConsoleAppender<E> {
 
   private final Queue<E> buffer;
   private boolean console;
+  private boolean doBuffer;
 
   public BufferingAppender() {
     this.buffer = new ConcurrentLinkedQueue<>();
@@ -42,12 +43,22 @@ public class BufferingAppender<E> extends ConsoleAppender<E> {
     this.console = console;
   }
 
+  public void disableBuffering() {
+    this.doBuffer = false;
+    if (!console) {
+      this.console = true;
+      sendContentsTo(this);
+    }
+  }
+
   @Override
   public void doAppend(E eventObject) {
     if (console) {
       super.doAppend(eventObject);
     }
-    buffer.add(eventObject);
+    if (doBuffer) {
+      buffer.add(eventObject);
+    }
   }
 
   public void sendContentsTo(Appender otherAppender) {
