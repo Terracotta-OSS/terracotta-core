@@ -69,6 +69,24 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
   }
 
   @Override
+  public void create(String entityClassName, String entityName, long version, byte[] config) {
+    try {
+      this.passthroughServerProcess.create(entityClassName, entityName, version, config);
+    } catch (EntityException ee) {
+    // ignore
+    }
+  }
+
+  @Override
+  public void reconfigureSelf(byte[] config) {
+    try {
+      this.passthroughServerProcess.reconfigure(entityClassName, entityName, 1L, config);
+    } catch (EntityException ee) {
+    // ignore
+    }
+  }
+
+  @Override
   public void messageSelf(EntityMessage message) throws MessageCodecException {
     // Serialize the message.
     PassthroughMessage passthroughMessage = makePassthroughMessage(message);
