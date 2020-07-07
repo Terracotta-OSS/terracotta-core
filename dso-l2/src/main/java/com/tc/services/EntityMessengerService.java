@@ -30,6 +30,7 @@ import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
+import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
 import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
@@ -85,6 +86,11 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   @Override
   public void destroySelf() {
     this.messageSink.addToSink(new DestroyMessage(lifecycleDescriptor));
+  }
+
+  @Override
+  public void create(String type, String name, long version, byte[] configuration) {
+    this.messageSink.addToSink(new CreateMessage(type, name, version, configuration));
   }
 
   @Override
