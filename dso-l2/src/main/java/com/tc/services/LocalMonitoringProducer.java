@@ -302,13 +302,9 @@ public class LocalMonitoringProducer implements ImplementationProvidedServicePro
   }
 
   private IStripeMonitoring getIStripeMonitoringService(long consumerID) {
-    try {
-      IStripeMonitoring collector = this.globalRegistry.subRegistry(consumerID).getService(new BasicServiceConfiguration<>(IStripeMonitoring.class));
-      if(collector != null) {
-        return new IStripeMonitoringWrapper(collector, LOGGER);
-      }
-    } catch (ServiceException e) {
-      LOGGER.error("service error", e);
+    Collection<IStripeMonitoring> collectors = this.globalRegistry.subRegistry(consumerID).getServices(new BasicServiceConfiguration<>(IStripeMonitoring.class));
+    if(collectors != null) {
+      return new IStripeMonitoringWrapper(collectors, LOGGER);
     }
     return null;
   }
