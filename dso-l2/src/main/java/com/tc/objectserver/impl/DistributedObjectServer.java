@@ -640,18 +640,10 @@ public class DistributedObjectServer {
     // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
     IMonitoringProducer serviceInterface = null;
 
-    Collection<IMonitoringProducer> services = platformServiceRegistry.getServices(new ServiceConfiguration<IMonitoringProducer>(){
-      @Override
-      public Class<IMonitoringProducer> getServiceType() {
-        return IMonitoringProducer.class;
-      }});
-
-    if (!services.isEmpty()) {
-      if (services.size() == 1) {
-        serviceInterface = services.iterator().next();
-      } else {
-        serviceInterface = new MonitoringProducerMultiplexor(services);
-      }
+    try {
+      serviceInterface = platformServiceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
+    } catch (ServiceException multi) {
+      Assert.fail("Multiple IMonitoringProducer implementations found!");
     }
 
     boolean USE_DIRECT = !tcProperties.getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_DISABLE_DIRECT_SINKS, false);
