@@ -22,16 +22,18 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
 import com.tc.logging.TCLogging;
-import com.tc.util.Assert;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.tripwire.EventAppender;
 
 public class TCLogbackLogging {
 
@@ -39,33 +41,91 @@ public class TCLogbackLogging {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCLogbackLogging.class);
 
+  public static void resetLogging() {
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(TCLogging.CONSOLE_LOGGER_NAME);
+    Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
+    while (appenders.hasNext()) {
+      Appender<ILoggingEvent> a = appenders.next();
+      if (a instanceof BufferingAppender) {
+        root.detachAppender(a);
+        a.stop();
+      }
+    }
+    console.detachAndStopAllAppenders();
+  }
+
+  public static void bootstrapLogging() {
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(TCLogging.CONSOLE_LOGGER_NAME);
+    Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
+    boolean hasBuffer = false;
+    boolean hasJfr = false;
+    while (appenders.hasNext()) {
+      Appender<ILoggingEvent> check = appenders.next();
+      if (check instanceof BufferingAppender) {
+        hasBuffer = true;
+      } else if (check instanceof EventAppender) {
+        hasJfr = true;
+      }
+    }
+    if (!hasBuffer) {
+      BufferingAppender<ILoggingEvent> appender = new BufferingAppender<>();
+      appender.setName("TC_BASE");
+      appender.setContext(loggerContext);
+      appender.setTarget("System.out");
+      PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+      encoder.setContext(loggerContext);
+      encoder.setPattern("%d [%t] %p %c - %m%n");
+      encoder.start();
+      appender.setEncoder(encoder);
+      appender.start();
+      root.addAppender(appender);
+    }
+    if (!hasJfr) {
+      EventAppender events = new EventAppender();
+      events.setName("LogToJFR");
+      events.setContext(loggerContext);
+      events.start();
+      root.addAppender(events);
+    }
+    if (!console.iteratorForAppenders().hasNext()) {
+      attachConsoleLogger(loggerContext, console);
+    }
+  }
+
   public static void redirectLogging(File logDirFile) {
     String logDir = getPathString(logDirFile);
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    ch.qos.logback.classic.Logger internalLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+    ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(TCLogging.CONSOLE_LOGGER_NAME);
 
-    Appender<ILoggingEvent> appender = internalLogger.getAppender("TC_BASE");
-    if (appender != null) {
+    Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
+    if (appenders != null) {
       if (logDir != null) {
         Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
         if (continuingAppender != null) {
-          if (appender instanceof BufferingAppender) {
-            BufferingAppender base = (BufferingAppender)appender;
-            base.sendContentsTo(continuingAppender);
-            internalLogger.addAppender(continuingAppender);
-            internalLogger.detachAppender(base);
-          } else {
-            TCLogging.getConsoleLogger().warn("Appender named TC_BASE in the overridden logging configuration is not a BufferingAppender. Logging will proceed to both TC_BASE and {}", logDir);
-            internalLogger.addAppender(continuingAppender);
+          while (appenders.hasNext()) {
+            Appender<ILoggingEvent> current = appenders.next();
+            if (current instanceof BufferingAppender) {
+              root.detachAppender(current);
+              current.stop();
+              ((BufferingAppender)current).sendContentsTo(continuingAppender);
+              root.addAppender(continuingAppender);
+            }
           }
         } else {
           throw new IllegalStateException("continuing log appender cannot be null");
         }
       } else {
-        if (appender instanceof BufferingAppender) {
-          ((BufferingAppender)appender).disableBuffering();
-        } else {
-          throw new IllegalStateException("logging configuration has excluded a buffering appender");
+        while (appenders.hasNext()) {
+          Appender<ILoggingEvent> current = appenders.next();
+          if (current instanceof BufferingAppender) {
+            ((BufferingAppender)current).disableBuffering();
+            console.detachAndStopAllAppenders();
+          }
         }
       }
     } else {
@@ -73,11 +133,26 @@ public class TCLogbackLogging {
     }
   }
 
+  private static void attachConsoleLogger(LoggerContext cxt, ch.qos.logback.classic.Logger console) {
+    ConsoleAppender<ILoggingEvent> append = new ConsoleAppender<>();
+    append.setContext(cxt);
+    append.setName("STDOUT");
+    append.setTarget("System.out");
+    PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+    encoder.setContext(cxt);
+    encoder.setParent(append);
+    encoder.setPattern("%d %p - %m%n");
+    encoder.start();
+    append.setEncoder(encoder);
+    append.start();
+    console.addAppender(append);
+  }
+
   private static Appender<ILoggingEvent> installFileAppender(String logDir, LoggerContext loggerContext) {
     String logLocation = logDir + File.separator + "terracotta.server.log";
     TCLogging.getConsoleLogger().info("Log file: {}", logLocation);
 
-    RollingFileAppender fileAppender = new RollingFileAppender();
+    RollingFileAppender<ILoggingEvent> fileAppender = new RollingFileAppender<>();
     fileAppender.setName("ROLLING");
     fileAppender.setContext(loggerContext);
     fileAppender.setFile(logLocation);
@@ -98,7 +173,7 @@ public class TCLogbackLogging {
     rollingPolicy.start();
     fileAppender.setRollingPolicy(rollingPolicy);
 
-    StartupAndSizeBasedTriggeringPolicy triggeringPolicy = new StartupAndSizeBasedTriggeringPolicy();
+    StartupAndSizeBasedTriggeringPolicy<ILoggingEvent> triggeringPolicy = new StartupAndSizeBasedTriggeringPolicy<>();
     triggeringPolicy.setMaxFileSize(FileSize.valueOf("512MB"));
     triggeringPolicy.setContext(loggerContext);
     triggeringPolicy.start();
