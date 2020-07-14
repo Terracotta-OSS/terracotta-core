@@ -68,7 +68,6 @@ public class BufferingAppender<E> extends ConsoleAppender<E> {
     while (true) {
       E event = this.buffer.poll();
       if (event == null) break;
-      System.out.printf("appending %s to %s\n", event, otherAppender);
       otherAppender.doAppend(event);
     }
   }
