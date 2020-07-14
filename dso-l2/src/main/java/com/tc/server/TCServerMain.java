@@ -49,14 +49,14 @@ import org.terracotta.server.ServerJMX;
 import org.terracotta.server.StopAction;
 
 public class TCServerMain {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(TCServerMain.class);
   private static final Logger CONSOLE = TCLogging.getConsoleLogger();
 
   public static TCServer server;
   public static ServerConfigurationManager setup;
 
   public static void main(String[] args) {
+    TCLogbackLogging.bootstrapLogging();
+    
     writeVersion();
     writePID();
 

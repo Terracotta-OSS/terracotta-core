@@ -22,10 +22,13 @@ import com.tc.client.ClientFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.UUID;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -44,6 +47,13 @@ public class DistributedObjectClientFactory {
     this.serverAddresses = serverAddresses;
     this.builder = builder;
     this.properties = properties;
+    Map<String, String> props = new HashMap<>();
+    for (String n : properties.stringPropertyNames()) {
+      if (n.startsWith("com.tc")) {
+        props.put(n.substring(7), properties.getProperty(n));
+      }
+    }
+    TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(props);
   }
 
   public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
