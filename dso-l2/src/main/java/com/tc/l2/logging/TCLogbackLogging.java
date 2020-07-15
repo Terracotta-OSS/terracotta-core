@@ -27,19 +27,19 @@ import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
 import com.tc.logging.TCLogging;
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.tripwire.EventAppender;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Iterator;
+
 public class TCLogbackLogging {
 
   private static final String TC_PATTERN = "%d [%t] %p %c - %m%n";
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(TCLogbackLogging.class);
+  private static final Logger LOGGER = TCLogging.getConsoleLogger();
 
   public static void resetLogging() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -106,30 +106,26 @@ public class TCLogbackLogging {
     if (appenders != null) {
       if (logDir != null) {
         Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
-        if (continuingAppender != null) {
-          while (appenders.hasNext()) {
-            Appender<ILoggingEvent> current = appenders.next();
-            if (current instanceof BufferingAppender) {
-              root.detachAppender(current);
-              current.stop();
-              ((BufferingAppender)current).sendContentsTo(continuingAppender);
-              root.addAppender(continuingAppender);
-            }
+        while (appenders.hasNext()) {
+          Appender<ILoggingEvent> current = appenders.next();
+          if (current instanceof BufferingAppender) {
+            root.detachAppender(current);
+            current.stop();
+            ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(continuingAppender);
+            root.addAppender(continuingAppender);
           }
-        } else {
-          throw new IllegalStateException("continuing log appender cannot be null");
         }
       } else {
         while (appenders.hasNext()) {
           Appender<ILoggingEvent> current = appenders.next();
           if (current instanceof BufferingAppender) {
-            ((BufferingAppender)current).disableBuffering();
+            ((BufferingAppender<ILoggingEvent>) current).disableBuffering();
             console.detachAndStopAllAppenders();
           }
         }
       }
     } else {
-      TCLogging.getConsoleLogger().warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
+      LOGGER.warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
     }
   }
 
@@ -150,7 +146,7 @@ public class TCLogbackLogging {
 
   private static Appender<ILoggingEvent> installFileAppender(String logDir, LoggerContext loggerContext) {
     String logLocation = logDir + File.separator + "terracotta.server.log";
-    TCLogging.getConsoleLogger().info("Log file: {}", logLocation);
+    LOGGER.info("Log file: {}", logLocation);
 
     RollingFileAppender<ILoggingEvent> fileAppender = new RollingFileAppender<>();
     fileAppender.setName("ROLLING");
@@ -184,25 +180,24 @@ public class TCLogbackLogging {
     return fileAppender;
   }
 
-  private static String getPathString(File logDir) {
-    try {
-      if (logDir == null) {
-        LOGGER.info("Logging directory is not set.  Logging only to the console");
-        return null;
-      } else if (!logDir.exists()) {
-        LOGGER.info("Logging directory {} does not exist.  Creating", logDir);
-        logDir.mkdirs();
-        return logDir.getCanonicalPath();
-      } else if (!logDir.isDirectory()) {
-        LOGGER.warn("Logging path {} is not a directory.  Logging only to the console", logDir);
-        return null;
-      } else {
-        return logDir.getCanonicalPath();
-      }
-    } catch (IOException ioe) {
-      LOGGER.warn("Error setting the logging directory.  Logging only to the console", ioe);
+  private static String getPathString(File logPath) {
+    if (logPath == null) {
+      LOGGER.info("Logging directory is not set. Logging only to the console");
       return null;
+    } else if (!logPath.exists()) {
+      if (!logPath.mkdirs()) {
+        throw new RuntimeException("Failed to created logging directory " + logPath);
+      } else {
+        LOGGER.info("Created logging directory {}", logPath);
+      }
+    } else if (!logPath.isDirectory()) {
+      throw new RuntimeException("Logging path " + logPath + " is not a directory");
+    }
+
+    try {
+      return logPath.getCanonicalPath();
+    } catch (IOException ioe) {
+      throw new UncheckedIOException("Error getting canonical path for the logging directory", ioe);
     }
   }
-
 }
