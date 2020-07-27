@@ -49,8 +49,12 @@ public class DynamicPassiveRemovalIT {
     // kill one passive
     CLUSTER.getClusterControl().terminateOnePassive();
     String deadPassive = findDeadPassive(hostPorts);
-
-    removeDeadPassiveFromTopology(hostPorts, deadPassive);
+    int split = deadPassive.indexOf(':');
+    String host = deadPassive.substring(0,split);
+    int port = Integer.parseInt(deadPassive.substring(split + 1));
+//  this is lazy, beacause we don't know the group port, use zero.
+//  don't really need it for remove
+    removeDeadPassiveFromTopology(hostPorts, deadPassive, port, 0);
 
     // kill the active so that one of the passives promotes
     CLUSTER.getClusterControl().terminateActive();
@@ -59,14 +63,14 @@ public class DynamicPassiveRemovalIT {
     CLUSTER.getClusterControl().waitForActive();
   }
 
-  private void removeDeadPassiveFromTopology(String[] hostPorts, String deadPassive) throws Exception {
+  private void removeDeadPassiveFromTopology(String[] hostPorts, String deadPassive, int port, int group) throws Exception {
     for (String hostPort: hostPorts) {
       if (hostPort.equals(deadPassive)) continue;
       try (Connection connection = ConnectionFactory.connect(URI.create( "diagnostic://" + hostPort),
                                                              new Properties())) {
         EntityRef<Diagnostics, Object, Object> entityRef = connection.getEntityRef(Diagnostics.class, 1L, "root");
         Diagnostics diagnostics = entityRef.fetchEntity(null);
-        diagnostics.invokeWithArg("TopologyMBean", "removePassive", deadPassive);
+        diagnostics.invokeWithArg("TopologyMBean", "removePassive", deadPassive + ":" + port + ":" + group);
       }
     }
   }

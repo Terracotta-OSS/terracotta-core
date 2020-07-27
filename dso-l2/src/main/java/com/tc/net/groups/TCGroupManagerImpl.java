@@ -74,7 +74,6 @@ import com.tc.objectserver.handler.TCGroupHandshakeMessageHandler;
 import com.tc.objectserver.handler.TCGroupMemberDiscoveryHandler;
 import com.tc.objectserver.impl.TopologyListener;
 import com.tc.objectserver.impl.TopologyManager;
-import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -819,13 +818,14 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public void nodeAdded(String host) {
-    this.discover.addNode(new Node(host));
+  public void nodeAdded(String host, int port, int group) {
+
+    this.discover.addNode(new Node(host, port, group));
   }
 
   @Override
-  public void nodeRemoved(String host) {
-    this.discover.removeNode(new Node(host));
+  public void nodeRemoved(String host, int port, int group) {
+    this.discover.removeNode(new Node(host, port, group));
   }
 
   private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {

@@ -284,7 +284,7 @@ public class ClientMessageTransport extends MessageTransportBase {
                                                                   + "\n\nPLEASE RECONFIGURE THE STACKS",
                                                                   synAck.getErrorType()));
         } else {
-          handleHandshakeError(new TransportHandshakeErrorContext(synAck.getErrorContext() + message,
+          handleHandshakeError(new TransportHandshakeErrorContext(synAck.getErrorContext() + " " + message,
                                                                   synAck.getErrorType()));
         }
       }
