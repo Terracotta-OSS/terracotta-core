@@ -116,7 +116,7 @@ public class BasicExternalClusterFOPConsistencyVoterIT {
           new Properties())) {
         EntityRef<Diagnostics, Object, Object> entityRef = connection.getEntityRef(Diagnostics.class, 1L, "root");
         Diagnostics diagnostics = entityRef.fetchEntity(null);
-        diagnostics.invokeWithArg("TopologyMBean", "removePassive", deadPassive);
+        diagnostics.invokeWithArg("TopologyMBean", "removePassive", deadPassive + ":0");
       }
     }
   }

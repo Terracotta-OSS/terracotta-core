@@ -19,7 +19,7 @@
 package com.tc.objectserver.impl;
 
 public interface TopologyListener {
-  void nodeAdded(String host);
+  void nodeAdded(String host, int port, int group);
 
-  void nodeRemoved(String host);
+  void nodeRemoved(String host, int port, int group);
 }

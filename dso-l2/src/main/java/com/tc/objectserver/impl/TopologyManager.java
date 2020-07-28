@@ -58,13 +58,13 @@ public class TopologyManager {
     }
   }
 
-  private synchronized boolean addPassive(String hostPort) {
+  private synchronized boolean addPassive(String host, int port, int group) {
     final Topology old = this.topology;
     Set<String> newServers = new HashSet<>(old.getServers());
-    if (newServers.add(hostPort)) {
+    if (newServers.add(host + ":" + port)) {
       this.topology = new Topology(newServers);
       for (TopologyListener listener : listeners) {
-        listener.nodeAdded(hostPort);
+        listener.nodeAdded(host,port,group);
       }
       return true;
     }
@@ -72,13 +72,13 @@ public class TopologyManager {
     return false;
   }
 
-  private synchronized boolean removePassive(String hostPort) {
+  private synchronized boolean removePassive(String host, int port, int group) {
     final Topology old = this.topology;
     Set<String> newServers = new HashSet<>(old.getServers());
-    if (newServers.remove(hostPort)) {
+    if (newServers.remove(host + ":" + port)) {
       this.topology = new Topology(newServers);
       for (TopologyListener listener : listeners) {
-        listener.nodeRemoved(hostPort);
+        listener.nodeRemoved(host,port,group);
       }
       return true;
     }
@@ -91,9 +91,13 @@ public class TopologyManager {
   }
 
   public interface TopologyMbean {
-    boolean addPassive(String hostPort);
+    boolean addPassive(String host, int port, int group);
 
-    boolean removePassive(String hostPort);
+    boolean addPassive(String hostPortGroup);
+
+    boolean removePassive(String hostPort, int port, int group);
+
+    boolean removePassive(String hostPortGroup);
 
     String getTopology();
   }
@@ -113,12 +117,22 @@ public class TopologyManager {
       }
     }
 
-    public boolean addPassive(String hostPort) {
-      return this.topologyManager.addPassive(hostPort);
+    public boolean addPassive(String host, int port, int group) {
+      return this.topologyManager.addPassive(host,port,group);
     }
 
-    public boolean removePassive(String hostPort) {
-      return this.topologyManager.removePassive(hostPort);
+    public boolean addPassive(String hostPortGroup) {
+      String[] split = hostPortGroup.split("\\:");
+      return this.topologyManager.addPassive(split[0],Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+    }
+    
+    public boolean removePassive(String host, int port, int group) {
+      return this.topologyManager.removePassive(host,port,group);
+    }
+
+    public boolean removePassive(String hostPortGroup) {
+      String[] split = hostPortGroup.split("\\:");
+      return this.topologyManager.removePassive(split[0],Integer.parseInt(split[1]), Integer.parseInt(split[2]));
     }
 
     @Override

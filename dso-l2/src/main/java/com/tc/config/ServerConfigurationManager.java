@@ -42,7 +42,6 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   private final ConfigurationProvider configurationProvider;
   private final Configuration configuration;
-  private final GroupConfiguration groupConfiguration;
   private final boolean consistentStartup;
   private final ServerConfiguration serverConfiguration;
   private final ServiceLocator serviceLocator;
@@ -66,10 +65,6 @@ public class ServerConfigurationManager implements PrettyPrintable {
       throw new ConfigurationException("unable to determine server configuration");
     }
 
-    Map<String, ServerConfiguration> serverConfigurationMap = getServerConfigurationMap(configuration.getServerConfigurations());
-
-    this.groupConfiguration = new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
-
     this.consistentStartup = consistentStartup;
 
     this.startUpArgs = Arrays.copyOf(startUpArgs, startUpArgs.length);
@@ -86,16 +81,18 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public GroupConfiguration getGroupConfiguration() {
-    return this.groupConfiguration;
-  }
+    Map<String, ServerConfiguration> serverConfigurationMap = getServerConfigurationMap(configuration.getServerConfigurations());
 
+    return new GroupConfiguration(serverConfigurationMap, this.serverConfiguration.getName());
+  }
+  
   public InputStream rawConfigFile() {
     String text = configuration.getRawConfiguration();
     return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
   }
 
   public String[] allCurrentlyKnownServers() {
-    return groupConfiguration.getMembers();
+    return getGroupConfiguration().getMembers();
   }
 
   public boolean consistentStartup() {
