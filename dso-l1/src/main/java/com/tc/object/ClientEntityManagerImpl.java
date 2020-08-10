@@ -59,6 +59,7 @@ import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -71,6 +72,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
@@ -84,7 +87,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   
   private final ClientMessageChannel channel;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
-  private final MessagePendingCount requestTickets = new MessagePendingCount();
+  private final StoppableSemaphore requestTickets = new StoppableSemaphore(ClientConfigurationContext.MAX_PENDING_REQUESTS);
   private final TransactionSource transactionSource;
 
   private final ClientEntityStateManager stateManager;
@@ -121,35 +124,44 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   } 
   
   private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
-    boolean enqueued = true;
-    boolean interrupted = false;
     long end = (timeout > 0) ? System.nanoTime() + unit.toNanos(timeout) : 0;
- //  stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
-    while ((waitUntilRunning && !this.stateManager.isRunning()) || !requestTickets.messagePendingSlotAvailable()) {
+    if (waitUntilRunning) {
+      boolean interrupted = Thread.interrupted();
       try {
-        if (!this.stateManager.isShutdown()) {
-          long timing = (end > 0) ? end - System.nanoTime() : 0;
-          if (timing < 0) {
-            throw new TimeoutException();
-          } else {
-            wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
+        while (!stateManager.isRunning()) {
+          try {
+            if (stateManager.isShutdown()) {
+              return false;
+            } else {
+              long timing = (end > 0) ? end - System.nanoTime() : 0;
+              if (timing < 0) {
+                throw new TimeoutException();
+              } else {
+                wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int) (timing % TimeUnit.MILLISECONDS.toNanos(1)));
+              }
+            }
+          } catch (InterruptedException e) {
+            interrupted = true;
           }
-        } else {
-          enqueued = false;
-          break;
         }
-      } catch (InterruptedException ie) {
-        interrupted = true;
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
-    if (interrupted) {
-      Thread.currentThread().interrupt();
+
+    // stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
+    if (stateManager.isRunning()) {
+      if (requestTickets.tryAcquireUninterruptibly(end - System.nanoTime(), TimeUnit.NANOSECONDS)) {
+        inFlightMessages.put(msg.getTransactionID(), msg);
+        return true;
+      } else {
+        throw new TimeoutException();
+      }
+    } else {
+      return false;
     }
-    if (enqueued) {
-      inFlightMessages.put(msg.getTransactionID(), msg);
-      requestTickets.messagePending();
-    }
-    return enqueued;
   }
   
   @SuppressWarnings("rawtypes")
@@ -351,7 +363,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       if (inFlight != null) {
         inFlight.retired();
         synchronized (this) {
-          requestTickets.messageRetired();
+          requestTickets.release();
           notify();
         }
       } else {
@@ -554,7 +566,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
     try {
       msgCount.increment();
-      inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.messagesPending);
+      inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.availablePermits());
       // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
       if (enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
         inFlight.sent();
@@ -738,27 +750,37 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   }
   
-  private static class MessagePendingCount {
-    private int messagesPending = ClientConfigurationContext.MAX_PENDING_REQUESTS;
-  
-    // synchronized by caller
-    private int messagePending() {
-      Assert.assertTrue(messagesPending > 0);
-      return --messagesPending;
+  private static class StoppableSemaphore extends Semaphore {
+
+    private final int permits;
+
+    public StoppableSemaphore(int permits) {
+      super(permits);
+      this.permits = permits;
     }
 
-    // synchronized by caller
-    private int messageRetired() {
-      Assert.assertTrue(messagesPending < ClientConfigurationContext.MAX_PENDING_REQUESTS);
-      return ++messagesPending;
+    public boolean tryAcquireUninterruptibly(long timeout, TimeUnit unit) {
+      boolean interrupted = Thread.interrupted();
+      try {
+        while (true) {
+          long start = System.nanoTime();
+          try {
+            return super.tryAcquire(timeout, unit);
+          } catch (InterruptedException e) {
+            interrupted = true;
+            timeout = unit.toNanos(timeout) - (System.nanoTime() - start);
+            unit = TimeUnit.NANOSECONDS;
+          }
+        }
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+      }
     }
-    
-    private boolean messagePendingSlotAvailable() {
-      return messagesPending > 0;
-    }
-    
+
     private void stop() {
-      messagesPending = 0;
+      reducePermits(permits);
     }
   }
 }
