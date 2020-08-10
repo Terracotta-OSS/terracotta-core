@@ -695,6 +695,11 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
 
       }
 
+      @Override
+      public void audit(String string, Properties prprts) {
+
+      }
+
 
     });
 
