@@ -23,7 +23,6 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.ServerMessageChannel;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.server.TCServer;
@@ -43,9 +42,13 @@ public class GuardianContext {
   private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>(); 
   
   private static Properties createGuardContext(String callName) {
+    return createGuardContext(callName, new Properties());
+  }
+
+  private static Properties createGuardContext(String callName, Properties existing) {
     ChannelID cid = CURRENTID.get();
     if (cid != null) {
-      Properties props =  createGuardContext(callName, CONTEXT.get(cid));
+      Properties props =  createGuardContext(callName, existing, CONTEXT.get(cid));
       props.setProperty("clientID", Long.toString(cid.toLong()));
       return props;
     } else {
@@ -53,8 +56,7 @@ public class GuardianContext {
     }
   }
   
-  private static Properties createGuardContext(String callName, MessageChannel c) {
-    Properties props = new Properties();
+  private static Properties createGuardContext(String callName, Properties props, MessageChannel c) {
     if (callName != null) {
       props.setProperty("id", callName);
     }
@@ -134,6 +136,10 @@ public class GuardianContext {
   }
   
   public static boolean validate(Guardian.Op op, String id, MessageChannel channel) {
-    return getOperationGuardian().validate(op, createGuardContext(id, channel));
+    return getOperationGuardian().validate(op, createGuardContext(id, new Properties(), channel));
+  }
+
+  public static boolean validate(Guardian.Op op, String id, Properties additional) {
+    return getOperationGuardian().validate(op, createGuardContext(id, additional));
   }
 }
