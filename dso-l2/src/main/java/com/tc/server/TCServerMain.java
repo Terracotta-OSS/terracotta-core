@@ -27,6 +27,7 @@ import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.impl.JMXSubsystem;
+import com.tc.spi.Guardian;
 import com.tc.util.ProductInfo;
 import org.terracotta.configuration.ConfigurationProvider;
 
@@ -279,6 +280,12 @@ public class TCServerMain {
       @Override
       public void console(String message, Object... sub) {
         CONSOLE.info(message, sub);
+      }
+
+      @Override
+      public void audit(String msg, Properties additional) {
+        GuardianContext.validate(Guardian.Op.AUDIT_OP, msg, additional);
+
       }
     });
   }
