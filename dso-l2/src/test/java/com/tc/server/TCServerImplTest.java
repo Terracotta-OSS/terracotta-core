@@ -35,6 +35,9 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+
 import java.util.Set;
 import javax.management.MBeanServer;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,6 +83,7 @@ public class TCServerImplTest {
       n.printStackTrace();
       throw n;
     }
+    ServerEnv.setServer(mock(Server.class));
   }
   
   private void setState(ServerMode state) {

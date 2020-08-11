@@ -19,13 +19,15 @@
 package com.tc.l2.state;
 
 import com.tc.management.AbstractTerracottaMBean;
+import org.terracotta.server.ServerEnv;
 
 import java.util.Collection;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements ConsistencyMBean {
 
-  private ConsistencyManager consistencyManager;
+  private final ConsistencyManager consistencyManager;
 
   public ConsistencyMBeanImpl(ConsistencyManager consistencyManager) throws Exception {
     super(ConsistencyMBean.class, false);
@@ -49,6 +51,7 @@ public class ConsistencyMBeanImpl extends AbstractTerracottaMBean implements Con
 
   @Override
   public void allowRequestedTransition() {
+    ServerEnv.getServer().audit("Allow server state transition invoked", new Properties());
     consistencyManager.allowLastTransition();
   }
 

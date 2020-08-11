@@ -59,13 +59,14 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
-import com.tc.objectserver.core.impl.GuardianContext;
-import com.tc.spi.Guardian;
 import com.tc.text.PrettyPrinter;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+
+import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
 
@@ -137,6 +138,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void stop(StopAction...restartMode) {
+    ServerEnv.getServer().audit("Stop invoked", new Properties());
     TCLogging.getConsoleLogger().info("Stopping server");
     dsoServer.getContext().getL2Coordinator().getStateManager().moveToStopState();
     EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
@@ -181,13 +183,9 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
-      if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "shutdown")) {
-        consoleLogger.info("Server exiting...");
-        notifyShutdown();
-        stop();
-      } else {
-        logger.info("shutdown operation not permitted by guardian");
-      }
+      consoleLogger.info("Server exiting...");
+      notifyShutdown();
+      stop();
     } else {
       logger.warn("Server in incorrect state (" + stateManager.getCurrentMode().getName() + ") to be shutdown.");
     }
@@ -363,11 +361,8 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void dump() {
-    if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "dump")) {
-      TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
-    } else {
-      logger.info("dump operation not permitted by guardian");
-    }
+    ServerEnv.getServer().audit("Dump invoked", new Properties());
+    TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
   protected synchronized void registerDSOServer(DistributedObjectServer server, MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
@@ -427,11 +422,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
   
   private void exitWithStatus(int status) {
-    if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "stop")) {
-      Runtime.getRuntime().exit(status);
-    } else {
-      logger.info("stop operation not allowed by guardian");
-    }
+    Runtime.getRuntime().exit(status);
   }
 
   @Override
