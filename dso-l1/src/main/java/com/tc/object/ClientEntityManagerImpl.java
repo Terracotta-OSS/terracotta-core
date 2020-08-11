@@ -164,7 +164,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
 
     // stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
-    if (stateManager.isRunning()) {
+    if (!stateManager.isShutdown()) { // enqueue here if the system is not shutdown, running or paused, the message should be readied for send
       if (requestTickets.tryAcquireUninterruptibly(end - System.nanoTime(), TimeUnit.NANOSECONDS)) {
         inFlightMessages.put(msg.getTransactionID(), msg);
         return true;
@@ -419,10 +419,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       InFlightMessage inFlight = inFlightMessages.remove(id);
       if (inFlight != null) {
         inFlight.retired();
-        synchronized (this) {
-          requestTickets.release();
-          notify();
-        }
+        requestTickets.release();
       } else {
         // resend result or stop
       }
