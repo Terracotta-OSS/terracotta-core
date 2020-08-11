@@ -37,7 +37,6 @@ import com.tc.services.SingleThreadedTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
-import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -219,7 +218,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
-import com.tc.objectserver.core.impl.MonitoringProducerMultiplexor;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -229,9 +227,6 @@ import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
 import com.tc.spi.DiagnosticFormat;
 import com.tc.spi.Guardian;
-import static com.tc.spi.Guardian.Op.CONNECT_CLIENT;
-import static com.tc.spi.Guardian.Op.SERVER_DUMP;
-import static com.tc.spi.Guardian.Op.SERVER_EXIT;
 import com.tc.spi.NetworkTranslator;
 import com.tc.spi.ProductCapabilities;
 import org.terracotta.configuration.Configuration;
@@ -241,12 +236,6 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.Collection;
-
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -849,6 +838,7 @@ public class DistributedObjectServer {
         try {
           boolean real = userProvided == null || userProvided.validate(o, p);
           switch (o) {
+            case AUDIT_OP:
             case SERVER_DUMP:
             case SERVER_EXIT:
             case CONNECT_CLIENT:
