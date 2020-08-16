@@ -15,48 +15,34 @@
  */
 package org.terracotta.testing.config;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ClusterInfo {
   private static final String SERVER_INFO_DELIM = ";";
-  private final Map<String, ServerInfo> servers;
+  private final List<ServerInfo> servers;
 
-  public ClusterInfo(Map<String, ServerInfo> servers) {
+  public ClusterInfo(List<ServerInfo> servers) {
     this.servers = servers;
   }
 
   public ServerInfo getServerInfo(String name) {
-    return servers.get(name);
+    return servers.stream().filter(serverInfo -> serverInfo.getName().equals(name)).findFirst().orElseThrow(RuntimeException::new);
   }
 
-  public Collection<ServerInfo> getServersInfo() {
-    return Collections.unmodifiableCollection(servers.values());
+  public List<ServerInfo> getServersInfo() {
+    return Collections.unmodifiableList(servers);
   }
 
   public String encode() {
-    StringBuilder stringBuilder = new StringBuilder();
-
-    for (ServerInfo serverInfo : servers.values()) {
-      stringBuilder.append(serverInfo.encode());
-      stringBuilder.append(SERVER_INFO_DELIM);
-    }
-
-    return stringBuilder.toString();
+    return servers.stream().map(serverInfo -> serverInfo.encode() + SERVER_INFO_DELIM).collect(Collectors.joining());
   }
 
   public static ClusterInfo decode(String from) {
     String[] serverInfoTokens = from.split(SERVER_INFO_DELIM);
-    Map<String, ServerInfo> servers = new HashMap<>();
-
-    for (String serverInfoToken : serverInfoTokens) {
-      ServerInfo serverInfo = ServerInfo.decode(serverInfoToken);
-      servers.put(serverInfo.getName(), serverInfo);
-    }
-
+    List<ServerInfo> servers = Arrays.stream(serverInfoTokens).map(ServerInfo::decode).collect(Collectors.toList());
     return new ClusterInfo(servers);
   }
 }

@@ -15,32 +15,38 @@
  */
 package org.terracotta.testing.config;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 
-/**
- * Tests that {@link ClusterInfo} can be correctly encoded and decoded.
- */
 public class ClusterInfoTest {
   @Test
-  public void testEncoding() throws Exception {
-    String testName = "test";
-    int testServerPort = 1234, testGroupPort = 1235;
+  public void testEncoding() {
+    String testNameBase = "test";
+    int portBase = 1000;
+    int groupPortBase = 2000;
+    int counter = 1;
 
-    Map<String, ServerInfo> servers = new HashMap<>();
-    servers.put(testName, new ServerInfo(testName, testServerPort, testGroupPort));
+    List<ServerInfo> servers = new ArrayList<>();
+    servers.add(new ServerInfo(testNameBase + counter, portBase + counter, groupPortBase + counter++));
+    servers.add(new ServerInfo(testNameBase + counter, portBase + counter, groupPortBase + counter++));
+    servers.add(new ServerInfo(testNameBase + counter, portBase + counter, groupPortBase + counter++));
+    servers.add(new ServerInfo(testNameBase + counter, portBase + counter, groupPortBase + counter++));
+    servers.add(new ServerInfo(testNameBase + counter, portBase + counter, groupPortBase + counter++));
 
     ClusterInfo clusterInfo = new ClusterInfo(servers);
     String encoded = clusterInfo.encode();
     ClusterInfo decoded = ClusterInfo.decode(encoded);
 
-    ServerInfo serverInfo = decoded.getServersInfo().iterator().next();
-    Assert.assertEquals(testName, serverInfo.getName());
-    Assert.assertEquals(testServerPort, serverInfo.getServerPort());
-    Assert.assertEquals(testGroupPort, serverInfo.getGroupPort());
+    int count = 1;
+    for (ServerInfo serverInfo : decoded.getServersInfo()) {
+      assertEquals(testNameBase + count, serverInfo.getName());
+      assertEquals(portBase + count, serverInfo.getServerPort());
+      assertEquals(groupPortBase + count, serverInfo.getGroupPort());
+      count++;
+    }
   }
 }

@@ -15,14 +15,10 @@
  */
 package org.terracotta.testing.config;
 
-
 import java.net.InetSocketAddress;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -125,11 +121,10 @@ public class StripeConfiguration {
   }
 
   private ClusterInfo buildClusterInfo(List<String> serverNames, List<Integer> serverPorts, List<Integer> groupPorts) {
-    Map<String, ServerInfo> servers = new HashMap<>();
+    List<ServerInfo> servers = new ArrayList<>();
 
     for (int i = 0; i < serverNames.size(); i++) {
-      String serverName = serverNames.get(i);
-      servers.put(serverName, new ServerInfo(serverName, serverPorts.get(i), groupPorts.get(i)));
+      servers.add(new ServerInfo(serverNames.get(i), serverPorts.get(i), groupPorts.get(i)));
     }
     return new ClusterInfo(servers);
   }
