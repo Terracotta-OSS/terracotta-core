@@ -15,16 +15,15 @@
  */
 package org.terracotta.testing.config;
 
-import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.InetSocketAddress;
 
-/**
- * Tests that {@link ServerInfo} can be correctly encoded and decoded.
- */
+import static org.junit.Assert.assertEquals;
+
 public class ServerInfoTest {
   @Test
-  public void testEncoding() throws Exception {
+  public void testEncoding() {
     String testName = "test";
     int testServerPort = 1234;
     int testGroupPort = 1235;
@@ -33,8 +32,9 @@ public class ServerInfoTest {
     String encoded = serverInfo.encode();
     ServerInfo decoded = ServerInfo.decode(encoded);
 
-    Assert.assertEquals(testName, decoded.getName());
-    Assert.assertEquals(testServerPort, decoded.getServerPort());
-    Assert.assertEquals(testGroupPort, decoded.getGroupPort());
+    assertEquals(testName, decoded.getName());
+    assertEquals(testServerPort, decoded.getServerPort());
+    assertEquals(testGroupPort, decoded.getGroupPort());
+    assertEquals(InetSocketAddress.createUnresolved("localhost", testServerPort), decoded.getAddress());
   }
 }

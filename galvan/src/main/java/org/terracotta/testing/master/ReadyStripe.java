@@ -20,11 +20,6 @@ import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
-import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.List;
-
-
 /**
  * A helper to install, configure, and start a single stripe, along with read-only data describing how to interact with it.
  */
@@ -32,13 +27,11 @@ public class ReadyStripe {
   private final IMultiProcessControl stripeControl;
   private final String stripeUri;
   private final ClusterInfo clusterInfo;
-  private final List<InetSocketAddress> serverAddresses;
 
-  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo, List<InetSocketAddress> serverAddresses) {
+  private ReadyStripe(IMultiProcessControl stripeControl, String stripeUri, ClusterInfo clusterInfo) {
     this.stripeControl = stripeControl;
     this.stripeUri = stripeUri;
     this.clusterInfo = clusterInfo;
-    this.serverAddresses = serverAddresses;
   }
 
   public IMultiProcessControl getStripeControl() {
@@ -51,10 +44,6 @@ public class ReadyStripe {
 
   public ClusterInfo getClusterInfo() {
     return clusterInfo;
-  }
-
-  public List<InetSocketAddress> getServerAddresses() {
-    return Collections.unmodifiableList(serverAddresses);
   }
 
   /**
@@ -85,6 +74,6 @@ public class ReadyStripe {
 
     // We can now create the information required by the ReadyStripe and return control to the caller to run the test or install clients.
     SynchronousProcessControl processControl = new SynchronousProcessControl(interlock, processControlLogger);
-    return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo(), stripeConfig.getServerAddresses());
+    return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo());
   }
 }
