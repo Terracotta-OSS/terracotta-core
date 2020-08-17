@@ -22,6 +22,9 @@ resources:
     - repository: templates
       type: git   
       name: terracotta/terracotta
+      trigger:  # CI trigger for this repository, no CI trigger if skipped (only works for Azure Repos)
+        tags:
+          exclude: [ draft ] 
 
 jobs:
 - template: build-templates/maven-common.yml@templates  
