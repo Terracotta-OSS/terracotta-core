@@ -17,6 +17,8 @@ package org.terracotta.testing.config;
 
 import org.terracotta.testing.common.Assert;
 
+import java.net.InetSocketAddress;
+
 /**
  * @author vmad
  */
@@ -25,7 +27,6 @@ public class ServerInfo {
   private final String name;
   private final int serverPort;
   private final int groupPort;
-
 
   public ServerInfo(String name, int serverPort, int groupPort) {
     this.name = name;
@@ -41,6 +42,10 @@ public class ServerInfo {
     return serverPort;
   }
 
+  public InetSocketAddress getAddress() {
+    return InetSocketAddress.createUnresolved("localhost", serverPort);
+  }
+
   public int getGroupPort() {
     return groupPort;
   }
@@ -52,7 +57,6 @@ public class ServerInfo {
   public static ServerInfo decode(String from) {
     String[] tokens = from.split(DELIM);
     Assert.assertTrue(tokens.length == 3);
-    return new ServerInfo(tokens[0], Integer.valueOf(tokens[1]), Integer.valueOf(tokens[2]));
+    return new ServerInfo(tokens[0], Integer.parseInt(tokens[1]), Integer.parseInt(tokens[2]));
   }
-
 }
