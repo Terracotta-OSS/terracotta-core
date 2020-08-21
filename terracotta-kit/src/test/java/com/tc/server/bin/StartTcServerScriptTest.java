@@ -33,13 +33,14 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyString;
-import org.junit.Assert;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import org.junit.Ignore;
 
 /**
  * Tests for {@code start-tc-server} scripts.
  */
+@Ignore("fix tool encoding")
 public class StartTcServerScriptTest extends BaseScriptTest {
 
   private static final int PATH_NAME_SEGMENT_LENGTH = 14;
