@@ -70,14 +70,12 @@ public class PassthroughClusterControl implements IClusterControl {
     }
   }
 
-  @Override
   public void startOneServerWithConsistency() throws Exception {
     // this is bogus, passthrough does not know about consistency and maybe it shouldn't
     // TODO: re-evaluate at some later point
     this.startOneServer();
   }
 
-  @Override
   public void startAllServersWithConsistency() throws Exception {
     // this is bogus, passthrough does not know about consistency and maybe it shouldn't
     // TODO: re-evaluate at some later point
@@ -159,7 +157,7 @@ public class PassthroughClusterControl implements IClusterControl {
       // Clear the active
       this.activeServer = null;
     }
-    
+
     for (PassthroughServer candidate : this.passthroughServers) {
       if (!this.stoppedPassthroughServers.contains(candidate)) {
         // This server is still running so bring it down.
