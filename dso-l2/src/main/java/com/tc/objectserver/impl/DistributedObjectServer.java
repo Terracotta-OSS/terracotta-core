@@ -837,7 +837,7 @@ public class DistributedObjectServer {
     }
     return (o, p)->{
       try {
-        return userProvided.stream().map(g->g.validate(o, p)).reduce(Boolean.TRUE, (r, l)->r & l);
+        return userProvided.stream().map(g->g.validate(o, p)).reduce(Boolean.TRUE, Boolean::logicalAnd);
       } catch (Throwable t) {
         logger.warn("guardian failed", t);
         return true;
