@@ -8,7 +8,7 @@
     <version>5.7-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
- 
+
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>terracotta-kit</artifactId>
@@ -35,7 +35,7 @@
         </dependency>
         <dependency>
           <groupId>org.terracotta</groupId>
-          <artifactId>default-configuration</artifactId>  
+          <artifactId>default-configuration</artifactId>
           <classifier>jar-with-dependencies</classifier>
           <version>${project.version}</version>
           <scope>runtime</scope>
