@@ -59,12 +59,9 @@ import com.tc.util.Assert;
 import com.tc.util.Util;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.util.Collection;
 import java.util.Collections;
 
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -664,26 +661,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     ClientID clientID = this.channel.getClientID();
     TransactionID transactionID = transactionSource.create();
     TransactionID oldestTransactionPending = transactionSource.oldest();//either premature retirement or late (or missing) removal from inflight
-    //this is expensive -- only assert when testing
-    TransactionID oldestTransactionInFlight;
-    assert (oldestTransactionInFlight = oldestTransactionIn(inFlightMessages.keySet())) == null || (oldestTransactionPending.compareTo(oldestTransactionInFlight) <= 0);
     message.setContents(clientID, transactionID, entityID, entityDescriptor, type, requiresReplication, TCByteBufferFactory.wrap(config), oldestTransactionPending, acks);
     return message;
-  }
-
-  private TransactionID oldestTransactionIn(Collection<TransactionID> transactionIds) {
-    Iterator<TransactionID> it = transactionIds.iterator();
-    if (it.hasNext()) {
-      TransactionID oldest = it.next();
-      for (TransactionID txnId : transactionIds) {
-        if (oldest.compareTo(txnId) > 0) {
-          oldest = txnId;
-        }
-      }
-      return oldest;
-    } else {
-      return null;
-    }
   }
 
   private static class FlushResponse implements VoltronEntityResponse, VoltronEntityMultiResponse {
