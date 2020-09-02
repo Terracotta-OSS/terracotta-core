@@ -56,11 +56,12 @@ public class DistributedObjectClientFactory {
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(props);
   }
 
-  public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
+  public DistributedObjectClient create(Runnable killSwitch) throws InterruptedException, ConfigurationSetupException {
     L1ThrowableHandler throwableHandler = new L1ThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class),
                                                                  new Callable<Void>() {
                                                                    @Override
                                                                    public Void call() throws Exception {
+                                                                     killSwitch.run();
                                                                      return null;
                                                                    }
                                                                  });

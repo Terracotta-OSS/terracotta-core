@@ -68,7 +68,7 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     errorListener.attachCollector();
     try {
       try {
-        client = clientCreator.create();
+        client = clientCreator.create(this::shutdown);
       } catch (Exception e){
         throw new DetailedConnectionException(new Exception(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()), e), errorListener.getErrors());
       }
