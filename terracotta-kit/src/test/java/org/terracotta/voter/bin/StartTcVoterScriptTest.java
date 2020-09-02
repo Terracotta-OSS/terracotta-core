@@ -56,7 +56,7 @@ public class StartTcVoterScriptTest extends BaseScriptTest {
     Path basePath = Paths.get("voter");
 
     Path binDir = createInstallDir(installRoot, basePath.resolve("bin"));
-    Path scriptPath = installScript(CURRENT_OPERATING_SYSTEM.appendScriptExtension("/voter/bin/start-tc-voter"), binDir);
+    Path scriptPath = installScript(CURRENT_OPERATING_SYSTEM.appendScriptExtension("/tools/voter/bin/start-tc-voter"), binDir);
     installScript(CURRENT_OPERATING_SYSTEM.appendScriptExtension("/setenv"), binDir);
 
     createJar("test.jar",

@@ -30,7 +30,7 @@ if ! [ -d "${JAVA_HOME}" ]; then
   exit 2
 fi
 
-TC_KIT_ROOT="$(dirname "$TC_VOTER_DIR")"
+TC_KIT_ROOT="$(dirname "$(dirname "$TC_VOTER_DIR")")"
 TC_LOGGING_ROOT="$TC_KIT_ROOT/client/logging"
 TC_CLIENT_ROOT="$TC_KIT_ROOT/client/lib"
 
