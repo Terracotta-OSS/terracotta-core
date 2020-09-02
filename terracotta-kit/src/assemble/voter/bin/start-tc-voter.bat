@@ -55,7 +55,7 @@ if not defined JAVA_HOME (
   exit /b 1
 )
 
-pushd "%TC_VOTER_DIR%\.."
+pushd "%TC_VOTER_DIR%\..\.."
 set "TC_KIT_ROOT=%CD%"
 popd
 set "TC_LOGGING_ROOT=%TC_KIT_ROOT%\client\logging"

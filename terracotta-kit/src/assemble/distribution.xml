@@ -98,7 +98,7 @@ The Initial Developer of the Covered Software is
     </fileSet>
     <fileSet>
       <directory>src/assemble/voter</directory>
-      <outputDirectory>/voter</outputDirectory>
+      <outputDirectory>/tools/voter</outputDirectory>
     </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>
@@ -126,7 +126,7 @@ The Initial Developer of the Covered Software is
       </includes>
     </dependencySet>
     <dependencySet>
-      <outputDirectory>voter/lib</outputDirectory>
+      <outputDirectory>tools/voter/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:voter</include>
       </includes>
