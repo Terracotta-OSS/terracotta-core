@@ -203,6 +203,10 @@ public class ActiveVoter implements AutoCloseable {
         ClientVoterManager owner = voteOwner.get();
         while (owner != null && !executorService.isShutdown()) {          
           try {
+            // Need to break out if the voterManager pointing to node is detached from the cluster
+            if (!existingTopology.contains(voterManager.getTargetHostPort())) {
+              break;
+            }
             voterManager.connect(connectionProps);
             long lastVotedElection = 0;
             // if the current vote owner is the active, allowed to reconnect
