@@ -690,8 +690,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
   private class InvokeHandler extends AbstractServerEntityRequestResponse implements ResultCapture, StatisticsCapture {
     private Supplier<ActivePassiveAckWaiter> waiter;
-    private final SetOnceFlag sent = new SetOnceFlag();
-    private final SetOnceFlag failure = new SetOnceFlag();
+    private final SetOnceFlag lastSent = new SetOnceFlag();
     private final boolean sendReceived;
     private final boolean holdResultForRetired;
     private byte[] heldResult;
@@ -754,7 +753,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
 
     private void sendResponse(byte[] result) {
-      if (!failure.isSet() && sent.attemptSet()) {
+      if (lastSent.attemptSet()) {
         if (getNodeID().isNull()) {
           super.complete(result);
         } else {
@@ -765,12 +764,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
           }
         }
       } else {
-        throw new AssertionError();
+//  possible that a failure is already sent on the wire
       }
     }
 
     private void sendFailure(ServerException e) {
-      if (failure.attemptSet()) {
+      if (lastSent.attemptSet()) {
         super.failure(e);
         MonitoringEventCreator.finish();
       } else {
@@ -784,7 +783,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       this.waiter.get().runWhenCompleted(()->{
         if (!getNodeID().isNull()) {
           stats[StatType.SERVER_RETIRED.serverSpot()] = System.nanoTime();
-          Assert.assertTrue(sent.isSet() || failure.isSet());
+          Assert.assertTrue(lastSent.isSet());
           safeGetChannel(getNodeID()).ifPresent(c -> {
             if (c.getAttachment("SendStats") != null) {
               addSequentially(getNodeID(), addTo -> addTo.addStats(InvokeHandler.this.getTransaction(), stats));
