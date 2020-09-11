@@ -260,11 +260,24 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
     this.lifeCycleMessageHandler = new PassthroughLifeCycleHandler(platformPersistence, shouldLoadStorage);
     
     // Look up the service interface the platform will use to publish events.
-    try {
-      this.serviceInterface = platformServiceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
-    } catch (ServiceException se) {
-      throw new AssertionError(se);
-    }
+    Collection<IMonitoringProducer> producers = platformServiceRegistry.getServices(new BasicServiceConfiguration<>(IMonitoringProducer.class));
+    this.serviceInterface = new IMonitoringProducer() {
+      @Override
+      public boolean addNode(String[] path, String name, Serializable value) {
+        return producers.stream().map(p->p.addNode(path, name, value)).reduce(Boolean.TRUE, Boolean::logicalAnd);
+      }
+
+      @Override
+      public boolean removeNode(String[] path, String name) {
+        return producers.stream().map(p->p.removeNode(path, name)).reduce(Boolean.TRUE, Boolean::logicalAnd);
+      }
+
+      @Override
+      public void pushBestEffortsData(String name, Serializable value) {
+        producers.forEach(p->p.pushBestEffortsData(name, value));
+      }
+    };
+
     if (null != this.serviceInterface) {
       // Create the root of the platform tree.
       this.serviceInterface.addNode(new String[0], PlatformMonitoringConstants.PLATFORM_ROOT_NAME, null);
