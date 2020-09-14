@@ -651,7 +651,7 @@ public class PassthroughServerProcess implements MessageHandler, PassthroughDump
       }
 
       @Override
-      public void waitUntilShutdown() {
+      public boolean waitUntilShutdown() {
         throw new UnsupportedOperationException("Not supported yet.");
       }
 
