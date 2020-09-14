@@ -131,13 +131,39 @@ public class PassthroughMonitoringProducer implements PassthroughImplementationP
 
 
   private IStripeMonitoring getUnderlyingService(String entityClassName, String entityName, long consumerID, DeferredEntityContainer container) {
-    try {
-      PassthroughServiceRegistry registry = PassthroughMonitoringProducer.this.serverProcess.createServiceRegistryForInternalConsumer(entityClassName, entityName, consumerID, container);
-      final IStripeMonitoring underlying = registry.getService(new BasicServiceConfiguration<IStripeMonitoring>(IStripeMonitoring.class));
-      return underlying;    
-    } catch (ServiceException se) {
-      throw new AssertionError(se);
-    }
+    PassthroughServiceRegistry registry = PassthroughMonitoringProducer.this.serverProcess.createServiceRegistryForInternalConsumer(entityClassName, entityName, consumerID, container);
+    final Collection<IStripeMonitoring> underlying = registry.getServices(()->IStripeMonitoring.class);
+    return new IStripeMonitoring() {
+      @Override
+      public void serverDidBecomeActive(PlatformServer ps) {
+        underlying.forEach(m->m.serverDidBecomeActive(ps));
+      }
+
+      @Override
+      public void serverDidJoinStripe(PlatformServer ps) {
+        underlying.forEach(m->m.serverDidJoinStripe(ps));
+      }
+
+      @Override
+      public void serverDidLeaveStripe(PlatformServer ps) {
+        underlying.forEach(m->m.serverDidLeaveStripe(ps));
+      }
+
+      @Override
+      public boolean addNode(PlatformServer ps, String[] path, String name, Serializable value) {
+        return underlying.stream().map(m->m.addNode(ps, path, name, value)).reduce(Boolean.TRUE, Boolean::logicalAnd);
+      }
+
+      @Override
+      public boolean removeNode(PlatformServer ps, String[] path, String name) {
+        return underlying.stream().map(m->m.removeNode(ps, path, name)).reduce(Boolean.TRUE, Boolean::logicalAnd);
+      }
+
+      @Override
+      public void pushBestEffortsData(PlatformServer ps, String path, Serializable value) {
+        underlying.forEach(m->m.pushBestEffortsData(ps, path, value));
+      }
+    };
   }
 
   private synchronized boolean addNodeFromShim(long consumerID, IStripeMonitoring underlyingCollector, String[] parents, String name, Serializable value) {
