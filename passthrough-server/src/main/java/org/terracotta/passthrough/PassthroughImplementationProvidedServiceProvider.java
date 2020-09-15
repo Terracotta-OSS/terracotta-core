@@ -19,6 +19,7 @@
 package org.terracotta.passthrough;
 
 import java.util.Collection;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.MessageCodec;
@@ -65,31 +66,18 @@ public interface PassthroughImplementationProvidedServiceProvider {
   public static class DeferredEntityContainer {
     public MessageCodec<?, ?> codec;
     private CommonServerEntity<?, ?> entity;
-    private EntityContainerListener listener;
-    
-    public void notifyOnEntitySet(EntityContainerListener listener) {
-      // Note that our current implementation only handles one such listener (only used by PassthroughMessengerService).
-      Assert.assertTrue(null == this.listener);
-      this.listener = listener;
-    }
+
     public CommonServerEntity<?, ?> getEntity() {
       return this.entity;
     }
+
     public void setEntity(CommonServerEntity<?, ?> entity) {
       Assert.assertTrue(null == this.entity);
       Assert.assertTrue(null != entity);
       this.entity = entity;
-      if (null != this.listener) {
-        this.listener.entitySetInContainer(this);
-      }
     }
     public void clearEntity() {
       this.entity = null;
     }
-  }
-
-
-  public interface EntityContainerListener {
-    public void entitySetInContainer(DeferredEntityContainer container);
   }
 }
