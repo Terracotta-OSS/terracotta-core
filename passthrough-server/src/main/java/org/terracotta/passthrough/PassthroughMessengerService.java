@@ -29,14 +29,13 @@ import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.DeferredEntityContainer;
-import org.terracotta.passthrough.PassthroughImplementationProvidedServiceProvider.EntityContainerListener;
 
 import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.exception.EntityException;
 
 
-public class PassthroughMessengerService implements IEntityMessenger<EntityMessage, EntityResponse>, EntityContainerListener {
+public class PassthroughMessengerService implements IEntityMessenger<EntityMessage, EntityResponse> {
   private final PassthroughServerProcess passthroughServerProcess;
   private final PassthroughRetirementManager retirementManager;
   private final DeferredEntityContainer entityContainer;
@@ -51,12 +50,6 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
     this.entityContainer = entityContainer;
     this.entityClassName = entityClassName;
     this.entityName = entityName;
-    
-    // Since this service needs access to the entity, potentially before the entity constructor has returned, see if we
-    // need to register for notifications that the entity has been created.
-    if (null == this.entityContainer.getEntity()) {
-      this.entityContainer.notifyOnEntitySet(this);
-    }
   }
 
   @Override
@@ -188,12 +181,6 @@ public class PassthroughMessengerService implements IEntityMessenger<EntityMessa
     PassthroughMessage passthroughMessage = makePassthroughMessage(newMessageToSchedule);
     this.passthroughServerProcess.sendMessageToActiveFromInsideActive(newMessageToSchedule, passthroughMessage, queueForComplete(response));
   }
-
-  @Override
-  public void entitySetInContainer(DeferredEntityContainer container) {
-
-  }
-
 
   private PassthroughMessage makePassthroughMessage(EntityMessage message) throws MessageCodecException {
     @SuppressWarnings("unchecked")
