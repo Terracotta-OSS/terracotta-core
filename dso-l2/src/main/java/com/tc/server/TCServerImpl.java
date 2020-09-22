@@ -21,19 +21,15 @@ package com.tc.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.monitoring.PlatformService.RestartMode;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
+import com.tc.async.api.Stage;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.ServerMode;
-import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.ServerExitStatus;
-import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
@@ -63,16 +59,21 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
-import com.tc.objectserver.core.api.Guardian;
-import com.tc.objectserver.core.api.GuardianContext;
 import com.tc.text.PrettyPrinter;
 import java.util.EnumSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 
 public class TCServerImpl extends SEDA implements TCServer {
   private static final Logger logger = LoggerFactory.getLogger(TCServer.class);
   private static final Logger consoleLogger = TCLogging.getConsoleLogger();
-
+  
   private volatile long                     startTime                                    = -1;
   private volatile long                     activateTime                                 = -1;
 
@@ -103,10 +104,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.configurationSetupManager = manager;
   }
 
-  private boolean validateState(ServerMode state) {
-    return ServerMode.VALID_STATES.contains(state);
-  }
-
   @Override
   public String getL2Identifier() {
     return configurationSetupManager.getServerConfiguration().getName();
@@ -122,12 +119,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void stop() {
-    stop(RestartMode.STOP_ONLY);
-  }
-
-  @Override
-  public void stopIfPassive(RestartMode restartMode) throws PlatformStopException {
+  public void stopIfPassive(StopAction...restartMode) throws PlatformStopException {
     if (stateManager.moveToStopStateIf(ServerMode.PASSIVE_STATES)) {
       stop(restartMode);
     } else {
@@ -136,7 +128,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void stopIfActive(RestartMode restartMode) throws PlatformStopException {
+  public void stopIfActive(StopAction...restartMode) throws PlatformStopException {
     if (stateManager.moveToStopStateIf(EnumSet.of(ServerMode.ACTIVE))) {
       stop(restartMode);
     } else {
@@ -145,22 +137,31 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public void stop(RestartMode restartMode) {
+  public void stop(StopAction...restartMode) {
+    ServerEnv.getServer().audit("Stop invoked", new Properties());
+    TCLogging.getConsoleLogger().info("Stopping server");
     dsoServer.getContext().getL2Coordinator().getStateManager().moveToStopState();
-    if (restartMode == RestartMode.STOP_ONLY) {
-      exitWithStatus(0);
-    } else if (restartMode == RestartMode.STOP_AND_RESTART) {
+    EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+    for (StopAction s : restartMode) {
+      set.add(s);
+    }
+    if (set.contains(StopAction.ZAP)) {
+      TCLogging.getConsoleLogger().info("Setting data to dirty");
+      dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
+    }
+    if (set.contains(StopAction.RESTART)) {
+      TCLogging.getConsoleLogger().info("Requesting restart");
       exitWithStatus(ServerExitStatus.EXITCODE_RESTART_REQUEST);
     } else {
-      throw new IllegalArgumentException("Unknown RestartMode: " + restartMode);
+      exitWithStatus(0);
     }
   }
 
   @Override
-  public synchronized void start() {
+  public void start() {
     if (!this.isStarted()) {
       try {
-        startServer();
+        startServer().get();
       } catch (Throwable t) {
         if (t instanceof RuntimeException) { throw (RuntimeException) t; }
         throw new RuntimeException(t);
@@ -182,13 +183,9 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
-      if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "shutdown")) {
-        consoleLogger.info("Server exiting...");
-        notifyShutdown();
-        stop();
-      } else {
-        logger.info("shutdown operation not permitted by guardian");
-      }
+      consoleLogger.info("Server exiting...");
+      notifyShutdown();
+      stop();
     } else {
       logger.warn("Server in incorrect state (" + stateManager.getCurrentMode().getName() + ") to be shutdown.");
     }
@@ -277,7 +274,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   public int getReconnectWindowTimeout() {
     return configurationSetupManager.getServerConfiguration().getClientReconnectWindow();
   }
-  
+
   @Override
   public State getState() {
     return this.stateManager.getCurrentMode().getState();
@@ -299,9 +296,14 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
 
-  private class StartAction implements StartupAction {
-    @Override
-    public void execute() throws Throwable {
+  private class StartAction implements Runnable {
+    private final CompletableFuture<Void> finish;
+
+    public StartAction(CompletableFuture<Void> finish) {
+      this.finish = finish;
+    }
+
+    public void run() {
       if (logger.isDebugEnabled()) {
         logger.debug("Starting Terracotta server instance...");
       }
@@ -313,23 +315,29 @@ public class TCServerImpl extends SEDA implements TCServer {
       }
 
       // the following code starts the jmx server as well
-      startDSOServer();
-
-      if (isActive()) {
-        if (TCServerImpl.this.activationListener != null) {
-          TCServerImpl.this.activationListener.serverActivated();
-        }
+      try {
+        startDSOServer();
+      } catch (Exception e) {
+        finish.completeExceptionally(e);
       }
 
       String serverName = TCServerImpl.this.configurationSetupManager.getServerConfiguration().getName();
       if (serverName != null) {
         logger.info("Server started as " + serverName);
       }
+
+      finish.complete(null);
     }
   }
+  
+  protected void warnOfStall(String name, long delay, int queueDepth) {
+    
+  }
 
-  protected void startServer() throws Exception {
-    new StartupHelper(getThreadGroup(), new StartAction()).startUp();
+  protected Future<Void> startServer() throws Exception {
+    CompletableFuture<Void> complete = new CompletableFuture<>();
+    new Thread(getThreadGroup(), new StartAction(complete), "Server Startup Thread").start();
+    return complete;
   }
 
   private void startDSOServer() throws Exception {
@@ -337,27 +345,24 @@ public class TCServerImpl extends SEDA implements TCServer {
     DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
     server.start();
     registerDSOServer(server, ManagementFactory.getPlatformMBeanServer());
+    try {
+      registerServerMBeans(server, ManagementFactory.getPlatformMBeanServer());
+    } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
+      throw new RuntimeException(exp);
+    }
   }
 
   protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
                                                                   ConnectionPolicy policy,
                                                                   TCServerImpl serverImpl) {
     DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
-    try {
-      registerServerMBeans(dso, ManagementFactory.getPlatformMBeanServer());
-    } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
-      throw new RuntimeException(exp);
-    }
     return dso;
   }
 
   @Override
   public void dump() {
-    if (GuardianContext.validate(Guardian.Op.SERVER_DUMP, "dump")) {
-      TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
-    } else {
-      logger.info("dump operation not permitted by guardian");
-    }
+    ServerEnv.getServer().audit("Dump invoked", new Properties());
+    TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
   protected synchronized void registerDSOServer(DistributedObjectServer server, MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
@@ -390,13 +395,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     mbs.unregisterMBean(L2MBeanNames.DSO);
   }
 
-  // TODO: check that this is not needed then remove
-  private TCServerActivationListener activationListener;
-
-  public void setActivationListener(TCServerActivationListener listener) {
-    this.activationListener = listener;
-  }
-
   private synchronized void notifyShutdown() {
     shutdown = true;
     notifyAll();
@@ -422,22 +420,67 @@ public class TCServerImpl extends SEDA implements TCServer {
   public String[] processArguments() {
     return configurationSetupManager.getProcessArguments();
   }
-
-  @Override
-  public String getResourceState() {
-    return "";
-  }
-
+  
   private void exitWithStatus(int status) {
-    if (GuardianContext.validate(Guardian.Op.SERVER_EXIT, "stop")) {
-      Runtime.getRuntime().exit(status);
-    } else {
-      logger.info("stop operation not allowed by guardian");
-    }
+    Runtime.getRuntime().exit(status);
   }
 
   @Override
   public String getClusterState(PrettyPrinter form) {
     return new String(dsoServer.getClusterState(Charset.defaultCharset(), form), Charset.defaultCharset());
+  }
+
+  @Override
+  public void pause(String path) {
+    if (path.equalsIgnoreCase("L1")) {
+      try {
+        dsoServer.getCommunicationsManager().getConnectionManager().getTcComm().pause();
+      } catch (NullPointerException npe) {
+        
+      }
+  } else if (path.equalsIgnoreCase("L2")) {
+      try {
+        dsoServer.getGroupManager().getConnectionManager().getTcComm().pause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else {
+      Stage s = this.getStageManager().getStage(path, Object.class);
+      if (s != null) {
+        s.pause();
+      }
+    }
+  }
+
+  @Override
+  public void unpause(String path) {
+    if (path.equalsIgnoreCase("L1")) {
+      try {
+        dsoServer.getCommunicationsManager().getConnectionManager().getTcComm().unpause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else if (path.equalsIgnoreCase("L2")) {
+      try {
+        dsoServer.getGroupManager().getConnectionManager().getTcComm().unpause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else {
+      Stage s = this.getStageManager().getStage(path, Object.class);
+      if (s != null) {
+        s.unpause();
+      }
+    }
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    return this.getStageManager().getStateMap();
+  }  
+
+  @Override
+  public void stageWarning(Object description) {
+    super.stageWarning(description);
   }
 }

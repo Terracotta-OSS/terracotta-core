@@ -24,8 +24,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
@@ -43,11 +41,11 @@ import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
-import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
@@ -55,9 +53,9 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,29 +76,17 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     Assert.assertTrue(clientConnectionMgrs.isEmpty());
   }
 
-  private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean enableReconnect) {
+  private NetworkStackHarnessFactory getNetworkStackHarnessFactory() {
     NetworkStackHarnessFactory networkStackHarnessFactory;
-    if (enableReconnect) {
-      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
-                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     new L1ReconnectConfigImpl(true,
-                                                                                               L1_RECONNECT_TIMEOUT,
-                                                                                               5000, 16, 32));
-    } else {
-      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    }
+    networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     return networkStackHarnessFactory;
   }
 
   private ClientMessageChannel createClientMsgCh() {
-    return createClientMsgCh(false);
-  }
-
-  private ClientMessageChannel createClientMsgCh(boolean ooo) {
     BasicConnectionManager connMgr = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connMgr);
     CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
-                                                                      getNetworkStackHarnessFactory(ooo),
+                                                                      getNetworkStackHarnessFactory(),
                                                                       connMgr,
                                                                       new NullConnectionPolicy());
     ClientMessageChannel clientMsgCh = clientComms
@@ -117,7 +103,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
                                                                          new NullMessageMonitor(),
                                                                          new TCMessageRouterImpl(),
-                                                                         getNetworkStackHarnessFactory(false),
+                                                                         getNetworkStackHarnessFactory(),
                                                                          connectionMgr,
                                                                          new NullConnectionPolicy(),
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
@@ -130,7 +116,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
     );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
-                                                             new DefaultConnectionIdFactory(), (t)->true);
+                                                             new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int serverPort = listener.getBindPort();
 
@@ -142,16 +128,16 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     ClientMessageChannel client2 = createClientMsgCh();
     ClientMessageChannel client3 = createClientMsgCh();
     
-    ConnectionInfo info = new ConnectionInfo("localhost", proxyPort);
+    InetSocketAddress serverAddress = new InetSocketAddress("localhost", proxyPort);
 
     client1.addListener(this);
-    client1.open(info);
+    client1.open(serverAddress);
 
     client2.addListener(this);
-    client2.open(info);
+    client2.open(serverAddress);
 
     client3.addListener(this);
-    client3.open(info);
+    client3.open(serverAddress);
 
     ThreadUtil.reallySleep(2000);
     assertTrue(client1.isConnected());
@@ -169,79 +155,6 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
     // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client
     // CommsManager is created with reconnect 0. we might need to wait till the created CCE gets quit request.
-    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > baseAsyncThreads) {
-      ThreadUtil.reallySleep(1000);
-      System.err.println("-");
-    }
-
-    listener.stop(5000);
-    serverCommsMgr.shutdown();
-    connectionMgr.shutdown();
-  }
-
-  public void testConnectionEstablisherThreadExitAfterOOO() throws Exception {
-    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new HealthCheckerConfigImpl(TCPropertiesImpl
-                                                                             .getProperties()
-                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
-                                                                                                     "Test Server"), new ClearTextBufferManagerFactory());
-    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
-                                                                         new NullMessageMonitor(),
-                                                                         new TCMessageRouterImpl(),
-                                                                         getNetworkStackHarnessFactory(true),
-                                                                         connectionMgr,
-                                                                         new NullConnectionPolicy(),
-                                                                         new HealthCheckerConfigImpl(TCPropertiesImpl
-                                                                             .getProperties()
-                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
-                                                                                                     "Test Server"),
-                                                                         new ServerID(),
-                                                                         new TransportHandshakeErrorNullHandler(),
-                                                                         Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
-                                                                         Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
-    );
-    NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
-                                                             new DefaultConnectionIdFactory(), (t)->true);
-    listener.start(Collections.<ConnectionID>emptySet());
-    int serverPort = listener.getBindPort();
-
-    int proxyPort = new PortChooser().chooseRandomPort();
-    TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
-    proxy.start();
-
-    ClientMessageChannel client1 = createClientMsgCh(true);
-    ClientMessageChannel client2 = createClientMsgCh(true);
-    ClientMessageChannel client3 = createClientMsgCh(true);
-    
-    ConnectionInfo info = new ConnectionInfo("localhost", proxyPort);
-
-    client1.addListener(this);
-    client1.open(info);
-
-    client2.addListener(this);
-    client2.open(info);
-
-    client3.addListener(this);
-    client3.open(info);
-
-    ThreadUtil.reallySleep(2000);
-    assertTrue(client1.isConnected());
-    assertTrue(client2.isConnected());
-    assertTrue(client3.isConnected());
-
-    // closing all connections from server side
-    System.err.println("XXX closing all client connections");
-    proxy.stop();
-
-    // let the OOO settle down
-    ThreadUtil.reallySleep(L1_RECONNECT_TIMEOUT);
-
-    while (connections.get() != 0) {
-      ThreadUtil.reallySleep(2000);
-      System.err.println(".");
-    }
-
-    // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client CommsManager
-    // is created with reconnect 0
     while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > baseAsyncThreads) {
       ThreadUtil.reallySleep(1000);
       System.err.println("-");

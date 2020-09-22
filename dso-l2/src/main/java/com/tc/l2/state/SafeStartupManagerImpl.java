@@ -35,6 +35,8 @@ import java.util.Set;
 import javax.management.ObjectName;
 
 import static com.tc.l2.state.ConsistencyMBean.CONSISTENCY_BEAN_NAME;
+
+import com.tc.objectserver.impl.Topology;
 import com.tc.util.concurrent.SetOnceFlag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -84,7 +86,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   }
 
   @Override
-  public synchronized boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
+  public synchronized boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
     if (newMode == Transition.CONNECT_TO_ACTIVE) {
       // disable this mode since we have already tried to connect to an existing active.
       // safe startup mode no longer applies
@@ -103,7 +105,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
       return !suspended;
     }
     suspended = false;
-    return consistencyManager.requestTransition(mode, sourceNode, newMode);
+    return consistencyManager.requestTransition(mode, sourceNode, topology, newMode);
   }
 
   @Override
@@ -148,6 +150,11 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   @Override
   public long getCurrentTerm() {
     return consistencyManager.getCurrentTerm();
+  }
+
+  @Override
+  public void setCurrentTerm(long term) {
+    consistencyManager.setCurrentTerm(term);
   }
 
   @Override

@@ -37,6 +37,8 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import org.terracotta.configuration.ConfigurationProvider;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -49,6 +51,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
+  private final ConfigurationProvider configurationProvider;
   private final StateManager    stateManager;
 
   private boolean               isActive = false;
@@ -56,10 +59,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final Collection<NodeID>    others = new HashSet<>();
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
-                                           ClusterState clusterState, ConnectionIDFactory factory) {
+                                           ClusterState clusterState, ConnectionIDFactory factory, ConfigurationProvider configurationProvider) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.state = clusterState;
+    this.configurationProvider = configurationProvider;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
     factory.registerForConnectionIDEvents(this);
   }
@@ -73,8 +77,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
     others.clear();
     // Sync state to external passive servers
+    state.setConfigSyncData(configurationProvider.getSyncData());
     others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
-
     isActive = true;
     notifyAll();
   }
@@ -82,7 +86,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   @Override
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
     waitUntilActive();
-    ClusterStateMessage msg = (ClusterStateMessage) groupManager
+    state.setConfigSyncData(configurationProvider.getSyncData());
+    ClusterStateMessage msg = (ClusterStateMessage)groupManager
         .sendToAndWaitForResponse(nodeID, ClusterStateMessage.createClusterStateMessage(state));
     validateResponse(nodeID, msg);
   }
@@ -158,6 +163,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       }
       if (ServerMode.PASSIVE_STATES.contains(this.stateManager.getCurrentMode())) {
         msg.initState(state);
+        if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
+          configurationProvider.sync(state.getConfigSyncData());
+        }
         state.syncSequenceState();
         sendOKResponse(fromNode, msg);
       } else {

@@ -43,6 +43,8 @@ public interface ClientHandshakeMessage extends TCMessage {
   int getClientPID();
 
   long getLocalTimeMills();
+  
+  String getClientAddress();
 
   void addReconnectReference(ClientEntityReferenceContext context);
 

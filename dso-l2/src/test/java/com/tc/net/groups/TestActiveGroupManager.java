@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 import java.util.Collections;
@@ -106,12 +107,22 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
+  public void sendTo(Set<String> nodes, GroupMessage msg) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void sendToWithSentCallback(NodeID node, GroupMessage msg, Runnable sentCallback) throws GroupException {
     Assert.fail("NOT CALLED IN CURRENT TESTS");
   }
 
   @Override
   public GroupMessage sendToAndWaitForResponse(NodeID nodeID, GroupMessage msg) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public GroupResponse<GroupMessage> sendToAndWaitForResponse(Set<String> nodes, GroupMessage msg) throws GroupException {
     throw new UnsupportedOperationException();
   }
 
@@ -185,5 +196,10 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   @Override
   public Map<String, ?> getStateMap() {
     return Collections.emptyMap();
+  }
+
+  @Override
+  public TCConnectionManager getConnectionManager() {
+    return null;
   }
 }

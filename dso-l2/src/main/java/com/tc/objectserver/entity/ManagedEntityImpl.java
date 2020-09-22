@@ -23,15 +23,12 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.classloader.TemporaryEntity;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.exception.EntityBusyException;
-import com.tc.exception.EntityReferencedException;
+import com.tc.exception.ServerException;
+import com.tc.exception.ServerRuntimeException;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
-import com.tc.exception.VoltronEntityUserExceptionWrapper;
-import com.tc.exception.VoltronWrapperException;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -45,8 +42,7 @@ import com.tc.objectserver.api.Retiree;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.api.StatisticsCapture;
-import com.tc.objectserver.core.api.Guardian;
-import com.tc.objectserver.core.api.GuardianContext;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.handler.RetirementManager;
@@ -54,6 +50,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.MappedStateCollector;
+import com.tc.spi.Guardian;
 import com.tc.tracing.Trace;
 import com.tc.util.Assert;
 import org.slf4j.Logger;
@@ -73,13 +70,6 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ReconnectRejectedException;
 import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.exception.EntityAlreadyExistsException;
-import org.terracotta.exception.EntityConfigurationException;
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityNotFoundException;
-import org.terracotta.exception.EntityServerException;
-import org.terracotta.exception.EntityServerUncaughtException;
-import org.terracotta.exception.PermanentEntityException;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -99,6 +89,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.terracotta.tripwire.Event;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 public class ManagedEntityImpl implements ManagedEntity {
@@ -293,7 +285,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (!isActive()) {
         throw new AssertionError();
       }
-      resp.failure(new EntityBusyException(id.getClassName(), id.getEntityName(), "entity is busy in sync, retry"));
+      resp.failure(ServerException.createBusyException(id));
     }
   }
   
@@ -453,7 +445,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     try {
       return payload == null ? new byte[0] : codec.encodeResponse(payload);
     } catch (MessageCodecException ce) {
-      capture.failure(new EntityServerException(id.getClassName(), id.getEntityName(), "error encoding response", ce));
+      capture.failure(ServerException.createMessageCodecException(id, ce));
     }
     return null;
   }
@@ -462,7 +454,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     try {
       return payload.decodeMessage(r->codec.decodeMessage(r));
     } catch (MessageCodecException ce) {
-      capture.failure(new EntityServerException(id.getClassName(), id.getEntityName(), "error parsing message", ce));
+      capture.failure(ServerException.createMessageCodecException(id, ce));
     }
     return null;
   }
@@ -478,14 +470,14 @@ public class ManagedEntityImpl implements ManagedEntity {
       switch (request.getAction()) {
         case CREATE_ENTITY:
           if (!GuardianContext.validate(Guardian.Op.ENTITY_CREATE, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
-            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+            resp.failure(ServerException.createPermissionDenied(this.getID()));
           } else {
             createEntity(resp, payload.getRawPayload());
           }
           break;
         case FETCH_ENTITY:
           if (!GuardianContext.validate(Guardian.Op.ENTITY_FETCH, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
-            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+            resp.failure(ServerException.createPermissionDenied(this.getID()));
           } else {
             getEntity(request, resp, payload.getRawPayload());
           }
@@ -495,7 +487,7 @@ public class ManagedEntityImpl implements ManagedEntity {
           break;
         case RECONFIGURE_ENTITY:
            if (!GuardianContext.validate(Guardian.Op.ENTITY_RECONFIGURE, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
-            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+            resp.failure(ServerException.createPermissionDenied(this.getID()));
           } else {
              reconfigureEntity(resp, payload.getRawPayload());
            }
@@ -503,7 +495,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         case DESTROY_ENTITY:
 //  all request queues are flushed because this action is on the MGMT_KEY
           if (!GuardianContext.validate(Guardian.Op.ENTITY_DESTROY, this.getID().getClassName() + ":" + this.getID().getEntityName())) {
-            resp.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), "not allowed", new Throwable()));
+            resp.failure(ServerException.createPermissionDenied(this.getID()));
           } else {
             destroyEntity(request, resp);
           }
@@ -532,18 +524,17 @@ public class ManagedEntityImpl implements ManagedEntity {
       }
     } catch (ConfigurationException ce) {
       // Wrap this exception.
-      EntityConfigurationException wrapper = new EntityConfigurationException(id.getClassName(), id.getEntityName(), ce);
-      logger.error("configuration error during a lifecyle operation ", wrapper);
-      resp.failure(wrapper);
+      logger.error("configuration error during a lifecyle operation ", ce);
+      resp.failure(ServerException.createConfigurationException(id, ce));
     } catch (TCShutdownServerException shutdown) {
       throw shutdown;
     } catch (TCServerRestartException shutdown) {
       throw shutdown;
     } catch (Exception e) {
       // Wrap this exception.
-      EntityServerUncaughtException wrapper = new EntityServerUncaughtException(this.getID().getClassName(), this.getID().getEntityName(), "caught exception during invoke ", e);
-      logger.error("caught exception during invoke ", wrapper);
-      throw wrapper;
+      ServerRuntimeException uncaught = ServerRuntimeException.createServerUncaught(getID(), e);
+      logger.error("caught exception during invoke ", uncaught);
+      throw uncaught;
     } finally {
       read.unlock();
       GuardianContext.clearCurrentChannelID(request.getNodeID().getChannelID());
@@ -703,12 +694,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         : passiveServerEntity;
     EntityDescriptor entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(id, version);
     if (this.isDestroyed) {
-      response.failure(new EntityNotFoundException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));        
+      response.failure(ServerException.createNotFoundException(id));
     } else if (null != commonServerEntity) {
       // We want to ensure that nobody somehow has a reference to this entity.
       if (!this.canDelete) {
         Assert.assertTrue(clientReferenceCount < 0);
-        response.failure(new VoltronWrapperException(new PermanentEntityException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName())));
+        response.failure(ServerException.createPermanentException(id));
       } else if (clientReferenceCount == 0 && !retirementManager.hasServerInflightMessages()) {
         Assert.assertTrue(!isInActiveState || clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
         Assert.assertFalse(this.isDestroyed);
@@ -724,8 +715,12 @@ public class ManagedEntityImpl implements ManagedEntity {
         eventCollector.entityWasDestroyed(id, consumerID);    
         response.complete();
       } else {
-        Assert.assertTrue(!isInActiveState || !clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
-        response.failure(new EntityReferencedException(entityDescriptor.getEntityID().getClassName(), entityDescriptor.getEntityID().getEntityName()));        
+        if (isInActiveState) {
+          Assert.assertTrue("retirementManager:" + retirementManager.hasServerInflightMessages() +
+                  " references:" + clientEntityStateManager.verifyNoEntityReferences(this.fetchID), 
+                  clientReferenceCount > 0 || retirementManager.hasServerInflightMessages() || !clientEntityStateManager.verifyNoEntityReferences(this.fetchID));
+        }
+        response.failure(ServerException.createReferencedException(id));        
       }
     }
   }
@@ -733,7 +728,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   private void reconfigureEntity(ResultCapture reconfigureEntityRequest, byte[] constructorInfo) throws ConfigurationException {
     byte[] oldconfig = this.constructorInfo;
     if (this.isDestroyed || (this.activeServerEntity == null && this.passiveServerEntity == null)) {
-      reconfigureEntityRequest.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
+      reconfigureEntityRequest.failure(ServerException.createNotFoundException(id));
       return;
     }
     this.constructorInfo = constructorInfo;
@@ -768,7 +763,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     Trace.activeTrace().log("ManagedEntityImpl.createEntity");
 
     if (!this.isDestroyed && (this.activeServerEntity != null || this.passiveServerEntity != null)) {
-      response.failure(new EntityAlreadyExistsException(this.getID().getClassName(), this.getID().getEntityName()));
+      response.failure(ServerException.createEntityExists(id));
 //  failed to create, destroyed
       return;
     }
@@ -876,7 +871,7 @@ public class ManagedEntityImpl implements ManagedEntity {
               new ActiveInvokeContextImpl<>(clientDescriptor, concurrencyKey, oldestId, currentId, 
                   ()->retirementManager.holdMessage(message),
                   (r)->response.message(decodeResponse(r)), 
-                  (e)->response.failure(convertException(e)),
+                  (e)->response.failure(convertException(getID(), e)),
                   ()->{
                     // returns true of the message has been completed 
                     // and held count is zero so the message should be retired
@@ -901,7 +896,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         } catch (EntityUserException e) {
           //on Active, log error and send the exception to the client - don't crash server
           logger.error("Caught EntityUserException during invoke", e);
-          response.failure(new VoltronEntityUserExceptionWrapper(e));
+          response.failure(ServerException.createEntityUserException(id, e));
           retirementManager.retireMessage(message);
         }
       }
@@ -940,11 +935,11 @@ public class ManagedEntityImpl implements ManagedEntity {
     return this.retirementManager;
   }
   
-  private EntityException convertException(Exception e) {
-    if (e instanceof EntityException) {
-      return (EntityException)e;
+  private ServerException convertException(EntityID eid, Exception e) {
+    if (e instanceof ServerException) {
+      return (ServerException)e;
     } else {
-      return new EntityServerException(id.getClassName(), id.getEntityName(), e.getMessage(), e);
+      return ServerException.wrapException(id, e);
     }
   }
   
@@ -963,7 +958,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void getEntity(ServerEntityRequest getEntityRequest, ResultCapture response, byte[] extendedData) {
     if (this.isDestroyed) {
-      response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
+      response.failure(ServerException.createNotFoundException(getID()));
     } else {
       if (canDelete) {
         clientReferenceCount += 1;
@@ -988,12 +983,12 @@ public class ManagedEntityImpl implements ManagedEntity {
               this.reconnect.handleReconnect(descriptor, extendedData);
             }
           } catch (ReconnectRejectedException rejected) {
-            response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), rejected.getMessage(), rejected));
+            response.failure(ServerException.createReconnectRejected(getID(), rejected));
             return;
           } catch (Exception e) {
 //  something happened during reconnection, force a disconnection, see ProcessTransactionHandler.disconnectClientDueToFailure for handling
             logger.warn("unexpected exception.  rejecting reconnection of " + descriptor.getNodeID() + " to " + this.id, e);
-            response.failure(new EntityServerException(this.getID().getClassName(), this.getID().getEntityName(), e.getMessage(), new ReconnectRejectedException(e.getMessage(), e)));
+            response.failure(ServerException.createReconnectRejected(getID(), new ReconnectRejectedException(e.getMessage(), e)));
             return;
           } 
         }
@@ -1011,7 +1006,7 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   private void releaseEntity(ServerEntityRequest request, ResultCapture response) {
     if (this.isDestroyed) {
-      response.failure(new EntityNotFoundException(id.getClassName(), id.getEntityName()));
+      response.failure(ServerException.createNotFoundException(this.getID()));
     } else {
       if (canDelete) {
         clientReferenceCount -= 1;
@@ -1245,6 +1240,8 @@ public class ManagedEntityImpl implements ManagedEntity {
     private final MessagePayload payload;
     private final Runnable original;
     private final int concurrency;
+    private final Event event;
+
     private ActivePassiveAckWaiter  waitFor;
 
     public SchedulingRunnable(ServerEntityRequest request, MessagePayload payload, Runnable r, int concurrency) {
@@ -1252,6 +1249,13 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.payload = payload;
       this.original = r;
       this.concurrency = concurrency;
+      this.event = TripwireFactory.createMessageEvent(id.toString(), 
+              concurrency, 
+              request.getAction().toString(), 
+              request.getNodeID().toLong(), 
+              request.getClientInstance().toString(), 
+              request.getTransaction().toLong(), 
+              request.getTraceID());
     }
         
     private void start() {
@@ -1304,6 +1308,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     public void accept(ActivePassiveAckWaiter waiter) {
       try {
         setWaitFor(waiter);
+        event.begin();
         original.run();
       } finally {
         this.end();
@@ -1322,6 +1327,9 @@ public class ManagedEntityImpl implements ManagedEntity {
         }
         flushLocalPipeline.completed(id, fetchID, action);
       }
+      event.setDescription(payload.getDebugId());
+      event.end();
+      event.commit();
     }
     
     private synchronized ActivePassiveAckWaiter waitForPassives() {

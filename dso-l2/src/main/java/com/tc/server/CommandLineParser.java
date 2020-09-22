@@ -1,18 +1,19 @@
 /*
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
  *
- * http://terracotta.org/legal/terracotta-public-license.
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
+ *  http://terracotta.org/legal/terracotta-public-license.
  *
- * The Covered Software is Terracotta Configuration.
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
  *
- * The Initial Developer of the Covered Software is
- * Terracotta, Inc., a Software AG company
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
  *
  */
 package com.tc.server;
@@ -24,8 +25,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.configuration.ConfigurationProvider;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,12 +38,10 @@ import java.util.Set;
 
 import static com.tc.server.CommandLineParser.Opt.CONSISTENT_STARTUP;
 import static com.tc.server.CommandLineParser.Opt.HELP;
-import static com.tc.server.CommandLineParser.Opt.SERVER_NAME;
 
 class CommandLineParser {
 
   enum Opt {
-    SERVER_NAME("n", "name"),
     CONSISTENT_STARTUP("c", "consistency-on-startup"),
     HELP("h", "help");
 
@@ -76,10 +76,8 @@ class CommandLineParser {
     }
   }
 
-  private final String serverName;
-
   private final boolean consistentStartup;
-
+  
   private final List<String> providerArgs = new ArrayList<>();
 
   CommandLineParser(String[] args, ConfigurationProvider configurationProvider) {
@@ -103,32 +101,34 @@ class CommandLineParser {
         System.exit(0);
       }
 
-      this.serverName = commandLine.getOptionValue(SERVER_NAME.getShortName());
       this.consistentStartup = commandLine.hasOption(CONSISTENT_STARTUP.getShortName());
     } catch (ParseException pe) {
       throw new RuntimeException("Unable to parse command-line arguments: " + Arrays.toString(args), pe);
     }
   }
 
-  String getServerName() {
-    return this.serverName;
-  }
-
   boolean consistentStartup() {
     return this.consistentStartup;
   }
-
+  
   List<String> getProviderArgs() {
     return Collections.unmodifiableList(providerArgs);
   }
 
   private static void printHelp(ConfigurationProvider configurationProvider) {
     new HelpFormatter().printHelp(
-        "[start-tc-server.sh|bat] [options]",
-        "Options: " + System.lineSeparator(),
+        new PrintWriter(System.out, true),
+        100,
+        "start-tc-server [options]",
+        "Startup options: " + System.lineSeparator(),
         createOptions(),
+        4,
+        4,
         ""
     );
+
+    System.out.println();
+    System.out.println("Configuration options:");
     System.out.println(configurationProvider.getConfigurationParamsDescription());
   }
 
@@ -136,24 +136,16 @@ class CommandLineParser {
     Options options = new Options();
 
     options.addOption(
-        Option.builder(SERVER_NAME.getShortName())
-              .longOpt(SERVER_NAME.getLongName())
-              .hasArg()
-              .argName("server-name")
-              .desc("specifies the server name, defaults to the host name")
-              .build()
-    );
-
-    options.addOption(
         Option.builder(CONSISTENT_STARTUP.getShortName())
               .longOpt(CONSISTENT_STARTUP.getLongName())
-              .desc("ensure that data consistency is preserved on startup")
+              .desc("preserve data consistency on startup")
               .build()
     );
-
+    
     options.addOption(
         Option.builder(HELP.getShortName())
               .longOpt(HELP.getLongName())
+              .desc("display help")
               .build()
     );
 
@@ -165,13 +157,7 @@ class CommandLineParser {
 
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
-      if (SERVER_NAME.same(arg)) {
-        filteredArgs.add(i);
-        if (i + 1 < args.length) {
-          filteredArgs.add(i + 1);
-          i++;
-        }
-      } else if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg)) {
+      if (CONSISTENT_STARTUP.same(arg) || HELP.same(arg)) {
         filteredArgs.add(i);
       }
     }

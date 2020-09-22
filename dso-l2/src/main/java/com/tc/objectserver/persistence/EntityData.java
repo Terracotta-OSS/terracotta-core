@@ -18,9 +18,9 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.exception.ServerException;
 import java.io.Serializable;
 
-import org.terracotta.exception.EntityException;
 
 
 /**
@@ -81,7 +81,7 @@ public class EntityData {
     // reconfigureResponse is only used to store the result of RECONFIGURE.
     public byte[] reconfigureResponse;
     // The exception in CREATE/DESTROY is saved here, null on success.
-    public EntityException failure;
+    public Exception failure;
 
     @Override
     public String toString() {

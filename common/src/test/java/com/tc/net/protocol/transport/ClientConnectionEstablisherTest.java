@@ -30,23 +30,21 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.delivery.OOOConnectionWatcher;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayer;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher.AsyncReconnect;
 import com.tc.util.TCAssertionError;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -63,15 +61,14 @@ public class ClientConnectionEstablisherTest {
   @Mock
   private TCConnectionManager                 connManager;
   @Mock
-  private OnceAndOnlyOnceProtocolNetworkLayer layer;
-  @Mock
   private ReconnectionRejectedHandler         reconnectionRejectedHandler;
 
   private ClientMessageTransport              cmt;
 
   private ClientConnectionEstablisher         spyConnEstablisher;
-  @Mock
-  private ConnectionInfo                      connInfo;
+
+  private InetSocketAddress                   serverAddress = InetSocketAddress.createUnresolved("localhost", 9510);
+
   @Mock
   private TCConnection                        tcConnection;
   @Mock
@@ -94,7 +91,7 @@ public class ClientConnectionEstablisherTest {
       cmt = spy(new ClientMessageTransport(connManager, mock(TransportHandshakeErrorHandler.class), mock(TransportHandshakeMessageFactory.class), mock(WireProtocolAdaptorFactory.class), TransportHandshakeMessage.NO_CALLBACK_PORT, 0));
       doNothing().when(cmt).sendToConnection(any(TCNetworkMessage.class));
       doNothing().when(cmt).reconnect(any(TCSocketAddress.class));
-      doReturn(new NetworkStackID(0)).when(cmt).open(any(ConnectionInfo.class));
+      doReturn(new NetworkStackID(0)).when(cmt).open(any(InetSocketAddress.class));
       doNothing().when(cmt).openConnection(any(TCConnection.class));
       ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), 0);
       cmt.initConnectionID(cid);
@@ -134,9 +131,10 @@ public class ClientConnectionEstablisherTest {
   public void test_open_fails_when_asyncReconnecting_is_true() throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     connEstablisher.setAsyncReconnectingForTests(true);
-    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(cmt, errorListener);
+    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(Collections.singleton(serverAddress), cmt,
+                                                                      errorListener);
     try {
-      spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
+      spyConnEstablisher.open(Collections.singleton(serverAddress), cmt, errorListener);
       Assert.fail();
     } catch (TCAssertionError e) {
       // ignore
@@ -146,20 +144,20 @@ public class ClientConnectionEstablisherTest {
   @Test
   public void test_open_sets_allowReconnects_to_true() throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(cmt, errorListener);
+    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(Collections.singleton(serverAddress), cmt, errorListener);
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
 
     spyConnEstablisher.setAllowReconnects(false);
-    spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
+    spyConnEstablisher.open(Collections.singleton(serverAddress), cmt, errorListener);
     Assert.assertTrue(spyConnEstablisher.getAllowReconnects());
   }
 
   @Test
   public void test_open_calls_connectTryAllOnce() throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(cmt, errorListener);
-    spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
-    Mockito.verify(spyConnEstablisher, Mockito.times(1)).connectTryAllOnce(cmt, errorListener);
+    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(Collections.singleton(serverAddress), cmt, errorListener);
+    spyConnEstablisher.open(Collections.singleton(serverAddress), cmt, errorListener);
+    Mockito.verify(spyConnEstablisher, Mockito.times(1)).connectTryAllOnce(Collections.singleton(serverAddress), cmt, errorListener);
   }
 
   @Test
@@ -168,21 +166,21 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
     // test
     try {
-      spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
+      spyConnEstablisher.open(Collections.singleton(serverAddress), cmt, errorListener);
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
 
-    Mockito.verify(cmt).open(any(ConnectionInfo.class));
+    Mockito.verify(cmt).open(any(InetSocketAddress.class));
   }
 
   @Test
   public void test_connect_tries_to_make_new_connection_and_connect() throws Exception {
     Mockito.doNothing().when(cmt).fireTransportConnectAttemptEvent();
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
-    spyConnEstablisher.open(Arrays.asList(connInfo), cmt, errorListener);
-    Mockito.verify(cmt).open(any(ConnectionInfo.class));
+    spyConnEstablisher.open(Collections.singletonList(serverAddress), cmt, errorListener);
+    Mockito.verify(cmt).open(any(InetSocketAddress.class));
   }
 
   @Test
@@ -198,17 +196,17 @@ public class ClientConnectionEstablisherTest {
   public void test_reconnect_calls_connect() throws Exception {
     Mockito.doReturn(logger).when(cmt).getLogger();
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
-    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(any(ClientMessageTransport.class), any(ClientConnectionErrorListener.class));
-    spyConnEstablisher.open(Arrays.asList(connInfo), cmt, errorListener);
+    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(any(Iterable.class), any(ClientMessageTransport.class), any(ClientConnectionErrorListener.class));
+    spyConnEstablisher.open(Collections.singletonList(serverAddress), cmt, errorListener);
     spyConnEstablisher.reconnect(cmt, ()->false);
-    Mockito.verify(cmt).reopen(any(ConnectionInfo.class));
+    Mockito.verify(cmt).reopen(any(InetSocketAddress.class));
   }
 
   @Test
   public void test_restore_calls_connect() throws Exception {
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
-    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(any(ClientMessageTransport.class), any(ClientConnectionErrorListener.class));
-    spyConnEstablisher.open(Arrays.asList(connInfo), cmt, errorListener);
+    Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(any(Iterable.class), any(ClientMessageTransport.class), any(ClientConnectionErrorListener.class));
+    spyConnEstablisher.open(Collections.singletonList(serverAddress), cmt, errorListener);
     spyConnEstablisher.restoreConnection(cmt, sa, 10 * 1000, callback);
     Mockito.verify(cmt).reconnect(any(TCSocketAddress.class));
   }
@@ -216,22 +214,21 @@ public class ClientConnectionEstablisherTest {
   @Test
   public void test_when_restoreConnection_gets_reconnectionRejected_then_reconnect_request_not_added()
       throws Exception {
-    Mockito.doThrow(new ReconnectionRejectedException("Reconnection Rejected")).when(cmt).reopen(any(ConnectionInfo.class));
+    Mockito.doThrow(new ReconnectionRejectedException("Reconnection Rejected")).when(cmt).reopen(any(InetSocketAddress.class));
     Mockito.doReturn(logger).when(cmt).getLogger();
     Mockito.doReturn(true).when(cmt).wasOpened();
     Mockito.doReturn(connection).when(connManager).createConnection((TCProtocolAdaptor) any());
-    OOOConnectionWatcher watcher = new OOOConnectionWatcher(cmt, connEstablisher, layer, 0);
     connEstablisher.disableReconnectThreadSpawn();
 
-    connEstablisher.restoreConnection(cmt, sa, 0, watcher);
+    connEstablisher.restoreConnection(cmt, sa, 0, (transport) -> { });
     Assert.assertEquals(0, connEstablisher.connectionRequestQueueSize());
   }
 
   @Test
   public void test_client_keeps_trying_for_reconnect_after_unknownHostException() throws Exception {
-    spyConnEstablisher.open(Collections.singleton(connInfo), cmt, errorListener);
+    spyConnEstablisher.open(Collections.singleton(serverAddress), cmt, errorListener);
     Mockito.doThrow(new UnknownHostException("Host can not be resolved!")).when(spyConnEstablisher)
-        .getHostByName(connInfo);
+        .getHostByName(serverAddress);
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
     try {
       spyConnEstablisher.reconnect(cmt, ()->false);
@@ -247,17 +244,16 @@ public class ClientConnectionEstablisherTest {
 
   @Test
   public void test_client_tries_next_after_noActive() throws Exception {
-    Collection<ConnectionInfo> infos = new ArrayList<ConnectionInfo>();
-    infos.add(connInfo);
-    ConnectionInfo connInfo2 = mock(ConnectionInfo.class);
-    infos.add(connInfo2);
-    doThrow(new NoActiveException()).when(cmt).open(any(ConnectionInfo.class));
+    List<InetSocketAddress> serverAddresses = new ArrayList<>();
+    serverAddresses.add(serverAddress);
+    serverAddresses.add(InetSocketAddress.createUnresolved("localhost", 9610));
+    doThrow(new NoActiveException()).when(cmt).open(any(InetSocketAddress.class));
     try {
-      spyConnEstablisher.open(infos, cmt, errorListener);
+      spyConnEstablisher.open(serverAddresses, cmt, errorListener);
     } catch (IOException ioe) {
       assertTrue(ioe.getCause() instanceof NoActiveException);
     }
-    verify(cmt).open(eq(connInfo));
-    verify(cmt).open(eq(connInfo2));
-  }  
+    verify(cmt).open(eq(serverAddresses.get(0)));
+    verify(cmt).open(eq(serverAddresses.get(1)));
+  }
 }

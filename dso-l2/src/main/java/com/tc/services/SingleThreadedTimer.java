@@ -32,20 +32,7 @@ import com.tc.util.Assert;
  */
 public class SingleThreadedTimer implements ISimpleTimer {
   private final TimeSource timeSource;
-  private final Thread timerThread = new Thread() {
-    @Override
-    public void run() {
-      Runnable nextRunnable = SingleThreadedTimer.this.getNextRunnable();
-      while (null != nextRunnable) {
-        try {
-          nextRunnable.run();
-        } catch (Throwable t) {
-          System.err.println("ERROR:  Unexpected exception in timer (timed events may be dropped)");
-          t.printStackTrace();
-        }
-        nextRunnable = SingleThreadedTimer.this.getNextRunnable();
-      }
-    }};
+  private final Thread timerThread;
   private boolean threadIsRunning = false;
   private long nextId = 1L;
   private final PriorityQueue<ListElement> queue = new PriorityQueue<>(1, new Comparator<ListElement>(){
@@ -58,14 +45,25 @@ public class SingleThreadedTimer implements ISimpleTimer {
     }});
   private boolean isInPoke = false;
 
-  public SingleThreadedTimer(TimeSource source) {
+  public SingleThreadedTimer(TimeSource source, ThreadGroup group) {
     this.timeSource = (null != source) ? source : new TimeSource() {
       @Override
       public long currentTimeMillis() {
         return System.currentTimeMillis();
       }
     };
-    this.timerThread.setName("SingleThreadedTimer");
+    timerThread = new Thread(group, () -> {
+      Runnable nextRunnable = SingleThreadedTimer.this.getNextRunnable();
+      while (null != nextRunnable) {
+        try {
+          nextRunnable.run();
+        } catch (Throwable t) {
+          System.err.println("ERROR:  Unexpected exception in timer (timed events may be dropped)");
+          t.printStackTrace();
+        }
+        nextRunnable = SingleThreadedTimer.this.getNextRunnable();
+      }
+    }, "SingleThreadedTimer");
   }
 
   @Override

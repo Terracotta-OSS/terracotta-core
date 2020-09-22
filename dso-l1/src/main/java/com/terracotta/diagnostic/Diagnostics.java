@@ -18,32 +18,7 @@
  */
 package com.terracotta.diagnostic;
 
-import org.terracotta.connection.entity.Entity;
 
-
-public interface Diagnostics extends Entity {
-  String getState();
-
-  String getInitialState();
-
-  String getClusterState();
-
-  String getConfig();
-
-  String getProcessArguments();
-
-  String getThreadDump();
-
-  String terminateServer();
-
-  String forceTerminateServer();  
-  
-  String get(String name, String attribute);
- 
-  String set(String name, String attribute, String arg);
-  
-  String invoke(String name, String cmd);
-
-  String invokeWithArg(String name, String cmd, String arg);
+public interface Diagnostics extends org.terracotta.connection.Diagnostics {
 
 }

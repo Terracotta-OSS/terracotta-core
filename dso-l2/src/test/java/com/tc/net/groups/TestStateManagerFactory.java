@@ -33,12 +33,12 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.net.NodeID;
 import static com.tc.net.groups.MockStageManagerFactory.createEventHandler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.TestClusterStatePersistor;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.l2.state.ServerMode;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import com.tc.server.TCServer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -72,7 +72,9 @@ public class TestStateManagerFactory {
     StageController controller = mock(StageController.class);
     ManagementTopologyEventCollector mgmt = mock(ManagementTopologyEventCollector.class);
     when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
-    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, controller, mgmt, stages, 1, 5, RandomWeightGenerator.createTestingFactory(2), cmgr, new TestClusterStatePersistor());
+    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, controller, mgmt, stages, 1, 5,
+                                                RandomWeightGenerator.createTestingFactory(2), cmgr,
+                                                new TestClusterStatePersistor(), mock(TopologyManager.class));
     handler.setMgr(mgr);
 
     stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();

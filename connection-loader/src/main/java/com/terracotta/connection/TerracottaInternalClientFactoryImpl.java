@@ -18,33 +18,13 @@
  */
 package com.terracotta.connection;
 
-import com.terracotta.connection.client.TerracottaClientConfigParams;
-import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 import java.net.InetSocketAddress;
-
 import java.util.Properties;
 
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
-
-  // public nullary constructor needed as entry point from SPI
-  public TerracottaInternalClientFactoryImpl() {
-
-  }
-
   @Override
-  public TerracottaInternalClient createL1Client(TerracottaClientConfigParams config) {
-    // Translate the URIs for the stripe with the system properties and use that to create the stripe config.
-    TerracottaClientStripeConnectionConfig stripeConnectionConfig = new TerracottaClientStripeConnectionConfig();
-    for (InetSocketAddress memberUri : config.getStripeMemberUris()) {
-      stripeConnectionConfig.addStripeMemberUri(memberUri);
-    }
-    return createClient(stripeConnectionConfig, config.getGenericProperties());
-  }
-
-
-  private TerracottaInternalClient createClient(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    TerracottaInternalClient client = new TerracottaInternalClientImpl(stripeConnectionConfig, props);
-    return client;
+  public TerracottaInternalClient createL1Client(Iterable<InetSocketAddress> serverAddresses, Properties properties) {
+    return new TerracottaInternalClientImpl(serverAddresses, properties);
   }
 }

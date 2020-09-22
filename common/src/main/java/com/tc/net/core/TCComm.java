@@ -37,5 +37,9 @@ public interface TCComm {
   public static boolean hasPendingRead() {
     return CoreNIOServices.hasPendingReads();
   }
+  
+  void pause();
+  
+  void unpause();
 
 }

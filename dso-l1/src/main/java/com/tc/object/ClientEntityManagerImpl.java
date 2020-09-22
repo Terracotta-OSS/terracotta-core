@@ -18,6 +18,8 @@
  */
 package com.tc.object;
 
+import com.tc.exception.EntityReferencedException;
+import com.tc.exception.WrappedEntityException;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.bytes.TCByteBufferFactory;
@@ -39,8 +41,6 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.EntityBusyException;
-import com.tc.exception.EntityReferencedException;
-import com.tc.exception.VoltronWrapperException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
@@ -123,6 +123,18 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
   } 
   
+  private synchronized boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
+    if (!this.stateManager.isRunning()) {
+      return false;
+    }
+    if (requestTickets.tryAcquire()) {
+      inFlightMessages.put(msg.getTransactionID(), msg);
+      return true;
+    } else {
+      throw new RejectedExecutionException("Output queue is full");
+    }
+  }
+
   private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
     boolean interrupted = Thread.interrupted();
     try {
@@ -152,7 +164,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 
       // stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
 
-      while (stateManager.isRunning()) {
+      while (!stateManager.isShutdown()) {
         try {
           if (timeout == 0) {
             requestTickets.acquire();
@@ -301,6 +313,46 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException {
+    if (unit == null) {
+      asyncQueueInFlightMessage(eid,
+          () -> createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+          requestedAcks, monitor);
+    } else {
+      try {
+        queueInFlightMessage(eid,
+            ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, requestedAcks),
+            requestedAcks, monitor, timeout, unit, false, true);
+      } catch (TimeoutException te) {
+        throw new RejectedExecutionException(te);
+      }
+    }
+  }
+
+  private void asyncQueueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor) throws RejectedExecutionException {
+    boolean queued;
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, false, true);
+    try {
+      msgCount.increment();
+      inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.availablePermits());
+      queued = enqueueMessage(inFlight);
+    } catch (Throwable t) {
+      transactionSource.retire(inFlight.getTransactionID());
+      throw t;
+    }
+
+    if (queued) {
+      inFlight.sent();
+      if (!inFlight.send()) {
+        logger.debug("message not sent.  Make sure resend happens : {}", inFlight);
+      }
+    } else {
+      transactionSource.retire(inFlight.getTransactionID());
+      throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+    }
+  }
+
+  @Override
   public Map<String, ?> getStateMap() {
     Map<String, Object> map = new LinkedHashMap<>();
     for (EntityClientEndpointImpl<?,?> s : objectStoreMap.values()) {
@@ -318,6 +370,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     sub.put("remote", channel.getRemoteAddress());
     sub.put("product", channel.getProductID());
     sub.put("client", channel.getClientID());
+    if (stateManager.isShutdown()) {
+      sub.put("pendingMessages", "<shutdown>");
+    } else {
+      sub.put("pendingMessages", ClientConfigurationContext.MAX_PENDING_REQUESTS - this.requestTickets.availablePermits());
+    }
     map.put("channel", sub);
     if (stats instanceof PrettyPrintable) {
       sub.put("stats", ((PrettyPrintable)stats).getStateMap());
@@ -354,7 +411,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public void failed(TransactionID id, EntityException error) {
+  public void failed(TransactionID id, Exception error) {
     // Note that this call comes the platform, potentially concurrently with received().
     InFlightMessage inFlight = inFlightMessages.get(id);
     if (inFlight != null) {
@@ -371,10 +428,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       InFlightMessage inFlight = inFlightMessages.remove(id);
       if (inFlight != null) {
         inFlight.retired();
-        synchronized (this) {
-          requestTickets.release();
-          notify();
-        }
+        requestTickets.release();
       } else {
         // resend result or stop
       }
@@ -461,7 +515,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   private void throwClosedExceptionOnMessage(InFlightMessage msg, String description) {
     msg.received();
     // Synthesize the disconnect runtime exception for this message.
-    msg.setResult(null, new VoltronWrapperException(new ConnectionClosedException(msg.getEntityID().getClassName(), msg.getEntityID().getEntityName(), description, msg.isSent(), null)));
+    ConnectionClosedException closed = new ConnectionClosedException(msg.getEntityID().getClassName(), msg.getEntityID().getEntityName(), description, false, null);
+    msg.setResult(null, closed);
     msg.retired();
   }
 
@@ -553,10 +608,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException in) {
-          throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", in));
+          throw new WrappedEntityException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", in));
         }
       } catch (InterruptedException | TimeoutException ie) {
-        throw new VoltronWrapperException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
+        throw new WrappedEntityException(new EntityServerUncaughtException(eid.getClassName(), eid.getEntityName(), "", ie));
       } 
     }
   }
@@ -572,31 +627,39 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire) throws TimeoutException {
-    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire);
+    return queueInFlightMessage(eid, message, requestedAcks, monitor, timeout, units, shouldBlockGetOnRetire, false);
+  }
+
+  private InFlightMessage queueInFlightMessage(EntityID eid, Supplier<NetworkVoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> requestedAcks, InFlightMonitor monitor, long timeout, TimeUnit units, boolean shouldBlockGetOnRetire, boolean asyncMode) throws TimeoutException {
+    boolean queued;
+    InFlightMessage inFlight = new InFlightMessage(eid, message, requestedAcks, monitor, shouldBlockGetOnRetire, asyncMode);
     try {
       msgCount.increment();
       inflights.add(ClientConfigurationContext.MAX_PENDING_REQUESTS - requestTickets.availablePermits());
       // NOTE:  If we are already stop, the handler in outbound will fail this message for us.
-      if (enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION)) {
-        inFlight.sent();
-        if (inFlight.send()) {
-          //  when encountering a send for anything other than an invoke, wait here before sending anything else
-          //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
-          //  make sure those complete before sending any new invokes or lifecycle messages
-          if (inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
-            inFlight.waitForAcks();
-          }
-        } else {
-          logger.debug("message not sent.  Make sure resend happens " + inFlight);
-        }
-      } else {
-        throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
-      }
-      return inFlight;
+      queued = enqueueMessage(inFlight, timeout, units, inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION);
     } catch (Throwable t) {
       transactionSource.retire(inFlight.getTransactionID());
       throw t;
     }
+
+    if (queued) {
+      inFlight.sent();
+      if (inFlight.send()) {
+        //  when encountering a send for anything other than an invoke, wait here before sending anything else
+        //  this is a bit paranoid but it is to prevent too many resends of lifecycle operations.  Just
+        //  make sure those complete before sending any new invokes or lifecycle messages
+        if (inFlight.getMessage().getVoltronType() != VoltronEntityMessage.Type.INVOKE_ACTION) {
+          inFlight.waitForAcks();
+        }
+      } else {
+        logger.debug("message not sent.  Make sure resend happens " + inFlight);
+      }
+    } else {
+      transactionSource.retire(inFlight.getTransactionID());
+      throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
+    }
+    return inFlight;
   }
 
   private NetworkVoltronEntityMessage createMessageWithoutClientInstance(EntityID entityID, long version, boolean requiresReplication, byte[] config, VoltronEntityMessage.Type type, Set<VoltronEntityMessage.Acks> acks) {
@@ -609,7 +672,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     NetworkVoltronEntityMessage message = (NetworkVoltronEntityMessage) channel.createMessage(TCMessageType.VOLTRON_ENTITY_MESSAGE);
     ClientID clientID = this.channel.getClientID();
     TransactionID transactionID = transactionSource.create();
-    TransactionID oldestTransactionPending = transactionSource.oldest();
+    TransactionID oldestTransactionPending = transactionSource.oldest();//either premature retirement or late (or missing) removal from inflight
     //this is expensive -- only assert when testing
     TransactionID oldestTransactionInFlight;
     assert (oldestTransactionInFlight = oldestTransactionIn(inFlightMessages.keySet())) == null || (oldestTransactionPending.compareTo(oldestTransactionInFlight) <= 0);

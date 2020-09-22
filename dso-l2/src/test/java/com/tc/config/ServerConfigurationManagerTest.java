@@ -1,45 +1,48 @@
 /*
- * The contents of this file are subject to the Terracotta Public License Version
- * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
  *
- * http://terracotta.org/legal/terracotta-public-license.
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
  *
- * Software distributed under the License is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
- * the specific language governing rights and limitations under the License.
+ *  http://terracotta.org/legal/terracotta-public-license.
  *
- * The Covered Software is Terracotta Configuration.
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
  *
- * The Initial Developer of the Covered Software is
- * Terracotta, Inc., a Software AG company
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
  *
  */
 package com.tc.config;
 
+import com.tc.classloader.ServiceLocator;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.terracotta.config.BindPort;
-import org.terracotta.config.Property;
-import org.terracotta.config.Server;
-import org.terracotta.config.Servers;
-import org.terracotta.config.TcConfig;
-import org.terracotta.config.TcProperties;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.properties.TCPropertiesImpl;
-import com.terracotta.config.Configuration;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationProvider;
+import org.terracotta.configuration.ServerConfiguration;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import org.mockito.ArgumentMatchers;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.configuration.ConfigurationException;
 
 public class ServerConfigurationManagerTest {
 
@@ -50,35 +53,56 @@ public class ServerConfigurationManagerTest {
   private static final int[] TEST_SERVER_PORTS = {9410, 9510};
   private static final int[] TEST_GROUP_PORTS = {9430, 9530};
 
+  private volatile String currentServer;
+  
+  private ConfigurationProvider mockServers(int length) throws ConfigurationException {
+    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
+    Configuration configuration = mock(Configuration.class);
+    when(configurationProvider.getConfiguration()).thenReturn(configuration);
+    List<ServerConfiguration> servers = new ArrayList<>();
+    
+    for (int x=0;x<length;x++) {
+      servers.add(createServer(x, 100));
+    }
+    
+    when(configuration.getServerConfigurations()).thenReturn(servers);
+
+    when(configuration.getServerConfiguration()).then(a->{
+      Object value = currentServer;
+      if (value == null) {
+        return servers.size() == 1 ? servers.get(0) : null;
+      }
+      for (int x=0;x<length;x++) {
+        if (TEST_SERVER_NAMES[x] == value) {
+          return servers.get(x);
+        }
+      }
+      return null;
+    });
+    return configurationProvider;
+  }
+
   @Test
   public void testSingleServerValidConfiguration() throws Exception {
-    Configuration configuration = mock(Configuration.class);
-
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
-
+    ConfigurationProvider configurationProvider = mockServers(1);
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[0],
-                                                                        configuration,
+    currentServer = TEST_SERVER_NAMES[0];
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        Thread.currentThread().getContextClassLoader(),
+                                                                        new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
     GroupConfiguration groupConfiguration = manager.getGroupConfiguration();
     assertThat(groupConfiguration.getCurrentNode(), is(createNode(0)));
+    System.out.println(groupConfiguration.getNodes());
     assertThat(groupConfiguration.getNodes(),
                containsInAnyOrder(
                    createNode(0)
                )
     );
     assertThat(groupConfiguration.getMembers(), arrayContainingInAnyOrder(TEST_SERVER_NAMES[0]));
-
+ 
     ServerConfiguration serverConfiguration = manager.getServerConfiguration();
     assertThat(serverConfiguration.getName(), is(TEST_SERVER_NAMES[0]));
 
@@ -89,22 +113,14 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testSingleServerWithServerNameNull() throws Exception {
-    Configuration configuration = mock(Configuration.class);
-
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
-
+    ConfigurationProvider configurationProvider = mockServers(1);
+    
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(null,
-                                                                        configuration,
+    currentServer = null;
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        Thread.currentThread().getContextClassLoader(),
+                                                                        new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
     ServerConfiguration serverConfiguration = manager.getServerConfiguration();
@@ -113,48 +129,31 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testSingleServerWithInvalidServerName() throws Exception {
-    Configuration configuration = mock(Configuration.class);
-
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
+    ConfigurationProvider configurationProvider = mockServers(1);
 
     boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("does not exist in the specified configuration");
-
-    new ServerConfigurationManager("not-a-server-name",
-                                                                        configuration,
+    expectedException.expect(ConfigurationException.class);
+    expectedException.expectMessage("unable to determine server configuration");
+    currentServer = "not-a-server-name";
+    new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        Thread.currentThread().getContextClassLoader(),
+                                                                        new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
   }
 
   @Test
   public void testMultipleServersValidConfiguration() throws Exception {
-    Configuration configuration = mock(Configuration.class);
+    ConfigurationProvider configurationProvider = mockServers(2);
+
     int currentServerIndex = 1;
-
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.getServer().add(createServer(1));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
 
     boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
-                                                                        configuration,
+    currentServer = TEST_SERVER_NAMES[currentServerIndex];
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        Thread.currentThread().getContextClassLoader(),
+                                                                        new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
     GroupConfiguration groupConfiguration = manager.getGroupConfiguration();
@@ -176,100 +175,73 @@ public class ServerConfigurationManagerTest {
 
   @Test
   public void testMultipleServersWithServerNameNull() throws Exception {
-    Configuration configuration = mock(Configuration.class);
-
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.getServer().add(createServer(1));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
+    ConfigurationProvider configurationProvider = mockServers(2);
 
     String[] processArgs = new String[] {"arg1", "arg2"};
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("The script can not automatically choose between the following server names");
-    ServerConfigurationManager manager = new ServerConfigurationManager(null,
-                                                                        configuration,
+    expectedException.expect(ConfigurationException.class);
+    expectedException.expectMessage("unable to determine server configuration");
+    currentServer = null;
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         true,
-                                                                        Thread.currentThread().getContextClassLoader(),
+                                                                        new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
   }
 
   @Test
   public void testMultipleServersWithInvalidServerName() throws Exception {
-    Configuration configuration = mock(Configuration.class);
-
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.getServer().add(createServer(1));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
+    ConfigurationProvider configurationProvider = mockServers(2);
 
     String[] processArgs = new String[] {"arg1", "arg2"};
-    expectedException.expect(ConfigurationSetupException.class);
-    expectedException.expectMessage("does not exist in the specified configuration");
+    expectedException.expect(ConfigurationException.class);
+    expectedException.expectMessage("unable to determine server configuration");
 
-    new ServerConfigurationManager("not-a-server-name",
-                                   configuration,
+    currentServer = "not-a-server-name";
+    new ServerConfigurationManager(configurationProvider,
                                    true,
-                                   Thread.currentThread().getContextClassLoader(),
+                                   new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                    processArgs);
   }
 
   @Test
   public void testTcProperties() throws Exception {
-    Configuration configuration = mock(Configuration.class);
+    ConfigurationProvider configurationProvider = mockServers(2);
+    Configuration configuration = configurationProvider.getConfiguration();
+
     int currentServerIndex = 1;
 
-    TcConfig tcConfig = new TcConfig();
-    when(configuration.getPlatformConfiguration()).thenReturn(tcConfig);
-    TcProperties tcProperties = new TcProperties();
-    Property tcProperty = new Property();
+    Properties tcProperties = new Properties();
     String testKey = "some-tc-property-key";
     String testValue = "value";
-    tcProperty.setName(testKey);
-    tcProperty.setValue(testValue);
-    tcProperties.getProperty().add(tcProperty);
-    tcConfig.setTcProperties(tcProperties);
+    tcProperties.setProperty(testKey, testValue);
+    when(configuration.getTcProperties()).thenReturn(tcProperties);
 
-    Servers servers = new Servers();
-    servers.getServer().add(createServer(0));
-    servers.getServer().add(createServer(1));
-    servers.setClientReconnectWindow(100);
-    tcConfig.setServers(servers);
+    List<ServerConfiguration> servers = new ArrayList<>();
+    servers.add(createServer(0, 100));
+    servers.add(createServer(1, 100));
+    when(configuration.getServerConfigurations()).thenReturn(servers);
 
     boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
-    ServerConfigurationManager manager = new ServerConfigurationManager(TEST_SERVER_NAMES[currentServerIndex],
-                                                                        configuration,
+    currentServer = TEST_SERVER_NAMES[currentServerIndex];
+    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         consistentStartup,
-                                                                        Thread.currentThread().getContextClassLoader(),
+                                                                        new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
     assertThat(TCPropertiesImpl.getProperties().getProperty(testKey), is(testValue));
   }
 
 
-  private static Server createServer(int serverIndex) {
-    Server server = new Server();
-    server.setName(TEST_SERVER_NAMES[serverIndex]);
-    server.setBind("localhost");
-    server.setHost("localhost");
-    BindPort tsaPortBind = new BindPort();
-    tsaPortBind.setBind(TCSocketAddress.WILDCARD_IP);
-    tsaPortBind.setValue(TEST_SERVER_PORTS[serverIndex]);
-    server.setTsaPort(tsaPortBind);
-    BindPort groupPortBind = new BindPort();
-    groupPortBind.setBind(TCSocketAddress.WILDCARD_IP);
-    groupPortBind.setValue(TEST_GROUP_PORTS[serverIndex]);
-    server.setTsaGroupPort(groupPortBind);
-
-    return server;
+  private static ServerConfiguration createServer(int serverIndex, int reconnectWindow) {
+    ServerConfiguration config = mock(ServerConfiguration.class);
+    when(config.getName()).thenReturn(TEST_SERVER_NAMES[serverIndex]);
+    when(config.getHost()).thenReturn("localhost");
+    InetSocketAddress tsaPort = InetSocketAddress.createUnresolved(TCSocketAddress.WILDCARD_IP, TEST_SERVER_PORTS[serverIndex]);
+    when(config.getTsaPort()).thenReturn(tsaPort);
+    InetSocketAddress groupPort = InetSocketAddress.createUnresolved(TCSocketAddress.WILDCARD_IP, TEST_GROUP_PORTS[serverIndex]);
+    when(config.getGroupPort()).thenReturn(groupPort);
+    when(config.getClientReconnectWindow()).thenReturn(reconnectWindow);
+    return config;
   }
 
   private static Node createNode(int serverIndex) {

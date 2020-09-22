@@ -19,6 +19,7 @@
 package com.tc.l2.ha;
 
 import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
+import java.util.concurrent.TimeUnit;
 
 
 public class ServerUptimeWeightGenerator implements WeightGenerator {
@@ -32,7 +33,9 @@ public class ServerUptimeWeightGenerator implements WeightGenerator {
 
   @Override
   public long getWeight() {
-    return System.currentTimeMillis() - this.startMillis;
+  //  calculate the seconds of uptime and convert back to millis for backwards 
+  // compatibility.  (i.e. 6055ms of uptime is converted to 6000ms of uptime)
+    return TimeUnit.SECONDS.toMillis(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - this.startMillis));
   }
 
   @Override

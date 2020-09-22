@@ -44,7 +44,7 @@ public class TransportNetworkStackHarnessFactory implements NetworkStackHarnessF
   public ClientNetworkStackHarness createClientHarness(MessageTransportFactory transportFactory,
                                                  ClientMessageChannel channel,
                                                  MessageTransportListener[] transportListeners) {
-    return new ClientNetworkStackHarness(transportFactory, channel, false){
+    return new ClientNetworkStackHarness(transportFactory, channel){
       @Override
       protected void connectStack() {
         super.connectStack();

@@ -84,7 +84,8 @@ public class L2HACoordinator implements L2Coordinator {
                                                                   this.groupManager,
                                                                   this.stateManager,
                                                                   clusterState,
-                                                                  this.server.getConnectionIdFactory());
+                                                                  this.server.getConnectionIdFactory(),
+                                                                  this.server.getConfigSetupManager().getConfigurationProvider());
     
   }
 

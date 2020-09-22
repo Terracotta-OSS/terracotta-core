@@ -18,24 +18,18 @@
  */
 package com.tc.object;
 
-import com.tc.config.schema.CommonL1Config;
-import com.tc.config.schema.L2ConfigForL1;
-import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
-import com.tc.management.TCClient;
-import com.tc.net.core.ConnectionInfo;
+import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
-import com.tc.object.config.ClientConfigImpl;
-import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
+
+import java.net.InetSocketAddress;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
@@ -50,53 +44,16 @@ import org.terracotta.connection.ConnectionPropertyNames;
 public class DistributedObjectClientTest extends TestCase {
   
   public void testConnectionTimeout() throws Exception {
-    L1ConfigurationSetupManager manager = new L1ConfigurationSetupManager() {
-      @Override
-      public String[] processArguments() {
-        return new String[0];
-      }
-
-      @Override
-      public boolean loadedFromTrustedSource() {
-        return true;
-      }
-
-      @Override
-      public String rawConfigText() {
-        return "";
-      }
-
-      @Override
-      public String source() {
-        return "";
-      }
-
-      @Override
-      public CommonL1Config commonL1Config() {
-        return Mockito.mock(CommonL1Config.class);
-      }
-
-      @Override
-      public L2ConfigForL1 l2Config() {
-        return Mockito.mock(L2ConfigForL1.class);
-      }
-
-      @Override
-      public Map<String, String> getOverrideTCProperties() {
-        return Collections.<String, String>emptyMap();
-      }
-    };
-    PreparedComponentsFromL2Connection l2connection = Mockito.mock(PreparedComponentsFromL2Connection.class);
-    ConnectionInfoConfig config = Mockito.mock(ConnectionInfoConfig.class);
-    ConnectionInfo info = new ConnectionInfo("localhost", new PortChooser().chooseRandomPort());
-    Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
-    Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     Properties connectionProperties = new Properties();
     connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
     connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), threadGroup,
-                                                                 l2connection, connectionProperties);
+    DistributedObjectClient client =
+        new DistributedObjectClient(
+            Collections.singleton(new InetSocketAddress("localhost", new PortChooser().chooseRandomPort())),
+            threadGroup,
+            connectionProperties
+        );
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();
@@ -117,53 +74,12 @@ public class DistributedObjectClientTest extends TestCase {
   }
   
   public void testFatalError() throws Exception {
-    L1ConfigurationSetupManager manager = new L1ConfigurationSetupManager() {
-      @Override
-      public String[] processArguments() {
-        return new String[0];
-      }
-
-      @Override
-      public boolean loadedFromTrustedSource() {
-        return true;
-      }
-
-      @Override
-      public String rawConfigText() {
-        return "";
-      }
-
-      @Override
-      public String source() {
-        return "";
-      }
-
-      @Override
-      public CommonL1Config commonL1Config() {
-        return Mockito.mock(CommonL1Config.class);
-      }
-
-      @Override
-      public L2ConfigForL1 l2Config() {
-        return Mockito.mock(L2ConfigForL1.class);
-      }
-
-      @Override
-      public Map<String, String> getOverrideTCProperties() {
-        return Collections.<String, String>emptyMap();
-      }
-    };
-    PreparedComponentsFromL2Connection l2connection = Mockito.mock(PreparedComponentsFromL2Connection.class);
-    ConnectionInfoConfig config = Mockito.mock(ConnectionInfoConfig.class);
-    ConnectionInfo info = new ConnectionInfo("localhost", new PortChooser().chooseRandomPort());
-    Mockito.when(config.getConnectionInfos()).thenReturn(new ConnectionInfo[] {info});
-    Mockito.when(l2connection.createConnectionInfoConfigItem()).thenReturn(config);
     TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
     Properties connectionProperties = new Properties();
     connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
-    ClientBuilder builder = new StandardClientBuilder(connectionProperties) {
+    ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextBufferManagerFactory()) {
       @Override
-      public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout, TCClient client) {
+      public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout) {
         ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
         try {
           Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));
@@ -175,7 +91,14 @@ public class DistributedObjectClientTest extends TestCase {
       }
     };
     
-    DistributedObjectClient client = new DistributedObjectClient(new ClientConfigImpl(manager), builder, threadGroup, l2connection, null, null, false);
+    DistributedObjectClient client = new DistributedObjectClient(
+        Collections.singleton(InetSocketAddress.createUnresolved("localhost", new PortChooser().chooseRandomPort())),
+        builder,
+        threadGroup,
+        null,
+        null,
+        false
+    );
     client.start();
     Assert.assertTrue(threadGroup.activeCount() > 0);
     long start = System.currentTimeMillis();

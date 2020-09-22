@@ -28,7 +28,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.6-SNAPSHOT</version>
+    <version>5.7-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
@@ -53,13 +53,14 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>connection-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>entity-common-api</artifactId>
       <version>${terracotta-apis.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>server-spi</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <!-- NOTE:  We added this dependency so that PlatformInfoRequest can use the appropriate type in its signature, only.

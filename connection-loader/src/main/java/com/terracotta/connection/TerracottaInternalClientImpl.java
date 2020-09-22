@@ -25,8 +25,8 @@ import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.net.protocol.transport.ClientConnectionErrorDetails;
 import com.terracotta.connection.api.DetailedConnectionException;
-import com.terracotta.connection.client.TerracottaClientStripeConnectionConfig;
 
+import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
@@ -42,18 +42,22 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private volatile boolean            shutdown             = false;
   private volatile boolean            isInitialized        = false;
 
-  TerracottaInternalClientImpl(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
+  TerracottaInternalClientImpl(Iterable<InetSocketAddress> serverAddresses, Properties props) {
     try {
-      this.clientCreator = buildClientCreator(stripeConnectionConfig, props);
+      this.clientCreator = buildClientCreator(serverAddresses, props);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
-  
-  private DistributedObjectClientFactory buildClientCreator(TerracottaClientStripeConnectionConfig stripeConnectionConfig, Properties props) {
-    ClientBuilder clientBuilder = ClientBuilderFactory.get().create(props);
+
+  private DistributedObjectClientFactory buildClientCreator(Iterable<InetSocketAddress> serverAddresses,
+                                                            Properties props) {
+    ClientBuilder clientBuilder = ClientBuilderFactory.get(ClientBuilderFactory.class).create(props);
+    if (clientBuilder == null) {
+      throw new RuntimeException("unable to build the client");
+    }
     clientBuilder.setClientConnectionErrorListener(errorListener);
-    return new DistributedObjectClientFactory(stripeConnectionConfig.getStripeMemberUris(), clientBuilder, props);
+    return new DistributedObjectClientFactory(serverAddresses, clientBuilder, props);
   }
 
   @Override

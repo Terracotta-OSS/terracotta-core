@@ -45,6 +45,7 @@ import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import org.terracotta.monitoring.ServerState;
@@ -139,6 +140,14 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       // We will use the ClientID long value as the node name.
       String nodeName = clientIdentifierForService(client);
       this.serviceInterface.addNode(PlatformMonitoringConstants.CLIENTS_PATH, nodeName, clientDescription);
+      String[] extrasPath = Arrays.copyOf(PlatformMonitoringConstants.CLIENTS_PATH, PlatformMonitoringConstants.CLIENTS_PATH.length + 1);
+      extrasPath[PlatformMonitoringConstants.CLIENTS_PATH.length] = nodeName;
+      if (minfo.hasClientVersion()) {
+        this.serviceInterface.addNode(extrasPath, "version", minfo.getVersion());
+      }
+      if (minfo.hasClientReportedAddress()) {
+        this.serviceInterface.addNode(extrasPath, "clientReportedAddress", minfo.getClientReportedAddress());
+      }
       if (earlyFetches != null && !earlyFetches.isEmpty()) {
         for (ResolvedDescriptors ed : earlyFetches) {
           String fetchIdentifier = fetchIdentifierForService(client, ed.id, ed.consumerID, ed.instance);

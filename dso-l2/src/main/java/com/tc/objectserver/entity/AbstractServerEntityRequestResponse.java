@@ -22,6 +22,7 @@ import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
+import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -41,13 +42,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import org.terracotta.exception.EntityException;
 
 
 public abstract class AbstractServerEntityRequestResponse implements ServerEntityRequest, ServerEntityResponse, Retiree {
   private final ServerEntityRequest request;
   private final Consumer<byte[]> complete;
-  private final Consumer<EntityException> fail;
+  private final Consumer<ServerException> fail;
   
   private final Consumer<VoltronEntityResponse> messageSender;
     
@@ -56,7 +56,7 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
 
   private volatile Future<Void> transactionOrderPersistenceFuture;
   
-  public AbstractServerEntityRequestResponse(ServerEntityRequest action, Consumer<VoltronEntityResponse> messageSender, Consumer<byte[]> complete, Consumer<EntityException> fail) {
+  public AbstractServerEntityRequestResponse(ServerEntityRequest action, Consumer<VoltronEntityResponse> messageSender, Consumer<byte[]> complete, Consumer<ServerException> fail) {
     this.request = action;
     this.messageSender = messageSender;
     this.complete = complete;
@@ -104,9 +104,9 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
   public ServerEntityAction getAction() {
     return request.getAction();
   }
-  
+
   @Override
-  public void failure(EntityException e) {
+  public void failure(ServerException e) {
     if (!this.getNodeID().isNull()) {
       getReturnChannel().ifPresent(channel -> {
         VoltronEntityAppliedResponse message = (VoltronEntityAppliedResponse)channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE);

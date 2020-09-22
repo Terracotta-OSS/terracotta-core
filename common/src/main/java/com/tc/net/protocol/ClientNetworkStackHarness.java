@@ -20,7 +20,6 @@ package com.tc.net.protocol;
 
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -36,19 +35,17 @@ import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
 import java.io.IOException;
-import java.util.Collection;
+import java.net.InetSocketAddress;
 
 public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
   protected ClientMessageTransport          transport;
   protected ClientMessageChannel            channel;
   private final MessageTransportFactory     transportFactory;
   private final SetOnceFlag                 finalized = new SetOnceFlag();
-  private final boolean                     allowConnectionReplace;
 
-  public ClientNetworkStackHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel, boolean allowConnectionReplace) {
+  public ClientNetworkStackHarness(MessageTransportFactory transportFactory, ClientMessageChannel channel) {
     this.transportFactory = transportFactory;
     this.channel = channel;
-    this.allowConnectionReplace = allowConnectionReplace;
   }
 
   /**
@@ -68,7 +65,6 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
       Assert.assertNotNull(this.channel);
       Assert.assertNotNull(this.transportFactory);
       this.transport = transportFactory.createNewTransport();
-      this.transport.setAllowConnectionReplace(allowConnectionReplace);
       connectStack();
     } else {
       throw Assert.failure("Attempt to finalize an already finalized stack");
@@ -87,13 +83,13 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
     final ClientConnectionEstablisher cce = createClientConnectionEstablisher();
     channel.setMessageTransportInitiator(new MessageTransportInitiator() {
       @Override
-      public NetworkStackID openMessageTransport(Collection<ConnectionInfo> dest, ConnectionID connection) throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException {
+      public NetworkStackID openMessageTransport(Iterable<InetSocketAddress> serverAddresses, ConnectionID connection) throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException {
 //  this is terrible but it sets the send layer of the channel (which is calling open),
 //  sets the connection id in the transport layer, and initiates the connection establisher
 //  to maintain the transport layer under the channel
         channel.setSendLayer(last);
         transport.initConnectionID(connection);
-        return cce.open(dest, transport, channel);
+        return cce.open(serverAddresses, transport, channel);
       }
     });
     

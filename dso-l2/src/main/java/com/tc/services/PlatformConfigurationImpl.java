@@ -22,8 +22,8 @@ import java.util.Collection;
 
 import org.terracotta.entity.PlatformConfiguration;
 
-import com.tc.config.ServerConfiguration;
-import com.terracotta.config.Configuration;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ServerConfiguration;
 
 /**
  * @author vmad
@@ -50,7 +50,7 @@ public class PlatformConfigurationImpl implements PlatformConfiguration {
 
   @Override
   public int getTsaPort() {
-    return serverConfig.getTsaPort().getValue();
+    return serverConfig.getTsaPort().getPort();
   }
 
   @Override

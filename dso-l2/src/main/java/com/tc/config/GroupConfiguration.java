@@ -20,7 +20,11 @@ package com.tc.config;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
+import static com.tc.properties.TCPropertiesConsts.L2_ELECTION_TIMEOUT;
+import com.tc.properties.TCPropertiesImpl;
+import org.terracotta.configuration.ServerConfiguration;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,30 +32,35 @@ import java.util.Set;
 public class GroupConfiguration {
 
   static final int SINGLE_SERVER_ELECTION_TIMEOUT = 0;
-  static final int MULTI_SERVER_ELECTION_TIMEOUT = 5;
+  static final int MULTI_SERVER_ELECTION_TIMEOUT = TCPropertiesImpl.getProperties().getInt(L2_ELECTION_TIMEOUT, 5);
 
   private final Set<String> members = new HashSet<>();
   private final Set<Node> nodes = new HashSet<>();
+  private final Set<String> hostPorts = new HashSet<>();
   private final Node currentNode;
 
   GroupConfiguration(Map<String, ServerConfiguration> configMap, String serverName) {
     this.members.addAll(configMap.keySet());
-    Node currentNode = null;
+    Node current = null;
     for (Map.Entry<String, ServerConfiguration> member : configMap.entrySet()) {
       ServerConfiguration serverConfiguration = member.getValue();
-      String bindAddress = serverConfiguration.getGroupPort().getBind();
+      String bindAddress = serverConfiguration.getGroupPort().getHostName();
       if (TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
         bindAddress = serverConfiguration.getHost();
       }
       Node node = new Node(bindAddress,
-                           serverConfiguration.getTsaPort().getValue(),
-                           serverConfiguration.getGroupPort().getValue());
+                           serverConfiguration.getTsaPort().getPort(),
+                           serverConfiguration.getGroupPort().getPort());
+      hostPorts.add(node.getServerNodeName());
       if (serverName.equals(member.getKey())) {
-        currentNode = node;
+        current = node;
       }
       nodes.add(node);
     }
-    this.currentNode = currentNode;
+    this.currentNode = current;
+    if (MULTI_SERVER_ELECTION_TIMEOUT < 0) {
+      throw new AssertionError("server election timeout cannot be less than zero");
+    }
   }
 
   public Set<Node> getNodes() {
@@ -66,6 +75,10 @@ public class GroupConfiguration {
     //TODO fix the election time
     // If there is only one server, always going to win so no reason to wait
     return (members.size() == 1) ? SINGLE_SERVER_ELECTION_TIMEOUT : MULTI_SERVER_ELECTION_TIMEOUT;
+  }
+
+  public Set<String> getHostPorts() {
+    return Collections.unmodifiableSet(hostPorts);
   }
 
   public String[] getMembers() {

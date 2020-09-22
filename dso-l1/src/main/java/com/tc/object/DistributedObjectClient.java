@@ -37,18 +37,13 @@ import com.tc.entity.VoltronEntityReceivedResponseImpl;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponseImpl;
 import com.tc.lang.TCThreadGroup;
-import com.tc.util.ProductID;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
-import com.tc.management.TCClient;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -65,8 +60,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandlerL1;
 import com.tc.net.protocol.transport.TransportHandshakeException;
-import com.tc.object.config.ClientConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
@@ -80,14 +73,12 @@ import com.tc.object.request.RequestReceiveHandler;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.cluster.ClientChannelEventController;
-import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.text.MapListPrettyPrint;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
@@ -102,12 +93,14 @@ import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
@@ -115,9 +108,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -130,15 +122,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * This is the main point of entry into the DSO client.
  */
-public class DistributedObjectClient implements TCClient {
+public class DistributedObjectClient {
 
   protected static final Logger DSO_LOGGER = LoggerFactory.getLogger(DistributedObjectClient.class);
   
   private final ClientBuilder                        clientBuilder;
-  private final ClientConfig                         config;
+  private final Iterable<InetSocketAddress> serverAddresses;
   private final TCThreadGroup                        threadGroup;
-
-  protected final PreparedComponentsFromL2Connection connectionComponents;
 
   private ClientMessageChannel                       channel;
   private TCConnectionManager                        connectionManager;
@@ -164,19 +154,16 @@ public class DistributedObjectClient implements TCClient {
   private final boolean isAsync;
 
   
-  public DistributedObjectClient(ClientConfig config, TCThreadGroup threadGroup,
-                                 PreparedComponentsFromL2Connection connectionComponents,
+  public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, TCThreadGroup threadGroup,
                                  Properties properties) {
-    this(config, ClientBuilderFactory.get().create(properties), threadGroup, connectionComponents,
+    this(serverAddresses, ClientBuilderFactory.get(ClientBuilderFactory.class).create(properties), threadGroup,
          UUID.NULL_ID.toString(), "", false);
   }
 
-  public DistributedObjectClient(ClientConfig config, ClientBuilder builder, TCThreadGroup threadGroup,
-                                 PreparedComponentsFromL2Connection connectionComponents,
+  public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, ClientBuilder builder, TCThreadGroup threadGroup,
                                  String uuid, String name, boolean asyncDrive) {
-    Assert.assertNotNull(config);
-    this.config = config;
-    this.connectionComponents = connectionComponents;
+    Assert.assertNotNull(serverAddresses);
+    this.serverAddresses = serverAddresses;
     this.threadGroup = threadGroup;
     this.clientBuilder = builder;
     this.uuid = uuid;
@@ -186,46 +173,6 @@ public class DistributedObjectClient implements TCClient {
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA seda = new SEDA(threadGroup);
     communicationStageManager = seda.getStageManager();
-  }
-
-  private ReconnectConfig getReconnectPropertiesFromServer() {
-    ReconnectConfig reconnectConfig = new ReconnectConfig() {
-
-      @Override
-      public boolean getReconnectEnabled() {
-        return false;
-      }
-
-      @Override
-      public int getReconnectTimeout() {
-        return 5000;
-      }
-
-      @Override
-      public int getSendQueueCapacity() {
-        return 5000;
-      }
-
-      @Override
-      public int getMaxDelayAcks() {
-        return 16;
-      }
-
-      @Override
-      public int getSendWindow() {
-        return 32;
-      }
-    };
-    return reconnectConfig;
-  }
-
-  private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean useOOOLayer,
-                                                                   ReconnectConfig l1ReconnectConfig) {
-    if (useOOOLayer) {
-      return new OOONetworkStackHarnessFactory(new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(), l1ReconnectConfig);
-    } else {
-      return new PlainNetworkStackHarnessFactory();
-    }
   }
 
   public synchronized void start() {
@@ -248,11 +195,7 @@ public class DistributedObjectClient implements TCClient {
       Thread.dumpStack();
     });
 
-    final ReconnectConfig l1ReconnectConfig = getReconnectPropertiesFromServer();
-
-    final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled();
-    final NetworkStackHarnessFactory networkStackHarnessFactory = getNetworkStackHarnessFactory(useOOOLayer,
-                                                                                                l1ReconnectConfig);
+    final NetworkStackHarnessFactory networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
     this.counterManager = new CounterManagerImpl();
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
@@ -281,7 +224,7 @@ public class DistributedObjectClient implements TCClient {
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
     ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
-                                                                 sessionManager, socketConnectTimeout, this);
+                                                                 sessionManager, socketConnectTimeout);
     this.channel = clientChannel;
     // add this listener so that the whole system is shutdown
     // if the transport is closed from underneath.
@@ -402,26 +345,21 @@ public class DistributedObjectClient implements TCClient {
   }
 
   private void openChannel(ClientMessageChannel channel) throws InterruptedException {
-    Collection<ConnectionInfo> infos = Arrays.asList(this.connectionComponents.createConnectionInfoConfigItem().getConnectionInfos());
-    if (infos.isEmpty()) {
-//  can't open a connection to nowhere
-      return;
-    }
     while (!clientStopped.isSet()) {
       try {
         DSO_LOGGER.debug("Trying to open channel....");
-        channel.open(infos);
+        channel.open(serverAddresses);
         DSO_LOGGER.debug("Channel open");
         break;
       } catch (final TCTimeoutException tcte) {
-        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
-        DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", infos, tcte.getMessage());
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
+        DSO_LOGGER.debug("Timeout connecting to server/s: {} {}", serverAddresses, tcte.getMessage());
         synchronized(clientStopped) {
           clientStopped.wait(5000);
         }
       } catch (final ConnectException e) {
-        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
-        DSO_LOGGER.debug("Connection refused from server/s: {} {}", infos, e.getMessage());
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
+        DSO_LOGGER.debug("Connection refused from server/s: {} {}", serverAddresses, e.getMessage());
         synchronized(clientStopped) {
           clientStopped.wait(5000);
         }
@@ -435,8 +373,8 @@ public class DistributedObjectClient implements TCClient {
         DSO_LOGGER.error(handshake.getMessage());
         throw new IllegalStateException(handshake.getMessage(), handshake);
       } catch (final IOException ioe) {
-        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", infos);
-        DSO_LOGGER.debug("IOException connecting to server/s: {} {}", infos, ioe.getMessage());
+        DSO_LOGGER.info("Unable to connect to server/s {} ...sleeping for 5 sec.", serverAddresses);
+        DSO_LOGGER.debug("IOException connecting to server/s: {} {}", serverAddresses, ioe.getMessage());
         synchronized(clientStopped) {
           clientStopped.wait(5000);
         }
@@ -529,10 +467,6 @@ public class DistributedObjectClient implements TCClient {
 
   public void dump() {
     DSO_LOGGER.info(getClientState());
-  }
-
-  protected ClientConfig getClientConfigHelper() {
-    return this.config;
   }
 
   public void shutdown() {
@@ -666,16 +600,6 @@ public class DistributedObjectClient implements TCClient {
         threads = new Thread[threads.length * 2];
       }
     }
-  }
-
-  @Override
-  public String[] processArguments() {
-    return null;
-  }
-
-  @Override
-  public String getUUID() {
-    return uuid;
   }
 
   private static class TCThreadGroupCleanerRunnable implements Runnable {

@@ -1,57 +1,78 @@
 /*
- * Copyright Terracotta, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *  http://terracotta.org/legal/terracotta-public-license.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
  */
 package org.terracotta.testing.rules;
 
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import java.io.File;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
+import org.terracotta.testing.config.StartupCommandBuilder;
+import org.terracotta.testing.config.StripeConfiguration;
+import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.GalvanFailureException;
 import org.terracotta.testing.master.GalvanStateInterlock;
 import org.terracotta.testing.master.ReadyStripe;
+import org.terracotta.testing.master.StripeInstaller;
 import org.terracotta.testing.master.TestStateManager;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import org.terracotta.testing.logging.ContextualLogger;
+import org.terracotta.testing.master.FileHelpers;
 
 /**
- *
  * @author cdennis
  */
 class BasicExternalCluster extends Cluster {
 
-  private final File clusterDirectory;
+  private final Path clusterDirectory;
   private final int stripeSize;
-  private final List<File> serverJars;
+  private final Set<Path> serverJars;
   private final String namespaceFragment;
   private final String serviceFragment;
-  private final int clientReconnectWindowTime;
-  private final int failoverPriorityVoterCount;
+  private final int clientReconnectWindow;
+  private final int voterCount;
+  private final boolean consistentStart;
   private final Properties tcProperties = new Properties();
   private final Properties systemProperties = new Properties();
   private final String logConfigExt;
+  private final int serverHeapSize;
+  private final Supplier<StartupCommandBuilder> startupBuilder;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -65,30 +86,33 @@ class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicExternalCluster(File clusterDirectory, int stripeSize, List<File> serverJars, String namespaceFragment,
-                       String serviceFragment, int clientReconnectWindowTime, int failoverPriorityVoterCount,
-                       Properties tcProperties, Properties systemProperties1, String logConfigExt) {
-    if (clusterDirectory.exists()) {
-      if (clusterDirectory.isFile()) {
+  BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
+                       String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
+                       Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
+    if (Files.exists(clusterDirectory)) {
+      if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
       }
     } else {
-      boolean didCreateDirectories = clusterDirectory.mkdirs();
+      boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
       if (!didCreateDirectories) {
         throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
       }
     }
+
     this.clusterDirectory = clusterDirectory;
     this.stripeSize = stripeSize;
     this.namespaceFragment = namespaceFragment;
     this.serviceFragment = serviceFragment;
     this.serverJars = serverJars;
-    this.clientReconnectWindowTime = clientReconnectWindowTime;
-    this.failoverPriorityVoterCount = failoverPriorityVoterCount;
+    this.clientReconnectWindow = clientReconnectWindow;
+    this.voterCount = voterCount;
+    this.consistentStart = consistentStart;
     this.tcProperties.putAll(tcProperties);
-    this.systemProperties.putAll(systemProperties1);
+    this.systemProperties.putAll(systemProperties);
     this.logConfigExt = logConfigExt;
-    
+    this.serverHeapSize = serverHeapSize;
+    this.startupBuilder = startupBuilder;
     this.clientThread = Thread.currentThread();
   }
 
@@ -105,51 +129,87 @@ class BasicExternalCluster extends Cluster {
     } else if (testClass == null) {
       this.displayName = description.getDisplayName();
     } else {
-      this.displayName = methodName + "(" + testClass.getSimpleName() + ")";
+      this.displayName = testClass.getSimpleName() + "-" + methodName;
     }
     return super.apply(base, description);
   }
 
   public void manualStart(String displayName) throws Throwable {
     this.displayName = displayName;
-    internalStart(false);
+    internalStart();
   }
 
   @Override
   protected void before() throws Throwable {
-    internalStart(false);
+    internalStart();
   }
-  
-  private void internalStart(boolean force) throws Throwable {
+
+  private void internalStart() throws Throwable {
     VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
     VerboseLogger fileHelpersLogger = new VerboseLogger(null, null);
     VerboseLogger clientLogger = null;
     VerboseLogger serverLogger = new VerboseLogger(System.out, System.err);
     VerboseManager verboseManager = new VerboseManager("", harnessLogger, fileHelpersLogger, clientLogger, serverLogger);
     VerboseManager displayVerboseManager = verboseManager.createComponentManager("[" + displayName + "]");
-    
+
     String kitInstallationPath = System.getProperty("kitInstallationPath");
     harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
-    File serverInstallDirectory = new File(kitInstallationPath);
-    File testParentDirectory = File.createTempFile(displayName, "", clusterDirectory);
-    testParentDirectory.delete();
-    testParentDirectory.mkdir();
-    List<String> serverJarPaths = convertToStringPaths(serverJars);
-    int serverPort = new PortChooser().chooseRandomPort();
+    Path kitDir = Paths.get(kitInstallationPath);
+    File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
+    testParentDir.delete();
+    testParentDir.mkdir();
     String debugPortString = System.getProperty("serverDebugPortStart");
-    int serverDebugStartPort = (null != debugPortString)
-        ? Integer.parseInt(debugPortString)
-        : 0;
+    int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
     stateManager = new TestStateManager();
-    // By default, we will use 128M heap size.
-    int heapInM = 128;
     interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
 
-    cluster = ReadyStripe.configureAndStartStripe(interlock, stateManager, displayVerboseManager,
-        serverInstallDirectory.getAbsolutePath(), testParentDirectory.getAbsolutePath(), stripeSize, heapInM, serverPort,
-        serverDebugStartPort, 0, serverJarPaths, namespaceFragment, serviceFragment,
-        failoverPriorityVoterCount, clientReconnectWindowTime, tcProperties, systemProperties, logConfigExt, force);
+    List<String> serverNames = new ArrayList<>();
+    List<Integer> serverPorts = new ArrayList<>();
+    List<Integer> serverGroupPorts = new ArrayList<>();
+    List<Integer> serverDebugPorts = new ArrayList<>();
+    int basePort = new PortChooser().chooseRandomPorts(stripeSize * 2);
+    for (int i = 0; i < stripeSize; i++) {
+      serverNames.add("testServer" + i);
+      serverPorts.add(basePort++);
+      serverGroupPorts.add(basePort++);
+      serverDebugPorts.add(serverDebugStartPort == 0 ? 0 : serverDebugStartPort++);
+    }
+
+    String stripeName = "stripe1";
+    Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
+    Files.createDirectory(stripeInstallationDir);
+
+    VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
+
+    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir);
+    Path kitLocation = installKit(stripeVerboseManager, kitDir, serverJars, stripeInstallationDir);
+
+    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
+        stripeName, serverHeapSize, logConfigExt, systemProperties);
+    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
+    // Configure and install each server in the stripe.
+    for (int i = 0; i < stripeSize; ++i) {
+      String serverName = serverNames.get(i);
+      Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
+      Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
+      Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
+      // Determine if we want a debug port.
+      int debugPort = stripeConfig.getServerDebugPorts().get(i);
+
+      StartupCommandBuilder builder = startupBuilder.get()
+          .tcConfig(tcConfigRelative)
+          .serverName(serverName)
+          .stripeName(stripeName)
+          .serverWorkingDir(serverWorkingDir)
+          .kitDir(kitLocationRelative)
+          .logConfigExtension(logConfigExt)
+          .consistentStartup(consistentStart);
+
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
+    }
+
+    cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
     // Spin up an extra thread to call waitForFinish on the stateManager.
     // This is required since galvan expects that the client is running in a different thread (different process, usually)
     // than the framework, and the framework waits for the finish so that it can terminate the clients/servers if any of
@@ -194,6 +254,35 @@ class BasicExternalCluster extends Cluster {
     waitForSafe();
   }
 
+  private Path relativize(Path root, Path other) {
+    return root.toAbsolutePath().relativize(other.toAbsolutePath());
+  }
+
+  private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
+                              Path stripeInstallationDir) {
+    TcConfigBuilder configBuilder = new TcConfigBuilder(serverNames, serverPorts, serverGroupPorts, tcProperties,
+        namespaceFragment, serviceFragment, clientReconnectWindow, voterCount);
+    String tcConfig = configBuilder.build();
+    try {
+      Path tcConfigPath = Files.createFile(stripeInstallationDir.resolve("tc-config.xml"));
+      Files.write(tcConfigPath, tcConfig.getBytes(UTF_8));
+      return tcConfigPath;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private Path installKit(VerboseManager logger, Path srcKit, Set<Path> extraJars, Path stripeInstall) throws IOException {
+    if (extraJars.isEmpty()) {
+      return srcKit;
+    } else {
+      ContextualLogger clogger = logger.createFileHelpersLogger();
+      Path stripeKit = FileHelpers.createTempCopyOfDirectory(clogger, stripeInstall, "installedKit", srcKit);
+      FileHelpers.copyJarsToServer(clogger, stripeKit, extraJars);
+      return stripeKit;
+    }
+  }
+
   public void manualStop() {
     internalStop();
   }
@@ -229,12 +318,12 @@ class BasicExternalCluster extends Cluster {
 
   @Override
   public URI getConnectionURI() {
-    return URI.create(cluster.stripeUri);
+    return URI.create(cluster.getStripeUri());
   }
 
   @Override
   public String[] getClusterHostPorts() {
-    return cluster.stripeUri.substring("terracotta://".length()).split(",");
+    return cluster.getStripeUri().substring("terracotta://".length()).split(",");
   }
 
   @Override
@@ -250,57 +339,39 @@ class BasicExternalCluster extends Cluster {
     return new IClusterControl() {
       @Override
       public void waitForActive() throws Exception {
-        cluster.stripeControl.waitForActive();
+        cluster.getStripeControl().waitForActive();
       }
 
       @Override
       public void waitForRunningPassivesInStandby() throws Exception {
-        cluster.stripeControl.waitForRunningPassivesInStandby();
-      }
-
-      @Override
-      public void startOneServerWithConsistency() throws Exception {
-        cluster.stripeControl.startOneServerWithConsistency();
+        cluster.getStripeControl().waitForRunningPassivesInStandby();
       }
 
       @Override
       public void startOneServer() throws Exception {
-        cluster.stripeControl.startOneServer();
+        cluster.getStripeControl().startOneServer();
       }
 
       @Override
       public void startAllServers() throws Exception {
-        cluster.stripeControl.startAllServers();
-      }
-
-      @Override
-      public void startAllServersWithConsistency() throws Exception {
-        cluster.stripeControl.startAllServersWithConsistency();
+        cluster.getStripeControl().startAllServers();
       }
 
       @Override
       public void terminateActive() throws Exception {
-        cluster.stripeControl.terminateActive();
+        cluster.getStripeControl().terminateActive();
       }
 
       @Override
       public void terminateOnePassive() throws Exception {
-        cluster.stripeControl.terminateOnePassive();
+        cluster.getStripeControl().terminateOnePassive();
       }
 
       @Override
       public void terminateAllServers() throws Exception {
-        cluster.stripeControl.terminateAllServers();
+        cluster.getStripeControl().terminateAllServers();
       }
     };
-  }
-
-  private static List<String> convertToStringPaths(List<File> serverJars) {
-    List<String> l = new ArrayList<>();
-    for (File f : serverJars) {
-      l.add(f.getAbsolutePath());
-    }
-    return l;
   }
 
   private synchronized void setSafeForRun(boolean isSafe) {
@@ -328,15 +399,15 @@ class BasicExternalCluster extends Cluster {
   private synchronized boolean checkSafe() {
     return this.isSafe;
   }
-  
+
   public boolean checkForFailure() throws GalvanFailureException {
     return stateManager.checkDidPass();
   }
-  
+
   public void waitForFinish() throws GalvanFailureException {
     stateManager.waitForFinish();
   }
-  
+
   public void failTestOnServerCrash(boolean value) throws GalvanFailureException {
     interlock.ignoreServerCrashes(value);
   }

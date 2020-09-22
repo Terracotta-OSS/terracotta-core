@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
@@ -29,7 +30,9 @@ import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ManagedEntity.LifecycleListener;
+import com.tc.objectserver.entity.CreateMessage;
 import com.tc.objectserver.entity.DestroyMessage;
+import com.tc.objectserver.entity.ReconfigureMessage;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
 import org.terracotta.entity.EntityMessage;
@@ -43,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.exception.EntityException;
 
 /**
  * Implements the IEntityMessenger interface by maintaining a "fake" EntityDescriptor (as there is no actual reference from
@@ -84,6 +86,16 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
   @Override
   public void destroySelf() {
     this.messageSink.addToSink(new DestroyMessage(lifecycleDescriptor));
+  }
+
+  @Override
+  public void create(String type, String name, long version, byte[] configuration) {
+    this.messageSink.addToSink(new CreateMessage(type, name, version, configuration));
+  }
+
+  @Override
+  public void reconfigureSelf(byte[] configuration) {
+    this.messageSink.addToSink(new ReconfigureMessage(lifecycleDescriptor, configuration));
   }
 
   @Override
@@ -242,7 +254,7 @@ public class EntityMessengerService<M extends EntityMessage, R extends EntityRes
       });
     }
     
-    public Consumer<EntityException> getExceptionHandler() {
+    public Consumer<ServerException> getExceptionHandler() {
       return response == null ? null : (exception)->this.response.accept(new MessageResponse() {
         @Override
         public boolean wasExceptionThrown() {

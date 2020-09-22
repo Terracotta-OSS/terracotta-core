@@ -18,7 +18,11 @@
  */
 package com.tc.classloader;
 
+import com.tc.util.ZipBuilder;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import org.junit.After;
@@ -26,15 +30,13 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import static org.junit.Assert.*;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
-
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -67,25 +69,34 @@ public class ComponentURLClassLoaderTest {
   
   @Test
   public void testCommonComponent() throws Exception {
-    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, this.getClass().getClassLoader(), new AnnotationBasedCommonComponentChecker());
+    CommonComponentChecker checker = mock(CommonComponentChecker.class);
+    when(checker.check(any(Class.class))).then(a->{
+      return ((Class)a.getArgument(0)).getName().endsWith("CommonComponentClass");
+    });
+    StrictURLClassLoader strict = new StrictURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, null, checker, true);
+    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, strict, checker);
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
-    assertEquals(commonClass.getClassLoader(), this.getClass().getClassLoader());
+    assertEquals(commonClass.getClassLoader(), strict);
     Class<?> specificClass = loader.loadClass("com.tc.classloader.SpecificComponentClass");
     assertEquals(specificClass.getClassLoader(), loader);
   }
   
-  @Test 
+  @Test @Ignore("test is no longer relevant")
   public void testClassCaching() throws Exception {
-    ExposedClassLoader parent = Mockito.spy(new ExposedClassLoader(new URL[0], this.getClass().getClassLoader()));
-    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, parent, new AnnotationBasedCommonComponentChecker());
+    CommonComponentChecker checker = mock(CommonComponentChecker.class);
+    when(checker.check(any(Class.class))).then(a->{
+      return ((Class)a.getArgument(0)).getName().endsWith("CommonComponentClass");
+    });
+    StrictURLClassLoader strict = new StrictURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, null, checker, true);
+    ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, strict, checker);
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
     assertTrue(commonClass == loader.loadClass("com.tc.classloader.CommonComponentClass"));
-//  should happen twice because the class is common
-    verify(parent, times(2)).loadClass(eq("com.tc.classloader.CommonComponentClass"), anyBoolean());
+
+    assertEquals(commonClass.getClassLoader(), strict);
     Class<?> specificClass = loader.loadClass("com.tc.classloader.SpecificComponentClass");
     assertTrue(specificClass == loader.loadClass("com.tc.classloader.SpecificComponentClass"));
-//  should happen once because the class is specific and should be a loaded class and not hit the parent the second time
-    verify(parent).loadClass(eq("com.tc.classloader.SpecificComponentClass"), anyBoolean());
+
+    assertEquals(specificClass.getClassLoader(), loader);
   }
   
   private static class ExposedClassLoader extends URLClassLoader {
@@ -99,4 +110,27 @@ public class ComponentURLClassLoaderTest {
       return super.loadClass(name, resolve);
     }
   }
+
+
+   private File writeZip(File api, String...classes) throws IOException {
+     ZipBuilder builder = new ZipBuilder(api, true);
+     for (String className : classes) {
+       className = className.replace('.', '/');
+       builder.putEntry(className + ".class", resourceToBytes(className + ".class"));
+     }
+     builder.finish();
+     return api;
+   }
+
+   private byte[] resourceToBytes(String loc) throws IOException {
+     ByteArrayOutputStream fos = new ByteArrayOutputStream();
+     InputStream implb = getClass().getClassLoader().getResourceAsStream(loc);
+     int check = implb.read();
+     while (check >= 0) {
+       fos.write(check);
+       check = implb.read();
+     }
+     fos.close();
+     return fos.toByteArray();
+   }
 }

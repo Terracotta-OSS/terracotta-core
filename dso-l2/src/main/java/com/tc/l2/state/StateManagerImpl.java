@@ -38,14 +38,15 @@ import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import com.tc.objectserver.impl.Topology;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.util.Arrays;
+
 import java.util.EnumSet;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,7 @@ public class StateManagerImpl implements StateManager {
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final ElectionManagerImpl        electionMgr;
   private final ConsistencyManager     availabilityMgr;
+  private final TopologyManager topologyManager;
   private final StageController stateChangeSink;
   private final ManagementTopologyEventCollector eventCollector;
   private final Sink<ElectionContext> electionSink;
@@ -77,26 +79,21 @@ public class StateManagerImpl implements StateManager {
   private final ServerMode               startState;
   private final ElectionGate                      elections  = new ElectionGate();
 
-  // Known servers from previous election
-  Set<NodeID> prevKnownServers = new HashSet<>();
-
-  // Known servers from current election
-  Set<NodeID> currKnownServers = new HashSet<>();
-  
-  Enrollment verification = null;
+  private Enrollment verification = null;
 
   public StateManagerImpl(Logger consoleLogger, GroupManager<AbstractGroupMessage> groupManager,
-                          StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr, 
+                          StageController controller, ManagementTopologyEventCollector eventCollector, StageManager mgr,
                           int expectedServers, int electionTimeInSec, WeightGeneratorFactory weightFactory,
-                          ConsistencyManager availabilityMgr, 
-                          ClusterStatePersistor clusterStatePersistor) {
+                          ConsistencyManager availabilityMgr,
+                          ClusterStatePersistor clusterStatePersistor, TopologyManager topologyManager) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = controller;
     this.eventCollector = eventCollector;
     this.weightsFactory = weightFactory;
     this.availabilityMgr = availabilityMgr;
-    this.electionMgr = new ElectionManagerImpl(groupManager, expectedServers, electionTimeInSec);
+    this.topologyManager = topologyManager;
+    this.electionMgr = new ElectionManagerImpl(groupManager, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
     this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
@@ -124,11 +121,8 @@ public class StateManagerImpl implements StateManager {
   
   private boolean electionStarted() {
     boolean isElectionStarted = elections.electionStarted();
-    if(isElectionStarted) {
+    if (isElectionStarted) {
       synchronized(this) {
-        prevKnownServers.clear();
-        prevKnownServers.addAll(currKnownServers);
-        currKnownServers.clear();
         verification = createVerificationEnrollment();
       }
     }
@@ -210,19 +204,23 @@ public class StateManagerImpl implements StateManager {
     if (!electionStarted()) {
       return;
     }
+
+    // This topology will be used throughout the election process
+    Topology lockedTopology = this.topologyManager.getTopology();
+
     NodeID myNodeID = getLocalNodeID();
     // Only new L2 if the DB was empty (no previous state) and the current state is START (as in before any elections
     // concluded)
     boolean isNew = isFreshServer();
     if (getActiveNodeID().isNull()) {
       debugInfo("Running election - isNew: " + isNew);
-      electionSink.addToSink(new ElectionContext(myNodeID, isNew, weightsFactory, state.getState(), (nodeid)-> {
+      electionSink.addToSink(new ElectionContext(myNodeID, lockedTopology.getServers(), isNew, weightsFactory, state.getState(), (nodeid)-> {
         boolean rerun = false;
         if (nodeid == myNodeID) {
           debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
           if (getCurrentMode().canBeActive() && clusterStatePersistor.isDBClean() && 
-              this.availabilityMgr.requestTransition(this.state, nodeid, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
-            moveToActiveState(electionMgr.passiveStandbys());
+              this.availabilityMgr.requestTransition(this.state, nodeid, lockedTopology, ConsistencyManager.Transition.MOVE_TO_ACTIVE)) {
+            moveToActiveState(electionMgr.passiveStandbys(), lockedTopology);
           } else {
             if (!clusterStatePersistor.isDBClean()) {
               logger.info("rerunning election because " + nodeid + " must be synced to an active");
@@ -302,18 +300,18 @@ public class StateManagerImpl implements StateManager {
     NodeID active = src.messageFrom();
     
     electionMgr.reset(active, winningEnrollment);
-    if (availabilityMgr instanceof ConsistencyManagerImpl) {
-      long[] weights = winningEnrollment.getWeights();
-      //  if the weight sizes are the same, we can assume that the generators 
-      //  were the same on both ends.  The last one is the current term of the 
-      //  winning election
-      if (weights.length == weightsFactory.size()) {
-        long term = weights[weights.length -1];
-        if (term > 0) {
-          ((ConsistencyManagerImpl)availabilityMgr).setCurrentTerm(term);
-        }
+    
+    long[] weights = winningEnrollment.getWeights();
+    //  term is always the last weight,  this value should
+    //  not be used, it is currently only for informational
+    //  purposes
+    if (weights.length == weightsFactory.size()) {
+      long term = weights[weights.length -1];
+      if (term > 0 && term < Long.MAX_VALUE) {
+        availabilityMgr.setCurrentTerm(term);
       }
     }
+
     // active is already set 
     if (!getActiveNodeID().isNull()) {
       Assert.assertEquals(getActiveNodeID(), active);
@@ -380,25 +378,17 @@ public class StateManagerImpl implements StateManager {
     return validStates.contains(this.getCurrentMode());
   }
 
-  private void moveToActiveState(Set<NodeID> passives) {
-    refreshKnownServers();
+  private void moveToActiveState(Set<NodeID> passives, Topology topology) {
     ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.START, ServerMode.PASSIVE));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
     for (NodeID peer : passives) {
-      if (!this.availabilityMgr.requestTransition(state, peer, ConsistencyManager.Transition.ADD_PASSIVE)) {
+      if (!this.availabilityMgr.requestTransition(state, peer, topology, ConsistencyManager.Transition.ADD_PASSIVE)) {
         groupManager.zapNode(peer, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, "unable to add passive");
       }
     }
     Enrollment verify = createVerificationEnrollment();
     electionMgr.declareWinner(verify, oldState.getState());
-  }
-  
-  private synchronized void refreshKnownServers() {
-    // we are moving from passive standby to active state with a new election but we need to use previous election
-    // known servers list as they are in sync in with previous active
-    currKnownServers.clear();
-    currKnownServers.addAll(prevKnownServers);
   }
   
   private synchronized ServerMode switchToState(ServerMode newState, Set<ServerMode> validOldStates) throws IllegalStateException {
@@ -451,15 +441,6 @@ public class StateManagerImpl implements StateManager {
   
   private synchronized boolean canStartElection() {
     return state == ServerMode.START || state == ServerMode.PASSIVE;
-  }
-  /**
-   * This will be called just before we start processing resends, so any server joins
-   * after this call will be out of sync with this active, so we need to remove all
-   * servers which are not connected yet
-   */
-  @Override
-  public synchronized void cleanupKnownServers() {
-    currKnownServers.removeIf(node->!groupManager.isNodeConnected(node));
   }
 
   @Override
@@ -516,8 +497,8 @@ public class StateManagerImpl implements StateManager {
   
   private void handleElectionWonMessage(L2StateMessage clusterMsg) {
     debugInfo("Received election_won msg: " + clusterMsg);
-    boolean peerWins = checkIfPeerWinsVerificationElection(clusterMsg);
-    boolean transition = peerWins && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
+    boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
     if (transition) {
       moveToPassiveReady(clusterMsg);
     } else {
@@ -538,8 +519,16 @@ public class StateManagerImpl implements StateManager {
   private boolean checkIfPeerWinsVerificationElection(L2StateMessage clusterMsg) {
     Enrollment winningEnrollment = clusterMsg.getEnrollment();
     Enrollment verify = getVerificationEnrollment();
-    boolean peerWins = (Arrays.equals(winningEnrollment.getWeights(), verify.getWeights())) ||
-            winningEnrollment.wins(verify);
+    int len = Math.min(winningEnrollment.getWeights().length, verify.getWeights().length);
+    // if weights are equal, the default is for the active to continue as active
+    boolean peerWins = !isActiveCoordinator();
+    for (int x=0;x<len;x++) {
+      if (winningEnrollment.getWeights()[x] != verify.getWeights()[x]) {
+        peerWins = false;
+        break;
+      }
+    }
+    peerWins |= winningEnrollment.wins(verify);
     logger.info("verifying election won results isActive:{} remote:{} local:{} remoteWins:{}", isActiveCoordinator(), winningEnrollment, verify, peerWins);
     return peerWins;
   }
@@ -589,7 +578,7 @@ public class StateManagerImpl implements StateManager {
   }
   
   private void verifyActiveDeclarationAndRespond(L2StateMessage clusterMsg) {
-    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg);
+    boolean verify = checkIfPeerWinsVerificationElection(clusterMsg) && !isActiveCoordinator();
     boolean transition = verify && availabilityMgr.requestTransition(state, clusterMsg.getEnrollment().getNodeID(), ConsistencyManager.Transition.CONNECT_TO_ACTIVE);
 
     if (transition) {
@@ -609,9 +598,6 @@ public class StateManagerImpl implements StateManager {
       L2StateMessage response = (L2StateMessage)groupManager.sendToAndWaitForResponse(msg.messageFrom(), abortMsg);
       validatePeerResponseToActiveDelaration(response);
     } else {
-      synchronized (this) {
-        currKnownServers.add(msg.getEnrollment().getNodeID());
-      }
       if (!electionMgr.handleStartElectionRequest(msg, state.getState())) {
 //  another server started an election.  Unclear which server is now active, clear the active and run our own election
         startElectionIfNecessary(ServerID.NULL_ID);
@@ -628,11 +614,6 @@ public class StateManagerImpl implements StateManager {
     AbstractGroupMessage msg = L2StateMessage.createElectionWonAlreadyMessage(verify, state.getState());
     L2StateMessage response = (L2StateMessage) groupManager.sendToAndWaitForResponse(nodeID, msg);
     validatePeerResponseToActiveDelaration(response);
-  }
-
-  //used in testing
-  public synchronized void addKnownServersList(Set<NodeID> nodeIDs) {
-    currKnownServers.addAll(nodeIDs);
   }
 
   private void validatePeerResponseToActiveDelaration(L2StateMessage response) throws GroupException {
@@ -685,7 +666,6 @@ public class StateManagerImpl implements StateManager {
     boolean elect = false;
 
     synchronized (this) {
-      currKnownServers.remove(disconnectedNode);
       if (state == ServerMode.START || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         setActiveNodeID(ServerID.NULL_ID);

@@ -22,10 +22,10 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
 
 import org.slf4j.Logger;
-import org.terracotta.exception.EntityException;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 
 public class ServerClientHandshakeManager {
@@ -68,8 +69,7 @@ public class ServerClientHandshakeManager {
   private final List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
 
   private final Timer                    timer;
-  private final ReconnectTimerTask       reconnectTimerTask;
-  private final long                     reconnectTimeout;
+  private final Supplier<Long>           reconnectTimeoutSupplier;
   private final DSOChannelManager        channelManager;
   private final ConsistencyManager       consistency;
   private final Logger logger;
@@ -78,15 +78,14 @@ public class ServerClientHandshakeManager {
   private final Sink<VoltronEntityMessage> voltron;
 
   public ServerClientHandshakeManager(Logger logger, ConsistencyManager consistency, DSOChannelManager channelManager,
-                                      Timer timer, long reconnectTimeout,Sink<VoltronEntityMessage> voltron,
+                                      Timer timer, Supplier<Long> reconnectTimeoutSupplier, Sink<VoltronEntityMessage> voltron,
                                       Logger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.reconnectTimeout = reconnectTimeout;
+    this.reconnectTimeoutSupplier = reconnectTimeoutSupplier;
     this.timer = timer;
     this.voltron = voltron;
     this.consoleLogger = consoleLogger;
-    this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
     this.consistency = consistency;
   }
 
@@ -108,7 +107,7 @@ public class ServerClientHandshakeManager {
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
-          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName(), handshake.getClientVersion()), false);
+          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName(), handshake.getClientVersion(), handshake.getClientAddress()), false);
       if (canAcceptStats(handshake.getClientVersion())) {
         handshake.getChannel().addAttachment("SendStats", true, true);
       }
@@ -128,7 +127,7 @@ public class ServerClientHandshakeManager {
           EntityDescriptor descriptor = EntityDescriptor.createDescriptorForFetch(referenceContext.getEntityID(), referenceContext.getEntityVersion(), referenceContext.getClientInstanceID());
           try {
             entity = entityManager.getEntity(descriptor);
-          } catch (EntityException e) {
+          } catch (ServerException e) {
             // We don't expect to fail at this point.
             // TODO:  Determine if we have a meaningful way to handle this error.
             throw Assert.failure("Unexpected failure to get entity in handshake", e);
@@ -172,7 +171,7 @@ public class ServerClientHandshakeManager {
   public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
     clientMsg.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
-        new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName(), clientMsg.getClientVersion()), false);
+        new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName(), clientMsg.getClientVersion(), clientMsg.getClientAddress()), false);
     ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
     ack.initialize(Collections.emptySet(), clientID, ProductInfo.getInstance().version());
     ack.send();
@@ -246,17 +245,19 @@ public class ServerClientHandshakeManager {
   }
 
   public void startReconnectWindow() {
-    String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+    long reconnectTimeout = reconnectTimeoutSupplier.get();
+    String message = "Starting reconnect window: " + reconnectTimeout + " ms. Waiting for "
                      + this.existingUnconnectedClients.size() + " clients to connect.";
     if (this.existingUnconnectedClients.size() <= 10) {
       message += " Unconnected Clients - " + this.existingUnconnectedClients;
     }
     this.consoleLogger.info(message);
 
-    if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
-      this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
+    ReconnectTimerTask reconnectTimerTask = new ReconnectTimerTask(this, timer, reconnectTimeout);
+    if (reconnectTimeout < RECONNECT_WARN_INTERVAL) {
+      this.timer.schedule(reconnectTimerTask, reconnectTimeout);
     } else {
-      this.timer.schedule(this.reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
+      this.timer.schedule(reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
     }
   }
 
@@ -283,13 +284,9 @@ public class ServerClientHandshakeManager {
     private final ServerClientHandshakeManager handshakeManager;
     private long                               timeToWait;
 
-    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer) {
+    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer, long timeToWait) {
       this.handshakeManager = handshakeManager;
       this.timer = timer;
-      this.timeToWait = handshakeManager.reconnectTimeout;
-    }
-
-    public void setTimeToWait(long timeToWait) {
       this.timeToWait = timeToWait;
     }
 
@@ -307,8 +304,7 @@ public class ServerClientHandshakeManager {
 
         if (this.timeToWait < RECONNECT_WARN_INTERVAL) {
           cancel();
-          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer);
-          task.setTimeToWait(this.timeToWait);
+          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer, this.timeToWait);
           this.timer.schedule(task, this.timeToWait);
         }
       } else {

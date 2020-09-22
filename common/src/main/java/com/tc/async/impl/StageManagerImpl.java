@@ -24,6 +24,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Stage;
+import com.tc.async.api.StageListener;
 import com.tc.async.api.StageManager;
 import com.tc.logging.DefaultLoggerProvider;
 import com.tc.logging.TCLoggerProvider;
@@ -52,27 +53,40 @@ public class StageManagerImpl implements StageManager {
   private static final long        MONITOR_DELAY = TCPropertiesImpl.getProperties()
                                                      .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
 
-  private final Map<String, Stage<?>>   stages        = new ConcurrentHashMap<String, Stage<?>>();
-  private final Map<String, Class<?>> classVerifications = new ConcurrentHashMap<String, Class<?>>();
+  private final Map<String, Stage<?>>   stages        = new ConcurrentHashMap<>();
+  private final Map<String, Class<?>> classVerifications = new ConcurrentHashMap<>();
   private TCLoggerProvider           loggerProvider;
   private final ThreadGroup          group;
   private String[]                   stageNames    = new String[] {};
   private final QueueFactory queueFactory;
+  private final StageListener listener;
   private volatile boolean           started;
 
   public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
     this.group = threadGroup;
     this.queueFactory = queueFactory;
+    this.listener = new NullStageListener();
 
     if (MONITOR) {
       startMonitor();
     }
   }
 
+  public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory, StageListener listener) {
+    this.loggerProvider = new DefaultLoggerProvider();
+    this.group = threadGroup;
+    this.queueFactory = queueFactory;
+    this.listener = listener;
+
+    if (MONITOR) {
+      startMonitor();
+    }
+  }
+  
   private void startMonitor() {
     final Logger logger = loggerProvider.getLogger(getClass());
-    Thread t = new Thread("SEDA Stage Monitor") {
+    Thread t = new Thread(group, "SEDA Stage Monitor") {
       @Override
       public void run() {
         while (true) {
@@ -116,7 +130,7 @@ public class StageManagerImpl implements StageManager {
 
     int capacity = maxSize >= 0 ? maxSize : Integer.MAX_VALUE;
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
-    Stage<EC> s = new StageImpl<EC>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, capacity, canBeDirect);
+    Stage<EC> s = new StageImpl<>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, listener, capacity, canBeDirect);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;

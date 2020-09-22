@@ -98,8 +98,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   void setVerboseGC(boolean verboseGC);
 
   void gc();
-
-  String getResourceState();
   
   void setPipelineMonitoring(boolean monitor);
   

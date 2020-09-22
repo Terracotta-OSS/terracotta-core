@@ -23,7 +23,6 @@ import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.object.ClientIDProvider;
-import com.tc.object.msg.ClientHandshakeMessageFactory;
 
 
 public interface ClientMessageChannel extends MessageChannel, NetworkLayer, MessageTransportListener, ClientIDProvider, ClientConnectionErrorListener {

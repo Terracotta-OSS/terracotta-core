@@ -18,10 +18,10 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.core.ConnectionInfo;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 
@@ -36,17 +36,17 @@ public class ClientConnectionErrorDetailsTest {
   public void testOnError() {
     ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
     errorDetails.attachCollector();
-    ConnectionInfo connInfo = new ConnectionInfo("localhost",9510);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", 9510);
     Exception exception1 = new IOException("Test Exception1");
-    errorDetails.onError(connInfo, exception1);
+    errorDetails.onError(serverAddress, exception1);
     Exception exception2 = new IOException("Test Exception2");
-    errorDetails.onError(connInfo, exception2);
+    errorDetails.onError(serverAddress, exception2);
 
     Map<String, List<Exception>> retMap = errorDetails.getErrors();
-    retMap.get(connInfo);
+    retMap.get(serverAddress.toString());
     assertNotNull(retMap);
     assertEquals(1,retMap.size());
-    List<Exception> errorList = retMap.get(connInfo.toString());
+    List<Exception> errorList = retMap.get(serverAddress.toString());
     /*
     Stores only the last exeption
      */
@@ -68,26 +68,26 @@ public class ClientConnectionErrorDetailsTest {
   public void testGetError() {
     ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
     errorDetails.attachCollector();
-    ConnectionInfo connInfo1 = new ConnectionInfo("localhost",9510);
+    InetSocketAddress serverAddress1 = InetSocketAddress.createUnresolved("localhost",9510);
     Exception exception1 = new IOException("Test Exception1");
-    errorDetails.onError(connInfo1, exception1);
+    errorDetails.onError(serverAddress1, exception1);
     Exception exception2 = new IOException("Test Exception2");
-    errorDetails.onError(connInfo1, exception2);
+    errorDetails.onError(serverAddress1, exception2);
 
-    ConnectionInfo connInfo2 = new ConnectionInfo("localhost",9710);
+    InetSocketAddress serverAddress2 = InetSocketAddress.createUnresolved("localhost",9710);
     Exception exception3 = new IOException("Test Exception3");
-    errorDetails.onError(connInfo2, exception3);
+    errorDetails.onError(serverAddress2, exception3);
 
     Map<String, List<Exception>> retMap = errorDetails.getErrors();
     assertNotNull(retMap);
     assertEquals(2, retMap.size());
-    List<Exception> exceptionList1 = retMap.get(connInfo1.toString());
+    List<Exception> exceptionList1 = retMap.get(serverAddress1.toString());
 
     assertEquals(1,exceptionList1.size());
     assertFalse(exceptionList1.contains(exception1));
     assertTrue(exceptionList1.contains(exception2));
 
-    List<Exception> exceptionList2 = retMap.get(connInfo2.toString());
+    List<Exception> exceptionList2 = retMap.get(serverAddress2.toString());
 
     assertEquals(1,exceptionList2.size());
     assertTrue(exceptionList2.contains(exception3));
@@ -97,15 +97,15 @@ public class ClientConnectionErrorDetailsTest {
   public void testDetatchCollector() {
     ClientConnectionErrorDetails errorDetails = new ClientConnectionErrorDetails();
     errorDetails.attachCollector();
-    ConnectionInfo connInfo = new ConnectionInfo("localhost",9510);
+    InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost",9510);
     Exception exception1 = new IOException("Test Exception1");
-    errorDetails.onError(connInfo, exception1);
+    errorDetails.onError(serverAddress, exception1);
 
     Map<String, List<Exception>> retMap = errorDetails.getErrors();
-    retMap.get(connInfo);
+    retMap.get(serverAddress);
     assertNotNull(retMap);
     assertEquals(1,retMap.size());
-    List<Exception> errorList = retMap.get(connInfo.toString());
+    List<Exception> errorList = retMap.get(serverAddress.toString());
     assertEquals(1,errorList.size());
 
     errorDetails.removeCollector();

@@ -19,9 +19,11 @@
 
 package com.tc.object;
 
+import org.terracotta.entity.AsyncInvocationBuilder;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvocationBuilder;
+import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
@@ -127,6 +129,99 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
     // We can't create new invocations when the endpoint is closed.
     checkEndpointOpen();
     return new InvocationBuilderImpl();
+  }
+
+  @Override
+  public AsyncInvocationBuilder<M, R> beginAsyncInvoke() {
+    // We can't create new invocations when the endpoint is closed.
+    checkEndpointOpen();
+    return new AsyncInvocationBuilderImpl();
+  }
+
+  private class AsyncInvocationBuilderImpl implements AsyncInvocationBuilder<M, R> {
+    private boolean invoked = false;
+    private M request;
+    private boolean requiresReplication = true;
+    private long time;
+    private TimeUnit unit;
+
+    @Override
+    public AsyncInvocationBuilder<M, R> replicate(boolean requiresReplication) {
+      this.requiresReplication = requiresReplication;
+      return this;
+    }
+
+    @Override
+    public AsyncInvocationBuilder<M, R> message(M request) {
+      checkInvoked();
+      this.request = request;
+      return this;
+    }
+
+    @Override
+    public AsyncInvocationBuilder<M, R> blockEnqueuing(long time, TimeUnit unit) {
+      this.time = time;
+      this.unit = unit;
+      return this;
+    }
+
+    private void checkInvoked() {
+      if (invoked) {
+        throw new IllegalStateException("Already invoked");
+      }
+    }
+
+    @Override
+    public void invoke(InvocationCallback<R> callback) throws RejectedExecutionException {
+      try {
+        checkInvoked();
+        invoked = true;
+        InvokeMonitor<R> monitor = new AsyncInvokeMonitor<>(callback);
+        InFlightMonitor<R> ifm = new InFlightMonitor<>(codec, monitor, null);
+        //TODO make requested acks configurable and only invoke callback methods of specified ones
+        invocationHandler.asyncInvokeAction(entityID, invokeDescriptor, EnumSet.allOf(VoltronEntityMessage.Acks.class), ifm, this.requiresReplication, codec.encodeMessage(request), time, unit);
+      } catch (IllegalStateException | MessageCodecException ex) {
+        callback.failure(ex);
+      }
+    }
+  }
+
+  static class AsyncInvokeMonitor<R extends EntityResponse> implements InvokeMonitor<R>, AckMonitor {
+    private final InvocationCallback<R> callback;
+
+    AsyncInvokeMonitor(InvocationCallback<R> callback) {
+      this.callback = callback;
+    }
+
+    @Override
+    public void ackDelivered(VoltronEntityMessage.Acks ack) {
+      switch (ack) {
+        case SENT:
+          callback.sent();
+          break;
+        case RETIRED:
+          callback.retired();
+          break;
+        case RECEIVED:
+          callback.received();
+          break;
+        case COMPLETED:
+          callback.complete();
+          break;
+        default:
+          callback.failure(new IllegalArgumentException("unknown ack : " + ack));
+      }
+    }
+
+    @Override
+    public void exception(EntityException ee) {
+      callback.failure(ee);
+    }
+
+    @Override
+    public void accept(R r) {
+      callback.result(r);
+    }
   }
 
   private class InvocationBuilderImpl implements InvocationBuilder<M, R> {

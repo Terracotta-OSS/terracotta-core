@@ -29,6 +29,8 @@ public interface ClusterState {
 
   void setNextAvailableChannelID(long next);
 
+  void setStartGlobalMessageID(long next);
+
   void addNewConnection(ConnectionID id);
 
   void setStripeID(String clusterID);
@@ -36,6 +38,8 @@ public interface ClusterState {
   void removeConnection(ConnectionID id);
 
   long getNextAvailableChannelID();
+
+  long getStartGlobalMessageID();
 
   StripeID getStripeID();
 
@@ -50,5 +54,9 @@ public interface ClusterState {
   void setCurrentState(State currentState);
   
   void reportStateToMap(Map<String, Object> state);
+
+  byte[] getConfigSyncData();
+
+  void setConfigSyncData(byte[] configSyncData);
 
 }

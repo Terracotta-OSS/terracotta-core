@@ -28,9 +28,7 @@ import com.tc.l2.state.AvailabilityManagerImpl;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.ClearTextBufferManagerFactory;
-import com.tc.config.ServerConfiguration;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
@@ -39,7 +37,6 @@ import com.tc.services.SingleThreadedTimer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
-import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.monitoring.IMonitoringProducer;
@@ -82,8 +79,10 @@ import com.tc.l2.ha.GenerationWeightGenerator;
 import com.tc.l2.ha.HASettingsChecker;
 import com.tc.l2.ha.InitialStateWeightGenerator;
 import com.tc.l2.ha.RandomWeightGenerator;
+import com.tc.l2.ha.SequenceIDWeightGenerator;
 import com.tc.l2.ha.ServerUptimeWeightGenerator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
+import com.tc.l2.ha.TopologyWeightGenerator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
@@ -95,6 +94,8 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.SyncReplicationActivity;
 import static com.tc.l2.msg.SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE;
+import static java.lang.Math.max;
+
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerImpl;
@@ -112,9 +113,6 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
-import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -153,12 +151,9 @@ import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.NullPlatformStorageServiceProvider;
 import com.tc.objectserver.persistence.NullPlatformStorageProviderConfiguration;
-import com.tc.properties.L1ReconnectConfigImpl;
-import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.server.TCServerMain;
 import com.tc.services.CommunicatorService;
@@ -167,8 +162,6 @@ import com.tc.services.LocalMonitoringProducer;
 import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
-import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
-import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
@@ -201,9 +194,7 @@ import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.text.MapListPrettyPrint;
-import com.tc.util.ProductCapabilities;
-import com.tc.text.PrettyPrinter;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.net.BindException;
 import java.nio.charset.Charset;
 import java.util.EnumSet;
@@ -217,32 +208,39 @@ import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ClientID;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
-import com.tc.net.groups.NullGroupManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.handler.ResponseMessage;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import com.tc.objectserver.core.api.Guardian;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
-import com.terracotta.config.Configuration;
+import com.tc.spi.DiagnosticFormat;
+import com.tc.spi.Guardian;
+import com.tc.spi.NetworkTranslator;
+import com.tc.spi.ProductCapabilities;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ServerConfiguration;
+import java.net.InetSocketAddress;
 
 import java.util.stream.Collectors;
-
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements ServerConnectionValidator {
+public class DistributedObjectServer {
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServer                         server;
   private final ServerBuilder                    serverBuilder;
@@ -250,12 +248,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   private static final Logger logger = LoggerFactory.getLogger(DistributedObjectServer.class);
   private static final Logger consoleLogger = TCLogging.getConsoleLogger();
+  private final TopologyManager topologyManager;
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
   protected NetworkListener                      l1Diagnostics;
   private CommunicationsManager                  communicationsManager;
-  private TCConnectionManager                   connectionManager;
+  private TCConnectionManager                    connectionManager;
   private ServerConfigurationContext             context;
   private CounterManager                         sampledCounterManager;
   private ServerManagementContext                managementContext;
@@ -269,9 +268,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   private final TCThreadGroup                    threadGroup;
   private final SEDA                            seda;
-
-  private ReconnectConfig                        l1ReconnectConfig;
-
+  
   private GroupManager<AbstractGroupMessage> groupCommManager;
   private StripeIDStateManagerImpl               stripeIDStateManager;
 
@@ -279,7 +276,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
-
+  
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
                                  ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
@@ -302,9 +299,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.seda = seda;
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
-    this.timer = new SingleThreadedTimer(null);
+    this.timer = new SingleThreadedTimer(null, threadGroup);
     this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
+    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts());
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -320,6 +318,31 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     try {
       if (pp == null) {
         pp = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(PrettyPrinter.class));
+      }
+    } catch (ServiceException se) {
+      logger.warn("error getting printer for cluster state", se);
+    }
+    try {
+      if (pp == null) {
+        DiagnosticFormat format = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(DiagnosticFormat.class));
+        if (format != null) {
+            pp = new PrettyPrinter() {
+            @Override
+            public PrettyPrinter println(Object o) {
+              format.print(o);
+              return this;
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public String toString() {
+              return format.toString();
+            }
+          };
+        }
       }
     } catch (ServiceException se) {
       logger.warn("error getting printer for cluster state", se);
@@ -356,7 +379,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   public void dumpOnExit() {
     // this is on exit so do not guard
-    TCLogging.getDumpLogger().info(new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
+    String clusterState = new String(getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset());
+    TCLogging.getDumpLogger().info(clusterState);
   }
 
   private void addExtendedConfigState(PrettyPrinter prettyPrinter) {
@@ -375,7 +399,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   public synchronized void start() throws IOException, LocationNotCreatedException, FileNotCreatedException {
-
     threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler());
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
@@ -411,7 +434,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       System.exit(-1);
     }
 
-    String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getBind();
+    String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getHostName();
 
     final InetAddress jmxBind = InetAddress.getByName(bindAddress);
     final AddressChecker addressChecker = new AddressChecker();
@@ -420,7 +443,6 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                              + addressChecker.getAllLocalAddresses()); }
 
     this.tcProperties = TCPropertiesImpl.getProperties();
-    this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     
     TCByteBufferFactory.setPoolingEnabled(tcProperties.getBoolean(TCPropertiesConsts.BYTEBUFFER_POOLING, false));
     TCByteBufferFactory.setPoolingThreadMax(tcProperties.getInt(TCPropertiesConsts.BYTEBUFFER_POOLING_THREAD_MAX, 1024));
@@ -433,15 +455,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // Set up the ServiceRegistry.
     Configuration configuration = this.configSetupManager.getConfiguration();
     PlatformConfiguration platformConfiguration =
-        new PlatformConfigurationImpl(this.configSetupManager.getServerConfiguration(), configuration);
-    serviceRegistry.initialize(platformConfiguration, configuration, Thread.currentThread().getContextClassLoader());
+        new PlatformConfigurationImpl(configSetupManager.getServerConfiguration(), configuration);
+    serviceRegistry.initialize(platformConfiguration, configuration);
     serviceRegistry.registerImplementationProvided(new PlatformServiceProvider(server));
 
     final EntityMessengerProvider messengerProvider = new EntityMessengerProvider();
     this.serviceRegistry.registerImplementationProvided(messengerProvider);
-    
-
-    
+        
     // See if we need to add an in-memory service for IPlatformPersistence.
     if (!this.serviceRegistry.hasUserProvidedServiceProvider(IPlatformPersistence.class)) {
       // In this case, we do still need to provide an implementation of IPlatformPersistence, backed by memory, so that entities can request a service which is as persistent as this server is.
@@ -458,11 +478,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     } catch (UnknownHostException unknown) {
       // ignore
     }
-    final int serverPort = l2DSOConfig.getTsaPort().getValue();
+    final int serverPort = l2DSOConfig.getTsaPort().getPort();
     final ProductInfo pInfo = ProductInfo.getInstance();
-    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getValue(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
     
-    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.serviceRegistry, thisServer, this.timer);
+    final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
     
     // ***** NOTE:  At this point, since we are about to create a subregistry for the platform, the serviceRegistry must be complete!
@@ -512,14 +532,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
-    final boolean useOOOLayer = this.l1ReconnectConfig.getReconnectEnabled();
-    if (useOOOLayer) {
-      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
-                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     this.l1ReconnectConfig);
-    } else {
-      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    }
+    networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
 
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, logger);
 
@@ -539,14 +552,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
                                                                bufferManagerFactory
     );
 
-
-    final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300,
-                                                                                                             true, 0L);
     NullConnectionIDFactoryImpl infoConnections = new NullConnectionIDFactoryImpl();
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(this.configSetupManager.getConfiguration().getPlatformConfiguration());
+        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -559,23 +569,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
 
-    final String dsoBind = l2DSOConfig.getTsaPort().getBind();
+    final String dsoBind = l2DSOConfig.getTsaPort().getHostName();
     this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
-                                                                this.connectionIdFactory, (t)->{
+                                                                this.connectionIdFactory, (MessageTransport t)->{
                                                                   return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(), 
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
-    
-    boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
-    this.l1Diagnostics = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true, infoConnections, () -> {
-      StateManager stateMgr = l2Coordinator.getStateManager();
-      // only provide an active name if this server is not active
-      ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
-      if (enabled && !server1.isNull()) {
-        return server1.getName();
-      }
-      return null;
-    });
+    this.l1Diagnostics = createDiagnosticsListener(dsoBind, serverPort, infoConnections);
     
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
@@ -603,13 +603,19 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     // 4)  InitialStateWeightGenerator - If it gets down to here, give some weight to a persistent server that went down as active
     final InitialStateWeightGenerator initialState = new InitialStateWeightGenerator(persistor.getClusterStatePersistor());
     weightGeneratorFactory.add(initialState);
-    // 5)  ServerUptimeWeightGenerator.
+    // 5)  Topology weight is the number nodes this stripe believes are in the cluster
+    final TopologyWeightGenerator topoWeight = new TopologyWeightGenerator(this.configSetupManager.getConfiguration());
+    weightGeneratorFactory.add(topoWeight);
+    // 6)  SequenceID weight is the number of replication activities handled by this passive server
+    final SequenceIDWeightGenerator sequenceWeight = new SequenceIDWeightGenerator();
+    weightGeneratorFactory.add(sequenceWeight);
+    // 7)  ServerUptimeWeightGenerator.
     final ServerUptimeWeightGenerator serverUptimeWeightGenerator = new ServerUptimeWeightGenerator(availableMode);
     weightGeneratorFactory.add(serverUptimeWeightGenerator);
-    // 6)  RandomWeightGenerator.
+    // 8)  RandomWeightGenerator.
     final RandomWeightGenerator randomWeightGenerator = new RandomWeightGenerator(new SecureRandom(), availableMode);
     weightGeneratorFactory.add(randomWeightGenerator);
-    // 7)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
+    // 9)  ConsistencyGenerationGeneration.  (not currently used, only for information sharing)
     final GenerationWeightGenerator generationWeightGenerator = new GenerationWeightGenerator(consistencyMgr);
     weightGeneratorFactory.add(generationWeightGenerator);
     // -We can now install the generator as it is built.
@@ -622,19 +628,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     // Note that the monitoring service interface can be null if there is no monitoring support loaded into the server.
     IMonitoringProducer serviceInterface = null;
+
     try {
-      serviceInterface = platformServiceRegistry.getService(new ServiceConfiguration<IMonitoringProducer>(){
-        @Override
-        public Class<IMonitoringProducer> getServiceType() {
-          return IMonitoringProducer.class;
-        }});
-    } catch (ServiceException e) {
+      serviceInterface = platformServiceRegistry.getService(new BasicServiceConfiguration<>(IMonitoringProducer.class));
+    } catch (ServiceException multi) {
       Assert.fail("Multiple IMonitoringProducer implementations found!");
     }
-
-    long reconnectTimeout = l2DSOConfig.getClientReconnectWindow();
-    logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
-    reconnectTimeout *= 1000;
 
     boolean USE_DIRECT = !tcProperties.getBoolean(TCPropertiesConsts.L2_SEDA_STAGE_DISABLE_DIRECT_SINKS, false);
     if (!USE_DIRECT) {
@@ -647,7 +646,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
-    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager, () -> l2Coordinator.getStateManager().cleanupKnownServers());
+    final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager);
     stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT).setSpinningCount(1000);
     stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize, false);
 //  add the server -> client communicator service
@@ -663,14 +662,10 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     messengerProvider.setMessageSink(fast.getSink());
     entityManager.setMessageSink(fast.getSink());    
             
-    this.groupCommManager = (knownPeers == 0) ? new NullGroupManager(thisServerNodeID) : this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
+    this.groupCommManager = this.serverBuilder.createGroupCommManager(this.configSetupManager, stageManager,
                                                                       this.thisServerNodeID,
                                                                       this.stripeIDStateManager, this.globalWeightGeneratorFactory,
-                                                                      bufferManagerFactory);
-    
-    if (knownPeers == 0) {
-      Assert.assertTrue(this.groupCommManager instanceof NullGroupManager);
-    }
+                                                                      bufferManagerFactory, this.topologyManager);
         
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
@@ -690,18 +685,19 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     haChecker.validateHealthCheckSettingsForHighAvailability();
 
     StateManager state = new StateManagerImpl(DistributedObjectServer.consoleLogger, this.groupCommManager, 
-        createStageController(processTransactionHandler, knownPeers > 0), eventCollector, stageManager, 
+        createStageController(processTransactionHandler), eventCollector, stageManager,
         configSetupManager.getGroupConfiguration().getMembers().length,
         configSetupManager.getGroupConfiguration().getElectionTimeInSecs(),
-        this.globalWeightGeneratorFactory, consistencyMgr, 
-        this.persistor.getClusterStatePersistor());
+        this.globalWeightGeneratorFactory, consistencyMgr,
+        this.persistor.getClusterStatePersistor(), this.topologyManager);
     
     // And the stage for handling their response batching/serialization.
     Stage<Runnable> replicationResponseStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE, Runnable.class, 
         new GenericHandler<>(), 1, maxStageSize);
 //  routing for passive to receive replication    
     ReplicatedTransactionHandler replicatedTransactionHandler = new ReplicatedTransactionHandler(state, replicationResponseStage, this.persistor, entityManager, groupCommManager);
-    // This requires both the stage for handling the replication/sync messages.
+    sequenceWeight.setReplicatedTransactionHandler(replicatedTransactionHandler);
+// This requires both the stage for handling the replication/sync messages.
     Stage<ReplicationMessage> replicationStage = stageManager.createStage(ServerConfigurationContext.PASSIVE_REPLICATION_STAGE, ReplicationMessage.class, 
         replicatedTransactionHandler.getEventHandler(), 1, maxStageSize);
     
@@ -722,12 +718,13 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
     connectServerStateToReplicatedState(monitoringShimService, state, clientEntityStateManager, l2Coordinator.getReplicatedClusterStateManager());
 // setup replication    
-    final Sink<ReplicationSendingAction> replicationSenderStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE, ReplicationSendingAction.class, new GenericHandler<ReplicationSendingAction>(), knownPeers, maxStageSize).getSink() :
-            (context) -> {throw new AssertionError("no messages to replication");};
+    final Sink<ReplicationSendingAction> replicationSenderStage =
+        stageManager.createStage(ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+                                 ReplicationSendingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
     ReplicationSender replicationSender = new ReplicationSender(replicationSenderStage, groupCommManager);
-    final Sink<ReplicationReceivingAction> replicationReceivingStage = knownPeers > 0 ? stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE, ReplicationReceivingAction.class, new GenericHandler<>(), knownPeers, maxStageSize).getSink() :
-            (context) -> {throw new AssertionError("no messages to replication");};
-    
+    final Sink<ReplicationReceivingAction> replicationReceivingStage =
+        stageManager.createStage(ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
+                                 ReplicationReceivingAction.class, new GenericHandler<>(), max(3, knownPeers), maxStageSize).getSink();
     final ActiveToPassiveReplication passives = new ActiveToPassiveReplication(consistencyMgr, processTransactionHandler, this.persistor.getEntityPersistor(), replicationSender, replicationReceivingStage, this.getGroupManager());
     processor.setReplication(passives); 
 
@@ -777,19 +774,16 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     this.groupCommManager.routeMessages(ReplicationMessageAck.class, replicationStageAck.getSink());
     Sink<PlatformInfoRequest> info = createPlatformInformationStages(stageManager, maxStageSize, monitoringShimService);
     dispatchHandler.addListener(connectPassiveEvents(info, monitoringShimService));
-    
 
     final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                                 LoggerFactory
-                                                                                                     .getLogger(ServerClientHandshakeManager.class),
-                                                                                                consistencyMgr,  
-                                                                                                channelManager,
-                                                                                                 new Timer(
-                                                                                                           "Reconnect timer",
-                                                                                                           true),
-                                                                                                 reconnectTimeout,
-                                                                                                 fast.getSink(),
-                                                                                                 consoleLogger);
+        LoggerFactory.getLogger(ServerClientHandshakeManager.class),
+        consistencyMgr,
+        channelManager,
+        new Timer("Reconnect timer", true),
+        () -> l2DSOConfig.getClientReconnectWindow() * 1000L, //need to pass reconnect window as milliseconds
+        fast.getSink(),
+        consoleLogger
+    );
     
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
@@ -814,7 +808,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     setLoggerOnExit();
   }
 
-  private static ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
+  private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
                                                              int knownPeers,
                                                              int voteCount) {
     // start the server in diagnostic mode if the configuration is not complete
@@ -829,8 +823,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        (voteCount < 0 || knownPeers == 0) ?
-            new AvailabilityManagerImpl() : new ConsistencyManagerImpl(knownPeers, voteCount)
+        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() :
+            new ConsistencyManagerImpl(this.topologyManager, voteCount)
     );
   }
 
@@ -844,6 +838,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         try {
           boolean real = userProvided == null || userProvided.validate(o, p);
           switch (o) {
+            case AUDIT_OP:
             case SERVER_DUMP:
             case SERVER_EXIT:
             case CONNECT_CLIENT:
@@ -875,6 +870,26 @@ public class DistributedObjectServer implements ServerConnectionValidator {
       bufferManagerFactory = new ClearTextBufferManagerFactory();
     }
     return bufferManagerFactory;
+  }
+  
+  private NetworkListener createDiagnosticsListener(String host, int port, ConnectionIDFactory idFactoryForInfoConnections) throws UnknownHostException {
+    boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
+    NetworkTranslator translator = null;
+    try {
+      translator = this.serviceRegistry.subRegistry(0).getService(new BasicServiceConfiguration<>(NetworkTranslator.class));
+    } catch (ServiceException se) {
+      logger.warn("error getting printer for cluster state", se);
+    }
+    NetworkTranslator finalTranslator = translator == null ? (src,redirect)->redirect : translator;
+    return this.communicationsManager.createListener(new TCSocketAddress(host, port), true, idFactoryForInfoConnections, (final InetSocketAddress srcOfRequest) -> {
+      StateManager stateMgr = l2Coordinator.getStateManager();
+      // only provide an active name if this server is not active
+      ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
+      if (enabled && !server1.isNull()) {
+        return finalTranslator.redirectTo(srcOfRequest, server1.getName());
+      }
+      return null;
+    });
   }
 
   private Sink<PlatformInfoRequest> createPlatformInformationStages(StageManager stageManager, int maxStageSize, LocalMonitoringProducer monitoringSupport) {
@@ -935,7 +950,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
         .getSink().addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), forDestroy));
   }
 
-  private StageController createStageController(ProcessTransactionHandler pth, boolean knownPeers) {
+  private StageController createStageController(ProcessTransactionHandler pth) {
     StageController control = new StageController(this::getContext);
 //  PASSIVE-UNINITIALIZED handle replicate messages right away. 
     // NOTE:  PASSIVE_OUTGOING_RESPONSE_STAGE must be active whenever PASSIVE_REPLICATION_STAGE is.
@@ -962,10 +977,8 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     });
     // these need to be started after startActiveMode is called since replication is only active after permanement 
     // entities are create or existing entities are reloaded
-    if (knownPeers) {
-      control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
-      control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
-    }
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
     return control;
   }
   
@@ -1075,11 +1088,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   }
 
   private ServerID makeServerNodeID(ServerConfiguration l2DSOConfig) {
-    String host = l2DSOConfig.getGroupPort().getBind();
+    String host = l2DSOConfig.getGroupPort().getHostName();
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2DSOConfig.getHost();
     }
-    final Node node = new Node(host, l2DSOConfig.getTsaPort().getValue());
+    final Node node = new Node(host, l2DSOConfig.getTsaPort().getPort());
     final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
@@ -1174,10 +1187,11 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   /**
    * Since this is accessed via JMX and l1Listener isn't initialed when a secondary is waiting on the lock file, use the
    * config value unless the special value 0 is specified for use in the tests to get a random port.
+   * @return 
    */
   public int getListenPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
-    final int configValue = l2DSOConfig.getTsaPort().getValue();
+    final int configValue = l2DSOConfig.getTsaPort().getPort();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
       try {
@@ -1194,7 +1208,7 @@ public class DistributedObjectServer implements ServerConnectionValidator {
 
   public int getGroupPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
-    final int configValue = l2DSOConfig.getGroupPort().getValue();
+    final int configValue = l2DSOConfig.getGroupPort().getPort();
     if (configValue != 0) { return configValue; }
     return -1;
   }
@@ -1211,13 +1225,12 @@ public class DistributedObjectServer implements ServerConnectionValidator {
     return this.managementContext;
   }
 
-  protected GroupManager<AbstractGroupMessage> getGroupManager() {
+  public GroupManager<AbstractGroupMessage> getGroupManager() {
     return this.groupCommManager;
   }
 
-  @Override
-  public boolean isAlive(String name) {
-    throw new UnsupportedOperationException();
+  public ServerConfigurationManager getConfigSetupManager() {
+    return configSetupManager;
   }
 
   protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, ConsistencyManager cm) {
@@ -1233,5 +1246,4 @@ public class DistributedObjectServer implements ServerConnectionValidator {
   public Persistor getPersistor() {
     return persistor;
   }
-
 }

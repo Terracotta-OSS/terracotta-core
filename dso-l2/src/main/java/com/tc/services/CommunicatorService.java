@@ -23,7 +23,7 @@ import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 
 import java.util.Collection;
 import java.util.Collections;

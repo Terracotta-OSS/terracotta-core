@@ -24,7 +24,6 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.MessageCodecException;
 
-
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
     MessagePayload payload = new MessagePayload(TCByteBufferFactory.getInstance(false, 0), null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
@@ -132,10 +131,14 @@ public class MessagePayload {
     return this.referenceCount;
   }
   
+  public Class<?> getType() {
+    return (message != null) ? message.getClass() : null;
+  }
+  
   public boolean shouldReplicate() {
     return replicate;
   }
-
+  
   @Override
   public String toString() {
     return "MessagePayload{" + "debugId=" + getDebugId() + '}';

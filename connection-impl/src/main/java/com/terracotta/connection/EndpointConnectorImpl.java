@@ -19,6 +19,7 @@
 package com.terracotta.connection;
 
 import org.terracotta.connection.entity.Entity;
+import org.terracotta.entity.EndpointConnector;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;

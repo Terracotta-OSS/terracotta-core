@@ -25,7 +25,7 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvokeMonitor;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
-
+import org.terracotta.exception.EntityException;
 
 
 public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[]>, AckMonitor, AutoCloseable {
@@ -37,6 +37,14 @@ public class InFlightMonitor<R extends EntityResponse> implements Consumer<byte[
     this.monitor = monitor == null ? (r)->{} : monitor;
     this.codec = codec;
     this.executor = executor;
+  }
+
+  public void exception(EntityException ee) {
+    if (executor != null) {
+      executor.execute(()->monitor.exception(ee));
+    } else {
+      monitor.exception(ee);
+    }
   }
 
   @Override

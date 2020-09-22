@@ -33,7 +33,12 @@ public class SEDA {
 
   public SEDA(TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
+    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory(), new StageListener() {
+      @Override
+      public void stageStalled(String name, long delay, int queueDepth) {
+        stageWarning(new StallWarning(name, delay, queueDepth));
+      }
+    });
   }
 
   public StageManager getStageManager() {
@@ -42,5 +47,26 @@ public class SEDA {
 
   protected TCThreadGroup getThreadGroup() {
     return this.threadGroup;
+  }
+  
+  public void stageWarning(Object description) {
+    
+  }
+  
+  private static class StallWarning {
+    private final String name;
+    private final long delay;
+    private final int depth;
+
+    public StallWarning(String name, long delay, int depth) {
+      this.name = name;
+      this.delay = delay;
+      this.depth = depth;
+    }
+
+    @Override
+    public String toString() {
+      return "StallWarning{" + "name=" + name + ", delay=" + delay + ", depth=" + depth + '}';
+    }
   }
 }

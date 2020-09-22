@@ -22,9 +22,8 @@ import org.slf4j.Logger;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 import com.tc.async.api.StageManager;
-import com.tc.management.TCClient;
 import com.tc.net.core.BufferManagerFactory;
-import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.ProductID;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -44,7 +43,6 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.util.ProductID;
 
 import java.util.Map;
 import java.util.Properties;
@@ -54,15 +52,17 @@ public class StandardClientBuilder implements ClientBuilder {
   
   private final Properties connectionProperties;
   private volatile ClientConnectionErrorListener listener;
+  private final BufferManagerFactory buffers;
 
-  public StandardClientBuilder(Properties connectionProperties) {
+  public StandardClientBuilder(Properties connectionProperties, BufferManagerFactory buffers) {
     this.connectionProperties = connectionProperties;
+    this.buffers = buffers;
   }
 
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                          SessionProvider sessionProvider, 
-                                                         int socketConnectTimeout, TCClient client) {
+                                                         int socketConnectTimeout) {
     ClientMessageChannel cmc = commMgr.createClientChannel(getTypeOfClient(), sessionProvider, socketConnectTimeout);
     if (listener != null){
       cmc.addClientConnectionErrorListener(listener);
@@ -122,7 +122,7 @@ public class StandardClientBuilder implements ClientBuilder {
   }
 
   protected BufferManagerFactory getBufferManagerFactory() {
-    return new ClearTextBufferManagerFactory();
+    return buffers;
   }
 
   @Override

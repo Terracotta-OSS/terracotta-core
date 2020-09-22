@@ -19,9 +19,9 @@
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.text.PrettyPrintable;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.tc.text.PrettyPrintable;
 
 public class ClientHandshakePrettyPrintable implements PrettyPrintable {
 
@@ -46,6 +46,7 @@ public class ClientHandshakePrettyPrintable implements PrettyPrintable {
             hs.put("pid", target.getPid());
             hs.put("uuid", target.getUuid());
             hs.put("version", target.getVersion());
+            hs.put("clientReportedAddress", target.getClientReportedAddress());
             map.put(c.toString(), hs);
           }
         }

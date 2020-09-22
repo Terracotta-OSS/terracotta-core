@@ -21,21 +21,21 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.util.ProductID;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 
@@ -70,8 +70,8 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public NetworkStackID open(ConnectionInfo info) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
-    return open(Collections.singleton(info));
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
+    return open(Collections.singleton(serverAddress));
   }
 
   @Override

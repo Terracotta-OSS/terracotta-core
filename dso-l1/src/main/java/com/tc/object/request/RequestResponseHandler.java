@@ -20,7 +20,6 @@
 package com.tc.object.request;
 
 import com.tc.object.ClientInstanceID;
-import org.terracotta.exception.EntityException;
 import com.tc.object.tx.TransactionID;
 
 
@@ -51,7 +50,7 @@ public interface RequestResponseHandler {
    * exception.  This implies an COMPLETED acknowledgement.  Note that all of our wire-level exceptions are now
    * EntityException instances.
    */
-  void failed(TransactionID id, EntityException e);
+  void failed(TransactionID id, Exception e);
 
   /**
    * Called when the server sends back a response that the message no longer needs to be tracked, at all, and can be retired.

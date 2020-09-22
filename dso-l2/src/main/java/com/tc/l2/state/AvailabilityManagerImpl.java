@@ -20,6 +20,7 @@ package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.NodeID;
+import com.tc.objectserver.impl.Topology;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,8 +28,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class AvailabilityManagerImpl implements ConsistencyManager {
+  
+  public AvailabilityManagerImpl() {
+  }
+  
   @Override
-  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Transition newMode) throws IllegalStateException {
+  public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
     return true;
   }
 
@@ -53,8 +58,13 @@ public class AvailabilityManagerImpl implements ConsistencyManager {
   }
 
   @Override
+  public void setCurrentTerm(long term) {
+  }
+
+  @Override
   public Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory) {
-    return EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+    Enrollment e = EnrollmentFactory.createTrumpEnrollment(lastActive, weightFactory);
+    return e;
   }
 
   @Override

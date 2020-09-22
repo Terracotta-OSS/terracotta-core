@@ -25,6 +25,8 @@ import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +48,8 @@ public class TCWorkerCommManager {
   private final CoreNIOServices[] workerCommThreads;
   private final SetOnceFlag       started            = new SetOnceFlag();
   private final SetOnceFlag       stopped            = new SetOnceFlag();
+  
+  private boolean paused = false;
 
   TCWorkerCommManager(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
@@ -130,4 +134,23 @@ public class TCWorkerCommManager {
   public List<?> getState() {
     return Arrays.stream(workerCommThreads).map(s->s.getState()).collect(Collectors.toList());
   }
+  
+  synchronized void waitDuringPause() throws IOException {
+    while (paused) {
+      try {
+        this.wait();
+      } catch (InterruptedException ie) {
+        throw new InterruptedIOException();
+      }
+    }
+  }
+  
+  public synchronized void pause() {
+    paused = true;
+  }
+  
+  public synchronized void unpause() {
+    paused = false;
+    this.notify();
+  }  
 }

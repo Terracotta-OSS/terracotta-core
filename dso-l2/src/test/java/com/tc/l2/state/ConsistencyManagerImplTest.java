@@ -20,8 +20,11 @@ package com.tc.l2.state;
 
 import com.tc.net.NodeID;
 import com.tc.objectserver.impl.JMXSubsystem;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.util.Assert;
+import org.terracotta.configuration.FailoverBehavior;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import org.junit.After;
@@ -30,15 +33,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static java.util.Arrays.asList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
-import org.terracotta.config.Consistency;
-import org.terracotta.config.FailoverPriority;
-import org.terracotta.config.Servers;
-import org.terracotta.config.TcConfig;
-import org.terracotta.config.Voter;
 
 /**
  *
@@ -73,7 +73,8 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testVoteThreshold() throws Exception {
     String voter = UUID.randomUUID().toString();
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1, 1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
     JMXSubsystem caller = new JMXSubsystem();
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
@@ -101,71 +102,62 @@ public class ConsistencyManagerImplTest {
     Assert.assertTrue(allowed);
     Assert.assertTrue(Boolean.parseBoolean(caller.call(ServerVoterManager.MBEAN_NAME, "deregisterVoter", voter)));
   }
-  
+
   @Test
   public void testVoteConfig() throws Exception {
-    List serverList = mock(List.class);
-    when(serverList.size()).thenReturn(2);
-    Servers servers = mock(Servers.class);
-    when(servers.getServer()).thenReturn(serverList);
-    TcConfig conf = mock(TcConfig.class);
-    when(conf.getServers()).thenReturn(servers);
-    FailoverPriority fail = mock(FailoverPriority.class);
-    String avail = "Availability";
-    when(fail.getAvailability()).thenReturn(avail);
-    when(conf.getFailoverPriority()).thenReturn(fail);
+    List servers = mock(List.class);
+    when(servers.size()).thenReturn(1);
     
-    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0), servers));
+    when(servers.size()).thenReturn(2);
     
-    when(conf.getFailoverPriority()).thenReturn(fail);
-    
-    Consistency c = mock(Consistency.class);
-    Voter voter = mock(Voter.class);
-    when(voter.getCount()).thenReturn(1);
-    
-    when(c.getVoter()).thenReturn(voter);
-    when(fail.getConsistency()).thenReturn(c);
-    when(fail.getAvailability()).thenReturn(null);
-    
-    Assert.assertEquals(1, ConsistencyManager.parseVoteCount(conf));
-    when(voter.getCount()).thenReturn(2);
-    
-    Assert.assertEquals(2, ConsistencyManager.parseVoteCount(conf));
-
+    Assert.assertEquals(1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), servers));    
+    Assert.assertEquals(2, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 2), servers));
   }
   
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(1, 1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
-    Assert.assertFalse(granted);
+    Assert.assertTrue(granted);
     Assert.assertFalse(impl.isVoting());
     Assert.assertFalse(impl.isBlocked());
     Assert.assertEquals(cterm, impl.getCurrentTerm());
   }
 
   @Test
+  public void testAddClientDoesntVote() throws Exception {
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
+    long cterm = impl.getCurrentTerm();
+    boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
+    Assert.assertTrue(granted);
+    Assert.assertFalse(impl.isVoting());
+    Assert.assertFalse(impl.isBlocked());
+    Assert.assertEquals(cterm, impl.getCurrentTerm());
+    granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.REMOVE_PASSIVE);
+    Assert.assertFalse(granted);
+    Assert.assertTrue(impl.isVoting());
+    Assert.assertTrue(impl.isBlocked());
+    granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
+    Assert.assertFalse(granted);
+  }
+
+  @Test
   public void testVoteConfigMandatoryForMultiNode() throws Exception {
     List serverList = mock(List.class);
     when(serverList.size()).thenReturn(2);
-    Servers servers = mock(Servers.class);
-    when(servers.getServer()).thenReturn(serverList);
-    TcConfig conf = mock(TcConfig.class);
-    when(conf.getServers()).thenReturn(servers);
     exit.expectSystemExitWithStatus(-1);
-    ConsistencyManager.parseVoteCount(conf);
+    ConsistencyManager.parseVoteCount(null, serverList);
   }
 
   @Test
   public void testVoteConfigNotMandatoryForSingleNode() throws Exception {
     List serverList = mock(List.class);
     when(serverList.size()).thenReturn(1);
-    Servers servers = mock(Servers.class);
-    when(servers.getServer()).thenReturn(serverList);
-    TcConfig conf = mock(TcConfig.class);
-    when(conf.getServers()).thenReturn(servers);
-    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(conf));
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), serverList));
   }
 
 }

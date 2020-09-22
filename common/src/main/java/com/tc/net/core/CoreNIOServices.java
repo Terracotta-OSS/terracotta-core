@@ -78,7 +78,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
   private final AtomicBoolean                              isSelectedForWeighting = new AtomicBoolean();
   private final List<TCListener>               listeners     = new ArrayList<>();
   private String                               listenerString;
-
+  
   private static enum COMM_THREAD_MODE {
     NIO_READER, NIO_WRITER
   }
@@ -616,7 +616,11 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
           }
           return;
         }
-
+        
+        if (workerCommMgr != null) {
+          workerCommMgr.waitDuringPause();
+        }
+        
         boolean isInterrupted = false;
         // run any pending selector tasks
         while (true) {

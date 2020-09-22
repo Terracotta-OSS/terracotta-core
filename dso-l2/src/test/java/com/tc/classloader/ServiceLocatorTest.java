@@ -1,12 +1,30 @@
 /*
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
+ */
+/*
  * All content copyright (c) 2014 Terracotta, Inc., except as may otherwise
  * be noted in a separate copyright notice. All rights reserved.
  */
 package com.tc.classloader;
 
-import static com.tc.config.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
+import static org.terracotta.configuration.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
-import com.tc.config.Directories;
+import org.terracotta.configuration.Directories;
 import com.tc.util.Assert;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;
@@ -18,6 +36,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -67,8 +86,8 @@ public class ServiceLocatorTest {
      File testApi = writeZip(new File(api, "test.jar"), "com.tc.classloader.TestInterface");
      System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
      
-     ClassLoader testloader = new URLClassLoader(new URL[] {impl.toURI().toURL()}, this.getClass().getClassLoader());
-     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, testloader);
+     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, null);
+     ClassLoader testloader = new StrictURLClassLoader(new URL[] {impl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), true);
      
      FileOutputStream services1 = new FileOutputStream(new File(meta, "com.tc.classloader.TestInterface"));
      services1.write("com.tc.classloader.TestInterfaceImpl".getBytes());
@@ -77,8 +96,7 @@ public class ServiceLocatorTest {
      services2.write("com.tc.classloader.TestInterfaceHandle".getBytes());
      services2.close();
      ComponentURLClassLoader component = new ComponentURLClassLoader(new URL[] {impl.toURI().toURL()}, 
-         apiLoader, 
-         new AnnotationOrDirectoryStrategyChecker());
+         testloader, new AnnotationOrDirectoryStrategyChecker());
      Class<?> interf = component.loadClass("com.tc.classloader.TestInterface");
      Class<?> interi = component.loadClass("com.tc.classloader.TestInterfaceImpl");
      Assert.assertTrue(interf.getClassLoader() instanceof ApiClassLoader);
@@ -90,6 +108,38 @@ public class ServiceLocatorTest {
      for (Class<? extends Runnable> r : list) {
        r.newInstance().run();
      }
+   }
+
+   @Test
+   public void testStrictMode() throws Exception {
+     File f = folder.newFolder();
+     File impl = new File(f, Directories.SERVER_PLUGIN_LIB_DIR);
+     impl.mkdirs();
+     File api = new File(f, Directories.SERVER_PLUGIN_API_DIR);
+     api.mkdirs();
+     File overload = writeZip(new File(impl, "overload.jar"), "com.tc.classloader.OverloadTestInterfaceImpl");
+     File testImpl = writeZip(new File(impl, "impl.jar"), "com.tc.classloader.TestInterfaceImpl", "com.tc.classloader.TestInterfaceHandle");
+     File testApi = writeZip(new File(api, "test.jar"), "com.tc.classloader.TestInterface");
+     System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
+
+     ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, null);
+     ClassLoader testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), true);
+     ComponentURLClassLoader component = new ComponentURLClassLoader(new URL[] {overload.toURI().toURL()},
+         testloader,new AnnotationOrDirectoryStrategyChecker());
+     try {
+      Class<?> interf = component.loadClass("com.tc.classloader.OverloadTestInterfaceImpl");
+      Assert.fail("class should not load");
+     } catch (NoClassDefFoundError err) {
+       //
+     }
+     testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), false);
+     component = new ComponentURLClassLoader(new URL[] {overload.toURI().toURL()}, testloader,new AnnotationOrDirectoryStrategyChecker());
+      try {
+        Class<?> interf = component.loadClass("com.tc.classloader.OverloadTestInterfaceImpl");
+        Assert.assertEquals(testloader, interf.getClassLoader());
+      } catch (Error e) {
+        e.printStackTrace();
+      }
    }
    
    @Test
@@ -125,6 +175,37 @@ public class ServiceLocatorTest {
      try {
        Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
        Assert.assertTrue(map.size() == 1);
+     } catch (Throwable t) {
+       t.printStackTrace();
+       throw t;
+     }
+   }
+
+   @Test
+   public void testSingleSourceForServices() throws Exception {
+     File base = folder.newFolder();
+     new File(base, "META-INF/services/").mkdirs();
+     FileOutputStream meta = new FileOutputStream(new File(base, "META-INF/services/com.tc.classloader.TestInterface"));
+     meta.write("com.tc.classloader.TestInterfaceImpl".getBytes());
+     meta.write("\n".getBytes());
+     meta.write("com.tc.classloader.AlternativeTestInterfaceImpl".getBytes());
+     meta.close();
+     new File(base, "com/tc/classloader/").mkdirs();
+     FileOutputStream clazz = new FileOutputStream(new File(base, "com/tc/classloader/TestInterfaceImpl.class"));
+     clazz.write(resourceToBytes("com/tc/classloader/TestInterfaceImpl.class"));
+     clazz.close();
+     clazz = new FileOutputStream(new File(base, "com/tc/classloader/AlternativeTestInterfaceImpl.class"));
+     clazz.write(resourceToBytes("com/tc/classloader/AlternativeTestInterfaceImpl.class"));
+     clazz.close();
+     FileOutputStream impl = new FileOutputStream(new File(base, "com/tc/classloader/TestInterface.class"));
+     impl.write(resourceToBytes("com/tc/classloader/TestInterface.class"));
+     impl.close();
+
+     try {
+       Collection<Class<?>> map = new ServiceLocator(new URLClassLoader(new URL[] {base.toURI().toURL()})).testingCheckUrls("com.tc.classloader.TestInterface");
+       Assert.assertTrue(map.size() == 2);
+       List<ClassLoader> cls = map.stream().map(Class::getClassLoader).collect(Collectors.toList());
+       Assert.assertEquals(cls.get(0), cls.get(1));
      } catch (Throwable t) {
        t.printStackTrace();
        throw t;

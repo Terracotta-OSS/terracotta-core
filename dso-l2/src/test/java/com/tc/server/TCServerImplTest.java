@@ -1,3 +1,21 @@
+/*
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
+ */
 package com.tc.server;
 
 import org.junit.Before;
@@ -5,7 +23,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.rules.ExpectedException;
-import org.terracotta.monitoring.PlatformService.RestartMode;
 
 import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.api.L2Coordinator;
@@ -18,11 +35,15 @@ import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+
 import java.util.Set;
 import javax.management.MBeanServer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.terracotta.server.StopAction.RESTART;
 
 public class TCServerImplTest {
 
@@ -62,6 +83,7 @@ public class TCServerImplTest {
       n.printStackTrace();
       throw n;
     }
+    ServerEnv.setServer(mock(Server.class));
   }
   
   private void setState(ServerMode state) {
@@ -71,68 +93,68 @@ public class TCServerImplTest {
   @Test
   public void testForceStop() {
     expectedSystemExit.expectSystemExitWithStatus(0);
-    tcServer.stop(RestartMode.STOP_ONLY);
+    tcServer.stop();
   }
 
   @Test
   public void testForceRestart() {
     expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
-    tcServer.stop(RestartMode.STOP_AND_RESTART);
+    tcServer.stop(RESTART);
   }
 
   @Test
   public void testStopIfPassive() throws Exception {
     setState(ServerMode.PASSIVE);
     expectedSystemExit.expectSystemExitWithStatus(0);
-    tcServer.stopIfPassive(RestartMode.STOP_ONLY);
+    tcServer.stopIfPassive();
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsUninitialized() throws Exception {
     setState(ServerMode.UNINITIALIZED);
     expectedSystemExit.expectSystemExitWithStatus(0);
-    tcServer.stopIfPassive(RestartMode.STOP_ONLY);
+    tcServer.stopIfPassive();
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsSyncing() throws Exception {
     setState(ServerMode.SYNCING);
     expectedSystemExit.expectSystemExitWithStatus(0);
-    tcServer.stopIfPassive(RestartMode.STOP_ONLY);
+    tcServer.stopIfPassive();
   }
 
   @Test
   public void testStopIfPassiveWhenStateIsNotPassive() throws Exception {
     setState(ServerMode.ACTIVE);
     expectedException.expect(UnexpectedStateException.class);
-    tcServer.stopIfPassive(RestartMode.STOP_ONLY);
+    tcServer.stopIfPassive();
   }
 
   @Test
   public void testStopIfPassiveWithRestart() throws Exception {
     setState(ServerMode.PASSIVE);
     expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
-    tcServer.stopIfPassive(RestartMode.STOP_AND_RESTART);
+    tcServer.stopIfPassive(RESTART);
   }
 
   @Test
   public void testStopIfActive() throws Exception {
     setState(ServerMode.ACTIVE);
     expectedSystemExit.expectSystemExitWithStatus(0);
-    tcServer.stopIfActive(RestartMode.STOP_ONLY);
+    tcServer.stopIfActive();
   }
 
   @Test
   public void testStopIfActiveWhenStateIsNotActive() throws Exception {
     setState(ServerMode.PASSIVE);
     expectedException.expect(UnexpectedStateException.class);
-    tcServer.stopIfActive(RestartMode.STOP_ONLY);
+    tcServer.stopIfActive();
   }
 
   @Test
   public void testStopIfActiveWithRestart() throws Exception {
     setState(ServerMode.ACTIVE);
     expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
-    tcServer.stopIfActive(RestartMode.STOP_AND_RESTART);
+    tcServer.stopIfActive(RESTART);
   }
 }

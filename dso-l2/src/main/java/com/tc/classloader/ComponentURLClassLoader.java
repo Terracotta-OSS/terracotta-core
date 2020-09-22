@@ -20,12 +20,16 @@ package com.tc.classloader;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class ComponentURLClassLoader extends URLClassLoader {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ComponentURLClassLoader.class);
   private final CommonComponentChecker commonComponentChecker;
 
   public ComponentURLClassLoader(URL[] urls, ClassLoader parent, CommonComponentChecker commonComponentChecker) {
@@ -35,28 +39,39 @@ public class ComponentURLClassLoader extends URLClassLoader {
 
   @Override
   protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-    Class<?> target = findLoadedClass(name);
-//  if it's already loaded in this loader, return it, decision has already been made about where 
-//  to load in previous iteration
-    if (target == null) {
+    Class<?> target = null;
+
+    try {
       target = super.loadClass(name, resolve);
+    } catch (ClassNotFoundException notfound) {
+      
+    }
 // if the class is not found, ClassNotFoundException will be thrown and that is fine, class is nowhere
-      if (!commonComponentChecker.check(target)) {
+    if (target == null || (!commonComponentChecker.check(target) && target.getClassLoader() != this)) {
 //  not a common class as designated by annotation, see if the class is in this specific class loader for preference if it is
-        try {
+      try {
+        synchronized (getClassLoadingLock(name)) {
           target = findClass(name);
-        } catch (ClassNotFoundException notfound) {
-//  it's not here in this loader, revert back to the common (already set)
+          if (resolve) {
+            this.resolveClass(target);
+          }
         }
-      } else {
-  //  this is a designated common component, return it no matter where it came from 
-  //  (default implementation always uses the parent classloader if the class is available there)
+      } catch (ClassNotFoundException notfound) {
+//  it's not here in this loader, revert back to the common (already set)
       }
+    } else {
+//  this is a designated common component, return it no matter where it came from
+//  (default implementation always uses the parent classloader if the class is available there)
     }
-    
-    if (resolve) {
-      this.resolveClass(target);
+    if (target == null) {
+      throw new ClassNotFoundException(name);
     }
+  
     return target;
+  }
+  
+  @Override
+  public String toString() {
+    return "ComponentURLClassLoader{from:"+ Arrays.toString(this.getURLs()) + '}';
   }
 }

@@ -224,7 +224,7 @@ public class TCPropertiesImpl implements TCProperties {
     InputStream in = null;
     try {
       in = url.openStream();
-      logger.info("Loading default properties from " + propFile);
+      logger.debug("Loading default properties from " + propFile);
       props.load(in);
     } catch (IOException e) {
       throw new AssertionError(e);

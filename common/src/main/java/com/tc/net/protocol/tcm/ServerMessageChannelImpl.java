@@ -21,14 +21,14 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.util.ProductID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
-import java.util.Collection;
+
+import java.net.InetSocketAddress;
 
 /**
  * TODO: Document me
@@ -74,7 +74,7 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public NetworkStackID open(Collection<ConnectionInfo> info) {
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) {
     throw new UnsupportedOperationException("Server channels don't support open()");
   }
 

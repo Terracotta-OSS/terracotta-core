@@ -24,12 +24,11 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.xml.sax.SAXException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -39,10 +38,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class TCVoterMain {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterMain.class);
+  
   private static final String HELP = "h";
   private static final String OVERRIDE = "o";
   protected static final String SERVER = "s";
-  protected static final String CONFIG_FILE = "f";
 
   private static final String ID = UUID.randomUUID().toString();
 
@@ -61,18 +61,13 @@ public class TCVoterMain {
     }
 
     if (commandLine.getOptions().length == 0) {
-      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s or -f provided");
+      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s provided");
     }
-
-    if (commandLine.hasOption(SERVER) && commandLine.hasOption(CONFIG_FILE)) {
-      throw new ConfigurationSetupException("Both -s and -f options provided. Use either one and not both together.");
-    }
+    
 
     Optional<Properties> connectionProps = getConnectionProperties(commandLine);
     if (commandLine.hasOption(SERVER)) {
       processServerArg(connectionProps, commandLine.getOptionValues(SERVER));
-    } else if (commandLine.hasOption(CONFIG_FILE)) {
-      processConfigFileArg(connectionProps, commandLine.getOptionValues(CONFIG_FILE));
     } else if (commandLine.hasOption(OVERRIDE)) {
       String hostPort = commandLine.getOptionValue(OVERRIDE);
       validateHostPort(hostPort);
@@ -94,20 +89,7 @@ public class TCVoterMain {
     }
     startVoter(connectionProps, hostPorts);
   }
-
-  protected void processConfigFileArg(Optional<Properties> connectionProps, String[] stripes) throws ConfigurationSetupException {
-    validateStripesLimit(CONFIG_FILE, stripes);
-
-    TCConfigParserUtil parser = new TCConfigParserUtil();
-    String[] hostPorts;
-    try {
-      hostPorts = parser.parseHostPorts(new FileInputStream(stripes[0]));
-    } catch (SAXException | IOException e) {
-      throw new ConfigurationSetupException(e);
-    }
-    startVoter(connectionProps, hostPorts);
-  }
-
+  
   protected TCVoter getVoter(Optional<Properties> connectionProps) {
     return new TCVoterImpl();
   }
@@ -126,7 +108,6 @@ public class TCVoterMain {
     return new Options()
         .addOption(Option.builder(HELP).desc("Help").hasArg(false).build())
         .addOption(Option.builder(OVERRIDE).desc("Override vote").hasArg().argName("host:port").build())
-        .addOption(Option.builder(CONFIG_FILE).desc("Server configuration file").hasArgs().argName("tc-config path").build())
         .addOption(Option.builder(SERVER).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
   }
 
@@ -145,7 +126,17 @@ public class TCVoterMain {
 
   public static void main(String[] args) throws ConfigurationSetupException, ParseException {
     TCVoterMain main = new TCVoterMain();
+    writePID();
     main.processArgs(args);
   }
 
+  private static void writePID() {
+    try {
+      String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+      long pid = Long.parseLong(processName.split("@")[0]);
+      LOGGER.info("PID is {}", pid);
+    } catch (Throwable t) {
+      LOGGER.warn("Unable to fetch the PID of this process.");
+    }
+  }
 }

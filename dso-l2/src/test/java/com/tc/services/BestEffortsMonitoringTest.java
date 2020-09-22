@@ -29,6 +29,7 @@ import org.terracotta.monitoring.IStripeMonitoring;
 import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.services.LocalMonitoringProducer.ActivePipeWrapper;
+import java.util.Collections;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
@@ -44,7 +45,7 @@ public class BestEffortsMonitoringTest {
   @Before
   public void setUp() throws Exception {
     this.source = new TestTimeSource(1);
-    this.timer = new SingleThreadedTimer(this.source);
+    this.timer = new SingleThreadedTimer(this.source, null);
     this.monitoring = new BestEffortsMonitoring(this.timer);
     this.timer.start();
   }
@@ -236,12 +237,12 @@ public class BestEffortsMonitoringTest {
     TerracottaServiceProviderRegistry globalRegistry = mock(TerracottaServiceProviderRegistry.class);
     if (null != consumer1) {
       InternalServiceRegistry registry1 = mock(InternalServiceRegistry.class);
-      when(registry1.getService(any(ServiceConfiguration.class))).thenReturn(consumer1);
+      when(registry1.getServices(any(ServiceConfiguration.class))).thenReturn(Collections.singleton(consumer1));
       when(globalRegistry.subRegistry(1)).thenReturn(registry1);
     }
     if (null != consumer2) {
       InternalServiceRegistry registry2 = mock(InternalServiceRegistry.class);
-      when(registry2.getService(any(ServiceConfiguration.class))).thenReturn(consumer2);
+      when(registry2.getServices(any(ServiceConfiguration.class))).thenReturn(Collections.singleton(consumer2));
       when(globalRegistry.subRegistry(2)).thenReturn(registry2);
     }
     return globalRegistry;

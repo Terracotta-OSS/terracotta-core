@@ -24,7 +24,6 @@ import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
-import com.tc.text.PrettyPrintable;
 import com.tc.util.Assert;
 import static com.tc.object.StatType.CLIENT_COMPLETE;
 import static com.tc.object.StatType.CLIENT_DECODED;
@@ -41,6 +40,7 @@ import static com.tc.object.StatType.SERVER_ENDINVOKE;
 import static com.tc.object.StatType.SERVER_RECEIVED;
 import static com.tc.object.StatType.SERVER_RETIRED;
 import static com.tc.object.StatType.SERVER_SCHEDULE;
+import com.tc.text.PrettyPrintable;
 import java.util.ArrayList;
 
 import java.util.EnumSet;
@@ -53,8 +53,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -64,10 +62,10 @@ import org.slf4j.LoggerFactory;
  * make unit testing more direct.
  */
 public class InFlightMessage implements PrettyPrintable {
-  private static Logger LOGGER = LoggerFactory.getLogger(InFlightMessage.class);
   private final VoltronEntityMessage message;
   private final EntityID eid;
   private final InFlightMonitor monitor;
+  private final boolean asyncMode;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
    * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
@@ -80,7 +78,7 @@ public class InFlightMessage implements PrettyPrintable {
   private final Set<Thread> waitingThreads;
 
   private boolean isSent;
-  private EntityException exception;
+  private Exception exception;
   private byte[] value;
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
@@ -100,10 +98,11 @@ public class InFlightMessage implements PrettyPrintable {
   
   private long[] serverStats;
   
-  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire) {
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean asyncMode) {
     this.eid = eid;
     this.message = message.get();
     this.monitor = monitor;
+    this.asyncMode = asyncMode;
     Assert.assertNotNull(eid);
     Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
@@ -308,7 +307,7 @@ public class InFlightMessage implements PrettyPrintable {
     timedWait(() -> getCanComplete, timeout, unit);
     this.got = System.nanoTime();
     if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(eid, exception);
+      throw ExceptionUtils.throwEntityException(exception);
     } else {
       if (this.message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
         Assert.assertNotNull(value);
@@ -317,7 +316,7 @@ public class InFlightMessage implements PrettyPrintable {
     }
   }
 
-  public synchronized void setResult(byte[] value, EntityException error) {
+  public synchronized void setResult(byte[] value, Exception error) {
     if (Trace.isTraceEnabled()) {
       trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
     }
@@ -336,23 +335,35 @@ public class InFlightMessage implements PrettyPrintable {
       this.pendingAcks.clear();
       this.exception = error;
       this.getCanComplete = true;
+      if (asyncMode) {
+        handleException(this.exception);
+      }
       notifyAll();
     } else {
       Assert.assertNotNull(value);
       this.value = value;
       if (!this.blockGetOnRetired) {
         this.getCanComplete = true;
+        if (asyncMode) {
+          handleMessage(value);
+        }
         notifyAll();
       }
     }
   }
   
-  public synchronized void handleMessage(byte[] raw) {
+  synchronized void handleException(Exception ee) {
       if (monitor != null) {
-        monitor.accept(raw);
+        monitor.exception(ExceptionUtils.convert(ee));
       } 
   }
-  
+
+  synchronized void handleMessage(byte[] raw) {
+      if (monitor != null) {
+        monitor.accept(raw);
+      }
+  }
+
   private void ackDelivered(VoltronEntityMessage.Acks ack) {
     if (Trace.isTraceEnabled()) {
       trace.log("Received ACK: " + ack);

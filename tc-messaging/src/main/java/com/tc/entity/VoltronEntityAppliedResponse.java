@@ -19,7 +19,7 @@
 
 package com.tc.entity;
 
-import org.terracotta.exception.EntityException;
+import com.tc.exception.ServerException;
 
 import com.tc.object.tx.TransactionID;
 
@@ -27,9 +27,9 @@ import com.tc.object.tx.TransactionID;
 public interface VoltronEntityAppliedResponse extends VoltronEntityResponse {
   // Read-only interface for the receiver.
   byte[] getSuccessValue();
-  EntityException getFailureException();
+  Exception getFailureException();
   
   // Writable interface for the sender.
   public void setSuccess(TransactionID transactionID, byte[] response);
-  public void setFailure(TransactionID transactionID, EntityException exception);  //  implied retire
+  public void setFailure(TransactionID transactionID, ServerException exception);  //  implied retire
 }

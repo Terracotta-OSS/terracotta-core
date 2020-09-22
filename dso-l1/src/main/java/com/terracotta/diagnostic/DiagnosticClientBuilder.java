@@ -20,6 +20,7 @@ package com.terracotta.diagnostic;
 
 
 import com.tc.async.api.StageManager;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -34,7 +35,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.StandardClientBuilder;
-import com.tc.util.ProductID;
+import com.tc.net.core.ProductID;
 import java.util.Map;
 
 import java.util.Properties;
@@ -42,8 +43,8 @@ import java.util.Properties;
 
 public class DiagnosticClientBuilder extends StandardClientBuilder {
 
-  public DiagnosticClientBuilder(Properties connectionProperties) {
-    super(connectionProperties);
+  public DiagnosticClientBuilder(Properties connectionProperties, BufferManagerFactory buffers) {
+    super(connectionProperties, buffers);
   }
 
   @Override

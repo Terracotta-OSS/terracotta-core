@@ -419,11 +419,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       MonitoringEventCreator.setPipelineMonitor(null);
     }
   }
-  
-  @Override
-  public String getResourceState() {
-    return server.getResourceState();
-  }
 
   @Override
   public String getClusterState(boolean shortForm) {

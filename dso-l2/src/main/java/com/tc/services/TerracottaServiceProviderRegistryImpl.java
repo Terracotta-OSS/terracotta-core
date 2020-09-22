@@ -23,14 +23,13 @@ import com.tc.server.TCServerMain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.TcConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.util.Assert;
-import com.terracotta.config.Configuration;
+import org.terracotta.configuration.Configuration;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -40,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -56,7 +56,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   private boolean hasCreatedSubRegistries;
 
   @Override
-  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration, ClassLoader loader) {
+  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration) {
     List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
     if(serviceProviderConfigurationList != null) {
@@ -73,11 +73,11 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
         }
       }
     }
-    loadClasspathBuiltins(loader, platformConfiguration);
+    loadClasspathBuiltins(platformConfiguration);
   }
   
-  private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
-    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class, loader);
+  private void loadClasspathBuiltins(PlatformConfiguration platformConfiguration) {
+    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {
@@ -92,8 +92,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
             }
           }
         }
-      } catch (IllegalAccessException | InstantiationException i) {
-        logger.error("caught exception while initializing service " + clazz, i);
+      } catch (Throwable i) {
+        logger.error("caught exception while initializing service {} from loader {}", clazz, clazz.getClassLoader());
+        throw new Error(i);
       }
     }
   }
@@ -147,6 +148,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   private void registerNewServiceProvider(ServiceProvider service) {
     logger.info("Initializing " + service);
+    Objects.requireNonNull(service);
     serviceProviders.add(service);
   }
 

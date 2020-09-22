@@ -30,7 +30,7 @@ public class TransportHandshakeErrorHandlerForGroupComm implements TransportHand
   public void handleHandshakeError(TransportHandshakeErrorContext e) {
     // print error message on console
     if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) consoleLogger.error(e.getMessage());
-    else consoleLogger.error("Exception: ", e);
+    else consoleLogger.error("Exception: {}", e);
     // top layer at TCGroupMemberDiscoveryStatic to terminate connection
   }
 

@@ -167,14 +167,9 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   @Override
   public boolean overrideVote(String id) {
-    if (votingInProgress) {
-      logger.info("Override vote received from {}", id);
-      this.overrideVote = true;
-      return true;
-    } else {
-      logger.info("Override vote from {} ignored as the server is not in the middle of an election", id);
-      return false;
-    }
+    logger.info("Override vote received from {}", id);
+    this.overrideVote = true;
+    return true;
   }
 
   @Override

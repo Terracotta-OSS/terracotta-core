@@ -23,6 +23,7 @@ import ch.qos.logback.core.ConsoleAppender;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Predicate;
 
 /**
  * An {@link Appender} that simply buffers records (in a bounded queue) until they're needed. This is used for making
@@ -32,25 +33,38 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class BufferingAppender<E> extends ConsoleAppender<E> {
 
   private final Queue<E> buffer;
-  private boolean console;
+  private Predicate<E> printToConsole = e->false;
+  private boolean doBuffer = true;
 
   public BufferingAppender() {
     this.buffer = new ConcurrentLinkedQueue<>();
   }
 
+  public void setConsoleFilter(Predicate<E> filter) {
+    printToConsole = filter;
+  }
+
   public void setConsole(boolean console) {
-    this.console = console;
+    this.printToConsole = e->console;
+  }
+
+  public void disableBuffering() {
+    this.doBuffer = false;
+    this.printToConsole = e->true;
+    sendContentsTo(this);
   }
 
   @Override
   public void doAppend(E eventObject) {
-    if (console) {
+    if (printToConsole.test(eventObject)) {
       super.doAppend(eventObject);
     }
-    buffer.add(eventObject);
+    if (doBuffer) {
+      buffer.add(eventObject);
+    }
   }
 
-  public void sendContentsTo(Appender otherAppender) {
+  public void sendContentsTo(Appender<E> otherAppender) {
     while (true) {
       E event = this.buffer.poll();
       if (event == null) break;

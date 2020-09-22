@@ -19,23 +19,33 @@
 package com.tc.net.groups;
 
 
+import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
+
 public class Node {
+
+  private static final String DELIMITER = ":";
 
   private final String host;
   private final int    port;
   private final int    groupPort;
   private final int    hashCode;
 
+  public Node(String hostPort) {
+    this(getHost(hostPort), getPort(hostPort));
+  }
+
   public Node(String host, int port) {
     this(host, port, 0);
   }
 
   public Node(String host, int port, int groupPort) {
-    checkArgs(host, port);
+    checkArgs(host, port, groupPort);
     this.host = host.trim();
     this.port = port;
     this.groupPort = groupPort;
-    this.hashCode = (host + "-" + port).hashCode();
+    this.hashCode = Objects.hash(host, port);
   }
 
   public String getHost() {
@@ -64,18 +74,36 @@ public class Node {
     return hashCode;
   }
 
-  private static void checkArgs(String host, int port) throws IllegalArgumentException {
+  private static void checkArgs(String host, int port, int groupPort) throws IllegalArgumentException {
     if (host == null || host.trim().length() == 0) { throw new IllegalArgumentException("Invalid host name: " + host); }
     if (port < 0) { throw new IllegalArgumentException("Invalid port number: " + port); }
+    if (groupPort < 0) { throw new IllegalArgumentException("Invalid group port number: " + groupPort); }
   }
 
   @Override
   public String toString() {
-    return "Node{host=" + host + ":" + port + "}";
+    return "Node{host=" + getName() + "}";
   }
 
   public String getServerNodeName() {
-    return (host + ":" + port);
+    return getName();
   }
 
+  private String getName() {
+    return host + DELIMITER + port;
+  }
+
+  private static String getHost(String hostPort) {
+    requireNonNull(hostPort);
+    return hostPort.split(DELIMITER)[0];
+  }
+
+  private static int getPort(String hostPort) {
+    requireNonNull(hostPort);
+    String[] tokens = hostPort.split(DELIMITER);
+    if (tokens.length != 2) {
+      throw new IllegalArgumentException("Unexpected format: " + hostPort + " expected: host" + DELIMITER + "port");
+    }
+    return Integer.parseInt(tokens[1]);
+  }
 }

@@ -22,7 +22,7 @@ import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
-import com.tc.management.TCClient;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -37,7 +37,6 @@ import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 
 import java.util.Map;
@@ -46,7 +45,7 @@ import java.util.Map;
 public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
                                                      SessionProvider sessionProvider,
-                                                     int socketConnectTimeout, TCClient client);
+                                                     int socketConnectTimeout);
 
   CommunicationsManager createCommunicationsManager(MessageMonitor monitor,
                                                     TCMessageRouter messageRouter,

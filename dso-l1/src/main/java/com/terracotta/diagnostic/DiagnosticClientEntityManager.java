@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -61,7 +62,10 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
 
   @Override
   public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
-    Assert.assertEquals(Diagnostics.class.getName(), entity.getClassName());
+    if (!entity.getClassName().equals(com.terracotta.diagnostic.Diagnostics.class.getName())
+            && !entity.getClassName().equals(org.terracotta.connection.Diagnostics.class.getName())) {
+      throw new AssertionError("wrong entity type " + entity.getClassName());
+    }
     Assert.assertEquals("root", entity.getEntityName());
     return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook, null);
   }
@@ -117,7 +121,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
-  public void failed(TransactionID id, EntityException e) {
+  public void failed(TransactionID id, Exception e) {
 
   }
 
@@ -149,10 +153,16 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   @Override
   public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
     DiagnosticMessage network = createMessage(payload);
-    InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false);
+    InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     network.send();
     return message;
+  }
+
+  @Override
+  public void asyncInvokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<Acks> requestedAcks, InFlightMonitor monitor, boolean requiresReplication, byte[] payload, long timeout, TimeUnit unit) throws RejectedExecutionException {
+    // TODO implement?
+    throw new UnsupportedOperationException();
   }
 
   @Override

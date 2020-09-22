@@ -19,6 +19,8 @@
 package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.TCSocketAddress;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -30,14 +32,18 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class ClientHandshakeMessageTest {
   @Test
   public void testMessage() throws Exception {
+    MessageChannel channel = mock(MessageChannel.class);
+    TCSocketAddress socket = new TCSocketAddress(65432);
+    when(channel.getLocalAddress()).thenReturn(socket);
 
     ClientHandshakeMessageImpl msg = new ClientHandshakeMessageImpl(new SessionID(0), mock(MessageMonitor.class),
-                                                                    new TCByteBufferOutputStream(4, 4096, false), null,
+                                                                    new TCByteBufferOutputStream(4, 4096, false), channel,
                                                                     TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
 
     EntityID entity1 = new EntityID("class", "entity 1");
@@ -57,7 +63,7 @@ public class ClientHandshakeMessageTest {
     msg.addReconnectReference(ref2);
     msg.dehydrate();
 
-    ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), null,
+    ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), channel,
                                                                      (TCMessageHeader) msg.getHeader(), msg
                                                                          .getPayload());
     msg2.hydrate();
