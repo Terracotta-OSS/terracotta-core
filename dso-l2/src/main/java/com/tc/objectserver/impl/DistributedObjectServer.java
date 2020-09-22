@@ -514,8 +514,8 @@ public class DistributedObjectServer {
       // create the persistor once again as underlying storage service might have cleared its internal state
       persistor = serverBuilder.createPersistor(platformServiceRegistry);
     }
-    //  if the DB was zapped, reset the flag until the server has finished sync
-    persistor.getClusterStatePersistor().setDBClean(!wasZapped);
+    //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
+    persistor.getClusterStatePersistor().setDBClean(configuration.isPartialConfiguration() || !wasZapped);
 
     new ServerPersistenceVersionChecker().checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
 
