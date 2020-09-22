@@ -159,7 +159,6 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws ServerException {
     // Valid entity versions start at 1.
-    Assert.assertTrue(version > 0);
     EntityServerService service = getVersionCheckedService(id, version);
     snapshotLock.acquireUninterruptibly();
     try {
@@ -279,7 +278,6 @@ public class EntityManagerImpl implements EntityManager {
 
   private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws ServerException {
     // Valid entity versions start at 1.
-    Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
     EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(typeName);
     if (service == null) {
@@ -298,7 +296,7 @@ public class EntityManagerImpl implements EntityManager {
     // We must have a service by now or we would have thrown.
     Assert.assertNotNull(service);
     long serviceVersion = service.getVersion();
-    if (serviceVersion != version) {
+    if (version > 0 && serviceVersion != version) {
         throw ServerException.createEntityVersionMismatch(entityID, serviceVersion + " does not match " + version);
     }
     return service;
