@@ -124,43 +124,52 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   } 
   
   private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
-    long end = (timeout > 0) ? System.nanoTime() + unit.toNanos(timeout) : 0;
-    if (waitUntilRunning) {
-      boolean interrupted = Thread.interrupted();
-      try {
+    boolean interrupted = Thread.interrupted();
+    try {
+      long end = 0;
+      if (timeout < 0) {
+        throw new IllegalArgumentException("timeout must be >= 0");
+      } else if (timeout > 0) {
+        end = System.nanoTime() + unit.toNanos(timeout);
+      }
+
+      if (waitUntilRunning) {
         while (!stateManager.isRunning()) {
           try {
             if (stateManager.isShutdown()) {
               return false;
+            } else if (timeout == 0) {
+              wait();
             } else {
-              long timing = (end > 0) ? end - System.nanoTime() : 0;
-              if (timing < 0) {
-                throw new TimeoutException();
-              } else {
-                wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int) (timing % TimeUnit.MILLISECONDS.toNanos(1)));
-              }
+              long timing = end - System.nanoTime();
+              wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int) (timing % TimeUnit.MILLISECONDS.toNanos(1)));
             }
           } catch (InterruptedException e) {
             interrupted = true;
           }
         }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
+      }
+
+      // stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
+
+      while (stateManager.isRunning()) {
+        try {
+          if (timeout == 0) {
+            requestTickets.acquire();
+          } else if (!requestTickets.tryAcquire(end - System.nanoTime(), TimeUnit.NANOSECONDS)) {
+            throw new TimeoutException();
+          }
+          inFlightMessages.put(msg.getTransactionID(), msg);
+          return true;
+        } catch (InterruptedException e) {
+          interrupted = true;
         }
       }
-    }
-
-    // stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
-    if (stateManager.isRunning()) {
-      if (requestTickets.tryAcquireUninterruptibly(end - System.nanoTime(), TimeUnit.NANOSECONDS)) {
-        inFlightMessages.put(msg.getTransactionID(), msg);
-        return true;
-      } else {
-        throw new TimeoutException();
-      }
-    } else {
       return false;
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
   
@@ -757,26 +766,6 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     public StoppableSemaphore(int permits) {
       super(permits);
       this.permits = permits;
-    }
-
-    public boolean tryAcquireUninterruptibly(long timeout, TimeUnit unit) {
-      boolean interrupted = Thread.interrupted();
-      try {
-        while (true) {
-          long start = System.nanoTime();
-          try {
-            return super.tryAcquire(timeout, unit);
-          } catch (InterruptedException e) {
-            interrupted = true;
-            timeout = unit.toNanos(timeout) - (System.nanoTime() - start);
-            unit = TimeUnit.NANOSECONDS;
-          }
-        }
-      } finally {
-        if (interrupted) {
-          Thread.currentThread().interrupt();
-        }
-      }
     }
 
     private void stop() {
