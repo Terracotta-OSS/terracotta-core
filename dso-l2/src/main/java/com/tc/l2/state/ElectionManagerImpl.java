@@ -32,7 +32,6 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupResponse;
-import com.tc.objectserver.impl.Topology;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.Collections;

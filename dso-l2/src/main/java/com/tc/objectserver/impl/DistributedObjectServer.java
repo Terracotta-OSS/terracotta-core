@@ -802,9 +802,11 @@ public class DistributedObjectServer {
 
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
-
-    startGroupManagers();
-    this.l2Coordinator.start();
+// don't join the group if the configuration is not complete
+    if (!configuration.isPartialConfiguration()) {
+      startGroupManagers();
+      this.l2Coordinator.start();
+    }
     startDiagnosticListener();
     setLoggerOnExit();
   }
