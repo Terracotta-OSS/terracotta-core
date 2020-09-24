@@ -806,6 +806,8 @@ public class DistributedObjectServer {
     if (!configuration.isPartialConfiguration()) {
       startGroupManagers();
       this.l2Coordinator.start();
+    } else {
+      TCLogging.getConsoleLogger().info("Started the server in diagnostic mode");
     }
     startDiagnosticListener();
     setLoggerOnExit();
@@ -1038,19 +1040,12 @@ public class DistributedObjectServer {
 
   public void startGroupManagers() {
     try {
-
         final NodeID myNodeId = this.groupCommManager.join(this.configSetupManager.getGroupConfiguration());
         logger.info("This L2 Node ID = " + myNodeId);
     } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
       throw new RuntimeException(e);
     }
-  }
-
-  @SuppressWarnings("unused")
-  public void reloadConfiguration() throws ConfigurationSetupException {
-    if (false) { throw new ConfigurationSetupException(); }
-    throw new UnsupportedOperationException();
   }
 
   private HashMap<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMappings() {

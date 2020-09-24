@@ -771,9 +771,12 @@ public class ProcessTransactionHandler implements ReconnectListener {
     private void sendFailure(ServerException e) {
       if (!lastSent.attemptSet()) {
         if (heldResult == null) {
-          throw new AssertionError("last message in the series has been sent");
+          // no held result.  failure already sent
+          return;
+        } else {
+          // clear held result
+          heldResult = null;
         }
-        heldResult = null;
       }
       super.failure(e);
       MonitoringEventCreator.finish();
