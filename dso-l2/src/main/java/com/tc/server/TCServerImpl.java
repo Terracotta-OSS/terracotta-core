@@ -413,7 +413,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void reloadConfiguration() throws ConfigurationSetupException {
-    dsoServer.reloadConfiguration();
+
   }
 
   @Override
