@@ -365,7 +365,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     Future<Void> transactionOrderPersistenceFuture = null;
     // if the client is valid and the transaction id is valid, then this came from a real client
     // and the client expects to be able to reconnect
-    ServerEntityRequestImpl request = new ServerEntityRequestImpl(descriptor.getClientInstanceID(), action, sourceNodeID, transactionID, transactionID, requiresReceived);
+    ServerEntityRequestImpl request = new ServerEntityRequestImpl(descriptor.getClientInstanceID(), action, sourceNodeID, transactionID, oldestTransactionOnClient, requiresReceived);
     if (sourceNodeID != null && !sourceNodeID.isNull() && transactionID.isValid()) {
       Assert.assertTrue(oldestTransactionOnClient.isValid());
       // This client still needs transaction order persistence.
