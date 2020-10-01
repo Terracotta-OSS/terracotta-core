@@ -31,18 +31,43 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static org.terracotta.voter.TCVoterMain.Opt.HELP;
+import static org.terracotta.voter.TCVoterMain.Opt.OVERRIDE;
+import static org.terracotta.voter.TCVoterMain.Opt.SERVER;
+
 public class TCVoterMain {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterMain.class);
   
-  private static final String HELP = "h";
-  private static final String OVERRIDE = "o";
-  protected static final String SERVER = "s";
+  enum Opt {
+    HELP("h", "help"),
+    OVERRIDE("o", "override"),
+    SERVER("s", "server");
+
+    String shortName;
+    String longName;
+
+    Opt(String shortName, String longName) {
+      Objects.requireNonNull(shortName);
+      Objects.requireNonNull(longName);
+      this.shortName = shortName;
+      this.longName = longName;
+    }
+
+    public String getShortName() {
+      return shortName;
+    }
+
+    public String getLongName() {
+      return longName;
+    }
+  }
 
   private static final String ID = UUID.randomUUID().toString();
 
@@ -55,8 +80,10 @@ public class TCVoterMain {
       throw new ConfigurationSetupException("Invalid arguments provided: " + commandLine.getArgList());
     }
 
-    if (commandLine.hasOption(HELP)) {
-      new HelpFormatter().printHelp("start-voter.sh[bat]", voterOptions);
+    if (commandLine.hasOption(HELP.getShortName())) {
+      Options options = createHelpOptions();
+      HelpFormatter helpFormatter = new HelpFormatter();
+      helpFormatter.printHelp("start-voter.sh[bat]", options);
       return;
     }
 
@@ -66,10 +93,10 @@ public class TCVoterMain {
     
 
     Optional<Properties> connectionProps = getConnectionProperties(commandLine);
-    if (commandLine.hasOption(SERVER)) {
-      processServerArg(connectionProps, commandLine.getOptionValues(SERVER));
-    } else if (commandLine.hasOption(OVERRIDE)) {
-      String hostPort = commandLine.getOptionValue(OVERRIDE);
+    if (commandLine.hasOption(SERVER.getShortName())) {
+      processServerArg(connectionProps, commandLine.getOptionValues(SERVER.getShortName()));
+    } else if (commandLine.hasOption(OVERRIDE.getShortName())) {
+      String hostPort = commandLine.getOptionValue(OVERRIDE.getShortName());
       validateHostPort(hostPort);
       getVoter(connectionProps).overrideVote(hostPort);
     } else {
@@ -77,12 +104,21 @@ public class TCVoterMain {
     }
   }
 
+  protected Options createHelpOptions() {
+    // creating new options with long name just for display purposes.
+    Options helpOptions = new Options()
+        .addOption(Option.builder(HELP.getLongName()).desc("Help").hasArg(false).build())
+        .addOption(Option.builder(OVERRIDE.getLongName()).desc("Override vote").hasArg().argName("host:port").build())
+        .addOption(Option.builder(SERVER.getLongName()).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
+    return helpOptions;
+  }
+  
   protected Optional<Properties> getConnectionProperties(CommandLine commandLine) {
     return Optional.empty();
   }
 
   protected void processServerArg(Optional<Properties> connectionProps, String[] stripes) throws ConfigurationSetupException {
-    validateStripesLimit(SERVER, stripes);
+    validateStripesLimit(SERVER.getShortName(), stripes);
     String[] hostPorts = stripes[0].split(",");
     for (String hostPort : hostPorts) {
       validateHostPort(hostPort);
@@ -106,9 +142,9 @@ public class TCVoterMain {
 
   protected Options voterOptions() {
     return new Options()
-        .addOption(Option.builder(HELP).desc("Help").hasArg(false).build())
-        .addOption(Option.builder(OVERRIDE).desc("Override vote").hasArg().argName("host:port").build())
-        .addOption(Option.builder(SERVER).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
+        .addOption(Option.builder(HELP.getShortName()).longOpt(HELP.getLongName()).desc("Help").hasArg(false).build())
+        .addOption(Option.builder(OVERRIDE.getShortName()).longOpt(OVERRIDE.getLongName()).desc("Override vote").hasArg().argName("host:port").build())
+        .addOption(Option.builder(SERVER.getShortName()).longOpt(SERVER.getLongName()).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
   }
 
   protected void validateHostPort(String hostPort) throws ConfigurationSetupException {
