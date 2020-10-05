@@ -21,19 +21,110 @@ package com.tc.object;
 import org.terracotta.exception.EntityException;
 
 import com.tc.entity.NetworkVoltronEntityMessage;
+import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage.Acks;
+import com.tc.exception.WrappedEntityException;
+import com.tc.util.Assert;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
+import org.hamcrest.Matchers;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import org.terracotta.exception.ConnectionClosedException;
 
 
 public class InFlightMessageTest extends TestCase {
+  
+  public void testExceptionClose() throws Exception {
+    Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
+    VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
+    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), ()->msg, acks, null, true, false);
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          TimeUnit.SECONDS.sleep(1);
+          inf.setResult(null, new WrappedEntityException(new ConnectionClosedException(true, "test")));
+        } catch (InterruptedException ie) {
+          
+        }
+      }
+    }).start();
+    
+    try {
+      byte[] result = inf.getWithTimeout(5, TimeUnit.SECONDS);
+    } catch (TimeoutException to) {
+      fail();
+    } catch (Exception closed) {
+      System.out.println("expected " + closed.toString());
+    }
+  }
+  
+  public void testUninterruptability() throws Exception {
+    Set<VoltronEntityMessage.Acks> acks = EnumSet.of(VoltronEntityMessage.Acks.RECEIVED);
+    VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
+    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), ()->msg, acks, null, true, false);
+    AtomicInteger interruptCount = new AtomicInteger();
+    CyclicBarrier barrier = new CyclicBarrier(2);
+    Thread t = new Thread(()->{
+      try {
+        barrier.await();
+      } catch (BrokenBarrierException | InterruptedException e) {
+        
+      }
+      inf.waitForAcks();
+    }) {
+      @Override
+      public void interrupt() {
+        int count = interruptCount.incrementAndGet();
+        super.interrupt(); 
+      }
+    };
+    t.start();
+    barrier.await();
+    //  sleep to make sure the thread has progressed to the wait
+    TimeUnit.SECONDS.sleep(1);
+    t.interrupt();
+    inf.sent();
+    inf.received();
+    t.join();
+    assertThat(interruptCount.get(), Matchers.lessThan(3));
+  }
+   
+  public void testExceptionWaitForAcks() throws Exception {
+    Set<VoltronEntityMessage.Acks> acks = EnumSet.allOf(VoltronEntityMessage.Acks.class);
+    VoltronEntityMessage msg = mock(VoltronEntityMessage.class);
+    final InFlightMessage inf = new InFlightMessage(mock(EntityID.class), ()->msg, acks, null, true, false);
+    Thread t = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        inf.waitForAcks();
+      }
+    });
+    
+    t.start();
+    
+    TimeUnit.SECONDS.sleep(1);
+    inf.setResult(null, new WrappedEntityException(new ConnectionClosedException(true, "test")));
+
+    t.join(3000);
+    Assert.assertFalse(t.isAlive());
+  }
+   
   public void testInterruptedGet() {
     // Create the message we will use in the test.
     NetworkVoltronEntityMessage mockedEntityMessage = mock(NetworkVoltronEntityMessage.class);
+    when(mockedEntityMessage.getEntityID()).thenReturn(new EntityID("test","test"));
     // We need to use the interlock message since we want to interrupt only after the get() has been called to ensure that
     // the message interrupt call actually knows which thread to interrupt.
     // While we could interrupt the thread before the blocking call, and it would still behave as if we interrupted it after
@@ -92,7 +183,7 @@ public class InFlightMessageTest extends TestCase {
     private boolean didEnter;
     
     public InterlockMessage(NetworkVoltronEntityMessage message, Set<Acks> acks, boolean shouldBlockGetOnRetire) {
-      super(message, acks, shouldBlockGetOnRetire);
+      super(message.getEntityID(), ()->message, acks, null, shouldBlockGetOnRetire, false);
       this.didEnter = false;
     }
 

@@ -18,64 +18,64 @@
  */
 package com.tc.objectserver.core.impl;
 
-import com.tc.management.RemoteManagement;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
-import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
-import com.tc.objectserver.core.api.GlobalServerStats;
-import com.tc.objectserver.locks.LockManagerMBean;
+import com.tc.objectserver.entity.VoltronMessageSink;
+import com.tc.objectserver.handler.VoltronMessageHandler;
+import com.tc.spi.Guardian;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import com.tc.text.PrettyPrintable;
 
-public class ServerManagementContext {
+public class ServerManagementContext implements PrettyPrintable {
 
   private final DSOChannelManagerMBean        channelMgr;
-  private final GlobalServerStats          serverStats;
   private final ChannelStats                  channelStats;
-  private final LockManagerMBean              lockMgr;
-  private final ObjectInstanceMonitorMBean    instanceMonitor;
   private final ConnectionPolicy              connectionPolicy;
-  private final RemoteManagement              remoteManagement;
+  private final Guardian           guardian;
+  private final VoltronMessageHandler handler;
+  private final VoltronMessageSink msgSink;
 
-  public ServerManagementContext(LockManagerMBean lockMgr, DSOChannelManagerMBean channelMgr,
-                                 GlobalServerStats serverStats, ChannelStats channelStats,
-                                 ObjectInstanceMonitorMBean instanceMonitor,
-                                 ConnectionPolicy connectionPolicy,
-                                 RemoteManagement remoteManagement) {
-    this.lockMgr = lockMgr;
+  public ServerManagementContext(DSOChannelManagerMBean channelMgr,ChannelStats channelStats,
+                                 ConnectionPolicy connectionPolicy, Guardian guard, VoltronMessageHandler handler,
+                                 VoltronMessageSink msgs) {
     this.channelMgr = channelMgr;
-    this.serverStats = serverStats;
     this.channelStats = channelStats;
-    this.instanceMonitor = instanceMonitor;
     this.connectionPolicy = connectionPolicy;
-    this.remoteManagement = remoteManagement;
+    this.guardian = guard;
+    this.handler = handler;
+    this.msgSink = msgs;
   }
 
   public DSOChannelManagerMBean getChannelManager() {
     return this.channelMgr;
   }
 
-  public GlobalServerStats getServerStats() {
-    return this.serverStats;
-  }
-
   public ChannelStats getChannelStats() {
     return this.channelStats;
   }
-
-  public LockManagerMBean getLockManager() {
-    return this.lockMgr;
-  }
-
-  public ObjectInstanceMonitorMBean getInstanceMonitor() {
-    return instanceMonitor;
-  }
-
+  
   public ConnectionPolicy getConnectionPolicy() {
     return this.connectionPolicy;
   }
-
-  public RemoteManagement getRemoteManagement() {
-    return remoteManagement;
+  
+  public Guardian getOperationGuardian() {
+    return this.guardian;
+  }
+  
+  public VoltronMessageHandler getVoltronMessageHandler() {
+    return this.handler;
+  }
+  
+  public VoltronMessageSink getVoltronMessageSink() {
+    return this.msgSink;
   }
 
+  @Override
+  public Map<String, ?> getStateMap() {
+    LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+    map.put("messageHandler", this.handler.getStateMap());
+    return map;
+  }
 }

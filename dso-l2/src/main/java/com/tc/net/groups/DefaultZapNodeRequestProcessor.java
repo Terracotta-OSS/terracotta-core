@@ -18,14 +18,15 @@
  */
 package com.tc.net.groups;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 import com.tc.net.NodeID;
 
 public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
 
-  private final TCLogger logger;
+  private final Logger logger;
 
-  public DefaultZapNodeRequestProcessor(TCLogger logger) {
+  public DefaultZapNodeRequestProcessor(Logger logger) {
     this.logger = logger;
   }
 
@@ -36,7 +37,7 @@ public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
 
   @Override
   public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
-    this.logger.fatal("DefaultZapNodeRequestProcessor : Received Zap Node request from " + nodeID + " type = "
+    this.logger.error("DefaultZapNodeRequestProcessor : Received Zap Node request from " + nodeID + " type = "
                       + zapNodeType + " reason = " + reason);
     System.exit(zapNodeType);
   }

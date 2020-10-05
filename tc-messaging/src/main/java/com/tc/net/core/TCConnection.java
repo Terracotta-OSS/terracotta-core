@@ -25,6 +25,7 @@ import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Map;
 
 /**
  * Common interface for TC network connections
@@ -92,7 +93,7 @@ public interface TCConnection extends NetworkMessageSink {
    * @throws IOException if there is an error connecting to the destination address
    * @throws TCTimeoutException if a timeout occurs
    */
-  public void connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
+  public Socket connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
 
   /**
    * Connect asynchronously to the given destination address
@@ -133,11 +134,6 @@ public interface TCConnection extends NetworkMessageSink {
   public TCSocketAddress getRemoteAddress();
 
   /**
-   * Fair distribution of worker comm threads
-   */
-  public void addWeight(int addWeightBy);
-
-  /**
    * After TC Transport handshake, a connection is said to be Transport Established
    */
   public void setTransportEstablished();
@@ -149,4 +145,6 @@ public interface TCConnection extends NetworkMessageSink {
    * @return true iff the connection as been marked for close but hasn't been closed yet
    */
   boolean isClosePending();
+  
+  Map<String, ?> getState();
 }

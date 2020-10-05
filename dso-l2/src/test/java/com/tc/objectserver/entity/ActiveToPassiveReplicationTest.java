@@ -19,11 +19,10 @@
 package com.tc.objectserver.entity;
 
 import com.tc.async.api.Sink;
-import com.tc.l2.msg.ReplicationEnvelope;
-import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ServerID;
-import com.tc.net.groups.MessageID;
-import com.tc.objectserver.api.ManagedEntity;
+import com.tc.net.groups.GroupManager;
+import com.tc.objectserver.handler.ProcessTransactionHandler;
 import com.tc.objectserver.persistence.EntityPersistor;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -33,12 +32,16 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Matchers;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManager.Transition;
+import com.tc.l2.state.ServerMode;
+import com.tc.net.NodeID;
+import com.tc.object.session.SessionID;
+import java.util.function.Consumer;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 
 public class ActiveToPassiveReplicationTest {
@@ -59,31 +62,25 @@ public class ActiveToPassiveReplicationTest {
   }
   
   @Before
-  @SuppressWarnings("unchecked")
   public void setUp() {
     passive = mock(ServerID.class);
-    Iterable<ManagedEntity> entities = mock(Iterable.class);
-    Sink<ReplicationEnvelope> replicate = mock(Sink.class);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        ((ReplicationEnvelope)invocation.getArguments()[0]).release();
-        return null;
-      }
-    }).when(replicate).addSingleThreaded(Matchers.any());
-    replication = new ActiveToPassiveReplication(Collections.singleton(passive), entities, mock(EntityPersistor.class), replicate);
+    ReplicationSender replicate = mock(ReplicationSender.class);
+    when(replicate.addPassive(any(NodeID.class), any(SessionID.class), anyInt(), any(SyncReplicationActivity.class))).thenReturn(Boolean.TRUE);
+    ConsistencyManager cmgr = mock(ConsistencyManager.class);
+    when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    ProcessTransactionHandler pth = mock(ProcessTransactionHandler.class);
+    when(pth.snapshotEntityList(any(Consumer.class))).thenReturn(Collections.emptyList());
+    replication = new ActiveToPassiveReplication(cmgr, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), mock(GroupManager.class));
   }
   
   @Test
   public void testNodeLeft() throws Exception {
-    replication.enterActiveState();
+    replication.enterActiveState(Collections.emptySet());
     replication.nodeJoined(passive);
-    ReplicationMessage msg = mock(ReplicationMessage.class);
-    MessageID id = new MessageID(1);
-    when(msg.getMessageID()).thenReturn(id);
-    ReplicationEnvelope env = mock(ReplicationEnvelope.class);
-    when(msg.target(Matchers.any(), Matchers.any())).thenReturn(env);
-    ActivePassiveAckWaiter ack = replication.replicateMessage(msg, Collections.singleton(passive));
+    SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    replication.startPassiveSync(passive);
+    ActivePassiveAckWaiter ack = replication.replicateActivity(activity, replication.passives());
     Thread it = new Thread(()->{
       try {
         TimeUnit.MILLISECONDS.sleep(100);
@@ -94,12 +91,16 @@ public class ActiveToPassiveReplicationTest {
       }
     });
     it.start();
-    try {
-      ack.waitForCompleted();
-    } catch (InterruptedException ie) {
-      Assert.fail("test failed");
-    }
+    ack.waitForCompleted();
     Assert.assertTrue(ack.isCompleted());
+    // make sure adding more waiters don't include removed passive
+    SyncReplicationActivity nowait = mock(SyncReplicationActivity.class);
+    when(nowait.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    ActivePassiveAckWaiter ack2 = replication.replicateActivity(nowait, replication.passives());
+    Assert.assertTrue(ack2.isCompleted());
+    replication.finishPassiveSync(10000);
+    Assert.assertTrue(replication.getWaiters().isEmpty());
   }
   
   @After

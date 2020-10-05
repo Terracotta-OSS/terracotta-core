@@ -18,19 +18,19 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.net.protocol.transport.MessageTransportFactory;
-import com.tc.net.protocol.transport.WireProtocolMessageSink;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
+import com.tc.net.core.ProductID;
+import com.tc.text.PrettyPrintable;
+import java.util.function.Predicate;
 
 /**
  * CommsMgr provides Listener and Channel endpoints for exchanging <code>TCMessage</code> type messages
  */
-public interface CommunicationsManager {
+public interface CommunicationsManager extends PrettyPrintable {
 
   static final String COMMSMGR_GROUPS = "L2_L2";
   static final String COMMSMGR_SERVER = "L2_L1";
@@ -49,41 +49,15 @@ public interface CommunicationsManager {
   /**
    * Creates a client message channel to the given host/port.
    * 
-   * @param maxReconnectTries The number of times the channel will attempt to reestablish communications with the server
-   *        if the connection is lost. If n==0, the channel will not attempt to reestablish communications. If n>0, the
-   *        channel will attempt to reestablish communications n times. If n<0 the channel will always try to
-   *        reestablish communications.
-   * @param hostname The hostname to connect to.
-   * @param port The remote port to connect to.
    * @param timeout The maximum time (in milliseconds) to wait for the underlying connection to be established before
    *        giving up.
    */
 
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory, TCMessageFactory msgFactory);
+  public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout);
+    
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
+                                        ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation);
 
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider);
-
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory);
-
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory);
-
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory,
-                                        WireProtocolMessageSink wireProtoMsgSink);
-
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory, boolean reuseAddress);
-
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
+                                        ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider);
 }

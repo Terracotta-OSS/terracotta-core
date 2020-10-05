@@ -20,6 +20,9 @@ package com.tc.util.version;
 
 import junit.framework.TestCase;
 
+/**
+ * Version compatibility check is currently disabled.
+ */
 public class VersionCompatibilityTest extends TestCase {
 
   private VersionCompatibility versionCompatibility;

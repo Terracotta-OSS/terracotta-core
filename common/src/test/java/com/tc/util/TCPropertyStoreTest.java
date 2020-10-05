@@ -54,9 +54,7 @@ public class TCPropertyStoreTest extends TestCase {
   public void testLoad() {
     TCPropertyStore propertyStore = new TCPropertyStore();
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE, propertyStore);
-    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED));
-    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED.toUpperCase()));
-    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_L1RECONNECT_ENABLED.replace("e", "E")));
+    Assert.assertTrue(propertyStore.containsKey(TCPropertiesConsts.L2_ELECTION_TIMEOUT));
   }
 
   public void testTrim() {
@@ -70,6 +68,14 @@ public class TCPropertyStoreTest extends TestCase {
       assertEquals("eck", props.getProperty(key));
     }
   }
+
+  public void testUnset() {
+    TCPropertyStore props = new TCPropertyStore();
+    props.setProperty("a", "b");
+    props.setProperty("a", null);
+    assertNull(props.getProperty("a"));
+  }
+
 
   public void testOrder() {
     TCPropertyStore props = new TCPropertyStore();

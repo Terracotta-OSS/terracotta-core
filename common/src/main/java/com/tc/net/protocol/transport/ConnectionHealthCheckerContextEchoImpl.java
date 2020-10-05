@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 /**
@@ -30,7 +31,7 @@ import java.io.IOException;
 public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthCheckerContext {
   private final MessageTransportBase             transport;
   private final HealthCheckerProbeMessageFactory messageFactory;
-  private final TCLogger                         logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
+  private final Logger logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class);
 
   public ConnectionHealthCheckerContextEchoImpl(MessageTransportBase mtb) {
     this.transport = mtb;
@@ -40,13 +41,13 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
   @Override
   public boolean receiveProbe(HealthCheckerProbeMessage message) {
     if (message.isPing()) {
-      HealthCheckerProbeMessage pingReplyMessage = this.messageFactory.createPingReply(transport.getConnectionId(),
+      HealthCheckerProbeMessage pingReplyMessage = this.messageFactory.createPingReply(transport.getConnectionID(),
                                                                                        transport.getConnection());
       try {
         this.transport.send(pingReplyMessage);
       } catch (IOException ioe) {
         logger.warn("trouble ping", ioe);
-        return false;
+        return true;
       }
       return true;
     } else if (message.isTimeCheck()) {
@@ -70,6 +71,11 @@ public class ConnectionHealthCheckerContextEchoImpl implements ConnectionHealthC
   @Override
   public void refresh() {
     throw new AssertionError("Echo HealthChecker");
+  }
+
+  @Override
+  public void close() {
+
   }
 
 }

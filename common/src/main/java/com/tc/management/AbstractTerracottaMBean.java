@@ -18,9 +18,10 @@
  */
 package com.tc.management;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -44,14 +45,13 @@ import javax.management.StandardMBean;
 public abstract class AbstractTerracottaMBean extends StandardMBean implements NotificationEmitter, TerracottaMBean {
 
   private static final ResourceBundle            DEFAULT_BUNDLE          = getBundleForMBean(TerracottaMBean.class,
-                                                                                             TCLogging
-                                                                                                 .getLogger(TerracottaMBean.class));
+                                                                                             LoggerFactory.getLogger(TerracottaMBean.class));
 
   private static final boolean                   ENABLED                 = TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getBoolean(TCPropertiesConsts.TC_MANAGEMENT_MBEANS_ENABLED);
 
-  private final TCLogger                         logger;
+  private final Logger                         logger;
   private final ResourceBundle                   beanBundle;
   private final boolean                          isNotificationBroadcaster;
 
@@ -70,7 +70,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
   protected AbstractTerracottaMBean(Class<?> mBeanInterface, boolean isNotificationBroadcaster,
                                     boolean isActive) throws NotCompliantMBeanException {
     super(mBeanInterface);
-    this.logger = TCLogging.getLogger(mBeanInterface);
+    this.logger = LoggerFactory.getLogger(mBeanInterface);
     this.beanBundle = getBundleForMBean(mBeanInterface, logger);
     this.isNotificationBroadcaster = isNotificationBroadcaster;
     this.isActive = isActive;
@@ -287,7 +287,7 @@ public abstract class AbstractTerracottaMBean extends StandardMBean implements N
     return bundleDescription;
   }
 
-  private static ResourceBundle getBundleForMBean(Class<?> mBeanInterface, TCLogger logger) {
+  private static ResourceBundle getBundleForMBean(Class<?> mBeanInterface, Logger logger) {
     ResourceBundle bundle = null;
     try {
       bundle = ResourceBundle.getBundle(mBeanInterface.getName(), Locale.getDefault(),

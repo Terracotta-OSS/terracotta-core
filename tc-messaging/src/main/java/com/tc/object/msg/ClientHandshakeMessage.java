@@ -20,15 +20,11 @@ package com.tc.object.msg;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 
 import java.util.Collection;
 
 
 public interface ClientHandshakeMessage extends TCMessage {
-  void addLockContext(ClientServerExchangeLockContext ctxt);
-
-  Collection<ClientServerExchangeLockContext> getLockContexts();
   
   void setUUID(String uuid);
   
@@ -46,11 +42,9 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   int getClientPID();
 
-  void setEnterpriseClient(boolean isEnterpirseClient);
-
-  boolean enterpriseClient();
-
   long getLocalTimeMills();
+  
+  String getClientAddress();
 
   void addReconnectReference(ClientEntityReferenceContext context);
 

@@ -18,10 +18,11 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
@@ -35,7 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Each TCGroupMember sits on top of a channel.
  */
 public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
-  private static final TCLogger logger       = TCLogging.getLogger(TCGroupMemberImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCGroupMemberImpl.class);
+
   private TCGroupManagerImpl    manager;
   private final MessageChannel  channel;
   private final ServerID        localNodeID;
@@ -61,9 +63,9 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
    * Use a wrapper to send old tribes GroupMessage out through channel's TCMessage
    */
   @Override
-  public void send(AbstractGroupMessage msg) throws GroupException {
+  public void send(AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     if (!channel.isOpen()) { throw new GroupException("Channel is not ready: " + toString()); }
-    sendMessage(msg);
+    sendMessage(msg, sentCallback);
   }
 
   @Override
@@ -72,13 +74,25 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
       logger.warn("Attempting send to a not ready member " + this + ", msg will not be sent: " + msg);
       return;
     }
-    sendMessage(msg);
+    // We can expose this callback if the caller is interested but for now we ignore it (at the moment, we are only looking
+    //  at batching passive replication responses).
+    Runnable sentCallback = null;
+    try {
+      sendMessage(msg, sentCallback);
+    } catch (GroupException ge) {
+      logger.warn("Attempting send to a not ready member " + this + ", msg will not be sent: " + msg, ge);
+    }
   }
 
-  private void sendMessage(AbstractGroupMessage msg) {
+  private void sendMessage(AbstractGroupMessage msg, Runnable sentCallback) throws GroupException {
     TCGroupMessageWrapper wrapper = (TCGroupMessageWrapper) channel.createMessage(TCMessageType.GROUP_WRAPPER_MESSAGE);
     wrapper.setGroupMessage(msg);
-    wrapper.send();
+    if (null != sentCallback) {
+      wrapper.setSentCallback(sentCallback);
+    }
+    if (!wrapper.send()) {
+      throw new GroupException("message not sent:" + msg);
+    }
   }
 
   @Override

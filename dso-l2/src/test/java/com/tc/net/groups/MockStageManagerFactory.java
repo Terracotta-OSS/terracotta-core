@@ -24,7 +24,6 @@ import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.logging.TCLogger;
 import static java.lang.Thread.State.RUNNABLE;
 import java.util.Collections;
 import java.util.List;
@@ -35,10 +34,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
+import org.slf4j.Logger;
+
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -46,10 +50,10 @@ import static org.mockito.Mockito.when;
 public class MockStageManagerFactory {
   
   private final ThreadGroup threadGroup;
-  private final TCLogger logging;
+  private final Logger logging;
   private volatile boolean alive = true;
 
-  public MockStageManagerFactory(TCLogger logging, ThreadGroup group) {
+  public MockStageManagerFactory(Logger logging, ThreadGroup group) {
     this.threadGroup = group;
     this.logging = logging;
   }
@@ -57,7 +61,7 @@ public class MockStageManagerFactory {
   public StageManager createStageManager() throws Exception {
     StageManager stages = mock(StageManager.class);
     ConcurrentHashMap<String, Stage> created = new ConcurrentHashMap<>();
-    when(stages.createStage(Matchers.anyString(), Matchers.any(), Matchers.any(), Matchers.anyInt(), Matchers.anyInt()))
+    when(stages.createStage(ArgumentMatchers.anyString(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt()))
       .then((invoke)->{
         String stageName = invoke.getArguments()[0].toString();
         int size = (Integer)invoke.getArguments()[4];
@@ -73,27 +77,25 @@ public class MockStageManagerFactory {
             }
           });
           return null;
-        }).when(sink).addSingleThreaded(Matchers.any());
-        
-        doAnswer((invoke2)->{
-          service.submit(()->{
-            try {
-              ev.handleEvent(invoke2.getArguments()[0]);
-            } catch (EventHandlerException e) {
-            }
-          });
-          return null;
-        }).when(sink).addMultiThreaded(Matchers.any());
+        }).when(sink).addToSink(ArgumentMatchers.any());
         
         when(stage.getSink()).thenReturn(sink);
         created.put(stageName, stage);
         return stage;
       });   
     
-    when(stages.getStage(Matchers.anyString(), Matchers.any()))
+    when(stages.getStage(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
         .then((invoke)->{
           return created.get(invoke.getArguments()[0].toString());
         });
+    
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        shutdown();
+        return null;
+      }
+    }).when(stages).stopAll();
     return stages;
   }
   

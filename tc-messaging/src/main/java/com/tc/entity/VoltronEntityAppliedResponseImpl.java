@@ -20,11 +20,14 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.ServerExceptionType;
+import com.tc.exception.ServerException;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.EntityID;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
@@ -36,24 +39,24 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityUserException;
 
 
 public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements VoltronEntityAppliedResponse {
   private TransactionID transactionID;
   private boolean isSuccess;
-  private boolean isRetire;
   private byte[] successResponse;
-  private EntityException failureException;
+  private Exception failureException;
+  private static byte HYDRATE_EXCEPTION_HANDLING_VERSION_NAME = 0;
+  private static byte HYDRATE_EXCEPTION_HANDLING_VERSION_0 = 0;
+  private static byte HYDRATE_EXCEPTION_HANDLING_VERSION_1 = 1;
   
   @Override
   public VoltronEntityMessage.Acks getAckType() {
-    return VoltronEntityMessage.Acks.APPLIED;
+    return VoltronEntityMessage.Acks.COMPLETED;
   }
   
   @Override
-  public void setSuccess(TransactionID transactionID, byte[] response, boolean retire) {
+  public void setSuccess(TransactionID transactionID, byte[] response) {
     Assert.assertNull(this.transactionID);
     Assert.assertNull(this.successResponse);
     Assert.assertNull(this.failureException);
@@ -62,12 +65,11 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     
     this.transactionID = transactionID;
     this.isSuccess = true;
-    this.isRetire = retire;
     this.successResponse = response;
   }
   
   @Override
-  public void setFailure(TransactionID transactionID, EntityException exception, boolean retire) {
+  public void setFailure(TransactionID transactionID, ServerException exception) {
     Assert.assertNull(this.transactionID);
     Assert.assertNull(this.successResponse);
     Assert.assertNull(this.failureException);
@@ -76,8 +78,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     
     this.transactionID = transactionID;
     this.isSuccess = false;
-    this.isRetire = retire;
-    this.failureException= exception;
+    this.failureException = exception;
   }
   
   
@@ -93,12 +94,11 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   protected void dehydrateValues() {
     TCByteBufferOutputStream outputStream = getOutputStream();
     // We don't want to use the NVpair stuff:  it is horrendously complicated, doesn't work well with all types, and doesn't buy us anything.
-    putNVPair((byte)0, (byte)0);
+    putNVPair(HYDRATE_EXCEPTION_HANDLING_VERSION_NAME, HYDRATE_EXCEPTION_HANDLING_VERSION_1);
     
     outputStream.writeLong(this.transactionID.toLong());
     
     outputStream.writeBoolean(this.isSuccess);
-    outputStream.writeBoolean(this.isRetire);
     
     if (this.isSuccess) {
       Assert.assertNotNull(this.successResponse);
@@ -106,21 +106,26 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
       outputStream.write(this.successResponse);
     } else {
       Assert.assertNotNull(this.failureException);
-      // We need to manually serialize the exception using Java serialization.
-      ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-      try {
-        ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput);      
-        try {
-          objectOutput.writeObject(this.failureException);
-        } finally {
-          objectOutput.close();
+      outputStream.writeInt(((ServerException)failureException).getType().ordinal());
+      outputStream.writeString(((ServerException)failureException).getClassName());
+      outputStream.writeString(((ServerException)failureException).getEntityName());
+      outputStream.writeString(failureException.getMessage());      
+      Throwable cause = failureException.getCause();
+      if (cause != null) {
+        StackTraceElement[] stack = cause.getStackTrace();
+        // We need to manually serialize the exception using Java serialization.
+        ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+        try (ObjectOutputStream objectOutput = new ObjectOutputStream(byteOutput)) {      
+          objectOutput.writeObject(stack);
+        } catch (IOException ioe) {
+
         }
-      } catch (IOException e) {
-        throw new AssertionError(e);
+        byte[] serializedException = byteOutput.toByteArray();
+        outputStream.writeInt(serializedException.length);
+        outputStream.write(serializedException);
+      } else {
+        outputStream.writeInt(0);
       }
-      byte[] serializedException = byteOutput.toByteArray();
-      outputStream.writeInt(serializedException.length);
-      outputStream.write(serializedException);
     }
   }
   
@@ -129,25 +134,42 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     Assert.assertTrue(0 == name);
     Assert.assertTrue(null == this.transactionID);
     // Read our dummy byte.
-    getByteValue();
+    int version = getByteValue();
     
     this.transactionID = new TransactionID(getLongValue());
     
     this.isSuccess = getBooleanValue();
-    this.isRetire = getBooleanValue();
+
     if (this.isSuccess) {
       this.successResponse = getBytesArray();
     } else {
-      ByteArrayInputStream byteInput = new ByteArrayInputStream(getBytesArray());
-      ObjectInputStream objectInput = new ObjectInputStream(byteInput);
-      try {
-          this.failureException = (EntityException) objectInput.readObject();
-      } catch (ClassNotFoundException e) {
-        // We may want to make this into an assertion but we do have a mechanism to pass it up to the next level so wrap
-        // it in a user exception.
-        this.failureException = new EntityUserException(null, null, e);
-      } finally {
-        objectInput.close();
+      if (version == HYDRATE_EXCEPTION_HANDLING_VERSION_1) {
+        ServerExceptionType type = ServerExceptionType.values()[getIntValue()];
+        String cname = getStringValue();
+        String ename = getStringValue();
+        String description = getStringValue();
+        byte[] objStream = getBytesArray();
+        StackTraceElement[] cause = null;
+        if (objStream.length > 0) {
+          ByteArrayInputStream byteInput = new ByteArrayInputStream(objStream);
+          try (ObjectInputStream objectInput = new ObjectInputStream(byteInput)) {
+            cause = (StackTraceElement[])objectInput.readObject();
+          } catch (ClassNotFoundException | IOException e) {
+          // ignore
+          }
+        }
+        this.failureException = ServerException.hydrateException(new EntityID(cname,ename), description, type, cause);
+      } else if (version == HYDRATE_EXCEPTION_HANDLING_VERSION_0) {
+        ByteArrayInputStream byteInput = new ByteArrayInputStream(getBytesArray());
+        try (ObjectInputStream objectInput = new ObjectInputStream(byteInput)) {
+            this.failureException = (Exception)objectInput.readObject();
+        } catch (ClassNotFoundException e) {
+          // We may want to make this into an assertion but we do have a mechanism to pass it up to the next level so wrap
+          // it in a user exception.
+          this.failureException =  e;
+        }
+      } else {
+        throw new IOException("unknown exception handling version");
       }
     }
     return true;
@@ -164,12 +186,7 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
   }
 
   @Override
-  public EntityException getFailureException() {
+  public Exception getFailureException() {
     return this.failureException;
-  }
-  
-  @Override 
-  public boolean alsoRetire() {
-    return this.isRetire;
   }
 }

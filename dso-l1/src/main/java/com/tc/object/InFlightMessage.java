@@ -18,19 +18,41 @@
  */
 package com.tc.object;
 
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.exception.EntityException;
 
-import com.tc.entity.NetworkVoltronEntityMessage;
+import com.tc.tracing.Trace;
 import com.tc.entity.VoltronEntityMessage;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import static com.tc.object.StatType.CLIENT_COMPLETE;
+import static com.tc.object.StatType.CLIENT_DECODED;
+import static com.tc.object.StatType.CLIENT_ENCODE;
+import static com.tc.object.StatType.CLIENT_GOT;
+import static com.tc.object.StatType.CLIENT_RECEIVED;
+import static com.tc.object.StatType.CLIENT_RETIRED;
+import static com.tc.object.StatType.CLIENT_SEND;
+import static com.tc.object.StatType.CLIENT_SENT;
+import static com.tc.object.StatType.SERVER_ADD;
+import static com.tc.object.StatType.SERVER_BEGININVOKE;
+import static com.tc.object.StatType.SERVER_COMPLETE;
+import static com.tc.object.StatType.SERVER_ENDINVOKE;
+import static com.tc.object.StatType.SERVER_RECEIVED;
+import static com.tc.object.StatType.SERVER_RETIRED;
+import static com.tc.object.StatType.SERVER_SCHEDULE;
+import com.tc.text.PrettyPrintable;
+import java.util.ArrayList;
 
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 
 /**
@@ -39,11 +61,14 @@ import java.util.concurrent.TimeoutException;
  * Note that this is only used from within ClietEntityManagerImpl, and was originally embedded there, but was extracted to
  * make unit testing more direct.
  */
-public class InFlightMessage implements InvokeFuture<byte[]> {
-  private final NetworkVoltronEntityMessage message;
+public class InFlightMessage implements PrettyPrintable {
+  private final VoltronEntityMessage message;
+  private final EntityID eid;
+  private final InFlightMonitor monitor;
+  private final boolean asyncMode;
   /**
    * The set of pending ACKs determines when the caller returns from the send, in order to preserve ordering in the
-   * client code.  This is different from being "done" which specifically means that the APPLIED has happened,
+   * client code.  This is different from being "done" which specifically means that the COMPLETED has happened,
    * potentially returning a value or exception.
    * ACKs are removed from this pending set, as they arrive.
    */
@@ -53,27 +78,121 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   private final Set<Thread> waitingThreads;
 
   private boolean isSent;
-  private EntityException exception;
+  private Exception exception;
   private byte[] value;
-  private boolean canSetResult;
   private boolean getCanComplete;
   private final boolean blockGetOnRetired;
-
-  public InFlightMessage(NetworkVoltronEntityMessage message, Set<VoltronEntityMessage.Acks> acks, boolean shouldBlockGetOnRetire) {
-    this.message = message;
+  private final Trace trace;
+  
+  private Runnable runOnRetire;
+    
+  private long start;
+  private long send;
+  private long notifySent;
+  private long sent;
+  private long received;
+  private long got;
+  private long complete;
+  private long retired;
+  private long end;
+  
+  private long[] serverStats;
+  
+  public InFlightMessage(EntityID eid, Supplier<? extends VoltronEntityMessage> message, Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean shouldBlockGetOnRetire, boolean asyncMode) {
+    this.eid = eid;
+    this.message = message.get();
+    this.monitor = monitor;
+    this.asyncMode = asyncMode;
+    Assert.assertNotNull(eid);
+    Assert.assertNotNull(message);
     this.pendingAcks = EnumSet.noneOf(VoltronEntityMessage.Acks.class);
     this.pendingAcks.addAll(acks);
-    this.waitingThreads = new HashSet<Thread>();
+    this.waitingThreads = new HashSet<>();
     this.blockGetOnRetired = shouldBlockGetOnRetire;
-    
-    // We always assume that we can set the result, the first time.
-    this.canSetResult = true;
+    this.trace = Trace.newTrace(this.message, "InFlightMessage");
+  }
+  
+  void setStatisticsBoundries(long start, long end) {
+    this.start = start;
+    this.end = end;
+  }
+  
+  public long[] collect() {
+    long[] stats = new long[StatType.END.ordinal()];
+    if (stats != null) {
+      stats[StatType.CLIENT_ENCODE.ordinal()] = start;
+      stats[StatType.CLIENT_SEND.ordinal()] = send;
+      stats[StatType.CLIENT_SENT.ordinal()] = sent;
+      stats[StatType.CLIENT_GOT.ordinal()] = got;
+      stats[StatType.CLIENT_COMPLETE.ordinal()] = complete;
+      stats[StatType.CLIENT_RECEIVED.ordinal()] = received;
+      stats[StatType.CLIENT_RETIRED.ordinal()] = retired;
+      stats[StatType.CLIENT_DECODED.ordinal()] = end;
+      if (serverStats != null) {
+        stats[StatType.SERVER_ADD.ordinal()] = serverStats[StatType.SERVER_ADD.serverSpot()];
+        stats[StatType.SERVER_SCHEDULE.ordinal()] = serverStats[StatType.SERVER_SCHEDULE.serverSpot()];
+        stats[StatType.SERVER_BEGININVOKE.ordinal()] = serverStats[StatType.SERVER_BEGININVOKE.serverSpot()];
+        stats[StatType.SERVER_ENDINVOKE.ordinal()] = serverStats[StatType.SERVER_ENDINVOKE.serverSpot()];
+        stats[StatType.SERVER_RECEIVED.ordinal()] = serverStats[StatType.SERVER_RECEIVED.serverSpot()];
+        stats[StatType.SERVER_RETIRED.ordinal()] = serverStats[StatType.SERVER_RETIRED.serverSpot()];
+        stats[StatType.SERVER_COMPLETE.ordinal()] = serverStats[StatType.SERVER_COMPLETE.serverSpot()];
+      }
+    }
+    return stats;
+  }
+  
+  synchronized void runOnRetire(Runnable r) {
+    if (retired != 0) {
+      r.run();
+    } else {
+      this.runOnRetire = r;
+    }
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    List<InFlightStats.Combo> values = new ArrayList<>(20);
+    long[] collect = collect();
+    values.add(new InFlightStats.Combo(CLIENT_ENCODE, CLIENT_SEND).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_SEND, CLIENT_SENT).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_SENT, CLIENT_RECEIVED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_RECEIVED, CLIENT_COMPLETE).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_COMPLETE, CLIENT_GOT).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_GOT, CLIENT_DECODED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_COMPLETE, CLIENT_RETIRED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_SENT, CLIENT_RETIRED).add(collect));
+    values.add(new InFlightStats.Combo(CLIENT_ENCODE, CLIENT_DECODED).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_ADD, SERVER_SCHEDULE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_SCHEDULE, SERVER_BEGININVOKE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_BEGININVOKE, SERVER_ENDINVOKE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_RECEIVED, SERVER_COMPLETE).add(collect));
+    values.add(new InFlightStats.Combo(SERVER_COMPLETE, SERVER_RETIRED).add(collect));
+
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("entity", eid);
+    Map<String, Object> timing = new LinkedHashMap<>();
+    timing.put("send", send);
+    timing.put("sent", sent);
+    timing.put("notifySent", notifySent);
+    timing.put("received", received);
+    timing.put("complete", complete);
+    timing.put("got", got);
+    timing.put("retired", retired);
+    map.put("marks", timing);
+    Map<String, Object> offset = new LinkedHashMap<>();
+    values.forEach(c->offset.put(c.toString(), c.value()));
+    map.put("timing", offset);
+    return map;
+  }
+
+  public EntityID getEntityID() {
+    return eid;
   }
 
   /**
    * Used when populating the reconnect handshake.
    */
-  public NetworkVoltronEntityMessage getMessage() {
+  public VoltronEntityMessage getMessage() {
     return this.message;
   }
 
@@ -82,123 +201,202 @@ public class InFlightMessage implements InvokeFuture<byte[]> {
   }
 
   public boolean send() {
+    Trace.activeTrace().log("InFlightMessage.send()");
     Assert.assertFalse(this.isSent);
     this.isSent = true;
-    return this.message.send();
+    this.send = System.nanoTime();
+    try {
+      return ((TCMessage)this.message).send();
+    } finally {
+      this.sent = System.nanoTime();
+    }
   }
   
-  public synchronized void waitForAcks() {
+  public void waitForAcks() {
     boolean interrupted = false;
-    while (!this.pendingAcks.isEmpty()) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        interrupted = true;
+    boolean complete = false;
+    try {
+      while (!complete) {
+        try {
+          waitForAcks(0, TimeUnit.MILLISECONDS);
+          complete = true;
+        } catch (InterruptedException ie) {
+          interrupted = true;
+        } catch (TimeoutException te) {
+          throw new AssertionError(te);
+        }
       }
-    }
-    if (interrupted) {
-      Thread.currentThread().interrupt();
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
-
+  
+  public void waitForAcks(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+    Trace.activeTrace().log("InFlightMessage.waitForAcks");
+    timedWait(() -> pendingAcks.isEmpty(), timeout, unit);
+  }
+  
   public synchronized void sent() {
-    if (this.pendingAcks.remove(VoltronEntityMessage.Acks.SENT)) {
-      if (this.pendingAcks.isEmpty()) {
-        notifyAll();
-      }
+    this.notifySent = System.nanoTime();
+    ackDelivered(VoltronEntityMessage.Acks.SENT);
+    if (this.pendingAcks.isEmpty()) {
+      notifyAll();
     }
   }
 
   public synchronized void received() {
-    if (this.pendingAcks.remove(VoltronEntityMessage.Acks.RECEIVED)) {
-      if (this.pendingAcks.isEmpty()) {
-        notifyAll();
-      }
+    this.received = System.nanoTime();
+    ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
+    if (this.pendingAcks.isEmpty()) {
+      notifyAll();
     }
   }
 
-  @Override
   public synchronized void interrupt() {
     for (Thread waitingThread : this.waitingThreads) {
       waitingThread.interrupt();
     }
   }
 
-  @Override
   public synchronized boolean isDone() {
     return this.getCanComplete;
   }
 
-  @Override
+  public synchronized boolean isSent() {
+    return this.isSent;
+  }
+  
   public synchronized byte[] get() throws InterruptedException, EntityException {
-    Thread callingThread = Thread.currentThread();
-    boolean didAdd = this.waitingThreads.add(callingThread);
-    // We can't have already been waiting.
-    Assert.assertTrue(didAdd);
-    
     try {
-      while (!this.getCanComplete) {
-        wait();
-      }
-    } finally {
-      // We will hit this path on interrupt, for example.
-      this.waitingThreads.remove(callingThread);
-    }
-    
-    // If we didn't throw due to interruption, we fall through here.
-    if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
-    } else {
-      return value;
+      return getWithTimeout(0, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException to) {
+    // should not happpen with zero timeout
+      throw new AssertionError(to);
     }
   }
-
-  @Override
-  public synchronized byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
-    Thread callingThread = Thread.currentThread();
+  
+  private synchronized void timedWait(Callable<Boolean> predicate, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+   Thread callingThread = Thread.currentThread();
     boolean didAdd = this.waitingThreads.add(callingThread);
     // We can't have already been waiting.
     Assert.assertTrue(didAdd);
     
-    long end = System.nanoTime() + unit.toNanos(timeout);
+    long end = (timeout > 0) ? System.nanoTime() + unit.toNanos(timeout) : 0;
     try {
-      while (!this.getCanComplete) {
-        long timing = end - System.nanoTime();
-        if (timing <= 0) {
+      while (!predicate.call()) {
+        long timing = (end > 0) ? end - System.nanoTime() : 0;
+        if (timing < 0) {
           throw new TimeoutException();
         } else {
           wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int)(timing % TimeUnit.MILLISECONDS.toNanos(1))); 
         }
       }
+    } catch (InterruptedException | TimeoutException ie) {
+      throw ie;
+    } catch (Exception exp) {
+      throw new AssertionError(exp);
     } finally {
       this.waitingThreads.remove(callingThread);
     }
+  }
+
+  public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
+    trace.log("getWithTimeout()");
+    timedWait(() -> getCanComplete, timeout, unit);
+    this.got = System.nanoTime();
     if (exception != null) {
-      throw ExceptionUtils.addLocalStackTraceToEntityException(exception);
+      throw ExceptionUtils.throwEntityException(exception);
     } else {
+      if (this.message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
+        Assert.assertNotNull(value);
+      }
       return value;
     }
   }
 
-  synchronized void setResult(byte[] value, EntityException error) {
-    this.pendingAcks.remove(VoltronEntityMessage.Acks.APPLIED);
-    if (this.canSetResult) {
+  public synchronized void setResult(byte[] value, Exception error) {
+    if (Trace.isTraceEnabled()) {
+      trace.log("Received Result: " + value + " ; Exception: " + (error != null ? error.getLocalizedMessage() : "None"));
+    }
+    if (this.received == 0) {
+      this.received = System.nanoTime();
+    }
+    ackDelivered(VoltronEntityMessage.Acks.RECEIVED);
+    this.complete = System.nanoTime();
+    ackDelivered(VoltronEntityMessage.Acks.COMPLETED);
+    if (pendingAcks.isEmpty()) {
+      notifyAll();
+    }
+
+    if (error != null) {
+      Assert.assertNull(value);
+      this.pendingAcks.clear();
       this.exception = error;
+      this.getCanComplete = true;
+      if (asyncMode) {
+        handleException(this.exception);
+      }
+      notifyAll();
+    } else {
+      Assert.assertNotNull(value);
       this.value = value;
       if (!this.blockGetOnRetired) {
         this.getCanComplete = true;
+        if (asyncMode) {
+          handleMessage(value);
+        }
         notifyAll();
       }
-      // Determine if this can be over-written - only if we are waiting for the retired.
-      this.canSetResult = this.blockGetOnRetired;
     }
   }
+  
+  synchronized void handleException(Exception ee) {
+      if (monitor != null) {
+        monitor.exception(ExceptionUtils.convert(ee));
+      } 
+  }
 
-  public synchronized void retired() {
-    this.pendingAcks.remove(VoltronEntityMessage.Acks.RETIRED);
+  synchronized void handleMessage(byte[] raw) {
+      if (monitor != null) {
+        monitor.accept(raw);
+      }
+  }
+
+  private void ackDelivered(VoltronEntityMessage.Acks ack) {
+    if (Trace.isTraceEnabled()) {
+      trace.log("Received ACK: " + ack);
+    }
+    if (this.pendingAcks.remove(ack) && monitor != null) {
+      monitor.ackDelivered(ack);
+    }
+  }
+  
+  private synchronized Runnable retiredBookeeping() {
+    this.retired = System.nanoTime();
+    ackDelivered(VoltronEntityMessage.Acks.RETIRED);
     if (this.blockGetOnRetired) {
       this.getCanComplete = true;
+      if (message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
+        Assert.assertTrue("failed " + this.message.getTransactionID(), value != null || exception != null);
+      }
     }
     notifyAll();
+    return this.runOnRetire;
+  }
+
+  public void retired() {
+    Runnable runAfter = retiredBookeeping();
+    if (monitor != null) {
+      monitor.close();
+    }
+    if (runAfter != null) {
+      runAfter.run();
+    }
+  }
+  
+  void addServerStatistics(long[] stats) {
+    this.serverStats = stats;
   }
 }

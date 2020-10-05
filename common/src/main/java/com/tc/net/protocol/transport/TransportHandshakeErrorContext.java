@@ -18,34 +18,37 @@
  */
 package com.tc.net.protocol.transport;
 
-public class TransportHandshakeErrorContext implements TransportHandshakeError {
+public class TransportHandshakeErrorContext {
   private String    message;
-  private short     errorType;
+  private TransportHandshakeError     errorType;
   private Throwable throwable;
 
   public TransportHandshakeErrorContext(String message) {
     this.message = message;
-    this.errorType = ERROR_GENERIC;
+    this.errorType = TransportHandshakeError.ERROR_GENERIC;
   }
 
   public TransportHandshakeErrorContext(String message, Throwable throwable) {
     this(message);
-    this.errorType = ERROR_GENERIC;
+    this.errorType = TransportHandshakeError.ERROR_GENERIC;
     this.throwable = throwable;
   }
 
-  public TransportHandshakeErrorContext(String message, short errorType) {
+  public TransportHandshakeErrorContext(String message, TransportHandshakeError errorType) {
     this(message);
     this.errorType = errorType;
   }
 
-  @Override
+  public TransportHandshakeErrorContext(String message, short errorType) {
+    this(message);
+    this.errorType = TransportHandshakeError.values()[errorType];
+  }
+  
   public String getMessage() {
     return message;
   }
-
-  @Override
-  public short getErrorType() {
+  
+  public TransportHandshakeError getErrorType() {
     return errorType;
   }
 

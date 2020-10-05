@@ -49,11 +49,6 @@ public interface ClientHandshakeManager {
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck);
 
   /**
-   * @return True if the remote server is running in a persistent mode.
-   */
-  public boolean serverIsPersistent();
-
-  /**
    * Blocks the caller until an acknowledgement of the handshake has been received, changing the receiver into a running
    * state.
    */
@@ -62,9 +57,8 @@ public interface ClientHandshakeManager {
   /**
    * Called to start a shutdown operation.
    * 
-   * @param fromShutdownHook True if the request was from a VM shutdown hook, false if it was from an internal code path.
    */
-  public void shutdown(boolean fromShutdownHook);
+  public void shutdown();
 
   /**
    * @return True if shutdown(boolean) has been called.  False, otherwise.

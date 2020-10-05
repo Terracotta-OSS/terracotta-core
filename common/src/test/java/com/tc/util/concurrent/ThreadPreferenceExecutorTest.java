@@ -18,7 +18,8 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.logging.TCLogging;
+import org.slf4j.LoggerFactory;
+
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,8 +34,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
   public void testBasic() {
     ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS,
-                                                                 TCLogging
-                                                                     .getLogger(ThreadPreferenceExecutorTest.class));
+                                                                 LoggerFactory.getLogger(ThreadPreferenceExecutorTest.class));
     assertEquals(0, exec.getActiveThreadCount());
 
     final AtomicInteger run = new AtomicInteger();
@@ -75,7 +75,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
   public void testThreadReuse() {
     ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS,
-                                                                 TCLogging
+                                                                 LoggerFactory
                                                                      .getLogger(ThreadPreferenceExecutorTest.class));
 
     final Set<Thread> threads = Collections.synchronizedSet(new HashSet<Thread>());

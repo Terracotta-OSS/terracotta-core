@@ -18,9 +18,9 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.exception.ServerException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import org.terracotta.exception.EntityException;
 
 /**
  *
@@ -53,7 +53,7 @@ public class BarrierCompletion implements SimpleCompletion {
     gate.release();
   }
   
-  public void failure(EntityException ee) {
+  public void failure(ServerException ee) {
     gate.release();
   }
 }

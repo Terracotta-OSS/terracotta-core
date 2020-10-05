@@ -18,7 +18,8 @@
  */
 package com.tc.async.api;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 import java.util.Collection;
 
 /**
@@ -28,7 +29,7 @@ import java.util.Collection;
  */
 public abstract class AbstractEventHandler<EC> implements EventHandler<EC> {
 
-  private volatile TCLogger logger;
+  private volatile Logger logger;
 
   @Override
   public abstract void handleEvent(EC context) throws EventHandlerException;
@@ -50,7 +51,7 @@ public abstract class AbstractEventHandler<EC> implements EventHandler<EC> {
     // Subclasses can override this.
   }
 
-  public TCLogger getLogger() {
+  public Logger getLogger() {
     return logger;
   }
 

@@ -18,13 +18,13 @@
  */
 package com.tc.net.protocol;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCInternalError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
-import com.tc.util.StringUtil;
 import com.tc.util.concurrent.SetOnceFlag;
 
 /**
@@ -33,7 +33,7 @@ import com.tc.util.concurrent.SetOnceFlag;
  * @author teck
  */
 public class AbstractTCNetworkMessage implements TCNetworkMessage {
-  protected static final TCLogger logger                = TCLogging.getLogger(TCNetworkMessage.class);
+  protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
   protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {
@@ -158,26 +158,11 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
     String extraMsgInfo = describeMessage();
     if (extraMsgInfo != null) {
-      buf.append(extraMsgInfo);
+      buf.append(extraMsgInfo).append("\n");
     }
-
-    if (header != null) {
-      buf.append("Header (").append(header.getClass().getName()).append(")\n");
-      buf.append(StringUtil.indentLines(header.toString()));
-      if (buf.charAt(buf.length() - 1) != '\n') {
-        buf.append('\n');
-      }
-    }
-
-    buf.append("Payload:\n");
-    if (messagePayload != null) {
-      buf.append(StringUtil.indentLines(messagePayload.toString())).append("\n");
-    } else {
-      if (payloadData != null) {
-        buf.append(StringUtil.indentLines(describePayload()));
-      } else {
-        buf.append(StringUtil.indentLines("*** No payoad data ***\n"));
-      }
+    String payload = describePayload();
+    if (payload != null) {
+      buf.append(payload);
     }
 
     return buf.toString();
@@ -187,9 +172,13 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   protected String describeMessage() {
     return null;
   }
+  
+  protected String describePayload() {
+    return null;
+  }
 
   // override this method to add more description to your payload data
-  protected String describePayload() {
+  protected String messageBytes() {
     StringBuffer buf = new StringBuffer();
     int totalBytesDumped = 0;
     if ((payloadData != null) && (payloadData.length != 0)) {
@@ -251,7 +240,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
       long dataLen = 0;
       for (int i = 1; i < entireMessageData.length; i++) {
-        dataLen += entireMessageData[i].limit();
+        dataLen += entireMessageData[i].remaining();
       }
 
       if (dataLen > Integer.MAX_VALUE) { throw new TCInternalError("Message too big"); }

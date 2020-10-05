@@ -53,6 +53,10 @@ public abstract class AbstractIdentifier implements Comparable<AbstractIdentifie
   public boolean isNull() {
     return (this.id == NULL_ID);
   }
+  
+  public boolean isValid() {
+    return (this.id >= 0L);
+  }
 
   /**
    * Convert to long

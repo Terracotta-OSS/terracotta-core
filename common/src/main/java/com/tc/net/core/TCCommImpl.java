@@ -18,8 +18,11 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Implementation for TCComm. Manages communication threads for new connection and listeners at a high level.
@@ -32,7 +35,7 @@ class TCCommImpl implements TCComm {
   private final TCWorkerCommManager workerCommMgr;
   private final CoreNIOServices     commThread;
   private final String              commThreadName = "TCComm Main Selector Thread";
-  private static final TCLogger     logger         = TCLogging.getLogger(TCCommImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCCommImpl.class);
 
   private volatile boolean          started        = false;
 
@@ -40,7 +43,7 @@ class TCCommImpl implements TCComm {
     if (workerCommCount > 0) {
       workerCommMgr = new TCWorkerCommManager(name, workerCommCount, socketParams);
     } else {
-      logger.info("Comm Worker Threads NOT requested");
+      logger.debug("Comm Worker Threads NOT requested");
       workerCommMgr = null;
     }
 
@@ -106,6 +109,26 @@ class TCCommImpl implements TCComm {
 
   public CoreNIOServices nioServiceThreadForNewListener() {
     return commThread;
+  }
+  
+  public Map<String, ?> getState() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("name", this.commThreadName);
+    map.put("threads", commThread.getState());
+    if (workerCommMgr != null) {
+      map.put("workers", workerCommMgr.getState());
+    }
+    return map;
+  }
+  
+  @Override
+  public void pause() {
+    workerCommMgr.pause();
+  }
+  
+  @Override
+  public void unpause() {
+    workerCommMgr.unpause();
   }
 
 }

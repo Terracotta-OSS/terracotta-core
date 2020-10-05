@@ -18,8 +18,9 @@
  */
 package com.tc.object.net;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
@@ -33,6 +34,7 @@ import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
+import com.tc.net.core.ProductID;
 import com.tc.util.concurrent.CopyOnWriteSequentialMap;
 
 import java.util.Collection;
@@ -46,7 +48,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * clients and hides the channel to client ID mapping from the rest of the world.
  */
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
-  private static final TCLogger      logger         = TCLogging.getLogger(DSOChannelManager.class);
+  private static final Logger logger = LoggerFactory.getLogger(DSOChannelManager.class);
 
   private final CopyOnWriteSequentialMap<NodeID, MessageChannel> activeChannels = new CopyOnWriteSequentialMap<NodeID, MessageChannel>(
                                                                                       new CopyOnWriteSequentialMap.TypedArrayFactory() {
@@ -57,7 +59,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
                                                                                         }
                                                                                       });
   
-  private final List<DSOChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<DSOChannelManagerEventListener>();
+  private final List<ChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<>();
 
   private final ChannelManager       genericChannelManager;
   private final TCConnectionManager  connectionManager;
@@ -135,20 +137,20 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   @Override
-  public void makeChannelActive(ClientID clientID, boolean persistent) {
+  public void makeChannelActive(ClientID clientID) {
     try {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion);
+        ackMsg.initialize(getAllActiveClientIDs(), clientID, serverVersion);
         if (!ackMsg.send()) {
           logger.warn("Not sending handshake message to disconnected client: " + clientID);
         }
       }
       fireChannelCreatedEvent(channel);
     } catch (NoSuchChannelException nsce) {
-      logger.warn("Not sending handshake message to disconnected client: " + clientID);
+      logger.warn("Not sending handshake message to disconnected client: " + clientID, nsce);
     }
   }
 
@@ -159,13 +161,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       synchronized (activeChannels) {
         handshakeRefuseMsg.initialize(message);
         if (!handshakeRefuseMsg.send()) {
-          logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+          logger.warn("Not sending handshake rejected message to disconnected client: " + clientID);
         }
       }
     } catch (NoSuchChannelException nsce) {
-      logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+      logger.warn("Not sending handshake rejected message to disconnected client: " + clientID);
     }
-
   }
 
   private Set<? extends NodeID> getAllActiveClientIDs() {
@@ -182,7 +183,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   @Override
-  public void addEventListener(DSOChannelManagerEventListener listener) {
+  public void addEventListener(ChannelManagerEventListener listener) {
     if (listener == null) { throw new NullPointerException("listener cannot be be null"); }
     eventListeners.add(listener);
   }
@@ -198,13 +199,13 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   private void fireChannelCreatedEvent(MessageChannel channel) {
-    for (DSOChannelManagerEventListener eventListener : eventListeners) {
+    for (ChannelManagerEventListener eventListener : eventListeners) {
       eventListener.channelCreated(channel);
     }
   }
 
   private void fireChannelRemovedEvent(MessageChannel channel) {
-    for (DSOChannelManagerEventListener eventListener : eventListeners) {
+    for (ChannelManagerEventListener eventListener : eventListeners) {
       eventListener.channelRemoved(channel);
     }
   }
@@ -213,7 +214,11 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
     @Override
     public void channelCreated(MessageChannel channel) {
-      // nothing
+      if (channel.getProductID() == ProductID.DIAGNOSTIC) {
+        fireChannelCreatedEvent(channel);
+      } else {
+        // wait for the channel to go active
+      }
     }
 
     @Override

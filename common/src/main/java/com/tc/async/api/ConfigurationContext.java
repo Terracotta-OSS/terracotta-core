@@ -18,12 +18,13 @@
  */
 package com.tc.async.api;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 
 public interface ConfigurationContext {
 
   public <EC> Stage<EC> getStage(String name, Class<EC> verification);
 
-  public TCLogger getLogger(Class<?> clazz);
+  public Logger getLogger(Class<?> clazz);
 
 }

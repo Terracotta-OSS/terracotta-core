@@ -16,23 +16,29 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
 
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
-import com.tc.net.NodeID;
+import com.tc.net.ClientID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
+import com.tc.net.core.ProductID;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 
 /**
@@ -41,24 +47,18 @@ import java.util.TreeMap;
  * the same order as their original order.
  */
 public class TransactionOrderPersistor {
-  private static final String CLIENT_LOCAL_LISTS = "client_local_lists";
-  private static final String LOCAL_VARIABLES = "local_variables";
-  private static final String RECEIVED_TRANSACTION_COUNT = "local_variables:received_transaction_count";
-//  must be a LinkedHashSet to preserve entry order.  Using set for constant time removal
-  private final KeyValueStorage<NodeID, List<ClientTransaction>> clientLocals;
-  private final KeyValueStorage<String, Long> localVariables;
+  private final IPlatformPersistence storageManager;
+  private Long receivedTransactionCount = 0L;
     
   private List<ClientTransaction> globalList = null;
-  private boolean rebuild = true;
-  // Unchecked and raw warnings because we are trying to use Class<List<?>>, which the compiler doesn't like but has no runtime meaning.
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public TransactionOrderPersistor(IPersistentStorage storageManager) {
-    // In the future, we probably want a different storage approach since storing the information, this way, doesn't
-    // work well with the type system (Lists inside KeyValueStorage) and will perform terribly.
-    this.clientLocals = storageManager.getKeyValueStorage(CLIENT_LOCAL_LISTS, NodeID.class, (Class)LinkedHashSet.class);
-    this.localVariables = storageManager.getKeyValueStorage(LOCAL_VARIABLES, String.class, (Class)Long.class);
-    if (!this.localVariables.containsKey(RECEIVED_TRANSACTION_COUNT)) {
-      this.localVariables.put(RECEIVED_TRANSACTION_COUNT, 0L);
+  private final Set<ClientID> permNodeIDs = new HashSet<>();
+  private final Map<ClientID, List<ClientTransaction>> fastSequenceCache = new HashMap<>();
+  
+  public TransactionOrderPersistor(IPlatformPersistence storageManager, Set<ClientID> clients) {
+    this.storageManager = storageManager;
+    // these are permanent clients because we steart with them
+    for (ClientID oneClient : clients) {
+      this.permNodeIDs.add(oneClient);
     }
   }
 
@@ -67,9 +67,8 @@ public class TransactionOrderPersistor {
    * This new transactionID will be enqueued as the most recent transaction for the given source but also globally.
    * Any transactions for this source which are older than oldestTransactionOnClient will be removed from persistence.
    */
-  public synchronized void updateWithNewMessage(NodeID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
+  public synchronized Future<Void> updateWithNewMessage(ClientID source, TransactionID transactionID, TransactionID oldestTransactionOnClient) {
     // We need to ensure that the arguments are sane.
-    rebuild = true;
     if ((null == oldestTransactionOnClient) || (null == transactionID)) {
       throw new IllegalArgumentException("Transactions cannot be null");
     }
@@ -77,79 +76,145 @@ public class TransactionOrderPersistor {
       throw new IllegalArgumentException("Oldest transaction cannot come after new transaction");
     }
     
-    // Get the local list for this client.
-    List<ClientTransaction> localList = clientLocals.get(source);
-    if (null == localList) {
-      localList = new LinkedList<>();
-    }
+    // This operation requires that the globalList be rebuilt.
+    this.globalList = null;
     
     // Increment the number of received transactions.
-    long received = (long)this.localVariables.get(RECEIVED_TRANSACTION_COUNT) + 1;
-    this.localVariables.put(RECEIVED_TRANSACTION_COUNT, received);
+    this.receivedTransactionCount += 1;
     
-    // Create the new pair.
-    ClientTransaction transaction = new ClientTransaction();
-    transaction.id = transactionID;
-    transaction.globalID = received;
-    
-    Iterator<ClientTransaction> walk = localList.iterator();
-    while (walk.hasNext()) {
-      ClientTransaction next = walk.next();
-      if (-1 == next.id.compareTo(oldestTransactionOnClient)) {
-        walk.remove();
+    // We now pass this straight into the underlying storage.
+    // if the oldestTransactionID is not valid, this is an internal message generated on 
+    // the server and does not need to be kept.
+    if (!source.isNull() && oldestTransactionOnClient.isValid()) {
+      if (this.permNodeIDs.contains(source)) {
+        // Create the new pair.
+        IPlatformPersistence.SequenceTuple transaction = new IPlatformPersistence.SequenceTuple();
+        transaction.localSequenceID = transactionID.toLong();
+        transaction.globalSequenceID = this.receivedTransactionCount;
+
+        return this.storageManager.fastStoreSequence(source.toLong(), transaction, oldestTransactionOnClient.toLong());
       } else {
-        break;
+        ClientTransaction transaction = new ClientTransaction();
+        transaction.localTransactionID = transactionID.toLong();
+        transaction.globalTransactionID = this.receivedTransactionCount;
+        return fastStoreSequence(source, transaction, oldestTransactionOnClient.toLong());
       }
+    } else {
+      return null;
     }
-    
-    // Create this new pair and add it to the global list.
-    localList.add(transaction);
-    clientLocals.put(source, localList);
+  }
+  
+  synchronized void addTrackingForClient(ClientID source, ProductID product) {
+    // Make sure we have tracking for this client.
+    if (product.isPermanent()) {
+      this.permNodeIDs.add(source);
+    } else if (product.isReconnectEnabled()) {
+      this.fastSequenceCache.put(source, new LinkedList<>());
+    } else {
+      // do nothing, this type of client will never reconnect
+    }
   }
 
   /**
    * Called when we no longer need to track transaction ordering information from source (presumably due to a disconnect).
    */
-  public void removeTrackingForClient(NodeID source) {
-    // Remove the local list for this client.
-    clientLocals.remove(source);
+  synchronized void removeTrackingForClient(ClientID source) {
+    long sourceID = source.toLong();
+    try {
+      if (this.permNodeIDs.remove(source)) {
+        this.storageManager.deleteSequence(sourceID);
+      } else {
+        fastSequenceCache.remove(source);
+      }
+    } catch (IOException e) {
+      Assert.fail(e.getLocalizedMessage());
+    }
   }
 
-  private static class ClientTransaction implements Serializable {
-    private static final long serialVersionUID = 1L;
-    public transient NodeID client;
-    public TransactionID id;
-    public long globalID;
+  private Future<Void> fastStoreSequence(ClientID sequenceIndex, ClientTransaction newEntry, long oldestValidSequenceID) {
+    List<ClientTransaction> sequence = fastSequenceCache.get(sequenceIndex);
+    if (sequence != null) {
+      if (!sequence.isEmpty()) {
+  //  exploiting the knowledge that sequences are always updated in an increasing fashion, as soon as the first
+  //  cleaning function fails, bail on the iteration
+        Iterator<ClientTransaction> tuple = sequence.iterator();
+        while (tuple.hasNext()) {
+          if (tuple.next().localTransactionID < oldestValidSequenceID) {
+            tuple.remove();
+          } else {
+            break;
+          }
+        }
+      }
+      sequence.add(newEntry);
+    } else {
+      // must be a client that will not reconnect
+    }
+    return null;
+  }
+    
+  private static class ClientTransaction {
+    public long clientID;
+    public long localTransactionID;
+    public long globalTransactionID;
 
     @Override
     public int hashCode() {
-      return (7 * this.client.hashCode()) ^ this.id.hashCode();
+      return (int) ((7 * clientID)
+          ^ (5 * localTransactionID)
+          ^ globalTransactionID);
     }
     @Override
     public boolean equals(Object obj) {
       boolean isEqual = (obj == this);
       if (!isEqual && (obj instanceof ClientTransaction)) {
         ClientTransaction other = (ClientTransaction) obj;
-        isEqual = this.client.equals(other.client)
-              & this.id.equals(other.id);
+        isEqual = (this.clientID == other.clientID)
+            && (this.localTransactionID == other.localTransactionID)
+            && (this.globalTransactionID == other.globalTransactionID);
       }
       return isEqual;
     }
+
+    @Override
+    public String toString() {
+      return "{clientID=" + clientID +
+             ", localTransactionID=" + localTransactionID +
+             ", globalTransactionID=" + globalTransactionID +
+             '}';
+    }
   }
   
-  private List<ClientTransaction> buildGlobalListIfNessessary() {
-    if (rebuild || globalList == null) {
+  private synchronized List<ClientTransaction> buildGlobalListIfNecessary() {
+    if (null == this.globalList) {
       TreeMap<Long, ClientTransaction> sortMap = new TreeMap<>();
-      for (NodeID client : clientLocals.keySet()) {
-        List<ClientTransaction> transactions = clientLocals.get(client);
-        for (ClientTransaction ct : transactions) {
-          ct.client = client;
-          sortMap.put(ct.globalID, ct);
+      for (ClientID clientID : this.permNodeIDs) {
+        List<IPlatformPersistence.SequenceTuple> transactions = null;
+        try {
+          transactions = this.storageManager.loadSequence(clientID.toLong());
+        } catch (IOException e) {
+          Assert.fail(e.getLocalizedMessage());
+        }
+        if (transactions != null) {
+          for (IPlatformPersistence.SequenceTuple tuple : transactions) {
+            ClientTransaction transaction = new ClientTransaction();
+            transaction.clientID = clientID.toLong();
+            transaction.localTransactionID = tuple.localSequenceID;
+            transaction.globalTransactionID = tuple.globalSequenceID;
+            sortMap.put(tuple.globalSequenceID, transaction);
+          }
         }
       }
-      globalList = Collections.unmodifiableList(new ArrayList(sortMap.values()));
+      for (List<ClientTransaction> all : this.fastSequenceCache.values()) {
+        if (all != null) {
+          for (ClientTransaction t : all) {
+            sortMap.put(t.globalTransactionID, t);
+          }
+        }
+      }
+      globalList = Collections.unmodifiableList(new ArrayList<>(sortMap.values()));
+      receivedTransactionCount = !sortMap.isEmpty() ? sortMap.lastKey() : 0L;
     }
-    rebuild = false;
     return globalList;
   }
 
@@ -157,12 +222,15 @@ public class TransactionOrderPersistor {
    * Called to ask where a given client-local transaction exists in the global transaction list.
    * Returns the index or -1 if it isn't known.
    */
-  public int getIndexToReplay(NodeID source, TransactionID transactionID) {
+  public int getIndexToReplay(ClientID source, TransactionID transaction) {
+    long sourceID = source.toLong();
+    long transactionID = transaction.toLong();
+    
     int index = -1;
-    List<ClientTransaction> list = buildGlobalListIfNessessary();
+    List<ClientTransaction> list = buildGlobalListIfNecessary();
     int seek = 0;
-    for (ClientTransaction transaction : list) {
-      if (source.equals(transaction.client) && transactionID.equals(transaction.id)) {
+    for (ClientTransaction oneTransaction : list) {
+      if ((oneTransaction.clientID == sourceID) && (oneTransaction.localTransactionID == transactionID)) {
         index = seek;
         break;
       }
@@ -174,16 +242,59 @@ public class TransactionOrderPersistor {
   /**
    * Clears all internal state.
    */
-  public void clearAllRecords() {
-    this.clientLocals.clear();
+  public synchronized  void clearAllRecords() {
     this.globalList = null;
-    this.rebuild = true;
+    for (ClientID nodeID : this.permNodeIDs) {
+      try {
+        this.storageManager.deleteSequence(nodeID.toLong());
+      } catch (IOException e) {
+        Assert.fail(e.getLocalizedMessage());
+      }
+    }
+    this.fastSequenceCache.clear();
   }
 
   /**
    * @return The number of transactions which have been observed by the persistor (NOT the number persisted).
    */
   public long getReceivedTransactionCount() {
-    return this.localVariables.get(RECEIVED_TRANSACTION_COUNT);
+    return this.receivedTransactionCount;
+  }
+  
+  public synchronized Map<String, Object> reportStateToMap(Map<String, Object> map) {
+    map.put("className", this.getClass().getName());
+    map.put("receivedTransactions", getReceivedTransactionCount());
+    if(this.permNodeIDs != null && storageManager != null) {
+      Map<String, Object> clientMap = new LinkedHashMap<>();
+      map.put("permanentClients", clientMap);
+      for (ClientID clientNodeID : permNodeIDs) {
+        List<IPlatformPersistence.SequenceTuple> transactions = null;
+        try {
+          transactions = this.storageManager.loadSequence(clientNodeID.toLong());
+        } catch (IOException e) {
+          Assert.fail(e.getLocalizedMessage());
+        }
+        List<String> trans = new ArrayList<>();
+        if (transactions != null) {
+          for (IPlatformPersistence.SequenceTuple transaction : transactions) {
+            trans.add("Global seq Id = " + transaction.globalSequenceID + ", local seq id = " + transaction.localSequenceID);
+          }
+        }
+        clientMap.put(clientNodeID.toString(), trans);
+      }
+    }
+
+    Map<String, Object> clientMap = new LinkedHashMap<>();
+    map.put("regularClients", clientMap);
+    for (Map.Entry<ClientID, List<ClientTransaction>> entry : fastSequenceCache.entrySet()) {
+      List<String> trans = new ArrayList<>();
+      if (entry.getValue() != null) {
+        clientMap.put(entry.getKey().toString(), trans);
+        for (ClientTransaction transaction : entry.getValue()) {
+          trans.add("Global seq Id = " + transaction.globalTransactionID + ", local seq id = " + transaction.localTransactionID);
+        }
+      }
+    }
+    return map;
   }
 }

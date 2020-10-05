@@ -18,19 +18,21 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+
 import com.tc.object.ClientIDProvider;
 
 public class ClientIDLogger extends BaseMessageDecoratorTCLogger {
 
   private final ClientIDProvider cidp;
 
-  public ClientIDLogger(ClientIDProvider clientIDProvider, TCLogger logger) {
+  public ClientIDLogger(ClientIDProvider clientIDProvider, Logger logger) {
     super(logger);
     this.cidp = clientIDProvider;
   }
 
   @Override
-  protected Object decorate(Object msg) {
+  protected String decorate(Object msg) {
     return cidp.getClientID() + ": " + msg;
   }
 

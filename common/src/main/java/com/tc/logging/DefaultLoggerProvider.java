@@ -18,16 +18,19 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DefaultLoggerProvider implements TCLoggerProvider {
 
   @Override
-  public TCLogger getLogger(Class<?> clazz) {
-    return TCLogging.getLogger(clazz);
+  public Logger getLogger(Class<?> clazz) {
+    return LoggerFactory.getLogger(clazz);
   }
 
   @Override
-  public TCLogger getLogger(String name) {
-    return TCLogging.getLogger(name);
+  public Logger getLogger(String name) {
+    return LoggerFactory.getLogger(name);
   }
 
 }

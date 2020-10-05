@@ -18,73 +18,66 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.async.api.StageManager;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
-import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.text.PrettyPrinter;
+import com.tc.objectserver.persistence.Persistor;
+import com.tc.util.Assert;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 
 
 public class L2HACoordinator implements L2Coordinator {
-  private static final TCLogger logger = TCLogging.getLogger(L2HACoordinator.class);
+  private static final Logger logger = LoggerFactory.getLogger(L2HACoordinator.class);
 
-  private final TCLogger                                    consoleLogger;
+  private final Logger consoleLogger;
   private final DistributedObjectServer                     server;
   private final GroupManager<AbstractGroupMessage> groupManager;
-  private final GroupID                                     thisGroupID;
 
-  private StateManager                                      stateManager;
+  private final StateManager                                      stateManager;
   private ReplicatedClusterStateManager                     rClusterStateMgr;
 
-  private final L2ConfigurationSetupManager                 configSetupManager;
-
-  public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
-                         StageManager stageManager, StateManager stateManager, 
+  public L2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
+                         StateManager stateManager, 
                          GroupManager<AbstractGroupMessage> groupCommsManager,
-                         ClusterStatePersistor clusterStatePersistor,
+                         Persistor persistor,
                          WeightGeneratorFactory weightGeneratorFactory,
-                         L2ConfigurationSetupManager configurationSetupManager,
-                         GroupID thisGroupID, StripeIDStateManager stripeIDStateManager, 
-                         ChannelLifeCycleHandler clm) {
+                         StripeIDStateManager stripeIDStateManager,
+                         ConsistencyManager consistencyMgr
+                         ) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.stateManager = stateManager;
-    this.thisGroupID = thisGroupID;
-    this.configSetupManager = configurationSetupManager;
-
-    init(stageManager, clusterStatePersistor,
-        weightGeneratorFactory, stripeIDStateManager, clm);
+    
+    init(persistor,
+        weightGeneratorFactory, stripeIDStateManager, consistencyMgr);
   }
 
-  private void init(StageManager stageManager, ClusterStatePersistor statePersistor,
+  private void init(Persistor persistor,
                     WeightGeneratorFactory weightGeneratorFactory,
-                    StripeIDStateManager stripeIDStateManager, ChannelLifeCycleHandler clm) {
-    final ClusterState clusterState = new ClusterStateImpl(statePersistor,
-                                                           this.server.getConnectionIdFactory(),
-                                                       this.thisGroupID,
+                    StripeIDStateManager stripeIDStateManager, ConsistencyManager consistencyMgr) {
+    final ClusterState clusterState = new ClusterStateImpl(persistor, this.server.getConnectionIdFactory(),
                                                        stripeIDStateManager);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
                                                                                      this.stateManager,
                                                                                      this.groupManager,
                                                                                      weightGeneratorFactory,
-                                                                                     statePersistor);
-    zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
+                                                                                     persistor.getClusterStatePersistor(),
+                                                                                     consistencyMgr);
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(
@@ -92,13 +85,13 @@ public class L2HACoordinator implements L2Coordinator {
                                                                   this.stateManager,
                                                                   clusterState,
                                                                   this.server.getConnectionIdFactory(),
-                                                                  clm);
+                                                                  this.server.getConfigSetupManager().getConfigurationProvider());
     
   }
 
   @Override
   public void start() {
-    this.stateManager.startElection();
+    this.stateManager.initializeAndStartElection();
   }
 
   @Override
@@ -122,7 +115,6 @@ public class L2HACoordinator implements L2Coordinator {
     if (this.stateManager.isActiveCoordinator()) {
       try {
         this.stateManager.publishActiveState(nodeID);
-        this.rClusterStateMgr.publishClusterState(nodeID);
       } catch (final GroupException ge) {
         final String errMesg = "A Terracotta server tried to join the mirror group as a second ACTIVE: " + nodeID
                                + " Zapping it to allow it to join as PASSIVE standby (backup): ";
@@ -147,20 +139,21 @@ public class L2HACoordinator implements L2Coordinator {
   public void nodeLeft(NodeID nodeID) {
     warn(nodeID + " left the cluster");
     if (this.stateManager.isActiveCoordinator()) {
-      this.rClusterStateMgr.fireNodeLeftEvent(nodeID);
+      Assert.assertFalse(nodeID.getNodeType() == NodeID.CLIENT_NODE_TYPE);
     } else {
       this.stateManager.startElectionIfNecessary(nodeID);
     }
   }
 
   @Override
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    final StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
-    strBuilder.append(this.thisGroupID);
-    strBuilder.append(" ]");
-    out.indent().print(strBuilder.toString()).flush();
-    out.indent().print("ReplicatedClusterStateMgr").visit(this.rClusterStateMgr).flush();
-    return out;
+  public Map<String, ?> getStateMap() {
+    if(rClusterStateMgr != null) {
+      Map<String, Object> state = new LinkedHashMap<>();
+      this.rClusterStateMgr.reportStateToMap(state);
+      state.put("stateManager", this.stateManager.getStateMap());
+      return state;
+    } else {
+      return Collections.emptyMap();
+    }
   }
 }

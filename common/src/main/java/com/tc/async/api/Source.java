@@ -18,17 +18,21 @@
  */
 package com.tc.async.api;
 
+import com.tc.async.impl.Event;
+
 /**
  * This is used by the internals to manage the process of processing EventContexts in the manner that makes sense for
  * each one. Individual Stages SHOULD NOT HAVE TO EITHER USE OR IMPLEMENT THIS INTERFACE
  * 
  */
 
-public interface Source<EC> {
+public interface Source {
 
-  public EC poll(long period) throws InterruptedException;
+  public Event poll(long period) throws InterruptedException;
 
   public String getSourceName();
 
   public boolean isEmpty();
+  
+  public int size();
 }

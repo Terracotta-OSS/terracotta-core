@@ -18,21 +18,25 @@
  */
 package com.tc.server;
 
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
+import org.terracotta.monitoring.PlatformStopException;
+
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.l2.state.StateChangeListener;
+import com.tc.spi.Pauseable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.State;
+import org.terracotta.server.StopAction;
 
-import java.io.IOException;
-import java.util.Map;
 
-public interface TCServer extends StateChangeListener {
+public interface TCServer extends Pauseable {
   String[] processArguments();
 
   void start() throws Exception;
 
-  void stop();
+  void stop(StopAction...restartMode);
+
+  void stopIfPassive(StopAction...restartMode) throws PlatformStopException;
+
+  void stopIfActive(StopAction...restartMode) throws PlatformStopException;
 
   boolean isStarted();
 
@@ -44,8 +48,8 @@ public interface TCServer extends StateChangeListener {
   
   boolean isPassiveStandby();
   
-  boolean isRecovering();
-  
+  boolean isReconnectWindow();
+    
   State getState();
 
   long getStartTime();
@@ -60,48 +64,21 @@ public interface TCServer extends StateChangeListener {
 
   String getConfig();
 
-  boolean getRestartable();
-
   String getDescriptionOfCapabilities();
 
-  L2Info[] infoForAllL2s();
-
   String getL2Identifier();
-
-  ServerGroupInfo[] serverGroups();
 
   int getTSAListenPort();
 
   int getTSAGroupPort();
+  
+  int getReconnectWindowTimeout();
 
   void waitUntilShutdown();
 
   void dump();
 
-  void dumpClusterState();
-
   void reloadConfiguration() throws ConfigurationSetupException;
 
-  boolean isSecure();
-
-  String getSecurityServiceLocation();
-
-  Integer getSecurityServiceTimeout();
-
-  String getSecurityHostname();
-
-  String getIntraL2Username();
-
-  String getRunningBackup();
-
-  String getBackupStatus(String name) throws IOException;
-
-  String getBackupFailureReason(String name) throws IOException;
-
-  Map<String, String> getBackupStatuses() throws IOException;
-
-  void backup(String name) throws IOException;
-
-  String getResourceState();
-
+  String getClusterState(PrettyPrinter form);
 }

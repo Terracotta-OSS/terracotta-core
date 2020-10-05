@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
+import com.tc.entity.VoltronEntityResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -30,6 +31,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
@@ -57,7 +59,7 @@ public class ServerEntityRequestImplTest {
     responseMessage = mock(VoltronEntityAppliedResponse.class);
     retiredMessage = mock(VoltronEntityRetiredResponse.class);
     messageChannel = mockMessageChannel(requestAckMessage, responseMessage, retiredMessage);
-    entityDescriptor = new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1);
+    entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(new EntityID("foo", "bar"), 1);
     transactionID = new TransactionID(1);
     nodeID = mock(ClientID.class);
   }
@@ -70,7 +72,7 @@ public class ServerEntityRequestImplTest {
     serverEntityRequest.complete(value);
     serverEntityRequest.retired();
     
-    verify(responseMessage).setSuccess(transactionID, value, false);
+    verify(responseMessage).setSuccess(transactionID, value);
     verify(responseMessage).send();
   }
 
@@ -78,13 +80,18 @@ public class ServerEntityRequestImplTest {
   public void testCompleteCreate() throws Exception {
     boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.CREATE_ENTITY, transactionID, TransactionID.NULL_ID, nodeID, Optional.of(messageChannel), isReplicatedMessage);
+    ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.CREATE_ENTITY, nodeID, transactionID, TransactionID.NULL_ID, requiresReplication);
+    ServerEntityRequestResponse serverEntityRequest = new ServerEntityRequestResponse(request, this::send, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
 
     serverEntityRequest.complete();
     serverEntityRequest.retired();
     
-    verify(responseMessage).setSuccess(transactionID, new byte[0], false);
+    verify(responseMessage).setSuccess(transactionID, new byte[0]);
     verify(responseMessage).send();
+  }
+  
+  private void send(VoltronEntityResponse msg) {
+    msg.send();
   }
 
   @Test
@@ -101,14 +108,16 @@ public class ServerEntityRequestImplTest {
   private static MessageChannel mockMessageChannel(VoltronEntityReceivedResponse requestAckMessage, VoltronEntityAppliedResponse responseMessage, VoltronEntityRetiredResponse retiredMessage) {
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(requestAckMessage);
-    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(responseMessage);
+    when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(responseMessage);
     when(channel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(retiredMessage);
     return channel;
   }
 
   private ServerEntityRequestResponse buildInvoke() {
-    boolean requiresReplication = true;
     boolean isReplicatedMessage = false;
-    return new ServerEntityRequestResponse(entityDescriptor, ServerEntityAction.INVOKE_ACTION, transactionID, TransactionID.NULL_ID, nodeID, Optional.of(messageChannel), isReplicatedMessage);
+    boolean isReceivedRequested = false;
+    EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
+    ServerEntityRequest request = new ServerEntityRequestImpl(entityDescriptor.getClientInstanceID(), ServerEntityAction.INVOKE_ACTION, nodeID, transactionID, TransactionID.NULL_ID, isReceivedRequested);
+    return new ServerEntityRequestResponse(request, this::send, ()->Optional.of(messageChannel), null, null, isReplicatedMessage);
   }
 }

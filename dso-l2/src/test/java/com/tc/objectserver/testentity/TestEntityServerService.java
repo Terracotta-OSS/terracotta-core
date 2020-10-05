@@ -33,7 +33,7 @@ import org.terracotta.entity.SyncMessageCodec;
 public class TestEntityServerService implements EntityServerService<EntityMessage, EntityResponse> {
   @Override
   public long getVersion() {
-    return TestEntity.VERSION;
+    return 1L;
   }
 
   @Override

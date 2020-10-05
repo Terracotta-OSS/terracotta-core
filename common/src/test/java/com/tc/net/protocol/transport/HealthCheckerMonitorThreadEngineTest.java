@@ -20,9 +20,9 @@
 package com.tc.net.protocol.transport;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class HealthCheckerMonitorThreadEngineTest {
 
-  private static final TCLogger logger = TCLogging.getLogger(HealthCheckerMonitorThreadEngineTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(HealthCheckerMonitorThreadEngineTest.class);
 
   @Test
   public void testAllowCheckTimeIfEnabledInConfig() {

@@ -18,14 +18,8 @@
  */
 package com.tc.stats.api;
 
-import com.tc.management.RemoteManagement;
 import com.tc.management.TerracottaMBean;
-import com.tc.objectserver.locks.LockMBean;
-import com.tc.objectserver.storage.api.OffheapStats;
-import com.tc.objectserver.storage.api.StorageDataStats;
-import com.tc.operatorevent.TerracottaOperatorEvent;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -37,55 +31,12 @@ import javax.management.ObjectName;
  * aggregating statistical, configuration, and operational child interfaces.
  */
 
-public interface DSOMBean extends Stats, TerracottaMBean {
-
-  Stats getStats();
-
-  static final String GC_STATUS_UPDATE = "dso.gc.status.update";
-
-  static final String ROOT_ADDED       = "dso.root.added";
-
-  ObjectName[] getRoots();
-
-  LockMBean[] getLocks();
+public interface DSOMBean extends TerracottaMBean {
 
   static final String CLIENT_ATTACHED = "dso.client.attached";
   static final String CLIENT_DETACHED = "dso.client.detached";
 
   ObjectName[] getClients();
-
-  ClassInfo[] getClassInfo();
-
-  Map<ObjectName, Long> getAllPendingTransactionsCount();
-
-  long getPendingTransactionsCount();
-
-  Map<ObjectName, Long> getClientTransactionRates();
-
-  Map<ObjectName, Map<String, Object>> getL1Statistics();
-
-  Map<ObjectName, Map<String, Object>> getPrimaryClientStatistics();
-
-  Map<ObjectName, Integer> getClientLiveObjectCount();
-
-  List<TerracottaOperatorEvent> getOperatorEvents();
-
-  /**
-   * This method returns operator events which have occurred between a particular time and the current time.
-   * @param sinceTimestamp the time since which the operator events need to be fetched
-   * @return list of TerracottaOperatorEvents between the date represented by "sinceTimestamp" and now.
-   */
-  List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp);
-
-  /**
-   * Mark an operator event as read or unread.
-   * @param operatorEvent the event to mark
-   * @param read true if the event should be marked as read, false if it should be marked as unread.
-   * @return true if the event was found and marked, false otherwise.
-   */
-  boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read);
-
-  int getLiveObjectCount();
 
   Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue);
 
@@ -103,8 +54,31 @@ public interface DSOMBean extends Stats, TerracottaMBean {
 
   int getLicensedClientHighCount();
 
-  Map<String, Integer> getUnreadOperatorEventCount();
+  String getJmxRemotePort();
 
-  RemoteManagement getRemoteManagement();
+  void setJmxRemotePort(String port);
 
+  String startJMXRemote();
+
+  String stopJMXRemote();
+  
+  int getCurrentBackoff();
+  
+  void setBackoffActive(boolean active);
+  
+  boolean isBackoffActive();
+  
+  boolean isCurrentlyDirect();
+  
+  boolean isDirectExecution();
+  
+  void setDirectExecution(boolean activate);
+  
+  long getMaxBackoffTime();
+  
+  long getBackoffCount();
+  
+  void setAlwaysHydrate(boolean hydrate);
+  
+  boolean isAlwaysHydrate();
 }

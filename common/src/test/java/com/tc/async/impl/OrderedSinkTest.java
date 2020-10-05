@@ -18,9 +18,10 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.logging.TCLogging;
 import com.tc.test.TCTestCase;
 
 import java.security.SecureRandom;
@@ -31,28 +32,28 @@ public class OrderedSinkTest extends TCTestCase {
 
   public void testBasic() throws Exception {
     MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
-    Sink<OrderedEventContext> s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
+    Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
 
     OrderedEventContext oc = new MyOrderedEventContext(1);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertEvents(des, 1, 1);
 
     oc = new MyOrderedEventContext(3);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertTrue(des.queue.isEmpty());
 
     oc = new MyOrderedEventContext(4);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertTrue(des.queue.isEmpty());
 
     oc = new MyOrderedEventContext(2);
-    s.addSingleThreaded(oc);
+    s.addToSink(oc);
     assertEvents(des, 2, 3);
 
     oc = new MyOrderedEventContext(2);
     boolean failed = false;
     try {
-      s.addSingleThreaded(oc);
+      s.addToSink(oc);
       failed = true;
     } catch (AssertionError ae) {
       // Excepted
@@ -62,7 +63,7 @@ public class OrderedSinkTest extends TCTestCase {
 
   public void testComplex() throws Exception {
     MockSink<OrderedEventContext> des = new MockSink<OrderedEventContext>();
-    Sink<OrderedEventContext> s = new OrderedSink(TCLogging.getLogger(OrderedSink.class), des);
+    Sink<OrderedEventContext> s = new OrderedSink(LoggerFactory.getLogger(OrderedSink.class), des);
     
     List<MyOrderedEventContext> l = createOrderedEvents(1000);
     SecureRandom r = new SecureRandom();
@@ -70,7 +71,7 @@ public class OrderedSinkTest extends TCTestCase {
     while (!l.isEmpty()) {
       int idx = r.nextInt(l.size());
       MyOrderedEventContext oc = l.remove(idx);
-      s.addSingleThreaded(oc);
+      s.addToSink(oc);
     }
     
     assertEvents(des, 1, 1000);

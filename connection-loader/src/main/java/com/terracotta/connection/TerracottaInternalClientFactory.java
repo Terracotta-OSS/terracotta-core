@@ -18,16 +18,12 @@
  */
 package com.terracotta.connection;
 
-import com.terracotta.connection.client.TerracottaClientConfigParams;
+import java.net.InetSocketAddress;
+import java.util.Properties;
 
 /**
  * A factory for creating {@link TerracottaInternalClient}
  */
 public interface TerracottaInternalClientFactory {
-
-  /**
-   * Get or create a new client depending on config
-   */
-  public TerracottaInternalClient createL1Client(TerracottaClientConfigParams config);
-
+  TerracottaInternalClient createL1Client(Iterable<InetSocketAddress> serverAddresses, Properties properties);
 }

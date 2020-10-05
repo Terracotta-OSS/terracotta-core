@@ -22,6 +22,10 @@ import com.tc.util.TCTimeoutException;
 
 import junit.framework.TestCase;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Test cases for TCFuture
  * 
@@ -38,12 +42,15 @@ public class TCFutureTest extends TestCase {
   }
 
   public void testTimeout(TCFuture f1) {
-
+    long befoteTimeoutTime = System.currentTimeMillis();
+    long waitTime = 2000L;
     try {
-      f1.get(500);
+      f1.get(waitTime);
       fail("timeout didn't happen");
     } catch (TCTimeoutException e) {
       // expected
+      long afterTimeoutTime = System.currentTimeMillis();
+      assertTrue((afterTimeoutTime - befoteTimeoutTime) >= waitTime);
     } catch (InterruptedException e) {
       fail(e.getMessage());
     } catch (TCExceptionResultException e) {
@@ -250,6 +257,48 @@ public class TCFutureTest extends TestCase {
     } catch (TCExceptionResultException e) {
       Throwable thrown = e.getCause();
       assertTrue(thrown == t);
+    }
+  }
+
+  public void testTimeoutDurationSimulatingSpuriousWakeup() {
+    Object lock = new Object();
+    final TCFuture future = new TCFuture(lock);
+    AtomicBoolean stopNotify = new AtomicBoolean(false);
+    AtomicReference<Throwable> exceptionThrown = new AtomicReference<>();
+    AtomicLong waitTime = new AtomicLong();
+    final long expectedWaitTime = 5000L;
+    Thread t1 = new Thread(() -> {
+
+      while (!stopNotify.get()) {
+        synchronized (lock) {
+          lock.notifyAll();
+        }
+        ThreadUtil.reallySleep(10);
+      }
+    });
+
+    Thread t2 = new Thread(() -> {
+      long befoteTimeoutTime = System.currentTimeMillis();
+
+      try {
+        future.get(expectedWaitTime, true);
+      } catch (Throwable e) {
+        exceptionThrown.set(e);
+      } finally {
+        stopNotify.set(true);
+        long afterTimeoutTime = System.currentTimeMillis();
+        waitTime.set(afterTimeoutTime - befoteTimeoutTime);
+      }
+    });
+    t1.start();
+    t2.start();
+    try {
+      t1.join();
+      t2.join();
+      assertTrue(waitTime.get() >= expectedWaitTime);
+      assertTrue(exceptionThrown.get() instanceof TCTimeoutException);
+    }catch (Exception e) {
+      fail(e.getMessage());
     }
   }
 }

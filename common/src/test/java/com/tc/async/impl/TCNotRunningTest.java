@@ -18,6 +18,9 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.Stage;
 import com.tc.exception.TCNotRunningException;
@@ -26,13 +29,11 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.concurrent.QueueFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import junit.framework.TestCase;
 
 public class TCNotRunningTest extends TestCase {
@@ -46,8 +47,8 @@ public class TCNotRunningTest extends TestCase {
     super.setUp();
     debug("In setup");
     try {
-      ThrowableHandler throwableHandler = new NonExitingThrowableHandler(TCLogging.getLogger(StageManagerImpl.class));
-      stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory<TestEventContext>());
+      ThrowableHandler throwableHandler = new NonExitingThrowableHandler(LoggerFactory.getLogger(StageManagerImpl.class));
+      stageManager = new StageManagerImpl(new TCThreadGroup(throwableHandler), new QueueFactory());
       callbackOnExitHandler = new TestCallbackOnExitHandler();
       throwableHandler.addCallbackOnExitDefaultHandler(callbackOnExitHandler);
       testHandler = new TestHandler<TestEventContext>();
@@ -60,7 +61,7 @@ public class TCNotRunningTest extends TestCase {
     debug("Running direct test");
     Stage<TestEventContext> stage = stageManager.createStage("some-stage", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().addSingleThreaded(new TestEventContext());
+    stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
     debug("test complete");
@@ -71,7 +72,7 @@ public class TCNotRunningTest extends TestCase {
     testHandler.state = HandlerState.WRAPPED_EXCEPTION;
     Stage<TestEventContext> stage = stageManager.createStage("some-stage-2", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().addSingleThreaded(new TestEventContext());
+    stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     Assert.assertFalse("Exit should not be called", callbackOnExitHandler.exitCalled);
     debug("test complete");
@@ -82,7 +83,7 @@ public class TCNotRunningTest extends TestCase {
     testHandler.state = HandlerState.OTHER_EXCEPTION;
     Stage<TestEventContext> stage = stageManager.createStage("some-stage-3", TestEventContext.class, testHandler, 1, 10);
     stage.start(new ConfigurationContextImpl(null));
-    stage.getSink().addSingleThreaded(new TestEventContext());
+    stage.getSink().addToSink(new TestEventContext());
     testHandler.waitUntilHandledEventCount(1);
     callbackOnExitHandler.waitUntilExitCalled();
     debug("test complete");
@@ -174,7 +175,7 @@ public class TCNotRunningTest extends TestCase {
 
   private static class NonExitingThrowableHandler extends ThrowableHandlerImpl {
 
-    public NonExitingThrowableHandler(TCLogger logger) {
+    public NonExitingThrowableHandler(Logger logger) {
       super(logger);
     }
 

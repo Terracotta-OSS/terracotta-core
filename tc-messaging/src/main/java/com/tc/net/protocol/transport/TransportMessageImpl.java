@@ -41,7 +41,8 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   static final byte          VERSION_3  = 3;
   static final byte          VERSION_4  = 4;
   static final byte          VERSION_5  = 5;
-  static final byte          VERSION    = VERSION_5;
+  static final byte          VERSION_6  = 6;
+  static final byte          VERSION    = VERSION_6;
 
 
   static final byte          SYN        = 1;
@@ -59,7 +60,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   private final int          maxConnections;
   private final boolean      isMaxConnectionsExceeded;
   private final short        stackLayerFlags;
-  private final short        errorType;
+  private final TransportHandshakeError        errorType;
   private final int          callbackPort;
   private final long         timestamp;
 
@@ -84,7 +85,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
       this.hasErrorContext = in.readBoolean();
 
       if (this.hasErrorContext) {
-        this.errorType = in.readShort();
+        this.errorType = TransportHandshakeError.values()[in.readShort()];
         this.errorContext = in.readString();
       } else {
         this.errorType = TransportHandshakeError.ERROR_NONE;
@@ -145,7 +146,7 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   }
 
   @Override
-  public short getErrorType() {
+  public TransportHandshakeError getErrorType() {
     Assert.eval(hasErrorContext());
     return this.errorType;
   }
@@ -204,5 +205,4 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   public int getCallbackPort() {
     return this.callbackPort;
   }
-
 }

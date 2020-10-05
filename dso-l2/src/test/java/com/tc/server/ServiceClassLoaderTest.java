@@ -18,7 +18,6 @@
  */
 package com.tc.server;
 
-import com.tc.classloader.ServiceLocator;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -26,7 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.List;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -35,9 +35,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
-import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderConfiguration;
 
 /**
  *
@@ -72,25 +69,39 @@ public class ServiceClassLoaderTest {
      File base = folder.newFolder();
      File test = new File(base, "test.jar");
      ZipBuilder zip = new ZipBuilder(test, false);
-     zip.putEntry("META-INF/services/org.terracotta.config.service.ServiceConfigParser", "com.tc.server.TestServiceConfigParser".getBytes());
-     zip.putEntry("com/tc/server/TestService.class", resourceToBytes("com/tc/server/TestService.class"));
-     zip.putEntry("com/tc/server/TestServiceConfigParser.class", resourceToBytes("com/tc/server/TestServiceConfigParser.class"));
-     zip.putEntry("com/tc/server/TestServiceProvider.class", resourceToBytes("com/tc/server/TestServiceProvider.class"));
-     zip.putEntry("com/tc/server/TestServiceProviderConfiguration.class", resourceToBytes("com/tc/server/TestServiceProviderConfiguration.class"));
+     zip.putEntry("META-INF/services/com.tc.server.TestInterface", "com.tc.server.TestInterfaceImpl".getBytes());
+     zip.putEntry("com/tc/server/TestInterfaceImpl.class", resourceToBytes("com/tc/server/TestInterfaceImpl.class"));
+     zip.putEntry("com/tc/server/TestChild.class", resourceToBytes("com/tc/server/TestChild.class"));
 //  put it in the zip so null parent loader can find it
      zip.finish();
-     List<Class<? extends ServiceConfigParser>> list = ServiceLocator.getImplementations(ServiceConfigParser.class, new URLClassLoader(new URL[] {test.toURI().toURL()}));
-     ClassLoader baseLoader = new ServiceClassLoader(list);
-     Class<? extends ServiceConfigParser> check = baseLoader.loadClass("com.tc.server.TestServiceConfigParser").asSubclass(ServiceConfigParser.class);
-     ServiceConfigParser parser = check.newInstance();
-     Assert.assertTrue(parser.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(parser.getClass().getClassLoader() == list.get(0).getClassLoader());
-     ServiceProviderConfiguration config = parser.parse(null, null);
-     Assert.assertTrue(config.getClass().getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(config.getClass().getClassLoader() == list.get(0).getClassLoader());
-     Class<? extends ServiceProvider> provider = config.getServiceProviderType();
-     Assert.assertTrue(provider.getClassLoader() != ClassLoader.getSystemClassLoader());
-     Assert.assertTrue(provider.getClassLoader() == list.get(0).getClassLoader());
+     // copy to remove dynamic nature of class building in the loader
+     System.out.println(TestInterface.class.getClassLoader());
+     // XXX: depending on the other resources are on the classpath, it is possible that we will see other parsers.  We
+     //  should figure out a better way to restrict this since the index otherwise needs to be manually updated when new
+     //  resources change the order of the ServiceConfigParser instances in the list.
+     int listIndexToTest = 0;
+     URLClassLoader special = new URLClassLoader(new URL[] {test.toURI().toURL()}, ClassLoader.getSystemClassLoader()) {
+       @Override
+       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+         if (name.startsWith("com/tc/server/Test")) {
+           return findClass(name);
+         } else {
+           return super.loadClass(name, resolve);
+         }
+       }
+     };
+     ClassLoader baseLoader = new ServiceClassLoader(special, TestInterface.class);
+     ServiceLoader<TestInterface>  serviceList = ServiceLoader.load(TestInterface.class, baseLoader);
+     Class<? extends TestInterface> check = baseLoader.loadClass("com.tc.server.TestInterfaceImpl").asSubclass(TestInterface.class);
+     TestInterface parser = check.newInstance();
+     Iterator<TestInterface> i = serviceList.iterator();
+     TestInterface ref = i.next();
+     
+     Assert.assertTrue(parser.getClass().getClassLoader() != this.getClass().getClassLoader());
+     Assert.assertTrue(parser.getClass().getClassLoader() == ref.getClass().getClassLoader());
+     Object config = parser.child();
+     Assert.assertTrue(config.getClass().getClassLoader() != this.getClass().getClassLoader());
+     Assert.assertTrue(config.getClass().getClassLoader() == ref.getClass().getClassLoader());
    }
 
    private byte[] resourceToBytes(String loc) throws IOException {

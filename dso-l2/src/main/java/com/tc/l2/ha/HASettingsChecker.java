@@ -18,9 +18,10 @@
  */
 package com.tc.l2.ha;
 
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tc.config.ServerConfigurationManager;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 
@@ -35,10 +36,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @author dkumar
  */
 public class HASettingsChecker {
+  private static final Logger logger = LoggerFactory.getLogger(HASettingsChecker.class);
 
-  private final L2ConfigurationSetupManager tcConfig;
+  private final ServerConfigurationManager tcConfig;
   private final TCProperties                tcProperties;
-  private static final TCLogger             logger = CustomerLogging.getDSOGenericLogger();
   private final boolean                     isHighAvailabilityEnabled;
   private final int                         l1l2PingIdleTime;
   private final int                         l1l2SocketConnectCount;
@@ -56,7 +57,7 @@ public class HASettingsChecker {
   private final int                         l1l2HealthCheckFailureTolerance;
   private final int                         l2l2HealthCheckFailureTolerance;
 
-  public HASettingsChecker(L2ConfigurationSetupManager config, TCProperties props) {
+  public HASettingsChecker(ServerConfigurationManager config, TCProperties props) {
     this.tcConfig = config;
     this.tcProperties = props;
     this.l1l2PingIdleTime = tcProperties.getInt(TCPropertiesConsts.L1_HEALTHCHECK_L2_PING_IDLETIME);
@@ -75,9 +76,9 @@ public class HASettingsChecker {
     this.l2l2HealthCheckFailureTolerance = interNodeHealthCheckTime(l2l2PingIdleTime, l2l2SocketConnectCount,
                                                                     l2l2PingInterval, l2l2PingProbes,
                                                                     l2l2SocketConnectTimeout);
-    this.clientReconnectWindow = SECONDS.toMillis(config.dsoL2Config().clientReconnectWindow());
-    this.electionTime = SECONDS.toMillis(config.getActiveServerGroupForThisL2().getElectionTimeInSecs());
-    this.isHighAvailabilityEnabled = checkIfHighAvailabilityIsEnabled(tcConfig, tcProperties);
+    this.clientReconnectWindow = SECONDS.toMillis(config.getServerConfiguration().getClientReconnectWindow());
+    this.electionTime = SECONDS.toMillis(config.getGroupConfiguration().getElectionTimeInSecs());
+    this.isHighAvailabilityEnabled = false;
   }
 
   /**
@@ -132,11 +133,5 @@ public class HASettingsChecker {
     // see http://www.terracotta.org/documentation/terracotta-server-array/high-availability
     return pingIdleTime + ((socketConnectCount) * (pingInterval * pingProbes + socketConnectTimeout * pingInterval));
 
-  }
-
-  private boolean checkIfHighAvailabilityIsEnabled(L2ConfigurationSetupManager config, TCProperties tcprops) {
-    return (tcprops.getBoolean(TCPropertiesConsts.L1_HEALTHCHECK_L2_PING_ENABLED)
-            && tcprops.getBoolean(TCPropertiesConsts.L2_HEALTHCHECK_L2_PING_ENABLED) && tcprops
-        .getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED));
   }
 }

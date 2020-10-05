@@ -18,188 +18,95 @@
  */
 package com.tc.server;
 
-import org.apache.commons.io.IOUtils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.async.api.SEDA;
-import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.CommonL2Config;
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
+import com.tc.async.api.Stage;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.state.StateChangeListener;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
-import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
+import com.tc.lang.ServerExitStatus;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2Dumper;
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfo;
-import com.tc.net.GroupID;
-import com.tc.net.OrderedGroupIDs;
-import com.tc.net.TCSocketAddress;
-import com.tc.net.core.security.TCSecurityManager;
-import com.tc.net.protocol.HttpConnectionContext;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
-import com.tc.text.StringUtils;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
+import java.io.ByteArrayOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
+import com.tc.text.PrettyPrinter;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 
-public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServer, StateChangeListener {
-  public static final String                CONNECTOR_NAME_TERRACOTTA                    = "terracotta";
-
-  private static final TCLogger             logger                                       = TCLogging
-                                                                                             .getLogger(TCServer.class);
-  private static final TCLogger             consoleLogger                                = CustomerLogging
-                                                                                             .getConsoleLogger();
-
+public class TCServerImpl extends SEDA implements TCServer {
+  private static final Logger logger = LoggerFactory.getLogger(TCServer.class);
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
+  
   private volatile long                     startTime                                    = -1;
   private volatile long                     activateTime                                 = -1;
 
-  protected DistributedObjectServer         dsoServer;
-
-  private final Object                      stateLock                                    = new Object();
-  private State                             serverState                                  = StateManager.START_STATE;
+  private DistributedObjectServer         dsoServer;
+  private StateManager                    stateManager;
   
-  private final L2ConfigurationSetupManager configurationSetupManager;
+  private final ServerConfigurationManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
-  protected final TCSecurityManager         securityManager;
 
   /**
    * This should only be used for tests.
    */
-  public TCServerImpl(L2ConfigurationSetupManager configurationSetupManager) {
-    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(TCLogging.getLogger(TCServer.class))));
+  public TCServerImpl(ServerConfigurationManager configurationSetupManager) {
+    this(configurationSetupManager, new TCThreadGroup(new ThrowableHandlerImpl(logger)));
   }
 
-  public TCServerImpl(L2ConfigurationSetupManager configurationSetupManager, TCThreadGroup threadGroup) {
+  public TCServerImpl(ServerConfigurationManager configurationSetupManager, TCThreadGroup threadGroup) {
     this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  public TCServerImpl(L2ConfigurationSetupManager manager, TCThreadGroup group,
+  public TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
                       ConnectionPolicy connectionPolicy) {
     super(group);
 
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
-
-    if (configurationSetupManager.isSecure()) {
-// no security implemention
-      this.securityManager = null;
-    } else {
-      this.securityManager = null;
-    }
-  }
-  
-  public synchronized void setState(State state) {
-    if (!validateState(state)) { throw new AssertionError("Unrecognized server state: [" + state.getName() + "]"); }
-
-    serverState = state;
-  }
-
-  private boolean validateState(State state) {
-    return StateManager.VALID_STATES.contains(state);
-  }
-
-
-  private static OrderedGroupIDs createOrderedGroupIds(List<ActiveServerGroupConfig> groups) {
-    GroupID[] gids = new GroupID[groups.size()];
-    for (int i = 0; i < groups.size(); i++) {
-      gids[i] = groups.get(i).getGroupId();
-    }
-    return new OrderedGroupIDs(gids);
-  }
-
-  @Override
-  public ServerGroupInfo[] serverGroups() {
-    L2Info[] l2Infos = infoForAllL2s();
-    List<ActiveServerGroupConfig> groups = this.configurationSetupManager.activeServerGroupsConfig()
-        .getActiveServerGroups();
-    OrderedGroupIDs orderedGroupsIds = createOrderedGroupIds(groups);
-    GroupID coordinatorId = orderedGroupsIds.getActiveCoordinatorGroup();
-    ServerGroupInfo[] result = new ServerGroupInfo[groups.size()];
-    for (int i = 0; i < groups.size(); i++) {
-      ActiveServerGroupConfig groupInfo = groups.get(i);
-      GroupID groupId = groupInfo.getGroupId();
-      List<L2Info> memberList = new ArrayList<>();
-      for (L2Info l2Info : l2Infos) {
-        if (groupInfo.isMember(l2Info.name())) {
-          memberList.add(l2Info);
-        }
-      }
-      result[i] = new ServerGroupInfo(memberList.toArray(new L2Info[0]), groupInfo.getGroupName(), groupId.toInt(),
-                                      coordinatorId.equals(groupId));
-    }
-    return result;
-  }
-
-  @Override
-  public L2Info[] infoForAllL2s() {
-    String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();
-    L2Info[] out = new L2Info[allKnownL2s.length];
-
-    for (int i = 0; i < out.length; ++i) {
-      try {
-        CommonL2Config config = this.configurationSetupManager.commonL2ConfigFor(allKnownL2s[i]);
-
-        String name = allKnownL2s[i];
-        if (name == null) {
-          name = L2Info.IMPLICIT_L2_NAME;
-        }
-
-        String host = config.tsaPort().getBind();
-        if (TCSocketAddress.WILDCARD_IP.equals(host)) {
-          host = config.host();
-        }
-        if (StringUtils.isBlank(host)) {
-          host = name;
-        }
-        //XXX hard coded jmx port
-        out[i] = new L2Info(name, host, config.tsaPort().getValue()+10, config.tsaPort().getValue(), config
-            .tsaGroupPort().getBind(), config.tsaGroupPort().getValue(),config.tsaGroupPort().getValue() + 1,
-                            getSecurityHostname());
-      } catch (ConfigurationSetupException cse) {
-        throw Assert.failure("This should be impossible here", cse);
-      }
-    }
-
-    return out;
   }
 
   @Override
   public String getL2Identifier() {
-    return configurationSetupManager.getL2Identifier();
+    return configurationSetupManager.getServerConfiguration().getName();
   }
 
   @Override
@@ -211,58 +118,76 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     }
   }
 
-  /**
-   * I realize this is wrong, since the server can still be starting but we'll have to deal with the whole stopping
-   * issue later, and there's the TCStop feature which should be removed.
-   */
   @Override
-  public void stop() {
-    synchronized (this.stateLock) {
-      if (this.isStopped()) {
-        stopServer();
-        logger.info("Server stopped.");
-      } else {
-        logger.warn("Server in incorrect state (" + this.serverState + ") to be stopped.");
-      }
+  public void stopIfPassive(StopAction...restartMode) throws PlatformStopException {
+    if (stateManager.moveToStopStateIf(ServerMode.PASSIVE_STATES)) {
+      stop(restartMode);
+    } else {
+      throw new UnexpectedStateException("Server is not in passive state, current state: " + stateManager.getCurrentMode());
     }
+  }
 
+  @Override
+  public void stopIfActive(StopAction...restartMode) throws PlatformStopException {
+    if (stateManager.moveToStopStateIf(EnumSet.of(ServerMode.ACTIVE))) {
+      stop(restartMode);
+    } else {
+      throw new UnexpectedStateException("Server is not in active state, current state: " + stateManager.getCurrentMode());
+    }
+  }
+
+  @Override
+  public void stop(StopAction...restartMode) {
+    ServerEnv.getServer().audit("Stop invoked", new Properties());
+    TCLogging.getConsoleLogger().info("Stopping server");
+    dsoServer.getContext().getL2Coordinator().getStateManager().moveToStopState();
+    EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+    for (StopAction s : restartMode) {
+      set.add(s);
+    }
+    if (set.contains(StopAction.ZAP)) {
+      TCLogging.getConsoleLogger().info("Setting data to dirty");
+      dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
+    }
+    if (set.contains(StopAction.RESTART)) {
+      TCLogging.getConsoleLogger().info("Requesting restart");
+      exitWithStatus(ServerExitStatus.EXITCODE_RESTART_REQUEST);
+    } else {
+      exitWithStatus(0);
+    }
   }
 
   @Override
   public void start() {
-    synchronized (this.stateLock) {
-      if (!this.isStarted()) {
-        try {
-          startServer();
-        } catch (Throwable t) {
-          if (t instanceof RuntimeException) { throw (RuntimeException) t; }
-          throw new RuntimeException(t);
-        }
-      } else {
-        logger.warn("Server in incorrect state (" + this.serverState + ") to be started.");
+    if (!this.isStarted()) {
+      try {
+        startServer().get();
+      } catch (Throwable t) {
+        if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+        throw new RuntimeException(t);
       }
+    } else {
+      logger.warn("Server in incorrect state (" + this.stateManager.getCurrentMode().getName() + ") to be started.");
     }
   }
 
   @Override
   public boolean canShutdown() {
-    synchronized (this.stateLock) {
-      return serverState.equals(StateManager.PASSIVE_STANDBY) ||
-       serverState.equals(StateManager.ACTIVE_COORDINATOR) || 
-       serverState.equals(StateManager.PASSIVE_UNINITIALIZED) ||
-       serverState.equals(StateManager.PASSIVE_SYNCING);
-    }
+    ServerMode serverState = stateManager.getCurrentMode();
+    return serverState == ServerMode.PASSIVE ||
+       serverState == ServerMode.ACTIVE || 
+       serverState == ServerMode.UNINITIALIZED ||
+       serverState == ServerMode.SYNCING;
   }
 
   @Override
   public synchronized void shutdown() {
     if (canShutdown()) {
-      setState(StateManager.STOP_STATE);
       consoleLogger.info("Server exiting...");
       notifyShutdown();
-      Runtime.getRuntime().exit(0);
+      stop();
     } else {
-      logger.warn("Server in incorrect state (" + serverState + ") to be shutdown.");
+      logger.warn("Server in incorrect state (" + stateManager.getCurrentMode().getName() + ") to be shutdown.");
     }
   }
 
@@ -285,20 +210,17 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
   @Override
   public String getConfig() {
-    InputStream is = null;
-    try {
-      is = this.configurationSetupManager.rawConfigFile();
-      return IOUtils.toString(is);
+    try (InputStream is = this.configurationSetupManager.rawConfigFile()) {
+      ByteArrayOutputStream writer = new ByteArrayOutputStream();
+      int c = is.read();
+      while (c >= 0) {
+        writer.write((byte)c);
+        c = is.read();
+      }
+      return new String(writer.toByteArray(), Charset.defaultCharset());
     } catch (IOException ioe) {
       return ioe.getLocalizedMessage();
-    } finally {
-      IOUtils.closeQuietly(is);
     }
-  }
-
-  @Override
-  public boolean getRestartable() {
-    return configurationSetupManager.dsoL2Config().getRestartable();
   }
 
   @Override
@@ -318,51 +240,44 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
   }
 
   @Override
-  public boolean isStarted() {
-    synchronized (this.stateLock) {
-      return !this.serverState.equals(StateManager.START_STATE);
-    }
+  public synchronized boolean isStarted() {
+    return this.stateManager != null && this.stateManager.getCurrentMode() != ServerMode.START;
   }
 
   @Override
   public boolean isActive() {
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.ACTIVE_COORDINATOR);
-    }
+    return this.stateManager.isActiveCoordinator();
   }
 
   @Override
-  public boolean isStopped() {
+  public synchronized boolean isStopped() {
     // XXX:: introduce a new state when stop is officially supported.
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.START_STATE);
-    }
+    return this.stateManager == null || this.stateManager.getCurrentMode() != ServerMode.STOP;
   }
 
   @Override
   public boolean isPassiveUnitialized() {
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.PASSIVE_UNINITIALIZED);
-    }
+    return this.stateManager.getCurrentMode() == ServerMode.UNINITIALIZED;
   }
 
   @Override
   public boolean isPassiveStandby() {
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.PASSIVE_STANDBY);
-    }
+    return this.stateManager.getCurrentMode() == ServerMode.PASSIVE;
   }
 
   @Override
-  public boolean isRecovering() {
-    synchronized (this.stateLock) {
-      return this.serverState.equals(StateManager.RECOVERING);
-    }
+  public boolean isReconnectWindow() {
+    return dsoServer.getContext().getClientHandshakeManager().isStarting();
+  }
+
+  @Override
+  public int getReconnectWindowTimeout() {
+    return configurationSetupManager.getServerConfiguration().getClientReconnectWindow();
   }
 
   @Override
   public State getState() {
-    return this.serverState;
+    return this.stateManager.getCurrentMode().getState();
   }
   
   @Override
@@ -380,35 +295,15 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
     return buf.toString();
   }
 
-  private void stopServer() {
-    // XXX: I have no idea if order of operations is correct here?
 
-    if (logger.isDebugEnabled()) {
-      consoleLogger.debug("Stopping TC server...");
+  private class StartAction implements Runnable {
+    private final CompletableFuture<Void> finish;
+
+    public StartAction(CompletableFuture<Void> finish) {
+      this.finish = finish;
     }
 
-    try {
-      getStageManager().stopAll();
-    } catch (Exception e) {
-      logger.error("Error shutting down stage manager", e);
-    }
-
-    // this stops the jmx server then dso server
-    if (this.dsoServer != null) {
-      try {
-        this.dsoServer.quickStop();
-      } catch (Exception e) {
-        logger.error("Error shutting down TSA server", e);
-      } finally {
-        this.dsoServer = null;
-      }
-    }
-
-  }
-
-  private class StartAction implements StartupAction {
-    @Override
-    public void execute() throws Throwable {
+    public void run() {
       if (logger.isDebugEnabled()) {
         logger.debug("Starting Terracotta server instance...");
       }
@@ -420,89 +315,84 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
       }
 
       // the following code starts the jmx server as well
-      startDSOServer();
-
-      if (isActive()) {
-        updateActivateTime();
-        if (TCServerImpl.this.activationListener != null) {
-          TCServerImpl.this.activationListener.serverActivated();
-        }
+      try {
+        startDSOServer();
+      } catch (Exception e) {
+        finish.completeExceptionally(e);
       }
 
-      String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
-      if (l2Identifier != null) {
-        logger.info("Server started as " + l2Identifier);
+      String serverName = TCServerImpl.this.configurationSetupManager.getServerConfiguration().getName();
+      if (serverName != null) {
+        logger.info("Server started as " + serverName);
       }
+
+      finish.complete(null);
     }
   }
+  
+  protected void warnOfStall(String name, long delay, int queueDepth) {
+    
+  }
 
-  protected void startServer() throws Exception {
-    new StartupHelper(getThreadGroup(), new StartAction()).startUp();
+  protected Future<Void> startServer() throws Exception {
+    CompletableFuture<Void> complete = new CompletableFuture<>();
+    new Thread(getThreadGroup(), new StartAction(complete), "Server Startup Thread").start();
+    return complete;
   }
 
   private void startDSOServer() throws Exception {
     Assert.assertTrue(this.isStopped());
-    this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
-    this.dsoServer.start();
-    registerDSOServer(dsoServer);
-  }
-
-  protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
-                                                                  ConnectionPolicy policy, 
-                                                                  TCServerImpl serverImpl) {
-    DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this, securityManager);
+    DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
+    server.start();
+    registerDSOServer(server, ManagementFactory.getPlatformMBeanServer());
     try {
-      registerServerMBeans(dso, ManagementFactory.getPlatformMBeanServer());
+      registerServerMBeans(server, ManagementFactory.getPlatformMBeanServer());
     } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
       throw new RuntimeException(exp);
     }
+  }
+
+  protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
+                                                                  ConnectionPolicy policy,
+                                                                  TCServerImpl serverImpl) {
+    DistributedObjectServer dso = new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, this, this);
     return dso;
   }
 
   @Override
   public void dump() {
-    if (this.dsoServer != null) {
-      this.dsoServer.dump();
-    }
+    ServerEnv.getServer().audit("Dump invoked", new Properties());
+    TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 
-  private void registerDSOServer(TCDumper dumper) throws InstanceAlreadyExistsException, MBeanRegistrationException,
+  protected synchronized void registerDSOServer(DistributedObjectServer server, MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
       NotCompliantMBeanException, NullPointerException {
-
+    this.dsoServer = server;
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
     ServerConfigurationContext configContext = this.dsoServer.getContext();
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    registerDSOMBeans(mgmtContext, configContext, dumper, mBeanServer);
+    registerDSOMBeans(mgmtContext, configContext, server, mBeanServer);
+    stateManager = dsoServer.getContext().getL2Coordinator().getStateManager();
   }
   
-  protected void registerServerMBeans(TCDumper tcDumper, MBeanServer mBeanServer) 
+  protected void registerServerMBeans(DistributedObjectServer tcDumper, MBeanServer mBeanServer) 
       throws NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
     mBeanServer.registerMBean(new TCServerInfo(this), L2MBeanNames.TC_SERVER_INFO);
-    mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
+    mBeanServer.registerMBean(new L2Dumper(this, mBeanServer), L2MBeanNames.DUMPER);
   }
   
   protected void unregisterServerMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
     mbs.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mbs.unregisterMBean(L2MBeanNames.DUMPER);
   }
-  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext, TCDumper tcDumper,
+  protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext, DistributedObjectServer tcDumper,
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
-    TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider = this.dsoServer
-        .getOperatorEventsHistoryProvider();
-    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, operatorEventHistoryProvider);
+    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer);
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
   }
 
   protected void unregisterDSOMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
     mbs.unregisterMBean(L2MBeanNames.DSO);
-  }
-
-  // TODO: check that this is not needed then remove
-  private TCServerActivationListener activationListener;
-
-  public void setActivationListener(TCServerActivationListener listener) {
-    this.activationListener = listener;
   }
 
   private synchronized void notifyShutdown() {
@@ -528,80 +418,69 @@ public class TCServerImpl extends SEDA<HttpConnectionContext> implements TCServe
 
   @Override
   public String[] processArguments() {
-    return configurationSetupManager.processArguments();
+    return configurationSetupManager.getProcessArguments();
+  }
+  
+  private void exitWithStatus(int status) {
+    Runtime.getRuntime().exit(status);
   }
 
   @Override
-  public void dumpClusterState() {
-    if (this.dsoServer != null) {
-      this.dsoServer.dumpClusterState();
+  public String getClusterState(PrettyPrinter form) {
+    return new String(dsoServer.getClusterState(Charset.defaultCharset(), form), Charset.defaultCharset());
+  }
+
+  @Override
+  public void pause(String path) {
+    if (path.equalsIgnoreCase("L1")) {
+      try {
+        dsoServer.getCommunicationsManager().getConnectionManager().getTcComm().pause();
+      } catch (NullPointerException npe) {
+        
+      }
+  } else if (path.equalsIgnoreCase("L2")) {
+      try {
+        dsoServer.getGroupManager().getConnectionManager().getTcComm().pause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else {
+      Stage s = this.getStageManager().getStage(path, Object.class);
+      if (s != null) {
+        s.pause();
+      }
     }
   }
 
   @Override
-  public String getRunningBackup() {
-    return "";
-  }
-
-  @Override
-  public String getBackupStatus(String name) throws IOException {
-    return "";
-  }
-
-  @Override
-  public String getBackupFailureReason(String name) throws IOException {
-    return "";
-  }
-
-  @Override
-  public Map<String, String> getBackupStatuses() throws IOException {
-    Map<String, String> result = new HashMap<>();
-    return result;
-  }
-
-  @Override
-  public void backup(String name) throws IOException {
-  }
-
-  @Override
-  public String getResourceState() {
-    return "";
-  }
-
-  @Override
-  public boolean isSecure() {
-    return securityManager != null;
-  }
-
-  @Override
-  public String getSecurityServiceLocation() {
-    return null;
-  }
-
-  @Override
-  public Integer getSecurityServiceTimeout() {
-    return null;
-  }
-
-  @Override
-  public String getSecurityHostname() {
-    String securityHostname = null;
-    if (securityHostname == null) {
-      securityHostname = configurationSetupManager.commonl2Config().host();
+  public void unpause(String path) {
+    if (path.equalsIgnoreCase("L1")) {
+      try {
+        dsoServer.getCommunicationsManager().getConnectionManager().getTcComm().unpause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else if (path.equalsIgnoreCase("L2")) {
+      try {
+        dsoServer.getGroupManager().getConnectionManager().getTcComm().unpause();
+      } catch (NullPointerException npe) {
+        
+      }
+    } else {
+      Stage s = this.getStageManager().getStage(path, Object.class);
+      if (s != null) {
+        s.unpause();
+      }
     }
-    return securityHostname;
   }
 
   @Override
-  public String getIntraL2Username() {
-    if (!isSecure()) { return null; }
-    return securityManager.getIntraL2Username();
-  }
+  public Map<String, ?> getStateMap() {
+    return this.getStageManager().getStateMap();
+  }  
 
   @Override
-  public void l2StateChanged(StateChangedEvent sce) {
-    synchronized (this.stateLock) {
-      this.serverState = sce.getCurrentState();
-    }
-  } 
+  public void stageWarning(Object description) {
+    super.stageWarning(description);
+  }
 }

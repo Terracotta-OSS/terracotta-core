@@ -18,14 +18,13 @@
  */
 package com.tc.object;
 
+import org.slf4j.Logger;
+import org.terracotta.connection.ConnectionPropertyNames;
+
 import com.tc.async.api.StageManager;
-import com.tc.util.ProductID;
-import com.tc.logging.ClientIDLogger;
-import com.tc.logging.TCLogger;
-import com.tc.management.TCClient;
-import com.tc.net.core.ConnectionAddressProvider;
-import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.ProductID;
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -34,83 +33,65 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
-import com.tc.object.config.ConnectionInfoConfig;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.runtime.logging.LongGCLogger;
-import com.tc.util.concurrent.TaskRunner;
-import com.tc.util.runtime.ThreadIDManager;
-import com.tcclient.cluster.ClusterInternalEventsGun;
 
 import java.util.Map;
+import java.util.Properties;
+
 
 public class StandardClientBuilder implements ClientBuilder {
+  
+  private final Properties connectionProperties;
+  private volatile ClientConnectionErrorListener listener;
+  private final BufferManagerFactory buffers;
+
+  public StandardClientBuilder(Properties connectionProperties, BufferManagerFactory buffers) {
+    this.connectionProperties = connectionProperties;
+    this.buffers = buffers;
+  }
 
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         PreparedComponentsFromL2Connection connComp,
-                                                         SessionProvider sessionProvider, int maxReconnectTries,
-                                                         int socketConnectTimeout, TCClient client) {
-    final ConnectionAddressProvider cap = createConnectionAddressProvider(connComp);
-    return commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0, socketConnectTimeout, cap);
-  }
-
-  protected ConnectionAddressProvider createConnectionAddressProvider(PreparedComponentsFromL2Connection connComp) {
-    final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
-    final ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
-    return cap;
+                                                         SessionProvider sessionProvider, 
+                                                         int socketConnectTimeout) {
+    ClientMessageChannel cmc = commMgr.createClientChannel(getTypeOfClient(), sessionProvider, socketConnectTimeout);
+    if (listener != null){
+      cmc.addClientConnectionErrorListener(listener);
+    }
+    return cmc;
   }
 
   @Override
   public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter,
                                                            NetworkStackHarnessFactory stackHarnessFactory,
-                                                           ConnectionPolicy connectionPolicy, int commThread,
+                                                           ConnectionPolicy connectionPolicy, 
+                                                           TCConnectionManager connections,
                                                            HealthCheckerConfig aConfig,
                                                            Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
-                                                           ReconnectionRejectedHandler reconnectionRejectedHandler,
-                                                           TCSecurityManager securityManager, ProductID productId) {
-    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, messageRouter, stackHarnessFactory, null,
-                                         connectionPolicy, 0, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
-                                         reconnectionRejectedHandler, securityManager, productId);
+                                                           ReconnectionRejectedHandler reconnectionRejectedHandler) {
+    return new CommunicationsManagerImpl(monitor, messageRouter, stackHarnessFactory, connections,
+                                         connectionPolicy, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,
+                                         reconnectionRejectedHandler, getBufferManagerFactory());
   }
 
   @Override
-  public ClientLockManager createLockManager(ClientMessageChannel channel, ClientIDLogger clientIDLogger,
-                                             SessionManager sessionManager,
-                                             LockRequestMessageFactory lockRequestMessageFactory,
-                                             ThreadIDManager threadManager,
-                                             ClientLockManagerConfig config,
-                                             TaskRunner taskRunner) {
-    return null;
-  }
-
-  @Override
-  public ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
+  public ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                              ClientHandshakeMessageFactory chmf, 
                                                              SessionManager sessionManager,
-                                                             ClusterInternalEventsGun clusterEventsGun, 
                                                              String uuid, 
                                                              String name, 
                                                              String clientVersion,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, clusterEventsGun, uuid, name, clientVersion, entity);
-  }
-
-  @Override
-  public LongGCLogger createLongGCLogger(long gcTimeOut) {
-    return new LongGCLogger(gcTimeOut);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, uuid, name, clientVersion, entity);
   }
 
   @Override
@@ -118,4 +99,34 @@ public class StandardClientBuilder implements ClientBuilder {
     return new ClientEntityManagerImpl(channel, stages);
   }
 
+  protected ProductID getTypeOfClient() {
+    boolean noreconnect =
+        Boolean.valueOf(connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT,
+                                                         "false"));
+    String typeName = connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE);
+    ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
+    try {
+      if (typeName != null) {
+        product = ProductID.valueOf(typeName);
+      }
+    } catch (IllegalArgumentException arg) {
+      // do nothing, just stick with the default
+    }
+
+    return product;
+  }
+  
+  @Override
+  public BufferManagerFactory createBufferManagerFactory() {
+    return getBufferManagerFactory();
+  }
+
+  protected BufferManagerFactory getBufferManagerFactory() {
+    return buffers;
+  }
+
+  @Override
+  public void setClientConnectionErrorListener(ClientConnectionErrorListener listener) {
+    this.listener = listener;
+  }
 }

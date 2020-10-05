@@ -23,13 +23,14 @@ import com.tc.net.core.TCConnection;
 import java.util.List;
 
 public interface MessageTransportFactory {
+  ClientConnectionEstablisher createClientConnectionEstablisher();
 
-  MessageTransport createNewTransport();
+  ClientMessageTransport createNewTransport();
 
-  MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
+  ServerMessageTransport createNewTransport(TransportHandshakeErrorHandler handler,
                                       TransportHandshakeMessageFactory handshakeMessageFactory, List<MessageTransportListener> transportListeners);
 
-  MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
+  ServerMessageTransport createNewTransport(TCConnection connection,
                                       TransportHandshakeErrorHandler handler,
                                       TransportHandshakeMessageFactory handshakeMessageFactory, List<MessageTransportListener> transportListeners);
 

@@ -19,5 +19,6 @@
 package com.tc.net.protocol.tcm;
 
 public interface ServerMessageChannel extends MessageChannel {
+  public static String TRANSPORT_INFO = "transportInfo";  // for attachments
   // nothing special here (yet)
 }

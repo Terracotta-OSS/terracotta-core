@@ -18,10 +18,11 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
@@ -31,7 +32,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 
 public class DiscoveryStateMachine implements ChannelEventListener {
-  private static final TCLogger logger = TCLogging.getLogger(DiscoveryStateMachine.class);
+  private static final Logger logger = LoggerFactory.getLogger(DiscoveryStateMachine.class);
   private final static long                        DISCOVERY_INTERVAL_MS;
   static {
     DISCOVERY_INTERVAL_MS = TCPropertiesImpl.getProperties()

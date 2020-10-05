@@ -18,17 +18,18 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.LogLevels;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,8 +42,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
-  private final TCLogger                         logger;
-  private final Thread                           monitorThread;
+  private final Logger logger;
+  private static final Timer                           monitorThread = new Timer("HealthCheck-Timer", true);
   private final HealthCheckerMonitorThreadEngine monitorThreadEngine;
 
   private final SetOnceFlag                      shutdown = new SetOnceFlag();
@@ -51,24 +52,21 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public ConnectionHealthCheckerImpl(HealthCheckerConfig healthCheckerConfig, TCConnectionManager connManager) {
     Assert.assertNotNull(healthCheckerConfig);
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
-    logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
-                                 + healthCheckerConfig.getHealthCheckerName());
-    logger.setLevel(LogLevels.DEBUG);
+    logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
+                                     + healthCheckerConfig.getHealthCheckerName());
     monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
-    monitorThread = new Thread(monitorThreadEngine, "HealthChecker");
-    monitorThread.setDaemon(true);
   }
 
   protected HealthCheckerMonitorThreadEngine getHealthMonitorThreadEngine(HealthCheckerConfig config,
                                                                           TCConnectionManager connectionManager,
-                                                                          TCLogger loger) {
+                                                                          Logger loger) {
     return new HealthCheckerMonitorThreadEngine(config, connectionManager, loger);
   }
 
   @Override
   public void start() {
     if (started.attemptSet()) {
-      monitorThread.start();
+      monitorThread.scheduleAtFixedRate(monitorThreadEngine, 0L, (long)monitorThreadEngine.pingInterval);
       logger.info("HealthChecker Started");
     } else {
       logger.warn("HealthChecker already started");
@@ -81,14 +79,14 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
       monitorThreadEngine.stop();
 // don't bother to join the monitorThread here.  shutdown should take care of all the 
 // threads in the thread group
-      logger.info("HealthChecker STOP requested");
+      logger.debug("HealthChecker STOP requested");
     } else {
-      logger.info("HealthChecker STOP already requested");
+      logger.warn("HealthChecker STOP already requested");
     }
   }
 
   public boolean isRunning() {
-    return started.isSet();
+    return started.isSet() && !shutdown.isSet();
   }
 
   @Override
@@ -101,7 +99,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
                     + "] CLOSED. Health Monitoring for this node is now disabled.");
       } else {
-        logger.info("Connection " + transport.getConnectionId() + " CLOSED. Health Monitor for this node is disabled.");
+        logger.info("Connection " + transport.getConnectionID() + " CLOSED. Health Monitor for this node is disabled.");
       }
     }
   }
@@ -126,7 +124,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
         logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
                     + "] DISCONNECTED. Health Monitoring for this node is now disabled.");
       } else {
-        logger.info("Connection " + transport.getConnectionId()
+        logger.info("Connection " + transport.getConnectionID()
                     + " DISCONNECTED. Health Monitor for this node is disabled.");
       }
     }
@@ -137,21 +135,21 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     // NOP
   }
 
-  static class HealthCheckerMonitorThreadEngine implements Runnable {
+  static class HealthCheckerMonitorThreadEngine extends TimerTask {
     private final ConcurrentMap<ConnectionID, MessageTransportBase> connectionMap =
-        new ConcurrentHashMap<ConnectionID, MessageTransportBase>();
+        new ConcurrentHashMap<>();
     private final long                pingIdleTime;
     private final long                pingInterval;
     private final int                 pingProbes;
     private final long                checkTimeInterval;
     private final SetOnceFlag         stop          = new SetOnceFlag();
     private final HealthCheckerConfig config;
-    private final TCLogger            logger;
+    private final Logger logger;
     private final TCConnectionManager connectionManager;
     private final AtomicLong          lastCheckTime = new AtomicLong(System.currentTimeMillis());
 
     public HealthCheckerMonitorThreadEngine(HealthCheckerConfig healthCheckerConfig,
-                                            TCConnectionManager connectionManager, TCLogger logger) {
+                                            TCConnectionManager connectionManager, Logger logger) {
       this.pingIdleTime = healthCheckerConfig.getPingIdleTimeMillis();
       this.pingInterval = healthCheckerConfig.getPingIntervalMillis();
       this.pingProbes = healthCheckerConfig.getPingProbes();
@@ -174,11 +172,11 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     private void addConnection(MessageTransport transport) {
       MessageTransportBase mtb = (MessageTransportBase) transport;
       mtb.setHealthCheckerContext(getHealthCheckerContext(mtb, config, connectionManager));
-      connectionMap.put(transport.getConnectionId(), mtb);
+      connectionMap.put(transport.getConnectionID(), mtb);
     }
 
     private boolean removeConnection(MessageTransport transport) {
-      return (connectionMap.remove(transport.getConnectionId())) != null;
+      return (connectionMap.remove(transport.getConnectionID())) != null;
     }
 
     protected ConnectionHealthCheckerContext getHealthCheckerContext(MessageTransportBase transport,
@@ -189,66 +187,56 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
     public void stop() {
       stop.attemptSet();
-      synchronized(stop) {
-        stop.notifyAll();
-      }
+      this.cancel();
     }
 
     @Override
     public void run() {
-      while (true) {
+      // same interval for all connections
+      final boolean canCheckTime = canCheckTime();
 
-        if (stop.isSet()) {
-          logger.info("HealthChecker SHUTDOWN");
-          return;
+      Iterator<MessageTransportBase> connectionIterator = connectionMap.values().iterator();
+      while (connectionIterator.hasNext()) {
+        MessageTransportBase mtb = connectionIterator.next();
+
+        TCConnection conn = mtb.getConnection();
+        if (conn == null || !mtb.isConnected()) {
+          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().getCanonicalStringForm())
+                      + "] is not connected. Health Monitoring for this node is now disabled.");
+          connectionIterator.remove();
+          continue;
         }
 
-        // same interval for all connections
-        final boolean canCheckTime = canCheckTime();
+        if (mtb.getReceiveLayer() == null) {
+          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().getCanonicalStringForm())
+                      + "] is no longer referenced.  Closing the connection");
+          mtb.disconnect();
+          connectionIterator.remove();
+          continue;
+        }
 
-        Iterator<MessageTransportBase> connectionIterator = connectionMap.values().iterator();
-        while (connectionIterator.hasNext()) {
-          MessageTransportBase mtb = connectionIterator.next();
+        ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
+        if ((conn.getIdleReceiveTime() >= this.pingIdleTime)) {
 
-          TCConnection conn = mtb.getConnection();
-          if (conn == null || !mtb.isConnected()) {
-            logger.info("[" + (conn == null ? null : conn.getRemoteAddress().getCanonicalStringForm())
-                        + "] is not connected. Health Monitoring for this node is now disabled.");
+          if (!connContext.probeIfAlive()) {
+            // Connection is dead. Disconnect the transport.
+            logger.error("Declared connection dead " + mtb.getConnectionID() + " idle time "
+                         + conn.getIdleReceiveTime() + "ms");
+            mtb.disconnect();
             connectionIterator.remove();
-            continue;
           }
-
-          ConnectionHealthCheckerContext connContext = mtb.getHealthCheckerContext();
-          if ((conn.getIdleReceiveTime() >= this.pingIdleTime)) {
-
-            if (!connContext.probeIfAlive()) {
-              // Connection is dead. Disconnect the transport.
-              logger.error("Declared connection dead " + mtb.getConnectionId() + " idle time "
-                           + conn.getIdleReceiveTime() + "ms");
-              mtb.disconnect();
-              connectionIterator.remove();
-            }
-          } else {
-            connContext.refresh();
-          }
-          // is there any significant time difference between hosts ?
-          if (canCheckTime) {
-            connContext.checkTime();
-          }
+        } else {
+          connContext.refresh();
         }
-
-        // update last check time once for all connections
+        // is there any significant time difference between hosts ?
         if (canCheckTime) {
-          this.lastCheckTime.set(System.currentTimeMillis());
+          connContext.checkTime();
         }
+      }
 
-        synchronized (stop) {
-          try {
-            stop.wait(this.pingInterval);
-          } catch (InterruptedException ie) {
-//  just drop the interrupt, probably stopping.  If from the outside, re-enter the loop
-          }
-        }
+      // update last check time once for all connections
+      if (canCheckTime) {
+        this.lastCheckTime.set(System.currentTimeMillis());
       }
     }
 

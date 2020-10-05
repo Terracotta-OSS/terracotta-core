@@ -19,16 +19,17 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.Sink;
-import com.tc.config.NodesStore;
+import com.tc.config.GroupConfiguration;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.text.PrettyPrintable;
+import com.tc.net.core.TCConnectionManager;
 
 import java.util.Set;
+import com.tc.text.PrettyPrintable;
 
 public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
-  public NodeID join(Node thisNode, NodesStore nodesStore) throws GroupException;
+  public NodeID join(GroupConfiguration groupConfiguration) throws GroupException;
 
   public NodeID getLocalNodeID();
 
@@ -42,7 +43,13 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public void sendTo(NodeID node, M msg) throws GroupException;
 
+  public void sendTo(Set<String> nodes, M msg);
+
+  public void sendToWithSentCallback(NodeID node, M msg, Runnable sentCallback) throws GroupException;
+
   public M sendToAndWaitForResponse(NodeID nodeID, M msg) throws GroupException;
+
+  public GroupResponse<M> sendToAndWaitForResponse(Set<String> nodes, M msg) throws GroupException;
 
   public <N extends M> void registerForMessages(Class<? extends N> msgClass, GroupMessageListener<N> listener);
 
@@ -59,4 +66,6 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public boolean isServerConnected(String nodeName);
 
   public void closeMember(ServerID serverID);
+  
+  public TCConnectionManager getConnectionManager();
 }

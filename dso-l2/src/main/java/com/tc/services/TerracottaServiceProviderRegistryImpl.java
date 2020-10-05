@@ -19,41 +19,46 @@
 package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
-import com.tc.classloader.ServiceLocator;
-import org.terracotta.config.TcConfiguration;
+import com.tc.server.TCServerMain;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import org.terracotta.configuration.Configuration;
 
-import java.util.HashSet;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumper;
+
 
 
 public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceProviderRegistry {
-  private static final TCLogger logger = TCLogging.getLogger(TerracottaServiceProviderRegistryImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TerracottaServiceProviderRegistryImpl.class);
 
   // We need to hold on to the configuration when we are initialized so we can give it to services registered later as
   //  built-ins.
-  private final Set<ServiceProvider> serviceProviders = new HashSet<>();
-  private final Set<ImplementationProvidedServiceProvider> implementationProvidedServiceProviders = new HashSet<>();
+  private final Set<ServiceProvider> serviceProviders = new LinkedHashSet<>();
+  private final Set<ImplementationProvidedServiceProvider> implementationProvidedServiceProviders = new LinkedHashSet<>();
 
   // In order to prevent ordering errors during start-up, we will set a flag when we hand out sub-registries and make sure that we haven't done that when registering a service.
   private boolean hasCreatedSubRegistries;
 
   @Override
-  public void initialize(PlatformConfiguration platformConfiguration, TcConfiguration configuration, ClassLoader loader) {
-    String serverName = platformConfiguration.getServerName();
-    List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations().get(serverName);
+  public void initialize(PlatformConfiguration platformConfiguration, Configuration configuration) {
+    List<ServiceProviderConfiguration> serviceProviderConfigurationList = configuration.getServiceConfigurations();
     Assert.assertFalse(this.hasCreatedSubRegistries);
-    loadClasspathBuiltins(loader, platformConfiguration);
     if(serviceProviderConfigurationList != null) {
       for (ServiceProviderConfiguration config : serviceProviderConfigurationList) {
         Class<? extends ServiceProvider> serviceClazz = config.getServiceProviderType();
@@ -66,25 +71,30 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
           logger.error("caught exception while initializing service " + serviceClazz, ie);
           throw new RuntimeException(ie);
         }
-
       }
     }
+    loadClasspathBuiltins(platformConfiguration);
   }
   
-  private void loadClasspathBuiltins(ClassLoader loader, PlatformConfiguration platformConfiguration) {
-    List<Class<? extends ServiceProvider>> providers = ServiceLocator.getImplementations(ServiceProvider.class, loader);
+  private void loadClasspathBuiltins(PlatformConfiguration platformConfiguration) {
+    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {
           logger.warn("service:" + clazz.getName() + " is registered as a builtin but is not properly annotated with @BuiltinService.  This builtin will not be loaded");
         } else {
-          ServiceProvider service = clazz.newInstance();
-    //  there is no config for builtins
-          service.initialize(null, platformConfiguration);
-          registerNewServiceProvider(service);
+          // only add a builtin if one has not already been configured into the system via xml
+          if (serviceProviders.stream().noneMatch(sp->sp.getClass().getName().equals(clazz.getName()))) {
+            ServiceProvider service = clazz.newInstance();
+            //  there is no config for builtins
+            if (service.initialize(null, platformConfiguration)) {
+              registerNewServiceProvider(service);
+            }
+          }
         }
-      } catch (IllegalAccessException | InstantiationException i) {
-        logger.error("caught exception while initializing service " + clazz, i);
+      } catch (Throwable i) {
+        logger.error("caught exception while initializing service {} from loader {}", clazz, clazz.getClassLoader());
+        throw new Error(i);
       }
     }
   }
@@ -104,7 +114,9 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   @Override
   public DelegatingServiceRegistry subRegistry(long consumerID) {
-    this.hasCreatedSubRegistries = true;
+    if (consumerID > 0) {
+      this.hasCreatedSubRegistries = true;
+    }
     return new DelegatingServiceRegistry(consumerID, serviceProviders.toArray(new ServiceProvider[serviceProviders.size()]), implementationProvidedServiceProviders.toArray(new ImplementationProvidedServiceProvider[implementationProvidedServiceProviders.size()]));
   }
 
@@ -112,7 +124,7 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
   public void clearServiceProvidersState() {
     for(ServiceProvider serviceProvider : serviceProviders) {
       try {
-        serviceProvider.clear();
+        serviceProvider.prepareForSynchronization();
       } catch (ServiceProviderCleanupException e) {
         throw new RuntimeException(e);
       }
@@ -136,25 +148,55 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
 
   private void registerNewServiceProvider(ServiceProvider service) {
     logger.info("Initializing " + service);
+    Objects.requireNonNull(service);
     serviceProviders.add(service);
   }
 
+  /**
+   * @return True if there is a user-provided service for the given class registered.
+   */
+  public boolean hasUserProvidedServiceProvider(Class<?> serviceInterface) {
+    boolean hasProvider = false;
+    for (ServiceProvider serviceProvider : this.serviceProviders) {
+      if (serviceProvider.getProvidedServiceTypes().contains(serviceInterface)) {
+        hasProvider = true;
+        break;
+      }
+    }
+    return hasProvider;
+  }
+
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    List<Object> services = new ArrayList<>(serviceProviders.size());
+    map.put("services", services);
     for (ServiceProvider serviceProvider : serviceProviders) {
-      // ServiceProviders can optionally implement StateDumpable, so we do a instanceof check before calling dump state
-      // method
-      if(serviceProvider instanceof StateDumpable) {
-        ((StateDumpable) serviceProvider).dumpStateTo(stateDumper.subStateDumper(serviceProvider.getClass().getName()));
+      try {
+        MappedStateCollector dump = new MappedStateCollector(serviceProvider.getClass().getName());
+        serviceProvider.addStateTo(dump.subStateDumpCollector(serviceProvider.getClass().getName()));
+        services.add(dump.getMap());
+      } catch (Throwable t) {
+        StringWriter w = new StringWriter();
+        PrintWriter p = new PrintWriter(w);
+        t.printStackTrace(p);
+        services.add(w.toString());
       }
     }
 
     for (ImplementationProvidedServiceProvider implementationProvidedServiceProvider : implementationProvidedServiceProviders) {
-      // ServiceProviders can optionally implement StateDumpable, so we do a instanceof check before calling dump state
-      // method
-      if(implementationProvidedServiceProvider instanceof StateDumpable) {
-        ((StateDumpable) implementationProvidedServiceProvider).dumpStateTo(stateDumper.subStateDumper(implementationProvidedServiceProvider.getClass().getName()));
+      try {
+        MappedStateCollector dump = new MappedStateCollector(implementationProvidedServiceProvider.getClass().getName());
+        implementationProvidedServiceProvider.addStateTo(dump);
+        services.add(dump.getMap());
+      } catch (Throwable t) {
+        StringWriter w = new StringWriter();
+        PrintWriter p = new PrintWriter(w);
+        t.printStackTrace(p);
+        services.add(w.toString());
       }
     }
+    return map;
   }
+
 }

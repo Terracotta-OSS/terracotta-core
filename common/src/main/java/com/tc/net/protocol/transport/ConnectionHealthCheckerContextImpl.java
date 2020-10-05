@@ -18,8 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
@@ -57,7 +58,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   // Basic Ping probes
   private State                                  currentState;
-  private final TCLogger                         logger;
+  private final Logger logger;
   private final MessageTransportBase             transport;
   private final HealthCheckerProbeMessageFactory messageFactory;
   private final TCConnectionManager              connectionManager;
@@ -90,14 +91,26 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.config = config;
     this.connectionManager = connMgr;
     this.timeDiffThreshold = config.getTimeDiffThreshold();
-    this.logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
-                                      + config.getHealthCheckerName());
+    this.logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
+                                          + config.getHealthCheckerName());
     this.remoteNodeDesc = mtb.getRemoteAddress().getCanonicalStringForm();
     logger.info("Health monitoring agent started for " + remoteNodeDesc);
     currentState = INIT;
     callbackPort = transport.getRemoteCallbackPort();
     configFactor = 1;
-    initCallbackPortVerification();
+    // only verify the callback port if the callback is different 
+    // from the connection port
+    if (callbackPort != transport.getRemoteAddress().getPort()) {
+      initCallbackPortVerification();
+    } else {
+      changeState(START);
+    }
+  }
+  
+  @Override
+  public synchronized void close() {
+    changeState(DEAD);
+    sockectConnect.stop();
   }
 
   // RMP-343
@@ -166,7 +179,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   protected HealthCheckerSocketConnect getHealthCheckerSocketConnector(TCConnection connection,
                                                                        MessageTransportBase transportBase,
-                                                                       TCLogger loger, HealthCheckerConfig cnfg) {
+                                                                       Logger loger, HealthCheckerConfig cnfg) {
     if (TransportHandshakeMessage.NO_CALLBACK_PORT == callbackPort) {
       logger.info("No HealthCheckCallbackPort handshaked for node " + remoteNodeDesc);
       return new NullHealthCheckerSocketConnectImpl();
@@ -224,7 +237,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   public synchronized void checkTime() {
     if (currentState.equals(START) || currentState.equals(ALIVE)) {
       try {
-        sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionId(), transport.getConnection()));
+        sendProbeMessage(this.messageFactory.createTimeCheck(transport.getConnectionID(), transport.getConnection()));
       } catch (IOException ioe) {
         logger.warn("probe problem", ioe);
       }
@@ -255,7 +268,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
           logger.debug("Sending PING Probe to IDLE " + remoteNodeDesc);
         }
         try {
-          sendProbeMessage(this.messageFactory.createPing(transport.getConnectionId(), transport.getConnection()));
+          sendProbeMessage(this.messageFactory.createPing(transport.getConnectionID(), transport.getConnection()));
         } catch (IOException ioe) {
           logger.warn("probe problem", ioe);
           return false;
@@ -292,13 +305,13 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     transport.setRemoteCallbackPort(TransportHandshakeMessage.NO_CALLBACK_PORT);
     updateConfigFactor(CONFIG_UPGRADE_FACTOR);
     changeState(START);
-    logger.info("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc + "(callbackport: " + callbackPort
+    logger.debug("HealthCheckCallbackPort verification FAILED for " + remoteNodeDesc + "(callbackport: " + callbackPort
                 + ")");
   }
 
   private void callbackPortVerificationSuccess() {
     changeState(START);
-    logger.info("HealthCheckCallbackPort verification PASSED for " + remoteNodeDesc + "(callbackport: " + callbackPort
+    logger.debug("HealthCheckCallbackPort verification PASSED for " + remoteNodeDesc + "(callbackport: " + callbackPort
                 + ")");
   }
 
@@ -307,10 +320,10 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     if (message.isPing()) {
       // Echo back but no change in this health checker state
       try {
-        sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionId(), transport.getConnection()));
+        sendProbeMessage(this.messageFactory.createPingReply(transport.getConnectionID(), transport.getConnection()));
       } catch (IOException ioe) {
         logger.warn("probe problem", ioe);
-        return false;
+        return true;
       }
     } else if (message.isPingReply()) {
       // The peer is alive
@@ -380,7 +393,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     }
   }
 
-  TCLogger getLogger() {
+  Logger getLogger() {
     return this.logger;
   }
 

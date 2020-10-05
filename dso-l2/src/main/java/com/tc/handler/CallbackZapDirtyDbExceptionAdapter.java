@@ -18,8 +18,9 @@
  */
 package com.tc.handler;
 
+import org.slf4j.Logger;
+
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -28,9 +29,9 @@ import com.tc.properties.TCPropertiesImpl;
 public class CallbackZapDirtyDbExceptionAdapter extends CallbackDirtyDatabaseCleanUpAdapter {
 
   private static final TCProperties l2Props = TCPropertiesImpl.getProperties();
-  private final TCLogger            consoleLogger;
+  private final Logger consoleLogger;
 
-  public CallbackZapDirtyDbExceptionAdapter(TCLogger logger, TCLogger consoleLogger,
+  public CallbackZapDirtyDbExceptionAdapter(Logger logger, Logger consoleLogger,
                                             ClusterStatePersistor clusterStateStore) {
     super(logger, clusterStateStore);
     this.consoleLogger = consoleLogger;

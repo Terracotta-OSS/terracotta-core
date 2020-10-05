@@ -36,11 +36,6 @@ public class NodeIDSerializationTest {
     assertTrue(n1.equals(n2));
     assertTrue(n2 instanceof ServerID);
 
-    NodeID n3 = new GroupID(100);
-    NodeID n4 = dupBySerialization(n3);
-    assertTrue(n3.equals(n4));
-    assertTrue(n4 instanceof GroupID);
-
     NodeID n5 = new ClientID(1000);
     NodeID n6 = dupBySerialization(n5);
     assertTrue(n5.equals(n6));
@@ -72,12 +67,7 @@ public class NodeIDSerializationTest {
     NodeID n2 = dupByTCSerializable(n1);
     assertTrue(n1.equals(n2));
     assertTrue(n2 instanceof ServerID);
-
-    NodeID n3 = new GroupID(100);
-    NodeID n4 = dupByTCSerializable(n3);
-    assertTrue(n3.equals(n4));
-    assertTrue(n4 instanceof GroupID);
-
+    
     NodeID n5 = new ClientID(1000);
     NodeID n6 = dupByTCSerializable(n5);
     assertTrue(n5.equals(n6));

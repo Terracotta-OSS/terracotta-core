@@ -18,12 +18,13 @@
  */
 package com.tc.stats;
 
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+
 
 public interface Stats {
   
   public String getDetails();
   
-  public void logDetails(TCLogger statsLogger);
+  public void logDetails(Logger statsLogger);
 
 }

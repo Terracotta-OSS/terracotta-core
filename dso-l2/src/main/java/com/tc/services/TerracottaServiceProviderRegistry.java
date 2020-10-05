@@ -18,10 +18,11 @@
  */
 package com.tc.services;
 
-import org.terracotta.config.TcConfiguration;
+import org.terracotta.configuration.Configuration;
+
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.StateDumpable;
+import com.tc.text.PrettyPrintable;
 
 
 /**
@@ -29,7 +30,7 @@ import org.terracotta.entity.StateDumpable;
  *
  * @author twu
  */
-public interface TerracottaServiceProviderRegistry extends StateDumpable {
+public interface TerracottaServiceProviderRegistry extends PrettyPrintable {
 
   /**
    * Initialize each of the service provider with platform configuration
@@ -39,7 +40,7 @@ public interface TerracottaServiceProviderRegistry extends StateDumpable {
    * @param loader the classloader used for all services
    *
    */
-  void initialize(PlatformConfiguration platformConfiguration, TcConfiguration configuration, ClassLoader loader);
+  void initialize(PlatformConfiguration platformConfiguration, Configuration configuration);
 
   /**
    * Method to register platform level service provider which don't have life-cycle using SPI interface but otherwise act

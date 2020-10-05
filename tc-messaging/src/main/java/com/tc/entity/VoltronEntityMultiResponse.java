@@ -20,8 +20,8 @@
 package com.tc.entity;
 
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.tx.TransactionID;
-import java.util.Map;
 
 
 /**
@@ -29,11 +29,31 @@ import java.util.Map;
  * This means that the caller needs to down-cast to the specific sub-type, cased on getAckType.
  * In the future, it would be ideal to remove this in favor of a different SEDA implementation.
  */
-public interface VoltronEntityMultiResponse extends TCMessage {
-  TransactionID[] getReceivedTransactions();
-  TransactionID[] getRetiredTransactions();
-  Map<TransactionID, byte[]> getResults();
+public interface VoltronEntityMultiResponse extends TCMessage {  
+  public interface ReplayReceiver {
+    void received(TransactionID tid);
+    void retired(TransactionID tid);
+    void result(TransactionID tid, byte[] result);
+    void message(ClientInstanceID cid, byte[] message);
+    void message(TransactionID tid, byte[] message);
+    void stats(TransactionID tid, long[] message);
+  }
+  
+  int replay(ReplayReceiver receiver);
+   
   boolean addReceived(TransactionID tid);
   boolean addRetired(TransactionID tid);
   boolean addResult(TransactionID tid, byte[] result);
+  boolean addResultAndRetire(TransactionID tid, byte[] result);
+  boolean addServerMessage(ClientInstanceID cid, byte[] message);
+  boolean addServerMessage(TransactionID cid, byte[] message);
+  boolean addStats(TransactionID cid, long[] timings);
+  
+  void stopAdding();
+  
+  boolean startAdding();
+  
+  default boolean shouldSend() {
+    return true;
+  }
 }

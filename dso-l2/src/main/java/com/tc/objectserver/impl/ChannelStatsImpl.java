@@ -19,10 +19,10 @@
 package com.tc.objectserver.impl;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.stats.StatsConfig;
 import com.tc.stats.counter.BoundedCounterConfig;
@@ -35,7 +35,7 @@ import com.tc.util.Events;
  * A helper class to make accessing channel specific stats objects a little easier. This class is sorta yucky and
  * definitely will need to evolve
  */
-public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventListener {
+public class ChannelStatsImpl implements ChannelStats, ChannelManagerEventListener {
 
   private static final StatsConfig[] STATS_CONFIG = new StatsConfig[] {
       new StatsConfig(READ_RATE, new SampledCounterConfig(1, 300, true, 0L)),
@@ -55,8 +55,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
   public Counter getCounter(MessageChannel channel, String name) {
     Counter rv = (Counter) channel.getAttachment(name);
     if (rv == null) {
-      createStatsCountersIfNeeded(channel, name);
-      rv = (Counter) channel.getAttachment(name);
+      rv = createStatsCountersIfNeeded(channel, name);
       if (rv == null) throw new NullPointerException("StatsCounter : " + name + " not attached to channel "
                                                      + channel.getChannelID()
                                                      + " ! Probably not initialized. Check ChannelStats Interface. ");
@@ -64,7 +63,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
     return rv;
   }
 
-  private synchronized void createStatsCountersIfNeeded(MessageChannel channel, String name) {
+  private synchronized Counter createStatsCountersIfNeeded(MessageChannel channel, String name) {
     Counter rv = (Counter) channel.getAttachment(name);
     if (rv == null) {
       for (StatsConfig config : STATS_CONFIG) {
@@ -72,6 +71,7 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
         channel.addAttachment(config.getStatsName(), counter, true);
       }
     }
+    return (Counter) channel.getAttachment(name);
   }
 
   @Override

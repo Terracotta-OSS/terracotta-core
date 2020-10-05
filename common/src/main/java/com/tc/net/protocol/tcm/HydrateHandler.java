@@ -18,13 +18,13 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 
 public class HydrateHandler extends AbstractEventHandler<HydrateContext> {
-  private static TCLogger logger = TCLogging.getLogger(HydrateHandler.class);
+  private static Logger logger = LoggerFactory.getLogger(HydrateHandler.class);
 
   @Override
   public void handleEvent(HydrateContext hc) {
@@ -41,13 +41,8 @@ public class HydrateHandler extends AbstractEventHandler<HydrateContext> {
       message.getChannel().close();
       return;
     }
-    // TODO: Rationalize this hack to explicitly know whether this is multi-threaded, or not.
-    // This hack is just a stop-gap to phase in the SEDA types in smaller changes.
-    if (message instanceof MultiThreadedEventContext) {
-      hc.getDestSink().addMultiThreaded(message);
-    } else {
-      hc.getDestSink().addSingleThreaded(message);
-    }
+      
+    hc.getDestSink().addToSink(message);
   }
 
 }

@@ -18,27 +18,24 @@
  */
 package com.tc.stats;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.management.RemoteManagement;
-import com.tc.management.beans.L2MBeanNames;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tc.management.TerracottaManagement;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionPolicy;
-import com.tc.object.ObjectID;
 import com.tc.object.net.ChannelStats;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.DSOChannelManagerMBean;
-import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.locks.LockMBean;
-import com.tc.objectserver.locks.LockManagerMBean;
-import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.stats.api.ClassInfo;
+import com.tc.objectserver.entity.VoltronMessageSink;
+import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.stats.api.DSOMBean;
-import com.tc.stats.api.Stats;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,37 +58,38 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 
 /**
  * This is the top-level MBean for the DSO subsystem, off which to hang JSR-77 Stats and Config MBeans.
  * 
  * @see DSOMBean
- * @see StatsImpl
  */
 public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
-  private final static TCLogger                        logger                 = TCLogging.getLogger(DSO.class);
-  private final static String                          DSO_OBJECT_NAME_PREFIX = L2MBeanNames.DSO.getCanonicalName()
-                                                                                + ",";
+  private final static Logger logger = LoggerFactory.getLogger(DSO.class);
 
-  private final StatsImpl                           dsoStats;
+  static final int DEFAULT_JMX_REMOTE_PORT = 5000;
+
   private final MBeanServer                            mbeanServer;
-  private final List<ObjectName>                       rootObjectNames        = new ArrayList<>();
   
   private final Set<ObjectName>                        clientObjectNames      = new LinkedHashSet<>();
   
   private final Map<ObjectName, Client>             clientMap              = new HashMap<>();
   private final DSOChannelManagerMBean                 channelMgr;
-  private final LockManagerMBean                       lockMgr;
   private final ChannelStats                           channelStats;
-  private final ObjectInstanceMonitorMBean             instanceMonitor;
-  private final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private final ConnectionPolicy                       connectionPolicy;
-  private final RemoteManagement                       remoteManagement;
+  private final VoltronMessageHandler               messageHandler;
+  private final VoltronMessageSink                  messageSink;
+  
+  private volatile int jmxRemotePort = DEFAULT_JMX_REMOTE_PORT;
+  private volatile JMXConnectorServer jmxConnectorServer;
+  private Registry registry;
 
   public DSO(ServerManagementContext managementContext, ServerConfigurationContext configContext,
-             MBeanServer mbeanServer,
-             TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider)
+             MBeanServer mbeanServer)
       throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
@@ -99,18 +97,14 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     } catch (Exception e) {/**/
     }
     this.mbeanServer = mbeanServer;
-    this.dsoStats = new StatsImpl(managementContext);
-    this.lockMgr = managementContext.getLockManager();
     this.channelMgr = managementContext.getChannelManager();
     this.channelStats = managementContext.getChannelStats();
-    this.instanceMonitor = managementContext.getInstanceMonitor();
-    this.operatorEventHistoryProvider = operatorEventHistoryProvider;
     this.connectionPolicy = managementContext.getConnectionPolicy();
-    this.remoteManagement = managementContext.getRemoteManagement();
-
+    this.messageHandler = managementContext.getVoltronMessageHandler();
+    this.messageSink = managementContext.getVoltronMessageSink();
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
-
+    
     setupClients();
   }
 
@@ -120,91 +114,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public Stats getStats() {
-    return dsoStats;
-  }
-
-  @Override
-  public long getTransactionRate() {
-    return getStats().getTransactionRate();
-  }
-
-  @Override
-  public long getReadOperationRate() {
-    return getStats().getReadOperationRate();
-  }
-
-  @Override
-  public long getGlobalLockRecallRate() {
-    return getStats().getGlobalLockRecallRate();
-  }
-
-  @Override
-  public long getTransactionSizeRate() {
-    return getStats().getTransactionSizeRate();
-  }
-
-  @Override
-  public long getBroadcastRate() {
-    return getStats().getBroadcastRate();
-  }
-
-  @Override
-  public Number[] getStatistics(String[] names) {
-    return getStats().getStatistics(names);
-  }
-
-  @Override
-  public List<TerracottaOperatorEvent> getOperatorEvents() {
-    return this.operatorEventHistoryProvider.getOperatorEvents();
-  }
-
-  @Override
-  public List<TerracottaOperatorEvent> getOperatorEvents(long sinceTimestamp) {
-    return this.operatorEventHistoryProvider.getOperatorEvents(sinceTimestamp);
-  }
-
-  @Override
-  public boolean markOperatorEvent(TerracottaOperatorEvent operatorEvent, boolean read) {
-    return operatorEventHistoryProvider.markOperatorEvent(operatorEvent, read);
-  }
-
-  @Override
-  public Map<String, Integer> getUnreadOperatorEventCount() {
-    return operatorEventHistoryProvider.getUnreadCounts();
-  }
-
-  @Override
-  public ObjectName[] getRoots() {
-    synchronized (rootObjectNames) {
-      return rootObjectNames.toArray(new ObjectName[rootObjectNames.size()]);
-    }
-  }
-
-  @Override
-  public LockMBean[] getLocks() {
-    return (this.lockMgr != null) ? this.lockMgr.getAllLocks() : new LockMBean[0];
-  }
-
-  @Override
   public ObjectName[] getClients() {
     synchronized (clientObjectNames) {
       return clientObjectNames.toArray(new ObjectName[clientObjectNames.size()]);
     }
-  }
-
-  @Override
-  public ClassInfo[] getClassInfo() {
-    Map<String, Integer> counts = instanceMonitor.getInstanceCounts();
-    List<ClassInfo> list = new ArrayList<>();
-
-    Iterator<Map.Entry<String, Integer>> iter = counts.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry<String, Integer> entry = iter.next();
-      list.add(new ClassInfo(entry.getKey(), entry.getValue()));
-    }
-
-    return list.toArray(new ClassInfo[list.size()]);
   }
 
   private void setupClients() {
@@ -216,46 +129,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private ObjectName makeClientObjectName(MessageChannel channel) {
     try {
-      return new ObjectName(DSO_OBJECT_NAME_PREFIX + "channelID=" + channel.getChannelID().toLong() +
-                            ",productId=" + channel.getProductId());
+      return TerracottaManagement.createObjectName(TerracottaManagement.Type.Client, channel.getProductID().toString() + "" + channel.getChannelID().toLong(), TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException e) {
       // this shouldn't happen
       throw new RuntimeException(e);
-    }
-  }
-
-  private ObjectName makeRootObjectName(String name, ObjectID id) {
-    try {
-      return new ObjectName(DSO_OBJECT_NAME_PREFIX + "rootID=" + id.toLong());
-    } catch (MalformedObjectNameException e) {
-      // this shouldn't happen
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void addRootMBean(String name, ObjectID rootID) {
-    // XXX: There should be a cleaner way to do this ignore
-    if (name.startsWith("@")) {
-      // ignore literal roots
-      return;
-    }
-
-    synchronized (rootObjectNames) {
-      ObjectName rootName = makeRootObjectName(name, rootID);
-      if (mbeanServer.isRegistered(rootName)) {
-        // this can happen since the initial root setup races with the object manager "root created" event
-        logger.debug("Root MBean already registered for name " + rootName);
-        return;
-      }
-
-      try {
-        Root dsoRoot = new Root(rootID, name);
-        mbeanServer.registerMBean(dsoRoot, rootName);
-        rootObjectNames.add(rootName);
-        sendNotification(ROOT_ADDED, rootName);
-      } catch (Exception e) {
-        logger.error(e);
-      }
     }
   }
 
@@ -269,7 +146,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
           mbeanServer.unregisterMBean(clientName);
         }
       } catch (Exception e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
       } finally {
         clientObjectNames.remove(clientName);
         Client client = clientMap.remove(clientName);
@@ -298,176 +175,21 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  @Override
-  public Map<ObjectName, Long> getAllPendingTransactionsCount() {
-    Map<ObjectName, Long> map = new HashMap<>();
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        map.put(clientBeanName, clientMap.get(clientBeanName).getPendingTransactionsCount());
-      }
-    }
-    return map;
-  }
-
-  /**
-   * Sum of all unacknowledged client transactions
-   */
-  @Override
-  public long getPendingTransactionsCount() {
-    long result = 0;
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        result += clientMap.get(clientBeanName).getPendingTransactionsCount();
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public Map<ObjectName, Long> getClientTransactionRates() {
-    Map<ObjectName, Long> result = new HashMap<>();
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        result.put(clientBeanName, clientMap.get(clientBeanName).getTransactionRate());
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public Map<ObjectName, Map<String, Object>> getL1Statistics() {
-    Map<ObjectName, Map<String, Object>> result = new HashMap<>();
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        result.put(clientBeanName, clientMap.get(clientBeanName).getStatistics());
-      }
-    }
-    return result;
-  }
-
   private static final ExecutorService pool = Executors.newCachedThreadPool();
 
-  private static class PrimaryClientStatWorker implements Callable<Map<String, Object>> {
-    private final ObjectName clientBeanName;
-    private final Client  client;
-
-    private PrimaryClientStatWorker(ObjectName clientBeanName, Client client) {
-      this.clientBeanName = clientBeanName;
-      this.client = client;
-    }
-
-    @Override
-    public Map<String, Object> call() {
-      try {
-        Map<String, Object> result = client.getStatistics();
-        if (result != null) {
-          result.put("TransactionRate", client.getTransactionRate());
-          result.put("clientBeanName", clientBeanName);
-        }
-        return result;
-      } catch (Exception e) {
-        return null;
-      }
-    }
-  }
-
-  /*
-   * MemoryUsage, CpuUsage, TransactionRate
-   */
-  @Override
-  public Map<ObjectName, Map<String, Object>> getPrimaryClientStatistics() {
-    Map<ObjectName, Map<String, Object>> result = new HashMap<>();
-    List<Callable<Map<String, Object>>> tasks = new ArrayList<>();
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        tasks.add(new PrimaryClientStatWorker(clientBeanName, clientMap.get(clientBeanName)));
-      }
-    }
-    try {
-      List<Future<Map<String, Object>>> results = pool.invokeAll(tasks, 2, TimeUnit.SECONDS);
-      Iterator<Future<Map<String, Object>>> resultIter = results.iterator();
-      while (resultIter.hasNext()) {
-        Future<Map<String, Object>> future = resultIter.next();
-        if (future.isDone()) {
-          try {
-            Map<String, Object> statsMap = future.get();
-            if (statsMap != null) {
-              result.put((ObjectName) statsMap.remove("clientBeanName"), statsMap);
-            }
-          } catch (InterruptedException e) {
-            /**/
-          } catch (ExecutionException e) {
-            /**/
-          }
-        }
-      }
-    } catch (InterruptedException ie) {/**/
-    }
-    return result;
-  }
-
-  @Override
-  public int getLiveObjectCount() {
-    return 0;
-  }
-
-  @Override
-  public Map<ObjectName, Integer> getClientLiveObjectCount() {
-    Map<ObjectName, Integer> result = new HashMap<>();
-    synchronized (clientObjectNames) {
-      Iterator<ObjectName> iter = clientObjectNames.iterator();
-      while (iter.hasNext()) {
-        ObjectName clientBeanName = iter.next();
-        result.put(clientBeanName, clientMap.get(clientBeanName).getLiveObjectCount());
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public long getGlobalServerMapGetSizeRequestsCount() {
-    return getStats().getGlobalServerMapGetSizeRequestsCount();
-  }
-
-  @Override
-  public long getGlobalServerMapGetSizeRequestsRate() {
-    return getStats().getGlobalServerMapGetSizeRequestsRate();
-  }
-
-  @Override
-  public long getGlobalServerMapGetValueRequestsCount() {
-    return getStats().getGlobalServerMapGetValueRequestsCount();
-  }
-
-  @Override
-  public long getGlobalServerMapGetValueRequestsRate() {
-    return getStats().getGlobalServerMapGetValueRequestsRate();
-  }
-
-  @Override
-  public long getWriteOperationRate() {
-    return getStats().getWriteOperationRate();
-  }
-
-  private class ChannelManagerListener implements DSOChannelManagerEventListener {
+  private class ChannelManagerListener implements ChannelManagerEventListener {
     @Override
     public void channelCreated(MessageChannel channel) {
-      addClientMBean(channel);
+      if (!channel.getProductID().isInternal()) {
+        addClientMBean(channel);
+      }
     }
 
     @Override
     public void channelRemoved(MessageChannel channel) {
-      removeClientMBean(channel);
+      if (!channel.getProductID().isInternal()) {
+        removeClientMBean(channel);
+      }
     }
   }
 
@@ -670,7 +392,98 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public RemoteManagement getRemoteManagement() {
-    return remoteManagement;
+  public String getJmxRemotePort() {
+    return String.valueOf(jmxRemotePort);
+  }
+
+  @Override
+  public void setJmxRemotePort(String port) {
+    if(jmxConnectorServer == null) {
+      jmxRemotePort = Integer.parseInt(port);
+    }
+  }
+
+  @Override
+  public String startJMXRemote() {
+    if(jmxConnectorServer != null) {
+      return "JMX remote already started at port: " + jmxRemotePort;
+    } else {
+      try {
+        registry = LocateRegistry.createRegistry(jmxRemotePort);
+        JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://localhost/jndi/rmi://localhost:" + jmxRemotePort + "/jmxrmi");
+        jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbeanServer);
+        jmxConnectorServer.start();
+        return "Successfully started jmx remote at port " + jmxRemotePort;
+      } catch (Throwable t) {
+        return "Caught exception while starting jmx at port " + jmxRemotePort + ": " + t.getLocalizedMessage();
+      }
+    }
+  }
+
+  @Override
+  public String stopJMXRemote() {
+    try {
+      if(jmxConnectorServer != null) {
+        jmxConnectorServer.stop();
+        jmxConnectorServer = null;
+        UnicastRemoteObject.unexportObject(registry, true);
+        return "Successfully stopped jmx remote at port " + jmxRemotePort;
+      } else {
+        return "JmxConnectorServer is not running";
+      }
+    } catch (Throwable t) {
+      return "Caught exception while stopping jmx remote at port " + jmxRemotePort + ": " + t.getLocalizedMessage();
+    }
+  }
+  
+
+  @Override
+  public int getCurrentBackoff() {
+    return messageHandler.currentBackoff();
+  }
+
+  @Override
+  public boolean isDirectExecution() {
+    return messageHandler.isDirect();
+  }
+
+  @Override
+  public void setDirectExecution(boolean activate) {
+    messageHandler.setDirect(activate);
+  }
+
+  @Override
+  public void setBackoffActive(boolean active) {
+    messageHandler.setUseBackoff(active);
+  }
+
+  @Override
+  public boolean isBackoffActive() {
+    return messageHandler.isUseBackoff();
+  }
+
+  @Override
+  public boolean isCurrentlyDirect() {
+    return messageHandler.currentlyDirect();
+  }  
+
+  @Override
+  public long getMaxBackoffTime() {
+    return messageHandler.getMaxBackoffTime();
+  }
+
+  @Override
+  public long getBackoffCount() {
+    return messageHandler.backoffCount();
+  }
+
+  @Override
+  public void setAlwaysHydrate(boolean hydrate) {
+    this.messageSink.setAlwaysHydrate(hydrate);
+  }
+
+  @Override
+  public boolean isAlwaysHydrate() {
+    return this.messageSink.isAlwaysHydrate();
   }
 }

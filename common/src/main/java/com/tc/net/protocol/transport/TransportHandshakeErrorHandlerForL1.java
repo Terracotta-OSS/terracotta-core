@@ -18,13 +18,14 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+
 import com.tc.util.concurrent.ThreadUtil;
 
 public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeErrorHandler {
 
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final Logger consoleLogger = TCLogging.getConsoleLogger();
 
   @Override
   public void handleHandshakeError(TransportHandshakeErrorContext e) {
@@ -33,8 +34,14 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     } else if (e.getErrorType() == TransportHandshakeError.ERROR_RECONNECTION_REJECTED) {
       // do not log here because ClientChannelEventController will be logging this event as
       // TRANSPORT_RECONNECTION_REJECTED_EVENT
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_NONE) {
+      //  don't log these, not real errors
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_REDIRECT_CONNECTION) {
+      //  don't log these, not real errors
+    } else if (e.getErrorType() == TransportHandshakeError.ERROR_NO_ACTIVE) {
+      //  don't log these, not real errors
     } else {
-      consoleLogger.error(e);
+      consoleLogger.error("Exception: ", e);
     }
 
     /**
@@ -45,9 +52,12 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
      */
 
     switch (e.getErrorType()) {
-      case TransportHandshakeError.ERROR_STACK_MISMATCH:
-      case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
-      case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
+      case ERROR_STACK_MISMATCH:
+      case ERROR_MAX_CONNECTION_EXCEED:
+      case ERROR_RECONNECTION_REJECTED:
+      case ERROR_REDIRECT_CONNECTION:
+      case ERROR_NO_ACTIVE:
+      case ERROR_NONE:
         // no sleep;
         break;
       default:
@@ -55,8 +65,9 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     }
 
     switch (e.getErrorType()) {
-      case TransportHandshakeError.ERROR_STACK_MISMATCH:
-      case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
+      case ERROR_STACK_MISMATCH:
+      case ERROR_MAX_CONNECTION_EXCEED:
+      case ERROR_PRODUCT_NOT_SUPPORTED:
         consoleLogger.error("Crashing the client due to handshake errors.");
         break;
       default:

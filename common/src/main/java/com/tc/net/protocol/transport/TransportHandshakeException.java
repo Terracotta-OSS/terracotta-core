@@ -32,4 +32,8 @@ public class TransportHandshakeException extends IOException {
   TransportHandshakeException(Exception parent) {
     super(parent);
   }
+
+  TransportHandshakeException(String message, Exception parent) {
+    super(message, parent);
+  }
 }

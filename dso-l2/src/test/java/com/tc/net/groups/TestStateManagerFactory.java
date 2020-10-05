@@ -18,22 +18,31 @@
  */
 package com.tc.net.groups;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManager;
-import com.tc.l2.state.StateManagerConfig;
 import com.tc.l2.state.StateManagerImpl;
-import com.tc.logging.TCLogger;
 import com.tc.net.NodeID;
 import static com.tc.net.groups.MockStageManagerFactory.createEventHandler;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.TestClusterStatePersistor;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ConsistencyManager.Transition;
+import com.tc.l2.state.ServerMode;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  *
@@ -41,12 +50,12 @@ import com.tc.objectserver.persistence.TestClusterStatePersistor;
 public class TestStateManagerFactory {
   
   private final MockStageManagerFactory stageCreator;
-  private final TCLogger logging;
+  private final Logger logging;
 
   private StateManagerImpl mgr;
   private Sink stateMsgs;
   
-  public TestStateManagerFactory(MockStageManagerFactory stageCreator, GroupManager groupMgr, TCLogger logging) throws Exception {
+  public TestStateManagerFactory(MockStageManagerFactory stageCreator, GroupManager groupMgr, Logger logging) throws Exception {
     this.stageCreator = stageCreator;
     this.logging = logging;
     this.mgr = createStateManager(groupMgr);
@@ -55,14 +64,17 @@ public class TestStateManagerFactory {
   private StateManagerImpl createStateManager(GroupManager groupMgr) throws Exception {
     MyGroupEventListener gel = new MyGroupEventListener(groupMgr.getLocalNodeID());
     groupMgr.registerForGroupEvents(gel);
-    MyStateManagerConfig config = new MyStateManagerConfig();
-    config.electionTime = 5;
      
     StageManager stages = stageCreator.createStageManager();
     
     LateLoadingEventHandler handler = new LateLoadingEventHandler();
-    Stage stateChange = stages.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, handler, 0, 1024);
-    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, stateChange.getSink(), stages, config, RandomWeightGenerator.createTestingFactory(2), new TestClusterStatePersistor());
+    ConsistencyManager cmgr = mock(ConsistencyManager.class);
+    StageController controller = mock(StageController.class);
+    ManagementTopologyEventCollector mgmt = mock(ManagementTopologyEventCollector.class);
+    when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    StateManagerImpl mgr = new StateManagerImpl(logging, groupMgr, controller, mgmt, stages, 1, 5,
+                                                RandomWeightGenerator.createTestingFactory(2), cmgr,
+                                                new TestClusterStatePersistor(), mock(TopologyManager.class));
     handler.setMgr(mgr);
 
     stateMsgs = stages.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, createEventHandler((msg)->mgr.handleClusterStateMessage(msg)), 0, 1024).getSink();
@@ -76,15 +88,6 @@ public class TestStateManagerFactory {
 
   public Sink getStateMessageSink() {
     return stateMsgs;
-  }
-    
-  private static class MyStateManagerConfig implements StateManagerConfig {
-    public int electionTime;
-
-    @Override
-    public int getElectionTimeInSecs() {
-      return electionTime;
-    }
   }
   
   private class LateLoadingEventHandler extends AbstractEventHandler<StateChangedEvent> {

@@ -18,15 +18,15 @@
  */
 package com.tc.lang;
 
+import org.slf4j.Logger;
+
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.exception.DatabaseException;
 import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
@@ -54,7 +54,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
 
   // instantiating message here to avoid any allocations on OOME
   private static final String                        OOME_ERROR_MSG                  = "Fatal error: out of available memory. Exiting...";
-  protected final TCLogger                           logger;
+  protected final Logger logger;
   private final ExceptionHelperImpl                  helper;
   private final List<CallbackOnExitHandler>          callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList<CallbackOnExitHandler>();
   private final Map<Class<?>, CallbackOnExitHandler> callbackOnExitExceptionHandlers = new HashMap<Class<?>, CallbackOnExitHandler>();
@@ -72,7 +72,7 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
    * 
    * @param logger Logger
    */
-  public ThrowableHandlerImpl(TCLogger logger) {
+  public ThrowableHandlerImpl(Logger logger) {
     this.logger = logger;
     helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());
@@ -89,7 +89,6 @@ public class ThrowableHandlerImpl implements ThrowableHandler {
     String bindExceptionExtraMessage = ".  Please make sure the server isn't already running or choose a different port.";
     addCallbackOnExitExceptionHandler(BindException.class,
                                       new CallbackStartupExceptionLoggingAdapter(bindExceptionExtraMessage));
-    addCallbackOnExitExceptionHandler(DatabaseException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(LocationNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(FileNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(TCDataFileLockingException.class, new CallbackStartupExceptionLoggingAdapter());

@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.0.0-SNAPSHOT</version>
+    <version>5.7-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
 
@@ -34,7 +34,7 @@
 
   <properties>
     <checkstyle-suppressions-file>${basedir}/../checkstyle-toolkit/suppressions.xml</checkstyle-suppressions-file>
-    <java.build.version>1.6</java.build.version>
+    <java.build.version>1.8</java.build.version>
   </properties>
 
   <dependencies>
@@ -44,6 +44,11 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency> 
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
@@ -75,12 +80,17 @@
     </dependency>
     <dependency>
       <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito</artifactId>
+      <artifactId>powermock-api-mockito2</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-junit4</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -102,13 +112,13 @@
   <repositories>
     <repository>
       <id>terracotta-repository</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-repository</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </pluginRepository>
   </pluginRepositories>
 </project>

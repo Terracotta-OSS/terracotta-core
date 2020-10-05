@@ -18,9 +18,9 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.Assert;
 
 import java.util.HashSet;
@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author steve
  */
 class ChannelManagerImpl implements ChannelManager, ChannelEventListener, ServerMessageChannelFactory {
-  private static final TCLogger                        logger              = TCLogging.getLogger(ChannelManager.class);
+  private static final Logger logger              = LoggerFactory.getLogger(ChannelManager.class);
   private static final MessageChannelInternal[]        EMPTY_CHANNEL_ARARY = new MessageChannelInternal[] {};
 
   private final Map<ChannelID, MessageChannelInternal> channels;
@@ -51,10 +51,13 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   }
 
   @Override
-  public MessageChannelInternal createNewChannel(ChannelID id, ProductID productId) {
-    MessageChannelInternal channel = channelFactory.createNewChannel(id, productId);
+  public MessageChannelInternal createNewChannel(ChannelID id) {
+    MessageChannelInternal channel = channelFactory.createNewChannel(id);
     synchronized (this) {
-      channels.put(channel.getChannelID(), channel);
+      if (id.isNull()) {
+        throw new AssertionError();
+      }
+      channels.put(id, channel);
       channel.addListener(this);
     }
     return channel;

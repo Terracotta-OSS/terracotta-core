@@ -21,18 +21,39 @@ package com.tc.l2.ha;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
 public class WeightGeneratorFactory {
-  private final List<WeightGenerator> generators = new ArrayList<>();
+  private final List<WeightGenerator> generators;
+  private final boolean complete;
 
-  public synchronized void add(WeightGenerator g) {
+  public WeightGeneratorFactory() {
+    generators = new ArrayList<>();
+    complete = false;
+  }
+
+  private WeightGeneratorFactory(List<WeightGenerator> generators) {
+    this.generators = Collections.unmodifiableList(generators);
+    this.complete = true;
+  }
+
+  public void add(WeightGenerator g) {
     Assert.assertNotNull(g);
     generators.add(g);
   }
   
-  public synchronized long[] generateWeightSequence() {
+  public WeightGeneratorFactory complete() {
+    return new WeightGeneratorFactory(generators);
+  }
+  
+  public boolean isComplete() {
+    return complete;
+  }
+  
+  public long[] generateWeightSequence() {
+    Assert.assertTrue(isComplete());
     long weights[] = new long[generators.size()];
     for (int i = 0; i < weights.length; i++) {
       weights[i] = generators.get(i).getWeight();
@@ -40,12 +61,33 @@ public class WeightGeneratorFactory {
     return weights;
   }
   
-  public synchronized long[] generateMaxWeightSequence() {
+  public long[] generateMaxWeightSequence() {
+    Assert.assertTrue(isComplete());
     long weights[] = new long[generators.size()];
     for (int i = 0; i < weights.length; i++) {
       weights[i] = Long.MAX_VALUE;
     }
     return weights;
+  }
+  
+  public long[] generateVerificationSequence() {
+    Assert.assertTrue(isComplete());
+    long weights[] = new long[generators.size()];
+    for (int i=0;i<generators.size();i++) {
+      WeightGenerator gen = generators.get(i);
+      // generation weight generator is for information sharing only
+      if (gen.isVerificationWeight()) {
+        weights[i] = gen.getWeight();
+      } else {
+        weights[i] = Long.MAX_VALUE;
+      }
+    }
+    return weights;
+  }
+  
+  public int size() {
+    Assert.assertTrue(isComplete());
+    return generators.size();
   }
 
   /**
@@ -53,5 +95,8 @@ public class WeightGeneratorFactory {
    */
   public static interface WeightGenerator {
     public long getWeight();
+    default boolean isVerificationWeight() {
+      return false;
+    }
   }
 }

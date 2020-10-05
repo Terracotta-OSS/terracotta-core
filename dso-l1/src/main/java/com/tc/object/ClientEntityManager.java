@@ -19,7 +19,6 @@
 package com.tc.object;
 
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -46,20 +45,11 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
    * @param closeHook To be passed into the found EntityClientEndpoint for it to call on close or called, directly, if lookup fails.
    * @return The end-point or null if the entity doesn't exist
    */
-  public EntityClientEndpoint fetchEntity(EntityDescriptor entityDescriptor, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException;
+  public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException;
 
-  /**
-   * Handles a message received from the server. It will hand off the message to the client side entity if it exists.
-   * otherwise it'll drop the message on the floor.
-   *
-   * @param entityDescriptor the entity and instance to receive the message.
-   * @param message opaque message
-   */
-  void handleMessage(EntityDescriptor entityDescriptor, byte[] message);
-
-  InvokeFuture<byte[]> createEntity(EntityID entityID, long version, byte[] config);
+  byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException;
   
-  InvokeFuture<byte[]> destroyEntity(EntityID entityID, long version);
+  boolean destroyEntity(EntityID entityID, long version) throws EntityException;
 
-  InvokeFuture<byte[]> reconfigureEntity(EntityID entityID, long version, byte[] config);
+  byte[] reconfigureEntity(EntityID entityID, long version, byte[] config) throws EntityException;
 }

@@ -22,6 +22,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 import java.util.Collection;
@@ -45,11 +46,11 @@ public interface DSOChannelManager {
 
   public TCConnection[] getAllActiveClientConnections();
 
-  public void addEventListener(DSOChannelManagerEventListener listener);
+  public void addEventListener(ChannelManagerEventListener listener);
 
   public Set<NodeID> getAllClientIDs();
 
-  public void makeChannelActive(ClientID clientID, boolean persistent);
+  public void makeChannelActive(ClientID clientID);
 
   public void makeChannelRefuse(ClientID clientID, String message);
 

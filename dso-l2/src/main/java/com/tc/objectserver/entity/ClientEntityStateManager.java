@@ -20,8 +20,9 @@ package com.tc.objectserver.entity;
 
 import com.tc.net.ClientID;
 import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
-import com.tc.object.net.DSOChannelManagerEventListener;
+import com.tc.object.FetchID;
+import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -29,23 +30,23 @@ import com.tc.object.net.DSOChannelManagerEventListener;
  * Note that the same client can refer to a specific entity multiple times, which each connection possessing a distinct
  * life cycle.
  */
-public interface ClientEntityStateManager extends DSOChannelManagerEventListener {
+  public interface ClientEntityStateManager {
   /**
    * Adds a reference from clientID to the entity described by entityDescriptor.
    * 
    * @param clientID The client.
    * @param entityDescriptor The entity.
+   * @return 
    */
-  public boolean addReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  public boolean addReference(ClientDescriptorImpl clientID, FetchID entityDescriptor);
 
   /**
-   * Removes a reference from clientID to the entity described by entityDescriptor.
-   * NOTE:  This will assert if an attempt is made to remove a reference which was never added.
+   * Removes a reference from clientID to the entity described by entityDescriptor.NOTE:  This will assert if an attempt is made to remove a reference which was never added.
    * 
    * @param clientID The client.
-   * @param entityDescriptor The entity.
+   * @return 
    */
-  public boolean removeReference(ClientID clientID, EntityDescriptor entityDescriptor);
+  public boolean removeReference(ClientDescriptorImpl clientID);
 
   /**
    * Verifies that no clients have a reference to the entity described by entityDescriptor.
@@ -54,5 +55,20 @@ public interface ClientEntityStateManager extends DSOChannelManagerEventListener
    * @param entityDescriptor The entity.
    * @return true if there are no references
    */
-  public boolean verifyNoReferences(EntityID entityDescriptor);
+  public boolean verifyNoEntityReferences(FetchID entityDescriptor);
+  
+  /**
+   * Verifies that the client has no references in the system
+   * 
+   * 
+   * @param client The client.
+   * @return true if there are no references
+   */
+  public boolean verifyNoClientReferences(ClientID client);  
+  
+  public List<EntityDescriptor> clientDisconnectedFromEntity(ClientID client, FetchID entity);
+  
+  public List<FetchID> clientDisconnected(ClientID client);
+  
+  public Set<ClientID> clearClientReferences();
 }

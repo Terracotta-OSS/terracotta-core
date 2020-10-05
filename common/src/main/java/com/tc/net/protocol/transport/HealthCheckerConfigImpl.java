@@ -20,7 +20,6 @@ package com.tc.net.protocol.transport;
 
 import com.tc.properties.TCProperties;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -138,16 +137,6 @@ public class HealthCheckerConfigImpl implements HealthCheckerConfig {
   @Override
   public int getSocketConnectTimeout() {
     return this.socketConnectTimeout;
-  }
-
-  @Override
-  public String getCallbackPortListenerBindAddress() {
-    throw new AssertionError("CallbackPort Listener not needed for servers");
-  }
-
-  @Override
-  public Set<Integer> getCallbackPortListenerBindPort() {
-    throw new AssertionError("CallbackPort Listener not needed for servers");
   }
 
   @Override

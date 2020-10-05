@@ -19,8 +19,6 @@
 package com.tc.management.beans;
 
 import com.tc.management.TerracottaManagement;
-import com.tc.management.TerracottaManagement.Subsystem;
-import com.tc.management.TerracottaManagement.Type;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -28,24 +26,18 @@ import javax.management.ObjectName;
 public class L2MBeanNames {
 
   public static final ObjectName TC_SERVER_INFO;
-  public static final ObjectName LOGGER;
   public static final ObjectName DSO;
 
   //XXX: this for test, to read server data when active-active is running.
-  public static final ObjectName OBJECT_MANAGEMENT;
   public static final ObjectName DUMPER;
-  public static final ObjectName SERVER_DB_BACKUP;
-  public static final ObjectName ENTERPRISE_TC_SERVER;
+  public static final ObjectName TOPOLOGY_MBEAN;
 
   static {
     try {
-      TC_SERVER_INFO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Terracotta Server", TerracottaManagement.MBeanDomain.INTERNAL);
-      LOGGER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Logger", TerracottaManagement.MBeanDomain.INTERNAL);
-      DSO = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "DSO", TerracottaManagement.MBeanDomain.PUBLIC);
-      OBJECT_MANAGEMENT = TerracottaManagement.createObjectName(Type.Server, Subsystem.ObjectManagement, null, "ObjectManagement", TerracottaManagement.MBeanDomain.PUBLIC);
-      DUMPER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "L2Dumper", TerracottaManagement.MBeanDomain.INTERNAL);
-      SERVER_DB_BACKUP = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Terracotta Server Backup", TerracottaManagement.MBeanDomain.INTERNAL);
-      ENTERPRISE_TC_SERVER = TerracottaManagement.createObjectName(Type.Server, Subsystem.None, null, "Enterprise Terracotta Server", TerracottaManagement.MBeanDomain.INTERNAL);
+      TC_SERVER_INFO = TerracottaManagement.createObjectName(null, "TerracottaServer", TerracottaManagement.MBeanDomain.PUBLIC);
+      DSO = TerracottaManagement.createObjectName(null, "DSO", TerracottaManagement.MBeanDomain.PUBLIC);
+      DUMPER = TerracottaManagement.createObjectName(null, "L2Dumper", TerracottaManagement.MBeanDomain.PUBLIC);
+      TOPOLOGY_MBEAN = TerracottaManagement.createObjectName(null, "TopologyMBean", TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

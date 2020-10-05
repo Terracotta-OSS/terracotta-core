@@ -19,8 +19,9 @@
 package com.tc.properties;
 
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.io.IOUtils;
 import com.tc.util.properties.TCPropertyStore;
 
@@ -29,15 +30,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * This class is an easy way to read properties that will help tune DSO. It first loads properties from the
@@ -47,7 +46,9 @@ import java.util.Properties;
  */
 public class TCPropertiesImpl implements TCProperties {
 
-  private static final TCLogger         logger                     = newLoggingProxy();
+  private static final Logger logger = LoggerFactory.getLogger(TCPropertiesImpl.class);
+
+  private static final Set<String> TC_PROPERTIES_WITH_NO_DEFAULTS = new HashSet<String>(Arrays.asList(TCPropertiesConsts.TC_PROPERTIES_WITH_NO_DEFAULTS));
 
   public static final String            SYSTEM_PROP_PREFIX         = "com.tc.";
 
@@ -138,34 +139,29 @@ public class TCPropertiesImpl implements TCProperties {
       return;
     }
 
-    // flip the logger proxy to the real deal
-    try {
-      ((LoggingInvocationHandler) Proxy.getInvocationHandler(logger)).switchToRealLogger();
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
-
-    logger.info("Loaded TCProperties : " + toString());
+    logger.debug("Loaded TCProperties : " + toString());
   }
 
   private void applyConfigOverrides(Map<String, String> overwriteProps) {
-    int noOfProperties = overwriteProps.size();
-
-    if (noOfProperties == 0) {
-      logger.info("tc-config doesn't have any tc-property. No tc-property will be overridden");
+    if (overwriteProps.isEmpty()) {
+      logger.debug("tc-config doesn't have any tc-property. No tc-property will be overridden");
       return;
     }
 
     for (Entry<String, String> prop : overwriteProps.entrySet()) {
       String propertyName = prop.getKey();
       String propertyValue = prop.getValue();
-      if (!this.props.containsKey(propertyName)) {
+      if (!this.props.containsKey(propertyName) && !TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
         logger.warn("The property \"" + propertyName
                     + "\" is not present in set of defined tc properties. Probably this is misspelled");
       }
       if (!this.localTcProperties.containsKey(propertyName)) {
-        logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
-                    + props.getProperty(propertyName) + " by the tc-config file");
+        if(TC_PROPERTIES_WITH_NO_DEFAULTS.contains(propertyName)) {
+          logger.info("The property \"" + propertyName + "\" was set to " + propertyValue + " by the tc-config file");
+        } else {
+          logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
+                      + props.getProperty(propertyName) + " by the tc-config file");
+        }
         setProperty(propertyName, propertyValue);
       } else {
         logger.warn("The property \"" + propertyName + "\" was set by local settings to "
@@ -228,7 +224,7 @@ public class TCPropertiesImpl implements TCProperties {
     InputStream in = null;
     try {
       in = url.openStream();
-      logger.info("Loading default properties from " + propFile);
+      logger.debug("Loading default properties from " + propFile);
       props.load(in);
     } catch (IOException e) {
       throw new AssertionError(e);
@@ -332,64 +328,4 @@ public class TCPropertiesImpl implements TCProperties {
     String val = getProperty(key);
     return Float.valueOf(val).floatValue();
   }
-
-  private static TCLogger newLoggingProxy() {
-    LoggingInvocationHandler handler = new LoggingInvocationHandler();
-    Class<?>[] interfaces = new Class[] { TCLogger.class };
-    ClassLoader loader = TCPropertiesImpl.class.getClassLoader();
-    return (TCLogger) Proxy.newProxyInstance(loader, interfaces, handler);
-  }
-
-  /**
-   * The whole point of this class is to delay initializing logging until TCProperties have been initialized. This proxy
-   * will buffer calls to logger until the switch method is called
-   */
-  private static class LoggingInvocationHandler implements InvocationHandler {
-    private final ArrayList<Call> calls    = new ArrayList<Call>();
-    private boolean    switched = false;
-    private TCLogger   realLogger;
-
-    @Override
-    public synchronized Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      if (switched) { return method.invoke(realLogger, args); }
-
-      if ((method.getReturnType() != Void.TYPE) && !switched) {
-        // if we haven't switched, it isn't clear what the return values should be
-        throw new UnsupportedOperationException("only void return type methods can be called before the switch");
-      }
-
-      calls.add(new Call(method, args));
-      return null;
-    }
-
-    synchronized void switchToRealLogger() throws Exception {
-      if (switched) { throw new IllegalStateException("Already switched"); }
-
-      realLogger = TCLogging.getLogger(TCProperties.class);
-
-      for (Call call : calls) {
-        call.execute(realLogger);
-      }
-
-      calls.clear();
-      switched = true;
-    }
-
-    private static class Call {
-
-      private final Method   method;
-      private final Object[] args;
-
-      Call(Method method, Object[] args) {
-        this.method = method;
-        this.args = args;
-      }
-
-      void execute(TCLogger target) throws Exception {
-        method.invoke(target, args);
-      }
-    }
-
-  }
-
 }

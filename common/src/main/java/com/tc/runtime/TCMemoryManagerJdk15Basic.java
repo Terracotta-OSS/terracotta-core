@@ -18,15 +18,16 @@
  */
 package com.tc.runtime;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 
 class TCMemoryManagerJdk15Basic implements JVMMemoryManager {
 
-  private static final TCLogger        logger           = TCLogging.getLogger(TCMemoryManagerJdk15Basic.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCMemoryManagerJdk15Basic.class);
 
   private final MemoryMXBean           memoryBean;
 

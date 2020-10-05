@@ -18,17 +18,18 @@
  */
 package com.tc.handler;
 
+import org.slf4j.Logger;
+
 import com.tc.lang.ServerExitStatus;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
 
 public class CallbackGroupExceptionHandler implements CallbackOnExitHandler {
 
-  private final TCLogger logger;
-  private final TCLogger consoleLogger;
+  private final Logger logger;
+  private final Logger consoleLogger;
 
-  public CallbackGroupExceptionHandler(TCLogger logger, TCLogger consoleLogger) {
+  public CallbackGroupExceptionHandler(Logger logger, Logger consoleLogger) {
     this.logger = logger;
     this.consoleLogger = consoleLogger;
   }

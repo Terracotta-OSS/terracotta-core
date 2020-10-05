@@ -34,7 +34,7 @@ public class RouteGroupMessagesToSink<M extends GroupMessage> implements GroupMe
 
   @Override
   public void messageReceived(NodeID fromNode, M msg) {
-    sink.addSingleThreaded(msg);
+    sink.addToSink(msg);
   }
 
   @Override

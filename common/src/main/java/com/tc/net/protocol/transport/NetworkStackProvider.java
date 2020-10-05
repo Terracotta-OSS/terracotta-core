@@ -19,6 +19,7 @@
 package com.tc.net.protocol.transport;
 
 import com.tc.net.core.TCConnection;
+import com.tc.net.protocol.ProductNotSupportedException;
 import com.tc.net.protocol.RejectReconnectionException;
 
 /**
@@ -30,6 +31,6 @@ public interface NetworkStackProvider {
    * Takes a new connection and a connectionId. Returns the MessageTransport associated with that id.
    */
   public MessageTransport attachNewConnection(ConnectionID connectionId, TCConnection connection)
-      throws RejectReconnectionException;
+      throws RejectReconnectionException, ProductNotSupportedException;
 
 }

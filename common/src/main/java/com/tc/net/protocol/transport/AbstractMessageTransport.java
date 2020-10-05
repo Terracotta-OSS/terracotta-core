@@ -18,16 +18,16 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.ConnectionIDProvider;
+import org.slf4j.Logger;
+
 import com.tc.logging.ConnectionIdLogger;
-import com.tc.logging.TCLogger;
 import com.tc.net.protocol.NetworkLayer;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class AbstractMessageTransport implements MessageTransport, ConnectionIDProvider {
+public abstract class AbstractMessageTransport implements MessageTransport {
 
   private static final int           DISCONNECTED          = 1;
   private static final int           FORCED_DISCONNECT     = 2;
@@ -39,7 +39,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
   protected ConnectionIdLogger       logger;
   private final CopyOnWriteArrayList<MessageTransportListener> listeners             = new CopyOnWriteArrayList<MessageTransportListener>();
 
-  public AbstractMessageTransport(TCLogger logger) {
+  public AbstractMessageTransport(Logger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
   }
 
@@ -149,10 +149,5 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
       parentLayer = parentLayer.getReceiveLayer();
     }
     return currentLayer.toString();
-  }
-
-  @Override
-  public void initConnectionID(ConnectionID cid) {
-    throw new UnsupportedOperationException();
   }
 }

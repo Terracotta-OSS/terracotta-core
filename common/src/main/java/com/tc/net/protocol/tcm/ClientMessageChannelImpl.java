@@ -18,97 +18,76 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
-import com.tc.net.core.ConnectionAddressProvider;
-import com.tc.net.core.ConnectionInfo;
-import com.tc.net.core.SecurityInfo;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ClientConnectionErrorListener;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.JvmIDUtil;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.object.msg.ClientHandshakeMessageFactory;
+import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
-import com.tc.security.PwProvider;
-import com.tc.util.Assert;
+import com.tc.net.core.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
-public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel, ClientHandshakeMessageFactory {
-  private static final TCLogger           logger           = TCLogging.getLogger(ClientMessageChannel.class);
-  
+public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel {
+  private static final Logger logger = LoggerFactory.getLogger(ClientMessageChannel.class);
+
   private int                             connectAttemptCount;
   private int                             connectCount;
-  private volatile ChannelID              channelID = ChannelID.NULL_ID;
+  private final ProductID                 productID;
   private final SessionProvider           sessionProvider;
-  private final SecurityInfo              securityInfo;
-  private final PwProvider                pwProvider;
+  private MessageTransportInitiator       initiator;
   private volatile SessionID              channelSessionID = SessionID.NULL_ID;
-  private final ConnectionAddressProvider addressProvider;
+  private final List<ClientConnectionErrorListener> errorListeners = new CopyOnWriteArrayList<>();
 
   protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, NodeID remoteNodeID,
-                                     SecurityInfo securityInfo, PwProvider pwProvider,
-                                     ConnectionAddressProvider addressProvider, ProductID productId) {
-    super(router, logger, msgFactory, remoteNodeID, productId);
-
-    this.securityInfo = securityInfo;
-    this.pwProvider = pwProvider;
-    this.addressProvider = addressProvider;
+                                     SessionProvider sessionProvider, ProductID productId) {
+    super(router, logger, msgFactory);
+    this.productID = productId;
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider();
   }
 
   @Override
-  public void reset() {
-    init();
+  public void setMessageTransportInitiator(MessageTransportInitiator initiator) {
+    this.initiator = initiator;
   }
 
-  protected void init() {
+  @Override
+  public void reset() {
     ChannelStatus status = getStatus();
     status.reset();
     this.sendLayer.reset();
-    setLocalNodeID(ClientID.NULL_ID);
   }
 
   @Override
-  public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
-      MaxConnectionsExceededException, CommStackMismatchException {
-    return open(null);
-  }
-
-  @Override
-  public NetworkStackID open(char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
-      String username = null;
-      if (securityInfo.hasCredentials()) {
-        username = securityInfo.getUsername();
-        Assert.assertNotNull("TCSecurityManager", pwProvider);
-        Assert.assertNotNull("Password", pw);
-      }
-      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
-                                                username, pw, getProductId());
-      ((MessageTransport) this.sendLayer).initConnectionID(cid);
-      final NetworkStackID id = this.sendLayer.open();
-      this.channelID = new ChannelID(id.toLong());
-      setLocalNodeID(new ClientID(id.toLong()));
+      final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()), productID);
+
+      final NetworkStackID id = this.initiator.openMessageTransport(serverAddresses, cid);
+
       this.channelSessionID = this.sessionProvider.getSessionID();
       channelOpened();
       return id;
@@ -116,32 +95,20 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public void reopen() throws Exception {
-    reset();
-    open(getPassword());
+  public NodeID getRemoteNodeID() {
+    return ServerID.NULL_ID;
   }
 
-  public char[] getPassword() {
-    char[] password = null;
-    if (securityInfo.hasCredentials()) {
-      Assert.assertNotNull("TCSecurityManager should not be null", pwProvider);
-      // use user-password of first server in the group
-      ConnectionInfo connectionInfo = addressProvider.getIterator().next();
-      password = pwProvider.getPasswordForTC(securityInfo.getUsername(), connectionInfo.getHostname(),
-                                           connectionInfo.getPort());
-      Assert.assertNotNull("password is null from securityInfo " + securityInfo, password);
-    }
-    return password;
+  @Override
+  public ProductID getProductID() {
+    return getProductID(productID);
   }
 
   @Override
   public ChannelID getChannelID() {
     final ChannelStatus status = getStatus();
     synchronized (status) {
-      if (!status.isOpen()) {
-        logger.warn("Attempt to get the channel ID of an unopened channel - " + this.channelID);
-      }
-      return this.channelID;
+      return new ChannelID(this.sendLayer.getConnectionID().getChannelID());
     }
   }
 
@@ -160,24 +127,25 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
    */
   @Override
   public void send(TCNetworkMessage message) throws IOException {
-// used to do session filtering here.  This wreaks havoc on upper layers to silently drop 
+// used to do session filtering here.  This wreaks havoc on upper layers to silently drop
 // messages on the floor.  send everything through
     super.send(message);
   }
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
-    long channelIdLong = transport.getConnectionId().getChannelID();
-    this.channelID = new ChannelID(channelIdLong);
-    setLocalNodeID(new ClientID(channelIdLong));
+    if (!transport.getConnectionID().isNull()) {
+      long channelIdLong = transport.getConnectionID().getChannelID();
+      setLocalNodeID(new ClientID(channelIdLong));
+      this.connectCount++;
+    }
     super.notifyTransportConnected(transport);
-    this.connectCount++;
   }
 
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
     this.channelSessionID = this.sessionProvider.nextSessionID();
-    logger.info("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
+    logger.debug("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
     super.notifyTransportDisconnected(transport, forcedDisconnect);
   }
 
@@ -189,7 +157,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    //
+    super.notifyTransportClosed(transport);
   }
 
   @Override
@@ -198,27 +166,17 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public ClientHandshakeMessage newClientHandshakeMessage(String uuid, String name, String clientVersion, boolean isEnterpriseClient) {
-    final ClientHandshakeMessage rv = (ClientHandshakeMessage) createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
-    rv.setClientVersion(clientVersion);
-    rv.setEnterpriseClient(isEnterpriseClient);
-    rv.setClientPID(getPID());
-    rv.setUUID(uuid);
-    rv.setName(name);
-    return rv;
+  public void addClientConnectionErrorListener(ClientConnectionErrorListener errorListener) {
+    errorListeners.add(errorListener);
   }
 
   @Override
-  public ClientHandshakeMessageFactory getClientHandshakeMessageFactory() {
-    return this;
+  public void removeClientConnectionErrorListener(ClientConnectionErrorListener errorListener) {
+    errorListeners.remove(errorListener);
   }
 
-  private int getPID() {
-    String vmName = ManagementFactory.getRuntimeMXBean().getName();
-    int index = vmName.indexOf('@');
-
-    if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
-
-    return Integer.parseInt(vmName.substring(0, index));
+  @Override
+  public void onError(InetSocketAddress serverAddress, Exception e) {
+    errorListeners.forEach(l->l.onError(serverAddress, e));
   }
 }

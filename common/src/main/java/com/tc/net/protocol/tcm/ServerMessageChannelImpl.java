@@ -18,12 +18,17 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.net.ClientID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.NetworkStackID;
+import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.core.ProductID;
+import com.tc.util.Assert;
+
+import java.net.InetSocketAddress;
 
 /**
  * TODO: Document me
@@ -31,16 +36,15 @@ import com.tc.net.protocol.NetworkStackID;
  * @author teck
  */
 public class ServerMessageChannelImpl extends AbstractMessageChannel implements ServerMessageChannel {
-  private static final TCLogger logger = TCLogging.getLogger(ServerMessageChannel.class);
-  private final ChannelID       sessionID;
-
+  private static final Logger logger = LoggerFactory.getLogger(ServerMessageChannel.class);
+  private final ChannelID       channel;
   /**
    * this is for the server it needs a session ID
    */
-  protected ServerMessageChannelImpl(ChannelID sessionID, TCMessageRouter router, TCMessageFactory msgFactory,
-                                     ServerID serverID, ProductID productId) {
-    super(router, logger, msgFactory, new ClientID(sessionID.toLong()), productId);
-    this.sessionID = sessionID;
+  protected ServerMessageChannelImpl(ChannelID channel, TCMessageRouter router, TCMessageFactory msgFactory,
+                                     ServerID serverID) {
+    super(router, logger, msgFactory);
+    this.channel = channel;
     setLocalNodeID(serverID);
 
     // server message channels should always be open initially
@@ -51,22 +55,46 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public ChannelID getChannelID() {
-    return sessionID;
+    if (this.isConnected()) {
+      Assert.assertEquals(super.getChannelID(), channel);
+      return channel;
+    } else {
+      return channel;
+    }
   }
 
   @Override
-  public NetworkStackID open() {
-    throw new UnsupportedOperationException("Server channels don't support open()");
+  public NodeID getRemoteNodeID() {
+    return getConnectionID().getClientID();
   }
 
   @Override
-  public NetworkStackID open(char[] password) {
+  public ProductID getProductID() {
+    return getProductID(ProductID.PERMANENT);
+  }
+
+  @Override
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) {
     throw new UnsupportedOperationException("Server channels don't support open()");
   }
 
   @Override
   public void reset() {
     throw new UnsupportedOperationException("Server channels don't support reset()");
+  }
+
+  @Override
+  public void notifyTransportClosed(MessageTransport transport) {
+//  don't bother removing attachment, it will be replaced on reconnect and we could use the info 
+//  even if the transport is closed
+//    removeAttachment(TRANSPORT_INFO);
+    super.notifyTransportClosed(transport); 
+  }
+
+  @Override
+  public void notifyTransportConnected(MessageTransport transport) {
+    addAttachment(TRANSPORT_INFO, transport, true);
+    super.notifyTransportConnected(transport); 
   }
 
 }

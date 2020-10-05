@@ -20,13 +20,14 @@ package com.tc.object.net;
 
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 public interface DSOChannelManagerMBean {
 
   public MessageChannel[] getActiveChannels();
 
-  public void addEventListener(DSOChannelManagerEventListener listener);
+  public void addEventListener(ChannelManagerEventListener listener);
   
   public ClientID getClientIDFor(ChannelID channelID);
 

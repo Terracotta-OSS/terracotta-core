@@ -21,188 +21,103 @@ package com.tc.l2.msg;
 import com.tc.async.api.OrderedEventContext;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
-import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- *
- */
-public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext {
-//  message types  
-  public static final int INVALID               = 0; // Invalid message type
-  public static final int REPLICATE               = 1; // Sent to replicate a request on the passive
-  public static final int SYNC               = 2; // Sent as part of a sync sequence
-  public static final int START                = 3; // start replication
 
-  public enum ReplicationType {
-    NOOP,
-    CREATE_ENTITY,
-    RECONFIGURE_ENTITY,
-    INVOKE_ACTION,
-    DESTROY_ENTITY,
-    
-    SYNC_BEGIN,
-    SYNC_END,
-    SYNC_ENTITY_BEGIN,
-    SYNC_ENTITY_END,
-    SYNC_ENTITY_CONCURRENCY_BEGIN,
-    SYNC_ENTITY_CONCURRENCY_PAYLOAD,
-    SYNC_ENTITY_CONCURRENCY_END;
-  }
-  
+public class ReplicationMessage extends AbstractGroupMessage implements OrderedEventContext, IBatchableGroupMessage<SyncReplicationActivity> {
+  // We don't have an explicit message type - the ReplicationMessage is only a container.
+  public static final int IGNORED = 0;
+
   // Factory methods.
-  public static ReplicationMessage createStartMessage() {
-    return new ReplicationMessage(START);
+  public static ReplicationMessage createActivityContainer(SyncReplicationActivity activity) {
+    Assert.assertNotNull(activity);
+    return new ReplicationMessage(activity);
   }
 
-  public static ReplicationMessage createNoOpMessage(EntityID eid, long version) {
-    return new ReplicationMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version), ClientID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.NOOP, new byte[0], 0);
+  public static ReplicationMessage createLocalContainer(SyncReplicationActivity activity) {
+    Assert.assertNotNull(activity);
+    ReplicationMessage message = new ReplicationMessage(activity);
+    message.didCreateLocally = false;
+    return message;
   }
 
-  public static ReplicationMessage createReplicatedMessage(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency) {
-    return new ReplicationMessage(descriptor, src, tid, oldest, action, payload, concurrency);
-  }
 
-  EntityDescriptor descriptor;
-    
-  ClientID src;
-  TransactionID tid;
-  TransactionID oldest;
-
-  ReplicationType action;
-  byte[] payload;
-  int concurrency;
-  
+  private List<SyncReplicationActivity> activities;
   long rid = 0;
+  // We will keep a flag to track whether this message is outgoing (created here and being sent to the network) or incoming
+  //  (created elsewhere and decoded here) to ensure that it is being used correctly.
+  // (Note that this check can be removed in the future - it is mostly to validate during refactoring and buffering
+  //  implementation).
+  private boolean didCreateLocally;
   
   public ReplicationMessage() {
-    super(INVALID);
-    descriptor = new EntityDescriptor(EntityID.NULL_ID, ClientInstanceID.NULL_ID, 0);
-    
+    super(IGNORED);
+    this.didCreateLocally = false;
   }
   
   protected ReplicationMessage(int type) {
     super(type);
+    this.didCreateLocally = false;
   }
   
 //  a true replicated message
-  private ReplicationMessage(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency) {
-    super(action.ordinal() >= ReplicationType.SYNC_BEGIN.ordinal() ? SYNC : REPLICATE);
-    initialize(descriptor, src, tid, oldest, action, payload, concurrency);
+  private ReplicationMessage(SyncReplicationActivity activity) {
+    super(IGNORED);
+    this.activities = new ArrayList<SyncReplicationActivity>();
+    this.activities.add(activity);
+    this.didCreateLocally = true;
   }
   
-  protected final void initialize(EntityDescriptor descriptor, ClientID src, 
-      TransactionID tid, TransactionID oldest, 
-      ReplicationType action, byte[] payload, int concurrency) {
-    Assert.assertNotNull(tid);
-    Assert.assertNotNull(oldest);
-    Assert.assertNotNull(src);
-    this.descriptor = descriptor;
-    this.src = src;
-    this.tid = tid;
-    this.oldest = oldest;
-    this.action = action;
-    this.payload = payload;
-    this.concurrency = concurrency;
-  }
-  
-  public ReplicationEnvelope target(NodeID node) {
-    return new ReplicationEnvelope(node, this, null);
-  }
-  
-  public ReplicationEnvelope target(NodeID node, Runnable waitRelease) {
-    return new ReplicationEnvelope(node, this, waitRelease);
-  }
-  
-  public void setReplicationID(long rid) {
+  @Override
+  public void setSequenceID(long rid) {
     this.rid = rid;
-  }
-  
-  public void setNoop() {
-    this.action = ReplicationType.NOOP;
   }
 
   @Override
   public long getSequenceID() {
     return rid;
   }
-  
-  public long getVersion() {
-    return descriptor.getClientSideVersion();
-  }
-  
-  public ReplicationType getReplicationType() {
-    return action;
+
+  @Override
+  public void addToBatch(SyncReplicationActivity element) {
+    this.activities.add(element);
   }
 
-  public byte[] getExtendedData() {
-    return payload;
-  }
-  
-  public ClientID getSource() {
-    return src;
-  }
-  
-  public TransactionID getTransactionID() {
-    return tid;
-  }
-  
-  public TransactionID getOldestTransactionOnClient() {
-    return oldest;
+  /**
+   * @return The current number of activities batched in this message.
+   */
+  public int getBatchSize() {
+    return this.activities.size();
   }
 
-  public EntityDescriptor getEntityDescriptor() {
-    return descriptor;
+  public List<SyncReplicationActivity> getActivities() {
+    // If this was created locally, we shouldn't be reaching into it to read the underlying activity - this is for the
+    //  receiving side, only.
+    Assert.assertFalse(this.didCreateLocally);
+    return this.activities;
   }
-  
-  public EntityID getEntityID() {
-    return descriptor == null ? EntityID.NULL_ID : descriptor.getEntityID();
-  }
-  
-  public int getConcurrency() {
-    return this.concurrency;
-  }
-  
+
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     int messageType = getType();
     switch (messageType) {
-      case INVALID:
-        // This message was not correctly initialized.
-        Assert.fail();
-        break;
-      case START:
-     // do nothing, just need the source
-        break;
-      case REPLICATE:
-      case SYNC:
+      case IGNORED:
         this.rid = in.readLong();
-        this.descriptor = EntityDescriptor.readFrom(in);
-        int type = in.read();
-        if (type == NodeID.CLIENT_NODE_TYPE) {
-          this.src = new ClientID().deserializeFrom(in);
-        } else if (type == NodeID.SERVER_NODE_TYPE) {
-          throw new AssertionError("node type is incorrect");
+        int batchSize = in.readInt();
+        // We don't send empty batches.
+        Assert.assertTrue(batchSize > 0);
+        this.activities = new ArrayList<SyncReplicationActivity>();
+        for (int i = 0; i < batchSize; ++i) {
+          SyncReplicationActivity activity = SyncReplicationActivity.deserializeFrom(in);
+          Assert.assertNotNull(activity);
+          this.activities.add(activity);
         }
-        this.tid = new TransactionID(in.readLong());
-        this.oldest = new TransactionID(in.readLong());
-        this.action = ReplicationType.values()[in.readInt()];
-        int length = in.readInt();
-        this.payload = new byte[length];
-        in.readFully(this.payload);
-        this.concurrency = in.readInt();
+        // Make sure that the message type and activity type are consistent.
         break;
     }
   }
@@ -211,35 +126,38 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
   protected void basicSerializeTo(TCByteBufferOutput out) {
     int messageType = getType();
     switch (messageType) {
-      case INVALID:
-        // This message was not correctly initialized.
-        Assert.fail();
-        break;
-      case START:
-     // do nothing, just need the source
-        break;
-      case REPLICATE:
-      case SYNC:
+      case IGNORED:
         out.writeLong(rid);
-        this.descriptor.serializeTo(out);
-        out.write(this.src.getNodeType());
-        this.src.serializeTo(out);
-        out.writeLong(tid.toLong());
-        out.writeLong(oldest.toLong());
-        out.writeInt(this.action.ordinal());
-        if (payload != null) {
-          out.writeInt(payload.length);
-          out.write(payload);
-        } else {
-          out.writeInt(0);
+        int batchSize = this.activities.size();
+        Assert.assertTrue(batchSize > 0);
+        out.writeInt(batchSize);
+        for (SyncReplicationActivity activity : this.activities) {
+          activity.serializeTo(out);
         }
-        out.writeInt(concurrency);
         break;
     }
+  }
+  
+  public String getDebugId() {
+    return this.getType() + " " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities");
   }
 
   @Override
   public String toString() {
-    return "ReplicationMessage{rid=" + rid + ", id=" + descriptor.getEntityID() + ", src=" + src + ", tid=" + tid + ", oldest=" + oldest + ", action=" + action + ", concurrency=" + concurrency +'}';
+    return "ReplicationMessage{rid=" + rid + ", " + ((this.activities != null) ? (this.activities.size() + " activities") : "no activities") + "}";
+  }
+
+  @Override
+  public AbstractGroupMessage asAbstractGroupMessage() {
+    return this;
+  }
+
+  @Override
+  public long getPayloadSize() {
+    long amt = 0L;
+    for (SyncReplicationActivity a : activities) {
+      amt += a.getExtendedData().remaining();
+    }
+    return amt;
   }
 }

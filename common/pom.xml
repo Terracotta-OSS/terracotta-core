@@ -30,7 +30,7 @@ Apache Ivy version: 2.2.0 20100923230623
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.0.0-SNAPSHOT</version>
+    <version>5.7-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
 
@@ -39,10 +39,15 @@ Apache Ivy version: 2.2.0 20100923230623
   <name>common</name>
 
   <properties>
-    <java.build.version>1.6</java.build.version>
+    <java.build.version>1.8</java.build.version>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-messaging</artifactId>
@@ -51,6 +56,19 @@ Apache Ivy version: 2.2.0 20100923230623
       <groupId>org.terracotta.internal</groupId>
       <artifactId>build-data</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <version>${terracotta-apis.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-tripwire-plugin</artifactId>
     </dependency>
     <!-- tests dependencies -->
     <dependency>
@@ -71,30 +89,26 @@ Apache Ivy version: 2.2.0 20100923230623
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- XXX should we even do this -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
-      <version>${terracotta-apis.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>packaging-support</artifactId>
-      <version>${terracotta-apis.version}</version>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.19</version>
         <configuration>
-            <forkCount>2C</forkCount>
+            <forkCount>0.5C</forkCount>
             <reuseForks>false</reuseForks>
             <workingDirectory>${project.build.directory}/test-fork-${surefire.forkNumber}</workingDirectory>
             <argLine>-Xmx2G -Djava.awt.headless=true</argLine>

@@ -19,21 +19,16 @@
 package com.tc.l2.handler;
 
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.async.api.ConfigurationContext;
 import com.tc.async.impl.StageController;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.state.StateManager;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.server.TCServerMain;
 import com.tc.util.State;
 
 
 public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent> {
 
-  private StateManager stateManager;
   private final StageController stageManager;
-  private ConfigurationContext context;
   private final ITopologyEventCollector eventCollector;
 
   public L2StateChangeHandler(StageController stageManager, ITopologyEventCollector eventCollector) {
@@ -47,19 +42,13 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
 // can happen in any order.  State transition happens in specific order as dictated 
 // by the stage controller.
     State newState = sce.getCurrentState();
-    stageManager.transition(context, sce.getOldState(), newState);
-    stateManager.fireStateChangedEvent(sce);
-    // Now that we have processed the event, the last thing we want to do is notify the collector that the server's state
-    // has changed.
-    eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());
+    // notify the collector that the server's state first to mark the start of transition
+    if (sce.movedToActive()) {
+//  if this server just became active
+      eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());      
+    } else {
+      eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
+    }
+    stageManager.transition(sce.getOldState(), newState);
   }
-
-  @Override
-  public void initialize(ConfigurationContext context) {
-    super.initialize(context);
-    ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    this.stateManager = oscc.getL2Coordinator().getStateManager();
-    this.context = context;
-  }
-
 }

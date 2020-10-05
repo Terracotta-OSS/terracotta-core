@@ -22,8 +22,7 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.Queue;
 
 /**
  * @author teck A thin wrapper to a real java.nio.ByteBuffer instance
@@ -39,10 +38,11 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   private final ByteBuffer          buffer;
   private final TCByteBuffer        root;
-  private final LinkedBlockingQueue<TCByteBuffer> bufPool;
+  private final Queue<TCByteBuffer> bufPool;
   private State                     state       = INIT;
-
-  TCByteBufferImpl(int capacity, boolean direct, LinkedBlockingQueue<TCByteBuffer> poolQueue) {
+  private final boolean isReadOnly;
+  
+  TCByteBufferImpl(int capacity, boolean direct, Queue<TCByteBuffer> poolQueue) {
     if (direct) {
       buffer = ByteBuffer.allocateDirect(capacity);
     } else {
@@ -50,18 +50,21 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
     }
     bufPool = poolQueue;
     root = this;
+    isReadOnly = false;
   }
 
   private TCByteBufferImpl(ByteBuffer buf) {
     buffer = buf;
     bufPool = null;
     this.root = null;
+    this.isReadOnly = false;
   }
 
-  private TCByteBufferImpl(ByteBuffer buf, TCByteBuffer root) {
+  private TCByteBufferImpl(ByteBuffer buf, TCByteBuffer root, boolean isReadOnly) {
     buffer = buf;
     bufPool = null;
     this.root = root;
+    this.isReadOnly = isReadOnly;
   }
 
   static TCByteBuffer wrap(byte[] data) {
@@ -346,7 +349,7 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   @Override
   public TCByteBuffer duplicate() {
-    return new TCByteBufferImpl(buffer.duplicate(), root);
+    return new TCByteBufferImpl(buffer.duplicate(), root, false);
   }
 
   @Override
@@ -357,7 +360,7 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   @Override
   public TCByteBuffer slice() {
-    return new TCByteBufferImpl(buffer.slice(), root);
+    return new TCByteBufferImpl(buffer.slice(), root, false);
   }
 
   @Override
@@ -367,7 +370,7 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   @Override
   public TCByteBuffer asReadOnlyBuffer() {
-    return new TCByteBufferImpl(buffer.asReadOnlyBuffer(), root);
+    return new TCByteBufferImpl(buffer.duplicate(), root, true);
   }
 
   @Override
@@ -598,12 +601,13 @@ public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   @Override
   public void offer(TCByteBuffer buf) throws InterruptedException {
-    this.bufPool.offer(buf, 0, TimeUnit.MILLISECONDS);
+    if (this.bufPool != null) {
+      this.bufPool.offer(buf);
+    }
   }
 
   /* This is the debug version. PLEASE DONT DELETE */
 
-  // private static final TCLogger logger = TCLogging.getLogger(TCByteBufferJDK14.class);
   //
   // private final ByteBuffer buffer;
   // private final TCByteBufferJDK14 root;

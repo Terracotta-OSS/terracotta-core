@@ -1,0 +1,8 @@
+<included>
+  <logger name="com.tc.net.protocol.transport" level="DEBUG">
+          <appender-ref ref="TC_BASE" />
+  </logger>
+  <root level="INFO">
+    <appender-ref ref="TC_BASE" />
+  </root>
+</included>

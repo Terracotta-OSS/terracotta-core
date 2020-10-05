@@ -1,78 +1,99 @@
+/*
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
+ */
 package com.tc.objectserver.persistence;
 
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumper;
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
-/**
- * @author vmad
- */
-public class NullPlatformPersistentStorage implements IPersistentStorage, StateDumpable {
 
-    final Map<String, String> properties = new ConcurrentHashMap<>();
-    final Map<String, InMemoryKeyValueStorage<?, ?>> maps = new ConcurrentHashMap<>();
+public class NullPlatformPersistentStorage implements IPlatformPersistence, StateDumpable {
+    final Map<String, Serializable> nameToDataMap = new ConcurrentHashMap<>();
+    final Map<Long, List<SequenceTuple>> fastSequenceCache = new HashMap<>();
 
     @Override
-    public void open() throws IOException {
-        //nothing to do
+    public Serializable loadDataElement(String name) throws IOException {
+      return nameToDataMap.get(name);
     }
 
     @Override
-    public void create() throws IOException {
-        //nothing to do
+    public Serializable loadDataElementInLoader(String name, ClassLoader loader) throws IOException {
+      return nameToDataMap.get(name);
     }
 
     @Override
-    public void close() {
-        //nothing to do
+    public void storeDataElement(String name, Serializable element) throws IOException {
+      if (null == element) {
+        nameToDataMap.remove(name);
+      } else {
+        nameToDataMap.put(name, element);
+      }
     }
 
     @Override
-    public Transaction begin() {
-        return new Transaction() {
-            @Override
-            public void commit() {
-                //nothing to do
-            }
-
-            @Override
-            public void abort() {
-                throw new UnsupportedOperationException();
-            }
-        };
+    public synchronized Future<Void> fastStoreSequence(long sequenceIndex, SequenceTuple newEntry, long oldestValidSequenceID) {
+      List<SequenceTuple> sequence = fastSequenceCache.get(sequenceIndex);
+      if (sequence == null) {
+        sequence = new LinkedList<>();
+        fastSequenceCache.put(sequenceIndex, sequence);
+      }
+      if (!sequence.isEmpty()) {
+//  exploiting the knowledge that sequences are always updated in an increasing fashion, as soon as the first
+//  cleaning function fails, bail on the iteration
+        Iterator<SequenceTuple> tuple = sequence.iterator();
+        while (tuple.hasNext()) {
+          if (tuple.next().localSequenceID < oldestValidSequenceID) {
+            tuple.remove();
+          } else {
+            break;
+          }
+        }
+      }
+      sequence.add(newEntry);
+      return CompletableFuture.completedFuture(null);
     }
 
     @Override
-    public Map<String, String> getProperties() {
-        return properties;
+    public synchronized List<SequenceTuple> loadSequence(long sequenceIndex) {
+      return fastSequenceCache.get(sequenceIndex);
     }
 
     @Override
-    public <K, V> KeyValueStorage<K, V> getKeyValueStorage(String alias, Class<K> keyClass, Class<V> valueClass) {
-        maps.putIfAbsent(alias, new InMemoryKeyValueStorage<K, V>());
-        return (KeyValueStorage<K, V>) maps.get(alias);
+    public synchronized void deleteSequence(long sequenceIndex) {
+      fastSequenceCache.remove(sequenceIndex);
     }
 
     @Override
-    public <K, V> KeyValueStorage<K, V> createKeyValueStorage(String alias, Class<K> keyClass, Class<V> valueClass) {
-        maps.putIfAbsent(alias, new InMemoryKeyValueStorage<K, V>());
-        return (KeyValueStorage<K, V>) maps.get(alias);
-    }
-
-    @Override
-    public <K, V> KeyValueStorage<K, V> destroyKeyValueStorage(String alias) {
-        return (KeyValueStorage<K, V>) maps.remove(alias);
-    }
-
-    @Override
-    public void dumpStateTo(StateDumper stateDumper) {
-        for (Map.Entry<String, InMemoryKeyValueStorage<?, ?>> entry : maps.entrySet()) {
-            entry.getValue().dumpStateTo(stateDumper.subStateDumper(entry.getKey()));
+    public void addStateTo(StateDumpCollector stateDumpCollector) {
+        for (Map.Entry<String, Serializable> entry : nameToDataMap.entrySet()) {
+          stateDumpCollector.addState("key", entry.getKey());
         }
     }
 }

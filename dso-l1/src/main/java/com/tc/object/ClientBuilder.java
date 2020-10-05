@@ -18,12 +18,11 @@
  */
 package com.tc.object;
 
+import com.tc.net.protocol.transport.ClientConnectionErrorListener;
+import org.slf4j.Logger;
+
 import com.tc.async.api.StageManager;
-import com.tc.util.ProductID;
-import com.tc.logging.ClientIDLogger;
-import com.tc.logging.TCLogger;
-import com.tc.management.TCClient;
-import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -34,56 +33,41 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
-import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.runtime.logging.LongGCLogger;
-import com.tc.util.concurrent.TaskRunner;
-import com.tc.util.runtime.ThreadIDManager;
-import com.tcclient.cluster.ClusterInternalEventsGun;
+import com.tc.net.core.TCConnectionManager;
 
 import java.util.Map;
 
-public interface ClientBuilder {
 
+public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                     PreparedComponentsFromL2Connection connComp,
-                                                     SessionProvider sessionProvider, int maxReconnectTries,
-                                                     int socketConnectTimeout, TCClient client);
+                                                     SessionProvider sessionProvider,
+                                                     int socketConnectTimeout);
 
   CommunicationsManager createCommunicationsManager(MessageMonitor monitor,
                                                     TCMessageRouter messageRouter,
                                                     NetworkStackHarnessFactory stackHarnessFactory,
                                                     ConnectionPolicy connectionPolicy,
-                                                    int workerCommThreads,
+                                                    TCConnectionManager connections,
                                                     HealthCheckerConfig hcConfig,
                                                     Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
-                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour,
-                                                    TCSecurityManager securityManager, ProductID productId);
+                                                    ReconnectionRejectedHandler reconnectionRejectedBehaviour);
 
-  ClientLockManager createLockManager(ClientMessageChannel dsoChannel, ClientIDLogger clientIDLogger,
-                                      SessionManager sessionManager,
-                                      LockRequestMessageFactory lockRequestMessageFactory,
-                                      ThreadIDManager threadManager,
-                                      ClientLockManagerConfig clientLockManagerConfig,
-                                      TaskRunner taskRunner);
-
-  ClientHandshakeManager createClientHandshakeManager(TCLogger logger,
+  ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
                                                       SessionManager sessionManager,
-                                                      ClusterInternalEventsGun clusterEventsGun,
                                                       String uuid,
                                                       String name,
                                                       String clientVersion,
                                                       ClientEntityManager entity);
 
-  LongGCLogger createLongGCLogger(long gcTimeOut);
-
   ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);
+
+  void setClientConnectionErrorListener(ClientConnectionErrorListener listener);
+  
+  BufferManagerFactory createBufferManagerFactory();
 
 }

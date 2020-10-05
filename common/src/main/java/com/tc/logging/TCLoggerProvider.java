@@ -18,7 +18,9 @@
  */
 package com.tc.logging;
 
+import org.slf4j.Logger;
+
 public interface TCLoggerProvider {
-  public TCLogger getLogger(Class<?> clazz);
-  public TCLogger getLogger(String name);
+  public Logger getLogger(Class<?> clazz);
+  public Logger getLogger(String name);
 }

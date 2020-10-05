@@ -18,17 +18,20 @@
  */
 package com.tc.net.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.io.IOException;
+import java.io.InterruptedIOException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 
 /**
  * The whole intention of this class is to manage the workerThreads for each Listener
@@ -36,9 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Manoj G
  */
 public class TCWorkerCommManager {
-  private static final TCLogger   logger             = TCLogging.getLogger(TCWorkerCommManager.class);
-  private static final TCLogger   lossyLogger        = new LossyTCLogger(logger, 10, LossyTCLoggerType.COUNT_BASED,
-                                                                         false);
+  private static final Logger logger = LoggerFactory.getLogger(TCWorkerCommManager.class);
+  private static final LossyTCLogger lossyLogger = new LossyTCLogger(logger, 10, LossyTCLoggerType.COUNT_BASED, false);
 
   private static final String     WORKER_NAME_PREFIX = "TCWorkerComm # ";
 
@@ -46,8 +48,8 @@ public class TCWorkerCommManager {
   private final CoreNIOServices[] workerCommThreads;
   private final SetOnceFlag       started            = new SetOnceFlag();
   private final SetOnceFlag       stopped            = new SetOnceFlag();
-
-  private final AtomicInteger     nextWorkerCommId   = new AtomicInteger();
+  
+  private boolean paused = false;
 
   TCWorkerCommManager(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
@@ -60,39 +62,37 @@ public class TCWorkerCommManager {
   }
 
   public CoreNIOServices getNextWorkerComm() {
-    List<CoreNIOServices> leastWeightWorkerComms = getLeastWeightWorkerComms();
-    CoreNIOServices rv;
-    Assert.eval(leastWeightWorkerComms.size() >= 1);
-    if (leastWeightWorkerComms.size() == 1) {
-      rv = leastWeightWorkerComms.get(0);
-    } else {
-      rv = leastWeightWorkerComms.get(nextWorkerCommId.getAndIncrement() % leastWeightWorkerComms.size());
+    CoreNIOServices leastWeightWorkerComm = null;
+    
+    while (leastWeightWorkerComm == null) {
+      leastWeightWorkerComm = getLeastWeightWorkerComm();
     }
+    // We can't fail to get the least.
+    Assert.assertTrue(null != leastWeightWorkerComm);
 
-    String message = "Selecting " + rv + "  from " + Arrays.asList(this.workerCommThreads);
+    String message = "Selecting " + leastWeightWorkerComm + "  from " + Arrays.asList(this.workerCommThreads);
     if (logger.isDebugEnabled()) {
       logger.debug(message);
-    } else {
-      lossyLogger.info(message);
     }
 
-    return rv;
+    return leastWeightWorkerComm;
   }
 
-  private List<CoreNIOServices> getLeastWeightWorkerComms() {
-    List<CoreNIOServices> selectedWorkerComms = new ArrayList<CoreNIOServices>();
-    int leastValue = Integer.MAX_VALUE;
+  /**
+   * Finds the underlying {@link CoreNIOServices} worker comm thread with the lowest weight.  Note that this might be
+   * called, concurrently, so it is really just a best-efforts attempt (since 2 threads could get the same answer or
+   * a previously-requesting thread changes the result underneath the currently-requesting thread).
+   * 
+   * @return The CoreNIOServices with the least weight (at least when scanned).
+   */
+  private CoreNIOServices getLeastWeightWorkerComm() {
+    CoreNIOServices selectedWorkerComm = null;
     for (CoreNIOServices workerComm : workerCommThreads) {
-      int presentValue = workerComm.getWeight();
-      if (presentValue < leastValue) {
-        selectedWorkerComms.clear();
-        selectedWorkerComms.add(workerComm);
-        leastValue = presentValue;
-      } else if (presentValue == leastValue) {
-        selectedWorkerComms.add(workerComm);
+      if (workerComm.compareWeights(selectedWorkerComm)) {
+        selectedWorkerComm = workerComm;
       }
     }
-    return selectedWorkerComms;
+    return selectedWorkerComm;
   }
 
   public synchronized void start() {
@@ -130,5 +130,27 @@ public class TCWorkerCommManager {
   protected long getTotalBytesWrittenByWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getTotalBytesWritten();
   }
-
+  
+  public List<?> getState() {
+    return Arrays.stream(workerCommThreads).map(s->s.getState()).collect(Collectors.toList());
+  }
+  
+  synchronized void waitDuringPause() throws IOException {
+    while (paused) {
+      try {
+        this.wait();
+      } catch (InterruptedException ie) {
+        throw new InterruptedIOException();
+      }
+    }
+  }
+  
+  public synchronized void pause() {
+    paused = true;
+  }
+  
+  public synchronized void unpause() {
+    paused = false;
+    this.notify();
+  }  
 }

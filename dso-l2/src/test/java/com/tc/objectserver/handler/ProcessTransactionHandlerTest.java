@@ -18,7 +18,7 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,46 +29,55 @@ import org.junit.Test;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
+import com.tc.bytes.TCByteBufferFactory;
+import com.tc.classloader.ServiceLocator;
 import com.tc.entity.NetworkVoltronEntityMessage;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityReceivedResponse;
 import com.tc.entity.VoltronEntityRetiredResponse;
+import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.api.ReplicatedClusterStateManager;
+import com.tc.l2.state.ServerMode;
+import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
+import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.ClientEntityStateManagerImpl;
 import com.tc.objectserver.entity.EntityManagerImpl;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.entity.PassiveReplicationBroker;
 import com.tc.objectserver.entity.RequestProcessor;
+import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.persistence.EntityData;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
-import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
-import org.mockito.Matchers;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class ProcessTransactionHandlerTest {
@@ -82,7 +91,8 @@ public class ProcessTransactionHandlerTest {
   private ForwardingSink loopbackSink;
   private RunnableSink requestProcessorSink;
   private ClientEntityStateManager clientEntityStateManager;
-  private ITopologyEventCollector eventCollector;
+  private ManagementTopologyEventCollector eventCollector;
+  private EntityManagerImpl entityManager;
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -92,42 +102,72 @@ public class ProcessTransactionHandlerTest {
     when(this.terracottaServiceProviderRegistry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
+
+    Persistor persistor = mock(Persistor.class);
+    when(persistor.getEntityPersistor()).thenReturn(this.entityPersistor);
+    when(persistor.getTransactionOrderPersistor()).thenReturn(this.transactionOrderPersistor);
+    
     this.source = mock(ClientID.class);
     
+    when(this.entityPersistor.getNextConsumerID()).thenReturn(1L);
     MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(mock(VoltronEntityReceivedResponse.class));
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(mock(VoltronEntityRetiredResponse.class));
+    VoltronEntityAppliedResponse msg = when(mock(VoltronEntityAppliedResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
+    when(msg.getTransactionID()).thenReturn(TransactionID.NULL_ID);
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(msg);
+    VoltronEntityReceivedResponse rsp = when(mock(VoltronEntityReceivedResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
+    when(rsp.getTransactionID()).thenReturn(TransactionID.NULL_ID);
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(rsp);
+    VoltronEntityRetiredResponse retire = when(mock(VoltronEntityRetiredResponse.class).getDestinationNodeID()).thenReturn(mock(ClientID.class)).getMock();
+    when(retire.getTransactionID()).thenReturn(TransactionID.NULL_ID);
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RETIRED_RESPONSE)).thenReturn(retire);
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
-    when(channelManager.getActiveChannel(Matchers.eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
+    when(channelManager.getActiveChannel(eq(ClientID.NULL_ID))).thenThrow(new NoSuchChannelException());
     
     StageManager stageManager = mock(StageManager.class);
     this.requestProcessorSink = new RunnableSink();
+    Stage runnableStage = mock(Stage.class);
+    when(runnableStage.getSink()).thenReturn(this.requestProcessorSink);
     
-    this.clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, mock(ManagementTopologyEventCollector.class), mock(DSOChannelManagerEventListener.class));
-    this.eventCollector = mock(ITopologyEventCollector.class);
-    RequestProcessor processor = new RequestProcessor(this.requestProcessorSink);
+    this.clientEntityStateManager = new ClientEntityStateManagerImpl();
+    this.eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
+    this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    RequestProcessor processor = new RequestProcessor(stageManager, 1024, true);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
     processor.setReplication(broker);
-    EntityManagerImpl entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop);
-    entityManager.enterActiveState();
-    channelManager.addEventListener(clientEntityStateManager);
+    entityManager = new EntityManagerImpl(this.terracottaServiceProviderRegistry, clientEntityStateManager, eventCollector, processor, this::sendNoop, new ServiceLocator(this.getClass().getClassLoader()));
+    entityManager.setMessageSink(mock(Sink.class));
 
-    this.processTransactionHandler = new ProcessTransactionHandler(this.entityPersistor, this.transactionOrderPersistor, channelManager, entityManager, mock(Runnable.class));
+    this.processTransactionHandler = new ProcessTransactionHandler(persistor, channelManager, entityManager);
 
     this.loopbackSink = new ForwardingSink(this.processTransactionHandler.getVoltronMessageHandler());
     Stage mockStage = mock(Stage.class);
     when(mockStage.getSink()).thenReturn(this.loopbackSink);
     when(stageManager.getStage(any(), any())).thenReturn(mockStage);
 
+    ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
+    ReplicatedClusterStateManager rep = mock(ReplicatedClusterStateManager.class);
+    L2Coordinator l2 = mock(L2Coordinator.class);
+    when(l2.getReplicatedClusterStateManager()).thenReturn(rep);
+    when(cxt.getL2Coordinator()).thenReturn(l2);
+    StateManager state = mock(StateManager.class);
+    when(state.getCurrentMode()).thenReturn(ServerMode.ACTIVE);
+    when(l2.getStateManager()).thenReturn(state);
+    Stage stage = mock(Stage.class);
+    when(stage.getSink()).thenReturn(mock(Sink.class));
+    when(cxt.getStage(anyString(), any(Class.class))).thenReturn(stage);
+    when(cxt.getClientHandshakeManager()).thenReturn(mock(ServerClientHandshakeManager.class));
+    this.processTransactionHandler.getVoltronMessageHandler().initializeContext(cxt);
+    this.processTransactionHandler.reconnectComplete();
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
   }
   
-  private void sendNoop(EntityID eid, long version) {
-    loopbackSink.addSingleThreaded(new NoopEntityMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, version)));
+  private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
+    loopbackSink.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(fetch, ClientInstanceID.NULL_ID), (action == ServerEntityAction.DESTROY_ENTITY)));
   }
   
   @After
@@ -148,8 +188,8 @@ public class ProcessTransactionHandlerTest {
   public void testLoadExisting() throws Exception {
     // Set up a believable collection of persistent entities.
     EntityData.Value data = new EntityData.Value();
-    data.className = TestEntity.class.getCanonicalName();
-    data.version = TestEntity.VERSION;
+    data.className = TEST_ENTITY_CLASS_NAME;
+    data.version = 1L;
     data.consumerID = 1;
     data.entityName = "foo";
     data.configuration = new byte[0];
@@ -163,7 +203,7 @@ public class ProcessTransactionHandlerTest {
   public void testFailOnLoadVersionMismatch() throws Exception {
     EntityData.Value data = new EntityData.Value();
     data.className = TEST_ENTITY_CLASS_NAME;
-    data.version = TestEntity.VERSION + 1;
+    data.version = 1 + 1;
     data.consumerID = 1;
     data.entityName = "foo";
     data.configuration = new byte[0];
@@ -178,13 +218,27 @@ public class ProcessTransactionHandlerTest {
       // Expected.
     }
   }
+  
+  @Test
+  public void testManagedEntityGC() throws Exception {
+    // Send in the GET as a simple request.
+    String entityName = "foo";
+    EntityID entityID = createMockEntity(entityName);
+    NetworkVoltronEntityMessage request = createMockRequest(VoltronEntityMessage.Type.CREATE_ENTITY, entityID, new TransactionID(1));
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(request);
+    this.requestProcessorSink.runUntilEmpty();
+    Assert.assertTrue(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(entityID, 1L)).isPresent());
+    NetworkVoltronEntityMessage destroy = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(1));
+    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroy);
+    this.requestProcessorSink.runUntilEmpty();
+    Assert.assertFalse(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(entityID, 1L)).isPresent());
+  }
+    
 
   @Test
   public void testChannelManagement() throws Exception {    
     // Set up the channel.
-    MessageChannel channel = mock(MessageChannel.class);
-    when(channel.getRemoteNodeID()).thenReturn(this.source);
-    this.clientEntityStateManager.channelCreated(channel);
+    try {
     this.requestProcessorSink.runUntilEmpty();
     String entityName = "foo";
     EntityID entityID = createMockEntity(entityName);
@@ -194,8 +248,12 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage fetchRequest = createMockRequest(VoltronEntityMessage.Type.FETCH_ENTITY, entityID, new TransactionID(2));
     this.processTransactionHandler.getVoltronMessageHandler().handleEvent(fetchRequest);
     this.requestProcessorSink.runUntilEmpty();
-    this.clientEntityStateManager.channelRemoved(channel);
+    this.clientEntityStateManager.clientDisconnected((ClientID)this.source);
     this.requestProcessorSink.runUntilEmpty();
+    } catch (Throwable e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   /**
@@ -217,13 +275,18 @@ public class ProcessTransactionHandlerTest {
     ClientID sender = new ClientID(-1);
     NetworkVoltronEntityMessage invokeRequest = createMockRequestWithSender(VoltronEntityMessage.Type.INVOKE_ACTION, entityID, new TransactionID(2), sender);
     // Send the message.
-    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(invokeRequest);
-    this.requestProcessorSink.runUntilEmpty();
-    
-    // The only way to observe that this was properly cleaned is to destroy it and ensure that there are no assertion failures when the RetirementManager comes down.
-    NetworkVoltronEntityMessage destroyRequest = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(3));
-    this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroyRequest);
-    this.requestProcessorSink.runUntilEmpty();
+    try {
+      this.processTransactionHandler.getVoltronMessageHandler().handleEvent(invokeRequest);
+      this.requestProcessorSink.runUntilEmpty();
+
+      // The only way to observe that this was properly cleaned is to destroy it and ensure that there are no assertion failures when the RetirementManager comes down.
+      NetworkVoltronEntityMessage destroyRequest = createMockRequest(VoltronEntityMessage.Type.DESTROY_ENTITY, entityID, new TransactionID(3));
+      this.processTransactionHandler.getVoltronMessageHandler().handleEvent(destroyRequest);
+      this.requestProcessorSink.runUntilEmpty();
+    } catch (Throwable t) {
+      t.printStackTrace();
+      throw t;
+    }
   }
 
 
@@ -247,55 +310,34 @@ public class ProcessTransactionHandlerTest {
     NetworkVoltronEntityMessage request = mock(NetworkVoltronEntityMessage.class);
     when(request.getSource()).thenReturn(sender);
     when(request.getVoltronType()).thenReturn(type);
-    EntityDescriptor entityDescriptor = mock(EntityDescriptor.class);
-    when(entityDescriptor.getClientSideVersion()).thenReturn((long) 1);
-    when(entityDescriptor.getEntityID()).thenReturn(entityID);
+    EntityDescriptor entityDescriptor = null;
+    switch(type) {
+      case INVOKE_ACTION:
+        entityDescriptor = EntityDescriptor.createDescriptorForInvoke(new FetchID(1L), new ClientInstanceID(1));
+        break;
+      case FETCH_ENTITY:
+        entityDescriptor = EntityDescriptor.createDescriptorForFetch(entityID, 1, new ClientInstanceID(1));
+        break;
+      default:
+        entityDescriptor = EntityDescriptor.createDescriptorForLifecycle(entityID, 1);
+        break;
+    }
+
     when(request.getEntityDescriptor()).thenReturn(entityDescriptor);
     when(request.getTransactionID()).thenReturn(transactionID);
-    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(0));
+    when(request.getOldestTransactionOnClient()).thenReturn(new TransactionID(1));
     // Return an empty byte[], for now.
-    when(request.getExtendedData()).thenReturn(new byte[0]);
+    when(request.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
     return request;
   }
 
 
-  private static abstract class NoStatsSink<T> implements Sink<T> {
-    @Override
-    public void enableStatsCollection(boolean enable) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public boolean isStatsCollectionEnabled() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public Stats getStats(long frequency) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public Stats getStatsAndReset(long frequency) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void resetStats() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public int size() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void clear() {
-      throw new UnsupportedOperationException();
-    }
+  public static abstract class NoStatsSink<T> implements Sink<T> {
+
   }
 
 
-  private static class RunnableSink extends NoStatsSink<Runnable> {
+  public static class RunnableSink extends NoStatsSink<Runnable> {
     private final Queue<Runnable> runnableQueue;
 
     public RunnableSink() {
@@ -309,19 +351,9 @@ public class ProcessTransactionHandlerTest {
       }
     }
     @Override
-    public void addSingleThreaded(Runnable context) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addMultiThreaded(Runnable context) {
+    public void addToSink(Runnable context) {
       this.runnableQueue.add(context);
     }
-
-    @Override
-    public void setClosed(boolean closed) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
-
   }
 
 
@@ -333,23 +365,12 @@ public class ProcessTransactionHandlerTest {
     }
 
     @Override
-    public void addSingleThreaded(VoltronEntityMessage context) {
+    public void addToSink(VoltronEntityMessage context) {
       try {
         this.target.handleEvent(context);
       } catch (EventHandlerException e) {
         Assert.fail();
       }
     }
-    @Override
-    public void addMultiThreaded(VoltronEntityMessage context) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setClosed(boolean closed) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-    
-    
-}
 }

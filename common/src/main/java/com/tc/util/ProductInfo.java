@@ -32,6 +32,7 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,10 +79,6 @@ public final class ProductInfo {
   private String                            buildID;
   private String                            copyright;
   private final String                      license                    = DEFAULT_LICENSE;
-
-  // XXX: Can't have a logger in this class...
-  // private static final TCLogger logger = TCLogging.getLogger(ProductInfo.class);
-  // private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
   /**
    * Construct a ProductInfo by reading properties from streams (most commonly by loading properties files as resources
@@ -247,6 +244,14 @@ public final class ProductInfo {
 
   public String version() {
     return buildVersion;
+  }
+
+  public String versionMessage() {
+    try {
+      return bundleHelper.getString("version.message");
+    } catch (MissingResourceException e) {
+      return "";
+    }
   }
 
   /**

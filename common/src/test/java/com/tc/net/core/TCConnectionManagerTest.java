@@ -21,7 +21,6 @@ package com.tc.net.core;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -30,6 +29,9 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
+import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.properties.TCPropertiesImpl;
+import java.util.Collections;
 
 /**
  * TODO Jan 13, 2005: comment describing what this class is for.
@@ -43,6 +45,7 @@ public class TCConnectionManagerTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(Collections.emptyMap());
     this.clientConnMgr = new TCConnectionManagerImpl();
     this.serverConnMgr = new TCConnectionManagerImpl();
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
@@ -130,6 +133,11 @@ public class TCConnectionManagerTest extends TestCase {
     conn2.connect(lsnr.getBindSocketAddress(), 5000);
     conn3.connect(lsnr.getBindSocketAddress(), 5000);
 
+    while (serverConnMgr.getAllConnections().length < 3) {
+      System.out.println("Waiting for server conn");
+      ThreadUtil.reallySleep(500);
+    }
+
     conn1.setTransportEstablished();
     conn2.setTransportEstablished();
     conn3.setTransportEstablished();
@@ -137,6 +145,11 @@ public class TCConnectionManagerTest extends TestCase {
     TCConnection activeConns[] = clientConnMgr.getAllActiveConnections();
     assertEquals(3, activeConns.length);
     assertTrue(Arrays.asList(activeConns).containsAll(Arrays.asList(new Object[] { conn1, conn2, conn3 })));
+
+    while (serverConnMgr.getAllConnections().length < 3) {
+      System.out.println("Waiting for server conn");
+      ThreadUtil.reallySleep(500);
+    }
 
     clientConnMgr.closeAllConnections(5000);
     assertEquals(0, clientConnMgr.getAllConnections().length);
@@ -146,26 +159,30 @@ public class TCConnectionManagerTest extends TestCase {
       System.out.println("Waiting for server conn close");
       ThreadUtil.reallySleep(500);
     }
+    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
 
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     conn2 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     assertEquals(2, clientConnMgr.getAllConnections().length);
     conn1.connect(lsnr.getBindSocketAddress(), 5000);
     conn2.connect(lsnr.getBindSocketAddress(), 5000);
+
+    while (serverConnMgr.getAllConnections().length < 2) {
+      System.out.println("Waiting for server conn");
+      ThreadUtil.reallySleep(500);
+    }
+
     conn1.setTransportEstablished();
     conn2.setTransportEstablished();
     assertEquals(2, clientConnMgr.getAllActiveConnections().length);
 
-    while (serverConnMgr.getAllConnections().length < 2) {
+    for (TCConnection c : serverConnMgr.getAllConnections()) {
+      c.setTransportEstablished();
+    }
+
+    while (serverConnMgr.getAllActiveConnections().length < 2) {
       System.out.println("Waiting for client conns");
       ThreadUtil.reallySleep(500);
-    }
-    
-    conns = serverConnMgr.getAllConnections();
-    assertEquals(2, conns.length);
-    
-    for (TCConnection conn : conns) {
-      conn.setTransportEstablished();
     }
     assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
@@ -191,8 +208,8 @@ public class TCConnectionManagerTest extends TestCase {
   }
 
   public void testInActiveClientConnections() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
-    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, null);
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(250, 250, 2, "testInActiveClientConnections", false);
+    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, new ClearTextBufferManagerFactory());
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {
@@ -222,7 +239,7 @@ public class TCConnectionManagerTest extends TestCase {
 
     assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
-    long sleepTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(hcConfig, false) + 2000 /* buffer sleep time */;
+    long sleepTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(hcConfig, false) * 2; /* buffer sleep time */;
     System.out.println("making client connections inactive. sleeping for " + sleepTime + "ms.");
     ThreadUtil.reallySleep(sleepTime);
 

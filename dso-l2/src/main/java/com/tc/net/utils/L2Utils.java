@@ -18,7 +18,6 @@
  */
 package com.tc.net.utils;
 
-import com.tc.bytes.TCByteBufferFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -39,10 +38,12 @@ public class L2Utils {
     // other performance bottlenecks within the application logic.
     // Note that this value is only the result of observations and reasonable behavior but may need to be tweaked, in the
     // future.
-    int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_COMM_THREADS);
+    int halfProcs = Runtime.getRuntime().availableProcessors() >> 1;
+    if (halfProcs == 0) halfProcs = 1;
+    int def = Math.min(halfProcs, MAX_DEFAULT_COMM_THREADS);
     return TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_TCCOM_WORKERTHREADS, def);
   }
-
+  
   public static int getOptimalStageWorkerThreads() {
     // We currently set the number of stage worker threads to the number of available processors.
     // This is further limited by MAX_DEFAULT_STAGE_THREADS to ensure that the number selected doesn't go so far as to
@@ -97,39 +98,5 @@ public class L2Utils {
     int threadsCount = cpusCount.multiply(utilization).multiply(BigDecimal.ONE
         .add(waitTime.divide(computeTime, 1, RoundingMode.HALF_UP))).setScale(0, RoundingMode.HALF_UP).intValue();
     return (wait == 0) ? threadsCount + 1 : threadsCount;
-  }
-
-  /**
-   * Calculates max possible direct memory consumption by TC Communication system. In fact, TC Comms can ask for more
-   * direct byte buffers than computed here if the buffer pool is fully used up, but its rare though.
-   *
-   * @return long - maximum consumable direct memory byte buffers in bytes by the comms system.
-   */
-  public static long getMaxDirectMemmoryConsumable() {
-
-    // L2<==L1, L2<==>L2
-    final int totalCommsThreads = getOptimalCommWorkerThreads() * 2;
-    final boolean poolingEnabled = TCPropertiesImpl.getProperties()
-        .getBoolean(TCPropertiesConsts.TC_BYTEBUFFER_POOLING_ENABLED);
-    final int directMemoryCommonPool = (TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT, 3000));
-    final int directMemoryThreadLocalPool = TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT, 2000);
-
-    long totalDirectMemeoryNeeded;
-    if (poolingEnabled) {
-      totalDirectMemeoryNeeded = (totalCommsThreads * directMemoryThreadLocalPool * TCByteBufferFactory.FIXED_BUFFER_SIZE)
-                                 + (directMemoryCommonPool * TCByteBufferFactory.FIXED_BUFFER_SIZE);
-    } else {
-      int maxPossbileMessageBytesSend = (TCPropertiesImpl.getProperties()
-          .getBoolean(TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED) ? TCPropertiesImpl.getProperties()
-                                                                            .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB) * 1024 : 1024);
-      totalDirectMemeoryNeeded = totalCommsThreads * maxPossbileMessageBytesSend * 4;
-    }
-
-    totalDirectMemeoryNeeded = (totalDirectMemeoryNeeded < MIN_COMMS_DIRECT_MEMORY_REQUIREMENT ? MIN_COMMS_DIRECT_MEMORY_REQUIREMENT
-        : totalDirectMemeoryNeeded);
-    return (totalDirectMemeoryNeeded > MAX_COMMS_DIRECT_MEMORY_REQUIREMENT ? MAX_COMMS_DIRECT_MEMORY_REQUIREMENT
-        : totalDirectMemeoryNeeded);
   }
 }

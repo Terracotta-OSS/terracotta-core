@@ -10,7 +10,7 @@
  *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
  *  the specific language governing rights and limitations under the License.
  *
- *  The Covered Software is Entity API.
+ *  The Covered Software is Terracotta Core.
  *
  *  The Initial Developer of the Covered Software is
  *  Terracotta, Inc., a Software AG company
@@ -24,6 +24,8 @@ import org.terracotta.entity.ServiceConfiguration;
 
 import com.tc.objectserver.api.ManagedEntity;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 
 
 /**
@@ -37,7 +39,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
  * This has no explicit initialization routine as it is expected that the implementation will be initialized with rich
  * context, inline, prior to being registered with the platform's provider registry.
  */
-public interface ImplementationProvidedServiceProvider {
+public interface ImplementationProvidedServiceProvider extends StateDumpable {
   /**
    * Get an instance of service from the provider.
    *
@@ -74,4 +76,9 @@ public interface ImplementationProvidedServiceProvider {
    * state.
    */
   void serverDidBecomeActive();
+
+  @Override
+  default void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState(this.getClass().getName(), this.toString());
+  }
 }

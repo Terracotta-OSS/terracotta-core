@@ -18,76 +18,126 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.ClientID;
 import com.tc.objectserver.api.ClientNotFoundException;
-import com.tc.util.UUID;
+import com.tc.util.Assert;
+import com.tc.net.core.ProductID;
 import com.tc.util.sequence.MutableSequence;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class ClientStatePersistor {
-  private static final String CLIENT_STATES =  "client_states";
-  private static final String UUID_CONTAINER =  "uuid_container";
-  private static final String UUID_KEY =  "uuid_container:key";
-  private static final String SEQUENCE_CONTAINER = "sequence_container";
-  private static final String SEQUENCE_KEY =  "sequence_container:key";
-
-  private final KeyValueStorage<String, String> uuidContainer;
-  private final KeyValueStorage<ChannelID, Boolean> clients;
+  private static final String CLIENTS_MAP_FILE_NAME =  "clients_map.map";
+  private static final String NEXT_CLIENT_ID_FILE_NAME =  "next_client_id.dat";
+  
+  
+  private final IPlatformPersistence storageManager;
+  private final ConcurrentHashMap<ClientID, Boolean> clients;
   private final MutableSequence clientIDSequence;
-
-  public ClientStatePersistor(IPersistentStorage storageManager) {
-    this.uuidContainer = storageManager.getKeyValueStorage(UUID_CONTAINER, String.class, String.class);
-    if (!this.uuidContainer.containsKey(UUID_KEY)) {
-      this.uuidContainer.put(UUID_KEY, UUID.getUUID().toString());
-    }
-    this.clients = storageManager.getKeyValueStorage(CLIENT_STATES, ChannelID.class, Boolean.class);
+  
+  @SuppressWarnings("unchecked")
+  public ClientStatePersistor(IPlatformPersistence storageManager) {
+    this.storageManager = storageManager;
     
-    KeyValueStorage<String, Long> sequenceContainer = storageManager.getKeyValueStorage(SEQUENCE_CONTAINER, String.class, Long.class);
-    this.clientIDSequence = new Sequence(sequenceContainer);
+    ConcurrentHashMap<ClientID, Boolean> clientsMap = null;
+    try {
+      clientsMap = (ConcurrentHashMap<ClientID, Boolean>) this.storageManager.loadDataElement(CLIENTS_MAP_FILE_NAME);
+      if (null == clientsMap) {
+        clientsMap = new ConcurrentHashMap<>();
+      }
+    } catch (IOException e) {
+      // We don't expect this during startup so just throw it as runtime.
+      throw new RuntimeException("Failure reading ClientStatePersistor data", e);
+    }
+    this.clients = clientsMap;
+    // orphaned clients are not supposed to reconnect on restart.  since we are repopulating 
+    // restart data, set aside the orphaned clients
+    this.clientIDSequence = new Sequence(this.storageManager);
+    Assert.assertNotNull(this.clients);
   }
 
   public MutableSequence getConnectionIDSequence() {
     return clientIDSequence;
   }
 
-  @SuppressWarnings("deprecation")
-  public Set<ChannelID> loadClientIDs() {
-    return clients.keySet();
+  public Set<ClientID> loadOrphanClientIDs() {
+    return clients.entrySet().stream().filter(entry->!entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
+  }
+  
+  public Set<ClientID> loadPermanentClientIDs() {
+    return clients.entrySet().stream().filter(entry->entry.getValue()).map((entry)->entry.getKey()).collect(Collectors.toSet());
+  }
+  
+  public Set<ClientID> loadAllClientIDs() {
+    return clients.entrySet().stream().map(entry->entry.getKey()).collect(Collectors.toSet());
   }
 
-  public boolean containsClient(ChannelID id) {
+  public boolean containsClient(ClientID id) {
     return clients.containsKey(id);
   }
 
-  public void saveClientState(ChannelID channelID) {
-    clients.put(channelID, true);
+  public void saveClientState(ClientID channelID, ProductID product) {
+    // if the client is in the orphaned set, do not add it to the saved list because 
+    // it should never connect again.  this can happen if the ConnectionIDFactory services
+    // a connection before the existing clients are loaded into the reconnect window
+    clients.put(channelID, product.isPermanent());
+    safeStoreClients();
   }
 
-  public void deleteClientState(ChannelID id) throws ClientNotFoundException {
-    if (!clients.remove(id)) {
+  public void deleteClientState(ClientID id) throws ClientNotFoundException {
+    if (clients.remove(id) == null) {
       throw new ClientNotFoundException();
     }
+    safeStoreClients();
   }
 
-  public String getServerUUID() {
-    return this.uuidContainer.get(UUID_KEY);
+  Map<String, Object> reportStateToMap(Map<String, Object> map) {
+    map.put("className", this.getClass().getName());
+    List<String> cs = new ArrayList<>();
+    map.put("clients", cs);
+    for (ClientID clientID : clients.keySet()) {
+      cs.add(clientID.toString());
+    }
+    map.put("next", clientIDSequence.current());
+
+    return map;
+  }
+  
+  private void safeStoreClients() {
+    try {
+      this.storageManager.storeDataElement(CLIENTS_MAP_FILE_NAME, this.clients);
+    } catch (IOException e) {
+      // Not expected during run.
+      Assert.fail(e.getLocalizedMessage());
+    }
   }
 
 
   private static class Sequence implements MutableSequence {
-    private final KeyValueStorage<String, Long> sequenceContainer;
+    private final IPlatformPersistence storageManager;
     private long next;
 
-    Sequence(KeyValueStorage<String, Long> sequenceContainer) {
-      this.sequenceContainer = sequenceContainer;
-      if (!this.sequenceContainer.containsKey(SEQUENCE_KEY)) {
-        this.sequenceContainer.put(SEQUENCE_KEY, 0L);
+    Sequence(IPlatformPersistence storageManager) {
+      this.storageManager = storageManager;
+      long nextID = 0;
+      try {
+        Long nextInStorage = (Long) this.storageManager.loadDataElement(NEXT_CLIENT_ID_FILE_NAME);
+        if (null != nextInStorage) {
+          nextID = nextInStorage;
+        }
+      } catch (IOException e) {
+        // We don't expect this during startup so just throw it as runtime.
+        throw new RuntimeException("Failure reading ClientStatePersistor next client ID", e);
       }
-      this.next = this.sequenceContainer.get(SEQUENCE_KEY);
+      this.next = nextID;
     }
 
     @Override
@@ -96,20 +146,29 @@ public class ClientStatePersistor {
         throw new AssertionError("next=" + next + " current=" + this.next);
       }
       this.next = next;
-      this.sequenceContainer.put(SEQUENCE_KEY, next);
+      storeNextID();
     }
 
     @Override
     public synchronized long next() {
       long r = next;
       next += 1;
-      this.sequenceContainer.put(SEQUENCE_KEY, next);
+      storeNextID();
       return r;
     }
 
     @Override
     public synchronized long current() {
       return next;
+    }
+    
+    private void storeNextID() {
+      try {
+        this.storageManager.storeDataElement(NEXT_CLIENT_ID_FILE_NAME, this.next);
+      } catch (IOException e) {
+        // We don't expect this during startup so just throw it as runtime.
+        throw new RuntimeException("Failure storing ClientStatePersistor next client ID", e);
+      }
     }
   }
 }

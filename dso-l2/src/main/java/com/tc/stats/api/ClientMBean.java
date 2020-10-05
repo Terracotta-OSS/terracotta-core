@@ -19,11 +19,8 @@
 package com.tc.stats.api;
 
 import com.tc.management.TerracottaMBean;
-import com.tc.management.beans.TerracottaOperatorEventsMBean;
-import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.net.protocol.tcm.ChannelID;
 
-import javax.management.ObjectName;
 
 public interface ClientMBean extends TerracottaMBean {
 
@@ -31,33 +28,15 @@ public interface ClientMBean extends TerracottaMBean {
 
   String getNodeID();
 
-  ObjectName getL1InfoBeanName();
-
-  L1InfoMBean getL1InfoBean();
-
-  ObjectName getL1DumperBeanName();
-
-  ObjectName getL1OperatorEventsBeanName();
-
-  ObjectName getEnterpriseTCClientBeanName();
-
-  TerracottaOperatorEventsMBean getL1OperatorEventsBean();
-
   ChannelID getChannelID();
 
   String getRemoteAddress();
 
-  long getTransactionRate();
-
-  long getReadRate();
-
-  long getWriteRate();
-
-  long getPendingTransactionsCount();
-
-  Number[] getStatistics(String[] names);
-
-  int getLiveObjectCount();
-
   void killClient();
+  
+  int getRemotePID();
+  
+  String getRemoteName();
+  
+  String getRemoteUUID();
 }

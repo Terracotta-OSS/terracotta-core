@@ -16,72 +16,61 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.persistence;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+
+import org.terracotta.persistence.IPlatformPersistence;
 
 import com.tc.util.Assert;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.terracotta.persistence.IPersistentStorage;
-import org.terracotta.persistence.KeyValueStorage;
-/**
- * @author tim
- */
 public class TestClusterStatePersistor extends ClusterStatePersistor {
-  public TestClusterStatePersistor(Map<String, String> map) {
-    super(new IPersistentStorage() {
-      boolean isReady = false;
-      
+  public TestClusterStatePersistor(Map<String, Serializable> map) {
+    super(new IPlatformPersistence() {
       @Override
-      public void open() throws IOException {
-        Assert.assertFalse(this.isReady);
-        this.isReady = true;
+      public Serializable loadDataElement(String name) throws IOException {
+        return map.get(name);
       }
 
       @Override
-      public void create() throws IOException {
-        Assert.assertFalse(this.isReady);
-        this.isReady = true;
+      public Serializable loadDataElementInLoader(String name, ClassLoader loader) throws IOException {
+        return map.get(name);
       }
 
       @Override
-      public Map<String, String> getProperties() {
-        Assert.assertTrue(this.isReady);
-        return map;
+      public void storeDataElement(String name, Serializable element) throws IOException {
+        map.put(name, element);
       }
 
       @Override
-      public <K, V> KeyValueStorage<K, V> getKeyValueStorage(String alias, Class<K> keyClass, Class<V> valueClass) {
-        throw new UnsupportedOperationException("Implement me!");
+      public Future<Void> fastStoreSequence(long sequenceIndex, SequenceTuple newEntry, long oldestValidSequenceID) {
+        // Not expected in test.
+        Assert.fail();
+        return null;
       }
 
       @Override
-      public void close() {
-        throw new UnsupportedOperationException("Implement me!");
+      public List<SequenceTuple> loadSequence(long sequenceIndex) {
+        // Not expected in test.
+        Assert.fail();
+        return null;
       }
 
       @Override
-      public IPersistentStorage.Transaction begin() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      public void deleteSequence(long sequenceIndex) {
+        // Not expected in test.
+        Assert.fail();
       }
-
-      @Override
-      public <K, V> KeyValueStorage<K, V> createKeyValueStorage(String alias, Class<K> keyClass, Class<V> valueClass) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
-      @Override
-      public <K, V> KeyValueStorage<K, V> destroyKeyValueStorage(String alias) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-      }
-
     });
   }
 
   public TestClusterStatePersistor() {
-    this(new HashMap<String, String>());
+    this(new HashMap<String, Serializable>());
   }
 }

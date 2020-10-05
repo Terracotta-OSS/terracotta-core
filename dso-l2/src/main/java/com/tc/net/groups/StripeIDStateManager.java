@@ -18,20 +18,16 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 
-import java.util.Map;
 
 public interface StripeIDStateManager {
 
-  public boolean verifyOrSaveStripeID(GroupID gid, StripeID stripeID, boolean overwrite);
+  public boolean verifyOrSaveStripeID(StripeID stripeID, boolean overwrite);
 
-  public StripeID getStripeID(GroupID gid);
-
-  public Map<GroupID, StripeID> getStripeIDMap(boolean fromAACoordinator);
+  public StripeID getStripeID();
   
-  public boolean isStripeIDMatched(GroupID gid, StripeID stripeID);
+  public boolean isStripeIDMatched(StripeID stripeID);
 
   public void registerForStripeIDEvents(StripeIDEventListener listener);
 

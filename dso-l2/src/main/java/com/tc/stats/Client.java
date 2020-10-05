@@ -19,30 +19,25 @@
 package com.tc.stats;
 
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
+import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.stats.api.ClientMBean;
-import com.tc.stats.counter.Counter;
-import com.tc.stats.counter.sampled.SampledCounter;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
 import javax.management.MBeanServerNotification;
-import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 import javax.management.NotificationListener;
@@ -50,22 +45,13 @@ import javax.management.ObjectName;
 
 public class Client extends AbstractTerracottaMBean implements ClientMBean, NotificationListener {
 
-  private static final TCLogger                logger                  = TCLogging.getLogger(Client.class);
+  private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
-  private final MBeanServer                    mbeanServer;
-  private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
-  private ObjectName                           l1OperatorEventsBeanName;
-  private TerracottaOperatorEventsMBean        l1OperatorEventsBean;
   private final MessageChannel                 channel;
-  private final SampledCounter                 txnRate;
-  private final SampledCounter                 writeRate;
-  private final SampledCounter                 readRate;
-  private final Counter                        pendingTransactions;
-  private final AtomicLong                     sequenceNumber          = new AtomicLong(0L);
-  private final ClientID                       clientID;
 
-  private ObjectName                           enterpriseMBeanName;
+  private final ClientHandshakeMonitoringInfo   minfo;
+  private final ClientID                       clientID;
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
@@ -80,13 +66,9 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
                 ClientID clientID) throws NotCompliantMBeanException {
     super(ClientMBean.class, true);
 
-    this.mbeanServer = mbeanServer;
     this.channel = channel;
     this.clientID = clientID;
-    this.txnRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.TXN_RATE);
-    this.writeRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.WRITE_RATE);
-    this.readRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.READ_RATE);
-    this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
+    this.minfo = (ClientHandshakeMonitoringInfo)channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT);
   }
 
   @Override
@@ -108,31 +90,6 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   }
 
   @Override
-  public ObjectName getL1InfoBeanName() {
-    return l1InfoBeanName;
-  }
-
-  @Override
-  public L1InfoMBean getL1InfoBean() {
-    return l1InfoBean;
-  }
-
-  @Override
-  public ObjectName getL1DumperBeanName() {
-    return ObjectName.WILDCARD;
-  }
-
-  @Override
-  public ObjectName getL1OperatorEventsBeanName() {
-    return l1OperatorEventsBeanName;
-  }
-
-  @Override
-  public TerracottaOperatorEventsMBean getL1OperatorEventsBean() {
-    return l1OperatorEventsBean;
-  }
-
-  @Override
   public ChannelID getChannelID() {
     return channel.getChannelID();
   }
@@ -145,67 +102,33 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   }
 
   @Override
-  public long getTransactionRate() {
-    return txnRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getReadRate() {
-    return readRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getWriteRate() {
-    return writeRate.getMostRecentSample().getCounterValue();
-  }
-
-  @Override
-  public long getPendingTransactionsCount() {
-    return pendingTransactions.getValue();
-  }
-
-  @Override
-  public Number[] getStatistics(String[] names) {
-    int count = names.length;
-    Number[] result = new Number[count];
-    Method method;
-
-    for (int i = 0; i < count; i++) {
-      try {
-        method = getClass().getMethod("get" + names[i], new Class[] {});
-        result[i] = (Number) method.invoke(this, new Object[] {});
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
-    return result;
-  }
-
-  @Override
   public void killClient() {
     logger.warn("Killing Client on JMX Request :" + channel);
     channel.close();
   }
-
-  private void setupL1InfoBean() {
-    l1InfoBean = MBeanServerInvocationHandler.newProxyInstance(mbeanServer, l1InfoBeanName, L1InfoMBean.class, false);
-  }
-
-  /**
-   * Since ObjectNames can have arbitrary attribute pairs, we need to match against a wildcard pattern that we expect.
-   * Each tunneled client bean is uniquely identified by its node attribute, which is constructed from the remote host
-   * and port of the terracotta client.
-   */
-  private boolean matchesClientBeanName(ObjectName clientBeanName, ObjectName beanName) {
-    try {
-      ObjectName wildcard = new ObjectName(clientBeanName.getCanonicalName() + ",*");
-      return wildcard.apply(beanName);
-    } catch (MalformedObjectNameException moe) {
-      throw new RuntimeException(moe);
+  
+  @Override
+  public int getRemotePID() {
+    if (minfo !=null) {
+      return minfo.getPid();
     }
+    return -1;
   }
-
+  @Override
+  public String getRemoteName() {
+    if (minfo !=null) {
+      return minfo.getName();
+    }
+    return "";
+  }
+  @Override
+  public String getRemoteUUID() {
+    if (minfo !=null) {
+      return minfo.getUuid();
+    }
+    return "";
+  }
+ 
   private void beanRegistered(ObjectName beanName) {
 
   }
@@ -247,17 +170,7 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
   }
 
   @Override
-  public int getLiveObjectCount() {
-    return -1;
-  }
-
-  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
-  }
-
-  @Override
-  public ObjectName getEnterpriseTCClientBeanName() {
-    return enterpriseMBeanName;
   }
 }

@@ -24,7 +24,7 @@ import com.tc.util.State;
 
 public interface ElectionManager {
 
-  public void declareWinner(NodeID myNodeId, State currentState);
+  public void declareWinner(Enrollment myNodeId, State currentState);
 
   public boolean handleStartElectionRequest(L2StateMessage msg, State currentState);
 
@@ -32,7 +32,7 @@ public interface ElectionManager {
 
   public void handleElectionResultMessage(L2StateMessage msg, State currentState);
 
-  public void reset(Enrollment winner);
+  public void reset(NodeID winnerNode, Enrollment winner);
 
   public long getElectionTime();
 }

@@ -19,7 +19,6 @@
 package com.tc.async.api;
 
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.bytes.TCByteBufferFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.util.concurrent.QueueFactory;
 
@@ -28,14 +27,18 @@ import com.tc.util.concurrent.QueueFactory;
  * 
  * @author steve
  */
-public class SEDA<EC> {
+public class SEDA {
   private final StageManager  stageManager;
   private final TCThreadGroup threadGroup;
 
   public SEDA(TCThreadGroup threadGroup) {
     this.threadGroup = threadGroup;
-    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory<EC>());
-    TCByteBufferFactory.registerThreadGroup(threadGroup);
+    this.stageManager = new StageManagerImpl(threadGroup, new QueueFactory(), new StageListener() {
+      @Override
+      public void stageStalled(String name, long delay, int queueDepth) {
+        stageWarning(new StallWarning(name, delay, queueDepth));
+      }
+    });
   }
 
   public StageManager getStageManager() {
@@ -44,5 +47,26 @@ public class SEDA<EC> {
 
   protected TCThreadGroup getThreadGroup() {
     return this.threadGroup;
+  }
+  
+  public void stageWarning(Object description) {
+    
+  }
+  
+  private static class StallWarning {
+    private final String name;
+    private final long delay;
+    private final int depth;
+
+    public StallWarning(String name, long delay, int depth) {
+      this.name = name;
+      this.delay = delay;
+      this.depth = depth;
+    }
+
+    @Override
+    public String toString() {
+      return "StallWarning{" + "name=" + name + ", delay=" + delay + ", depth=" + depth + '}';
+    }
   }
 }

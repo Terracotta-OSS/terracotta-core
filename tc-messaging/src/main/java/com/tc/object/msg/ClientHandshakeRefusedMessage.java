@@ -18,10 +18,8 @@
  */
 package com.tc.object.msg;
 
-import com.tc.net.protocol.tcm.TCMessage;
-
-public interface ClientHandshakeRefusedMessage extends TCMessage {
-  String getRefualsCause();
+public interface ClientHandshakeRefusedMessage extends ClientHandshakeResponse {
+  String getRefusalsCause();
 
   void initialize(String message);
 

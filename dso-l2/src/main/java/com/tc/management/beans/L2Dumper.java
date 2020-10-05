@@ -18,10 +18,12 @@
  */
 package com.tc.management.beans;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
+import com.tc.server.TCServerImpl;
 
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -31,7 +33,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 
 public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
-  private static final TCLogger logger                        = TCLogging.getLogger(L2Dumper.class);
+  private static final Logger logger = LoggerFactory.getLogger(L2Dumper.class);
 
   private static final boolean  DEBUG                         = false;
 
@@ -43,11 +45,11 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   private int                   threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
   private long                  threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
 
-  private final TCDumper        dumper;
+  private final TCServerImpl        dumper;
 
   private final MBeanServer     mbs;
 
-  public L2Dumper(TCDumper dumper, MBeanServer mbs) throws NotCompliantMBeanException {
+  public L2Dumper(TCServerImpl dumper, MBeanServer mbs) throws NotCompliantMBeanException {
     super(L2DumperMBean.class, false);
     this.dumper = dumper;
     this.mbs = mbs;
@@ -96,7 +98,7 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
     try {
       allL2DumperMBeans = TerracottaManagement.getAllL2DumperMBeans(mbs);
     } catch (Exception e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return;
     }
 
@@ -105,22 +107,6 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
         mbs.invoke(l2DumperBean, "doServerDump", new Object[] {}, new String[] {});
       } catch (Exception e) {
         logger.error("error dumping on " + l2DumperBean, e);
-      }
-    }
-
-    Set<ObjectName> allL1DumperMBeans;
-    try {
-      allL1DumperMBeans = TerracottaManagement.getAllL1DumperMBeans(mbs);
-    } catch (Exception e) {
-      logger.error(e);
-      return;
-    }
-
-    for (ObjectName l1DumperBean : allL1DumperMBeans) {
-      try {
-        mbs.invoke(l1DumperBean, "doClientDump", new Object[] {}, new String[] {});
-      } catch (Exception e) {
-        logger.error("error dumping on " + l1DumperBean, e);
       }
     }
   }

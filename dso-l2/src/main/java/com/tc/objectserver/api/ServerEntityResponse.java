@@ -18,7 +18,7 @@
  */
 package com.tc.objectserver.api;
 
-import org.terracotta.exception.EntityException;
+import com.tc.exception.ServerException;
 
 /**
  * Interface to communicate with a client the result of an entity request.  It is the job
@@ -33,8 +33,8 @@ public interface ServerEntityResponse {
 
   void complete(byte[] value);
 
-  void failure(EntityException e);
-
+  void failure(ServerException e);
+  
   void received();
 
 }

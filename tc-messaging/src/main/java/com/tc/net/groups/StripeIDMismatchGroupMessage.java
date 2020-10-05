@@ -20,7 +20,6 @@ package com.tc.net.groups;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.GroupID;
 
 import java.io.IOException;
 
@@ -35,18 +34,16 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
 
   private int             errorType;
   private String          reason;
-  private GroupID         groupID;
 
   // To make serialization happy
   public StripeIDMismatchGroupMessage() {
     super(-1);
   }
 
-  public StripeIDMismatchGroupMessage(int type, int errorType, String reason, GroupID groupID) {
+  public StripeIDMismatchGroupMessage(int type, int errorType, String reason) {
     super(type);
     this.reason = reason;
     this.errorType = errorType;
-    this.groupID = groupID;
   }
 
   @Override
@@ -55,20 +52,17 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
     reason = in.readString();
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
-    groupID = (GroupID) nodeIDSerializer.getNodeID();
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     out.writeInt(errorType);
     out.writeString(reason);
-    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(groupID);
-    nodeIDSerializer.serializeTo(out);
   }
 
   @Override
   public String toString() {
-    return "StripeIDMismatchGroupMessage [ " + errorType + " , " + reason + " , " + groupID + " ]";
+    return "StripeIDMismatchGroupMessage [ " + errorType + " , " + reason + " ]";
   }
 
   public String getReason() {
@@ -77,10 +71,6 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
 
   public int getErrorType() {
     return errorType;
-  }
-
-  public GroupID getGroupID() {
-    return groupID;
   }
 
 }

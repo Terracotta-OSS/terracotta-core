@@ -33,24 +33,21 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
-import com.tc.object.net.DSOChannelManagerEventListener;
-import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import java.util.Arrays;
+import com.tc.object.FetchID;
+import com.tc.util.Assert;
+import static com.tc.util.Assert.assertEquals;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import org.mockito.Matchers;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
 public class ClientEntityStateManagerImplTest {
   private ClientEntityStateManager clientEntityStateManager;
-  private ManagementTopologyEventCollector collector;
   private Sink requestSink;
   private Stage requestStage;
   private StageManager stageManager;
@@ -63,77 +60,80 @@ public class ClientEntityStateManagerImplTest {
     when(requestStage.getSink()).thenReturn(requestSink);
     stageManager = mock(StageManager.class);
     when(stageManager.getStage(any(), any())).thenReturn(requestStage);
-    collector = mock(ManagementTopologyEventCollector.class);
-    clientEntityStateManager = new ClientEntityStateManagerImpl(stageManager, collector, mock(DSOChannelManagerEventListener.class));
+    clientEntityStateManager = new ClientEntityStateManagerImpl();
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getRemoteNodeID()).thenReturn(new ClientID(1));
-    clientEntityStateManager.channelCreated(channel);
   }
 
   @Test
   public void testAddForNewClient() throws Exception {
-    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    assertTrue(addReference(cd, new FetchID(1)));
   }
 
   @Test
   public void testAddTwice() throws Exception {
-    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
-    assertFalse(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    assertTrue(addReference(cd, new FetchID(1)));
+    assertFalse(addReference(cd, new FetchID(1)));
   }
 
   @Test
   public void testRemoveUnknown() throws Exception {
-    assertFalse(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    try {
+      assertFalse(removeReference(cd));
+      Assert.fail();
+    } catch (Throwable ee) {
+      // expected
+    }
   }
 
   @Test
   public void testChannelRemoved() throws Exception {
-    EntityID entityID = new EntityID("foo", "bar");
+    FetchID entityID = new FetchID(1);
     ClientInstanceID clientInstanceID = new ClientInstanceID(1);
-    long version = 1;
     ClientID clientID = new ClientID(1);
-    MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.getRemoteNodeID()).thenReturn(clientID);
 
-    clientEntityStateManager.addReference(clientID, new EntityDescriptor(entityID, clientInstanceID, version));
-    clientEntityStateManager.channelRemoved(messageChannel);
+    clientEntityStateManager.addReference(new ClientDescriptorImpl(clientID, clientInstanceID), entityID);
+    List<FetchID> list = clientEntityStateManager.clientDisconnected(clientID);
 
-    verify(requestSink).addSingleThreaded(argThat(hasClientAndEntityIDs(clientID, entityID)));
-    verify(collector).expectedReleases(Matchers.eq(clientID), argThat(collectionMatcher(Arrays.asList(new EntityDescriptor(entityID, clientInstanceID, version)))));
+    assertEquals(1, list.size());
+    assertEquals(entityID, list.get(0));
   }
 
   @Test
   public void testVerifyNoReferences() throws Exception {
     // Verify that there are no references.
-    assertTrue(verifyNoReferences(new EntityID("foo", "bar")));
+    assertTrue(verifyNoReferences(new FetchID(1)));
     // Add a reference.
-    assertTrue(addReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    ClientDescriptorImpl cd = new ClientDescriptorImpl(new ClientID(1), new ClientInstanceID(1));
+    assertTrue(addReference(cd, new FetchID(1)));
     // Verify that there now are references.
-    assertFalse(verifyNoReferences(new EntityID("foo", "bar")));
+    assertFalse(verifyNoReferences(new FetchID(1)));
     // Remove the reference.
-    assertTrue(removeReference(new ClientID(1), new EntityDescriptor(new EntityID("foo", "bar"), new ClientInstanceID(1), 1)));
+    assertTrue(removeReference(cd));
     // Verify that there are no references.
-    assertTrue(verifyNoReferences(new EntityID("foo", "bar")));
+    assertTrue(verifyNoReferences(new FetchID(1)));
   }
 
-  private boolean addReference(ClientID clientID, EntityDescriptor descriptor) {
+  private boolean addReference(ClientDescriptorImpl clientID, FetchID descriptor) {
     // This only fails by asserting.
     boolean didSucceed = false;
     try {
-      clientEntityStateManager.addReference(clientID, descriptor);
-      didSucceed = true;
+      didSucceed = clientEntityStateManager.addReference(clientID, descriptor);
     } catch (AssertionError e) {
       didSucceed = false;
     }
     return didSucceed;
   }
 
-  private boolean removeReference(ClientID clientID, EntityDescriptor descriptor) {
-    return clientEntityStateManager.removeReference(clientID, descriptor);
+  private boolean removeReference(ClientDescriptorImpl clientID) {
+      return clientEntityStateManager.removeReference(clientID);
   }
 
-  private boolean verifyNoReferences(EntityID eid) {
-    return clientEntityStateManager.verifyNoReferences(eid);
+  private boolean verifyNoReferences(FetchID eid) {
+    return clientEntityStateManager.verifyNoEntityReferences(eid);
   }
   
   private Matcher<Collection<EntityDescriptor>> collectionMatcher(Collection<EntityDescriptor> list) {

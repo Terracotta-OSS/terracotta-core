@@ -19,6 +19,7 @@
 package com.tc.async.api;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  * Interface for handling either single events or multiple events at one time. For more information of this kind of
@@ -46,5 +47,23 @@ public interface EventHandler<EC> extends PostInit {
    * Shut down the stage
    */
   public void destroy();
+  
+  public static <EC> Sink<EC> directSink(EventHandler<EC> handler) {
+    return (e)->{
+      try {
+        handler.handleEvent(e);
+      } catch (EventHandlerException ee) {
+        throw new RuntimeException(ee);
+      }
+    };
+  }
 
+  public static <EC> EventHandler<EC> consumer(Consumer<EC> handler) {
+    return new AbstractEventHandler<EC>() {
+      @Override
+      public void handleEvent(EC context) throws EventHandlerException {
+        handler.accept(context);
+      }
+    };
+  }
 }

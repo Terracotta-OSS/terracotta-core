@@ -18,131 +18,99 @@
  */
 package com.tc.objectserver.impl;
 
+import org.slf4j.Logger;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
-import com.tc.config.HaConfig;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.io.TCFile;
+import com.tc.config.ServerConfigurationManager;
+import com.tc.config.GroupConfiguration;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.net.GroupID;
 import com.tc.net.ServerID;
-import com.tc.net.core.security.TCSecurityManager;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
-import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManager;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.objectserver.persistence.PersistentStorageServiceConfiguration;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.runtime.logging.LongGCLogger;
 import com.tc.util.Assert;
-import com.tc.util.NonBlockingStartupLock;
-import com.tc.util.StartupLock;
-import com.tc.util.runtime.ThreadDumpUtil;
 
-import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 
 public class StandardServerBuilder implements ServerBuilder {
-  private final HaConfig            haConfig;
+  private final GroupConfiguration groupConfiguration;
 
-  protected final TCSecurityManager securityManager;
-  protected final TCLogger          logger;
+  protected final Logger logger;
 
-  public StandardServerBuilder(HaConfig haConfig, TCLogger logger,
-                                  TCSecurityManager securityManager) {
+  public StandardServerBuilder(GroupConfiguration groupConfiguration, Logger logger) {
     this.logger = logger;
-    this.securityManager = securityManager;
-    this.logger.info("Standard TSA Server created");
-    this.haConfig = haConfig;
+    this.groupConfiguration = groupConfiguration;
   }
 
   @Override
-  public GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
-                                             StageManager stageManager, ServerID serverNodeID,
-                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory) {
-    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.haConfig.getThisNode(), this.haConfig.getNodesStore(), securityManager, weightGeneratorFactory);
+  public GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
+                                                                   StageManager stageManager, ServerID serverNodeID,
+                                                                   StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
+                                                                   BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager) {
+    return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, this.groupConfiguration.getCurrentNode(),
+                                  weightGeneratorFactory, bufferManagerFactory, topologyManager);
   }
 
   @Override
   public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
-                                                                     LockManager lockMgr,
                                                                      DSOChannelManager channelManager,
                                                                      ChannelStatsImpl channelStats,
                                                                      L2Coordinator coordinator,
                                                                      ServerClientHandshakeManager clientHandshakeManager,
-                                                                     GlobalServerStats serverStats,
                                                                      ConnectionIDFactory connectionIdFactory,
-                                                                     int maxStageSize,
-                                                                     ChannelManager genericChannelManager,
-                                                                     DumpHandlerStore dumpHandlerStore) {
+                                                                     int maxStageSize) {
     return new ServerConfigurationContextImpl(stageManager,
-        lockMgr, channelManager,
+        channelManager,
         clientHandshakeManager, channelStats, coordinator
     );
   }
-
-  @Override
-  public void dump() {
-    TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
-  }
-
+  
   @Override
   public void initializeContext(ConfigurationContext context) {
     // Nothing to initialize here
   }
 
   @Override
-  public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
-                                             StageManager stageManager, StateManager stateMgr, 
+  public L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
+                                             StateManager stateMgr, 
                                              GroupManager<AbstractGroupMessage> groupCommsManager,
-                                             ClusterStatePersistor clusterStatePersistor,
+                                             Persistor persistor,
                                              WeightGeneratorFactory weightGeneratorFactory,
-                                             L2ConfigurationSetupManager configurationSetupManager,
-                                             StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm) {
-    return new L2HACoordinator(consoleLogger, server, stageManager, stateMgr, 
-        groupCommsManager, clusterStatePersistor,
-        weightGeneratorFactory, configurationSetupManager,
-        haConfig.getThisGroupID(), stripeStateManager, clm);
-  }
-
-  @Override
-  public LongGCLogger createLongGCLogger(long gcTimeOut) {
-    return new LongGCLogger(gcTimeOut);
-  }
-
-  @Override
-  public StartupLock createStartupLock(TCFile location, boolean retries) {
-    return new NonBlockingStartupLock(location, retries);
+                                             StripeIDStateManager stripeStateManager,
+                                             ConsistencyManager consistencyMgr) {
+    return new L2HACoordinator(consoleLogger, server, stateMgr, 
+        groupCommsManager, persistor,
+        weightGeneratorFactory, stripeStateManager, consistencyMgr);
   }
 
   @Override
   public Persistor createPersistor(ServiceRegistry serviceRegistry) {
-    IPersistentStorage persistentStorage = serviceRegistry.getService(new PersistentStorageServiceConfiguration());
-    // We can't fail to find persistence support (at least not in our current environment).
-    Assert.assertNotNull(persistentStorage);
-    return new Persistor(persistentStorage);
-  }
-
-  @Override
-  public GroupID getLocalGroupId() {
-    return haConfig.getThisGroupID();
+    IPlatformPersistence platformPersistence = null;
+    try {
+      platformPersistence = serviceRegistry.getService(new BasicServiceConfiguration<IPlatformPersistence>(IPlatformPersistence.class));
+    } catch (ServiceException e) {
+      Assert.fail("Multiple IPlatformPersistence implementations found!");
+    }
+    // We can't fail to look this up as the implementation will install an in-memory implementation if an on-disk on
+    //  wasn't provided
+    Assert.assertNotNull(platformPersistence);
+    return new Persistor(platformPersistence);
   }
 }

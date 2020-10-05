@@ -22,7 +22,6 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
 import java.io.IOException;
 
@@ -51,13 +50,14 @@ public class ClientEntityReferenceContext implements TCSerializable<ClientEntity
   public EntityID getEntityID() {
     return this.entityID;
   }
-  
+
+
+  public ClientInstanceID getClientInstanceID() {
+    return clientInstanceID;
+  }
+
   public long getEntityVersion() {
     return this.entityVersion;
-  }
-  
-  public EntityDescriptor getEntityDescriptor() {
-    return new EntityDescriptor(this.entityID, this.clientInstanceID, this.entityVersion);
   }
 
   public byte[] getExtendedReconnectData() {

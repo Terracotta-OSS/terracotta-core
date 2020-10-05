@@ -18,7 +18,7 @@
  */
 package com.tc.stats;
 
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -47,7 +47,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 
@@ -108,53 +107,52 @@ public class MBeanRegTest {
     }).when(channel).close();
 
     when(smCtxt.getChannelManager()).thenReturn((DSOChannelManagerMBean) channelMgrMbean);
-    when(stats.getCounter(Matchers.same(channel), Matchers.startsWith("serverMap")))
+    when(stats.getCounter(ArgumentMatchers.same(channel), ArgumentMatchers.startsWith("serverMap")))
         .thenReturn(mock(SampledCumulativeCounter.class));
-    when(stats.getCounter(Matchers.same(channel), Matchers.argThat(new ArgumentMatcher<String>() {
+    when(stats.getCounter(ArgumentMatchers.same(channel), ArgumentMatchers.argThat(new ArgumentMatcher<String>() {
 
       @Override
-      public boolean matches(Object argument) {
+      public boolean matches(String argument) {
         // Ugly, ugly, ugly
-        String str = (String) argument;
+        String str = argument;
         return !str.startsWith("serverMap");
       }
 
     }))).thenReturn(SampledCounter.NULL_SAMPLED_COUNTER);
     when(smCtxt.getChannelStats()).thenReturn(stats);
     mbeanSvr = mock(MBeanServer.class);
-    dso = new DSO(smCtxt, mock(ServerConfigurationContext.class), mbeanSvr,
-        mock(TerracottaOperatorEventHistoryProvider.class));
+    dso = new DSO(smCtxt, mock(ServerConfigurationContext.class), mbeanSvr);
 
   }
 
   @Test @Ignore // client tunneling is no longer valid
   public void testRemoveListenerOnDisconnect() throws Exception {
-    channelMgrMbean.makeChannelActive(clientId, false);
+    channelMgrMbean.makeChannelActive(clientId);
     channelMgrMbean.closeAll(Collections.singletonList(clientId));
     InOrder order = Mockito.inOrder(mbeanSvr);
 
     order.verify(mbeanSvr).addNotificationListener(isA(ObjectName.class),
-                                                     Matchers.argThat(new ArgumentMatcher<NotificationListener>() {
+                                                     ArgumentMatchers.argThat(new ArgumentMatcher<NotificationListener>() {
 
                                                        @Override
-                                                       public boolean matches(Object arg) {
+                                                       public boolean matches(NotificationListener arg) {
                                                          return arg instanceof Client
                                                                 && clientId.toLong() == (((Client) arg)
                                                                                                 .getClientID());
                                                        }
 
-                                                   }), isA(NotificationFilter.class), Matchers.any());
+                                                   }), isA(NotificationFilter.class), ArgumentMatchers.any());
     order.verify(mbeanSvr).removeNotificationListener(isA(ObjectName.class),
-                                                        Matchers.argThat(new ArgumentMatcher<NotificationListener>() {
+                                                        ArgumentMatchers.argThat(new ArgumentMatcher<NotificationListener>() {
 
                                                           @Override
-                                                          public boolean matches(Object arg) {
+                                                          public boolean matches(NotificationListener arg) {
                                                             return arg instanceof Client
                                                                    && clientId.toLong() == (((Client) arg)
                                                                        .getClientID());
                                                           }
 
-                                                      }), isA(NotificationFilter.class), Matchers.any());
+                                                      }), isA(NotificationFilter.class), ArgumentMatchers.any());
   }
 
 }

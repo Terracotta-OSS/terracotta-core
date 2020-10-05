@@ -1,3 +1,21 @@
+/*
+ *
+ *  The contents of this file are subject to the Terracotta Public License Version
+ *  2.0 (the "License"); You may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at
+ *
+ *  http://terracotta.org/legal/terracotta-public-license.
+ *
+ *  Software distributed under the License is distributed on an "AS IS" basis,
+ *  WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ *  the specific language governing rights and limitations under the License.
+ *
+ *  The Covered Software is Terracotta Core.
+ *
+ *  The Initial Developer of the Covered Software is
+ *  Terracotta, Inc., a Software AG company
+ *
+ */
 package com.tc.objectserver.persistence;
 
 import org.terracotta.entity.PlatformConfiguration;
@@ -5,9 +23,9 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.entity.StateDumper;
-import org.terracotta.persistence.IPersistentStorage;
+import org.terracotta.persistence.IPlatformPersistence;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -33,7 +51,7 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider, Stat
 
     @Override
     public Collection<Class<?>> getProvidedServiceTypes() {
-        return Collections.singleton(IPersistentStorage.class);
+      return Collections.singleton(IPlatformPersistence.class);
     }
 
     public void close() throws IOException {
@@ -41,14 +59,14 @@ public class NullPlatformStorageServiceProvider implements ServiceProvider, Stat
     }
 
     @Override
-    public void clear() throws ServiceProviderCleanupException {
+    public void prepareForSynchronization() throws ServiceProviderCleanupException {
         providers.clear();
     }
 
     @Override
-    public void dumpStateTo(StateDumper stateDumper) {
+    public void addStateTo(StateDumpCollector stateDumpCollector) {
         for (Map.Entry<Long, NullPlatformPersistentStorage> entry : providers.entrySet()) {
-            entry.getValue().dumpStateTo(stateDumper.subStateDumper(String.valueOf(entry.getKey())));
+            entry.getValue().addStateTo(stateDumpCollector.subStateDumpCollector(String.valueOf(entry.getKey())));
         }
     }
 }

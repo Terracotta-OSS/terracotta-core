@@ -20,7 +20,6 @@ package com.tc.net.groups;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.util.Assert;
 
@@ -33,7 +32,6 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
 
   public static final int STRIPEID_MESSAGE = 1;
 
-  private GroupID         groupID;
   private StripeID        stripeID;
   private boolean         isActive;
   private boolean         remap;
@@ -43,9 +41,8 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     super(-1);
   }
 
-  public StripeIDGroupMessage(int type, GroupID groupID, StripeID stripeID, boolean isActive, boolean isRemap) {
+  public StripeIDGroupMessage(int type, StripeID stripeID, boolean isActive, boolean isRemap) {
     super(type);
-    this.groupID = groupID;
     this.stripeID = stripeID;
     this.isActive = isActive;
     this.remap = isRemap;
@@ -56,7 +53,6 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
-    groupID = (GroupID) nodeIDSerializer.getNodeID();
     nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
     stripeID = (StripeID) nodeIDSerializer.getNodeID();
@@ -67,7 +63,6 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
-    new NodeIDSerializer(groupID).serializeTo(out);
     new NodeIDSerializer(stripeID).serializeTo(out);
     out.writeBoolean(isActive);
     out.writeBoolean(remap);
@@ -75,12 +70,8 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
 
   @Override
   public String toString() {
-    return "StripeIDGroupMessage [ " + this.stripeID + " " + this.groupID + " isActive: " + this.isActive + " isRemap:"
+    return "StripeIDGroupMessage [ " + this.stripeID + " isActive: " + this.isActive + " isRemap:"
            + this.remap + " ]";
-  }
-
-  public GroupID getGroupID() {
-    return this.groupID;
   }
 
   public StripeID getStripeID() {

@@ -18,9 +18,10 @@
  */
 package com.tc.util.concurrent;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCInternalError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.util.TCTimeoutException;
 
 /**
@@ -30,7 +31,7 @@ import com.tc.util.TCTimeoutException;
  * @author teck
  */
 public class TCFuture {
-  private static final TCLogger logger = TCLogging.getLogger(TCFuture.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCFuture.class);
   private volatile boolean      set;
   private volatile boolean      cancel;
   private volatile boolean      timedOut;
@@ -72,7 +73,7 @@ public class TCFuture {
    * @return the value set in this future (which may be null)
    * @throws InterruptedException if the current thread is interrupted while waiting for the result to be set
    * @throws TCTimeoutException if timeout period expires
-   * @throws TCExceptionResultExecption if another thread sets the future result to an exception.
+   * @throws TCExceptionResultException if another thread sets the future result to an exception.
    * @see setException(Throwable t)
    */
   public Object get(long timeout) throws InterruptedException, TCTimeoutException, TCExceptionResultException {
@@ -89,27 +90,41 @@ public class TCFuture {
    * @return the value set in this future (which may be null)
    * @throws InterruptedException if the current thread is interrupted while waiting for the result to be set
    * @throws TCTimeoutException if timeout period expires
-   * @throws TCExceptionResultExecption if another thread sets the future result to an exception.
+   * @throws TCExceptionResultException if another thread sets the future result to an exception.
    * @see setException(Throwable t)
    */
   public Object get(long timeout, boolean flagIfTimedOut) throws InterruptedException, TCTimeoutException,
       TCExceptionResultException {
     synchronized (this.lock) {
-      if (cancel) { throw new InterruptedException("Future already cancelled"); }
-
+      if (cancel) {
+        throw new InterruptedException("Future already cancelled"); 
+      }
+      long internalTimeout = timeout;
       while (!set) {
-        if (timeout < 0) { throw new TCTimeoutException("Timeout of " + timeout + " milliseconds occurred"); }
-
-        lock.wait(timeout);
-
-        if (cancel) { throw new InterruptedException("Future was cancelled while waiting"); }
-
-        if ((!set) && (timeout != 0)) {
+        if (internalTimeout < 0 ) {
           this.timedOut = flagIfTimedOut;
-          throw new TCTimeoutException("Timeout of " + timeout + " milliseconds occured");
+          throw new TCTimeoutException("Timeout of " + timeout + " milliseconds occurred");
+        }
+        long startTime = System.currentTimeMillis();
+        lock.wait(internalTimeout);
+        long waitTime = System.currentTimeMillis() - startTime;
+        if (cancel) {
+          throw new InterruptedException("Future was cancelled while waiting");
+        }
+        
+        if (timeout != 0L) {
+          //In case the timeout value is greater than zero, then only reduce the wait time.
+          //If timeout == 0, thread waits indefinitely (Always internalTimeout == timeout == 0L)
+          internalTimeout -= waitTime;
+          if (internalTimeout == 0L) {
+            //If internalTimeout value has become zero, that means, total time the thread has waited
+            //is exactly equals to the timeout value passed in the invocation.In that case, reduce it by
+            //one so that client gets TCTimeoutException instead of going into indefinite wait call
+            //in next iteration
+            internalTimeout--;
+          }
         }
       }
-
       if (exception == null) {
         return value;
       } else if (exception != null) {
@@ -133,7 +148,6 @@ public class TCFuture {
 
     synchronized (this.lock) {
       if (cancel) {
-        logger.warn("Exception result set in future after it was cancelled");
         return;
       }
 
@@ -156,7 +170,6 @@ public class TCFuture {
     synchronized (this.lock) {
 
       if (cancel) {
-        logger.warn("Value set in future after it was cancelled");
         return;
       }
 
@@ -175,10 +188,6 @@ public class TCFuture {
    */
   public void cancel() {
     synchronized (this.lock) {
-      if (set) {
-        logger.warn("Attempt to cancel an already set future value");
-      }
-
       cancel = true;
       this.lock.notifyAll();
     }

@@ -24,7 +24,7 @@ import com.tc.stats.counter.sampled.SampledCounterImpl;
 import java.util.Timer;
 
 public class CounterManagerImpl implements CounterManager {
-  private final Timer timer    = new Timer("SampledCounterManager Timer", true);
+  private Timer timer    = null;
   private boolean     shutdown = false;
 
   public CounterManagerImpl() {
@@ -35,12 +35,14 @@ public class CounterManagerImpl implements CounterManager {
   public synchronized void shutdown() {
     if (shutdown) { return; }
     try {
-      timer.cancel();
+      if (timer != null) {
+        timer.cancel();
+      }
     } finally {
       shutdown = true;
     }
   }
-
+  
   @Override
   public synchronized Counter createCounter(CounterConfig config) {
     if (shutdown) { throw new IllegalStateException("counter manager is shutdown"); }
@@ -49,6 +51,9 @@ public class CounterManagerImpl implements CounterManager {
     Counter counter = config.createCounter();
     if (counter instanceof SampledCounterImpl) {
       SampledCounterImpl sampledCounter = (SampledCounterImpl) counter;
+      if (timer == null) {
+        timer = new Timer("SampledCounterManager Timer", true);
+      }
       timer.schedule(sampledCounter.getTimerTask(), sampledCounter.getIntervalMillis(), sampledCounter
           .getIntervalMillis());
     }

@@ -18,23 +18,25 @@
  */
 package com.tc.net.groups;
 
+import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.config.NodesStore;
-import com.tc.config.NodesStoreImpl;
+import com.tc.config.GroupConfiguration;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
+import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -53,11 +55,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   private final static String   LOCALHOST = "localhost";
-  private static final TCLogger logger    = TCLogging.getLogger(TCGroupManagerNodeJoinedTest.class);
+  private static final Logger logger    = LoggerFactory.getLogger(TCGroupManagerNodeJoinedTest.class);
   private TCThreadGroup         threadGroup;
   private TCGroupManagerImpl[]  groupManagers;
   private MyListener[]          listeners;
@@ -86,21 +91,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     nodesSetupAndJoined_DEV3101(2);
   }
 
-  public void testNoConnectionThreadLeakOnL2Reconnect() throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-    nodesSetupAndJoined_DEV3101(2);
-    TCPropertiesImpl.getProperties()
-        .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
-  }
-
-  // Test for DEV-4870
-  public void testNodeJoinAfterCloseMember() throws Exception {
-    TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
-    nodesSetupAndJoinedAfterCloseMember(2);
-    TCPropertiesImpl.getProperties()
-        .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
-  }
-
   public void testNodejoinedThreeServers() throws Exception {
     nodesSetupAndJoined(3);
   }
@@ -125,7 +115,10 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                     stages.createStageManager(),
+                                                     RandomWeightGenerator.createTestingFactory(2),
+                                                     mock(TopologyManager.class));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -141,8 +134,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       Set<Node> nodeSet = new HashSet<>();
       Collections.addAll(nodeSet, allNodes);
-      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-      groupManagers[i].join(allNodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
     waitForAllMessageCountsToReach(nodes - 1);
 
@@ -178,7 +171,9 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                     stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                                     mock(TopologyManager.class));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -192,12 +187,12 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, proxiedAllNodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
 
     // joining
     System.err.println("XXX Start Joining...");
     for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].join(allNodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
 
     waitForAllMessageCountsToReach(nodes - 1);
@@ -244,7 +239,9 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stages.createStageManager(), null, RandomWeightGenerator.createTestingFactory(2));
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                     stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                                     mock(TopologyManager.class));
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
 
       groupManagers[i] = gm;
@@ -260,9 +257,10 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     System.out.println("*** Start Joining...");
     Set<Node> nodeSet = new HashSet<>();
     Collections.addAll(nodeSet, proxiedAllNodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+
     for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].join(allNodes[i], nodeStore);
+      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+      groupManagers[i].join(groupConfiguration);
     }
 
     waitForAllMessageCountsToReach(nodes - 1);
@@ -277,10 +275,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     groupManagers[0].addZappedNode(groupManagers[1].getLocalNodeID());
 
     System.out.println("XXX proxy stopped");
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED)) {
-      ThreadUtil.reallySleep(TCPropertiesImpl.getProperties()
-          .getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT));
-    }
     ThreadUtil.reallySleep(5000);
 
     for (int i = 0; i < nodes; ++i) {
@@ -297,9 +291,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     }
 
     System.out.println("XXX Waiting for all restore connection close");
-    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED)) {
-      ThreadUtil.reallySleep(ClientMessageTransport.TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
-    }
 
     ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME, count);
     shutdown();
@@ -351,6 +342,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (Thread t : allThreads) {
       if (t.isAlive() && t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME)) {
         try {
+          t.interrupt(); // break any waits in the select loop
           t.join();
         } catch (InterruptedException ie) {
           throw new AssertionError("trouble shutting down test", ie);
@@ -362,6 +354,9 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
   private void shutdown(TCGroupManagerImpl[] groupMgr, int start, int end) {
     for (int i = start; i < end; ++i) {
       try {
+        for (TCGroupMember member : groupMgr[i].getMembers()) {
+          member.close();
+        }
         groupMgr[i].stop(1000);
       } catch (Exception ex) {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);

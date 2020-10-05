@@ -18,16 +18,13 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.GroupID;
 import com.tc.net.StripeID;
-import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.StripeIDGroupMessage;
 
 public class StripeIDGroupMessageFactory {
 
-  public static AbstractGroupMessage createStripeIDGroupMessage(GroupID groupID, StripeID stripeID, boolean isActive,
+  public static AbstractGroupMessage createStripeIDGroupMessage(StripeID stripeID, boolean isActive,
                                                         boolean isRemap) {
-    return new StripeIDGroupMessage(StripeIDGroupMessage.STRIPEID_MESSAGE, groupID, stripeID, isActive, isRemap);
+    return new StripeIDGroupMessage(StripeIDGroupMessage.STRIPEID_MESSAGE, stripeID, isActive, isRemap);
   }
 
 }

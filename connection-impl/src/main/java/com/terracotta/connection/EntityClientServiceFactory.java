@@ -37,33 +37,55 @@
  */
 package com.terracotta.connection;
 
+import com.tc.util.ManagedServiceLoader;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
-import java.util.List;
-import java.util.ServiceLoader;
 
 
 public class EntityClientServiceFactory {
-  public static <T extends Entity, C> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> creationServiceForType(Class<T> cls) {
-    return creationServiceForType(cls, EntityClientServiceFactory.class.getClassLoader());
-  }
+  private final ManagedServiceLoader loader;
+  private final Map<ClassLoader, List<Class<? extends EntityClientService>>> cachedEntities = new WeakHashMap<ClassLoader, List<Class<? extends EntityClientService>>>();
 
-  /**
-   * Note that this returns the service or null if no service could be found.
-   */
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  public static <T extends Entity, C> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> creationServiceForType(Class<T> cls, ClassLoader classLoader) {
-    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse> foundService = null;
-    ServiceLoader<EntityClientService> implementations = ServiceLoader.load(EntityClientService.class,  classLoader);
-    for (EntityClientService instance : implementations) {
+  public EntityClientServiceFactory() {
+    loader = new ManagedServiceLoader();
+  }
+  
+  public <T extends Entity, C, U> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> creationServiceForType(Class<T> cls) {
+    EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> foundService = null;
+    List<Class<? extends EntityClientService>> implementations = getEntityServices(cls.getClassLoader());
+    for (Class<? extends EntityClientService> ctype : implementations) {
+      EntityClientService instance = instantiate(ctype);
       if (instance.handlesEntityType(cls)) {
         foundService = instance;
         break;
       }
     }
     return foundService;
+  }
+  
+  private synchronized List<Class<? extends EntityClientService>> getEntityServices(ClassLoader cl) {
+    List<Class<? extends EntityClientService>> list = cachedEntities.get(cl);
+    if (list == null) {
+      list = loader.getImplementations(EntityClientService.class, cl);
+      cachedEntities.put(cl, list);
+    }
+    return list;
+  }
+  
+  private static EntityClientService instantiate(Class<? extends EntityClientService> entry) {
+    try {
+      return entry.newInstance();
+    } catch (IllegalAccessException a) {
+      
+    } catch (InstantiationException i) {
+      
+    }
+    return null;
   }
 }

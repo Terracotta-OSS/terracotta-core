@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import java.util.Set;
-
 public interface HealthCheckerConfig {
 
   // HC - HealthChecker
@@ -58,11 +56,6 @@ public interface HealthCheckerConfig {
    * RMP-343: L2 SocketConnect L1
    */
   boolean isCallbackPortListenerNeeded();
-
-  String getCallbackPortListenerBindAddress();
-
-  Set<Integer> getCallbackPortListenerBindPort();
-
   /**
    * Checking time difference between hosts enabled/disabled.
    */

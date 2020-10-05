@@ -19,16 +19,23 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.util.ProductID;
 import com.tc.net.ClientID;
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.core.ProductID;
+import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,12 +125,13 @@ public class TestMessageChannel implements MessageChannel {
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException
+      , IOException, CommStackMismatchException {
     return null;
   }
 
   @Override
-  public NetworkStackID open(char[] password) {
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) {
     return null;
   }
 
@@ -183,7 +191,13 @@ public class TestMessageChannel implements MessageChannel {
   }
 
   @Override
-  public ProductID getProductId() {
+  public ProductID getProductID() {
     return null;
   }
+  
+
+  @Override
+  public ConnectionID getConnectionID() {
+    return null;
+  }  
 }

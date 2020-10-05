@@ -18,21 +18,18 @@
  */
 package com.tc.object.handshakemanager;
 
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.ClientID;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.session.SessionManager;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Util;
-import com.tc.util.version.Version;
-import com.tc.util.version.VersionCompatibility;
-import com.tcclient.cluster.ClusterInternalEventsGun;
-import java.io.IOException;
+
+import java.util.Objects;
 
 /**
  * This class has been changed to be heavily synchronized. This is in attempt to 
@@ -50,11 +47,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     PAUSED, STARTING, RUNNING
   }
 
-  private static final TCLogger CONSOLE_LOGGER = CustomerLogging.getConsoleLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandshakeManagerImpl.class);
 
   private final ClientHandshakeCallback callBacks;
   private final ClientHandshakeMessageFactory chmf;
-  private final TCLogger logger;
+  private final Logger logger;
   private final SessionManager sessionManager;
   private final String clientVersion;
   
@@ -63,19 +60,15 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   private State state;
   private volatile boolean disconnected;
-  private volatile boolean serverIsPersistent = false;
   private volatile boolean isShutdown = false;
 
-  private final ClusterInternalEventsGun clusterEventsGun;
-
-  public ClientHandshakeManagerImpl(TCLogger logger, ClientHandshakeMessageFactory chmf,
-                                    SessionManager sessionManager, ClusterInternalEventsGun clusterEventsGun, 
+  public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
+                                    SessionManager sessionManager,
                                     String uuid, String name, String clientVersion,
                                     ClientHandshakeCallback entities) {
     this.logger = logger;
     this.chmf = chmf;
     this.sessionManager = sessionManager;
-    this.clusterEventsGun = clusterEventsGun;
     this.uuid = uuid;
     this.name = name;
     this.clientVersion = clientVersion;
@@ -86,20 +79,20 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public synchronized void shutdown(boolean fromShutdownHook) {
+  public synchronized void shutdown() {
     isShutdown = true;
     notifyAll();
-    shutdownCallbacks(fromShutdownHook);
+    shutdownCallbacks();
   }
 
   @Override
-  public boolean isShutdown() {
+  public synchronized boolean isShutdown() {
     return isShutdown;
   }
 
   private boolean checkShutdown() {
     if (isShutdown) {
-      this.logger.warn("Drop handshaking due to client shutting down...");
+      this.logger.info("Drop handshaking due to client shutting down...");
     }
     return isShutdown;
   }
@@ -109,46 +102,49 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     ClientHandshakeMessage handshakeMessage;
 
     changeToStarting();
-    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, isEnterpriseClient());
-    notifyCallbackOnHandshake(handshakeMessage);
+    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion);
+    if (handshakeMessage != null) {
+      notifyCallbackOnHandshake(handshakeMessage);
 
-    this.logger.info("Sending handshake message");
-    Assert.assertTrue(handshakeMessage.send());
+      this.logger.debug("Sending handshake message");
+      if (!handshakeMessage.send()) {
+        if (handshakeMessage.getChannel().isConnected()) {
+          LOGGER.error("handshake not sent but channel is connected", new Exception("FATAL HANDSHAKE ERROR"));
+        } else {
+          LOGGER.info("handshake failed. channel not connected");
+        }
+      }
+    }
   }
-
-  protected boolean isEnterpriseClient() {
-    return false;
-  }
-
+  
   @Override
   public void fireNodeError() {
     final String msg = "Reconnection was rejected from server. This client will never be able to join the cluster again.";
     logger.error(msg);
-    CONSOLE_LOGGER.error(msg);
-    clusterEventsGun.fireNodeError();
+    LOGGER.error(msg);
   }
 
   @Override
   public synchronized void disconnected() {
     // We ignore the disconnected call if we are shutting down.
     if (!checkShutdown()) {
-      boolean isPaused = changeToPaused();
-
-      if (isPaused) {
+      boolean wasRunning = changeToPaused();
+        
+      if (wasRunning) {
       // A thread might be waiting for us to change whether or not we are disconnected.
         notifyAll();
         pauseCallbacks();
         this.sessionManager.newSession();
-        this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
+        this.logger.debug("ClientHandshakeManager moves to " + this.sessionManager.getSessionID());
       }
     }
   }
 
   @Override
   public synchronized void connected() {
-    this.logger.info("Connected: Unpausing from " + getState());
-    if (getState() != State.PAUSED) {
-      this.logger.warn("Ignoring unpause while " + getState());
+    this.logger.debug("Connected: Unpausing from " + this.state);
+    if (this.state != State.PAUSED) {
+      this.logger.warn("Ignoring unpause while " + this.state);
     } else if (!checkShutdown()) {
       // drop handshaking if shutting down
       initiateHandshake();
@@ -157,41 +153,35 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   @Override
   public void acknowledgeHandshake(ClientHandshakeAckMessage handshakeAck) {
-    acknowledgeHandshake(handshakeAck.getPersistentServer(), handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
+    acknowledgeHandshake(handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(),
         handshakeAck.getServerVersion());
   }
 
-  protected synchronized void acknowledgeHandshake(boolean persistentServer, ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
-    this.logger.info("Received Handshake ack");
-    if (getState() != State.STARTING) {
-      this.logger.warn("Ignoring handshake acknowledgement while " + getState());
+  protected synchronized void acknowledgeHandshake(ClientID thisNodeId, ClientID[] clusterMembers, String serverVersion) {
+    this.logger.debug("Received Handshake ack");
+    if (this.state != State.STARTING) {
+      this.logger.warn("Ignoring handshake acknowledgement while " + this.state);
     } else {
       checkClientServerVersionCompatibility(serverVersion);
-      this.serverIsPersistent = persistentServer;
 
       changeToRunning();
       notifyAll();
       unpauseCallbacks();
-
-      clusterEventsGun.fireThisNodeJoined(thisNodeId, clusterMembers);
     }
   }
 
   protected void checkClientServerVersionCompatibility(String serverVersion) {
-    final boolean check = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.VERSION_COMPATIBILITY_CHECK);
-
-    if (check && !new VersionCompatibility().isCompatibleClientServer(new Version(clientVersion), new Version(serverVersion))) {
-      final String msg = "Client/Server versions are not compatibile: Client Version: " + clientVersion + ", Server Version: "
-                         + serverVersion + ".  Terminating client now.";
-      CONSOLE_LOGGER.error(msg);
-      throw new IllegalStateException(msg);
+    if (!Objects.equals(clientVersion, serverVersion)) {
+      String message = String.format("Client version %s is different from server version %s.",
+              clientVersion, serverVersion);
+      logger.info(message);
     }
   }
 
-  private void shutdownCallbacks(boolean fromShutdownHook) {
+  private void shutdownCallbacks() {
     // Now that the handshake manager has concluded that it is entering into a shutdown state, anyone else wishing to use it
     // needs to be notified that they cannot.
-    this.callBacks.shutdown(fromShutdownHook);
+    this.callBacks.shutdown();
   }
 
   private void pauseCallbacks() {
@@ -207,15 +197,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   }
 
   @Override
-  public boolean serverIsPersistent() {
-    return this.serverIsPersistent;
-  }
-
-  @Override
   public synchronized void waitForHandshake() {
     boolean isInterrupted = false;
     try {
-      while (this.disconnected && !this.isShutdown()) {
+      while (this.disconnected && !this.isShutdown) {
         try {
           wait();
         } catch (InterruptedException e) {
@@ -234,15 +219,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     boolean didChangeToPaused = false;
     if (old != State.PAUSED) {
       this.state = State.PAUSED;
-      didChangeToPaused = true;
 
-      this.logger.info("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
+      this.logger.debug("Disconnected: Pausing from " + old + ". Disconnect count: " + this.disconnected);
 
       if (old == State.RUNNING) {
+        didChangeToPaused = true;
         this.disconnected = true;
       }
-
-      this.clusterEventsGun.fireOperationsDisabled();
     }
     return didChangeToPaused;
   }
@@ -257,9 +240,5 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     state = State.RUNNING;
 
     this.disconnected = false;
-  }
-
-  private State getState() {
-    return this.state;
   }
 }

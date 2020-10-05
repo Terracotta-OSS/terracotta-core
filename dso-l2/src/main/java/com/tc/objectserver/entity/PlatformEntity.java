@@ -18,37 +18,35 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.net.ClientID;
-import com.tc.net.NodeID;
-import com.tc.object.ClientInstanceID;
-import com.tc.object.EntityDescriptor;
+import com.tc.async.api.Sink;
+import com.tc.entity.VoltronEntityMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityRequest;
 import com.tc.objectserver.handler.RetirementManager;
 import com.tc.util.Assert;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ExecutionStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.StateDumper;
-import org.terracotta.exception.EntityException;
+import org.terracotta.entity.ServiceProvider;
 
 
 public class PlatformEntity implements ManagedEntity {
   public static EntityID PLATFORM_ID = new EntityID("platform", "root");
+  public static FetchID PLATFORM_FETCH_ID = new FetchID(0L);
   public static long VERSION = 1L;
-  private static EntityDescriptor descriptor = new EntityDescriptor(PLATFORM_ID, ClientInstanceID.NULL_ID, VERSION);
+  private final Sink<VoltronEntityMessage> messageSelf;
   public final RequestProcessor processor;
   private boolean isActive;
 
-  public PlatformEntity(RequestProcessor processor) {
+  public PlatformEntity(Sink<VoltronEntityMessage>messageSelf, RequestProcessor processor) {
     this.processor = processor;
+    this.messageSelf = messageSelf;
     // We always start in the passive state.
     this.isActive = false;
   }
@@ -64,20 +62,10 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public SimpleCompletion addRequestMessage(ServerEntityRequest request, MessagePayload payload, Consumer<byte[]> complete, Consumer<EntityException> exception) {
+  public void addRequestMessage(ServerEntityRequest request, MessagePayload payload, ResultCapture capture) {
     // We don't actually invoke the message, only complete it, so make sure that it wasn't deserialized as something we
     // expect to use.
-    ActivePassiveAckWaiter waiter = processor.scheduleRequest(descriptor, request, payload, ()-> {complete.accept(payload.getRawPayload());}, false, payload.getConcurrency());    
-    return new SimpleCompletion() {
-      @Override
-      public void waitForCompletion() {
-        try {
-          waiter.waitForCompleted();
-        } catch (InterruptedException ie) {
-          throw new RuntimeException(ie);
-        }
-      }
-    };
+    processor.scheduleRequest(false, PLATFORM_ID, VERSION, PLATFORM_FETCH_ID, request, payload, (w)-> {capture.complete(payload.getRawPayload());}, false, payload.getConcurrency());    
   }
 
   @Override
@@ -96,15 +84,15 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void reconnectClient(ClientID clientID, ClientDescriptor clientDescriptor, byte[] extendedReconnectData) {
-  // never reconnect
-  }
-
-  @Override
-  public void sync(NodeID passive) {
+  public void sync(SessionID passive) {
   //  never sync
   }
-
+  
+  @Override
+  public SyncReplicationActivity.EntityCreationTuple  startSync() {
+    return null;
+  }
+  
   @Override
   public void loadEntity(byte[] configuration) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -118,14 +106,27 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
-  public void promoteEntity() {
+  public Runnable promoteEntity() {
     // Set us to active mode.
     this.isActive = true;
+    return  null;
   }
 
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
+  public void resetReferences(int count) {
 
+  }
+
+  @Override
+  public Map<String, Object> getState() {
+    Map<String, Object> map = new LinkedHashMap<>();
+    map.put("id", this.PLATFORM_ID);
+    return map;
+  }
+
+  @Override
+  public boolean clearQueue() {
+    return true;
   }
 
   @Override
@@ -133,5 +134,17 @@ public class PlatformEntity implements ManagedEntity {
     // The platform entity doesn't expose this since it isn't expecting message interdependencies, internally.
     Assert.fail();
     return null;
+  }
+
+  @Override
+  public long getConsumerID() {
+    // The platform uses the consumerID 0 constant.
+    return ServiceProvider.PLATFORM_CONSUMER_ID;
+  }
+
+  @Override
+  public void addLifecycleListener(LifecycleListener listener) {
+    // Not expected on this entity.
+    Assert.assertFalse(true);
   }
 }

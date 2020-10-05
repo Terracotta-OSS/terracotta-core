@@ -18,38 +18,43 @@
  */
 package com.tc.objectserver.handshakemanager;
 
-import com.tc.async.api.Stage;
-import com.tc.async.api.StageManager;
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.exception.EntityException;
+import com.tc.async.api.Sink;
+import com.tc.bytes.TCByteBufferFactory;
+
+import org.slf4j.Logger;
 
 import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
-import com.tc.logging.TCLogger;
+import com.tc.exception.ServerException;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityDescriptor;
-import com.tc.object.EntityID;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.ClientEntityReferenceContext;
+import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.entity.ClientDescriptorImpl;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
+import com.tc.objectserver.entity.ReconnectListener;
+import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
-import java.util.Collection;
+import com.tc.util.ProductInfo;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 
 public class ServerClientHandshakeManager {
@@ -59,31 +64,29 @@ public class ServerClientHandshakeManager {
     STARTED,
   }
   static final int                       RECONNECT_WARN_INTERVAL           = 15000;
-
+  private static final boolean           SHOULD_SEND_STATS                 = TCPropertiesImpl.getProperties().getBoolean("client.send.stats", false);
   private State                          state                             = State.INIT;
+  private final List<ReconnectListener>     waitingForReconnect = new ArrayList<>();
 
   private final Timer                    timer;
-  private final ReconnectTimerTask       reconnectTimerTask;
-  private final StageManager             stageManager;
-  private final long                     reconnectTimeout;
+  private final Supplier<Long>           reconnectTimeoutSupplier;
   private final DSOChannelManager        channelManager;
-  private final TCLogger                 logger;
+  private final ConsistencyManager       consistency;
+  private final Logger logger;
   private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
-  private final boolean                  persistent;
-  private final TCLogger                 consoleLogger;
+  private final Logger consoleLogger;
+  private final Sink<VoltronEntityMessage> voltron;
 
-  public ServerClientHandshakeManager(TCLogger logger, DSOChannelManager channelManager,
-                                      StageManager stageManager, 
-                                      Timer timer, long reconnectTimeout,
-                                      boolean persistent, TCLogger consoleLogger) {
+  public ServerClientHandshakeManager(Logger logger, ConsistencyManager consistency, DSOChannelManager channelManager,
+                                      Timer timer, Supplier<Long> reconnectTimeoutSupplier, Sink<VoltronEntityMessage> voltron,
+                                      Logger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
-    this.stageManager = stageManager;
-    this.reconnectTimeout = reconnectTimeout;
+    this.reconnectTimeoutSupplier = reconnectTimeoutSupplier;
     this.timer = timer;
-    this.persistent = persistent;
+    this.voltron = voltron;
     this.consoleLogger = consoleLogger;
-    this.reconnectTimerTask = new ReconnectTimerTask(this, timer);
+    this.consistency = consistency;
   }
 
   public synchronized boolean isStarting() {
@@ -93,23 +96,25 @@ public class ServerClientHandshakeManager {
   public synchronized boolean isStarted() {
     return this.state == State.STARTED;
   }
+  
+  private boolean canAcceptStats(String version) {
+    return SHOULD_SEND_STATS && version.equals(ProductInfo.getInstance().version());
+  }
 
   public void notifyClientConnect(ClientHandshakeMessage handshake, EntityManager entityManager, ProcessTransactionHandler transactionHandler) throws ClientHandshakeException {
     final ClientID clientID = (ClientID) handshake.getSourceNodeID();
+    long save = clientID.toLong();
     synchronized (this) {
       this.logger.info("Handling client handshake for " + clientID);
       handshake.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
-          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName()), false);
-
-      Collection<ClientServerExchangeLockContext> lockContexts = handshake.getLockContexts();
+          new ClientHandshakeMonitoringInfo(handshake.getClientPID(), handshake.getUUID(), handshake.getName(), handshake.getClientVersion(), handshake.getClientAddress()), false);
+      if (canAcceptStats(handshake.getClientVersion())) {
+        handshake.getChannel().addAttachment("SendStats", true, true);
+      }
+      this.logger.info("confirming client handshake for " + state + " " + save + " " + clientID);
       if (this.state == State.STARTED) {
+        Assert.assertEquals(save, clientID.toLong());
         // This is a normal connection handshake, from a new client connecting once the server is up and running.
-        
-        for (final ClientServerExchangeLockContext context : lockContexts) {
-          if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) {
-            throw new ClientHandshakeException("Client " + clientID + " connected after startup should have no existing wait contexts.");
-          }
-        }
         sendAckMessageFor(clientID);
       } else if (this.state == State.STARTING) {
         // This is a client reconnecting after a restart.
@@ -118,36 +123,28 @@ public class ServerClientHandshakeManager {
         
         // Find any client-entity references and ensure that we account for them.
         for(ClientEntityReferenceContext referenceContext : handshake.getReconnectReferences()) {
-          EntityID entityID = referenceContext.getEntityID();
-          long version = referenceContext.getEntityVersion();
           Optional<ManagedEntity> entity = null;
+          EntityDescriptor descriptor = EntityDescriptor.createDescriptorForFetch(referenceContext.getEntityID(), referenceContext.getEntityVersion(), referenceContext.getClientInstanceID());
           try {
-            entity = entityManager.getEntity(entityID, version);
-          } catch (EntityException e) {
+            entity = entityManager.getEntity(descriptor);
+          } catch (ServerException e) {
             // We don't expect to fail at this point.
             // TODO:  Determine if we have a meaningful way to handle this error.
             throw Assert.failure("Unexpected failure to get entity in handshake", e);
           }
-          // If we fail to find this, something is seriously wrong since either the restart/failover was incorrect or this message is invalid.
-          // TODO:  Determine if we have a meaningful way to handle this error.
-          if (!entity.isPresent()) {
-// added debug information if this assert is triggered
-            for (ResendVoltronEntityMessage resentMessage : handshake.getResendMessages()) {
-              logger.error("RESENT:" + resentMessage.getSource() + " " + resentMessage.getVoltronType() + " " + resentMessage.getEntityDescriptor().getEntityID());
-            }
-            for (ClientServerExchangeLockContext locks : lockContexts) {
-              logger.error("LOCK:" + locks.getNodeID() + " " + locks.getLockID() + " " + locks.getState());
-            }
-            Assert.assertTrue("entity:" + entityID + " version:" + version + " entities:" + entityManager, entity.isPresent());
+
+          if (entity.isPresent()) {
+            byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
+            ReferenceMessage msg = new ReferenceMessage(clientID, true, descriptor, TCByteBufferFactory.wrap(extendedReconnectData));
+            transactionHandler.handleResentReferenceMessage(msg);
+          } else {
+            throw Assert.failure("entity not found");
           }
-          EntityDescriptor entityDescriptor = referenceContext.getEntityDescriptor();
-          ClientDescriptor clientDescriptor = new ClientDescriptorImpl(clientID, entityDescriptor);
-          byte[] extendedReconnectData = referenceContext.getExtendedReconnectData();
-          entity.get().reconnectClient(clientID, clientDescriptor, extendedReconnectData);
         }
         
         // Find any resent messages and re-apply them in the transaction handler.
         for (ResendVoltronEntityMessage resentMessage : handshake.getResendMessages()) {
+          logger.debug("RESENT:" + resentMessage.getVoltronType() + " " + resentMessage.getEntityDescriptor());
           transactionHandler.handleResentMessage(resentMessage);
         }
 
@@ -170,13 +167,22 @@ public class ServerClientHandshakeManager {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
     this.channelManager.makeChannelRefuse(clientID, message);
   }
+  
+  public void notifyDiagnosticClient(ClientHandshakeMessage clientMsg) {
+    final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
+    clientMsg.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
+        new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName(), clientMsg.getClientVersion(), clientMsg.getClientAddress()), false);
+    ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
+    ack.initialize(Collections.emptySet(), clientID, ProductInfo.getInstance().version());
+    ack.send();
+  }  
 
   private void sendAckMessageFor(ClientID clientID) {
     this.logger.info("Sending handshake acknowledgement to " + clientID);
 
     // NOTE: handshake ack message initialize()/send() must be done atomically with making the channel active
     // and is thus done inside this channel manager call
-    this.channelManager.makeChannelActive(clientID, this.persistent);
+    this.channelManager.makeChannelActive(clientID);
   }
 
   public synchronized void notifyTimeout() {
@@ -195,45 +201,63 @@ public class ServerClientHandshakeManager {
 
   // Should be called from within the sync block
   private void start() {
-    this.logger.info("Starting TSA services...");
     final Set<NodeID> cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
+    while (!cids.isEmpty() && !this.consistency.requestTransition(ServerMode.ACTIVE, ClientID.NULL_ID, ConsistencyManager.Transition.ADD_CLIENT)) {
+      consoleLogger.info("request to add reconnect clients has been rejected, will try again in 5 seconds");
+      try {
+        TimeUnit.SECONDS.sleep(5);
+      } catch (InterruptedException i) {
+        throw new RuntimeException(i);
+      }
+    }
     // It is important to start all the managers before sending the ack to the clients
     for (NodeID nid : cids) {
       final ClientID clientID = (ClientID) nid;
-      sendAckMessageFor(clientID);
+      if (this.channelManager.isActiveID(clientID)) {
+        sendAckMessageFor(clientID);
+      }
     }
     this.state = State.STARTED;
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).unpause();
+    notifyComplete();
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).getSink().addSingleThreaded(new NoopEntityMessage(EntityDescriptor.NULL_ID));
+    voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
+  }
+  
+  public void notifyComplete() {
+    waitingForReconnect.forEach(ReconnectListener::reconnectComplete);
+  }
+  
+  public void addReconnectListener(ReconnectListener rl) {
+    waitingForReconnect.add(rl);
   }
 
-  public synchronized void setStarting(Set<ConnectionID> existingConnections) {
+  public synchronized void setStarting(Set<ClientID> existingClients) {
     assertInit();
-    stageManager.getStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class).pause();
     this.state = State.STARTING;
-    if (existingConnections.isEmpty()) {
+    if (existingClients.isEmpty()) {
       start();
     } else {
-      for (ConnectionID connID : existingConnections) {
-        this.existingUnconnectedClients.add(this.channelManager.getClientIDFor(new ChannelID(connID.getChannelID())));
+      for (ClientID connID : existingClients) {
+        this.existingUnconnectedClients.add(connID);
       }
     }
   }
 
   public void startReconnectWindow() {
-    String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+    long reconnectTimeout = reconnectTimeoutSupplier.get();
+    String message = "Starting reconnect window: " + reconnectTimeout + " ms. Waiting for "
                      + this.existingUnconnectedClients.size() + " clients to connect.";
     if (this.existingUnconnectedClients.size() <= 10) {
       message += " Unconnected Clients - " + this.existingUnconnectedClients;
     }
     this.consoleLogger.info(message);
 
-    if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
-      this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
+    ReconnectTimerTask reconnectTimerTask = new ReconnectTimerTask(this, timer, reconnectTimeout);
+    if (reconnectTimeout < RECONNECT_WARN_INTERVAL) {
+      this.timer.schedule(reconnectTimerTask, reconnectTimeout);
     } else {
-      this.timer.schedule(this.reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
+      this.timer.schedule(reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
     }
   }
 
@@ -260,13 +284,9 @@ public class ServerClientHandshakeManager {
     private final ServerClientHandshakeManager handshakeManager;
     private long                               timeToWait;
 
-    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer) {
+    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer, long timeToWait) {
       this.handshakeManager = handshakeManager;
       this.timer = timer;
-      this.timeToWait = handshakeManager.reconnectTimeout;
-    }
-
-    public void setTimeToWait(long timeToWait) {
       this.timeToWait = timeToWait;
     }
 
@@ -284,8 +304,7 @@ public class ServerClientHandshakeManager {
 
         if (this.timeToWait < RECONNECT_WARN_INTERVAL) {
           cancel();
-          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer);
-          task.setTimeToWait(this.timeToWait);
+          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer, this.timeToWait);
           this.timer.schedule(task, this.timeToWait);
         }
       } else {

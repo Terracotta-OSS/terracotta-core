@@ -23,6 +23,7 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
+import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.io.IOException;
@@ -48,6 +49,7 @@ public class L2StateMessage extends AbstractGroupMessage {
 
   public L2StateMessage(int type, Enrollment e, State state) {
     super(type);
+    Assert.assertNotNull(e);
     this.enrollment = e;
     this.state = state;
   }

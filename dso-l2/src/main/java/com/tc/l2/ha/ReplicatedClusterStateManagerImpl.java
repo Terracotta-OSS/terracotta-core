@@ -18,13 +18,14 @@
  */
 package com.tc.l2.ha;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -34,50 +35,50 @@ import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.State;
-import java.util.ArrayList;
+import org.terracotta.configuration.ConfigurationProvider;
+
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
-    ConnectionIDFactoryListener, PrettyPrintable {
+    ConnectionIDFactoryListener {
 
-  private static final TCLogger logger   = TCLogging.getLogger(ReplicatedClusterStateManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
 
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
+  private final ConfigurationProvider configurationProvider;
   private final StateManager    stateManager;
-  private final ChannelLifeCycleHandler clm;
 
   private boolean               isActive = false;
 
   private final Collection<NodeID>    others = new HashSet<>();
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
-                                           ClusterState clusterState, ConnectionIDFactory factory,
-                                           ChannelLifeCycleHandler clm) {
+                                           ClusterState clusterState, ConnectionIDFactory factory, ConfigurationProvider configurationProvider) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.state = clusterState;
-    this.clm = clm;
+    this.configurationProvider = configurationProvider;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
     factory.registerForConnectionIDEvents(this);
   }
 
   @Override
   public synchronized void goActiveAndSyncState() {
+    Assert.assertTrue(stateManager.getCurrentMode() == ServerMode.ACTIVE);
+    state.setCurrentState(stateManager.getCurrentMode().getState());
     state.generateStripeIDIfNeeded();
     state.syncActiveState();
 
     others.clear();
     // Sync state to external passive servers
+    state.setConfigSyncData(configurationProvider.getSyncData());
     others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
-
     isActive = true;
     notifyAll();
   }
@@ -85,7 +86,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   @Override
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {
     waitUntilActive();
-    ClusterStateMessage msg = (ClusterStateMessage) groupManager
+    state.setConfigSyncData(configurationProvider.getSyncData());
+    ClusterStateMessage msg = (ClusterStateMessage)groupManager
         .sendToAndWaitForResponse(nodeID, ClusterStateMessage.createClusterStateMessage(state));
     validateResponse(nodeID, msg);
   }
@@ -104,29 +106,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private boolean validateResponse(NodeID nodeID, ClusterStateMessage msg) {
     if (msg == null || msg.getType() != ClusterStateMessage.OPERATION_SUCCESS) {
       logger.error("Recd wrong response from : " + nodeID + " : msg = " + msg
-                   + " while publishing Cluster State: Killing the node");
-      groupManager
-          .zapNode(nodeID,
-                   (msg != null && msg.getType() == ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN ? L2HAZapNodeRequestProcessor.SPLIT_BRAIN
-                       : L2HAZapNodeRequestProcessor.PROGRAM_ERROR),
-                   "Recd wrong response from : " + nodeID + " while publishing Cluster State"
-                       + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
+                   + " while publishing Cluster State");
       return false;
     } else {
       return true;
     }
-  }
-
-  @Override
-  public synchronized Iterable<NodeID> getPassives() {
-    return new Iterable<NodeID>() {
-      @Override
-      public Iterator<NodeID> iterator() {
-        synchronized(ReplicatedClusterStateManagerImpl.this) {
-          return new ArrayList<>(others).iterator();
-        }
-      }
-    };
   }
 
   @Override
@@ -151,7 +135,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
         ClusterStateMessage msg = (ClusterStateMessage) resp;
         if (validateResponse(msg.messageFrom(), msg)) {
           success.add(msg.messageFrom());
-      }
+        }
       }
       return success;
     } catch (GroupException e) {
@@ -170,9 +154,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       logger.warn("Recd ClusterStateMessage from " + fromNode
                   + " while I am the cluster co-ordinator. This is bad. Sending NG response. ");
       sendNGSplitBrainResponse(fromNode, msg);
-      groupManager.zapNode(fromNode, L2HAZapNodeRequestProcessor.SPLIT_BRAIN,
-                           "Recd ClusterStateMessage from : " + fromNode + " while in ACTIVE-COORDINATOR state"
-                               + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
       // XXX:: Is it a good idea to check if the message we are receiving is from the active server that we think is
       // active ? There is a race between publishing active and pushing cluster state and hence we don't do the check.
@@ -180,21 +161,16 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       if (msg.isSplitBrainMessage()) {
         return; // About to get zapped no need to actually do anything with the split brain message.
       }
-      msg.initState(state);
-      state.syncSequenceState();
-      sendChannelLifeCycleEventsIfNecessary(msg);
-      sendOKResponse(fromNode, msg);
-    }
-  }
-
-  private void sendChannelLifeCycleEventsIfNecessary(ClusterStateMessage msg) {
-    if (msg.getType() == ClusterStateMessage.NEW_CONNECTION_CREATED) {
-      // Not really needed, but just in case
-      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientCreated(nodeID, msg.getConnectionID().getProductId());
-    } else if (msg.getType() == ClusterStateMessage.CONNECTION_DESTROYED) {
-      ClientID nodeID = new ClientID(msg.getConnectionID().getChannelID());
-      clm.clientDropped(nodeID, msg.getConnectionID().getProductId());
+      if (ServerMode.PASSIVE_STATES.contains(this.stateManager.getCurrentMode())) {
+        msg.initState(state);
+        if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
+          configurationProvider.sync(state.getConfigSyncData());
+        }
+        state.syncSequenceState();
+        sendOKResponse(fromNode, msg);
+      } else {
+        sendNGSplitBrainResponse(fromNode, msg);
+      }
     }
   }
 
@@ -215,25 +191,16 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   @Override
-  public void fireNodeLeftEvent(NodeID nodeID) {
-    // this is needed to clean up some data structures internally
-    if (nodeID instanceof ClientID) {
-      clm.clientDropped((ClientID)nodeID, null);
-    }
-  }
-
-  @Override
   public synchronized void setCurrentState(State currentState) {
     this.state.setCurrentState(currentState);
   }
 
   @Override
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(ReplicatedClusterStateManagerImpl.class.getSimpleName() + " [ ");
-    strBuilder.append(this.state).append(" ").append(this.stateManager);
-    strBuilder.append(" ]");
-    out.indent().print(strBuilder.toString()).flush();
-    return out;
+  public void reportStateToMap(Map<String, Object> state) {
+    state.put("className", this.getClass().getName());
+    Map<String, Object> cstate = new LinkedHashMap<>();
+    state.put("state", cstate);
+    this.state.reportStateToMap(cstate);
+    state.put("stateManager", this.stateManager.toString());
   }
 }

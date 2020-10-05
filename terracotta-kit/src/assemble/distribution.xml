@@ -1,4 +1,23 @@
+<!--
 
+
+     The contents of this file are subject to the Terracotta Public License Version
+     2.0 (the "License"); You may not use this file except in compliance with the
+     License. You may obtain a copy of the License at
+
+     http://terracotta.org/legal/terracotta-public-license.
+
+     Software distributed under the License is distributed on an "AS IS" basis,
+     WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+     the specific language governing rights and limitations under the License.
+
+     The Covered Software is Terracotta Core.
+
+     The Initial Developer of the Covered Software is
+     Terracotta, Inc., a Software AG company
+
+
+-->
 <!--
 The contents of this file are subject to the Terracotta Public License Version
 2.0 (the "License"); You may not use this file except in compliance with the
@@ -63,8 +82,23 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/legal</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>src/assemble/server/bin</directory>
-      <outputDirectory>/server/bin</outputDirectory>
+      <directory>src/assemble/server</directory>
+      <outputDirectory>/server</outputDirectory>
+      <excludes>
+        <exclude>bin/windowsBatchCoding.adoc</exclude>
+      </excludes> 
+    </fileSet>
+    <fileSet>
+      <directory>src/assemble/init</directory>
+      <outputDirectory>/init</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>src/assemble/client</directory>
+      <outputDirectory>/client</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>src/assemble/voter</directory>
+      <outputDirectory>/tools/voter</outputDirectory>
     </fileSet>
     <!-- copy dependencies of terracotta (except itself) into /server/lib -->
     <fileSet>
@@ -72,8 +106,6 @@ The Initial Developer of the Covered Software is
       <outputDirectory>/server/lib</outputDirectory>
       <excludes>
         <exclude>terracotta-${project.version}.jar</exclude>
-        <exclude>client**</exclude>
-        <exclude>entity-client**</exclude>
       </excludes>      
     </fileSet>
   </fileSets>
@@ -83,7 +115,7 @@ The Initial Developer of the Covered Software is
     <file>
       <source>${project.build.directory}/server-lib/terracotta-${project.version}.jar</source>
       <outputDirectory>/server/lib</outputDirectory>
-      <destName>tc.jar</destName>      
+      <destName>tc.jar</destName>    
     </file>
   </files>
   <dependencySets>
@@ -91,6 +123,12 @@ The Initial Developer of the Covered Software is
       <outputDirectory>client/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-*</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>tools/voter/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta.internal:voter</include>
       </includes>
     </dependencySet>
     <dependencySet>
@@ -102,7 +140,15 @@ The Initial Developer of the Covered Software is
     <dependencySet>
       <outputDirectory>client/logging/impl</outputDirectory>
       <includes>
-        <include>org.slf4j:slf4j-log4j12</include>
+        <include>ch.qos.logback:logback-core</include>
+        <include>ch.qos.logback:logback-classic</include>
+        <include>org.terracotta:tc-tripwire-appenders</include>
+      </includes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>server/plugins/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta:default-configuration:jar:jar-with-dependencies</include>
       </includes>
     </dependencySet>
   </dependencySets>

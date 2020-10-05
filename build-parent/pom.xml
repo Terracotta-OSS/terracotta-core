@@ -25,7 +25,7 @@
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>terracotta-core-root</artifactId>
-    <version>5.0.0-SNAPSHOT</version>
+    <version>5.7-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -42,14 +42,15 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <slf4j.version>1.7.7</slf4j.version>
+    <slf4j.version>1.7.25</slf4j.version>
+    <logback.version>1.2.3</logback.version>
     <management-core-version>2.0.8</management-core-version>
 
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
-    <surefire.version>2.15</surefire.version>
-    <powermock.version>1.5.1</powermock.version>
+    <powermock.version>2.0.0</powermock.version>
     <hamcrest.version>1.3</hamcrest.version>
+    <asm.version>7.2</asm.version>
     <skip.testjar>false</skip.testjar>
     <localMavenRepository>${user.home}/.m2/repository</localMavenRepository>
     <checkstyle-suppressions-file>${basedir}/../checkstyle/suppressions.xml</checkstyle-suppressions-file>
@@ -66,7 +67,6 @@
     <surefire.min-memory>64m</surefire.min-memory>
     <surefire.max-memory>512m</surefire.max-memory>
     <surefire.additional-jvm-args/>
-    <should_skip_tests>true</should_skip_tests>
     <surefire.jvm.mode>-server</surefire.jvm.mode>
     <surefire.argLine>${surefire.jvm.mode}
       -Xms${surefire.min-memory}
@@ -74,11 +74,9 @@
       -XX:MaxDirectMemorySize=1024m
       -XX:+HeapDumpOnOutOfMemoryError
       -Dtc.base-dir=${tc.base-dir} ${tc.config}
-      -Dtc.dso.globalmode=false
       -Dtc.tests.info.property-files=${tc.tests.info.property-files}
       -Dcom.tc.l1.modules.repositories=${localMavenRepository}
       -Dtc.install-root.ignore-checks=true
-      -Dcom.sun.management.jmxremote
       ${surefire.additional-jvm-args}</surefire.argLine>
   </properties>
 
@@ -115,14 +113,9 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>1.2.17</version>
-      </dependency>
-      <dependency>
         <groupId>commons-cli</groupId>
         <artifactId>commons-cli</artifactId>
-        <version>1.1</version>
+        <version>1.3.1</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId>
@@ -130,49 +123,58 @@
         <version>2.4</version>
       </dependency>
       <dependency>
-        <groupId>jline</groupId>
-        <artifactId>jline</artifactId>
-        <version>0.9.94</version>
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-        </exclusions>        
-      </dependency>
-      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
-        <version>${slf4j.version}</version>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>tc-tripwire-plugin</artifactId>
+        <version>${tc-tripwire.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>tc-tripwire-appenders</artifactId>
+        <version>${tc-tripwire.version}</version>
+      </dependency>
       <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${terracotta-configuration.version}</version>
+        <classifier>jar-with-dependencies</classifier>
+        <!-- dependencies shaded inside the jar -->
+        <exclusions>
+            <exclusion>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.terracotta</groupId>
+                <artifactId>tcconfig-schema</artifactId>
+            </exclusion>
+        </exclusions>
       </dependency>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>tcconfig-schema</artifactId>
-        <version>${terracotta-configuration.version}</version>
-      </dependency>
-
       <!-- tests -->
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-all</artifactId>
-        <version>1.9.5</version>
+        <artifactId>mockito-core</artifactId>
+        <version>2.23.4</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.11</version>
+        <version>4.12</version>
       </dependency>
       <dependency>
         <groupId>org.powermock</groupId>
@@ -181,13 +183,28 @@
       </dependency>
       <dependency>
         <groupId>org.powermock</groupId>
-        <artifactId>powermock-api-mockito</artifactId>
+        <artifactId>powermock-api-mockito2</artifactId>
         <version>${powermock.version}</version>
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
         <artifactId>hamcrest-all</artifactId>
         <version>${hamcrest.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-commons</artifactId>
+        <version>${asm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ow2.asm</groupId>
+        <artifactId>asm-util</artifactId>
+        <version>${asm.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -242,11 +259,6 @@
             </execution>
           </executions>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>${surefire.version}</version>
-        </plugin>
       </plugins>
     </pluginManagement>
   </build>
@@ -268,7 +280,7 @@
   <repositories>
     <repository>
       <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <url>https://www.terracotta.org/download/reflector/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
@@ -278,7 +290,7 @@
     </repository>
     <repository>
       <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
       <releases>
         <enabled>true</enabled>
       </releases>
@@ -290,11 +302,11 @@
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <url>https://www.terracotta.org/download/reflector/snapshots</url>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </pluginRepository>
   </pluginRepositories>
 </project>

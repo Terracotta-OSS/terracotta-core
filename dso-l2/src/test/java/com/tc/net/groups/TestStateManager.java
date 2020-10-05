@@ -18,28 +18,31 @@
  */
 package com.tc.net.groups;
 
-
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
-import com.tc.util.State;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TestStateManager implements StateManager {
-  private boolean                    isActive  = false;
+
+  private boolean isActive = false;
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<>();
-  private final NodeID               localNodeID;
+  private final NodeID localNodeID;
 
   public TestStateManager(NodeID localNodeID) {
     this.localNodeID = localNodeID;
   }
 
   @Override
-  public State getCurrentState() {
-    return new State("NO_STATE");
+  public ServerMode getCurrentMode() {
+    return ServerMode.STOP;
   }
 
   @Override
@@ -55,8 +58,8 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
-  public void cleanupKnownServers() {
-
+  public Set<NodeID> getPassiveStandbys() {
+    return Collections.emptySet();
   }
 
   @Override
@@ -80,6 +83,17 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
+  public void moveToStopState() {
+    isActive = false;
+  }
+
+  @Override
+  public boolean moveToStopStateIf(Set<ServerMode> validStates) {
+    isActive = false;
+    return false;
+  }
+
+  @Override
   public void publishActiveState(NodeID nodeID) {
     throw new UnsupportedOperationException();
   }
@@ -90,7 +104,7 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
-  public void startElection() {
+  public void initializeAndStartElection() {
     fireStateChangedEvent(new StateChangedEvent(StateManager.PASSIVE_STANDBY, StateManager.ACTIVE_COORDINATOR));
   }
 
@@ -106,6 +120,11 @@ public class TestStateManager implements StateManager {
 
   public boolean isPassiveUnitialized() {
     return false;
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 
 }

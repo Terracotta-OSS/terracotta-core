@@ -20,8 +20,6 @@
 package com.tc.async.impl;
 
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.stats.Stats;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -42,13 +40,12 @@ public class MockSink<EC> implements Sink<EC> {
     }
   }
 
-  @Override
-  public void setClosed(boolean closed) {
-    this.closed = closed;
+  public void close() {
+    this.closed = true;
   }
 
   @Override
-  public void addSingleThreaded(EC context) {
+  public void addToSink(EC context) {
     if (closed) {
       throw new IllegalStateException("closed");
     }
@@ -57,50 +54,5 @@ public class MockSink<EC> implements Sink<EC> {
     } catch (Exception e) {
       throw new AssertionError(e);
     }
-  }
-
-  @Override
-  public void addMultiThreaded(EC context) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int size() {
-    return this.queue.size();
-  }
-
-  @Override
-  public void clear() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void resetStats() {
-    throw new UnsupportedOperationException();
   }
 }

@@ -24,11 +24,14 @@ import java.util.Collections;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 
 import com.tc.async.api.Sink;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import java.util.Optional;
+import java.util.function.Function;
 
 
 /**
@@ -39,6 +42,10 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
   private Sink<VoltronEntityMessage> messageSink;
   private boolean serverIsActive;
 
+  public EntityMessengerProvider() {
+
+  }
+
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
     Assert.assertNotNull(this.messageSink);
@@ -46,7 +53,16 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
     Assert.assertNotNull(owningEntity);
     T service = null;
     if (this.serverIsActive) {
-      service = configuration.getServiceType().cast(new EntityMessengerService(this.messageSink, owningEntity));
+      // TODO: consider making this configurable.  if false, the active will not wait for received on passive before invoke.
+      boolean waitForReceived = true;
+      if (configuration instanceof EntityMessengerConfiguration) {
+        waitForReceived = ((EntityMessengerConfiguration) configuration).isWaitForReceived();
+      } else if (configuration instanceof Function) {
+        waitForReceived = (Boolean)((Function)configuration).apply("PASSIVE_CONFIRMATION");
+      }
+      EntityMessengerService es = new EntityMessengerService(this.messageSink, owningEntity, Optional.ofNullable(waitForReceived).orElse(false));
+      owningEntity.addLifecycleListener(es);
+      service = configuration.getServiceType().cast(es);
     }
     return service;
   }
@@ -71,5 +87,11 @@ public class EntityMessengerProvider implements ImplementationProvidedServicePro
   public void setMessageSink(Sink<VoltronEntityMessage> messageSink) {
     Assert.assertNotNull(messageSink);
     this.messageSink = messageSink;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    StateDumpCollector dumpCollector = stateDumpCollector.subStateDumpCollector(getClass().getCanonicalName());
+    dumpCollector.addState("isServerActive", serverIsActive);
   }
 }

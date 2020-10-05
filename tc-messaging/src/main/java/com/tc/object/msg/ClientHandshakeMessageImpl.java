@@ -25,7 +25,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 
@@ -38,22 +37,22 @@ import java.util.Comparator;
 
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
-  private static final byte   LOCK_CONTEXT             = 1;
+  private static final byte   UNUSED_1        = 1;
   private static final byte   CLIENT_VERSION           = 2;
-  private static final byte   ENTERPRISE_CLIENT        = 3;
+  private static final byte   UNUSED_2        = 3;
   private static final byte   LOCAL_TIME_MILLS         = 4;
   private static final byte   RECONNECT_REFERENCES     = 5;
   private static final byte   RESEND_MESSAGES          = 6;
   private static final byte   CLIENT_PID               = 7;
   private static final byte   CLIENT_UUID              = 8;
   private static final byte   CLIENT_NAME              = 9;
+  private static final byte   CLIENT_ADDRESS           = 10;
 
-  private final Set<ClientServerExchangeLockContext> lockContexts             = new HashSet<ClientServerExchangeLockContext>();
   private long                currentLocalTimeMills    = System.currentTimeMillis();
-  private boolean             enterpriseClient         = false;
   private String                uuid                     = com.tc.util.UUID.NULL_ID.toString();
   private String              name                     = "";
-  private String              clientVersion            = "UNKNOWN";
+  private String              clientVersion            = "";
+  private String              clientAddress            = ""; 
   private int                 pid                      = -1;
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
   private final Set<ResendVoltronEntityMessage> resendMessages = new TreeSet<ResendVoltronEntityMessage>(new Comparator<ResendVoltronEntityMessage>() {
@@ -66,16 +65,15 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                     MessageChannel channel, TCMessageType messageType) {
     super(sessionID, monitor, out, channel, messageType);
+    // if this is on the server, it will be replaced by the dehydrate
+    clientAddress = channel.getLocalAddress().getCanonicalStringForm();
   }
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
                                     TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
-  }
-
-  @Override
-  public Collection<ClientServerExchangeLockContext> getLockContexts() {
-    return this.lockContexts;
+    // if this is on the server, it will be replaced by the dehydrate
+    clientAddress = channel.getLocalAddress().getCanonicalStringForm();
   }
 
   @Override
@@ -119,31 +117,19 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
-  public void addLockContext(ClientServerExchangeLockContext ctxt) {
-    this.lockContexts.add(ctxt);
-  }
-
-  @Override
-  public boolean enterpriseClient() {
-    return this.enterpriseClient;
-  }
-
-  @Override
-  public void setEnterpriseClient(boolean isEnterpriseClient) {
-    this.enterpriseClient = isEnterpriseClient;
-  }
-
-  @Override
   public long getLocalTimeMills() {
     return this.currentLocalTimeMills;
   }
 
   @Override
+  public String getClientAddress() {
+    return this.clientAddress;
+  }
+
+  @Override
   protected void dehydrateValues() {
-    for (final ClientServerExchangeLockContext lockContext : this.lockContexts) {
-      putNVPair(LOCK_CONTEXT, lockContext);
-    }
-    putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
+    putNVPair(UNUSED_1, false);  // unused but keep for compatibility
+    putNVPair(UNUSED_2, false);  // unused but keep for compatibility
     putNVPair(CLIENT_UUID, this.uuid);
     putNVPair(CLIENT_NAME, this.name);
     putNVPair(CLIENT_VERSION, this.clientVersion);
@@ -155,16 +141,17 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     for (final ResendVoltronEntityMessage resendMessage : this.resendMessages) {
       putNVPair(RESEND_MESSAGES, resendMessage);
     }
+    putNVPair(CLIENT_ADDRESS, this.clientAddress);
   }
 
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case LOCK_CONTEXT:
-        this.lockContexts.add(getObject(new ClientServerExchangeLockContext()));
+      case UNUSED_1:
+        getBooleanValue();  // unused but keep for compatibility
         return true;
-      case ENTERPRISE_CLIENT:
-        this.enterpriseClient = getBooleanValue();
+      case UNUSED_2:
+        getBooleanValue();  // unused but keep for compatibility
         return true;
       case CLIENT_VERSION:
         this.clientVersion = getStringValue();
@@ -186,6 +173,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         return true;
       case CLIENT_NAME:
         this.name = getStringValue();
+        return true;
+      case CLIENT_ADDRESS:
+        this.clientAddress = getStringValue();
         return true;
       default:
         return false;

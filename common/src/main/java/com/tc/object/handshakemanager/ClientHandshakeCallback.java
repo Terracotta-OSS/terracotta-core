@@ -31,5 +31,5 @@ public interface ClientHandshakeCallback {
 
   public void initializeHandshake(ClientHandshakeMessage handshakeMessage);
 
-  public void shutdown(boolean fromShutdownHook);
+  public void shutdown();
 }

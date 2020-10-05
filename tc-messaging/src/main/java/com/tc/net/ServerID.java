@@ -73,7 +73,7 @@ public class ServerID implements NodeID, Serializable {
   }
 
   public String getName() {
-    Assert.assertTrue(this.name != UNINITIALIZED);
+    Assert.assertTrue(!this.name.equals(UNINITIALIZED));
     return name;
   }
 
@@ -103,7 +103,7 @@ public class ServerID implements NodeID, Serializable {
 
   @Override
   public void serializeTo(TCByteBufferOutput out) {
-    Assert.assertTrue(this.name != UNINITIALIZED);
+    Assert.assertTrue(!this.name.equals(UNINITIALIZED));
     out.writeString(this.name);
     int length = this.uid.length;
     out.writeInt(length);

@@ -16,7 +16,6 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-
 package com.tc.objectserver.handshakemanager;
 
 import com.tc.async.api.Sink;
@@ -24,27 +23,31 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import com.tc.entity.ResendVoltronEntityMessage;
-import com.tc.logging.TCLogger;
+import com.tc.l2.state.ConsistencyManager;
+import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
-import com.tc.objectserver.entity.NoopEntityMessage;
+import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -61,26 +64,27 @@ public class ServerClientHandshakeManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    TCLogger logger = mock(TCLogger.class);
+    Logger logger = mock(Logger.class);
     this.channelManager = mock(DSOChannelManager.class);
     this.transactionHandler = mock(ProcessTransactionHandler.class);
     StageManager stageManager = mock(StageManager.class);
     Timer timer = mock(Timer.class);
-    long reconnectTimeout = 1000;
-    boolean persistent = true;
-    TCLogger consoleLogger = mock(TCLogger.class);
+    Supplier<Long> reconnectTimeoutSupplier = () -> 1000L;
+    Logger consoleLogger = mock(Logger.class);
     voltronStage = mock(Stage.class);
     voltronSink = mock(Sink.class);
     when(voltronStage.getSink()).thenReturn(voltronSink);
     when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
-    this.manager = new ServerClientHandshakeManager(logger, this.channelManager, stageManager, timer, reconnectTimeout, persistent, consoleLogger);
+    ConsistencyManager consistency = mock(ConsistencyManager.class);
+    when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), any(ConsistencyManager.Transition.class))).thenReturn(Boolean.TRUE);
+    this.manager = new ServerClientHandshakeManager(logger, consistency, this.channelManager, timer, reconnectTimeoutSupplier, voltronSink, consoleLogger);
   }
 
   @Test
   public void testStartNoExisting() throws Exception {
     assertFalse(this.manager.isStarting());
     assertFalse(this.manager.isStarted());
-    Set<ConnectionID> existingConnections = Collections.emptySet();
+    Set<ClientID> existingConnections = Collections.emptySet();
     this.manager.setStarting(existingConnections);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
@@ -90,7 +94,7 @@ public class ServerClientHandshakeManagerTest {
   public void testStartOneExisting() throws Exception {
     assertFalse(this.manager.isStarting());
     assertFalse(this.manager.isStarted());
-    Set<ConnectionID> existingConnections = Collections.singleton(mock(ConnectionID.class));
+    Set<ClientID> existingConnections = Collections.singleton(mock(ClientID.class));
     this.manager.setStarting(existingConnections);
     assertTrue(this.manager.isStarting());
     assertFalse(this.manager.isStarted());
@@ -98,8 +102,8 @@ public class ServerClientHandshakeManagerTest {
 
   @Test
   public void testReconnectNoData() throws Exception {
-    ConnectionID connection = mock(ConnectionID.class);
-    Set<ConnectionID> existingConnections = Collections.singleton(connection);
+    ClientID connection = mock(ClientID.class);
+    Set<ClientID> existingConnections = Collections.singleton(connection);
     this.manager.setStarting(existingConnections);
     this.manager.startReconnectWindow();
     assertTrue(this.manager.isStarting());
@@ -107,14 +111,16 @@ public class ServerClientHandshakeManagerTest {
     
     // We should see the server start after it gets this handshake since it was waiting for one connection.
     ClientHandshakeMessage handshake = mock(ClientHandshakeMessage.class);
+    when(handshake.getClientVersion()).thenReturn("");
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel = mock(MessageChannel.class);
     when(handshake.getChannel()).thenReturn(messageChannel);
+    when(handshake.getSourceNodeID()).thenReturn(connection);
     this.manager.notifyClientConnect(handshake, entityManager, transactionHandler);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
     
-    verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
+    verify(this.voltronSink).addToSink(any(LocalPipelineFlushMessage.class));
   }
 
   @Test
@@ -131,9 +137,9 @@ public class ServerClientHandshakeManagerTest {
     when(connection2.getChannelID()).thenReturn(2L);
     when(this.channelManager.getClientIDFor(new ChannelID(2))).thenReturn(client2);
     
-    Set<ConnectionID> existingConnections = new HashSet<>();
-    existingConnections.add(connection1);
-    existingConnections.add(connection2);
+    Set<ClientID> existingConnections = new HashSet<>();
+    existingConnections.add(client1);
+    existingConnections.add(client2);
     this.manager.setStarting(existingConnections);
     this.manager.startReconnectWindow();
     assertTrue(this.manager.isStarting());
@@ -141,6 +147,7 @@ public class ServerClientHandshakeManagerTest {
     
     // We should see this first message go through to the transaction handler but not start the server.
     ClientHandshakeMessage message1 = mock(ClientHandshakeMessage.class);
+    when(message1.getClientVersion()).thenReturn("");
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel1 = mock(MessageChannel.class);
     when(message1.getChannel()).thenReturn(messageChannel1);
@@ -150,10 +157,11 @@ public class ServerClientHandshakeManagerTest {
     this.manager.notifyClientConnect(message1, entityManager, transactionHandler);
     assertFalse(this.manager.isStarted());
     verify(this.transactionHandler).handleResentMessage(resend);
-    verify(this.voltronSink, never()).addSingleThreaded(any(NoopEntityMessage.class));
+    verify(this.voltronSink, never()).addToSink(any(LocalPipelineFlushMessage.class));
     
     // This second message will now start the server.
     ClientHandshakeMessage message2 = mock(ClientHandshakeMessage.class);
+    when(message2.getClientVersion()).thenReturn("");
     // We also need to provide a messageChannel since the manager will try to add an attachment to it (so it can't be null).
     MessageChannel messageChannel2 = mock(MessageChannel.class);
     when(message2.getChannel()).thenReturn(messageChannel2);
@@ -161,7 +169,7 @@ public class ServerClientHandshakeManagerTest {
     this.manager.notifyClientConnect(message2, entityManager, transactionHandler);
     assertFalse(this.manager.isStarting());
     assertTrue(this.manager.isStarted());
-    verify(this.voltronSink).addSingleThreaded(any(NoopEntityMessage.class));
+    verify(this.voltronSink).addToSink(any(LocalPipelineFlushMessage.class));
   }
 
   @Test
@@ -171,8 +179,8 @@ public class ServerClientHandshakeManagerTest {
     when(connection1.getChannelID()).thenReturn(1L);
     when(this.channelManager.getClientIDFor(new ChannelID(1))).thenReturn(client1);
 
-    Set<ConnectionID> existingConnections = new HashSet<>();
-    existingConnections.add(connection1);
+    Set<ClientID> existingConnections = new HashSet<>();
+    existingConnections.add(client1);
     this.manager.setStarting(existingConnections);
     this.manager.notifyTimeout();
     assertTrue(this.manager.getUnconnectedClients().isEmpty());

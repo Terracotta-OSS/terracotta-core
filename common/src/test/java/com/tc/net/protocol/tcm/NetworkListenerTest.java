@@ -19,13 +19,16 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
-import com.tc.object.session.NullSessionManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -42,13 +45,15 @@ import junit.framework.TestCase;
  */
 public class NetworkListenerTest extends TestCase {
 
+  TCConnectionManager connMgr;
   CommunicationsManager commsMgr;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    commsMgr = new CommunicationsManagerImpl("TestCommMgr", new NullMessageMonitor(),
-                                             new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
+    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                             new PlainNetworkStackHarnessFactory(), connMgr, new NullConnectionPolicy());
   }
 
   @Override
@@ -58,14 +63,16 @@ public class NetworkListenerTest extends TestCase {
     if (commsMgr != null) {
       commsMgr.shutdown();
     }
+    if (connMgr != null) {
+      connMgr.shutdown();
+    }
   }
 
   public void testBindException() throws Exception {
     assertTrue(commsMgr.getAllListeners().length == 0);
 
     ConnectionIDFactory cidf = new DefaultConnectionIdFactory();
-    SessionProvider sessionProvider = new NullSessionManager();
-    NetworkListener lsnr = commsMgr.createListener(sessionProvider, new TCSocketAddress(0), true, cidf, false);
+    NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), true, cidf, (MessageTransport t)->true);
 
     try {
       lsnr.start(Collections.<ConnectionID>emptySet());
@@ -73,11 +80,16 @@ public class NetworkListenerTest extends TestCase {
       fail(ioe.getMessage());
     }
 
-    NetworkListener lsnr2 = commsMgr.createListener(sessionProvider, new TCSocketAddress(lsnr.getBindPort()), true,
-                                                    cidf, false);
+    NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf, (MessageTransport t)->true);
     try {
       lsnr2.start(Collections.<ConnectionID>emptySet());
-      fail();
+      // NOTE (issue-529):  When running on Windows, in a pre-Java7u25 JVM, this bind succeeds.
+      if (isWindows() && isJava6()) {
+        System.err.println("WARNING:  bind success due to lack of SO_EXCLUSIVEADDRUSE - ignoring test failure");
+        lsnr2.stop(5000);
+      } else {
+        fail();
+      }
     } catch (IOException ioe) {
       // expect a bind exception
     }
@@ -96,8 +108,8 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener[] listeners = new NetworkListener[cnt];
 
     for (int i = 0; i < cnt; i++) {
-      NetworkListener lsnr = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(InetAddress
-          .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory());
+      NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(InetAddress
+          .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
       try {
         lsnr.start(Collections.<ConnectionID>emptySet());
@@ -119,4 +131,11 @@ public class NetworkListenerTest extends TestCase {
     assertTrue(commsMgr.getAllListeners().length == 0);
   }
 
+  private static boolean isWindows() {
+    return (-1 != System.getProperty("os.name").toLowerCase().indexOf("windows"));
+  }
+
+  private static boolean isJava6() {
+    return (0 == System.getProperty("java.version").toLowerCase().indexOf("1.6"));
+  }
 }

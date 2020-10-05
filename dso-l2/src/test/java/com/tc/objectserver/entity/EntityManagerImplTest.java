@@ -18,22 +18,22 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.Sink;
+import com.tc.classloader.ServiceLocator;
 import com.tc.net.ClientID;
-import com.tc.net.NodeID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
+import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
-import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.testentity.TestEntity;
 import com.tc.services.InternalServiceRegistry;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
@@ -42,19 +42,26 @@ import java.util.Optional;
 
 import static java.util.Optional.empty;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.mockito.Matchers;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import org.terracotta.entity.ClientDescriptor;
+import static org.mockito.Mockito.doAnswer;
+import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.api.ResultCapture;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.util.function.Consumer;
+import org.terracotta.monitoring.IMonitoringProducer;
 
 
 public class EntityManagerImplTest {
-  private EntityManager entityManager;
+  private EntityManagerImpl entityManager;
   private EntityID id;
+  private FetchID fetch;
   private long version;
   private long consumerID;
 
@@ -64,30 +71,40 @@ public class EntityManagerImplTest {
     TerracottaServiceProviderRegistry registry = mock(TerracottaServiceProviderRegistry.class);
     when(registry.subRegistry(any(Long.class))).thenReturn(mock(InternalServiceRegistry.class));
     RequestProcessor processor = mock(RequestProcessor.class);
-    when(processor.scheduleRequest(any(), any(), any(), any(), Matchers.anyBoolean(), Matchers.anyInt())).then((invoke)->{
-        ((Runnable)invoke.getArguments()[3]).run();
+    ActivePassiveAckWaiter waiter = mock(ActivePassiveAckWaiter.class);
+    doAnswer((invoke)->{
+        ((Consumer)invoke.getArguments()[6]).accept(waiter);
         return null;
-      });
+    }).when(processor).scheduleRequest(anyBoolean(), any(), anyLong(), any(), any(), any(), any(), anyBoolean(), anyInt());
     entityManager = new EntityManagerImpl(
         registry,
         mock(ClientEntityStateManager.class),
-        mock(ITopologyEventCollector.class),
-        mock(RequestProcessor.class),
-        mock(BiConsumer.class)
+        new ManagementTopologyEventCollector(mock(IMonitoringProducer.class)),
+        processor,
+        mock(ManagementKeyCallback.class),
+        new ServiceLocator(this.getClass().getClassLoader())
     );
-    id = new EntityID(TestEntity.class.getName(), "foo");
+    entityManager.setMessageSink(mock(Sink.class));
+    id = new EntityID("com.tc.objectserver.testentity.TestEntity", "foo");
+    consumerID = 1L;
+    fetch = new FetchID(consumerID);
     version = 1;
   }
 
   @Test
   public void testGetNonExistent() throws Exception {
-    assertThat(entityManager.getEntity(id, version), is(empty()));
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 
   @Test
   public void testCreateEntity() throws Exception {
-    entityManager.createEntity(id, version, consumerID, true);
-    assertThat(entityManager.getEntity(id, version).get().getID(), is(id));
+    try {
+      entityManager.createEntity(id, version, consumerID, true);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)).get().getID(), is(id));
   }
 
   @Test
@@ -99,16 +116,17 @@ public class EntityManagerImplTest {
   
   @Test
   public void testNullEntityChecks() throws Exception {
-    Optional<ManagedEntity> check = entityManager.getEntity(EntityID.NULL_ID, 0);
+    Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));
     Assert.assertFalse(check.isPresent());
     ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
-    check = entityManager.getEntity(id, version);
+    Assert.assertNotNull(entity);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version));
     Assert.assertTrue(check.isPresent());
-    check = entityManager.getEntity(id, 0);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, 0));
     //  make sure zero versions go to empty
-    Assert.assertFalse(check.isPresent());
+    Assert.assertTrue(check.isPresent());
     //  make sure null goes to empty
-    check = entityManager.getEntity(EntityID.NULL_ID, 1);
+    check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, 1));
     Assert.assertFalse(check.isPresent());
   }
 
@@ -139,20 +157,25 @@ public class EntityManagerImplTest {
       }
 
       @Override
-      public ClientDescriptor getSourceDescriptor() {
-        return new ClientDescriptorImpl(ClientID.NULL_ID, new EntityDescriptor(id, ClientInstanceID.NULL_ID, version));
+      public ClientInstanceID getClientInstance() {
+        return ClientInstanceID.NULL_ID;
       }
 
       @Override
-      public Set<NodeID> replicateTo(Set<NodeID> passives) {
+      public boolean requiresReceived() {
+        return false;
+      }
+
+      @Override
+      public Set<SessionID> replicateTo(Set<SessionID> passives) {
         return Collections.emptySet();
       }
     };
     //  set the destroyed flag in the entity
-    entity.addRequestMessage(req, MessagePayload.EMPTY, null, null);
+    entity.addRequestMessage(req, MessagePayload.emptyPayload(), mock(ResultCapture.class));
     //  remove it from the manager
-    entityManager.removeDestroyed(id);
-    assertThat(entityManager.getEntity(id, version), is(empty()));
+    entityManager.removeDestroyed(fetch);
+    assertThat(entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version)), is(empty()));
   }
 
 }

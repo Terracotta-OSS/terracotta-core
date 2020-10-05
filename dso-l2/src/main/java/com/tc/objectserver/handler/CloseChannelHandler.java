@@ -18,16 +18,17 @@
  */
 package com.tc.objectserver.handler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.async.api.AbstractEventHandler;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.groups.L1RemovedGroupMessage;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 
 public class CloseChannelHandler extends AbstractEventHandler<L1RemovedGroupMessage> {
-  private static final TCLogger logger = TCLogging.getLogger(CloseChannelHandler.class);
+  private static final Logger logger = LoggerFactory.getLogger(CloseChannelHandler.class);
   private final ChannelManager  channelManager;
 
   public CloseChannelHandler(ChannelManager channelManager) {
@@ -39,7 +40,7 @@ public class CloseChannelHandler extends AbstractEventHandler<L1RemovedGroupMess
     final ClientID cid = msg.getClientID();
     MessageChannel channel = channelManager.getChannel(cid.getChannelID());
     if (channel != null) {
-      logger.warn("Close " + cid + " due to disconnect from stripe " + msg.getGroupID());
+      logger.warn("Close " + cid + " due to disconnect from stripe");
       channel.close();
     }
   }

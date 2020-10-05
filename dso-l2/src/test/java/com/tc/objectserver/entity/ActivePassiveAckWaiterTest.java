@@ -18,11 +18,16 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
+import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Test;
@@ -36,8 +41,8 @@ public class ActivePassiveAckWaiterTest {
    */
   @Test
   public void testEmptyWait() throws Exception {
-    Set<NodeID> passives = Collections.emptySet();
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    Set<SessionID> passives = Collections.emptySet();
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(Collections.emptyMap(), passives, null);
     // This can run in a single thread.
     Assert.assertTrue(waiter.isCompleted());
     waiter.waitForReceived();
@@ -47,17 +52,20 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testSingleWait() throws Exception {
-    Set<NodeID> passives = new HashSet<NodeID>();
-    NodeID onePassive = mock(NodeID.class);
+    Map<NodeID, SessionID> map = new HashMap<>();
+    Set<SessionID> passives = new HashSet<>();
+    SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    NodeID node = mock(NodeID.class);
+    map.put(node, onePassive);
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(1);
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    waiter.didReceiveOnPassive(onePassive);
+    waiter.didReceiveOnPassive(node);
     interlock.waitOnReceivesOnly();
-    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(node, ReplicationResultCode.SUCCESS);
     Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
@@ -65,22 +73,30 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testMultiWait() throws Exception {
-    Set<NodeID> passives = new HashSet<NodeID>();
-    NodeID onePassive = mock(NodeID.class);
+    Map<NodeID, SessionID> map = new HashMap<>();
+    Set<SessionID> passives = new HashSet<>();
+
+    SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    NodeID twoPassive = mock(NodeID.class);
+    SessionID twoPassive = mock(SessionID.class);
     passives.add(twoPassive);
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    
+    NodeID node1 = mock(NodeID.class);
+    NodeID node2 = mock(NodeID.class);
+    map.put(node1, onePassive);
+    map.put(node2, twoPassive);
+    
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(1);
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    waiter.didReceiveOnPassive(onePassive);
-    waiter.didReceiveOnPassive(twoPassive);
+    waiter.didReceiveOnPassive(node1);
+    waiter.didReceiveOnPassive(node2);
     interlock.waitOnReceivesOnly();
-    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive, true);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(node2, ReplicationResultCode.SUCCESS);
     Assert.assertFalse(waiterIsDone);
-    waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    waiterIsDone = waiter.didCompleteOnPassive(node1, ReplicationResultCode.SUCCESS);
     Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
@@ -88,24 +104,33 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testMultiWaitWithMoreThreads() throws Exception {
-    Set<NodeID> passives = new HashSet<NodeID>();
-    NodeID onePassive = mock(NodeID.class);
+    Set<SessionID> passives = new HashSet<>();
+    Map<NodeID, SessionID> map = new HashMap<>();
+    
+    SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    NodeID twoPassive = mock(NodeID.class);
+    SessionID twoPassive = mock(SessionID.class);
     passives.add(twoPassive);
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    
+    NodeID node1 = mock(NodeID.class);
+    NodeID node2 = mock(NodeID.class);
+    
+    map.put(node1, onePassive);
+    map.put(node2, twoPassive);
+    
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(2);
     LockStep lockStep1 = new LockStep(waiter, interlock);
     LockStep lockStep2 = new LockStep(waiter, interlock);
     lockStep1.start();
     lockStep2.start();
     interlock.waitOnStarts();
-    waiter.didReceiveOnPassive(onePassive);
-    waiter.didReceiveOnPassive(twoPassive);
+    waiter.didReceiveOnPassive(node1);
+    waiter.didReceiveOnPassive(node2);
     interlock.waitOnReceivesOnly();
-    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive, true);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(node2, ReplicationResultCode.SUCCESS);
     Assert.assertFalse(waiterIsDone);
-    waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    waiterIsDone = waiter.didCompleteOnPassive(node1, ReplicationResultCode.SUCCESS);
     Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep1.join();
@@ -114,19 +139,26 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testImplicitReceive() throws Exception {
-    Set<NodeID> passives = new HashSet<NodeID>();
-    NodeID onePassive = mock(NodeID.class);
+    Map<NodeID, SessionID> map = new HashMap<>();
+    Set<SessionID> passives = new HashSet<>();
+    SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    NodeID twoPassive = mock(NodeID.class);
+    SessionID twoPassive = mock(SessionID.class);
     passives.add(twoPassive);
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    
+    NodeID node1 = mock(NodeID.class);
+    NodeID node2 = mock(NodeID.class);
+    map.put(node1, onePassive);
+    map.put(node2, twoPassive);
+    
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(1);
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    boolean waiterIsDone = waiter.didCompleteOnPassive(twoPassive, true);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(node2, ReplicationResultCode.SUCCESS);
     Assert.assertFalse(waiterIsDone);
-    waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    waiterIsDone = waiter.didCompleteOnPassive(node1, ReplicationResultCode.SUCCESS);
     Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
@@ -134,21 +166,25 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testFailedDoubleComplete() throws Exception {
-    Set<NodeID> passives = new HashSet<NodeID>();
-    NodeID onePassive = mock(NodeID.class);
+    Map<NodeID, SessionID> map = new HashMap<>();
+    Set<SessionID> passives = new HashSet<>();
+    SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    NodeID node1 = mock(NodeID.class);
+    map.put(node1, onePassive);
+    
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(1);
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    waiter.didReceiveOnPassive(onePassive);
+    waiter.didReceiveOnPassive(node1);
     interlock.waitOnReceivesOnly();
-    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(node1, ReplicationResultCode.SUCCESS);
     Assert.assertTrue(waiterIsDone);
     boolean didFail = false;
     try {
-      waiter.didCompleteOnPassive(onePassive, true);
+      waiter.didCompleteOnPassive(node1, ReplicationResultCode.SUCCESS);
     } catch (AssertionError e) {
       // We expect this to fail on double-complete.
       didFail = true;
@@ -160,25 +196,54 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testDisconnectAfterComplete() throws Exception {
-    Set<NodeID> passives = new HashSet<NodeID>();
-    NodeID onePassive = mock(NodeID.class);
+    Map<NodeID, SessionID> map = new HashMap<>();
+    Set<SessionID> passives = new HashSet<>();
+    SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(passives);
+    
+    NodeID node1 = mock(NodeID.class);
+    map.put(node1, onePassive);
+    
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(1);
     LockStep lockStep = new LockStep(waiter, interlock);
     lockStep.start();
     interlock.waitOnStarts();
-    waiter.didReceiveOnPassive(onePassive);
+    waiter.didReceiveOnPassive(node1);
     interlock.waitOnReceivesOnly();
-    boolean waiterIsDone = waiter.didCompleteOnPassive(onePassive, true);
+    boolean waiterIsDone = waiter.didCompleteOnPassive(node1, ReplicationResultCode.SUCCESS);
     Assert.assertTrue(waiterIsDone);
     // We will try to complete, again, but this won't assert, since we are stating that it is not a normal complete.
-    waiterIsDone = waiter.didCompleteOnPassive(onePassive, false);
+    waiterIsDone = waiter.failedToSendToPassive(onePassive);
     Assert.assertTrue(waiterIsDone);
     interlock.waitOnCompletes();
     lockStep.join();
   }
 
+  @Test
+  public void testDisconnectRunsFinalizer() throws Exception {
+    Map<NodeID, SessionID> map = new HashMap<>();
+    Set<SessionID> passives = new HashSet<>();
+    SessionID onePassive = mock(SessionID.class);
+    passives.add(onePassive);
+    
+    NodeID node1 = mock(NodeID.class);
+    map.put(node1, onePassive);
+    
+    SetOnceFlag checkMark = new SetOnceFlag();
+    
+    ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
+    waiter.runWhenCompleted(checkMark::set);
+    Interlock interlock = new Interlock(1);
+    LockStep lockStep = new LockStep(waiter, interlock);
+    lockStep.start();
+    interlock.waitOnStarts();
+    boolean waiterIsDone = waiter.failedToSendToPassive(onePassive);
+    Assert.assertTrue(waiterIsDone);
+    Assert.assertTrue(checkMark.isSet());
+    interlock.waitOnCompletes();
+    lockStep.join();
+  }
 
   private static class LockStep extends Thread {
     private final ActivePassiveAckWaiter waiter;
@@ -191,14 +256,10 @@ public class ActivePassiveAckWaiterTest {
     @Override
     public void run() {
       Assert.assertFalse(this.waiter.isCompleted());
-      try {
-        this.interlock.decrementStarts();
-        this.waiter.waitForReceived();
-        this.interlock.decrementReceives();
-        this.waiter.waitForCompleted();
-      } catch (InterruptedException e) {
-        Assert.fail();
-      }
+      this.interlock.decrementStarts();
+      this.waiter.waitForReceived();
+      this.interlock.decrementReceives();
+      this.waiter.waitForCompleted();
       this.interlock.decrementCompletes();
       Assert.assertTrue(this.waiter.isCompleted());
     }

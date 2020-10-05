@@ -18,17 +18,26 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+
 import com.tc.bytes.TCByteBuffer;
-import com.tc.util.ProductID;
-import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
+import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
+import com.tc.util.TCTimeoutException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Collections;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,25 +53,25 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   private final Set<ChannelEventListener>     listeners   = new CopyOnWriteArraySet<ChannelEventListener>();
   private final ChannelStatus                 status      = new ChannelStatus();
   private final TCMessageFactory              msgFactory;
-  private final ProductID                     productId;
   private final TCMessageRouter               router;
   private final TCMessageParser               parser;
-  private final TCLogger                      logger;
-  private final NodeID                        remoteNodeID;
+  private final Logger logger;
   private volatile NodeID                     localNodeID;
 
   protected volatile NetworkLayer             sendLayer;
 
-  AbstractMessageChannel(TCMessageRouter router, TCLogger logger, TCMessageFactory msgFactory, NodeID remoteNodeID,
-                         ProductID productId) {
+  AbstractMessageChannel(TCMessageRouter router, Logger logger, TCMessageFactory msgFactory) {
     this.router = router;
     this.logger = logger;
     this.msgFactory = msgFactory;
-    this.productId = productId;
     this.parser = new TCMessageParser(this.msgFactory);
-    this.remoteNodeID = remoteNodeID;
     // This is set after hand shake for the clients
     this.localNodeID = ClientID.NULL_ID;
+  }
+
+  @Override
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
+    return open(Collections.singleton(serverAddress));
   }
 
   @Override
@@ -108,11 +117,6 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   @Override
   public void setLocalNodeID(NodeID localNodeID) {
     this.localNodeID = localNodeID;
-  }
-
-  @Override
-  public NodeID getRemoteNodeID() {
-    return remoteNodeID;
   }
 
   @Override
@@ -190,7 +194,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
             try {
               existingCallback.run();
             } catch (Exception e) {
-              logger.error(e);
+              logger.error("Exception: ", e);
             } finally {
               logMsg.run();
             }
@@ -233,6 +237,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
     // yeah, we know. We closed it.
+    fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_CLOSED_EVENT, AbstractMessageChannel.this));
     return;
   }
 
@@ -287,13 +292,29 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   @Override
   public String toString() {
-    return ((isOpen() ? getChannelID() : "ChannelID[NULL_ID, " + getStatus() + "]") + ":" + getLocalAddress()
-            + " <--> " + getRemoteAddress());
+    return (getChannelID() + ":" + getLocalAddress() + " <--> " + getRemoteAddress());
+  }
+
+  protected ProductID getProductID(ProductID defaultID) {
+    if (this.sendLayer != null) {
+      return this.sendLayer.getConnectionID().getProductId();
+    } else {
+      return defaultID;
+    }
   }
 
   @Override
-  public ProductID getProductId() {
-    return productId;
+  public ConnectionID getConnectionID() {
+    if (this.sendLayer != null) {
+      return this.sendLayer.getConnectionID();
+    } else {
+      return ConnectionID.NULL_ID;
+    }
+  }
+
+  @Override
+  public ChannelID getChannelID() {
+    return new ChannelID(getConnectionID().getChannelID());
   }
 
   private enum ChannelState {
@@ -319,7 +340,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
     synchronized boolean getAndSetIsClosed() {
       if (ChannelState.INIT.equals(state)) {
         // Treating an unopened channel as effectively equivalent to closed.
-        logger.warn("Switcing channel state from " + ChannelState.INIT + " to " + ChannelState.CLOSED + ".");
+        logger.debug("Switching channel state from " + ChannelState.INIT + " to " + ChannelState.CLOSED + ".");
         state = ChannelState.CLOSED;
         return true;
       }

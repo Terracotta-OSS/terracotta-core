@@ -20,30 +20,32 @@ package com.tc.l2.handler;
 
 import java.io.Serializable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformServer;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.l2.msg.PlatformInfoRequest;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.server.TCServerMain;
 import com.tc.services.LocalMonitoringProducer;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class PlatformInfoRequestHandler {
-  private static final TCLogger LOGGER = TCLogging.getLogger(PlatformInfoRequestHandler.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(PlatformInfoRequestHandler.class);
 
   private final GroupManager<AbstractGroupMessage> groupManager;
   private final LocalMonitoringProducer monitoringSupport;
+// single threaded, doesn't need synchronization
+  private final Set<NodeID> knownServer = new HashSet<>();
 
   public PlatformInfoRequestHandler(GroupManager<AbstractGroupMessage> groupManager, LocalMonitoringProducer monitoringSupport) {
     Assert.assertNotNull(groupManager);
@@ -64,11 +66,17 @@ public class PlatformInfoRequestHandler {
             case PlatformInfoRequest.RESPONSE_INFO:
               handleServerInfo(context);
               break;
+            case PlatformInfoRequest.INFO_REMOVE:
+              handleServerRemove(context);
+              break;
             case PlatformInfoRequest.RESPONSE_ADD:
-              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteAdd((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName(), context.getNodeValue());
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteAdd((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName(), context.getNodeValue(monitoringSupport.getWireLoader()));
               break;
             case PlatformInfoRequest.RESPONSE_REMOVE:
               PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteRemove((ServerID)context.messageFrom(), context.getConsumerID(), context.getParents(), context.getNodeName());
+              break;
+            case PlatformInfoRequest.BEST_EFFORTS_BATCH:
+              PlatformInfoRequestHandler.this.monitoringSupport.handleRemoteBestEffortsBatch((ServerID)context.messageFrom(), context.getConsumerIDs(), context.getKeys(), context.getValues(monitoringSupport.getWireLoader()));
               break;
             default:
               break;
@@ -111,6 +119,16 @@ public class PlatformInfoRequestHandler {
           LOGGER.error(e.getLocalizedMessage());
         }
       }
+      @Override
+      public void pushBestEffortsBatch(long[] consumerIDs, String[] keys, Serializable[] values) {
+        PlatformInfoRequest message = PlatformInfoRequest.createBestEffortsBatch(consumerIDs, keys, values);
+        try {
+          groupManager.sendTo(requester, message);
+        } catch (GroupException e) {
+          // If there is something wrong in sending the monitoring data, this isn't critical so just log the error.
+          LOGGER.error(e.getLocalizedMessage());
+        }
+      }
     };
     this.monitoringSupport.sendToNewActive(pipeWrapper);
   }
@@ -118,6 +136,16 @@ public class PlatformInfoRequestHandler {
   private void handleServerInfo(PlatformInfoRequest msg) throws GroupException {
     ServerID sender = (ServerID)msg.messageFrom();
     PlatformServer platformServer = (PlatformServer)msg.getServerInfo();
-    this.monitoringSupport.serverDidJoinStripe(sender, platformServer);
+    if (knownServer.add(sender)) {
+      this.monitoringSupport.serverDidJoinStripe(sender, platformServer);
+    }
   }
+  
+
+  private void handleServerRemove(PlatformInfoRequest msg) throws GroupException {
+    ServerID sender = (ServerID)msg.messageFrom();
+    if (knownServer.remove(sender)) {
+      this.monitoringSupport.serverDidLeaveStripe(sender);      
+    }
+  }  
 }

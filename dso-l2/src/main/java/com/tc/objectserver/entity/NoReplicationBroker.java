@@ -18,9 +18,9 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
-import com.tc.util.Assert;
+import com.tc.object.session.SessionID;
 import java.util.Collections;
 import java.util.Set;
 
@@ -29,25 +29,21 @@ import java.util.Set;
  * Stubbed implementation which provides no replication.
  */
 public class NoReplicationBroker implements PassiveReplicationBroker {
-  
-  private boolean isActive = false;
-  
-  public static final ActivePassiveAckWaiter NOOP_WAITER = new ActivePassiveAckWaiter(Collections.emptySet());
+    
+  public static final ActivePassiveAckWaiter NOOP_WAITER = new ActivePassiveAckWaiter(Collections.emptyMap(), Collections.emptySet(), null);
 
   @Override
-  public void enterActiveState() {
-// only happens once
-    Assert.assertFalse(isActive);
-    isActive = true;
-  }
-
-  @Override
-  public Set<NodeID> passives() {
+  public Set<SessionID> passives() {
     return Collections.emptySet();
   }
 
   @Override
-  public ActivePassiveAckWaiter replicateMessage(ReplicationMessage msg, Set<NodeID> passives) {
+  public ActivePassiveAckWaiter replicateActivity(SyncReplicationActivity activity, Set<SessionID> passives) {
     return NOOP_WAITER;
+  }
+
+  @Override
+  public void zapAndWait(NodeID node) {
+    //  do nothing
   }
 }

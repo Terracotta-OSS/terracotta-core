@@ -21,6 +21,7 @@ package com.tc.l2.api;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
+import java.util.Map;
 
 public interface ReplicatedClusterStateManager {
 
@@ -28,10 +29,7 @@ public interface ReplicatedClusterStateManager {
 
   public void publishClusterState(NodeID nodeID) throws GroupException;
 
-  public void fireNodeLeftEvent(NodeID nodeID);
-
   public void setCurrentState(State currentState);
-
-  public Iterable<NodeID> getPassives();
-
+  
+  public void reportStateToMap(Map<String, Object> state);
 }

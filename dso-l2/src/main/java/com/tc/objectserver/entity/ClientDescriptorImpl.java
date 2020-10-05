@@ -18,10 +18,11 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.net.ClientID;
+import com.tc.object.ClientInstanceID;
+import com.tc.util.Assert;
 import org.terracotta.entity.ClientDescriptor;
-
-import com.tc.net.NodeID;
-import com.tc.object.EntityDescriptor;
+import org.terracotta.entity.ClientSourceId;
 
 /**
  * An opaque token representing a specific entity instance on a specific client node.
@@ -32,34 +33,41 @@ import com.tc.object.EntityDescriptor;
  * client-side entity lives.
  */
 public class ClientDescriptorImpl implements ClientDescriptor {
+  public static ClientDescriptorImpl NULL_ID = new ClientDescriptorImpl(ClientID.NULL_ID, ClientInstanceID.NULL_ID);
   // The specific node where the referenced instance lives.
-  private final NodeID nodeID;
-  private final EntityDescriptor entityDescriptor;
-  
-  public ClientDescriptorImpl(NodeID nodeID, EntityDescriptor entityDescriptor) {
+  private final ClientID nodeID;
+  private final ClientInstanceID clientInstance;
+
+  public ClientDescriptorImpl(ClientID nodeID, ClientInstanceID clientInstance) {
+    Assert.assertNotNull(nodeID);
+    Assert.assertNotNull(clientInstance);
     this.nodeID = nodeID;
-    this.entityDescriptor = entityDescriptor;
+    this.clientInstance = clientInstance;
   }
-  
-  public NodeID getNodeID() {
+
+  public ClientDescriptorImpl() {
+    this(ClientID.NULL_ID, ClientInstanceID.NULL_ID);
+  }
+
+  public ClientID getNodeID() {
     return this.nodeID;
   }
   
-  public EntityDescriptor getEntityDescriptor() {
-    return this.entityDescriptor;
+  public ClientInstanceID getClientInstanceID() {
+    return this.clientInstance;
   }
 
   @Override
   public String toString() {
     return "ClientDescriptorImpl{" +
            "nodeID=" + nodeID +
-           ", entityDescriptor=" + entityDescriptor +
+           ", entityDescriptor=" + clientInstance +
            "}";
   }
   
   @Override
   public int hashCode() {
-    return this.nodeID.hashCode() ^ this.entityDescriptor.hashCode();
+    return this.nodeID.hashCode() ^ this.clientInstance.hashCode();
   }
   
   @Override
@@ -69,8 +77,17 @@ public class ClientDescriptorImpl implements ClientDescriptor {
     {
       final ClientDescriptorImpl that = (ClientDescriptorImpl) other;
       doesMatch = this.nodeID.equals(that.nodeID)
-          && this.entityDescriptor.equals(that.entityDescriptor);
+          && this.clientInstance.equals(that.clientInstance);
     }
     return doesMatch;
+  }
+
+  public boolean isValid() {
+    return nodeID.toLong() >= 0 && clientInstance.getID() >= 0;
+  }
+
+  @Override
+  public ClientSourceId getSourceId() {
+    return new ClientSourceIdImpl(nodeID.toLong());
   }
 }

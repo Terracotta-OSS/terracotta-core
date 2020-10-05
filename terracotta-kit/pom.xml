@@ -2,17 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>terracotta-core-root</artifactId>
-        <groupId>org.terracotta.internal</groupId>
-        <version>5.0.0-SNAPSHOT</version>
-    </parent>
+  <parent>
+    <groupId>org.terracotta.internal</groupId>
+    <artifactId>build-parent</artifactId>
+    <version>5.7-SNAPSHOT</version>
+    <relativePath>../build-parent</relativePath>
+  </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>terracotta-kit</artifactId>
     <packaging>pom</packaging>
     <name>Terracotta Kit</name>
-
 
     <dependencies>
         <dependency>
@@ -24,21 +25,36 @@
             <groupId>org.terracotta.internal</groupId>
             <artifactId>client-runtime</artifactId>
             <version>${project.version}</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.terracotta.internal</groupId>
-            <artifactId>client-logging</artifactId>
-            <version>${project.version}</version>
+          <groupId>org.terracotta.internal</groupId>
+          <artifactId>voter</artifactId>
+          <version>${project.version}</version>
+          <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.7</version>
+          <groupId>org.terracotta</groupId>
+          <artifactId>default-configuration</artifactId>
+          <classifier>jar-with-dependencies</classifier>
+          <version>${project.version}</version>
+          <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.7</version>
+          <groupId>org.terracotta.test</groupId>
+          <artifactId>test-common</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest-all</artifactId>
+          <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -46,6 +62,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
                 <executions>
                     <execution>
                         <id>prepare-server-lib</id>
@@ -55,21 +72,69 @@
                         </goals>
                         <configuration>
                             <outputDirectory>${project.build.directory}/server-lib</outputDirectory>
-                            <excludeArtifactIds>dso-l1</excludeArtifactIds>  <!-- inside the client runtime -->
+                            <includeScope>compile</includeScope>
+                            <excludeArtifactIds>spotbugs-annotations,jsr305</excludeArtifactIds>
                         </configuration>
-
                     </execution>
                 </executions>
             </plugin>
 
             <plugin>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>3.1.0</version>
+              <executions>
+                <execution>
+                  <id>copy-tests</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                    <goal>testResources</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+            <plugin>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>3.8.1</version>
+              <executions>
+                <execution>
+                  <id>compile-tests</id>
+                  <phase>test-compile</phase>
+                  <goals>
+                    <goal>testCompile</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+            <plugin>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>test-scripts</id>
+                  <phase>test</phase>
+                  <goals>
+                    <goal>test</goal>
+                  </goals>
+                  <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                    <additionalClasspathElements>
+                      <!-- Enable scripts to be found as resources. -->
+                      <element>${project.basedir}${file.separator}src${file.separator}assemble</element>
+                    </additionalClasspathElements>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+          <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.2.0</version>
                 <configuration>
                     <finalName>terracotta-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <attach>true</attach>
-                    <tarLongFileMode>gnu</tarLongFileMode>
+                    <tarLongFileMode>posix</tarLongFileMode>
                     <descriptors>
                         <descriptor>${basedir}/src/assemble/distribution.xml</descriptor>
                     </descriptors>

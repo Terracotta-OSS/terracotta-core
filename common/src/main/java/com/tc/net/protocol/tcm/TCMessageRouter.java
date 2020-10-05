@@ -18,8 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
-
 /**
  * Interface for TC message routers
  * 
@@ -28,8 +26,6 @@ import com.tc.async.api.Sink;
 public interface TCMessageRouter extends TCMessageSink {
 
   public void routeMessageType(TCMessageType protocol, TCMessageSink sink);
-
-  public void routeMessageType(TCMessageType protocol, Sink destSink, Sink hydrateSink);
 
   public void unrouteMessageType(TCMessageType protocol);
 

@@ -18,52 +18,55 @@
  */
 package com.tc.l2.logging;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Predicate;
 
 /**
  * An {@link Appender} that simply buffers records (in a bounded queue) until they're needed. This is used for making
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender extends AppenderSkeleton {
+public class BufferingAppender<E> extends ConsoleAppender<E> {
 
-  private final BlockingQueue<LoggingEvent> buffer;
-  private boolean             on;
+  private final Queue<E> buffer;
+  private Predicate<E> printToConsole = e->false;
+  private boolean doBuffer = true;
 
-  public BufferingAppender(int maxCapacity) {
-    this.buffer = new ArrayBlockingQueue<LoggingEvent>(maxCapacity);
-    this.on = true;
+  public BufferingAppender() {
+    this.buffer = new ConcurrentLinkedQueue<>();
+  }
+
+  public void setConsoleFilter(Predicate<E> filter) {
+    printToConsole = filter;
+  }
+
+  public void setConsole(boolean console) {
+    this.printToConsole = e->console;
+  }
+
+  public void disableBuffering() {
+    this.doBuffer = false;
+    this.printToConsole = e->true;
+    sendContentsTo(this);
   }
 
   @Override
-  protected synchronized void append(LoggingEvent event) {
-    if (on) {
-      this.buffer.offer(event);
+  public void doAppend(E eventObject) {
+    if (printToConsole.test(eventObject)) {
+      super.doAppend(eventObject);
+    }
+    if (doBuffer) {
+      buffer.add(eventObject);
     }
   }
 
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
-  @Override
-  public void close() {
-    // nothing needs to be here.
-  }
-
-  public void stopAndSendContentsTo(Appender otherAppender) {
-    synchronized (this) {
-      on = false;
-    }
-
+  public void sendContentsTo(Appender<E> otherAppender) {
     while (true) {
-      LoggingEvent event = this.buffer.poll();
+      E event = this.buffer.poll();
       if (event == null) break;
       otherAppender.doAppend(event);
     }

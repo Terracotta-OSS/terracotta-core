@@ -18,12 +18,21 @@
  */
 package com.tc.net.protocol.transport;
 
-public enum MessageTransportState {
+enum MessageTransportState {
   /**
    * XXX: move to client state machine Initial state for client transports.
    */
-  STATE_START("START"),
-
+  STATE_START("START") {
+    @Override
+    public boolean isOpen() {
+      return false;
+    }
+  },
+  
+  STATE_START_OPEN("START_OPEN"),
+  
+  STATE_CONNECTED("CONNECTED"),
+  
   STATE_RESTART("RESTART"),
 
   /**
@@ -55,7 +64,12 @@ public enum MessageTransportState {
    * End state-- if the client is disconnected and isn't going to reconnect or if there is a handshake error (server or
    * client)
    */
-  STATE_END("END");
+  STATE_END("END") {
+    @Override
+    public boolean isOpen() {
+      return false;
+    }
+  };
 
   private final String name;
 
@@ -66,5 +80,9 @@ public enum MessageTransportState {
   @Override
   public String toString() {
     return this.name;
+  }
+  
+  public boolean isOpen() {
+    return true;
   }
 }

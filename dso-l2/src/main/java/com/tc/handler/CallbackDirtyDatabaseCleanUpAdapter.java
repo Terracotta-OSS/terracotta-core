@@ -18,17 +18,18 @@
  */
 package com.tc.handler;
 
+import org.slf4j.Logger;
+
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
-import com.tc.logging.TCLogger;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 
 public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandler {
 
-  private final TCLogger              logger;
+  private final Logger logger;
   private final ClusterStatePersistor clusterStateStore;
 
-  public CallbackDirtyDatabaseCleanUpAdapter(TCLogger logger, ClusterStatePersistor clusterStateStore) {
+  public CallbackDirtyDatabaseCleanUpAdapter(Logger logger, ClusterStatePersistor clusterStateStore) {
     this.logger = logger;
     this.clusterStateStore = clusterStateStore;
   }

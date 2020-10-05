@@ -18,14 +18,16 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.net.protocol.transport.MessageTransportFactory;
-import com.tc.net.protocol.transport.WireProtocolMessageSink;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
+import com.tc.operatorevent.NodeNameProvider;
+import com.tc.net.core.ProductID;
+import java.util.Collections;
+import java.util.Map;
+import java.util.function.Predicate;
 
 public class TestCommunicationsManager implements CommunicationsManager {
 
@@ -47,40 +49,18 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory, TCMessageFactory msgFactory) {
-    throw new UnsupportedOperationException();
+  public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider) {
-    throw new UnsupportedOperationException();
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validate) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                  String hostname, int port, int timeout,
-                                                  ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory, boolean reuseAddress) {
-    throw new UnsupportedOperationException();
+  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
+    throw new UnsupportedOperationException(); 
   }
 
   @Override
@@ -89,17 +69,14 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public NetworkListener createListener(SessionProvider sessionProvider, TCSocketAddress addr,
-                                        boolean transportDisconnectRemovesChannel,
-                                        ConnectionIDFactory connectionIdFactory,
-                                        WireProtocolMessageSink wireProtoMsgSink) {
+  public void addClassMapping(TCMessageType messageType, Class<? extends TCMessage> messageClass) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void addClassMapping(TCMessageType messageType, Class<? extends TCMessage> messageClass) {
-    throw new UnsupportedOperationException();
-
+  public Map<String, ?> getStateMap() {
+    return Collections.emptyMap();
   }
 
+  
 }

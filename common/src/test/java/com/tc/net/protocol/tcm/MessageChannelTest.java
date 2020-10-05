@@ -18,33 +18,41 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
-import com.tc.net.core.ConnectionInfo;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
+import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
+import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
+import com.tc.net.core.ProductID;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
-import com.tc.util.runtime.Vm;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -68,10 +76,13 @@ public class MessageChannelTest extends TCTestCase {
   static final int             WAIT          = ITERATIONS * WAIT_PERIOD;
   static final int             MESSAGE_COUNT = 250;
 
-  TCLogger                     logger        = TCLogging.getLogger(getClass());
+  Logger logger = LoggerFactory.getLogger(getClass());
   NetworkListener              lsnr;
-  CommunicationsManager        clientComms;
-  CommunicationsManager        serverComms;
+  InetSocketAddress            serverAddress;
+  TCConnectionManager         clientConns;
+  TCConnectionManager         serverConns;
+  CommunicationsManagerImpl        clientComms;
+  CommunicationsManagerImpl        serverComms;
   TCMessageRouter              clientMessageRouter;
   TCMessageRouter              serverMessageRouter;
   ClientMessageChannel         clientChannel;
@@ -80,49 +91,46 @@ public class MessageChannelTest extends TCTestCase {
   AtomicReference<Throwable>   error         = new AtomicReference<Throwable>(null);
   SequenceGenerator            sq            = new SequenceGenerator();
 
-  // Disabled until MNK-3330
-  public MessageChannelTest() {
-    if (Os.isWindows() && Vm.isJDK17()) {
-      timebombTest("2033-01-30");
-    }
+  protected void setUp(ProductID product) throws Exception {
+    setUp(product, false);
   }
 
-  protected void setUp(int maxReconnectTries) throws Exception {
-    setUp(maxReconnectTries, false);
+  protected void setUp(ProductID product, boolean dumbSink) throws Exception {
+    setUp(product, new PlainNetworkStackHarnessFactory(),
+          new PlainNetworkStackHarnessFactory(), dumbSink);
   }
 
-  protected void setUp(int maxReconnectTries, boolean allowConnectionReplace) throws Exception {
-    setUp(maxReconnectTries, allowConnectionReplace, false);
-  }
-
-  protected void setUp(int maxReconnectTries, boolean allowConnectionReplace, boolean dumbSink) throws Exception {
-    setUp(maxReconnectTries, new PlainNetworkStackHarnessFactory(allowConnectionReplace),
-          new PlainNetworkStackHarnessFactory(allowConnectionReplace), dumbSink);
-  }
-
-  protected void setUp(int maxReconnectTries, NetworkStackHarnessFactory clientStackHarnessFactory,
+  protected void setUp(ProductID product, NetworkStackHarnessFactory clientStackHarnessFactory,
                        NetworkStackHarnessFactory serverStackHarnessFactory, boolean dumbServerSink) throws Exception {
     super.setUp();
-
+try {
     clientWatcher = new MessageSendAndReceiveWatcher();
     serverWatcher = new MessageSendAndReceiveWatcher();
 
     clientMessageRouter = new TCMessageRouterImpl();
     serverMessageRouter = new TCMessageRouterImpl();
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, clientMessageRouter,
-                                                clientStackHarnessFactory, new NullConnectionPolicy(),
-                                                new DisabledHealthCheckerConfigImpl(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(mm, clientMessageRouter,
+                                                clientStackHarnessFactory, clientConns, new NullConnectionPolicy(),
+                                                new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), 
+                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
-    serverComms = new CommunicationsManagerImpl("TestCommMgr-server", mm, serverMessageRouter,
-                                                serverStackHarnessFactory, new NullConnectionPolicy(),
-                                                new DisabledHealthCheckerConfigImpl(), Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+    serverConns = new TCConnectionManagerImpl("TestCommMgr-server", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverComms = new CommunicationsManagerImpl(mm, serverMessageRouter,
+                                                serverStackHarnessFactory, serverConns, new NullConnectionPolicy(),
+                                                new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorNullHandler(),
+                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
-    this.clientChannel = createClientMessageChannel(maxReconnectTries);
+    this.clientChannel = createClientMessageChannel(product);
     this.setUpClientReceiveSink();
+} catch (Exception ex) {
+  ex.printStackTrace();
+  throw ex;
+}
   }
 
   private void initListener(final MessageSendAndReceiveWatcher myClientSenderWatcher,
@@ -137,7 +145,7 @@ public class MessageChannelTest extends TCTestCase {
             @Override
             public void putMessage(TCMessage message)
                 throws UnsupportedMessageTypeException {
-              // System.out.println(message);
+              //System.out.println(message);
 
               PingMessage ping = (PingMessage) message;
               try {
@@ -156,8 +164,8 @@ public class MessageChannelTest extends TCTestCase {
             }
           });
       if (dumbServerSink) {
-        lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
-            new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
+        lsnr = serverComms.createListener(new TCSocketAddress(port), false,
+            new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
 
           @Override
           public void putMessage(WireProtocolMessage message) {
@@ -165,15 +173,13 @@ public class MessageChannelTest extends TCTestCase {
             // But i don't give you back anything
             // as i am Dumb.
           }
-        }
-
-        );
+        }, null, (t)->true);
       } else {
-        lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
-            new DefaultConnectionIdFactory());
+        lsnr = serverComms.createListener(new TCSocketAddress(port), false,
+            new DefaultConnectionIdFactory(), (MessageTransport t)->true);
       }
-
-      lsnr.start(new HashSet<ConnectionID>());
+      lsnr.start(new HashSet<>());
+      serverAddress = InetSocketAddress.createUnresolved("localhost", lsnr.getBindPort());
   }
 
   private void initListener(MessageSendAndReceiveWatcher myClientSenderWatcher,
@@ -192,13 +198,19 @@ public class MessageChannelTest extends TCTestCase {
     if (this.clientChannel != null) this.clientChannel.close();
     if (clientComms != null) clientComms.shutdown();
     if (serverComms != null) serverComms.shutdown();
+    if (clientConns != null) clientConns.shutdown();
+    if (serverConns != null) serverConns.shutdown();
   }
 
   public void testAttachments() throws Exception {
-    setUp(10);
-    clientChannel.open();
+    setUp(ProductID.STRIPE);
+    try {
+      clientChannel.open(serverAddress);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     String key = "key";
-    MessageChannel channel = createClientMessageChannel(10);
+    MessageChannel channel = createClientMessageChannel(ProductID.STRIPE);
     assertNull(channel.getAttachment(key));
     assertNull(channel.removeAttachment(key));
 
@@ -221,12 +233,12 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   public void testOpenRaceWithAutoReconnect() throws Exception {
-    setUp(-1, false, true);
+    setUp(ProductID.STRIPE, true);
 
     Thread t = new Thread() {
       @Override
       public void run() {
-        ThreadUtil.reallySleep(WAIT / 2);
+        ThreadUtil.reallySleep(WAIT / 10);
         serverComms.getConnectionManager().shutdown();
         System.err.println("closed connections on server side");
       }
@@ -234,16 +246,28 @@ public class MessageChannelTest extends TCTestCase {
 
     t.start();
 
-    try {
-      clientChannel.open();
-      fail();
-    } catch (TCTimeoutException e) {
-      // expected;
-      System.err.println("Expected: got timeout exception for first open() : " + e);
+    boolean justTimeout = true;
+    while (justTimeout) {
+      try {
+        clientChannel.open(serverAddress);
+        fail();
+      } catch(ConnectException ce) {
+        // missed it
+        System.err.println("Unexpected: missed race for first open() : " + ce);
+        justTimeout=false;
+      } catch (TransportHandshakeException e) {
+        // expected;
+        System.err.println("Expected: got handshake exception for first open() : " + e);
+        justTimeout = false;
+      } catch (TCTimeoutException to) {
+        System.err.println("Unexpected: timeout for first open() : " + to);
+        justTimeout=false;
+        //System.out.println(ThreadDumpUtil.getThreadDump());
+      }
     }
 
     try {
-      clientChannel.open();
+      clientChannel.open(serverAddress);
       fail();
     } catch (ConnectException e) {
       // expected
@@ -252,51 +276,68 @@ public class MessageChannelTest extends TCTestCase {
     clientChannel = null;
   }
 
-  public void testClientSwithOver() throws Exception {
+  public void testClientSwitchOver() throws Exception {
 
     clientWatcher = new MessageSendAndReceiveWatcher();
     serverWatcher = new MessageSendAndReceiveWatcher();
 
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, new PlainNetworkStackHarnessFactory(),
-                                                new NullConnectionPolicy(), 0);
-    CommunicationsManager serverComms1 = new CommunicationsManagerImpl("TestCommMgr-server-1", mm,
-                                                                       new PlainNetworkStackHarnessFactory(),
-                                                                       new NullConnectionPolicy(), 0);
-    CommunicationsManager serverComms2 = new CommunicationsManagerImpl("TestCommMgr-server-2", mm,
-                                                                       new PlainNetworkStackHarnessFactory(),
-                                                                       new NullConnectionPolicy(), 0);
+    
+    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(mm, new PlainNetworkStackHarnessFactory(),
+                                                clientConns, 
+                                                new NullConnectionPolicy());
 
-    addCommsMappingAndRouting(clientWatcher, serverWatcher, true, serverComms1);
+    TCConnectionManager serverConns1 = new TCConnectionManagerImpl("TestCommMgr-server-1", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    CommunicationsManagerImpl serverComms1 = new CommunicationsManagerImpl(mm,
+                                                                       new PlainNetworkStackHarnessFactory(),
+                                                                       serverConns1, 
+                                                                       new NullConnectionPolicy());
+    TCConnectionManager serverConns2 = new TCConnectionManagerImpl("TestCommMgr-server-2", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    CommunicationsManagerImpl serverComms2 = new CommunicationsManagerImpl(mm,
+                                                                       new PlainNetworkStackHarnessFactory(),
+                                                                       serverConns2, new NullConnectionPolicy());
+
+    addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms1);
     NetworkListener lsnr1 = getListener(clientWatcher, serverWatcher, true, serverComms1);
 
-    addCommsMappingAndRouting(clientWatcher, serverWatcher, false, serverComms2);
+    addCommsMappingAndRouting(clientWatcher, serverWatcher, serverComms2);
     NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
 
-    CommunicationsManager clComms = new CommunicationsManagerImpl("TestCommMgr-client", mm,
+    TCConnectionManager clientConns2 = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    CommunicationsManager clComms = new CommunicationsManagerImpl(mm,
                                                                   new PlainNetworkStackHarnessFactory(),
-                                                                  new NullConnectionPolicy(), 0);
+                                                                  clientConns2, new NullConnectionPolicy());
 
     this.setUpClientReceiveSink();
-    this.clientChannel = createClientMessageChannel(clComms, -1, lsnr1.getBindPort(), new ConnectionInfo[] {
-        new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort()) });
+    this.clientChannel = createClientMessageChannel(ProductID.STRIPE, clComms);
 
     try {
-      clientChannel.open();
+      clientChannel.open(Arrays.asList(InetSocketAddress.createUnresolved("localhost", lsnr1.getBindPort()),
+                                       InetSocketAddress.createUnresolved("localhost", lsnr2.getBindPort())));
     } catch (TCTimeoutException e) {
       Assert.eval("This is not suppose to happen", false);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      throw t;
     }
     Assert.eval(clientChannel.isConnected());
+    lsnr1.stop(1000);
+    lsnr2.stop(1000);
+    serverComms1.shutdown();
+    serverComms2.shutdown();
+    clComms.shutdown();
+    clientConns2.shutdown();
   }
 
   private NetworkListener getListener(MessageSendAndReceiveWatcher clientWatcher2,
                                       MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
-                                      CommunicationsManager serverComms1) throws IOException {
+                                      CommunicationsManagerImpl serverComms1) throws IOException {
 
     NetworkListener rv;
     if (dumbServerSink) {
-      rv = serverComms1.createListener(new NullSessionManager(), new TCSocketAddress(0), false,
-                                       new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
+      rv = serverComms1.createListener(new TCSocketAddress(0), false,
+                                       new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
 
                                          @Override
                                         public void putMessage(WireProtocolMessage message) {
@@ -304,12 +345,10 @@ public class MessageChannelTest extends TCTestCase {
                                            // But i don't give you back anything
                                            // as i am Dumb.
                                          }
-                                       }
-
-      );
+                                       }, null, (t)->true);
     } else {
-      rv = serverComms1.createListener(new NullSessionManager(), new TCSocketAddress(0), false,
-                                       new DefaultConnectionIdFactory());
+      rv = serverComms1.createListener(new TCSocketAddress(0), false,
+                                       new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     }
 
     rv.start(new HashSet<ConnectionID>());
@@ -317,7 +356,7 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   private void addCommsMappingAndRouting(final MessageSendAndReceiveWatcher clientWatcher2,
-                                         final MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
+                                         final MessageSendAndReceiveWatcher serverWatcher2,
                                          CommunicationsManager serverComms1) {
     serverComms1.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ((CommunicationsManagerImpl) serverComms1).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
@@ -325,7 +364,7 @@ public class MessageChannelTest extends TCTestCase {
           @Override
           public void putMessage(TCMessage message)
               throws UnsupportedMessageTypeException {
-            // System.out.println(message);
+            //System.out.println(message);
 
             PingMessage ping = (PingMessage)message;
             try {
@@ -345,33 +384,6 @@ public class MessageChannelTest extends TCTestCase {
         });
   }
 
-  public void testAutomaticReconnect() throws Exception {
-    setUp(10, true);
-    assertEquals(0, clientChannel.getConnectCount());
-    assertEquals(0, clientChannel.getConnectAttemptCount());
-    clientChannel.open();
-    assertEquals(1, clientChannel.getConnectCount());
-    assertEquals(1, clientChannel.getConnectAttemptCount());
-
-    final int closeCount = new Random().nextInt(MESSAGE_COUNT);
-
-    for (int i = 0; i < MESSAGE_COUNT; i++) {
-      if (i == closeCount) {
-        waitForArrivalOrFail(clientWatcher, i);
-        waitForArrivalOrFail(serverWatcher, i);
-        clientComms.getConnectionManager().closeAllConnections(WAIT);
-        if (!waitUntilReconnected()) {
-          fail("Didn't reconnect");
-        }
-      }
-      createAndSendMessage();
-    }
-    assertTrue(clientChannel.getConnectAttemptCount() > 1);
-    assertTrue(clientChannel.getConnectCount() > 1);
-
-    waitForMessages(MESSAGE_COUNT);
-  }
-
   private void waitForMessages(int count) throws InterruptedException {
     waitForArrivalOrFail(clientWatcher, count);
     waitForArrivalOrFail(serverWatcher, count);
@@ -387,7 +399,7 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   public void testManualReconnectAfterFailure() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
 
     int port = lsnr.getBindPort();
 
@@ -397,7 +409,7 @@ public class MessageChannelTest extends TCTestCase {
 
     for (int i = 0; i < 10; i++) {
       try {
-        clientChannel.open();
+        clientChannel.open(serverAddress);
         fail("Should have thrown an exception");
       } catch (TCTimeoutException e) {
         // expected
@@ -411,13 +423,13 @@ public class MessageChannelTest extends TCTestCase {
     }
 
     initListener(this.clientWatcher, this.serverWatcher, false, port);
-    clientChannel.open();
+    clientChannel.open(InetSocketAddress.createUnresolved("localhost", port));
     assertTrue(clientChannel.isConnected());
   }
 
   public void testSendAfterDisconnect() throws Exception {
-    setUp(0);
-    clientChannel.open();
+    setUp(ProductID.SERVER);
+    clientChannel.open(serverAddress);
 
     createAndSendMessage();
     waitForArrivalOrFail(clientWatcher, 1);
@@ -430,11 +442,11 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   public void testZeroMaxRetriesDoesntAutoreconnect() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
     assertEquals(0, clientChannel.getConnectAttemptCount());
     assertEquals(0, clientChannel.getConnectCount());
 
-    clientChannel.open();
+    clientChannel.open(serverAddress);
     assertEquals(1, clientChannel.getConnectAttemptCount());
     assertEquals(1, clientChannel.getConnectCount());
     clientComms.getConnectionManager().closeAllConnections(WAIT);
@@ -444,12 +456,12 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   public void testNegativeMaxRetriesAlwaysReconnects() throws Exception {
-    setUp(-1);
+    setUp(ProductID.STRIPE);
 
     assertEquals(0, clientChannel.getConnectCount());
     assertEquals(0, clientChannel.getConnectAttemptCount());
 
-    clientChannel.open();
+    clientChannel.open(serverAddress);
 
     assertEquals(1, clientChannel.getConnectCount());
     assertEquals(1, clientChannel.getConnectAttemptCount());
@@ -495,16 +507,16 @@ public class MessageChannelTest extends TCTestCase {
   // }
 
   public void testGetStatus() throws Exception {
-    setUp(0);
-    clientChannel.open();
+    setUp(ProductID.SERVER);
+    clientChannel.open(serverAddress);
     assertTrue(clientChannel.isOpen());
     clientChannel.close();
     assertTrue(clientChannel.isClosed());
   }
 
   public void testSend() throws Exception {
-    setUp(0);
-    clientChannel.open();
+    setUp(ProductID.SERVER);
+    clientChannel.open(serverAddress);
     int count = 100;
     List<PingMessage> messages = new LinkedList<PingMessage>();
     for (int i = 0; i < count; i++) {
@@ -515,12 +527,12 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   public void testSocketInfo() throws Exception {
-    setUp(0);
+    setUp(ProductID.SERVER);
 
     assertNull(clientChannel.getRemoteAddress());
     assertNull(clientChannel.getLocalAddress());
 
-    clientChannel.open();
+    clientChannel.open(serverAddress);
     createAndSendMessage();
     waitForMessages(1);
 
@@ -557,18 +569,14 @@ public class MessageChannelTest extends TCTestCase {
       i++;
     }
   }
-
-  private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
-    return createClientMessageChannel(clientComms, maxReconnectTries, lsnr.getBindPort(),
-                                      new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr.getBindPort()) });
+  
+  private ClientMessageChannel createClientMessageChannel(ProductID product) {
+    return createClientMessageChannel(product, clientComms);
   }
 
-  private ClientMessageChannel createClientMessageChannel(CommunicationsManager clComms, int maxReconnectTries,
-                                                          int lsnrPort, ConnectionInfo[] connInfo) {
+  private ClientMessageChannel createClientMessageChannel(ProductID product, CommunicationsManager clComms) {
     clComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    ClientMessageChannel ch = clComms.createClientChannel(new NullSessionManager(), maxReconnectTries,
-                                                          TCSocketAddress.LOOPBACK_IP, lsnrPort, WAIT,
-                                                          new ConnectionAddressProvider(connInfo));
+    ClientMessageChannel ch = clientComms.createClientChannel(product, new NullSessionManager(), WAIT);
     return ch;
   }
 

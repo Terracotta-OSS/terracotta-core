@@ -45,7 +45,7 @@ public class TestServiceProvider implements ServiceProvider {
   }
 
   @Override
-  public void clear() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() throws ServiceProviderCleanupException {
     // nothing to do
   }
 }

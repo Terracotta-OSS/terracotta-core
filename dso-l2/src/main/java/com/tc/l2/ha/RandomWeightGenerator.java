@@ -24,17 +24,21 @@ import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
 
 
 public class RandomWeightGenerator implements WeightGenerator {
-  private final SecureRandom generator;
+  private final long randomNumber;
 
-  public RandomWeightGenerator(SecureRandom generator) {
-    this.generator = generator;
+  public RandomWeightGenerator(SecureRandom generator, boolean isAvailable) {
+    this.randomNumber = generator.nextLong();
   }
 
   @Override
   public long getWeight() {
-    return this.generator.nextLong();
+    return this.randomNumber;
   }
   
+  @Override
+  public boolean isVerificationWeight() {
+    return false;
+  }  
   /**
    * A helper used only in tests (and kept here since it is used in a selection of different tests) which creates a generator
    * factory, populated only with random weight generators.
@@ -45,8 +49,8 @@ public class RandomWeightGenerator implements WeightGenerator {
   public static WeightGeneratorFactory createTestingFactory(int generatorsToUse) {
     WeightGeneratorFactory wgf = new WeightGeneratorFactory();
     for (int i = 0; i < generatorsToUse; ++i) {
-      wgf.add(new RandomWeightGenerator(new SecureRandom()));
+      wgf.add(new RandomWeightGenerator(new SecureRandom(), true));
     }
-    return wgf;
+    return wgf.complete();
   }
 }

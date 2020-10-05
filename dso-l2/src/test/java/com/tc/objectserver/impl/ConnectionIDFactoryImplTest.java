@@ -19,13 +19,22 @@
 
 package com.tc.objectserver.impl;
 
-import com.tc.exception.TCRuntimeException;
+import com.tc.net.ClientID;
+import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
+import com.tc.net.protocol.transport.JvmIDUtil;
+import com.tc.net.protocol.transport.NullConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.ClientStatePersistor;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
+import com.tc.net.core.ProductID;
 import com.tc.util.sequence.MutableSequence;
+import java.util.EnumSet;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -38,13 +47,16 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   private ConnectionIDFactoryImpl connectionIDFactory;
   private ClientStatePersistor persistor;
   private MutableSequence sequence;
+  private ConnectionIDFactoryListener listener;
 
   @Override
   public void setUp() throws Exception {
     sequence = createSequence();
     persistor = createPersistor(sequence);
-    when(persistor.getServerUUID()).thenReturn("abc123");
-    connectionIDFactory = new ConnectionIDFactoryImpl(persistor);
+    connectionIDFactory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.allOf(ProductID.class));
+    listener = mock(ConnectionIDFactoryListener.class);
+    connectionIDFactory.activate(new StripeID("abc123"), 0);
+    connectionIDFactory.registerForConnectionIDEvents(listener);
   }
 
   public void testNextID() throws Exception {
@@ -56,28 +68,64 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
 
   public void testCreateExistingID() throws Exception {
-    setContainsId(0, true);
-    try {
-      connectionIDFactory.populateConnectionID(idWith("aaa", 0));
-      fail();
-    } catch (TCRuntimeException e) {
-      // expected
-    }
+//  implementation can no longer check existing
+    connectionIDFactory.populateConnectionID(idWith("aaa", 0));
   }
 
   public void testRemoveId() throws Exception {
     connectionIDFactory.channelRemoved(channelWithId(0));
-    verify(persistor).deleteClientState(new ChannelID(0));
+    verify(listener).connectionIDDestroyed(Mockito.<ConnectionID>any());
   }
 
   private void nextChannelId(long id) {
     when(sequence.next()).thenReturn(id);
   }
-
-  private void setContainsId(long id, boolean contains) {
-    when(persistor.containsClient(new ChannelID(id))).thenReturn(contains);
+  
+  public void testProductNegotiation() {
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
+    StripeID sid = new StripeID("server1");
+    factory.activate(sid, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), ProductID.PERMANENT));
+    
+    Assert.assertEquals(ProductID.SERVER, cid.getProductId());
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), ProductID.STRIPE));
+    
+    Assert.assertEquals(ProductID.SERVER, cid.getProductId());
   }
-
+  
+    
+  public void testMismatchServerRejection() {
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.of(ProductID.DIAGNOSTIC, ProductID.SERVER));
+    StripeID sid = new StripeID("server1");
+    factory.activate(sid, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, new StripeID("server2").getName(), ProductID.PERMANENT));
+    
+    Assert.assertEquals(ConnectionID.NULL_ID, cid);
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, sid.getName(), ProductID.STRIPE));
+    
+    Assert.assertEquals(new ClientID(0), cid.getClientID());
+  }
+  
+  public void testProductRefusal() {
+    ConnectionIDFactoryImpl factory = new ConnectionIDFactoryImpl(new NullConnectionIDFactoryImpl(), persistor, EnumSet.noneOf(ProductID.class));
+    factory.activate(StripeID.NULL_ID, 0);
+    ConnectionID cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", ProductID.PERMANENT));
+    
+    Assert.assertEquals(ConnectionID.NULL_ID, cid);
+    cid = factory.populateConnectionID(new ConnectionID("jvmid", 0, "serverid", ProductID.STRIPE));
+    
+    Assert.assertEquals(ConnectionID.NULL_ID, cid);
+  }
+  
+  public void testListenerGetsRightProductType() {
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getConnectionID()).thenReturn(new ConnectionID(JvmIDUtil.getJvmID(), 1L, ProductID.SERVER));
+    connectionIDFactory.channelRemoved(channel);
+    ArgumentCaptor<ConnectionID> cap = ArgumentCaptor.forClass(ConnectionID.class);
+    verify(listener).connectionIDDestroyed(cap.capture());
+    Assert.assertEquals(ProductID.SERVER, cap.getValue().getProductId());
+  }
+  
   private static MutableSequence createSequence() {
     MutableSequence sequence = mock(MutableSequence.class);
     return sequence;

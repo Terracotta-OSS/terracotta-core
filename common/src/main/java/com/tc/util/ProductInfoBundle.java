@@ -30,9 +30,10 @@ public class ProductInfoBundle extends ListResourceBundle {
     {"moniker", "Terracotta"},
     {"invalid.timestamp", "The build timestamp string ''{0}'' does not appear to be valid."},
     {"load.properties.failure", "Unable to load build properties from ''{0}''."},
-    {"copyright", "Copyright (c) 2003-2016 Terracotta, Inc. All rights reserved."},
+    {"copyright", "Copyright (c) 2003-2020 Terracotta, Inc. All rights reserved."},
     {"option.verbose", "Produces more detailed information."},
     {"option.raw", "Produces raw information."},
-    {"option.help", "Shows this text."}
+    {"option.help", "Shows this text."},
+    {"version.message", ""}
   };
 }

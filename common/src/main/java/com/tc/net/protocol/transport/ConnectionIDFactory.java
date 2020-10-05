@@ -18,7 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import java.util.Set;
+import com.tc.net.StripeID;
 
 public interface ConnectionIDFactory {
 
@@ -26,12 +26,7 @@ public interface ConnectionIDFactory {
 
   public ConnectionID populateConnectionID(ConnectionID connectionID);
 
-  public void restoreConnectionId(ConnectionID rv);
-
-  public Set<ConnectionID> loadConnectionIDs();
-
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener);
 
-  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections);
-
+  public void activate(StripeID clusterID, long nextID);
 }

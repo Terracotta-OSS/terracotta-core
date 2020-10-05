@@ -19,6 +19,8 @@
 package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.TCSocketAddress;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -30,14 +32,18 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class ClientHandshakeMessageTest {
   @Test
   public void testMessage() throws Exception {
+    MessageChannel channel = mock(MessageChannel.class);
+    TCSocketAddress socket = new TCSocketAddress(65432);
+    when(channel.getLocalAddress()).thenReturn(socket);
 
     ClientHandshakeMessageImpl msg = new ClientHandshakeMessageImpl(new SessionID(0), mock(MessageMonitor.class),
-                                                                    new TCByteBufferOutputStream(4, 4096, false), null,
+                                                                    new TCByteBufferOutputStream(4, 4096, false), channel,
                                                                     TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
 
     EntityID entity1 = new EntityID("class", "entity 1");
@@ -46,19 +52,18 @@ public class ClientHandshakeMessageTest {
     Assert.assertNotEquals(entity1, entity2);
     long entityVersion = 1;
     long instanceID = 0;
-    ClientInstanceID clientInstanceID = new ClientInstanceID(instanceID);
     byte[] extendedReconnectData1 = {};
     byte[] extendedReconnectData2 = {1, 2, 3};
     byte[] extendedReconnectData3 = {3, 4, 5, 6};
-    ClientEntityReferenceContext ref1 = new ClientEntityReferenceContext(entity1, entityVersion, clientInstanceID, extendedReconnectData1);
-    ClientEntityReferenceContext ref2 = new ClientEntityReferenceContext(entity2, entityVersion, clientInstanceID, extendedReconnectData2);
-    ClientEntityReferenceContext ref3 = new ClientEntityReferenceContext(entity3, entityVersion, clientInstanceID, extendedReconnectData3);
+    ClientEntityReferenceContext ref1 = new ClientEntityReferenceContext(entity1, entityVersion, new ClientInstanceID(instanceID++), extendedReconnectData1);
+    ClientEntityReferenceContext ref2 = new ClientEntityReferenceContext(entity2, entityVersion, new ClientInstanceID(instanceID++), extendedReconnectData2);
+    ClientEntityReferenceContext ref3 = new ClientEntityReferenceContext(entity3, entityVersion, new ClientInstanceID(instanceID++), extendedReconnectData3);
     Assert.assertNotEquals(ref1, ref2);
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
     msg.dehydrate();
 
-    ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), null,
+    ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), channel,
                                                                      (TCMessageHeader) msg.getHeader(), msg
                                                                          .getPayload());
     msg2.hydrate();

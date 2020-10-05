@@ -18,15 +18,14 @@
  */
 package com.tc.net.core;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
-import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -38,6 +37,7 @@ import java.net.InetAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CopyOnWriteArraySet;
+import com.tc.net.protocol.TCProtocolAdaptor;
 
 /**
  * TCListener implementation
@@ -45,7 +45,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author teck
  */
 final class TCListenerImpl implements TCListener {
-  protected final static TCLogger                            logger          = TCLogging.getLogger(TCListener.class);
+  protected final static Logger logger = LoggerFactory.getLogger(TCListener.class);
 
   private final ServerSocketChannel                          ssc;
   private final TCConnectionEventListener                    listener;
@@ -60,14 +60,13 @@ final class TCListenerImpl implements TCListener {
   private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<TCListenerEventListener>();
   private final ProtocolAdaptorFactory                       factory;
   private final CoreNIOServices                              commNIOServiceThread;
-  private final TCSecurityManager                            securityManager;
+  private final BufferManagerFactory                         bufferManagerFactory;
 
   TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
-                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread,
-                 TCSecurityManager securityManager) {
-    this.securityManager = securityManager;
+                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread, BufferManagerFactory bufferManagerFactory) {
     this.addr = ssc.socket().getInetAddress();
     this.port = ssc.socket().getLocalPort();
+    this.bufferManagerFactory = bufferManagerFactory;
     this.sockAddr = new TCSocketAddress(this.addr, this.port);
     this.factory = factory;
     this.staticEvent = new TCListenerEvent(this);
@@ -84,8 +83,7 @@ final class TCListenerImpl implements TCListener {
   TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
       throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams,
-                                               securityManager);
+    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams, bufferManagerFactory);
     rv.finishConnect();
     parent.newConnection(rv);
     return rv;
@@ -129,7 +127,7 @@ final class TCListenerImpl implements TCListener {
         Thread.currentThread().interrupt();
         return;
       } catch (TCExceptionResultException e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
         Assert.eval("exception result set in future", false);
         return;
       } finally {

@@ -19,21 +19,16 @@
 
 package com.tc.server;
 
-import com.tc.config.HaConfigImpl;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
-import com.tc.net.protocol.transport.NullConnectionPolicy;
 
 public class ServerFactory {
   private final static int MAX_CLIENTS = Integer.MAX_VALUE;
   
-  public static TCServer createServer(L2ConfigurationSetupManager configurationSetupManager, TCThreadGroup threadGroup) {
-    // only coordinator checks license
-    boolean isCoordinatorGroup = new HaConfigImpl(configurationSetupManager).isActiveCoordinatorGroup();
-    ConnectionPolicy policy = isCoordinatorGroup ? new ConnectionPolicyImpl(MAX_CLIENTS)
-        : new NullConnectionPolicy();
+  public static TCServer createServer(ServerConfigurationManager configurationSetupManager, TCThreadGroup threadGroup) {
+    ConnectionPolicy policy = new ConnectionPolicyImpl(MAX_CLIENTS);
     return new TCServerImpl(configurationSetupManager, threadGroup, policy);
   }
 }

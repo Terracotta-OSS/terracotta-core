@@ -19,6 +19,7 @@
 
 package com.tc.entity;
 
+import com.tc.bytes.TCByteBuffer;
 import org.terracotta.entity.EntityMessage;
 
 import com.tc.net.ClientID;
@@ -53,9 +54,17 @@ public interface VoltronEntityMessage {
      */
     INVOKE_ACTION,
     /**
-     * noop for pipeline flushes
+     * Flush the local pipeline - not ever passed over the wire.
      */
-    NOOP
+    LOCAL_PIPELINE_FLUSH,
+    /**
+     * GC a managed entity after destroy - do not pass on the wire.
+     */
+    LOCAL_ENTITY_GC,
+    /**
+     * GC a client after it disconnects.
+     */
+    DISCONNECT_CLIENT
   }
   
   enum Acks {
@@ -74,11 +83,11 @@ public interface VoltronEntityMessage {
      * from the server.
      * If this Ack is not requested, the get() will only return any local exceptions and no return value (null).
      */
-    APPLIED,
+    COMPLETED,
     /**
-     * Sent AFTER the APPLIED response.  Even if APPLIED is received, it is still possible that a reconnect could cause the
+     * Sent AFTER the COMPLETED response.  Even if COMPLETED is received, it is still possible that a reconnect could cause the
      * message to re-send until the RETIRED is received.
-     * While this ACK typically arrives immediately after APPLIED, it can come much later if EntityMessenger is used to
+     * While this ACK typically arrives immediately after COMPLETED, it can come much later if EntityMessenger is used to
      * defer the retirement of a completed message.
      */
     RETIRED,
@@ -92,9 +101,13 @@ public interface VoltronEntityMessage {
 
   boolean doesRequireReplication();
   
+  boolean doesRequestReceived();
+  
+  boolean doesRequestRetired();
+  
   Type getVoltronType();
   
-  byte[] getExtendedData();
+  TCByteBuffer getExtendedData();
   
   /**
    * This represents the oldest transaction that the sending client still knows about, from a tracking perspective.  The

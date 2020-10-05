@@ -18,32 +18,33 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.util.Assert;
 
+import java.net.InetSocketAddress;
+
 public class ServerMessageTransport extends MessageTransportBase {
 
-  private static final TCLogger smtLogger = TCLogging.getLogger(ServerMessageTransport.class);
+  private static final Logger smtLogger = LoggerFactory.getLogger(ServerMessageTransport.class);
 
-  public ServerMessageTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handshakeErrorHandler,
+  public ServerMessageTransport(TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
-    super(MessageTransportState.STATE_RESTART, handshakeErrorHandler, messageFactory, true, smtLogger);
-    this.connectionId = connectionID;
+    super(MessageTransportState.STATE_RESTART, handshakeErrorHandler, messageFactory, smtLogger);
   }
 
   /**
    * Constructor for when you want a transport that you can specify a connection (e.g., in a server). This constructor
    * will create an open MessageTransport ready for use.
    */
-  public ServerMessageTransport(ConnectionID connectionId, TCConnection conn,
+  public ServerMessageTransport(TCConnection conn,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
                                 TransportHandshakeMessageFactory messageFactory) {
-    super(MessageTransportState.STATE_START, handshakeErrorHandler, messageFactory, true, smtLogger);
-    this.connectionId = connectionId;
+    super(MessageTransportState.STATE_START_OPEN, handshakeErrorHandler, messageFactory, smtLogger);
     Assert.assertNotNull(conn);
     wireNewConnection(conn);
   }
@@ -56,7 +57,7 @@ public class ServerMessageTransport extends MessageTransportBase {
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(InetSocketAddress serverAddress) {
     throw new UnsupportedOperationException("Server transport doesn't support open()");
   }
 
@@ -69,19 +70,23 @@ public class ServerMessageTransport extends MessageTransportBase {
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
     boolean notifyTransportConnected = false;
     boolean recycleAndReturn = false;
-    synchronized (status) {
-      if (status.isStart()) {
-        recycleAndReturn = true;
-        notifyTransportConnected = verifyAndHandleAck(message);
-      } else if (!status.isEstablished()) {
-        /*
-         * Server Tx can move from START to CLOSED state on client connection restore failure (Client ACK would have
-         * reached the server, but worker thread might not have processed it yet and the OOOReconnectTimeout thread
-         * pushed the Server Tx to closed state).
-         */
-        logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
-                    + message);
-        recycleAndReturn = true;
+    if (status.isEstablished()) {
+      // do nothing, just receive
+    } else {
+      synchronized (status) {
+        if (status.isConnected()) {
+          recycleAndReturn = true;
+          notifyTransportConnected = verifyAndHandleAck(message);
+        } else if (!status.isEstablished()) {
+          /*
+           * Server Tx can move from START to CLOSED state on client connection restore failure (Client ACK would have
+           * reached the server, but worker thread might not have processed it yet and the OOOReconnectTimeout thread
+           * pushed the Server Tx to closed state).
+           */
+          logger.debug("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
+                      + message);
+          recycleAndReturn = true;
+        }
       }
     }
 
@@ -92,7 +97,6 @@ public class ServerMessageTransport extends MessageTransportBase {
         fireTransportConnectedEvent();
       }
       message.recycle();
-      return;
     } else {
       // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
       super.receiveToReceiveLayer(message);
@@ -115,11 +119,10 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private void handleAck(TransportHandshakeMessage ack) {
     synchronized (status) {
-      Assert.eval(status.isStart());
-      Assert.eval("Wrong connection ID: [" + this.connectionId + "] != [" + ack.getConnectionId() + "]",
-                  this.connectionId.equals(ack.getConnectionId()));
+      Assert.eval(status.isConnected());
+      Assert.eval("Wrong connection ID: [" + getConnectionID() + "] != [" + ack.getConnectionId() + "]",
+                  !getConnectionID().isValid() || getConnectionID().equals(ack.getConnectionId()));
       status.established();
-      ack.getSource().setTransportEstablished();
     }
   }
 
@@ -133,8 +136,13 @@ public class ServerMessageTransport extends MessageTransportBase {
     public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
       Assert.assertNull(oldConnection);
       wireNewConnection(newConnection);
+      log("Attaching new connection to transport: " + newConnection);
     }
 
   }
 
+  @Override
+  public String toString() {
+    return "ServerMessageTransport{connection=" + getConnection() + '}';
+  }
 }

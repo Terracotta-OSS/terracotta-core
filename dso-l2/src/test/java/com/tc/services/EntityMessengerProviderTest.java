@@ -18,6 +18,7 @@
  */
 package com.tc.services;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +45,8 @@ public class EntityMessengerProviderTest {
   private MessageCodec<EntityMessage, EntityResponse> messageCodec;
   private ManagedEntity owningEntity;
   private ServiceConfiguration<IEntityMessenger> configuration;
+  private TestTimeSource timeSource;
+  private SingleThreadedTimer timer;
 
   private EntityMessengerProvider entityMessengerProvider;
 
@@ -56,17 +59,28 @@ public class EntityMessengerProviderTest {
     this.messageSink = mock(Sink.class);
     this.consumerID = 1;
     this.messageCodec = mock(MessageCodec.class);
+    when(this.messageCodec.encodeMessage(any())).thenReturn(new byte[0]);
     this.owningEntity = mock(ManagedEntity.class);
     when(this.owningEntity.getCodec()).thenReturn((MessageCodec)this.messageCodec);
     when(this.owningEntity.getRetirementManager()).thenReturn(mock(RetirementManager.class));
     this.configuration = mock(ServiceConfiguration.class);
     when(this.configuration.getServiceType()).thenReturn(IEntityMessenger.class);
     
+    // Build the timer we will use in the provider.
+    this.timeSource = new TestTimeSource(1L);
+    this.timer = new SingleThreadedTimer(this.timeSource, null);
+    this.timer.start();
+    
     // Build the test subject.
     this.entityMessengerProvider = new EntityMessengerProvider();
     this.entityMessengerProvider.setMessageSink(this.messageSink);
     // Note that we can only serve this service if in active mode.
     this.entityMessengerProvider.serverDidBecomeActive();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    this.timer.stop();
   }
 
   @Test
@@ -84,6 +98,6 @@ public class EntityMessengerProviderTest {
     
     // Verify the calls we observed.
     verify(this.messageCodec).encodeMessage(message);
-    verify(this.messageSink).addSingleThreaded(any(VoltronEntityMessage.class));
+    verify(this.messageSink).addToSink(any(VoltronEntityMessage.class));
   }
 }

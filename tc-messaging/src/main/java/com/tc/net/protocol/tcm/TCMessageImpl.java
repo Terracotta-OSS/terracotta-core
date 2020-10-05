@@ -18,17 +18,16 @@
  */
 package com.tc.net.protocol.tcm;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
-import com.tc.object.locks.LockID;
-import com.tc.object.locks.LockIDSerializer;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -40,7 +39,7 @@ import java.io.IOException;
  */
 public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
 
-  private static final TCLogger LOGGER = TCLogging.getLogger(TCMessageImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TCMessageImpl.class);
   private final MessageMonitor          monitor;
   private final SetOnceFlag             processed         = new SetOnceFlag();
   private final SetOnceFlag             isSent            = new SetOnceFlag();
@@ -249,10 +248,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return getObject(new NodeIDSerializer()).getNodeID();
   }
 
-  protected LockID getLockIDValue() throws IOException {
-    return getObject(new LockIDSerializer()).getLockID();
-  }
-
   protected <T extends TCSerializable<T>> T getObject(T target) throws IOException {
     return target.deserializeFrom(bbis);
   }
@@ -262,17 +257,17 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   protected byte[] getBytesArray() throws IOException {
-    int length = bbis.readInt();
+    int length = bbis.readInt();    
     byte bytes[] = new byte[length];
-    int off = 0;
-    while (length > 0) {
-      int read = bbis.read(bytes, off, length);
-      length -= read;
-      off += read;
-    }
+    bbis.readFully(bytes);
     return bytes;
   }
 
+  protected TCByteBuffer getByteBuffer() throws IOException {
+    int length = bbis.readInt();
+    return bbis.read(length);
+  }
+  
   protected void putNVPair(byte name, boolean value) {
     nvCount++;
     out.write(name);
@@ -333,12 +328,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     new NodeIDSerializer(nodeID).serializeTo(out);
   }
 
-  protected void putNVPair(byte name, LockID lid) {
-    nvCount++;
-    out.write(name);
-    new LockIDSerializer(lid).serializeTo(out);
-  }
-
   protected void putNVPair(byte name, TCSerializable<?> object) {
     nvCount++;
     out.write(name);
@@ -364,10 +353,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     out.writeLong(identifier.toLong());
   }
 
-  public ChannelID getChannelID() {
-    return channel.getChannelID();
-  }
-
   @Override
   public MessageChannel getChannel() {
     return channel;
@@ -388,7 +373,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 //  suppress some warnings when the channel is closed as this is expected, client is not
 //  there anymore
         if (channel.isOpen()) {
-          LOGGER.warn("message not sent", ioe);
+          LOGGER.info("Message not sent: " + ioe.getMessage());
         }
       }
     }

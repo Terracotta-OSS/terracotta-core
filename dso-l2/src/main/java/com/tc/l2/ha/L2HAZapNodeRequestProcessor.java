@@ -18,13 +18,15 @@
  */
 package com.tc.l2.ha;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.tc.exception.ZapServerNodeException;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.ZapEventListener;
@@ -37,8 +39,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
-  private static final TCLogger               logger                        = TCLogging
-                                                                                .getLogger(L2HAZapNodeRequestProcessor.class);
+  private static final Logger logger = LoggerFactory.getLogger(L2HAZapNodeRequestProcessor.class);
 
   public static final int              COMMUNICATION_ERROR             = 0x01;
   public static final int              PROGRAM_ERROR                   = 0x02;
@@ -48,30 +49,40 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   public static final int              INSUFFICIENT_RESOURCES          = 0x06;
   public static final int              SPLIT_BRAIN                     = 0xff;
 
-  private final TCLogger                      consoleLogger;
+  private final Logger                      consoleLogger;
   private final StateManager                  stateManager;
   private final WeightGeneratorFactory        factory;
 
   private final GroupManager                  groupManager;
   private final List<ZapEventListener>        listeners                     = new CopyOnWriteArrayList<>();
   private final ClusterStatePersistor         clusterStatePersistor;
+  private final ConsistencyManager            consistencyMgr;
 
-  public L2HAZapNodeRequestProcessor(TCLogger consoleLogger, StateManager stateManager, GroupManager groupManager,
-                                     WeightGeneratorFactory factory, ClusterStatePersistor clusterStatePersistor) {
+  public L2HAZapNodeRequestProcessor(Logger consoleLogger, StateManager stateManager, GroupManager groupManager,
+                                     WeightGeneratorFactory factory, ClusterStatePersistor clusterStatePersistor, ConsistencyManager consistency) {
     this.consoleLogger = consoleLogger;
     this.stateManager = stateManager;
     this.groupManager = groupManager;
     this.factory = factory;
     this.clusterStatePersistor = clusterStatePersistor;
+    this.consistencyMgr = consistency;
   }
 
   @Override
   public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason) {
     assertOnType(zapNodeType, reason);
-    if (stateManager.isActiveCoordinator()
-        || (zapNodeType == COMMUNICATION_TO_ACTIVE_ERROR && nodeID.equals(stateManager.getActiveNodeID()))) {
-      consoleLogger.warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
+    if (zapNodeType == COMMUNICATION_TO_ACTIVE_ERROR && nodeID.equals(stateManager.getActiveNodeID())) {
+      consoleLogger.warn("Requesting active node to quit : " + getFormatedError(nodeID, zapNodeType));
       return true;
+    }
+    if (stateManager.isActiveCoordinator()) {
+      if (consistencyMgr.requestTransition(stateManager.getCurrentMode(), nodeID, ConsistencyManager.Transition.ZAP_NODE)) {
+        consoleLogger.warn("Requesting node to quit : " + getFormatedError(nodeID, zapNodeType));
+        return true;
+      } else {
+        logger.warn("Not allowing to Zap " + nodeID + " since server does not have consistency votes");
+        return false;
+      }
     } else {
       logger.warn("Not allowing to Zap " + nodeID + " since not in " + StateManager.ACTIVE_COORDINATOR);
       return false;
@@ -142,6 +153,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         logger.error(message);
         if (zapNodeType == NODE_JOINED_WITH_DIRTY_DB) {
           clusterStatePersistor.setDBClean(false);
+          stateManager.moveToStopState();
           throw new ZapDirtyDbServerNodeException(message);
         } else if (zapNodeType == INSUFFICIENT_RESOURCES) {
           throw new TCShutdownServerException(message);

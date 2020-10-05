@@ -18,16 +18,18 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.util.ProductID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.core.ProductID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -36,7 +38,7 @@ import java.net.UnknownHostException;
  * 
  * @author teck
  */
-public interface MessageChannel extends ChannelIDProvider {
+public interface MessageChannel {
 
   public TCSocketAddress getLocalAddress();
 
@@ -74,10 +76,12 @@ public interface MessageChannel extends ChannelIDProvider {
   public boolean isConnected();
 
   public void send(TCNetworkMessage message) throws IOException;
+  
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
 
-  public NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
-
-  public NetworkStackID open(char[] password) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException;
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) throws MaxConnectionsExceededException,
+      TCTimeoutException,
+      UnknownHostException, IOException, CommStackMismatchException;
 
   public void close();
   
@@ -86,6 +90,10 @@ public interface MessageChannel extends ChannelIDProvider {
   public void setLocalNodeID(NodeID source);
   
   public NodeID getRemoteNodeID();
-
-  public ProductID getProductId();
+  
+  public ProductID getProductID();
+  
+  public ConnectionID getConnectionID();
+  
+  public ChannelID getChannelID();
 }

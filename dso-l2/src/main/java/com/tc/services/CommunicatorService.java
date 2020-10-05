@@ -19,11 +19,11 @@
 package com.tc.services;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.object.net.DSOChannelManager;
-import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.util.Assert;
+import com.tc.net.core.ProductID;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -32,17 +32,30 @@ import java.util.concurrent.ConcurrentMap;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProviderCleanupException;
+import org.terracotta.entity.StateDumpCollector;
 
 
-public class CommunicatorService implements ImplementationProvidedServiceProvider, DSOChannelManagerEventListener {
+public class CommunicatorService implements ImplementationProvidedServiceProvider, ChannelManagerEventListener {
   private final ConcurrentMap<NodeID, ClientAccount> clientAccounts = new ConcurrentHashMap<>();
+  private final ClientMessageSender sender;
   private boolean serverIsActive;
   // We have late-bound logic so make sure that is called.
   private boolean wasInitialized;
 
+  public CommunicatorService(ClientMessageSender sender) {
+    this.sender = sender;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    ImplementationProvidedServiceProvider.super.addStateTo(stateDumpCollector); 
+  }
+
   @Override
   public void channelCreated(MessageChannel channel) {
-    clientAccounts.put(channel.getRemoteNodeID(), new ClientAccount(channel));
+    if (channel.getProductID() != ProductID.DIAGNOSTIC) {
+      clientAccounts.put(channel.getRemoteNodeID(), new ClientAccount(sender, channel));
+    }
   }
 
   @Override
@@ -52,15 +65,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
       clientAccount.close();
     }
   }
-
-  void response(NodeID nodeID, long responseId) {
-    ClientAccount clientAccount = clientAccounts.get(nodeID);
-    if (clientAccount != null) {
-      clientAccount.response(responseId);
-    }
-  }
-
-
+  
   @Override
   public <T> T getService(long consumerID, ManagedEntity owningEntity, ServiceConfiguration<T> configuration) {
     Assert.assertTrue(this.wasInitialized);
@@ -96,8 +101,7 @@ public class CommunicatorService implements ImplementationProvidedServiceProvide
     this.serverIsActive = true;
   }
 
-  public void setChannelManager(DSOChannelManager dsoChannelManager) {
-    dsoChannelManager.addEventListener(this);
+  public void initialized() {
     this.wasInitialized = true;
   }
 }

@@ -25,57 +25,68 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.0.0</version>
+    <version>5.19</version>
     <relativePath/>
   </parent>
 
   <groupId>org.terracotta.internal</groupId>
   <artifactId>terracotta-core-root</artifactId>
-  <version>5.0.0-SNAPSHOT</version>
+  <version>5.7-SNAPSHOT</version>
   <name>terracotta-core-root</name>
   <packaging>pom</packaging>
 
   <properties>
     <build.edition>opensource</build.edition>
-    <maven-forge-plugin.version>1.2.20</maven-forge-plugin.version>
     <tc-shader.version>1.2</tc-shader.version>
-    <skip.deploy>false</skip.deploy>
+    <spotbugs.skip>true</spotbugs.skip>
+    <exclude-spotbugs-dependency>true</exclude-spotbugs-dependency>
 
-    <terracotta-apis.version>1.0.9.beta</terracotta-apis.version>
-    <terracotta-configuration.version>10.0.9.beta</terracotta-configuration.version>
+    <terracotta-apis.version>1.7.0</terracotta-apis.version>
+    <terracotta-configuration.version>10.7.1-pre1</terracotta-configuration.version>
+    <galvan.version>1.5.0</galvan.version>
+    <tc-tripwire.version>1.0.0</tc-tripwire.version>
   </properties>
 
   <modules>
     <module>build-parent</module>
     <module>build-data</module>
     <module>test-common</module>
+    <module>common-spi</module>
+    <module>server-spi</module>
     <module>tc-messaging</module>
     <module>common</module>
     <module>dso-l1</module>
     <module>dso-l2</module>
+    <module>voter</module>
     <module>connection-loader</module>
     <module>connection-impl</module>
     <module>management</module>
     <module>terracotta-kit</module>
     <module>terracotta</module>
     <module>client-runtime</module>
-    <module>client-logging</module>
+    <module>galvan-support</module>
+    <module>configuration-provider</module>
+    <module>default-configuration</module>
   </modules>
+
+  <repositories>
+    <repository>
+      <id>terracotta-releases</id>
+      <url>http://www.terracotta.org/download/reflector/releases</url>
+    </repository>
+  </repositories>
 
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.1</version>
-          <extensions>true</extensions>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
           <configuration>
-            <!-- The Base URL of Nexus instance where we want to stage -->
-            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
-            <!-- The server "id" element from settings to use authentication from -->
-            <serverId>terracotta-nexus-staging</serverId>
-            <skipNexusStagingDeployMojo>${skip.deploy}</skipNexusStagingDeployMojo>
+            <aggregate>true</aggregate>
+            <header>header.txt</header>
+            <inlineHeader combine.self="override"></inlineHeader>
+            <failIfMissing>false</failIfMissing>
           </configuration>
         </plugin>
       </plugins>
@@ -85,44 +96,21 @@
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.6.1</version>
+        <configuration>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+            <!--arg>-Werror</arg-->
+          </compilerArgs>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
-
-  <repositories>
-    <repository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </repository>
-    <repository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
-    </pluginRepository>
-  </pluginRepositories>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-core.git</connection>

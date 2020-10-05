@@ -24,8 +24,10 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.Enrollment;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.ConnectionAddressProvider;
-import com.tc.net.core.ConnectionInfo;
+import com.tc.net.basic.BasicConnectionManager;
+import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -42,15 +44,17 @@ import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.object.session.NullSessionManager;
+import com.tc.net.core.ProductID;
 import com.tc.util.State;
 import com.tc.util.UUID;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -72,6 +76,8 @@ public class TCGroupMessageWrapperTest extends TestCase {
   final NullSessionManager                        sessionManager = new NullSessionManager();
   final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
   final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
+  private TCConnectionManager                     clientConns;
+  private TCConnectionManager                     serverConns;  
   private CommunicationsManager                   clientComms;
   private CommunicationsManager                   serverComms;
   private ChannelManager                          channelManager;
@@ -82,16 +88,18 @@ public class TCGroupMessageWrapperTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new TCMessageRouterImpl(),
-                                                new PlainNetworkStackHarnessFactory(), null,
-                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+    clientConns = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
+    clientComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
+                                                new PlainNetworkStackHarnessFactory(), clientConns,
+                                                new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
-                                                Collections.emptyMap(), null);
-    serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new TCMessageRouterImpl(),
-                                                new PlainNetworkStackHarnessFactory(), null,
-                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+                                                Collections.emptyMap());
+    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
+                                                new PlainNetworkStackHarnessFactory(), serverConns,
+                                                new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
-                                                Collections.emptyMap(), null);
+                                                Collections.emptyMap());
   }
 
   @Override
@@ -110,8 +118,10 @@ public class TCGroupMessageWrapperTest extends TestCase {
     } finally {
       try {
         clientComms.shutdown();
+        clientConns.shutdown();
       } finally {
         serverComms.shutdown();
+        serverConns.shutdown();
       }
     }
   }
@@ -133,11 +143,10 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                                                       }
                                                                                     }
                                                                                   });
-    NetworkListener lsnr = serverComms.createListener(sessionManager,
-                                                      new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
-                                                      new DefaultConnectionIdFactory());
+    NetworkListener lsnr = serverComms.createListener(new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
+                                                      new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
-    lsnr.start(new HashSet<ConnectionID>());
+    lsnr.start(new HashSet<>());
     return (lsnr);
   }
 
@@ -145,14 +154,9 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ClientMessageChannel channel;
     clientComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel = clientComms
-        .createClientChannel(sessionManager,
-                             0,
-                             TCSocketAddress.LOOPBACK_IP,
-                             lsnr.getBindPort(),
-                             3000,
-                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(LOCALHOST, lsnr
-                                 .getBindPort()) }));
-    channel.open();
+        .createClientChannel(ProductID.SERVER, sessionManager,
+                             3000);
+    channel.open(InetSocketAddress.createUnresolved(LOCALHOST, lsnr.getBindPort()));
 
     assertTrue(channel.isConnected());
 

@@ -18,9 +18,10 @@
  */
 package com.tc.util;
 
+import org.slf4j.Logger;
+
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
-import com.tc.logging.TCLogger;
 
 import java.lang.reflect.Array;
 
@@ -59,7 +60,7 @@ public class Util {
   }
 
   @SuppressWarnings("finally")
-  public static void printLogAndRethrowError(Throwable t, TCLogger logger) {
+  public static void printLogAndRethrowError(Throwable t, Logger logger) {
     if (t == null) {
       throw null;
     }
@@ -68,7 +69,7 @@ public class Util {
       try {
         t.printStackTrace();
       } finally {
-        logger.error(t);
+        logger.error("Exception: ", t);
       }
     } catch (Throwable err) {
       try {

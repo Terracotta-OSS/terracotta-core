@@ -5,7 +5,7 @@
     <parent>
         <artifactId>terracotta-core-root</artifactId>
         <groupId>org.terracotta.internal</groupId>
-        <version>5.0.0-SNAPSHOT</version>
+        <version>5.7-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -31,29 +31,27 @@
             <plugin>
                 <groupId>org.terracotta</groupId>
                 <artifactId>maven-forge-plugin</artifactId>
-                <version>${maven-forge-plugin.version}</version>
-                <configuration>
-                    <rootPath>${basedir}/..</rootPath>
-                    <addClasspath>true</addClasspath>
-                    <excludeGroupIds>${excludeGroupIdsForClasspath}</excludeGroupIds>
-                    <manifestEntries>
-                        <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
-                        <Class-Path>resources/</Class-Path>
-                    </manifestEntries>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
                             <goal>manifest</goal>
                         </goals>
                         <phase>compile</phase>
+                        <configuration>
+                            <rootPath>${basedir}/..</rootPath>
+                            <addClasspath>true</addClasspath>
+                            <excludeGroupIds>${excludeGroupIdsForClasspath}</excludeGroupIds>
+                            <manifestEntries>
+                                <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
+                                <Class-Path>resources/</Class-Path>
+                            </manifestEntries>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.3.2</version>
                 <configuration>
                     <archive>
                         <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>

@@ -18,25 +18,36 @@
  */
 package com.tc.server;
 
-import java.util.Collections;
+import com.tc.classloader.ServiceLocator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.terracotta.config.service.ServiceConfigParser;
 
 /**
  *
  */
 public class ServiceClassLoader extends ClassLoader {
   
-  private final Map<String, Class<?>> cached;
-  
-  public ServiceClassLoader(List<Class<? extends ServiceConfigParser>> svcs) {
-    Map<String, Class<?>> set = new HashMap<>();
-    for (Class<?> svc : svcs) {
-      set.put(svc.getName(), svc);
+  private final Map<String, Class<?>> cached = new HashMap<>();
+
+  @SuppressWarnings({"rawtypes","unchecked"})
+  public ServiceClassLoader(ClassLoader loader, Class<?>...serviceTypes) {
+    super(loader);
+    ServiceLocator locator = new ServiceLocator(loader);
+    for (Class serviceType : serviceTypes) {
+      List<Class<?>> svcs = locator.getImplementations(serviceType);
+      loadServiceClasses(svcs);
     }
-    cached = Collections.unmodifiableMap(set);
+  }
+  
+  public void addServiceClass(Class<?> svc) {
+    cached.put(svc.getName(), svc);
+  }
+  
+  private void loadServiceClasses(List<Class<?>> svcs) {
+    for (Class<?> svc : svcs) {
+      cached.put(svc.getName(), svc);
+    }
   }
 
   @Override
@@ -45,6 +56,6 @@ public class ServiceClassLoader extends ClassLoader {
     if (get != null) {
       return get;
     }
-    return super.loadClass(name, resolve);
+    return (Class<?>)super.loadClass(name, resolve);
   }
 }

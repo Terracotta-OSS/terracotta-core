@@ -19,6 +19,7 @@
 package com.tc.object.tx;
 
 import com.tc.util.AbstractIdentifier;
+import static com.tc.util.Assert.assertTrue;
 
 /**
  * @author steve
@@ -28,6 +29,7 @@ public class TransactionID extends AbstractIdentifier {
 
   public TransactionID(long id) {
     super(id);
+    assertTrue(id != 0L);
   }
 
   private TransactionID() {
@@ -38,9 +40,4 @@ public class TransactionID extends AbstractIdentifier {
   public String getIdentifierType() {
     return "TransactionID";
   }
-
-  public TransactionID next() {
-    return new TransactionID(toLong() + 1);
-  }
-
 }

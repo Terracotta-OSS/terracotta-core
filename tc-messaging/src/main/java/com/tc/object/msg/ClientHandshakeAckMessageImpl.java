@@ -40,7 +40,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private static final byte      SERVER_VERSION    = 4;
 
   private final Set<NodeID>      allNodes          = new HashSet<NodeID>();
-  private boolean                persistentServer;
   private ClientID               thisNodeId;
   private String                 serverVersion;
 
@@ -58,8 +57,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
 
   @Override
   protected void dehydrateValues() {
-    putNVPair(PERSISTENT_SERVER, persistentServer);
-
     for (NodeID nodeID : allNodes) {
       putNVPair(ALL_NODES, nodeID);
     }
@@ -71,9 +68,6 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case PERSISTENT_SERVER:
-        persistentServer = getBooleanValue();
-        return true;
       case ALL_NODES:
         allNodes.add(getNodeIDValue());
         return true;
@@ -89,18 +83,12 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   }
 
   @Override
-  public void initialize(boolean persistent, Set<? extends NodeID> allNodeIDs, ClientID thisNodeID,
+  public void initialize(Set<? extends NodeID> allNodeIDs, ClientID thisNodeID,
                          String sv) {
-    this.persistentServer = persistent;
     this.allNodes.addAll(allNodeIDs);
 
     this.thisNodeId = thisNodeID;
     this.serverVersion = sv;
-  }
-
-  @Override
-  public boolean getPersistentServer() {
-    return persistentServer;
   }
 
   @Override

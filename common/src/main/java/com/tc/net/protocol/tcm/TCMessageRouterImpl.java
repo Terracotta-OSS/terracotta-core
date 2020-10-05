@@ -18,19 +18,19 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.EnumMap;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author orion
  */
 public class TCMessageRouterImpl implements TCMessageRouter {
-  private static final TCLogger logger       = TCLogging.getLogger(TCMessageRouter.class);
-  private final Map<TCMessageType, TCMessageSink> routesByType = new ConcurrentHashMap<TCMessageType, TCMessageSink>();
+  private static final Logger logger = LoggerFactory.getLogger(TCMessageRouter.class);
+  private final Map<TCMessageType, TCMessageSink> routesByType = new EnumMap<TCMessageType, TCMessageSink>(TCMessageType.class);
   private final TCMessageSink   defaultRoute;
 
   public TCMessageRouterImpl() {
@@ -72,11 +72,6 @@ public class TCMessageRouterImpl implements TCMessageRouter {
   public void routeMessageType(TCMessageType type, TCMessageSink sink) {
     if (null == sink) { throw new IllegalArgumentException("Sink cannot be null"); }
     routesByType.put(type, sink);
-  }
-
-  @Override
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
-    routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
   }
 
   @Override

@@ -18,8 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+
 import com.tc.util.Assert;
 
 import java.util.HashMap;
@@ -31,7 +30,6 @@ import java.util.HashSet;
 public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   private final HashMap<String, HashSet<ConnectionID>> clientsByJvm = new HashMap<String, HashSet<ConnectionID>>();
-  private final TCLogger                               logger       = TCLogging.getLogger(ConnectionPolicyImpl.class);
   private final int                                    maxConnections;
   private int                                          maxReached;
 
@@ -42,7 +40,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean isConnectAllowed(ConnectionID connID) {
-    if (connID.getProductId().isInternal()) {
+    if (connID.getProductId().isInternal() || !connID.isValid()) {
       // Don't count internal clients.
       return true;
     }
@@ -63,7 +61,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean connectClient(ConnectionID connID) {
-    if (connID.getProductId().isInternal()) {
+    if (connID.getProductId().isInternal() || !connID.isValid()) {
       // Always allow connections from internal products
       return true;
     }
@@ -71,7 +69,6 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
     HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
 
     if (isMaxConnectionsReached() && jvmClients == null) {
-      logger.info("Rejecting " + connID + "; " + toString());
       return false;
     }
 
@@ -79,11 +76,9 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
       jvmClients = new HashSet<ConnectionID>();
       clientsByJvm.put(connID.getJvmID(), jvmClients);
       maxReached = clientsByJvm.size();
-      logger.info("Allocated connection license for jvm " + connID.getJvmID() + "; " + toString());
     }
 
     if (!jvmClients.contains(connID)) {
-      logger.info("New connection [" + connID.getChannelID() + "] from jvm " + connID.getJvmID());
       jvmClients.add(connID);
     }
 
@@ -92,7 +87,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized void clientDisconnected(ConnectionID connID) {
-    if (connID.getProductId().isInternal()) {
+    if (connID.getProductId().isInternal() || !connID.isValid()) {
       // ignore internal clients
       return;
     }
@@ -104,13 +99,10 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
     if (jvmClients == null) return; // must have already received the event for this client
 
-    if (jvmClients.remove(connID)) {
-      logger.info("Removed connection [" + connID.getChannelID() + "] from jvm " + connID.getJvmID());
-    }
+    jvmClients.remove(connID);
 
     if (jvmClients.size() == 0) {
       clientsByJvm.remove(connID.getJvmID());
-      logger.info("De-allocated connection license for jvm " + connID.getJvmID() + "; " + toString());
     }
   }
 

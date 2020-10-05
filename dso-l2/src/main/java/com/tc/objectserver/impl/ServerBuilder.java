@@ -18,67 +18,50 @@
  */
 package com.tc.objectserver.impl;
 
+import org.slf4j.Logger;
 import org.terracotta.entity.ServiceRegistry;
 
 import com.tc.async.api.PostInit;
 import com.tc.async.api.StageManager;
-import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.io.TCFile;
+import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
-import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.TCLogger;
-import com.tc.management.beans.TCDumper;
-import com.tc.net.GroupID;
 import com.tc.net.ServerID;
+import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
-import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.net.DSOChannelManager;
-import com.tc.objectserver.core.api.GlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.handler.ChannelLifeCycleHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
-import com.tc.objectserver.locks.LockManager;
-import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.objectserver.persistence.Persistor;
-import com.tc.runtime.logging.LongGCLogger;
-import com.tc.util.StartupLock;
 
 import java.io.IOException;
 
 
-public interface ServerBuilder extends TCDumper, PostInit {
-  GroupManager<AbstractGroupMessage> createGroupCommManager(L2ConfigurationSetupManager configManager,
-                                      StageManager stageManager, ServerID serverNodeID,
-                                      StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory);
+public interface ServerBuilder extends PostInit {
+  GroupManager<AbstractGroupMessage> createGroupCommManager(ServerConfigurationManager configManager,
+                                                            StageManager stageManager, ServerID serverNodeID,
+                                                            StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
+                                                            BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager);
 
-  ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
-                                                              LockManager lockMgr, DSOChannelManager channelManager,
+  ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,
                                                               L2Coordinator l2HACoordinator,
                                                               ServerClientHandshakeManager clientHandshakeManager,
-                                                              GlobalServerStats serverStats,
                                                               ConnectionIDFactory connectionIdFactory,
-                                                              int maxStageSize, ChannelManager genericChannelManager,
-                                                              DumpHandlerStore dumpHandlerStore);
+                                                              int maxStageSize);
 
-  L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
-                                      StageManager stageManager, StateManager stateMgr, 
+  L2Coordinator createL2HACoordinator(Logger consoleLogger, DistributedObjectServer server,
+                                      StateManager stateMgr,
                                       GroupManager<AbstractGroupMessage> groupCommsManager,
-                                      ClusterStatePersistor clusterStatePersistor,
+                                      Persistor clusterStatePersistor,
                                       WeightGeneratorFactory weightGeneratorFactory,
-                                      L2ConfigurationSetupManager configurationSetupManager,
-                                      StripeIDStateManager stripeStateManager, ChannelLifeCycleHandler clm);
+                                      StripeIDStateManager stripeStateManager,
+                                      ConsistencyManager consistency);
 
   Persistor createPersistor(ServiceRegistry serviceRegistry) throws IOException;
-
-  LongGCLogger createLongGCLogger(long gcTimeOut);
-
-  StartupLock createStartupLock(TCFile location, boolean retries);
-
-  GroupID getLocalGroupId();
 }

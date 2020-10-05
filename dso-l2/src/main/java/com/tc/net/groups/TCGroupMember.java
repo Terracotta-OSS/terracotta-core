@@ -29,7 +29,7 @@ public interface TCGroupMember {
 
   public MessageChannel getChannel();
 
-  public void send(AbstractGroupMessage msg) throws GroupException;
+  public void send(AbstractGroupMessage msg, Runnable sentCallback) throws GroupException;
   
   public void sendIgnoreNotReady(AbstractGroupMessage msg);
 

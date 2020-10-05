@@ -18,21 +18,19 @@
  */
 package com.tc.objectserver.handler;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import org.junit.After;
-import org.junit.Before;
-
 import com.tc.async.api.EventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.objectserver.entity.MessagePayload;
+import com.tc.async.api.Stage;
+import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityReceivedResponse;
-import com.tc.l2.msg.PassiveSyncMessage;
+import com.tc.io.TCByteBufferInput;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.msg.ReplicationMessage;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.l2.state.StateManager;
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
@@ -43,34 +41,45 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
+import com.tc.objectserver.api.ResultCapture;
 import com.tc.objectserver.api.ServerEntityAction;
 import com.tc.objectserver.api.ServerEntityRequest;
-import com.tc.objectserver.entity.ClientEntityStateManager;
+import com.tc.objectserver.entity.MessagePayload;
 import com.tc.objectserver.entity.PlatformEntity;
+import com.tc.objectserver.entity.SimpleCompletion;
 import com.tc.objectserver.persistence.EntityPersistor;
+import com.tc.objectserver.persistence.Persistor;
 import com.tc.objectserver.persistence.TransactionOrderPersistor;
-import com.tc.stats.Stats;
 import com.tc.util.Assert;
-
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Consumer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mockito;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.SyncMessageCodec;
 
 
 public class ReplicatedTransactionHandlerTest {
@@ -78,8 +87,8 @@ public class ReplicatedTransactionHandlerTest {
   private TransactionOrderPersistor transactionOrderPersistor;
   private ReplicatedTransactionHandler rth;
   private ClientID source;
-  private ForwardingSink loopbackSink;
-  private ClientEntityStateManager clientEntityStateManager;
+  private ClientInstanceID instance;
+  private ForwardingSink<ReplicationMessage> loopbackSink;
   private StateManager stateManager;
   private EntityManager entityManager;
   private ManagedEntity platform;
@@ -92,131 +101,227 @@ public class ReplicatedTransactionHandlerTest {
   public void setUp() throws Exception {
     this.entityPersistor = mock(EntityPersistor.class);
     this.transactionOrderPersistor = mock(TransactionOrderPersistor.class);
+    
+    Persistor persistor = mock(Persistor.class);
+    when(persistor.getEntityPersistor()).thenReturn(this.entityPersistor);
+    when(persistor.getTransactionOrderPersistor()).thenReturn(this.transactionOrderPersistor);
+    
     this.stateManager = mock(StateManager.class);
     this.entityManager = mock(EntityManager.class);
     this.groupManager = mock(GroupManager.class);
-    this.platform = mock(ManagedEntity.class);
-    Mockito.doAnswer((Answer) (InvocationOnMock invocation) -> {
-      ((Consumer)invocation.getArguments()[2]).accept(null);
+    Mockito.doAnswer((Answer<Void>) (InvocationOnMock invocation) -> {
+      ((Runnable)invocation.getArguments()[2]).run();
       return null;
-    }).when(platform).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
-    when(entityManager.getEntity(Matchers.eq(PlatformEntity.PLATFORM_ID), Matchers.eq(PlatformEntity.VERSION))).thenReturn(Optional.of(platform));
-    this.rth = new ReplicatedTransactionHandler(stateManager, this.transactionOrderPersistor, this.entityManager, this.entityPersistor, this.groupManager);
-    this.source = mock(ClientID.class);
+    }).when(groupManager).sendToWithSentCallback(Mockito.any(), Mockito.any(), Mockito.any());
+    this.platform = mock(ManagedEntity.class);
+    Mockito.doAnswer((Answer<SimpleCompletion>) (InvocationOnMock invocation) -> {
+      ((ResultCapture)invocation.getArguments()[2]).complete();
+      return null;
+    }).when(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any(ResultCapture.class));
+    when(entityManager.getEntity(any(EntityDescriptor.class))).thenReturn(Optional.empty());
+    when(entityManager.getEntity(eq(EntityDescriptor.createDescriptorForLifecycle(PlatformEntity.PLATFORM_ID, 1L)))).thenReturn(Optional.of(platform));
+    Stage runner = mock(Stage.class);
+    Sink<Runnable> sink = mock(Sink.class);
+    when(runner.getSink()).thenReturn(sink);
+    doAnswer(answer->{
+      ((Runnable)answer.getArguments()[0]).run();
+      return null;
+    }).when(sink).addToSink(any(Runnable.class));
+
+    this.rth = new ReplicatedTransactionHandler(stateManager, runner, persistor, this.entityManager, this.groupManager);
+    // We need to do things like serialize/deserialize this so we can't easily use a mocked source.
+    this.source = new ClientID(1);
+    this.instance = new ClientInstanceID(1);
     
     MessageChannel messageChannel = mock(MessageChannel.class);
-    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_APPLIED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
+    when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_COMPLETED_RESPONSE)).thenReturn(mock(VoltronEntityAppliedResponse.class));
     when(messageChannel.createMessage(TCMessageType.VOLTRON_ENTITY_RECEIVED_RESPONSE)).thenReturn(mock(VoltronEntityReceivedResponse.class));
     
     DSOChannelManager channelManager = mock(DSOChannelManager.class);
     when(channelManager.getActiveChannel(this.source)).thenReturn(messageChannel);
+        
+    this.loopbackSink = new ForwardingSink<ReplicationMessage>(this.rth.getEventHandler());
+  }
     
-    this.loopbackSink = new ForwardingSink(this.rth.getEventHandler());
-    
-    channelManager.addEventListener(clientEntityStateManager);
+  private void sendNoop(EntityID eid, FetchID fetch, ServerEntityAction action) {
+    ReplicationMessage flush = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createFlushLocalPipelineMessage(fetch, action.replicationType()));
+    loopbackSink.addToSink(flush);
   }
   
   @Test
   public void testEntityNoIgnoresDuringSyncOfKey() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
-    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
+    FetchID fetch = new FetchID(10L);
     ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
-    ReplicationMessage msg = mock(ReplicationMessage.class);
+    SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
     int rand = 1;
-    when(msg.getConcurrency()).thenReturn(rand);
-    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
-    when(msg.getReplicationType()).thenReturn(ReplicationMessage.ReplicationType.INVOKE_ACTION);
-    when(msg.getEntityID()).thenReturn(eid);
+    when(activity.getConcurrency()).thenReturn(rand);
+    when(activity.getActivityType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
+    when(activity.getEntityID()).thenReturn(eid);
+    when(activity.getFetchID()).thenReturn(fetch);
+    when(activity.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(activity.getExtendedData()).thenReturn(TCByteBufferFactory.wrap(new byte[0]));
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    ReplicationMessage msg = mock(ReplicationMessage.class);
     when(msg.messageFrom()).thenReturn(sid);
-    when(msg.getEntityDescriptor()).thenReturn(descriptor);
-    when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
-    when(msg.getExtendedData()).thenReturn(new byte[0]);
+    when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
-    when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
-      when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    when(this.entityManager.getEntity(any())).thenReturn(Optional.empty());
+    when(this.entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+      when(this.entityManager.getEntity(any())).thenReturn(Optional.of(entity));
       return entity;
     });
     Mockito.doAnswer(invocation->{
-      Consumer consumer = (Consumer)invocation.getArguments()[2];
-      if (consumer != null) {
-        consumer.accept(new byte[0]);
-      }
+      ResultCapture capture = (ResultCapture)invocation.getArguments()[2];
+      capture.received();
+      capture.complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityMessage(eid, 1, new byte[0], true));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartEntityKeyMessage(eid, 1, rand));
-    this.loopbackSink.addSingleThreaded(msg);
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, rand));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndEntityMessage(eid, 1));
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
-//  verify there was an attempt to decode the invoke message
-    verify(msg).getExtendedData();
-    verify(entity).getCodec();
+    }).when(entity).addRequestMessage(any(), any(), any());
+    SyncReplicationActivity.EntityCreationTuple[] entitiesToSync = {
+        new SyncReplicationActivity.EntityCreationTuple(eid, 1, 10L, new byte[0], true)
+    };
+    int referenceCount = 0;
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(entitiesToSync)));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), TCByteBufferFactory.wrap(entitiesToSync[0].configPayload), referenceCount)));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartEntityKeyMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), rand)));
+    this.loopbackSink.addToSink(msg);
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndEntityKeyMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID), rand)));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndEntityMessage(entitiesToSync[0].id, entitiesToSync[0].version, new FetchID(entitiesToSync[0].consumerID))));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(new byte[0]))));
+    verify(activity).getExtendedData();
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
-    verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
+    verify(groupManager, times(2)).sendToWithSentCallback(eq(sid), any(), any());
   }  
   
   @Test
   public void testEntityGetsConcurrencyKey() throws Exception {
     EntityID eid = new EntityID("foo", "bar");
-    EntityDescriptor descriptor = new EntityDescriptor(eid, ClientInstanceID.NULL_ID, 1);
+    FetchID fetch = new FetchID(1L);
     ServerID sid = new ServerID("test", "test".getBytes());
     ManagedEntity entity = mock(ManagedEntity.class);
+    SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
+    int rand = new Random().nextInt();
+    when(activity.getConcurrency()).thenReturn(rand);
+    when(activity.getActivityType()).thenReturn(SyncReplicationActivity.ActivityType.INVOKE_ACTION);
+    when(activity.getEntityID()).thenReturn(eid);
+    when(activity.getFetchID()).thenReturn(fetch);
+    when(activity.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
     ReplicationMessage msg = mock(ReplicationMessage.class);
     MessageCodec codec = mock(MessageCodec.class);
-    int rand = new Random().nextInt();
-    when(msg.getConcurrency()).thenReturn(rand);
-    when(msg.getType()).thenReturn(ReplicationMessage.REPLICATE);
-    when(msg.getReplicationType()).thenReturn(ReplicationMessage.ReplicationType.INVOKE_ACTION);
-    when(msg.getEntityID()).thenReturn(eid);
     when(msg.messageFrom()).thenReturn(sid);
-    when(msg.getEntityDescriptor()).thenReturn(descriptor);
-    when(msg.getOldestTransactionOnClient()).thenReturn(TransactionID.NULL_ID);
-    when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
+    when(this.entityManager.getEntity(any())).thenReturn(Optional.of(entity));
     when(entity.getCodec()).thenReturn(codec);
-    when(this.entityManager.getMessageCodec(Matchers.any())).thenReturn(codec);
+    when(this.entityManager.getMessageCodec(any())).thenReturn(codec);
     Mockito.doAnswer(invocation->{
-      Consumer consumer = (Consumer)invocation.getArguments()[2];
-      if (consumer != null) {
-        consumer.accept(new byte[0]);
-      }
+      ResultCapture capture = (ResultCapture)invocation.getArguments()[2];
+      capture.received();
+      capture.complete(new byte[0]);
       // NOTE:  We don't retire replicated messages.
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createStartSyncMessage());
-    this.loopbackSink.addSingleThreaded(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
-    this.loopbackSink.addSingleThreaded(msg);
-    verify(msg).getExtendedData();
-    verify(msg).getConcurrency();  // make sure RTH is pulling the concurrency from the message
+    }).when(entity).addRequestMessage(any(), any(), any());
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
+    this.loopbackSink.addToSink(createReceivedActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(new byte[0]))));
+    this.loopbackSink.addToSink(msg);
+    verify(activity).getExtendedData();
+    verify(activity).getConcurrency();  // make sure RTH is pulling the concurrency from the message
     // Note that we want to verify 2 ACK messages:  RECEIVED and COMPLETED.
-    verify(groupManager, times(2)).sendTo(Matchers.eq(sid), Matchers.any());
+    verify(groupManager, times(2)).sendToWithSentCallback(eq(sid), any(), any());
   }
   
   @Test
   public void testDestroy() throws Exception {
     this.rth.getEventHandler().destroy();
-    verify(platform).addRequestMessage(Matchers.any(ServerEntityRequest.class), Matchers.any(MessagePayload.class), Matchers.any(), Matchers.any());
+    verify(platform).addRequestMessage(any(ServerEntityRequest.class), any(MessagePayload.class), any());
+  }
+  
+  @Test
+  public void testLifecycleGetsJournaled() throws Exception {
+    EntityID eid = new EntityID("test","test");
+    FetchID fetch = new FetchID(1L);
+    ClientID cid = new ClientID(1L);
+    ClientInstanceID instance = new ClientInstanceID(1L);
+    TransactionID tid = new TransactionID(1L);
+    TransactionID old = new TransactionID(1L);
+    ReplicationMessage start = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0]));
+    ByteArrayOutputStream raw = new ByteArrayOutputStream();
+    ObjectOutputStream out = new ObjectOutputStream(raw);
+    out.writeInt(0);
+    out.close();
+    ReplicationMessage end = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(raw.toByteArray())));
+    ReplicationMessage create = ReplicationMessage.createLocalContainer(SyncReplicationActivity.createLifecycleMessage(eid,1L,fetch,cid,instance,tid,old,SyncReplicationActivity.ActivityType.CREATE_ENTITY,TCByteBufferFactory.wrap(new byte[0])));
+    ManagedEntity entity = mock(ManagedEntity.class);
+    when(entity.getConsumerID()).thenReturn(1L);
+    doAnswer((in)->{
+      ((ResultCapture)in.getArguments()[2]).complete(new byte[0]);
+      return null;
+    }).when(entity).addRequestMessage(any(), any(), any());
+    when(entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).thenReturn(entity);
+    when(entityManager.getEntity(EntityDescriptor.NULL_ID)).thenReturn(Optional.empty());
+    this.rth.getEventHandler().handleEvent(start);
+    this.rth.getEventHandler().handleEvent(end);
+    this.rth.getEventHandler().handleEvent(create);
+    verify(entityPersistor).entityCreated(eq(cid), eq(tid.toLong()), eq(old.toLong()), eq(eid), eq(1L), eq(1L), eq(true), any(byte[].class));
+  }
+  
+  @Test
+  public void testManagedEntityGC() throws Exception {
+    EntityID entityID = new EntityID("TEST", "TEST");
+    FetchID fetchID = new FetchID(1L);
+    ManagedEntity entity = mock(ManagedEntity.class);
+    Mockito.doAnswer(invoked->{
+      if (((ServerEntityRequest)invoked.getArguments()[0]).getAction() != ServerEntityAction.LOCAL_FLUSH) {
+        sendNoop(entityID, fetchID, ((ServerEntityRequest)invoked.getArguments()[0]).getAction());
+      }
+      return null;
+    }).when(entity).addRequestMessage(Mockito.any(), Mockito.any(), Mockito.any());
+    when(entity.getID()).thenReturn(entityID);
+    when(entity.getConsumerID()).thenReturn(1L);
+    when(this.entityManager.getEntity(any())).then(invoke->{
+      EntityDescriptor desp = (EntityDescriptor)invoke.getArguments()[0];
+      if (desp.isIndexed() && desp.getFetchID().equals(fetchID)) {
+        return Optional.of(entity);
+      } else if (!desp.isIndexed() && desp.getEntityID().equals(entityID)) {
+        return Optional.of(entity);
+      } else {
+        return Optional.empty();
+      }
+    });
+    
+    when(this.entityManager.createEntity(Mockito.eq(entityID), Mockito.anyLong(), anyLong(), anyBoolean())).thenReturn(entity);
+    this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    ObjectOutputStream out = new ObjectOutputStream(bout);
+    out.writeInt(0);
+    out.close();
+    this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(bout.toByteArray()))));
+    ReplicationMessage request = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID,  ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.CREATE_ENTITY, TCByteBufferFactory.wrap(new byte[0])));
+    try {
+      this.rth.getEventHandler().handleEvent(request);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
+    ReplicationMessage destroy = createMockRequest(SyncReplicationActivity.createLifecycleMessage(entityID, 1L, fetchID, ClientID.NULL_ID, ClientInstanceID.NULL_ID, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.DESTROY_ENTITY, TCByteBufferFactory.wrap(new byte[0])));
+    when(entity.isRemoveable()).thenReturn(Boolean.TRUE);
+    this.rth.getEventHandler().handleEvent(destroy);
+    verify(entityManager).removeDestroyed(eq(fetchID));
   }
   
   @Test
   public void testTestDefermentDuringSync() throws Exception {
-    EntityID eid = new EntityID("foo", "bar");
-    long VERSION = 1;
     ManagedEntity entity = mock(ManagedEntity.class);
     MessageCodec codec = mock(MessageCodec.class);
-    SyncMessageCodec sync = mock(SyncMessageCodec.class);
-    when(this.entityManager.getEntity(Matchers.eq(eid), Matchers.eq(VERSION))).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(Matchers.any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
-      when(this.entityManager.getEntity(Matchers.any(), Matchers.anyInt())).thenReturn(Optional.of(entity));
+    when(this.entityManager.getEntity(any())).thenReturn(Optional.empty());
+    when(this.entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+      when(this.entityManager.getEntity(any())).thenReturn(Optional.of(entity));
       return entity;
     });
-    when(this.entityManager.getMessageCodec(Matchers.eq(eid))).thenReturn(codec);
+    when(this.entityManager.getMessageCodec(any())).thenReturn(codec);
     when(entity.getCodec()).thenReturn(codec);
-    when(this.entityManager.getSyncMessageCodec(Matchers.eq(eid))).thenReturn(sync);
     
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
@@ -224,13 +329,16 @@ public class ReplicatedTransactionHandlerTest {
       // NOTE:  We don't retire replicated messages.
       verifySequence(req, ((MessagePayload)invocation.getArguments()[1]).getRawPayload(), ((MessagePayload)invocation.getArguments()[1]).getConcurrency());
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(any(), any(), any());
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];
       // NOTE:  We don't retire replicated messages.
-      verifySequence(req, ((MessagePayload)invocation.getArguments()[1]).getRawPayload(), ((MessagePayload)invocation.getArguments()[1]).getConcurrency());
+      MessagePayload payload = (MessagePayload)invocation.getArguments()[1];
+      byte[] raw = (null != payload) ? payload.getRawPayload() : null;
+      int concurrency = (null != payload) ? payload.getConcurrency() : ConcurrencyStrategy.MANAGEMENT_KEY;
+      verifySequence(req, raw, concurrency);
       return null;
-    }).when(entity).addRequestMessage(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any());
+    }).when(entity).addRequestMessage(any(), any(), any());
     mockPassiveSync(rth);
   }
   
@@ -241,15 +349,20 @@ public class ReplicatedTransactionHandlerTest {
   
   private void verifySequence(ServerEntityRequest req, byte[] payload, int c) {
     switch(req.getAction()) {
-      case RECEIVE_SYNC_ENTITY_START:
+      case RECEIVE_SYNC_CREATE_ENTITY:
         Assert.assertNull(last);
         last = req;
         Assert.assertEquals(0, concurrency);
         break;
-      case RECEIVE_SYNC_ENTITY_KEY_START:
-        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+      case RECEIVE_SYNC_ENTITY_START_SYNCING:
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_CREATE_ENTITY);
         last = req;
         Assert.assertEquals(0, concurrency);
+        break;
+      case RECEIVE_SYNC_ENTITY_KEY_START:
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_START_SYNCING || last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        last = req;
+        Assert.assertEquals(c - 1, concurrency);
         concurrency = c;
         break;
       case RECEIVE_SYNC_PAYLOAD:
@@ -263,15 +376,15 @@ public class ReplicatedTransactionHandlerTest {
         Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
         last = req;
         Assert.assertEquals(concurrency, c);
-        concurrency = 0;
+        concurrency = c;
         break;
       case RECEIVE_SYNC_ENTITY_END:
-        Assert.assertEquals(last.getAction(), ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END || last.getAction() == ServerEntityAction.INVOKE_ACTION);
         last = req;
         invoked = false;
         break;
       case INVOKE_ACTION:
-        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_PAYLOAD);
+        Assert.assertTrue(last.getAction() == ServerEntityAction.RECEIVE_SYNC_ENTITY_KEY_END);
         int sid = ByteBuffer.wrap(payload).getInt();
         Assert.assertEquals(lastSid + 1, sid);
         Assert.assertEquals(concurrency, c);
@@ -288,39 +401,43 @@ public class ReplicatedTransactionHandlerTest {
   private void mockPassiveSync(ReplicatedTransactionHandler rth) throws EventHandlerException {
 //  start passive sync
     EntityID eid = new EntityID("foo", "bar");
+    FetchID fetch = new FetchID(10L);
     long VERSION = 1;
     byte[] config = new byte[0];
-    send(PassiveSyncMessage.createStartSyncMessage());
-    send(PassiveSyncMessage.createStartEntityMessage(eid, VERSION, config, true));
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 1));
-    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 1, config));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 1));
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 2));
-    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 2, config));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 2));  
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 3));
-    send(PassiveSyncMessage.createPayloadMessage(eid, VERSION, 3, config));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, VERSION, 3));  
-    send(PassiveSyncMessage.createStartEntityKeyMessage(eid, VERSION, 4));
+    boolean canDelete = true;
+    SyncReplicationActivity.EntityCreationTuple[] entitiesToSync = {
+        new SyncReplicationActivity.EntityCreationTuple(eid, VERSION, 10L, config, canDelete)
+    };
+    send(SyncReplicationActivity.createStartSyncMessage(entitiesToSync));
+    send(SyncReplicationActivity.createStartEntityMessage(eid, VERSION, new FetchID(10L), TCByteBufferFactory.wrap(config), 0));
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, new FetchID(10L), 1));
+    send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, new FetchID(10L), 1, TCByteBufferFactory.wrap(config), ""));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, VERSION, new FetchID(10L), 1));
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, new FetchID(10L), 2));
+    send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, new FetchID(10L), 2, TCByteBufferFactory.wrap(config), ""));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, VERSION, new FetchID(10L), 2));  
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, new FetchID(10L), 3));
+    send(SyncReplicationActivity.createPayloadMessage(eid, VERSION, new FetchID(10L), 3, TCByteBufferFactory.wrap(config), ""));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, VERSION, new FetchID(10L), 3));  
+    send(SyncReplicationActivity.createStartEntityKeyMessage(eid, VERSION, new FetchID(10L), 4));
 //  defer a few replicated messages with sequence as payload
-    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(1).array(), 4));
-    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(2).array(), 4));
-    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(3).array(), 4));
-    send(PassiveSyncMessage.createPayloadMessage(eid, 1, 4, config));
+    send(createMockReplicationMessage(fetch, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(1).array(), 4));
+    send(createMockReplicationMessage(fetch, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(2).array(), 4));
+    send(createMockReplicationMessage(fetch, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(3).array(), 4));
+    send(SyncReplicationActivity.createPayloadMessage(eid, 1, new FetchID(10L), 4, TCByteBufferFactory.wrap(config), ""));
 //  defer a few replicated messages with sequence as payload
-    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(4).array(), 4));
-    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(5).array(), 4));
-    send(createMockReplicationMessage(eid, VERSION, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(6).array(), 4));
-    send(PassiveSyncMessage.createEndEntityKeyMessage(eid, 1, 4)); 
-    send(PassiveSyncMessage.createEndEntityMessage(eid, VERSION));
-    send(PassiveSyncMessage.createEndSyncMessage(new byte[0]));
+    send(createMockReplicationMessage(fetch, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(4).array(), 4));
+    send(createMockReplicationMessage(fetch, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(5).array(), 4));
+    send(createMockReplicationMessage(fetch, ByteBuffer.wrap(new byte[Integer.BYTES]).putInt(6).array(), 4));
+    send(SyncReplicationActivity.createEndEntityKeyMessage(eid, 1, new FetchID(10L), 4)); 
+    send(SyncReplicationActivity.createEndEntityMessage(eid, VERSION, new FetchID(10L)));
+    send(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(new byte[0])));
   }
 
-  private long send(ReplicationMessage msg) throws EventHandlerException {
-    msg.setReplicationID(rid++);
-    if (!msg.getEntityID().equals(EntityID.NULL_ID)) {
-      loopbackSink.addSingleThreaded(msg);
-    }
+  private long send(SyncReplicationActivity activity) throws EventHandlerException {
+    ReplicationMessage msg = createReceivedActivity(activity);
+    msg.setSequenceID(rid++);
+    loopbackSink.addToSink(msg);
     return rid;
   }
   @After
@@ -328,72 +445,55 @@ public class ReplicatedTransactionHandlerTest {
     this.rth.getEventHandler().destroy();
   }
   
-  private ReplicationMessage createMockReplicationMessage(EntityID eid, long VERSION, byte[] payload, int concurrency) {
-    return ReplicationMessage.createReplicatedMessage(new EntityDescriptor(eid, ClientInstanceID.NULL_ID, VERSION), 
-        source, TransactionID.NULL_ID, TransactionID.NULL_ID, ReplicationMessage.ReplicationType.INVOKE_ACTION, payload, concurrency);
+  private SyncReplicationActivity createMockReplicationMessage(FetchID fetchID, byte[] payload, int concurrency) {
+    return SyncReplicationActivity.createInvokeMessage(fetchID,
+        source, instance, TransactionID.NULL_ID, TransactionID.NULL_ID, SyncReplicationActivity.ActivityType.INVOKE_ACTION, TCByteBufferFactory.wrap(payload), concurrency, "");
   }
 
   private static abstract class NoStatsSink<T> implements Sink<T> {
-    @Override
-    public void enableStatsCollection(boolean enable) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public boolean isStatsCollectionEnabled() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public Stats getStats(long frequency) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public Stats getStatsAndReset(long frequency) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void resetStats() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addSpecialized(SpecializedEventContext specialized) {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public int size() {
-      throw new UnsupportedOperationException();
-    }
-    @Override
-    public void clear() {
-      throw new UnsupportedOperationException();
-    }
+
   }
 
 
-  private static class ForwardingSink extends NoStatsSink<ReplicationMessage> {
-    private final EventHandler<ReplicationMessage> target;
+  private static class ForwardingSink<M> extends NoStatsSink<M> {
+    private final EventHandler<M> target;
 
-    public ForwardingSink(EventHandler<ReplicationMessage> voltronMessageHandler) {
+    public ForwardingSink(EventHandler<M> voltronMessageHandler) {
       this.target = voltronMessageHandler;
     }
 
     @Override
-    public void addSingleThreaded(ReplicationMessage context) {
+    public void addToSink(M context) {
       try {
         this.target.handleEvent(context);
       } catch (EventHandlerException e) {
         Assert.fail();
       }
     }
-    @Override
-    public void addMultiThreaded(ReplicationMessage context) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setClosed(boolean closed) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-    
-    
-}
+
+
+  /**
+   * Wraps the activity in a ReplicationMessage but also emulates its "received from network" state.
+   */
+  private static ReplicationMessage createReceivedActivity(SyncReplicationActivity activity) {
+    ReplicationMessage sending = ReplicationMessage.createActivityContainer(activity);
+    TCByteBufferOutput output = new TCByteBufferOutputStream();
+    sending.serializeTo(output);
+    TCByteBufferInput input = new TCByteBufferInputStream(output.toArray());
+    ReplicationMessage receiving = new ReplicationMessage();
+    try {
+      receiving.deserializeFrom(input);
+    } catch (IOException e) {
+      // Not expected in test.
+      e.printStackTrace();
+      Assert.fail(e.getLocalizedMessage());
+    }
+    return receiving;
+  }  
+  
+  ReplicationMessage createMockRequest(SyncReplicationActivity act) {
+    ReplicationMessage msg = ReplicationMessage.createLocalContainer(act);
+    return msg;
+  }
 }

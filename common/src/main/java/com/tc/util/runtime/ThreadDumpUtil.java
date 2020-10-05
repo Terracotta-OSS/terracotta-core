@@ -18,9 +18,9 @@
  */
 package com.tc.util.runtime;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.object.locks.ThreadID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.util.Conversion;
 
 import java.io.ByteArrayOutputStream;
@@ -31,7 +31,6 @@ import java.lang.management.MonitorInfo;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Date;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -40,7 +39,7 @@ public class ThreadDumpUtil {
   public static final String            ZIP_BUFFER_NAME         = "threadDumps.zip";
   private static final short            ZIP_BUFFER_INITIAL_SIZE = 10 * 1024;
 
-  protected static final TCLogger       logger                  = TCLogging.getLogger(ThreadDumpUtil.class);
+  protected static final Logger logger = LoggerFactory.getLogger(ThreadDumpUtil.class);
   protected static final ThreadMXBean   threadMXBean            = ManagementFactory.getThreadMXBean();
   protected static volatile ThreadGroup rootThreadGroup;
 
@@ -51,7 +50,7 @@ public class ThreadDumpUtil {
     try {
       zout.putNextEntry(zEntry);
     } catch (IOException e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return null;
     }
 
@@ -62,36 +61,19 @@ public class ThreadDumpUtil {
       zout.write(Conversion.string2Bytes(threadDump));
       zout.flush();
     } catch (IOException e) {
-      logger.error(e);
+      logger.error("Exception: ", e);
       return null;
     } finally {
       try {
         zout.closeEntry();
         zout.close();
       } catch (IOException e) {
-        logger.error(e);
+        logger.error("Exception: ", e);
         return null;
       }
     }
 
     return bOutStream.toByteArray();
-  }
-
-  public static String getLockList(LockInfoByThreadID lockInfo, ThreadID tcThreadID) {
-    String lockList = "";
-    List<String> heldLocks = lockInfo.getHeldLocks(tcThreadID);
-    List<String> waitOnLocks = lockInfo.getWaitOnLocks(tcThreadID);
-    List<String> pendingLocks = lockInfo.getPendingLocks(tcThreadID);
-    if (heldLocks.size() != 0) {
-      lockList += "LOCKED : " + heldLocks.toString() + "\n";
-    }
-    if (waitOnLocks.size() != 0) {
-      lockList += "WAITING ON LOCK: " + waitOnLocks.toString() + "\n";
-    }
-    if (pendingLocks.size() != 0) {
-      lockList += "WAITING TO LOCK: " + pendingLocks.toString() + "\n";
-    }
-    return lockList;
   }
 
   /**

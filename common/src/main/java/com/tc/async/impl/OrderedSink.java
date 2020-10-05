@@ -18,11 +18,10 @@
  */
 package com.tc.async.impl;
 
+import org.slf4j.Logger;
+
 import com.tc.async.api.OrderedEventContext;
 import com.tc.async.api.Sink;
-import com.tc.async.api.SpecializedEventContext;
-import com.tc.logging.TCLogger;
-import com.tc.stats.Stats;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -38,7 +37,7 @@ import java.util.TreeSet;
 public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
 
   private final Sink<T> sink;
-  private final TCLogger logger;
+  private final Logger logger;
 
   private long           current = 0;
   private final SortedSet<T> pending = new TreeSet<T>(new Comparator<T>() {
@@ -52,20 +51,20 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
       }
   });
 
-  public OrderedSink(TCLogger logger, Sink<T> sink) {
+  public OrderedSink(Logger logger, Sink<T> sink) {
     this.logger = logger;
     this.sink = sink;
   }
 
   @Override
-  public synchronized void addSingleThreaded(T oc) {
+  public synchronized void addToSink(T oc) {
     long seq = oc.getSequenceID();
     if (seq == 0) {
       if (pending.isEmpty()) {
         logger.debug("Sequence reset. Message with ID " + (current)
             + " was last before reset");
         current = 0;
-        sink.addSingleThreaded(oc);
+        sink.addToSink(oc);
       } else {
         throw new AssertionError(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
             + " is missing still but reset was requested");
@@ -75,32 +74,15 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
           + " Seq Id = " + seq + " Event = " + oc);
     } else if (seq == current + 1) {
       current = seq;
-      sink.addSingleThreaded(oc);
+      sink.addToSink(oc);
       processPendingIfNecessary();
     } else {
       pending.add(oc);
       if (pending.size() % 10 == 0) {
-        logger.warn(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
+        logger.info(pending.size() + " messages in pending queue. Message with ID " + (current + 1)
             + " is missing still");
       }
     }
-  }
-
-  @Override
-  public void setClosed(boolean closed) {
-    this.sink.setClosed(closed);
-  }
-
-  @Override
-  public void addMultiThreaded(OrderedEventContext specialized) {
-    // Not used in the ordered case.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addSpecialized(SpecializedEventContext specialized) {
-    // Not used in the ordered case.
-    throw new UnsupportedOperationException();
   }
 
   private void processPendingIfNecessary() {
@@ -110,49 +92,12 @@ public class OrderedSink<T extends OrderedEventContext> implements Sink<T> {
         long seq = oc.getSequenceID();
         if (seq == current + 1) {
           current = seq;
-          sink.addSingleThreaded(oc);
+          sink.addToSink(oc);
           i.remove();
         } else {
           break;
         }
       }
     }
-  }
-
-  @Override
-  public synchronized void clear() {
-    pending.clear();
-    current = 0;
-    sink.clear();
-  }
-
-  @Override
-  public int size() {
-    return sink.size();
-  }
-
-  @Override
-  public void enableStatsCollection(boolean enable) {
-    sink.enableStatsCollection(enable);
-  }
-
-  @Override
-  public Stats getStats(long frequency) {
-    return sink.getStats(frequency);
-  }
-
-  @Override
-  public Stats getStatsAndReset(long frequency) {
-    return sink.getStatsAndReset(frequency);
-  }
-
-  @Override
-  public boolean isStatsCollectionEnabled() {
-    return sink.isStatsCollectionEnabled();
-  }
-
-  @Override
-  public void resetStats() {
-    sink.resetStats();
   }
 }

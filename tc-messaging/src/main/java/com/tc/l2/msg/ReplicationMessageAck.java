@@ -21,32 +21,30 @@ package com.tc.l2.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.net.groups.MessageID;
-import java.io.IOException;
+import com.tc.util.Assert;
 
-/**
- *
- */
-public class ReplicationMessageAck extends AbstractGroupMessage {
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class ReplicationMessageAck extends AbstractGroupMessage implements IBatchableGroupMessage<ReplicationAckTuple> {
   //message types  
   public static final int INVALID               = 0; // Sent to replicate a request on the passive
-  public static final int RECEIVED                = 2; // Means that the replicated action has been received by the passive
-  public static final int COMPLETED                = 3; // response that the replicated action completed
   public static final int START_SYNC                = 4; // Sent from the passive when it wants the active to start passive sync.
+  public static final int BATCH                = 5; // Sent from the passive to ack a batch of messages.
 
   // Factory methods.
   public static ReplicationMessageAck createSyncRequestMessage() {
     return new ReplicationMessageAck(START_SYNC);
   }
 
-  public static ReplicationMessageAck createReceivedAck(MessageID requestToAck) {
-    return new ReplicationMessageAck(RECEIVED, requestToAck);
+  public static ReplicationMessageAck createBatchAck() {
+    return new ReplicationMessageAck(BATCH);
   }
 
-  public static ReplicationMessageAck createCompletedAck(MessageID requestToAck) {
-    return new ReplicationMessageAck(COMPLETED, requestToAck);
-  }
 
+  private List<ReplicationAckTuple> batch;
 
   public ReplicationMessageAck() {
     super(INVALID);
@@ -55,19 +53,69 @@ public class ReplicationMessageAck extends AbstractGroupMessage {
 //  this type requests passive sync from the active  
   private ReplicationMessageAck(int type) {
     super(type);
+    if (BATCH == type) {
+      this.batch = new ArrayList<ReplicationAckTuple>();
+    }
   }
-  
-  private ReplicationMessageAck(int type, MessageID requestID) {
-    super(type, requestID);
+
+  // Note that this does change the instance, so synchronized would be required if it were being called by multiple threads.
+  // However, due to other races in how the using code decides to stop changing a message, it makes more sense for them to serialize on that level.
+  @Override
+  public void addToBatch(ReplicationAckTuple element) {
+    Assert.assertTrue(BATCH == this.getType());
+    this.batch.add(element);
   }
 
   @Override
+  public int getBatchSize() {
+    return this.batch.size();
+  }
+
+  public List<ReplicationAckTuple> getBatch() {
+    return this.batch;
+  }
+  
+  @Override
+  public void setSequenceID(long rid) {
+    //  unused
+  }
+  
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    // Do nothing - no instance variables.
+    if (BATCH == this.getType()) {
+      int batchSize = in.readInt();
+      // We should never send an empty message.
+      Assert.assertTrue(batchSize > 0);
+      this.batch = new ArrayList<ReplicationAckTuple>();
+      for (int i = 0; i < batchSize; ++i) {
+        SyncReplicationActivity.ActivityID respondTo = new SyncReplicationActivity.ActivityID(in.readLong());
+        ReplicationResultCode result = ReplicationResultCode.decode(in.readInt());
+        this.batch.add(new ReplicationAckTuple(respondTo, result));
+      }
+    }
   }
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    // Do nothing - no instance variables.
+    if (BATCH == this.getType()) {
+      int size = this.batch.size();
+      // We should never send an empty message.
+      Assert.assertTrue(size > 0);
+      out.writeInt(size);
+      for (ReplicationAckTuple tuple : this.batch) {
+        out.writeLong(tuple.respondTo.id);
+        out.writeInt(tuple.result.code());
+      }
+    }
+  }
+
+  @Override
+  public AbstractGroupMessage asAbstractGroupMessage() {
+    return this;
+  }
+
+  @Override
+  public long getPayloadSize() {
+    return 0L;
   }
 }

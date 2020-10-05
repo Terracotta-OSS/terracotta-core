@@ -21,17 +21,24 @@ package com.tc.net.protocol.tcm;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.util.ProductID;
 import com.tc.net.ClientID;
+import com.tc.net.CommStackMismatchException;
+import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
+import com.tc.net.core.ProductID;
+import com.tc.util.TCTimeoutException;
+import java.io.IOException;
 
 import java.lang.reflect.Constructor;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -131,15 +138,15 @@ public class MockMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public NetworkStackID open() {
+  public NetworkStackID open(InetSocketAddress serverAddress) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public NetworkStackID open(char[] password) {
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses) throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException, CommStackMismatchException {
     throw new UnsupportedOperationException();
   }
-
+  
   @SuppressWarnings("resource")
   @Override
   public TCMessage createMessage(TCMessageType type) {
@@ -249,7 +256,12 @@ public class MockMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public ProductID getProductId() {
+  public ProductID getProductID() {
+    return null;
+  }
+
+  @Override
+  public ConnectionID getConnectionID() {
     return null;
   }
 }

@@ -18,164 +18,273 @@
  */
 package com.tc.objectserver.entity;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
+import com.tc.async.api.Sink;
+import com.tc.classloader.ServiceLocator;
+import com.tc.entity.VoltronEntityMessage;
+import com.tc.exception.ServerException;
+import com.tc.exception.TCShutdownServerException;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.EntityDescriptor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityServerService;
-import org.terracotta.entity.StateDumper;
-import org.terracotta.exception.EntityException;
-import org.terracotta.exception.EntityVersionMismatchException;
 
 import com.tc.object.EntityID;
+import com.tc.object.FetchID;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
-import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.services.TerracottaServiceProviderRegistry;
 import com.tc.util.Assert;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
+import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
+import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.exception.EntityNotProvidedException;
+import com.tc.objectserver.api.ManagementKeyCallback;
+import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.util.LinkedHashMap;
 
 
 public class EntityManagerImpl implements EntityManager {
-  private static final TCLogger LOGGER = TCLogging.getLogger(EntityManagerImpl.class);
-  private final ConcurrentMap<EntityID, ManagedEntity> entities = new ConcurrentHashMap<>();
+  private static final Logger LOGGER = LoggerFactory.getLogger(EntityManagerImpl.class);
+  private final ConcurrentMap<EntityID, FetchID> entities = new ConcurrentHashMap<>();
+  private final ConcurrentMap<FetchID, ManagedEntity> entityIndex = new ConcurrentHashMap<>();
   private final ConcurrentMap<String, EntityServerService<EntityMessage, EntityResponse>> entityServices = new ConcurrentHashMap<>();
 
-  private final ClassLoader creationLoader;
+  private final ServerEntityFactory creationLoader;
   private final TerracottaServiceProviderRegistry serviceRegistry;
   private final ClientEntityStateManager clientEntityStateManager;
-  private final ITopologyEventCollector eventCollector;
+  private final ManagementTopologyEventCollector eventCollector;
   
-  private final BiConsumer<EntityID, Long> noopLoopback;
+  private final ManagementKeyCallback flushLocalPipeline;
+  private Sink<VoltronEntityMessage> messageSelf;
   
   private final RequestProcessor processorPipeline;
   private boolean shouldCreateActiveEntities;
+  
+  private final Semaphore snapshotLock = new Semaphore(1); // sync and create or destroy are mutually exclusive
+  
+  // The sort comparator.
+  private final Comparator<ManagedEntity> consumerIdSorter = new Comparator<ManagedEntity>() {
+    @Override
+    public int compare(ManagedEntity o1, ManagedEntity o2) {
+      long firstID = o1.getConsumerID();
+      long secondID = o2.getConsumerID();
+      // NOTE:  The ids are unique.
+      Assert.assertTrue(firstID != secondID);
+      return (firstID > secondID)
+          ? 1
+          : -1;
+    }};
+
 
   public EntityManagerImpl(TerracottaServiceProviderRegistry serviceRegistry, 
-      ClientEntityStateManager clientEntityStateManager, ITopologyEventCollector eventCollector, 
-      RequestProcessor processor, BiConsumer<EntityID, Long> noopLoopback) {
+      ClientEntityStateManager clientEntityStateManager, ManagementTopologyEventCollector eventCollector, 
+      RequestProcessor processor, ManagementKeyCallback flushLocalPipeline, ServiceLocator locator) {
     this.serviceRegistry = serviceRegistry;
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
     this.processorPipeline = processor;
     // By default, the server starts up in a passive mode so we will create passive entities.
     this.shouldCreateActiveEntities = false;
-    this.creationLoader = Thread.currentThread().getContextClassLoader();
-    this.noopLoopback = noopLoopback;
+    this.creationLoader = new ServerEntityFactory(locator);
+    this.flushLocalPipeline = flushLocalPipeline;
     ManagedEntity platform = createPlatformEntity();
-    entities.put(platform.getID(), platform);
+    entities.put(platform.getID(), PlatformEntity.PLATFORM_FETCH_ID);
+    entityIndex.put(PlatformEntity.PLATFORM_FETCH_ID, platform);
+  }
+  
+  public void setMessageSink(Sink<VoltronEntityMessage> sink) {
+    this.messageSelf = sink;
   }
 
   private ManagedEntity createPlatformEntity() {
-    return new PlatformEntity(processorPipeline);
+    return new PlatformEntity(messageSelf, processorPipeline);
   }
 
   @Override
-  public ClassLoader getEntityLoader() {
+  public ServerEntityFactory getEntityLoader() {
     return this.creationLoader;
   }
 
   @Override
-  public void enterActiveState() {
+  public List<VoltronEntityMessage> enterActiveState() {
     // We can't enter active twice.
     Assert.assertFalse(this.shouldCreateActiveEntities);
-    
-    // Tell our implementation-provided services to become active (since they might have modes of operation).
-    this.serviceRegistry.notifyServerDidBecomeActive();
-    
-    // Set the state of the manager.
-    this.shouldCreateActiveEntities = true;
-    // We can promote directly because this method is only called from PTH initialize 
-    //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
-    for (ManagedEntity entity : this.entities.values()) {
-      entity.promoteEntity();
+    //  locking the snapshotting until full active is achieved 
+    snapshotLock.acquireUninterruptibly();
+    try {
+      // Tell our implementation-provided services to become active (since they might have modes of operation).
+      this.serviceRegistry.notifyServerDidBecomeActive();
+
+      // Set the state of the manager.
+      this.shouldCreateActiveEntities = true;
+      // We can promote directly because this method is only called from PTH initialize 
+      //  thus, this only happens once RTH is spun down and PTH is beginning to spin up.  We know the request queues are clear
+      // issue-439: We need to sort these entities, ascending by consumerID.
+      List<ManagedEntity> sortingList = new ArrayList<ManagedEntity>(this.entityIndex.values());
+      List<VoltronEntityMessage> reconnectDone = new ArrayList<>(this.entityIndex.size());
+      Collections.sort(sortingList, this.consumerIdSorter);
+      for (ManagedEntity entity : sortingList) {
+        try {
+            reconnectDone.add(new LocalPipelineFlushMessage(
+              EntityDescriptor.createDescriptorForInvoke(new FetchID(entity.getConsumerID()), ClientInstanceID.NULL_ID), 
+              entity.promoteEntity()));
+        } catch (ConfigurationException ce) {
+          String errMsg = "failure to promote entity: " + entity.getID();
+          LOGGER.error(errMsg, ce);
+          throw new TCShutdownServerException(errMsg, ce);
+        }
+      }
+  //  only enter active state after all the entities have promoted to active
+      processorPipeline.enterActiveState();
+      return reconnectDone;
+    } finally {
+      snapshotLock.release();
     }
-//  only enter active state after all the entities have promoted to active
-    processorPipeline.enterActiveState();
   }
 
   @Override
-  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws EntityException {
+  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws ServerException {
     // Valid entity versions start at 1.
-    Assert.assertTrue(version > 0);
-    ManagedEntity temp = new ManagedEntityImpl(id, version, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID),
-        clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(id, version), this.shouldCreateActiveEntities, canDelete);
-    ManagedEntity exists = entities.putIfAbsent(id, temp);
-    if (exists == null) {
-      LOGGER.debug("created " + id);
+    EntityServerService service = getVersionCheckedService(id, version);
+    snapshotLock.acquireUninterruptibly();
+    try {
+    //  if active, reuse the managed entity if it is mapped to an id.  if passive, MUST map the id to the index of the managed entity
+      FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
+      
+      ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
+        new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete));
+
+      return temp;
+    } finally {
+      snapshotLock.release();
     }
-    return exists != null ? exists : temp;
   }
 
   @Override
-  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws EntityException {
+  public void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws ServerException {
     // Valid entity versions start at 1.
     Assert.assertTrue(recordedVersion > 0);
-    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, noopLoopback, serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, processorPipeline, getVersionCheckedService(entityID, recordedVersion), this.shouldCreateActiveEntities, canDelete);
-    if (entities.putIfAbsent(entityID, temp) != null) {
-      throw new IllegalStateException("Double create for entity " + entityID);
-    }    
-    temp.loadEntity(configuration);
+    EntityServerService service = getVersionCheckedService(entityID, recordedVersion);
+    FetchID set = new FetchID(consumerID);
+    Object checkNull = entities.put(entityID, set);
+    Assert.assertNull(checkNull); //  must be null, nothing should be competing
+    ManagedEntity temp = new ManagedEntityImpl(entityID, recordedVersion, consumerID, flushLocalPipeline, 
+          serviceRegistry.subRegistry(consumerID), clientEntityStateManager, this.eventCollector, this.messageSelf,
+          processorPipeline, service, this.shouldCreateActiveEntities, canDelete);
+    
+    checkNull = entityIndex.put(set, temp);
+    Assert.assertNull(checkNull); //  must be null, nothing should be competing
+    try {
+      temp.loadEntity(configuration);
+    } catch (ConfigurationException ce) {
+      String errMsg = "failure to load an existing entity: " + entityID;
+      LOGGER.error(errMsg, ce);
+      throw new TCShutdownServerException(errMsg, ce);
+    }
   }
 
   @Override
-  public boolean removeDestroyed(EntityID id) {
-    boolean removed = false;
-    ManagedEntity e = entities.get(id);
-    if (e != null && e.isDestroyed()) {
-      if (entities.remove(id) != null) {
-        removed = true;
+  public boolean removeDestroyed(FetchID id) {
+    snapshotLock.acquireUninterruptibly();
+    try {
+      ManagedEntity e = entityIndex.computeIfPresent(id,(fetch,entity)->{
+        if (entity.isRemoveable()) {
+          entities.remove(entity.getID(), fetch);
+          return null;
+        } else {
+          return entity;
+        }
+      });
+      
+      if (e == null) {
+        LOGGER.debug("removed " + id);
+        return true;
+      } else {
+        return false;
       }
+    } finally {
+      snapshotLock.release();
     }
-    if (removed) {
-      LOGGER.debug("removed " + id);
-    }
-    return removed;
   }
 
   @Override
-  public Optional<ManagedEntity> getEntity(EntityID id, long version) throws EntityException {
+  public Optional<ManagedEntity> getEntity(EntityDescriptor descriptor) throws ServerException {
+    if (descriptor.isIndexed()) {
+      return getEntity(descriptor.getFetchID());
+    } else {
+      return getEntity(descriptor.getEntityID(), descriptor.getClientSideVersion());
+    }
+  }
+  
+  private Optional<ManagedEntity> getEntity(FetchID idx) {
+    Assert.assertFalse(idx.isNull());
+    return Optional.ofNullable(this.entityIndex.get(idx));
+  }
+  
+  private Optional<ManagedEntity> getEntity(EntityID id, long version) throws ServerException {
     Assert.assertNotNull(id);
-    if (EntityID.NULL_ID == id || version == 0) {
+    if (EntityID.NULL_ID == id) {
 //  just do instance check, believe it or not, equality check is expensive due to frequency called
 //  short circuit for null entity, it's never here
       return Optional.empty();
     }
-    ManagedEntity entity = entities.get(id);
-    if (entity != null) {
-      // Valid entity versions start at 1.
-      Assert.assertTrue(version > 0);
+    FetchID fetch = entities.get(id);
+    ManagedEntity entity = null;
+    if (fetch != null) {
+      entity = entityIndex.get(fetch);
+      //  if the version in the descriptor is not valid, don't check 
       //  check the provided version against the version of the entity
-      if (entity.getVersion() != version) {
-        throw new EntityVersionMismatchException(id.getClassName(), id.getEntityName(), entity.getVersion(), version);
+      if (version > 0 && entity.getVersion() != version) {
+        throw ServerException.createEntityVersionMismatch(id, entity.getVersion() + " does not match " + version);
       }
     }
     return Optional.ofNullable(entity);
   }
-  
+
+  @Override
   public Collection<ManagedEntity> getAll() {
-    return new ArrayList<>(entities.values());
+    return new ArrayList<>(entityIndex.values());
   }
   
-  private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws EntityVersionMismatchException, EntityNotProvidedException {
+  @Override
+  public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst) {
+    snapshotLock.acquireUninterruptibly();
+    List<ManagedEntity> sortingList = new ArrayList<>(this.entityIndex.values());
+    try {
+      Collections.sort(sortingList, this.consumerIdSorter);
+      return sortingList;
+    } finally {
+      snapshotLock.release();
+      if (runFirst != null) {
+        runFirst.accept(sortingList);
+      }
+    }
+  }
+
+  private EntityServerService<EntityMessage, EntityResponse> getVersionCheckedService(EntityID entityID, long version) throws ServerException {
     // Valid entity versions start at 1.
-    Assert.assertTrue(version > 0);
     String typeName = entityID.getClassName();
     EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(typeName);
     if (service == null) {
       try {
-        service = ServerEntityFactory.getService(typeName, this.creationLoader);
+        service = (EntityServerService)this.creationLoader.getService(typeName);
       } catch (ClassNotFoundException notfound) {
-        throw new EntityNotProvidedException(typeName, entityID.getEntityName());
+        throw ServerException.createEntityNotProvided(entityID);
       }
       // getService only fails to resolve by throwing.
       Assert.assertNotNull(service);
@@ -187,29 +296,28 @@ public class EntityManagerImpl implements EntityManager {
     // We must have a service by now or we would have thrown.
     Assert.assertNotNull(service);
     long serviceVersion = service.getVersion();
-    if (serviceVersion != version) {
-      throw new EntityVersionMismatchException(typeName, entityID.getEntityName(), serviceVersion, version);
+    if (version > 0 && serviceVersion != version) {
+        throw ServerException.createEntityVersionMismatch(entityID, serviceVersion + " does not match " + version);
     }
     return service;
   }
-
+  
   @Override
-  public MessageCodec<EntityMessage, EntityResponse> getMessageCodec(EntityID eid) {
-    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
-    if (service != null) {
-      return service.getMessageCodec();
+  public void resetReferences() {
+    clientEntityStateManager.clearClientReferences();
+    for (ManagedEntity me : entityIndex.values()) {
+      me.resetReferences(0);
     }
-    return null;
   }
 
   @Override
-  public SyncMessageCodec<EntityMessage> getSyncMessageCodec(EntityID eid) {
-    EntityServerService<EntityMessage, EntityResponse> service = entityServices.get(eid.getClassName());
-    if (service != null) {
-      return service.getSyncMessageCodec();
+  public MessageCodec<? extends EntityMessage, ? extends EntityResponse> getMessageCodec(EntityDescriptor eid) {
+    ManagedEntity e = this.entityIndex.get(eid.getFetchID());
+    if (e != null) {
+      return e.getCodec();
     }
     return null;
-  }  
+  }
 
   @Override
   public String toString() {
@@ -217,11 +325,15 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public void dumpStateTo(StateDumper stateDumper) {
-    for (Map.Entry<EntityID, ManagedEntity> entry : entities.entrySet()) {
-      EntityID entityID = entry.getKey();
-      entry.getValue().dumpStateTo(stateDumper.subStateDumper(entityID.getClassName() + ":" + entityID.getEntityName()));
-    }
+  public Map<String, ?> getStateMap() {
+    Map<String, Object> entityMap = new LinkedHashMap<>();
+    Set<Map.Entry<EntityID, FetchID>> entries = entities.entrySet();
+    entityMap.put("className", this.getClass().getName());
+    entityMap.put("size", entries.size());
+    List<Map<String, Object>> entities  = new ArrayList<>(entityIndex.size());
+    entityMap.put("entities", entities);
+    entityIndex.values().forEach(entity->entities.add(entity.getState()));
+    return entityMap;
   }
 }
 

@@ -19,66 +19,48 @@
 
 package com.tc.services;
 
-import com.tc.entity.ServerEntityMessage;
+import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.EntityDescriptor;
-import com.tc.util.Assert;
+import com.tc.object.ClientInstanceID;
+import com.tc.object.tx.TransactionID;
 
-import java.util.HashMap;
-import java.util.Map;
 
 public class ClientAccount {
+  private final ClientID clientID;
+  private final ClientMessageSender sender;
   private final MessageChannel channel;
-  private final Map<Long, ResponseWaiter> waitingResponse = new HashMap<>();
   private volatile boolean open = true;
-  private long responseId = 0;
 
-  ClientAccount(MessageChannel channel) {
+  ClientAccount(ClientMessageSender sender, MessageChannel channel) {
+    this.sender = sender;
+    this.clientID = (ClientID)channel.getRemoteNodeID();
     this.channel = channel;
   }
 
-  synchronized ResponseWaiter send(EntityDescriptor entityDescriptor, byte[] payload) {
-    ResponseWaiter responseWaiter = new ResponseWaiter();
-    if (!open) {
-      responseWaiter.done();
-    } else {
-      waitingResponse.put(responseId, responseWaiter);
-      ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
-      message.setMessage(entityDescriptor, payload, responseId++);
-      if (!message.send()) {
-        if (waitingResponse.remove(responseId, responseWaiter)) {
-          responseWaiter.done();
-        }
-      }
+  synchronized void sendNoResponse(ClientInstanceID clientInstance, byte[] payload) {
+    if (open) {
+      this.sender.send(this.clientID, clientInstance, payload);
     }
-    return responseWaiter;
   }
 
-  synchronized void sendNoResponse(EntityDescriptor entityDescriptor, byte[] payload) {
+  synchronized void sendInvokeMessage(TransactionID transaction, byte[] payload) {
     if (open) {
-      ServerEntityMessage message = (ServerEntityMessage) channel.createMessage(TCMessageType.SERVER_ENTITY_MESSAGE);
-      message.setMessage(entityDescriptor, payload);
-      if (!message.send()) {
-//  message not delivered.  This call is only best efforts so ignore.        
-      }
+      this.sender.send(this.clientID, transaction, payload);
     }
   }
+  /** 
+   * going to initiate the close here.  also want to shutdown all the waiters because 
+   * the mapping is going to be removed from above
+   */
 
   synchronized void close() {
+    if (channel.isOpen()) {
+      // if the channel is open, this means that a consumer of the ClientCommunicator API
+      // has directly requested a close on the client connection.  This slightly reorders things
+      // but it shouldn't matter here.  waiting on response is not something that is really supported anyways
+      // (API is deprecated)
+      channel.close();
+    }
     open = false;
-    for (ResponseWaiter responseWaiter : waitingResponse.values()) {
-      // Client closed, whether or not it received the message is not important anymore since it's gone.
-      responseWaiter.done();
-    }
-  }
-
-  synchronized void response(long responseId) {
-    if (open) {
-      ResponseWaiter responseWaiter = waitingResponse.remove(responseId);
-      if (responseWaiter != null) {
-        responseWaiter.done();
-      }
-    }
   }
 }

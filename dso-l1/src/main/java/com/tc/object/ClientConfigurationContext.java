@@ -20,50 +20,16 @@ package com.tc.object;
 
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
-import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
-public class ClientConfigurationContext extends ConfigurationContextImpl {
 
-  public final static String             LOCK_RESPONSE_STAGE                         = "lock_response_stage";
-  public final static String             HYDRATE_MESSAGE_STAGE                       = "hydrate_message_stage";
-  public static final String             CLIENT_COORDINATION_STAGE                   = "client_coordination_stage";
-  public static final String             CLUSTER_EVENTS_STAGE                        = "cluster_events_stage";
-  public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE              = "cluster_membership_event_stage";
-  public static final String             MANAGEMENT_STAGE                            = "management_stage";
-  public static final String             VOLTRON_ENTITY_RESPONSE_STAGE                      = "request_ack_stage";
+public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             VOLTRON_ENTITY_MULTI_RESPONSE_STAGE                      = "multi_request_ack_stage";
-  public static final String             SERVER_ENTITY_MESSAGE_STAGE                 = "server_entity_message_stage";
-  public static final String             SERVER_ENTITY_MESSAGE_SENDER_STAGE                 = "server_entity_message_sender_stage";
 
   public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
-  public static final int                MAX_SENT_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_SENT_REQUESTS, 200);
   
-  private final ClientLockManager         lockManager;
-  private final ClientEntityManager       entityManager;
-  private final ClientHandshakeManager    clientHandshakeManager;
-
-  public ClientConfigurationContext(StageManager stageManager, ClientLockManager lockManager,
-                                    ClientEntityManager entityManager,
-                                    ClientHandshakeManager clientHandshakeManager) {
+  public ClientConfigurationContext(StageManager stageManager) {
     super(stageManager);
-    this.lockManager = lockManager;
-    this.entityManager = entityManager;
-    this.clientHandshakeManager = clientHandshakeManager;
-  }
-
-  public ClientLockManager getLockManager() {
-    return this.lockManager;
-  }
-
-  public ClientEntityManager getEntityManager() {
-    return this.entityManager;
-  }
-
-  public ClientHandshakeManager getClientHandshakeManager() {
-    return this.clientHandshakeManager;
   }
 }

@@ -18,62 +18,129 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 
-/**
- *
- */
 public class MessagePayload {
-  
-  private final byte[] raw;
-  private EntityMessage message;
-  private final int concurrency;
-  private final boolean replicate;
-  
-  public static final MessagePayload EMPTY = new MessagePayload(new byte[0], null, true);
-  
-  public MessagePayload(byte[] raw, EntityMessage message, boolean replicate) {
-    this(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, replicate);
-  }
-  
-  public MessagePayload(byte[] raw, EntityMessage message, int concurrency) {
-    this(raw, message, concurrency, false);
+  public static final MessagePayload emptyPayload() {
+    MessagePayload payload = new MessagePayload(TCByteBufferFactory.getInstance(false, 0), null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
+    payload.setDebugId("EMPTY");
+    return payload;
   }
 
-  private MessagePayload(byte[] raw, EntityMessage message, int concurrency, boolean replicate) {
-    this.raw = raw;
+  public static final MessagePayload rawDataOnly(TCByteBuffer raw) {
+    MessagePayload payload = new MessagePayload(raw, null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, false, false);
+    payload.setDebugId("RAW");
+    return payload;
+  }
+
+  public static final MessagePayload commonMessagePayload(TCByteBuffer raw, EntityMessage message, boolean replicate, boolean allowBusy) {
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, allowBusy);
+  }
+
+  public static final MessagePayload commonMessagePayloadBusy(TCByteBuffer raw, EntityMessage message, boolean replicate) {
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, true);
+  }
+
+  public static final MessagePayload commonMessagePayloadNotBusy(TCByteBuffer raw, EntityMessage message, boolean replicate) {
+    return new MessagePayload(raw, message, ConcurrencyStrategy.MANAGEMENT_KEY, 0, replicate, false);
+  }
+
+  public static final MessagePayload syncPayloadNormal(TCByteBuffer raw, int concurrencyKey) {
+    return new MessagePayload(raw, null, concurrencyKey, 0, false, false);
+  }
+
+  public static final MessagePayload syncPayloadCreation(TCByteBuffer raw, int referenceCount) {
+    return new MessagePayload(raw, null, 0, referenceCount, false, false);
+  }
+
+
+  private final TCByteBuffer raw;
+  private EntityMessage message;
+  private MessageCodecException exception;
+  private final int concurrency;
+  private final int referenceCount;
+  private final boolean replicate;
+  private final boolean canBeBusy;
+  private String debugId;
+  
+  // NOTE:  ReferenceCount is a special-case for synchronizing the creation of an existing entity.
+  private MessagePayload(TCByteBuffer raw, EntityMessage message, int concurrency, int referenceCount, boolean replicate, boolean canBeBusy) {
+    this.raw = raw == null || raw.isReadOnly() ? raw : raw.asReadOnlyBuffer();
     this.message = message;
+    this.debugId = null;
     this.concurrency = concurrency;
+    this.referenceCount = referenceCount;
     this.replicate = replicate;
+    this.canBeBusy = canBeBusy;
+  }
+  
+  private byte[] convertRawToBytes() {
+    return TCByteBufferFactory.unwrap(raw);
   }
   
   public byte[] getRawPayload() {
-    return raw;
+    return convertRawToBytes();
   }
   
-  public EntityMessage decodeRawMessage(MessageCodec codec) {
-    try {
-      return decodeMessage(codec);
-    } catch (MessageCodecException mce) {
-      throw new RuntimeException(mce);
+  public TCByteBuffer getByteBufferPayload() {
+    return this.raw.duplicate();
+  }
+  
+  public void setDebugId(String debugId) {
+    this.debugId = debugId;
+  }
+  
+  public String getDebugId() {
+    if (debugId == null && this.message != null) {
+      debugId = message.toString();
     }
+    return debugId;
+  }
+  
+  public boolean canBeBusy() {
+    return canBeBusy;
   }
 
-  public EntityMessage decodeMessage(MessageCodec codec) throws MessageCodecException {
-    if (message == null) {
-      message = codec.decodeMessage(raw);
+  public EntityMessage decodeMessage(MessageDecoder codec) throws MessageCodecException {
+    if (exception != null) {
+      throw exception;
     }
-    return message;
+    try {
+      if (message == null) {
+        message = codec.decode(convertRawToBytes());
+      }
+      return message;
+    } catch (MessageCodecException ce) {
+      exception = ce;
+      throw exception;
+    } catch (Exception e) {
+      exception = new MessageCodecException("error decoding message", e);
+      throw exception;
+    }
   }
   
   public int getConcurrency() {
     return concurrency;
   }
   
+  public int getReferenceCount() {
+    return this.referenceCount;
+  }
+  
+  public Class<?> getType() {
+    return (message != null) ? message.getClass() : null;
+  }
+  
   public boolean shouldReplicate() {
     return replicate;
+  }
+  
+  @Override
+  public String toString() {
+    return "MessagePayload{" + "debugId=" + getDebugId() + '}';
   }
 }

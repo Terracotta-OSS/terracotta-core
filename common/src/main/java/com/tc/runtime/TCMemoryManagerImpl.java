@@ -18,11 +18,11 @@
  */
 package com.tc.runtime;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.TCThreadGroup;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.util.runtime.Os;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TCMemoryManagerImpl implements TCMemoryManager {
 
-  private static final TCLogger            logger        = TCLogging.getLogger(TCMemoryManagerImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(TCMemoryManagerImpl.class);
   private static final String              CMS_NAME      = "ConcurrentMarkSweep";
   private static final String              CMS_WARN_MESG = "Terracotta does not recommend ConcurrentMarkSweep Collector.";
 
@@ -145,12 +145,10 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
           if (run) {
             interrupt = true;
           }
+        } catch (InternalError ie) {
+          // Do nothing - sometimes the information, while bean setup worked, will fail to be accessed
+          logger.debug("Memory information could not be accessed at this time", ie);
         } catch (Throwable t) {
-          // for debugging purpose
-          StackTraceElement[] trace = t.getStackTrace();
-          for (StackTraceElement element : trace)
-            logger.warn(element.toString());
-          logger.error(t);
           throw new TCRuntimeException(t);
         }
       }

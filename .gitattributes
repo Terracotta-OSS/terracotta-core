@@ -1,0 +1,6 @@
+# Set the default behavior to LF
+* text eol=lf
+
+# Batch scripts should have Windows endings
+*.bat eol=crlf
+*.cmd eol=crlf

@@ -18,11 +18,11 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.StripeID;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.core.ProductID;
 import com.tc.util.UUID;
 
-import java.util.Collections;
-import java.util.Set;
 
 public class DefaultConnectionIdFactory implements ConnectionIDFactory {
 
@@ -33,38 +33,28 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
     if (new ChannelID(connectionID.getChannelID()).isNull()) {
-      return nextConnectionId(connectionID.getJvmID());
+      return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
     } else {
-      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID());
+      return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
     }
   }
 
-  private synchronized ConnectionID nextConnectionId(String clientJvmID) {
-    return new ConnectionID(clientJvmID, sequence++, serverID);
+  private synchronized ConnectionID nextConnectionId(String clientJvmID, ProductID product) {
+    return new ConnectionID(clientJvmID, sequence++, serverID, product);
   }
 
-  private ConnectionID makeConnectionId(String clientJvmID, long channelID) {
-    return new ConnectionID(clientJvmID, channelID, serverID);
-  }
-
-  @Override
-  public Set<ConnectionID> loadConnectionIDs() {
-    return Collections.emptySet();
+  private ConnectionID makeConnectionId(String clientJvmID, long channelID, ProductID product) {
+    return new ConnectionID(clientJvmID, channelID, serverID, product);
   }
 
   @Override
-  public void init(String clusterID, long nextAvailChannelID, Set<ConnectionID> connections) {
+  public void activate(StripeID stripeID, long nextAvailChannelID) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void registerForConnectionIDEvents(ConnectionIDFactoryListener listener) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void restoreConnectionId(ConnectionID rv) {
-    //
   }
 
   @Override

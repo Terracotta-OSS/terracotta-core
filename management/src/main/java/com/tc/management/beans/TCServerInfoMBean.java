@@ -18,12 +18,9 @@
  */
 package com.tc.management.beans;
 
-import com.tc.config.schema.L2Info;
-import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
-import java.io.IOException;
 import java.util.Map;
 
 public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
@@ -37,8 +34,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   boolean isPassiveUninitialized();
 
   boolean isPassiveStandby();
-
-  boolean isRecovering();
 
   long getStartTime();
 
@@ -70,17 +65,11 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getDescriptionOfCapabilities();
 
-  L2Info[] getL2Info();
-
   String getL2Identifier();
-
-  ServerGroupInfo[] getServerGroupInfo();
 
   int getTSAListenPort();
 
   int getTSAGroupPort();
-
-  boolean getRestartable();
 
   Map<String, Object> getStatistics();
 
@@ -101,34 +90,16 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getState();
 
   boolean isVerboseGC();
+  
+  boolean isReconnectWindow();
+  
+  int getReconnectWindowTimeout();
 
   void setVerboseGC(boolean verboseGC);
 
   void gc();
-
-  boolean isEnterprise();
-
-  boolean isSecure();
-
-  String getSecurityServiceLocation();
-
-  Integer getSecurityServiceTimeout();
-
-  String getSecurityHostname();
-
-  String getIntraL2Username();
-
-  String getRunningBackup();
-
-  String getBackupStatus(String name) throws IOException;
-
-  String getBackupFailureReason(String name) throws IOException;
-
-  Map<String, String> getBackupStatuses() throws IOException;
-
-  void backup(String name) throws IOException;
-
-  String getResourceState();
-
-  boolean isLegacyProductionModeEnabled();
+  
+  void setPipelineMonitoring(boolean monitor);
+  
+  String getClusterState(boolean shortForm);
 }

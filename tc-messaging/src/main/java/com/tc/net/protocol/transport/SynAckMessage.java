@@ -22,7 +22,7 @@ public interface SynAckMessage extends TransportHandshakeMessage {
 
   public String getErrorContext();
 
-  public short getErrorType();
+  public TransportHandshakeError getErrorType();
 
   public boolean hasErrorContext();
 
