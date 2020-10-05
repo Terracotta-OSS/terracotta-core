@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.l2.msg.IBatchableGroupMessage;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
@@ -37,17 +38,17 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
   
   private final Function<E, M> messageFactory;
   private final GroupManager<AbstractGroupMessage> groupManager;
-  private final NodeID target;
+  private final ServerID target;
   private final int maximumBatchSize;
   private final int idealMessagesInFlight;
-  private final Consumer<NodeID> networkDoneTarget;
+  private final Consumer<ServerID> networkDoneTarget;
   
   private int messagesInFlight;
   private M cachedMessage;
   private long nextReplicationID;
 
 
-  public GroupMessageBatchContext(Function<E, M> messageFactory, GroupManager<AbstractGroupMessage> groupManager, NodeID target, int maximumBatchSize, int idealMessagesInFlight, Consumer<NodeID> networkDoneTarget) {
+  public GroupMessageBatchContext(Function<E, M> messageFactory, GroupManager<AbstractGroupMessage> groupManager, ServerID target, int maximumBatchSize, int idealMessagesInFlight, Consumer<ServerID> networkDoneTarget) {
     this.messageFactory = messageFactory;
     this.groupManager = groupManager;
     this.target = target;

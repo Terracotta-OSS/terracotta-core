@@ -21,6 +21,7 @@ package com.tc.objectserver.entity;
 import com.tc.exception.TCServerRestartException;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -36,7 +37,7 @@ import java.util.Set;
  * COMPLETED acknowledgement for a specific message.
  */
 public class ActivePassiveAckWaiter {
-  private final Map<NodeID, SessionID> session;
+  private final Map<ServerID, SessionID> session;
   private final Set<SessionID> start;
   private final Set<SessionID> receivedPending;
   private final Set<SessionID> receivedByComplete;
@@ -45,7 +46,7 @@ public class ActivePassiveAckWaiter {
   private final Map<NodeID, ReplicationResultCode> results;
   private final PassiveReplicationBroker parent;
 
-  public ActivePassiveAckWaiter(Map<NodeID, SessionID> map, Set<SessionID> allPassiveNodes, PassiveReplicationBroker parent) {
+  public ActivePassiveAckWaiter(Map<ServerID, SessionID> map, Set<SessionID> allPassiveNodes, PassiveReplicationBroker parent) {
     this.session = map;
     this.start =  Collections.unmodifiableSet(allPassiveNodes);
     this.receivedPending =  new HashSet<>(allPassiveNodes);

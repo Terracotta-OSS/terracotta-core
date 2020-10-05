@@ -99,7 +99,7 @@ public class ReplicatedTransactionHandler {
   private final SyncState state = new SyncState();
   
   // This MUST be manipulated under lock - it is the batch of ack messages we are accumulating until the network is ready for another message.
-  private NodeID cachedMessageAckFrom;
+  private ServerID cachedMessageAckFrom;
   private GroupMessageBatchContext<ReplicationMessageAck, ReplicationAckTuple> cachedBatchAck;
   private final Sink<Runnable> sentToActive;
 
@@ -620,7 +620,7 @@ public class ReplicatedTransactionHandler {
     return message;
   }
 
-  private synchronized void prepareAckForSend(NodeID sender, SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode code) {
+  private synchronized void prepareAckForSend(ServerID sender, SyncReplicationActivity.ActivityID respondTo, ReplicationResultCode code) {
     // The batch context is cached and constructed lazily when the sender changes.
     if (!sender.equals(this.cachedMessageAckFrom)) {
       this.cachedMessageAckFrom = sender;

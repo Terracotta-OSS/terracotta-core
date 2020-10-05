@@ -24,6 +24,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +59,7 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
-  public Set<NodeID> getPassiveStandbys() {
+  public Set<ServerID> getPassiveStandbys() {
     return Collections.emptySet();
   }
 
