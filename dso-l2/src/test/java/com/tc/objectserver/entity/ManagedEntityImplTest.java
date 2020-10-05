@@ -246,28 +246,41 @@ public class ManagedEntityImplTest {
   }
   
   @Test 
-  public void testReconfigureEntity() throws Exception {
-    // first create a passive entity and then promote
-    ServerEntityRequest request = mockCreateEntityRequest();
-    TestingResponse response = mockResponse();
-    String config = "foo";
-    MessagePayload arg = mockCreatePayload(config);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request, arg, response));
-    response.waitFor();
-    verify(response).complete();
+  public void testReconfigureEntityWhenPassive() throws Exception {
+    ServerEntityRequest createRequest = mockCreateEntityRequest();
+    TestingResponse createResponse = mockResponse();
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(createRequest, mockCreatePayload("foo"), createResponse));
+    createResponse.waitFor();
+    verify(createResponse).complete();
+
+    ServerEntityRequest reconfigureRequest = mockReconfigureEntityRequest();
+    TestingResponse reconfigureResponse = mockResponse();
+    MessagePayload barPayload = mockReconfigurePayload("bar");
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(reconfigureRequest, barPayload, reconfigureResponse));
+    reconfigureResponse.waitFor();
+    verify(reconfigureResponse).complete(Mockito.any());
+    
+    verify(serverEntityService).reconfigureEntity(eq(serviceRegistry), eq(passiveServerEntity), eq(barPayload.getRawPayload()));
+  }
+
+  @Test
+  public void testReconfigureEntityWhenActive() throws Exception {
+    ServerEntityRequest createRequest = mockCreateEntityRequest();
+    TestingResponse createResponse = mockResponse();
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(createRequest, mockCreatePayload("foo"), createResponse));
+    createResponse.waitFor();
+    verify(createResponse).complete();
+
     promote();
 
-    // first create a passive entity and then promote
-    ServerEntityRequest request2 = mockReconfigureEntityRequest();
-    TestingResponse response2 = mockResponse();
-    String config2 = "foo2";
-    MessagePayload arg2 = mockReconfigurePayload(config2);
-    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(request2, arg2, response2));
-    response2.waitFor();
-    verify(response2).complete(Mockito.any());
-    
-    // We expected to see this as a result of the promotion.
-    verify(serverEntityService).reconfigureEntity(ArgumentMatchers.eq(serviceRegistry), eq(this.activeServerEntity), ArgumentMatchers.eq(arg2.getRawPayload()));
+    ServerEntityRequest reconfigureRequest = mockReconfigureEntityRequest();
+    TestingResponse reconfigureResponse = mockResponse();
+    MessagePayload barPayload = mockReconfigurePayload("bar");
+    invokeOnTransactionHandler(()->managedEntity.addRequestMessage(reconfigureRequest, barPayload, reconfigureResponse));
+    reconfigureResponse.waitFor();
+    verify(reconfigureResponse).complete(Mockito.any());
+
+    verify(serverEntityService).reconfigureEntity(eq(serviceRegistry), eq(activeServerEntity), eq(barPayload.getRawPayload()));
   }
 
 
