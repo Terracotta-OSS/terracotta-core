@@ -67,6 +67,7 @@ import org.mockito.Matchers;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -228,31 +229,42 @@ public class ManagedEntityImplTest {
   }
   
   @Test 
-  public void testReconfigureEntity() throws Exception {
-    // first create a passive entity and then promote
-    ServerEntityRequest request = mockCreateEntityRequest();
-    TestingResponse response = mockResponse();
-    String config = "foo";
-    MessagePayload arg = mockCreatePayload(config);
-    pth.submit(()->managedEntity.addRequestMessage(request, arg, response::complete, response::failure));
-    response.waitFor();
-    verify(response).complete(Mockito.any());
+  public void testReconfigureEntityWhenPassive() throws Exception {
+    ServerEntityRequest createRequest = mockCreateEntityRequest();
+    TestingResponse createResponse = mockResponse();
+    pth.submit(()->managedEntity.addRequestMessage(createRequest, mockCreatePayload("foo"), createResponse::complete, createResponse::failure));
+    createResponse.waitFor();
+    verify(createResponse).complete(isNull(byte[].class));
+
+    ServerEntityRequest reconfigureRequest = mockReconfigureEntityRequest();
+    TestingResponse reconfigureResponse = mockResponse();
+    MessagePayload barPayload = mockReconfigurePayload("bar");
+    pth.submit(()->managedEntity.addRequestMessage(reconfigureRequest, barPayload, reconfigureResponse::complete, reconfigureResponse::failure));
+    reconfigureResponse.waitFor();
+    verify(reconfigureResponse).complete(Mockito.any());
+    
+    verify(serverEntityService).reconfigureEntity(eq(serviceRegistry), eq(passiveServerEntity), eq(barPayload.getRawPayload()));
+  }
+
+  @Test
+  public void testReconfigureEntityWhenActive() throws Exception {
+    ServerEntityRequest createRequest = mockCreateEntityRequest();
+    TestingResponse createResponse = mockResponse();
+    pth.submit(()->managedEntity.addRequestMessage(createRequest, mockCreatePayload("foo"), createResponse::complete, createResponse::failure));
+    createResponse.waitFor();
+    verify(createResponse).complete(isNull(byte[].class));
+
     managedEntity.promoteEntity();
     switchThreadName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
 
-    // first create a passive entity and then promote
-    ServerEntityRequest request2 = mockReconfigureEntityRequest();
-    TestingResponse response2 = mockResponse();
-    String config2 = "foo2";
-    MessagePayload arg2 = mockReconfigurePayload(config2);
-    pth.submit(()->{
-      managedEntity.addRequestMessage(request2, arg2, response2::complete, response2::failure);
-    });
-    response2.waitFor();
-    verify(response2).complete(Mockito.any());
-    
-    // We expected to see this as a result of the promotion.
-    verify(serverEntityService).reconfigureEntity(Matchers.eq(serviceRegistry), eq(this.activeServerEntity), Matchers.eq(arg2.getRawPayload()));
+    ServerEntityRequest reconfigureRequest = mockReconfigureEntityRequest();
+    TestingResponse reconfigureResponse = mockResponse();
+    MessagePayload barPayload = mockReconfigurePayload("bar");
+    pth.submit(()->managedEntity.addRequestMessage(reconfigureRequest, barPayload, reconfigureResponse::complete, reconfigureResponse::failure));
+    reconfigureResponse.waitFor();
+    verify(reconfigureResponse).complete(Mockito.any());
+
+    verify(serverEntityService).reconfigureEntity(eq(serviceRegistry), eq(activeServerEntity), eq(barPayload.getRawPayload()));
   }
   
   

@@ -505,7 +505,6 @@ public class ManagedEntityImpl implements ManagedEntity {
       reconfigureEntityRequest.failure(new EntityNotFoundException(this.getID().getClassName(), this.getID().getEntityName()));
       return;
     }
-    this.constructorInfo = constructorInfo;
     CommonServerEntity<EntityMessage, EntityResponse> entityToCreate = null;
     // Create the appropriate kind of entity, based on our active/passive state.
     if (this.isInActiveState) {
@@ -521,13 +520,14 @@ public class ManagedEntityImpl implements ManagedEntity {
       if (null == this.passiveServerEntity) {
         throw new IllegalStateException("Passive entity " + id + " does not exists.");
       } else {
-        this.passiveServerEntity = this.factory.reconfigureEntity(this.registry, this.passiveServerEntity, this.constructorInfo);
+        this.passiveServerEntity = this.factory.reconfigureEntity(this.registry, this.passiveServerEntity, constructorInfo);
         Assert.assertNull(this.concurrencyStrategy);
         Assert.assertNull(this.executionStrategy);
         // Store the configuration in case we promote.
         entityToCreate = this.passiveServerEntity;
       }
     }
+    this.constructorInfo = constructorInfo;
     reconfigureEntityRequest.complete(oldconfig);
     // Fire the event that the entity was created.
     this.eventCollector.entityWasReloaded(this.getID(), this.consumerID, this.isInActiveState);
