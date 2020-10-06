@@ -20,7 +20,6 @@ package com.tc.net.groups;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 
@@ -34,7 +33,7 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   private MessageID        id;
   private MessageID        requestID;
 
-  private transient NodeID messageOrginator = ServerID.NULL_ID;
+  private transient ServerID messageOrginator = ServerID.NULL_ID;
 
   protected AbstractGroupMessage(int type) {
     this.type = type;
@@ -94,12 +93,12 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   }
 
   @Override
-  public void setMessageOrginator(NodeID n) {
+  public void setMessageOrginator(ServerID n) {
     this.messageOrginator = n;
   }
 
   @Override
-  public NodeID messageFrom() {
+  public ServerID messageFrom() {
     return this.messageOrginator;
   }
 }

@@ -378,7 +378,7 @@ public class StateManagerImpl implements StateManager {
     return validStates.contains(this.getCurrentMode());
   }
 
-  private void moveToActiveState(Set<NodeID> passives, Topology topology) {
+  private void moveToActiveState(Set<ServerID> passives, Topology topology) {
     ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.START, ServerMode.PASSIVE));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
@@ -653,7 +653,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   @Override
-  public Set<NodeID> getPassiveStandbys() {
+  public Set<ServerID> getPassiveStandbys() {
     return electionMgr.passiveStandbys();
   }
 

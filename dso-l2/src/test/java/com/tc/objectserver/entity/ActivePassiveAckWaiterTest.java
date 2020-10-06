@@ -20,6 +20,7 @@ package com.tc.objectserver.entity;
 
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -52,11 +53,11 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testSingleWait() throws Exception {
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     Set<SessionID> passives = new HashSet<>();
     SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    NodeID node = mock(NodeID.class);
+    ServerID node = mock(ServerID.class);
     map.put(node, onePassive);
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
     Interlock interlock = new Interlock(1);
@@ -73,7 +74,7 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testMultiWait() throws Exception {
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     Set<SessionID> passives = new HashSet<>();
 
     SessionID onePassive = mock(SessionID.class);
@@ -81,8 +82,8 @@ public class ActivePassiveAckWaiterTest {
     SessionID twoPassive = mock(SessionID.class);
     passives.add(twoPassive);
     
-    NodeID node1 = mock(NodeID.class);
-    NodeID node2 = mock(NodeID.class);
+    ServerID node1 = mock(ServerID.class);
+    ServerID node2 = mock(ServerID.class);
     map.put(node1, onePassive);
     map.put(node2, twoPassive);
     
@@ -105,15 +106,15 @@ public class ActivePassiveAckWaiterTest {
   @Test
   public void testMultiWaitWithMoreThreads() throws Exception {
     Set<SessionID> passives = new HashSet<>();
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     
     SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
     SessionID twoPassive = mock(SessionID.class);
     passives.add(twoPassive);
     
-    NodeID node1 = mock(NodeID.class);
-    NodeID node2 = mock(NodeID.class);
+    ServerID node1 = mock(ServerID.class);
+    ServerID node2 = mock(ServerID.class);
     
     map.put(node1, onePassive);
     map.put(node2, twoPassive);
@@ -139,15 +140,15 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testImplicitReceive() throws Exception {
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     Set<SessionID> passives = new HashSet<>();
     SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
     SessionID twoPassive = mock(SessionID.class);
     passives.add(twoPassive);
     
-    NodeID node1 = mock(NodeID.class);
-    NodeID node2 = mock(NodeID.class);
+    ServerID node1 = mock(ServerID.class);
+    ServerID node2 = mock(ServerID.class);
     map.put(node1, onePassive);
     map.put(node2, twoPassive);
     
@@ -166,11 +167,11 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testFailedDoubleComplete() throws Exception {
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     Set<SessionID> passives = new HashSet<>();
     SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
-    NodeID node1 = mock(NodeID.class);
+    ServerID node1 = mock(ServerID.class);
     map.put(node1, onePassive);
     
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
@@ -196,12 +197,12 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testDisconnectAfterComplete() throws Exception {
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     Set<SessionID> passives = new HashSet<>();
     SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
     
-    NodeID node1 = mock(NodeID.class);
+    ServerID node1 = mock(ServerID.class);
     map.put(node1, onePassive);
     
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(map, passives, null);
@@ -222,12 +223,12 @@ public class ActivePassiveAckWaiterTest {
 
   @Test
   public void testDisconnectRunsFinalizer() throws Exception {
-    Map<NodeID, SessionID> map = new HashMap<>();
+    Map<ServerID, SessionID> map = new HashMap<>();
     Set<SessionID> passives = new HashSet<>();
     SessionID onePassive = mock(SessionID.class);
     passives.add(onePassive);
     
-    NodeID node1 = mock(NodeID.class);
+    ServerID node1 = mock(ServerID.class);
     map.put(node1, onePassive);
     
     SetOnceFlag checkMark = new SetOnceFlag();

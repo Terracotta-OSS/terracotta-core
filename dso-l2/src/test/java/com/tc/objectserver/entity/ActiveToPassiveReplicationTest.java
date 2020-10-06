@@ -65,12 +65,14 @@ public class ActiveToPassiveReplicationTest {
   public void setUp() {
     passive = mock(ServerID.class);
     ReplicationSender replicate = mock(ReplicationSender.class);
-    when(replicate.addPassive(any(NodeID.class), any(SessionID.class), anyInt(), any(SyncReplicationActivity.class))).thenReturn(Boolean.TRUE);
+    when(replicate.addPassive(any(ServerID.class), any(SessionID.class), anyInt(), any(SyncReplicationActivity.class))).thenReturn(Boolean.TRUE);
     ConsistencyManager cmgr = mock(ConsistencyManager.class);
     when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     ProcessTransactionHandler pth = mock(ProcessTransactionHandler.class);
     when(pth.snapshotEntityList(any(Consumer.class))).thenReturn(Collections.emptyList());
-    replication = new ActiveToPassiveReplication(cmgr, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), mock(GroupManager.class));
+    GroupManager grp = mock(GroupManager.class);
+    when(grp.isNodeConnected(any(NodeID.class))).thenReturn(Boolean.TRUE);
+    replication = new ActiveToPassiveReplication(cmgr, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), grp);
   }
   
   @Test

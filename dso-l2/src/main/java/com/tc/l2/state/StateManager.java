@@ -21,6 +21,7 @@ package com.tc.l2.state;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
 import java.util.Set;
@@ -63,7 +64,7 @@ public interface StateManager extends PrettyPrintable {
 
   public NodeID getActiveNodeID();
   
-  public Set<NodeID> getPassiveStandbys();
+  public Set<ServerID> getPassiveStandbys();
   
   public static ServerMode convert(State state) {
     if (state == null) {

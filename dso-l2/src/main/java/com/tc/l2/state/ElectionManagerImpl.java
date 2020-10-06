@@ -61,7 +61,7 @@ public class ElectionManagerImpl implements ElectionManager {
   private State                 serverState;
   private Enrollment            winner;
   private NodeID                active = ServerID.NULL_ID;
-  private Set<NodeID>           passiveStandbys;
+  private Set<ServerID>           passiveStandbys;
 
   private final long            electionTime;
   private int             expectedServers;
@@ -92,7 +92,7 @@ public class ElectionManagerImpl implements ElectionManager {
     };
   }
   
-  public Set<NodeID> passiveStandbys() {
+  public Set<ServerID> passiveStandbys() {
     return passiveStandbys;
   }
 
@@ -276,7 +276,7 @@ public class ElectionManagerImpl implements ElectionManager {
     msg = L2StateMessage.createElectionResultMessage(e, currentState);
     debugInfo("Won election, announcing to world and waiting for response...");
     GroupResponse<L2StateMessage> responses = groupManager.sendToAndWaitForResponse(servers, msg);
-    Set<NodeID> passives = new HashSet<>();
+    Set<ServerID> passives = new HashSet<>();
     for (L2StateMessage response : responses.getResponses()) {
       Assert.assertEquals(msg.getMessageID(), response.inResponseTo());
       if (response.getType() == L2StateMessage.RESULT_AGREED) {

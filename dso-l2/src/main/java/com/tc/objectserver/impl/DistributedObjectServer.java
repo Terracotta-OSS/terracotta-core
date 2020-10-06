@@ -1001,7 +1001,7 @@ public class DistributedObjectServer {
       public void nodeLeft(NodeID nodeID) {
         if (l2Coordinator.getStateManager().isActiveCoordinator()) {
           PlatformInfoRequest fake = PlatformInfoRequest.createServerInfoRemoveMessage((ServerID)nodeID);
-          fake.setMessageOrginator(nodeID);
+          fake.setMessageOrginator((ServerID)nodeID);
           infoHandler.addToSink(fake);
         }
       }

@@ -22,6 +22,7 @@ import com.tc.async.api.Sink;
 import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
@@ -70,7 +71,7 @@ public class ReplicationSender {
     filtering.remove(dest);
   }
 
-  public boolean addPassive(NodeID node, SessionID session, Integer execution, SyncReplicationActivity activity) {
+  public boolean addPassive(ServerID node, SessionID session, Integer execution, SyncReplicationActivity activity) {
     // Set up the sync state.
     SyncState state = createAndRegisterSyncState(node, session, execution);
     // Send the message.
@@ -101,7 +102,7 @@ public class ReplicationSender {
 
   }
   
-  private SyncState createAndRegisterSyncState(NodeID node, SessionID session, int lane) {
+  private SyncState createAndRegisterSyncState(ServerID node, SessionID session, int lane) {
     // We can't already have a state for this passive.
     Assert.assertTrue(!node.isNull());
     Assert.assertTrue(!filtering.containsKey(session));
@@ -137,7 +138,6 @@ public class ReplicationSender {
   }  
   
   private class SyncState {
-    private final NodeID target;
     // liveSet is the total set of entities which we believe have finished syncing and fully exist on the passive.
     private final Set<FetchID> liveFetch = new HashSet<>();
     // syncdID is the set of concurrency keys, of the entity syncingID, which we believe have finished syncing and fully
@@ -159,8 +159,7 @@ public class ReplicationSender {
     private final SessionID session;
     private final int executionLane;
         
-    public SyncState(NodeID target, SessionID nodeToId, int lane) {
-      this.target = target;
+    public SyncState(ServerID target, SessionID nodeToId, int lane) {
       this.session = nodeToId;
       this.executionLane = lane;
       
@@ -361,6 +360,5 @@ public class ReplicationSender {
         }
       }));
     }
-
   }
 }

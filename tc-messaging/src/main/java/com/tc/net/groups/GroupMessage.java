@@ -20,6 +20,7 @@ package com.tc.net.groups;
 
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 
 public interface GroupMessage extends TCSerializable<GroupMessage> {
@@ -30,9 +31,9 @@ public interface GroupMessage extends TCSerializable<GroupMessage> {
 
   public abstract MessageID inResponseTo();
 
-  public abstract void setMessageOrginator(NodeID n);
+  public abstract void setMessageOrginator(ServerID n);
 
-  public abstract NodeID messageFrom();
+  public abstract ServerID messageFrom();
   
   public boolean isRecycleOnRead(TCMessageImpl message);
 

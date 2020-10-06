@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 import static com.tc.l2.state.StateManager.ACTIVE_COORDINATOR;
 import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import static com.tc.l2.state.StateManager.START_STATE;
+import com.tc.net.ServerID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.server.TCServerMain;
 import java.util.concurrent.ExecutorService;
@@ -389,7 +390,7 @@ public class StateManagerImplTest {
     when(sw.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);
     Enrollment winner = mock(Enrollment.class);
     when(sw.getEnrollment()).thenReturn(winner);
-    NodeID active = mock(NodeID.class);
+    ServerID active = mock(ServerID.class);
     when(winner.getNodeID()).thenReturn(active);
     when(winner.wins(any(Enrollment.class))).thenReturn(Boolean.TRUE);
     when(winner.getWeights()).thenReturn(new long[0]);

@@ -29,6 +29,7 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ClientInstanceID;
@@ -57,7 +58,7 @@ import static org.mockito.Mockito.when;
 
 
 public class ReplicationSenderTest {
-  NodeID node = mock(NodeID.class);
+  ServerID node = mock(ServerID.class);
   SessionID session = mock(SessionID.class);
   @SuppressWarnings("unchecked")
   GroupManager<AbstractGroupMessage> groupMgr = mock(GroupManager.class);
