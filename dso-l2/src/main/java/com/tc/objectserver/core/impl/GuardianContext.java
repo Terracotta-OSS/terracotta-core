@@ -25,9 +25,7 @@ import com.tc.net.protocol.tcm.ServerMessageChannel;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.objectserver.impl.DistributedObjectServer;
-import com.tc.server.TCServer;
 import com.tc.server.TCServerImpl;
-import com.tc.server.TCServerMain;
 import com.tc.spi.Guardian;
 import com.tc.util.Assert;
 import java.util.Map;
@@ -39,7 +37,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class GuardianContext {
   private static final ConcurrentHashMap<ChannelID, MessageChannel> CONTEXT = new ConcurrentHashMap<>();
-  private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>(); 
+  private static final ThreadLocal<ChannelID>  CURRENTID = new ThreadLocal<>();
+
+  private static TCServerImpl server;
+
+  public static void setServer(TCServerImpl server) {
+    GuardianContext.server = server;
+  }
   
   private static Properties createGuardContext(String callName) {
     return createGuardContext(callName, new Properties());
@@ -118,9 +122,8 @@ public class GuardianContext {
   }
   
   private static Guardian getOperationGuardian() {
-    TCServer server = TCServerMain.getServer();
     if (server != null && server instanceof TCServerImpl) {
-      DistributedObjectServer dso = ((TCServerImpl)server).getDSOServer();
+      DistributedObjectServer dso = server.getDSOServer();
       if (dso != null) {
         ServerManagementContext cxt = dso.getManagementContext();
         if (cxt != null) {

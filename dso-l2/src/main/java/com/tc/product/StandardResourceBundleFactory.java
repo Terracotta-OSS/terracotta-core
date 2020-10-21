@@ -16,8 +16,13 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.server;
+package com.tc.product;
 
-public interface TCServerActivationListener {
-  public void serverActivated();
+import java.util.ResourceBundle;
+
+public class StandardResourceBundleFactory extends AbstractResourceBundleFactory {
+  @Override
+  public ResourceBundle createBundle(Class<?> c) {
+    return ResourceBundle.getBundle(c.getName()+"Bundle");
+  }
 }

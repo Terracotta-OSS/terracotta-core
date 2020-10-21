@@ -31,22 +31,23 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
 
 /**
  *
  */
 public class ConsistencyManagerImplTest {
-
-  @Rule
-  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   public ConsistencyManagerImplTest() {
   }
@@ -73,9 +74,15 @@ public class ConsistencyManagerImplTest {
   @Test
   public void testVoteThreshold() throws Exception {
     String voter = UUID.randomUUID().toString();
+    MBeanServer mServer = MBeanServerFactory.newMBeanServer();
+    JMXSubsystem caller = new JMXSubsystem(mServer);
+    Server server = mock(Server.class);
+    ServerJMX jmx = mock(ServerJMX.class);
+    when(jmx.getMBeanServer()).thenReturn(mServer);
+    when(server.getManagement()).thenReturn(jmx);
+    ServerEnv.setServer(server);
     TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
     ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
-    JMXSubsystem caller = new JMXSubsystem();
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
     Assert.assertTrue(term == 0);
@@ -149,8 +156,10 @@ public class ConsistencyManagerImplTest {
   public void testVoteConfigMandatoryForMultiNode() throws Exception {
     List serverList = mock(List.class);
     when(serverList.size()).thenReturn(2);
-    exit.expectSystemExitWithStatus(-1);
-    ConsistencyManager.parseVoteCount(null, serverList);
+    Server server = mock(Server.class);
+    ServerEnv.setServer(server);
+    int count = ConsistencyManager.parseVoteCount(null, serverList);
+    verify(server).stop();
   }
 
   @Test

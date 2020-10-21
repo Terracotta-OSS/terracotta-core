@@ -29,7 +29,6 @@ import com.tc.config.ServerConfigurationManager;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
-import com.tc.lang.ServerExitStatus;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.logging.TCLogging;
@@ -39,8 +38,10 @@ import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
@@ -50,7 +51,6 @@ import java.io.ByteArrayOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.Date;
 
@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import javax.management.MBeanServerFactory;
 
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
@@ -82,8 +83,10 @@ public class TCServerImpl extends SEDA implements TCServer {
   
   private final ServerConfigurationManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
-  private boolean                           shutdown                                     = false;
+  private boolean                           shutdown                            = false;
+  private volatile boolean                  restart                             = false;
 
+  private final JMXSubsystem                subsystem = new JMXSubsystem(MBeanServerFactory.createMBeanServer());
   /**
    * This should only be used for tests.
    */
@@ -95,13 +98,18 @@ public class TCServerImpl extends SEDA implements TCServer {
     this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  public TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
+  protected TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
                       ConnectionPolicy connectionPolicy) {
     super(group);
 
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
+    GuardianContext.setServer(this);
+  }
+
+  public JMXSubsystem getJMX() {
+    return subsystem;
   }
 
   @Override
@@ -140,7 +148,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   public void stop(StopAction...restartMode) {
     ServerEnv.getServer().audit("Stop invoked", new Properties());
     TCLogging.getConsoleLogger().info("Stopping server");
-    dsoServer.getContext().getL2Coordinator().getStateManager().moveToStopState();
+    try {
+      dsoServer.stop();
+    } catch (Exception e) {
+      logger.error("trouble shutting down", e);
+    }
     EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
     for (StopAction s : restartMode) {
       set.add(s);
@@ -151,12 +163,11 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
     if (set.contains(StopAction.RESTART)) {
       TCLogging.getConsoleLogger().info("Requesting restart");
-      exitWithStatus(ServerExitStatus.EXITCODE_RESTART_REQUEST);
-    } else {
-      exitWithStatus(0);
+      restart = true;
     }
+    notifyShutdown();
   }
-
+  
   @Override
   public void start() {
     if (!this.isStarted()) {
@@ -184,7 +195,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   public synchronized void shutdown() {
     if (canShutdown()) {
       consoleLogger.info("Server exiting...");
-      notifyShutdown();
       stop();
     } else {
       logger.warn("Server in incorrect state (" + stateManager.getCurrentMode().getName() + ") to be shutdown.");
@@ -344,12 +354,9 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertTrue(this.isStopped());
     DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
     server.start();
-    registerDSOServer(server, ManagementFactory.getPlatformMBeanServer());
-    try {
-      registerServerMBeans(server, ManagementFactory.getPlatformMBeanServer());
-    } catch (NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException exp) {
-      throw new RuntimeException(exp);
-    }
+    MBeanServer mbean = ServerEnv.getServer().getManagement().getMBeanServer();
+    registerDSOServer(server, mbean);
+    registerServerMBeans(server, mbean);
   }
 
   protected DistributedObjectServer createDistributedObjectServer(ServerConfigurationManager configSetupManager,
@@ -366,7 +373,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   protected synchronized void registerDSOServer(DistributedObjectServer server, MBeanServer mBeanServer) throws InstanceAlreadyExistsException, MBeanRegistrationException,
-      NotCompliantMBeanException, NullPointerException {
+      NotCompliantMBeanException {
     this.dsoServer = server;
     ServerManagementContext mgmtContext = this.dsoServer.getManagementContext();
     ServerConfigurationContext configContext = this.dsoServer.getContext();
@@ -401,7 +408,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   @Override
-  public synchronized void waitUntilShutdown() {
+  public synchronized boolean waitUntilShutdown() {
     while (!shutdown) {
       try {
         wait();
@@ -409,6 +416,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         throw new AssertionError(e);
       }
     }
+    return restart;
   }
 
   @Override
@@ -419,10 +427,6 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public String[] processArguments() {
     return configurationSetupManager.getProcessArguments();
-  }
-  
-  private void exitWithStatus(int status) {
-    Runtime.getRuntime().exit(status);
   }
 
   @Override

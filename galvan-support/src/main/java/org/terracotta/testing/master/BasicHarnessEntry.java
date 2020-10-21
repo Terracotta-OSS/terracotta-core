@@ -140,7 +140,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
   private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                               Path stripeInstallationDir, CommonHarnessOptions harnessOpts) {
-    TcConfigBuilder configBuilder = new TcConfigBuilder(serverNames, serverPorts, serverGroupPorts, harnessOpts.tcProperties,
+    TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, serverNames, serverPorts, serverGroupPorts, harnessOpts.tcProperties,
         harnessOpts.namespaceFragment, harnessOpts.serviceFragment, harnessOpts.clientReconnectWindow, harnessOpts.voterCount);
     String tcConfig = configBuilder.build();
     try {

@@ -51,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.terracotta.server.ServerEnv;
 
 
 public class StateManagerImpl implements StateManager {
@@ -414,7 +415,13 @@ public class StateManagerImpl implements StateManager {
 //    stateChangeSink.addToSink(event);
     if (event.movedToActive()) {
 //  if this server just became active
-      eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());      
+      long activate = System.currentTimeMillis();
+      try {
+        activate = ServerEnv.getServer().getActivateTime();
+      } catch (Exception e) {
+        // ignore
+      }
+      eventCollector.serverDidEnterState(newState, activate);
     } else {
       eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
     }

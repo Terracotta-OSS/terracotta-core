@@ -20,15 +20,11 @@ package com.tc.classloader;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class StrictURLClassLoader extends URLClassLoader {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(StrictURLClassLoader.class);
 
   private final CommonComponentChecker checker;
   private final boolean strict;

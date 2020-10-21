@@ -55,6 +55,11 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>management</artifactId>
       <version>${project.version}</version>
     </dependency>

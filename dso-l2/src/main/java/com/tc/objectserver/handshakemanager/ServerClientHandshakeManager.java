@@ -223,6 +223,11 @@ public class ServerClientHandshakeManager {
     // in case all the clients are waiting on resends
     voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
   }
+
+  public void stop() {
+    timer.cancel();
+    this.state = State.INIT;
+  }
   
   public void notifyComplete() {
     waitingForReconnect.forEach(ReconnectListener::reconnectComplete);

@@ -19,12 +19,10 @@
 
 package com.tc.classloader;
 
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.terracotta.configuration.Directories;
+import com.tc.server.Directories;
 import com.tc.util.ManagedServiceLoader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServiceLocator extends ManagedServiceLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
-  private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_CLASSLOADER_COMPATIBILITY);
+  private static final boolean STRICT = !Boolean.getBoolean("server.classloader.compatibility");
   private final ClassLoader defaultClassLoader;
   private final Map<String, ClassLoader> locationCache = new ConcurrentHashMap<>();
 
@@ -103,18 +101,16 @@ public class ServiceLocator extends ManagedServiceLoader {
   private static URL[] findPluginURLS() throws FileNotFoundException {
     return createURLS(Directories.getServerPluginsLibDir());
   }
-  
-  public static ClassLoader PLATFORM_LOADER = createPlatformClassLoader();
-  
-  public static ClassLoader getPlatformLoader() {
-    return PLATFORM_LOADER;
+
+  public static ClassLoader resetPlatformClassLoader(ClassLoader serverClassLoader) {
+    return createPlatformClassLoader(serverClassLoader);
   }
   
-  private static ClassLoader createPlatformClassLoader() {
+  private static ClassLoader createPlatformClassLoader(ClassLoader serverClassLoader) {
     try {
       LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
       LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
-      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(ServiceLocator.class.getClassLoader()),new AnnotationOrDirectoryStrategyChecker(),STRICT);
+      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(serverClassLoader),new AnnotationOrDirectoryStrategyChecker(),STRICT);
       return purls;
     } catch (FileNotFoundException file) {
       return ClassLoader.getSystemClassLoader();

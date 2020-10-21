@@ -16,9 +16,7 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package org.terracotta.configuration;
-
-import org.slf4j.LoggerFactory;
+package com.tc.server;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -78,7 +76,7 @@ public class Directories {
       if (path == null || path.trim().isEmpty()) {
         //if not set, use working dir
         path = System.getProperty("user.dir");
-        LoggerFactory.getLogger(Directories.class).info("System property \"tc.install-root\" is not set, using working dir (" + path + ") as default location ");
+        System.err.println("System property \"tc.install-root\" is not set, using working dir (" + path + ") as default location ");
       }
 
       File rootPath = new File(path).getAbsoluteFile();

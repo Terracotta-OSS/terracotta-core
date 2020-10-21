@@ -25,7 +25,6 @@ import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaManagement.MBeanKeys;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.util.StringUtil;
-import java.lang.management.ManagementFactory;
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -44,9 +43,14 @@ import javax.management.ReflectionException;
  */
 public class JMXSubsystem {
   private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticsHandler.class);
-  private final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+  private final MBeanServer server;
   
-  public JMXSubsystem() {
+  public JMXSubsystem(MBeanServer server) {
+    this.server = server;
+  }
+
+  public MBeanServer getServer() {
+    return this.server;
   }
   
   private ObjectName getObjectName(String id) throws MalformedObjectNameException {

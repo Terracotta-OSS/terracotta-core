@@ -74,9 +74,29 @@ limitations under the License.
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>server-spi</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>server-bootstrap</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-port-chooser</artifactId>
+      <version>0.0.6</version>
     </dependency>
   </dependencies>
 

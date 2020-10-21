@@ -17,9 +17,8 @@
  *
  */
 
-package org.terracotta.configuration;
+package com.tc.server;
 
-import org.terracotta.configuration.Directories;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;

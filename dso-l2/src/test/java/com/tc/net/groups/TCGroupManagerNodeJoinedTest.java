@@ -302,6 +302,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);
       }
     }
+    this.stages.shutdown();
     System.out.println("*** shutdown done");
   }
 

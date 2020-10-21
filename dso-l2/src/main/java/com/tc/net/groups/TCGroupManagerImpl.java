@@ -336,17 +336,26 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       }
     });
   }
+
+  @Override
+  public void stop() {
+    try {
+      stop(1000);
+    } catch (TCTimeoutException e) {
+      throw new RuntimeException(e);
+    }
+  }
 //  FOR TESTING ONLY
   public void stop(long timeout) throws TCTimeoutException {
     for (ServerID sid : members.keySet()) {
       closeMember(sid);
     }
     isStopped.set(true);
-    stageManager.stopAll();
     discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
     connectionManager.shutdown();
+    handshakeTimer.cancel();
     for (TCGroupMember m : members.values()) {
       notifyAnyPendingRequests(m);
     }
@@ -697,7 +706,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (m == null) {
       TCGroupHandshakeStateMachine stateMachine = getHandshakeStateMachine(channel);
       String errInfo = "Received message for non-exist member from " + channel.getRemoteAddress() + " to "
-                       + channel.getLocalAddress() + "; Node: " + getMember(channel).getPeerNodeID() + "; " + stateMachine
+                       + channel.getLocalAddress() + "; " + stateMachine
                        + "; msg: " + message;
       if (stateMachine != null && stateMachine.isFailureState()) {
         // message received after node left

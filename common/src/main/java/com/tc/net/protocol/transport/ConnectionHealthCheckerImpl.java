@@ -65,8 +65,13 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   @Override
   public void start() {
-    if (started.attemptSet()) {
-      monitorThread.scheduleAtFixedRate(monitorThreadEngine, 0L, (long)monitorThreadEngine.pingInterval);
+    if (started.attemptSet() && !shutdown.isSet()) {
+      try {
+        monitorThread.scheduleAtFixedRate(monitorThreadEngine, 0L, monitorThreadEngine.pingInterval);
+      } catch (IllegalStateException state) {
+        logger.warn("HealthChecker cannot start");
+        return;
+      }
       logger.info("HealthChecker Started");
     } else {
       logger.warn("HealthChecker already started");
@@ -83,6 +88,10 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     } else {
       logger.warn("HealthChecker STOP already requested");
     }
+  }
+
+  public static void kill() {
+    monitorThread.cancel();
   }
 
   public boolean isRunning() {

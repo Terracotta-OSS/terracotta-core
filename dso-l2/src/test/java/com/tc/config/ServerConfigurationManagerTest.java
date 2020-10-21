@@ -85,14 +85,13 @@ public class ServerConfigurationManagerTest {
   @Test
   public void testSingleServerValidConfiguration() throws Exception {
     ConfigurationProvider configurationProvider = mockServers(1);
-    boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
     currentServer = TEST_SERVER_NAMES[0];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
-                                                                        consistentStartup,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
+    manager.initialize();
     GroupConfiguration groupConfiguration = manager.getGroupConfiguration();
     assertThat(groupConfiguration.getCurrentNode(), is(createNode(0)));
     System.out.println(groupConfiguration.getNodes());
@@ -108,7 +107,6 @@ public class ServerConfigurationManagerTest {
 
     assertThat(manager.getServiceLocator(), notNullValue());
     assertThat(manager.getProcessArguments(), arrayContainingInAnyOrder(processArgs));
-    assertThat(manager.consistentStartup(), is(consistentStartup));
   }
 
   @Test
@@ -119,10 +117,10 @@ public class ServerConfigurationManagerTest {
     String[] processArgs = new String[] {"arg1", "arg2"};
     currentServer = null;
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
-                                                                        consistentStartup,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
+    manager.initialize();
     ServerConfiguration serverConfiguration = manager.getServerConfiguration();
     assertThat(serverConfiguration.getName(), is(TEST_SERVER_NAMES[0]));
   }
@@ -131,15 +129,13 @@ public class ServerConfigurationManagerTest {
   public void testSingleServerWithInvalidServerName() throws Exception {
     ConfigurationProvider configurationProvider = mockServers(1);
 
-    boolean consistentStartup = true;
     String[] processArgs = new String[] {"arg1", "arg2"};
     expectedException.expect(ConfigurationException.class);
     expectedException.expectMessage("unable to determine server configuration");
     currentServer = "not-a-server-name";
     new ServerConfigurationManager(configurationProvider,
-                                                                        consistentStartup,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs);
+                                                                        processArgs).initialize();
   }
 
   @Test
@@ -148,14 +144,13 @@ public class ServerConfigurationManagerTest {
 
     int currentServerIndex = 1;
 
-    boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
     currentServer = TEST_SERVER_NAMES[currentServerIndex];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
-                                                                        consistentStartup,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
                                                                         processArgs);
 
+    manager.initialize();
     GroupConfiguration groupConfiguration = manager.getGroupConfiguration();
     assertThat(groupConfiguration.getCurrentNode(), is(createNode(currentServerIndex)));
     assertThat(groupConfiguration.getNodes(),
@@ -170,7 +165,6 @@ public class ServerConfigurationManagerTest {
 
     assertThat(manager.getServiceLocator(), notNullValue());
     assertThat(manager.getProcessArguments(), arrayContainingInAnyOrder(processArgs));
-    assertThat(manager.consistentStartup(), is(consistentStartup));
   }
 
   @Test
@@ -181,10 +175,9 @@ public class ServerConfigurationManagerTest {
     expectedException.expect(ConfigurationException.class);
     expectedException.expectMessage("unable to determine server configuration");
     currentServer = null;
-    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
-                                                                        true,
+    new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs);
+                                                                        processArgs).initialize();
   }
 
   @Test
@@ -197,9 +190,8 @@ public class ServerConfigurationManagerTest {
 
     currentServer = "not-a-server-name";
     new ServerConfigurationManager(configurationProvider,
-                                   true,
                                    new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                   processArgs);
+                                   processArgs).initialize();
   }
 
   @Test
@@ -220,13 +212,11 @@ public class ServerConfigurationManagerTest {
     servers.add(createServer(1, 100));
     when(configuration.getServerConfigurations()).thenReturn(servers);
 
-    boolean consistentStartup = false;
     String[] processArgs = new String[] {"arg1", "arg2"};
     currentServer = TEST_SERVER_NAMES[currentServerIndex];
-    ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
-                                                                        consistentStartup,
+    new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs);
+                                                                        processArgs).initialize();
 
     assertThat(TCPropertiesImpl.getProperties().getProperty(testKey), is(testValue));
   }

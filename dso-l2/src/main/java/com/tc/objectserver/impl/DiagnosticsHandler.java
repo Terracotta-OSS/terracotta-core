@@ -34,7 +34,6 @@ import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.objectserver.core.impl.GuardianContext;
-import com.tc.server.TCServerMain;
 import com.tc.spi.Guardian;
 import com.tc.util.State;
 import com.tc.util.StringUtil;
@@ -45,6 +44,8 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 /**
  *
@@ -55,9 +56,9 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
   private final DistributedObjectServer server;
   private final JMXSubsystem subsystem;
 
-  public DiagnosticsHandler(DistributedObjectServer server) {
+  public DiagnosticsHandler(DistributedObjectServer server, JMXSubsystem subsystem) {
     this.server = server;
-    this.subsystem = new JMXSubsystem();
+    this.subsystem = subsystem;
   }
   
   @Override
@@ -102,21 +103,26 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
           }
           break;
         case "getConfig":
-          result = TCServerMain.getServer().getConfig().getBytes(set);
+          result = ServerEnv.getServer().getConfiguration().getBytes(set);
           break;
         case "getProcessArguments":
-          result = StringUtil.toString(TCServerMain.getServer().processArguments(), " ", null, null).getBytes(set);
+          result = StringUtil.toString(ServerEnv.getServer().processArguments(), " ", null, null).getBytes(set);
           break;
         case "getThreadDump":
           result = ThreadDumpUtil.getThreadDump().getBytes(set);
           break;
         case "terminateServer":
-          TCServerMain.getServer().shutdown();
+          ServerEnv.getServer().stop();
+          // never used, server is dead
+          result = "".getBytes(set);
+          break;
+        case "restartServer":
+          ServerEnv.getServer().stop(StopAction.RESTART);
           // never used, server is dead
           result = "".getBytes(set);
           break;
         case "forceTerminateServer":
-          TCServerMain.getServer().stop();
+          ServerEnv.getServer().stop();
           // never used, server is dead
           result = "".getBytes(set);
           break;

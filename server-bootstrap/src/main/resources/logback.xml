@@ -1,0 +1,20 @@
+<configuration>
+
+  <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender">
+    <encoder>
+      <pattern>%d [%t] %p %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="LogToJFR" class="org.terracotta.tripwire.EventAppender">
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="TC_BASE" />
+    <appender-ref ref="LogToJFR" />
+  </root>
+
+  <include optional="true" resource="logback-ext.xml"/>
+
+</configuration>
+

@@ -23,6 +23,11 @@
         </dependency>
         <dependency>
             <groupId>org.terracotta.internal</groupId>
+            <artifactId>dso-l2</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.terracotta.internal</groupId>
             <artifactId>client-runtime</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>

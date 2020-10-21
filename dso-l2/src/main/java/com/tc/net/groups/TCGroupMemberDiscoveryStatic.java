@@ -244,10 +244,14 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   @Override
   public void stop(long timeout) {
     stopAttempt.set(true);
-
+    wake();
     // wait for all connections completed to avoid
     // IllegalStateException in TCConnectionManagerJDK14.checkShutdown()
     waitTillNoConnecting(timeout);
+  }
+
+  private synchronized void wake() {
+    this.notifyAll();
   }
 
   @Override

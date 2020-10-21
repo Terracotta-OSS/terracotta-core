@@ -58,4 +58,5 @@ public interface ServerConfigurationContext extends ConfigurationContext {
 
   public ChannelStats getChannelStats();
 
+  void shutdown();
 }

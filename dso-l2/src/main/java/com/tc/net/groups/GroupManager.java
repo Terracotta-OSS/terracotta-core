@@ -68,4 +68,6 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public void closeMember(ServerID serverID);
   
   public TCConnectionManager getConnectionManager();
+
+  public void stop();
 }

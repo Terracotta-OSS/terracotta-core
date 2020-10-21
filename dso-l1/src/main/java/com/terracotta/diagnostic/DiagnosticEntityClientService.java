@@ -85,7 +85,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
               }
             }).invoke();
             // if the server is terminating, never going to get a message back.  just return null
-            if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer")) {
+            if (!methodName.equals("terminateServer") && !methodName.equals("forceTerminateServer") && !methodName.equals("restartServer")) {
               try {
                 return returnValue.getWithTimeout(timeoutInMillis, TimeUnit.MILLISECONDS).toString();
               } catch (TimeoutException timeout) {

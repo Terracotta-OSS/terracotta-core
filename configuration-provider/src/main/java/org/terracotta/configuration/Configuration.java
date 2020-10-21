@@ -37,6 +37,10 @@ public interface Configuration {
   Properties getTcProperties();
   
   FailoverBehavior getFailoverPriority();
+
+  default boolean isConsistentStartup() {
+    return false;
+  }
   
   default boolean isPartialConfiguration() {
     return false;

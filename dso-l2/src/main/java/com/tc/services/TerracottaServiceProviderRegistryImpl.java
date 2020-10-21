@@ -19,7 +19,6 @@
 package com.tc.services;
 
 import com.tc.classloader.BuiltinService;
-import com.tc.server.TCServerMain;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +28,7 @@ import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
 import com.tc.util.Assert;
+import java.io.Closeable;
 import org.terracotta.configuration.Configuration;
 
 import java.io.PrintWriter;
@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import org.terracotta.server.ServerEnv;
 
 
 
@@ -75,9 +76,26 @@ public class TerracottaServiceProviderRegistryImpl implements TerracottaServiceP
     }
     loadClasspathBuiltins(platformConfiguration);
   }
+
+  public void shutdown() {
+    serviceProviders.forEach(TerracottaServiceProviderRegistryImpl::closeCloseable);
+    implementationProvidedServiceProviders.forEach(TerracottaServiceProviderRegistryImpl::closeCloseable);
+  }
+
+  private static void closeCloseable(Object p) {
+    try {
+      if (p instanceof Closeable) {
+        ((Closeable)p).close();
+      } else if (p instanceof AutoCloseable) {
+        ((AutoCloseable)p).close();
+      }
+    } catch (Exception e) {
+      logger.info("exception closing service", e);
+    }
+  }
   
   private void loadClasspathBuiltins(PlatformConfiguration platformConfiguration) {
-    List<Class<? extends ServiceProvider>> providers = TCServerMain.getSetupManager().getServiceLocator().getImplementations(ServiceProvider.class);
+    List<Class<? extends ServiceProvider>> providers = ServerEnv.getServer().getImplementations(ServiceProvider.class);
     for (Class<? extends ServiceProvider> clazz : providers) {
       try {
         if (!clazz.isAnnotationPresent(BuiltinService.class)) {

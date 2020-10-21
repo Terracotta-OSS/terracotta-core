@@ -22,9 +22,9 @@
  */
 package com.tc.classloader;
 
-import static org.terracotta.configuration.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
+import static com.tc.server.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
-import org.terracotta.configuration.Directories;
+import com.tc.server.Directories;
 import com.tc.util.Assert;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;

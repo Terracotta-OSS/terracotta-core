@@ -51,7 +51,6 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
@@ -155,7 +154,6 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServer;
-import com.tc.server.TCServerMain;
 import com.tc.services.CommunicatorService;
 import com.tc.services.EntityMessengerProvider;
 import com.tc.services.LocalMonitoringProducer;
@@ -236,7 +234,9 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
+import org.terracotta.server.ServerEnv;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -280,7 +280,7 @@ public class DistributedObjectServer {
 
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
-                                 ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
+                                 ConnectionPolicy connectionPolicy) {
     this(configSetupManager, threadGroup, connectionPolicy, new SEDA(threadGroup), null);
 
   }
@@ -432,7 +432,7 @@ public class DistributedObjectServer {
       final String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
-      System.exit(-1);
+      ServerEnv.getServer().stop();
     }
 
     String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getHostName();
@@ -481,7 +481,7 @@ public class DistributedObjectServer {
     }
     final int serverPort = l2DSOConfig.getTsaPort().getPort();
     final ProductInfo pInfo = ProductInfo.getInstance();
-    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), ServerEnv.getServer().getStartTime());
 
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
@@ -675,7 +675,7 @@ public class DistributedObjectServer {
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
-    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this), 1, 1);
+    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
 
     VoltronMessageSink voltronSink = new VoltronMessageSink(hydrator, fast.getSink(), entityManager);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
@@ -813,6 +813,41 @@ public class DistributedObjectServer {
     setLoggerOnExit();
   }
 
+  public void stop() throws Exception {
+    this.groupCommManager.stop();
+    this.l1Diagnostics.stop(1000);
+    this.l1Listener.stop(1000);
+    this.connectionManager.shutdown();
+    this.serviceRegistry.shutdown();
+    this.timer.cancelAll();
+    this.timer.stop();
+    this.context.shutdown();
+    this.configSetupManager.close();
+    Thread killer = new Thread(this::killThreads);
+    killer.setDaemon(true);
+    killer.start();
+  }
+
+  private void killThreads() {
+    this.seda.getStageManager().stopAll();
+    boolean complete = false;
+    while (!complete) {
+      complete = true;
+      int ac = threadGroup.activeCount();
+      Thread[] list = new Thread[ac];
+      threadGroup.enumerate(list, true);
+      for (Thread t : list) {
+        if (t != null && !t.isDaemon()) {
+          t.interrupt();
+          complete = false;
+        }
+      }
+      if (!complete) {
+        ThreadUtil.reallySleep(2000);
+      }
+    }
+  }
+
   private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
                                                              int knownPeers,
                                                              int voteCount) {
@@ -824,7 +859,7 @@ public class DistributedObjectServer {
       return new DiagnosticModeConsistencyManager();
     }
 
-    boolean consistentStartup = knownPeers > 0 && (configSetupManager.consistentStartup() || voteCount >= 0);
+    boolean consistentStartup = knownPeers > 0 && (configSetupManager.getConfiguration().isConsistentStartup() || voteCount >= 0);
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,

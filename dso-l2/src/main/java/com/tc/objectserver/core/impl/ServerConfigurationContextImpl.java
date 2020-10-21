@@ -68,4 +68,10 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   public ChannelStats getChannelStats() {
     return this.channelStats;
   }
+
+  @Override
+  public void shutdown() {
+    l2Coordinator.getStateManager().moveToStopState();
+    clientHandshakeManager.stop();
+  }
 }

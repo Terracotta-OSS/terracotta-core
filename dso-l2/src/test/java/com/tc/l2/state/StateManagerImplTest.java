@@ -45,7 +45,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.server.TCServer;
 import com.tc.util.State;
 import com.tc.util.concurrent.QueueFactory;
 
@@ -86,6 +85,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.server.Server;
 
 
 public class StateManagerImplTest {
@@ -116,8 +116,8 @@ public class StateManagerImplTest {
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
-    TCServerMain.server = mock(TCServer.class);
-    when(TCServerMain.server.getActivateTime()).thenReturn(System.currentTimeMillis());
+    Server server = mock(Server.class);
+    when(server.getActivateTime()).thenReturn(System.currentTimeMillis());
 
     PortManager portManager = PortManager.getInstance();
     ports = portManager.reservePorts(NUM_OF_SERVERS);

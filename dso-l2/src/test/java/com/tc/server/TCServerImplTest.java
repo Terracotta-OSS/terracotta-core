@@ -21,20 +21,20 @@ package com.tc.server;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import org.junit.rules.ExpectedException;
 
 import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
-
 import static com.tc.lang.ServerExitStatus.EXITCODE_RESTART_REQUEST;
+
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.util.Assert;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 
@@ -42,24 +42,23 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.server.StopAction.RESTART;
 
 public class TCServerImplTest {
 
   @Rule
-  public final ExpectedSystemExit expectedSystemExit = ExpectedSystemExit.none();
-
-  @Rule
   public final ExpectedException expectedException = ExpectedException.none();
 
   private TCServerImpl tcServer;
+  private DistributedObjectServer dso;
   private ServerMode currentState = ServerMode.START;
 
   @Before
   public void setUp() throws Exception {
     tcServer = new TCServerImpl(mock(ServerConfigurationManager.class));
-    DistributedObjectServer dso = mock(DistributedObjectServer.class);
+    dso = mock(DistributedObjectServer.class);
     ServerManagementContext smc = mock(ServerManagementContext.class);
     DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
     when(cm.getActiveChannels()).thenReturn(new MessageChannel[0]);
@@ -91,36 +90,37 @@ public class TCServerImplTest {
   }
 
   @Test
-  public void testForceStop() {
-    expectedSystemExit.expectSystemExitWithStatus(0);
+  public void testForceStop() throws Exception {
     tcServer.stop();
+    verify(dso).stop();
   }
 
   @Test
-  public void testForceRestart() {
-    expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
+  public void testForceRestart() throws Exception {
     tcServer.stop(RESTART);
+    verify(dso).stop();
+    Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 
   @Test
   public void testStopIfPassive() throws Exception {
     setState(ServerMode.PASSIVE);
-    expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfPassive();
+    verify(dso).stop();
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsUninitialized() throws Exception {
     setState(ServerMode.UNINITIALIZED);
-    expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfPassive();
+    verify(dso).stop();
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsSyncing() throws Exception {
     setState(ServerMode.SYNCING);
-    expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfPassive();
+    verify(dso).stop();
   }
 
   @Test
@@ -133,15 +133,16 @@ public class TCServerImplTest {
   @Test
   public void testStopIfPassiveWithRestart() throws Exception {
     setState(ServerMode.PASSIVE);
-    expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
     tcServer.stopIfPassive(RESTART);
+    verify(dso).stop();
+    Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 
   @Test
   public void testStopIfActive() throws Exception {
     setState(ServerMode.ACTIVE);
-    expectedSystemExit.expectSystemExitWithStatus(0);
     tcServer.stopIfActive();
+    verify(dso).stop();
   }
 
   @Test
@@ -154,7 +155,8 @@ public class TCServerImplTest {
   @Test
   public void testStopIfActiveWithRestart() throws Exception {
     setState(ServerMode.ACTIVE);
-    expectedSystemExit.expectSystemExitWithStatus(EXITCODE_RESTART_REQUEST);
     tcServer.stopIfActive(RESTART);
+    verify(dso).stop();
+    Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 }

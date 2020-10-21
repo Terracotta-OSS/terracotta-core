@@ -24,14 +24,14 @@
 --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  
+
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
     <version>5.7-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
-  
+
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
@@ -61,6 +61,7 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>server-spi</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <!-- NOTE:  We added this dependency so that PlatformInfoRequest can use the appropriate type in its signature, only.

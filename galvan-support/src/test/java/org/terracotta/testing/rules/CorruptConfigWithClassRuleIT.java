@@ -21,7 +21,6 @@ package org.terracotta.testing.rules;
 import java.util.Properties;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
@@ -58,7 +57,7 @@ public class CorruptConfigWithClassRuleIT {
   @Test(expected=ConnectionException.class)
   public void testConnectionViaURI() throws Exception {
     Properties connectionProps = new Properties();
-    connectionProps.put("connection.timeout", "10000");
+    connectionProps.put("connection.timeout", "1000");
     Connection connection = ConnectionFactory.connect(CLUSTER.getConnectionURI(), new Properties(connectionProps));
     try {
       //do nothing

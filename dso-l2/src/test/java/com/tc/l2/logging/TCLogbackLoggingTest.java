@@ -18,7 +18,7 @@
  */
 package com.tc.l2.logging;
 
-import com.tc.logging.TCLogging;
+import static com.tc.l2.logging.TCLogbackLogging.CONSOLE;
 import java.io.File;
 import java.io.FileReader;
 import java.io.LineNumberReader;
@@ -34,6 +34,7 @@ import org.junit.Rule;
 import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -72,7 +73,7 @@ public class TCLogbackLoggingTest {
     TCLogbackLogging.bootstrapLogging();
 
     // test that console logger is properly installed
-    Logger test = TCLogging.getConsoleLogger();
+    Logger test = LoggerFactory.getLogger(CONSOLE);
     test.info("this is a test");
     assertThat(sysout.getLog(), containsString("this is a test"));
     sysout.clearLog();
@@ -91,16 +92,16 @@ public class TCLogbackLoggingTest {
     TCLogbackLogging.bootstrapLogging();
 
     // test that console logger is properly installed
-    Logger test = TCLogging.getConsoleLogger();
+    Logger test = LoggerFactory.getLogger(CONSOLE);
     test.info("this is a test");
     assertThat(sysout.getLog(), containsString("this is a test"));
 
     File folder = temp.newFolder();
     TCLogbackLogging.redirectLogging(folder);
-    TCLogging.getConsoleLogger().info("flush1");
-    TCLogging.getConsoleLogger().info("flush2");
-    TCLogging.getConsoleLogger().info("flush3");
-    TCLogging.getConsoleLogger().info("flush4");
+    LoggerFactory.getLogger(CONSOLE).info("flush1");
+    LoggerFactory.getLogger(CONSOLE).info("flush2");
+    LoggerFactory.getLogger(CONSOLE).info("flush3");
+    LoggerFactory.getLogger(CONSOLE).info("flush4");
 
     FileReader read = new FileReader(new File(folder, "terracotta.server.log"));
     LineNumberReader lines = new LineNumberReader(read);

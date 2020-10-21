@@ -33,11 +33,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
 
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 public class DistributedObjectClientFactory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DistributedObjectClientFactory.class);
+
   private final Iterable<InetSocketAddress> serverAddresses;
   private final ClientBuilder builder;
   private final Properties        properties;
@@ -85,11 +88,13 @@ public class DistributedObjectClientFactory {
       String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
       if (!client.waitForConnection(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
 //  timed out, shutdown the extra threads and return null;
+        LOGGER.warn("connection timeout {}", this);
         client.shutdown();
         return null;
       }
     } catch (InterruptedException ie) {
 // wait got interrupted, shutdown extra threads and return nothing
+      LOGGER.warn("connection interrupt", ie);
       client.shutdown();
       return null;
     } catch (RuntimeException exp) {

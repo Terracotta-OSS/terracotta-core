@@ -77,7 +77,7 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
   public void addToSink(EC context) {
     Assert.assertNotNull(context);
     if (isClosed()) {
-      throw new IllegalStateException("closed");
+      return;
     }
     if (this.logger.isDebugEnabled()) {
       this.logger.debug("Added:" + context + " to:" + this.stageName);

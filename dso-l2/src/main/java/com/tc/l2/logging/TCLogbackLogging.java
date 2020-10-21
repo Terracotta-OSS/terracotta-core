@@ -26,7 +26,6 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
-import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.tripwire.EventAppender;
@@ -38,28 +37,37 @@ import java.util.Iterator;
 
 public class TCLogbackLogging {
 
+  public static final String CONSOLE = "org.terracotta.console";
   private static final String TC_PATTERN = "%d [%t] %p %c - %m%n";
-  private static final Logger LOGGER = TCLogging.getConsoleLogger();
+  private static final Logger LOGGER = LoggerFactory.getLogger(CONSOLE);
 
   public static void resetLogging() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-    ch.qos.logback.classic.Logger console = loggerContext.getLogger(TCLogging.CONSOLE_LOGGER_NAME);
-    Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
-    while (appenders.hasNext()) {
-      Appender<ILoggingEvent> a = appenders.next();
-      if (a instanceof BufferingAppender) {
-        root.detachAppender(a);
-        a.stop();
-      }
-    }
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
+//    Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
+//    while (appenders.hasNext()) {
+//      Appender<ILoggingEvent> a = appenders.next();
+//      if (a instanceof BufferingAppender) {
+//        root.detachAppender(a);
+//        a.stop();
+//      }
+//    }
+    root.detachAndStopAllAppenders();
     console.detachAndStopAllAppenders();
+    loggerContext.reset();
+  }
+
+  public static void setServerName(String name) {
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    loggerContext.setName(name);
   }
 
   public static void bootstrapLogging() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-    ch.qos.logback.classic.Logger console = loggerContext.getLogger(TCLogging.CONSOLE_LOGGER_NAME);
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
+
     Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
     boolean hasBuffer = false;
     boolean hasJfr = false;
@@ -100,7 +108,7 @@ public class TCLogbackLogging {
     String logDir = getPathString(logDirFile);
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-    ch.qos.logback.classic.Logger console = loggerContext.getLogger(TCLogging.CONSOLE_LOGGER_NAME);
+    ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
 
     Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
     if (appenders != null) {

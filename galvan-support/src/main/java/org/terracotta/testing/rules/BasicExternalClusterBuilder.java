@@ -18,7 +18,6 @@
  */
 package org.terracotta.testing.rules;
 
-import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.config.StartupCommandBuilder;
 
 import java.nio.file.Path;
@@ -27,6 +26,7 @@ import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Supplier;
+import org.terracotta.testing.config.ArgOnlyStartupCommandBuilder;
 
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
@@ -46,7 +46,7 @@ public class BasicExternalClusterBuilder {
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
-  private Supplier<StartupCommandBuilder> startupBuilder = DefaultStartupCommandBuilder::new;
+  private Supplier<StartupCommandBuilder> startupBuilder = ArgOnlyStartupCommandBuilder::new;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;

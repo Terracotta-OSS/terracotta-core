@@ -37,8 +37,8 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
-
 import java.lang.management.ManagementFactory;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
