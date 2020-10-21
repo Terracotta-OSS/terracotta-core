@@ -57,6 +57,11 @@ limitations under the License.
       <artifactId>test-interfaces</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <version>1.7-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>

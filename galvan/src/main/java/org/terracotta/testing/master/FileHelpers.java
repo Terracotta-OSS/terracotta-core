@@ -109,7 +109,7 @@ public class FileHelpers {
     Assert.assertTrue(Files.isDirectory(pluginsLibDirectory));
     for (Path sourcePath : extraJarPaths) {
       // This file must exist.
-      if (Files.isRegularFile(sourcePath)) {
+      if (!Files.isRegularFile(sourcePath)) {
         throw new IllegalArgumentException("JAR path is not a file: " + sourcePath);
       }
       Path targetPath = pluginsLibDirectory.resolve(sourcePath.getFileName());
