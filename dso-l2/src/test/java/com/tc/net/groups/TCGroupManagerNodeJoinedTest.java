@@ -18,12 +18,10 @@
  */
 package com.tc.net.groups;
 
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.utilities.test.net.PortManager;
 
-import com.tc.async.api.StageManager;
-import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.GroupConfiguration;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
@@ -31,32 +29,28 @@ import com.tc.l2.ha.RandomWeightGenerator;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
-import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.objectserver.impl.TopologyManager;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.CallableWaiter;
-import com.tc.util.PortChooser;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
-import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
@@ -106,115 +100,51 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     listeners = new MyListener[nodes];
     groupManagers = new TCGroupManagerImpl[nodes];
-    Node[] allNodes = new Node[nodes];
-    PortChooser pc = new PortChooser();
-    for (int i = 0; i < nodes; ++i) {
-      int port = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, port, port + 1);
+
+    PortManager portManager = PortManager.getInstance();
+    List<PortManager.PortRef> ports = portManager.reservePorts(nodes);
+    List<PortManager.PortRef> groupPorts = portManager.reservePorts(nodes);
+    try {
+      Node[] allNodes = new Node[nodes];
+      for (int i = 0; i < nodes; ++i) {
+        allNodes[i] = new Node(LOCALHOST, ports.get(i).port(), groupPorts.get(i).port());
+      }
+
+      for (int i = 0; i < nodes; ++i) {
+        TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
+                                                       allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                       stages.createStageManager(),
+                                                       RandomWeightGenerator.createTestingFactory(2),
+                                                       mock(TopologyManager.class));
+        gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
+
+        groupManagers[i] = gm;
+        MyGroupEventListener gel = new MyGroupEventListener(gm);
+        listeners[i] = new MyListener();
+        gm.registerForMessages(TestMessage.class, listeners[i]);
+        gm.registerForGroupEvents(gel);
+
+      }
+
+      // joining
+      System.out.println("*** Start Joining...");
+      for (int i = 0; i < nodes; ++i) {
+        Set<Node> nodeSet = new HashSet<>();
+        Collections.addAll(nodeSet, allNodes);
+        GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+        groupManagers[i].join(groupConfiguration);
+      }
+      waitForAllMessageCountsToReach(nodes - 1);
+
+      System.out.println("VERIFIED");
+      shutdown();
+    } finally {
+      ports.forEach(PortManager.PortRef::close);
+      groupPorts.forEach(PortManager.PortRef::close);
     }
-
-    for (int i = 0; i < nodes; ++i) {
-      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
-                                                     stages.createStageManager(),
-                                                     RandomWeightGenerator.createTestingFactory(2),
-                                                     mock(TopologyManager.class));
-      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
-
-      groupManagers[i] = gm;
-      MyGroupEventListener gel = new MyGroupEventListener(gm);
-      listeners[i] = new MyListener();
-      gm.registerForMessages(TestMessage.class, listeners[i]);
-      gm.registerForGroupEvents(gel);
-
-    }
-
-    // joining
-    System.out.println("*** Start Joining...");
-    for (int i = 0; i < nodes; ++i) {
-      Set<Node> nodeSet = new HashSet<>();
-      Collections.addAll(nodeSet, allNodes);
-      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
-      groupManagers[i].join(groupConfiguration);
-    }
-    waitForAllMessageCountsToReach(nodes - 1);
-
-    System.out.println("VERIFIED");
-    shutdown();
   }
 
-  public void nodesSetupAndJoinedAfterCloseMember(int nodes) throws Exception {
-    System.out.println("XXX Testing DEV-4870 : There is a world after doing closeMember()");
-    Assert.assertEquals(2, nodes);
-
-    int count = getThreadCountByName(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
-    System.out.println("XXX Thread count : " + ClientConnectionEstablisher.RECONNECT_THREAD_NAME + " - " + count);
-
-    listeners = new MyListener[nodes];
-    groupManagers = new TCGroupManagerImpl[nodes];
-    Node[] allNodes = new Node[nodes];
-    Node[] proxiedAllNodes = new Node[nodes];
-    TCPProxy[] proxy = new TCPProxy[nodes];
-    PortChooser pc = new PortChooser();
-    for (int i = 0; i < nodes; ++i) {
-      int port = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, port, port + 1);
-
-      int proxyPort = pc.chooseRandomPort();
-      proxy[i] = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), port + 1, 0, false, null);
-      proxy[i].start();
-      proxiedAllNodes[i] = new Node(LOCALHOST, port, proxyPort);
-    }
-
-    proxy[1].stop();
-
-    for (int i = 0; i < nodes; ++i) {
-      StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
-      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
-                                                     stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
-                                                     mock(TopologyManager.class));
-      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
-
-      groupManagers[i] = gm;
-      gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
-      MyGroupEventListener gel = new MyGroupEventListener(gm);
-      listeners[i] = new MyListener();
-      gm.registerForMessages(TestMessage.class, listeners[i]);
-      gm.registerForGroupEvents(gel);
-
-    }
-
-    Set<Node> nodeSet = new HashSet<>();
-    Collections.addAll(nodeSet, proxiedAllNodes);
-
-    // joining
-    System.err.println("XXX Start Joining...");
-    for (int i = 0; i < nodes; ++i) {
-      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
-      groupManagers[i].join(groupConfiguration);
-    }
-
-    waitForAllMessageCountsToReach(nodes - 1);
-
-    ThreadUtil.reallySleep(5000);
-
-    System.err.println("XXX 1st verification done.");
-    System.err.println("XXX Node 0: " + allNodes[0]);
-    System.err.println("XXX Node 1: " + allNodes[1]);
-
-    groupManagers[0].closeMember((ServerID) groupManagers[1].getLocalNodeID());
-    System.out.println("XXX member close done");
-
-    proxy[0].stop();
-    proxy[1].start();
-
-    waitForAllMessageCountsToReach(nodes);
-
-    shutdown();
-  }
-
-  public void nodesSetupAndJoined_DEV3101(int nodes) throws Exception {
+  private void nodesSetupAndJoined_DEV3101(int nodes) throws Exception {
     System.out.println("*** Testing DEV3101 1");
     Assert.assertEquals(2, nodes);
 
@@ -223,77 +153,87 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     listeners = new MyListener[nodes];
     groupManagers = new TCGroupManagerImpl[nodes];
-    Node[] allNodes = new Node[nodes];
-    Node[] proxiedAllNodes = new Node[nodes];
     TCPProxy[] proxy = new TCPProxy[nodes];
-    PortChooser pc = new PortChooser();
-    for (int i = 0; i < nodes; ++i) {
-      int port = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, port, port + 1);
 
-      int proxyPort = pc.chooseRandomPort();
-      proxy[i] = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), port + 1, 0, false, null);
-      proxy[i].start();
-      proxiedAllNodes[i] = new Node(LOCALHOST, port, proxyPort);
+    PortManager portManager = PortManager.getInstance();
+    List<PortManager.PortRef> ports = portManager.reservePorts(nodes);
+    List<PortManager.PortRef> groupPorts = portManager.reservePorts(nodes);
+    List<PortManager.PortRef> proxyPorts = portManager.reservePorts(nodes);
+    try {
+      Node[] allNodes = new Node[nodes];
+      Node[] proxiedAllNodes = new Node[nodes];
+      for (int i = 0; i < nodes; ++i) {
+        int port = ports.get(i).port();
+        int groupPort = groupPorts.get(i).port();
+        int proxyPort = proxyPorts.get(i).port();
+        allNodes[i] = new Node(LOCALHOST, port, groupPort);
+        proxy[i] = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), groupPort, 0, false, null);
+        proxy[i].start();
+        proxiedAllNodes[i] = new Node(LOCALHOST, port, proxyPort);
+      }
+
+      for (int i = 0; i < nodes; ++i) {
+        TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
+                                                       allNodes[i].getPort(), allNodes[i].getGroupPort(),
+                                                       stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
+                                                       mock(TopologyManager.class));
+        gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
+
+        groupManagers[i] = gm;
+        gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
+        MyGroupEventListener gel = new MyGroupEventListener(gm);
+        listeners[i] = new MyListener();
+        gm.registerForMessages(TestMessage.class, listeners[i]);
+        gm.registerForGroupEvents(gel);
+      }
+
+      // joining
+      System.out.println("*** Start Joining...");
+      Set<Node> nodeSet = new HashSet<>();
+      Collections.addAll(nodeSet, proxiedAllNodes);
+
+      for (int i = 0; i < nodes; ++i) {
+        GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
+        groupManagers[i].join(groupConfiguration);
+      }
+
+      waitForAllMessageCountsToReach(nodes - 1);
+
+      System.out.println("XXX 1st verification done");
+
+      for (int i = 0; i < nodes; ++i) {
+        proxy[i].stop();
+      }
+
+      System.out.println("XXX Node 0 Zapped Node 1");
+      groupManagers[0].addZappedNode(groupManagers[1].getLocalNodeID());
+
+      System.out.println("XXX proxy stopped");
+      ThreadUtil.reallySleep(5000);
+
+      for (int i = 0; i < nodes; ++i) {
+        proxy[i].start();
+      }
+      System.out.println("XXX proxy resumed. Grp Mgrs discovery started for 20 seconds");
+
+      // let the restores/reconnects along with the zapping problem happen for 20 seconds
+      ThreadUtil.reallySleep(20000);
+
+      System.out.println("XXX STOPPING Grp Mgrs discovery");
+      for (int i = 0; i < nodes; ++i) {
+        groupManagers[i].getDiscover().stop(Integer.MAX_VALUE);
+      }
+
+      System.out.println("XXX Waiting for all restore connection close");
+
+      ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME, count);
+      shutdown();
+    } finally {
+      Arrays.stream(proxy).filter(Objects::nonNull).forEach(TCPProxy::stop);
+      proxyPorts.forEach(PortManager.PortRef::close);
+      ports.forEach(PortManager.PortRef::close);
+      groupPorts.forEach(PortManager.PortRef::close);
     }
-
-    for (int i = 0; i < nodes; ++i) {
-      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
-                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(),
-                                                     stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
-                                                     mock(TopologyManager.class));
-      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm, allNodes[i]));
-
-      groupManagers[i] = gm;
-      gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
-      MyGroupEventListener gel = new MyGroupEventListener(gm);
-      listeners[i] = new MyListener();
-      gm.registerForMessages(TestMessage.class, listeners[i]);
-      gm.registerForGroupEvents(gel);
-
-    }
-
-    // joining
-    System.out.println("*** Start Joining...");
-    Set<Node> nodeSet = new HashSet<>();
-    Collections.addAll(nodeSet, proxiedAllNodes);
-
-    for (int i = 0; i < nodes; ++i) {
-      GroupConfiguration groupConfiguration = TCGroupManagerImplTest.getGroupConfiguration(nodeSet, allNodes[i]);
-      groupManagers[i].join(groupConfiguration);
-    }
-
-    waitForAllMessageCountsToReach(nodes - 1);
-
-    System.out.println("XXX 1st verification done");
-
-    for (int i = 0; i < nodes; ++i) {
-      proxy[i].stop();
-    }
-
-    System.out.println("XXX Node 0 Zapped Node 1");
-    groupManagers[0].addZappedNode(groupManagers[1].getLocalNodeID());
-
-    System.out.println("XXX proxy stopped");
-    ThreadUtil.reallySleep(5000);
-
-    for (int i = 0; i < nodes; ++i) {
-      proxy[i].start();
-    }
-    System.out.println("XXX proxy resumed. Grp Mgrs discovery started for 20 seconds");
-
-    // let the restores/reconnects along with the zapping problem happen for 20 seconds
-    ThreadUtil.reallySleep(20000);
-
-    System.out.println("XXX STOPPING Grp Mgrs discovery");
-    for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].getDiscover().stop(Integer.MAX_VALUE);
-    }
-
-    System.out.println("XXX Waiting for all restore connection close");
-
-    ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME, count);
-    shutdown();
   }
 
   private void ensureThreadAbsent(String absentThreadName, int allowedLimit) {
@@ -304,7 +244,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 //  one more chance to wait for death
         try {
 //  mutliple tests can be running in the same JVM so this is kind of bogus.
-//  just wait until they all finish.  If there is a problem in one of the 
+//  just wait until they all finish.  If there is a problem in one of the
 //  tests, things will just hang.
           t.join(5000);
         } catch (InterruptedException ie) {

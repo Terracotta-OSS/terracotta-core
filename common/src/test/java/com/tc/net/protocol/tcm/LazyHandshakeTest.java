@@ -19,6 +19,7 @@
 package com.tc.net.protocol.tcm;
 
 import org.slf4j.LoggerFactory;
+import org.terracotta.utilities.test.net.PortManager;
 
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
@@ -41,7 +42,6 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.net.core.ProductID;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
-import com.tc.util.PortChooser;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -55,7 +55,7 @@ import java.util.HashSet;
  * new connection is opened with the clients. If for any reason, any of the handshake messages arrive on the old
  * connection, we assert saying wrong state. This test tries to reproduce the same scenario and with the fix the test
  * should go through fine.
- * 
+ *
  * @author Manoj
  */
 
@@ -69,9 +69,7 @@ public class LazyHandshakeTest extends TCTestCase {
   private TCConnectionManager   clientConn;
   private CommunicationsManager serverComms;
   private CommunicationsManager clientComms;
-  private PortChooser           pc;
   private TCPProxy              proxy;
-  private int                   proxyPort;
   private InetSocketAddress serverAddress;
 
   private NetworkListener       listener;
@@ -83,15 +81,14 @@ public class LazyHandshakeTest extends TCTestCase {
     super.setUp();
   }
 
-  private void lazySetUp() {
-    pc = new PortChooser();
+  private void lazySetUp(int proxyPort) {
     serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
     clientConn = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 serverConn,
                                                 new NullConnectionPolicy());
     clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-            clientConn,                                    
+            clientConn,
             new NullConnectionPolicy());
 
     listener = serverComms.createListener(new TCSocketAddress(0), true,
@@ -103,7 +100,6 @@ public class LazyHandshakeTest extends TCTestCase {
       System.out.println("lsnr Excep");
     }
 
-    proxyPort = pc.chooseRandomPort();
     proxy = new TCPProxy(proxyPort, listener.getBindAddress(), listener.getBindPort(), PROXY_SYNACK_DELAY, false, null);
 
     serverAddress = InetSocketAddress.createUnresolved(listener.getBindAddress().getHostAddress(), proxyPort);
@@ -122,6 +118,11 @@ public class LazyHandshakeTest extends TCTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    try {
+      listener.stop(5000);
+    } catch (TCTimeoutException e) {
+      // ignored
+    }
     clientComms.shutdown();
     serverComms.shutdown();
     clientConn.shutdown();
@@ -133,23 +134,30 @@ public class LazyHandshakeTest extends TCTestCase {
     TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandlerImpl(LoggerFactory.getLogger(this.getClass())));
     // imitating TCGroupManager implementation of StaticMemberDiscovery on handshake timeouts
 
-    Thread lazyThread = new Thread(threadGroup, new Runnable() {
-      @Override
-      public void run() {
-        lazySetUp();
-        handshaker();
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      Thread lazyThread = new Thread(threadGroup, new Runnable() {
+        @Override
+        public void run() {
+          lazySetUp(portRef.port());
+          handshaker();
+        }
+      });
+
+      try {
+        lazyThread.start();
+        try {
+          lazyThread.join();
+        } catch (InterruptedException e) {
+          System.out.println("Received the UNexpected exception: " + e);
+        }
+        ThreadUtil.reallySleep(3 * PROXY_SYNACK_DELAY);
+        Assert.eval((channel[0].getConnectCount() + channel[1].getConnectCount() + channel[2].getConnectCount()) == 0);
+      } finally {
+        if (proxy != null) {
+          proxy.stop();
+        }
       }
-    });
-
-    lazyThread.start();
-    try {
-      lazyThread.join();
-    } catch (InterruptedException e) {
-      System.out.println("Received the UNexpected exception: " + e);
     }
-    ThreadUtil.reallySleep(3 * PROXY_SYNACK_DELAY);
-    Assert.eval((channel[0].getConnectCount() + channel[1].getConnectCount() + channel[2].getConnectCount()) == 0);
-
   }
 
   private void handshaker() {

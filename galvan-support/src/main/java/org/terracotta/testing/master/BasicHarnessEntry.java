@@ -18,7 +18,6 @@
  */
 package org.terracotta.testing.master;
 
-import com.tc.util.PortChooser;
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.config.BasicClientArgumentBuilder;
@@ -34,11 +33,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
 import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 import org.terracotta.testing.config.StartupCommandBuilder;
+import org.terracotta.testing.support.PortTool;
+import org.terracotta.utilities.test.net.PortManager;
 
 /**
  * The harness entry-point for the harness running {@link BasicTestClusterConfiguration} tests.
@@ -51,18 +55,22 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     int stripeSize = runConfiguration.serversInStripe;
     Assert.assertTrue(stripeSize > 0);
 
-    List<String> serverNames = new ArrayList<>();
-    List<Integer> serverPorts = new ArrayList<>();
-    List<Integer> serverGroupPorts = new ArrayList<>();
+    /*
+     * Debug ports, if requested, are reserved from a specified base port, first.  This
+     * provides the best chance of allocating a consecutive list of ports without interference
+     * from the server and group port reservations.
+     */
+    PortManager portManager = PortManager.getInstance();
+    List<PortManager.PortRef> debugPortRefs = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
-    int basePort = new PortChooser().chooseRandomPorts(stripeSize * 2);
-    int serverDebugPortStart = debugOptions.serverDebugPortStart;
-    for (int i = 0; i < stripeSize; i++) {
-      serverNames.add("testServer" + i);
-      serverPorts.add(basePort++);
-      serverGroupPorts.add(basePort++);
-      serverDebugPorts.add(serverDebugPortStart == 0 ? 0 : serverDebugPortStart++);
-    }
+    PortTool.assignDebugPorts(portManager, debugOptions.serverDebugPortStart, stripeSize, debugPortRefs, serverDebugPorts);
+
+    List<PortManager.PortRef> serverPortRefs = portManager.reservePorts(stripeSize);
+    List<PortManager.PortRef> groupPortRefs = portManager.reservePorts(stripeSize);
+
+    List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
+    List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
+    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testserver" + i).collect(toList());
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
@@ -116,7 +124,13 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
       stateManager.waitForFinish();
     } finally {
       // No matter what happened, shut down the test.
-      interlock.forceShutdown();
+      try {
+        interlock.forceShutdown();
+      } finally {
+        serverPortRefs.forEach(PortManager.PortRef::close);
+        groupPortRefs.forEach(PortManager.PortRef::close);
+        debugPortRefs.stream().filter(Objects::nonNull).forEach(PortManager.PortRef::close);
+      }
     }
   }
 

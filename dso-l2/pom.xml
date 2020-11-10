@@ -26,19 +26,19 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  
+
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
     <version>5.7-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
-  
+
   <artifactId>dso-l2</artifactId>
   <packaging>jar</packaging>
   <name>dso-l2</name>
 
-  <properties>  
+  <properties>
     <jersey.version>2.6</jersey.version>
     <hk2.version>2.2.0</hk2.version>
   </properties>
@@ -74,12 +74,12 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
-    </dependency> 
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-tripwire-appenders</artifactId>
     </dependency>
-    <dependency>      
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>management</artifactId>
       <version>${project.version}</version>
@@ -93,6 +93,11 @@
       <groupId>org.terracotta.test</groupId>
       <artifactId>test-common</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-port-chooser</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -149,7 +154,7 @@
       </plugin>
     </plugins>
     </build>
-    
+
    <profiles>
     <profile>
       <id>debug</id>

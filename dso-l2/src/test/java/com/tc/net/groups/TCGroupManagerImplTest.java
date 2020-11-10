@@ -36,11 +36,9 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.SessionID;
-import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
-import com.tc.util.PortChooser;
 import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -48,12 +46,14 @@ import com.tc.util.runtime.ThreadDump;
 
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
+import org.terracotta.utilities.test.net.PortManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -70,8 +70,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   private final static String      LOCALHOST      = "localhost";
 
-  private int                      ports[];
-  private int                      groupPorts[];
+  private List<PortManager.PortRef> ports;
+  private List<PortManager.PortRef> groupPorts;
   private TCGroupManagerImpl       groups[];
   private TestGroupMessageListener listeners[];
   private TestGroupEventListener   groupEventListeners[];
@@ -80,8 +80,6 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private MockStageManagerFactory  stages;
 
   private void setupGroups(int n) throws Exception {
-    ports = new int[n];
-    groupPorts = new int[n];
     groups = new TCGroupManagerImpl[n];
     listeners = new TestGroupMessageListener[n];
     groupEventListeners = new TestGroupEventListener[n];
@@ -89,14 +87,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
     error = new AtomicReference<>();
     stages = new MockStageManagerFactory(LoggerFactory.getLogger(TCGroupManagerImplTest.class), new ThreadGroup("stage-manager"));
 
-    PortChooser pc = new PortChooser();
+    PortManager portManager = PortManager.getInstance();
+    ports = portManager.reservePorts(n);
+    groupPorts = portManager.reservePorts(n);
     for (int i = 0; i < n; ++i) {
-      ports[i] = pc.chooseRandom2Port();
-      groupPorts[i] = ports[i] + 1;
-      nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
+      nodes[i] = new Node(LOCALHOST, ports.get(i).port(), groupPorts.get(i).port());
     }
     for (int i = 0; i < n; ++i) {
-      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i],
+      groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
                                          stages.createStageManager(), RandomWeightGenerator.createTestingFactory(2),
                                          mock(TopologyManager.class));
       groups[i].setDiscover(new TCGroupMemberDiscoveryStatic(groups[i], nodes[i]));
@@ -108,11 +106,20 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private void tearGroups() throws Exception {
-    for (TCGroupManagerImpl group : groups) {
-      System.out.println("Shutting down " + group);
-      group.shutdown();
+    try {
+      for (TCGroupManagerImpl group : groups) {
+        System.out.println("Shutting down " + group);
+        group.shutdown();
+      }
+      stages.shutdown();
+    } finally {
+      if (ports != null) {
+        ports.forEach(PortManager.PortRef::close);
+      }
+      if (groupPorts != null) {
+        groupPorts.forEach(PortManager.PortRef::close);
+      }
     }
-    stages.shutdown();
     throwExceptionIfNecessary();
   }
 
@@ -144,7 +151,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groups[1].join(groupConfiguration2);
 
     // open test
-    groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
+    groups[0].openChannel(LOCALHOST, groupPorts.get(1).port(), new NullChannelEventListener());
 
     Thread.sleep(2000);
 
@@ -236,8 +243,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groups[0].join(groupConfiguration1);
     groups[1].join(groupConfiguration2);
 
-    groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
-    groups[1].openChannel(LOCALHOST, groupPorts[0], new NullChannelEventListener());
+    groups[0].openChannel(LOCALHOST, groupPorts.get(1).port(), new NullChannelEventListener());
+    groups[1].openChannel(LOCALHOST, groupPorts.get(0).port(), new NullChannelEventListener());
 
     // wait one channel to be closed.
     Thread.sleep(2000);

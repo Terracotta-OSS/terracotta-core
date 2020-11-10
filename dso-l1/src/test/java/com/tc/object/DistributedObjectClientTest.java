@@ -25,7 +25,6 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
-import com.tc.util.PortChooser;
 import com.tc.net.core.ProductID;
 
 import java.net.InetSocketAddress;
@@ -39,29 +38,32 @@ import static com.tc.object.ClientBuilderFactory.CLIENT_BUILDER_TYPE;
 import static org.mockito.Mockito.when;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.utilities.test.net.PortManager;
 
 
 public class DistributedObjectClientTest extends TestCase {
-  
+
   public void testConnectionTimeout() throws Exception {
-    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
-    Properties connectionProperties = new Properties();
-    connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
-    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
-    DistributedObjectClient client =
-        new DistributedObjectClient(
-            Collections.singleton(new InetSocketAddress("localhost", new PortChooser().chooseRandomPort())),
-            threadGroup,
-            connectionProperties
-        );
-    client.start();
-    Assert.assertTrue(threadGroup.activeCount() > 0);
-    long start = System.currentTimeMillis();
-    boolean connected = client.waitForConnection(10, TimeUnit.SECONDS);
-    Assert.assertFalse(connected);
-    client.shutdown();
-    Assert.assertTrue(threadGroup.activeCount() == 0);
-    Assert.assertTrue(System.currentTimeMillis() - start, System.currentTimeMillis() - start < 15000);
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
+      Properties connectionProperties = new Properties();
+      connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
+      connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
+      DistributedObjectClient client =
+          new DistributedObjectClient(
+              Collections.singleton(new InetSocketAddress("localhost", portRef.port())),
+              threadGroup,
+              connectionProperties
+          );
+      client.start();
+      Assert.assertTrue(threadGroup.activeCount() > 0);
+      long start = System.currentTimeMillis();
+      boolean connected = client.waitForConnection(10, TimeUnit.SECONDS);
+      Assert.assertFalse(connected);
+      client.shutdown();
+      Assert.assertTrue(threadGroup.activeCount() == 0);
+      Assert.assertTrue(System.currentTimeMillis() - start, System.currentTimeMillis() - start < 15000);
+    }
     int count = Thread.activeCount();
     System.out.println("active threads:" + count);
     Thread[] t = new Thread[count];
@@ -72,47 +74,49 @@ public class DistributedObjectClientTest extends TestCase {
       }
     }
   }
-  
+
   public void testFatalError() throws Exception {
-    TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
-    Properties connectionProperties = new Properties();
-    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
-    ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextBufferManagerFactory()) {
-      @Override
-      public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout) {
-        ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
-        try {
-          Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));
-        } catch (Exception exp) {
-          
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
+      Properties connectionProperties = new Properties();
+      connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
+      ClientBuilder builder = new StandardClientBuilder(connectionProperties, new ClearTextBufferManagerFactory()) {
+        @Override
+        public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr, SessionProvider sessionProvider, int socketConnectTimeout) {
+          ClientMessageChannel channel = Mockito.mock(ClientMessageChannel.class);
+          try {
+            Mockito.when(channel.open(Mockito.anyCollection())).thenThrow(new RuntimeException("bad connection"));
+          } catch (Exception exp) {
+
+          }
+          when(channel.getProductID()).thenReturn(ProductID.PERMANENT);
+          return channel;
         }
-        when(channel.getProductID()).thenReturn(ProductID.PERMANENT);
-        return channel;
+      };
+
+      DistributedObjectClient client = new DistributedObjectClient(
+          Collections.singleton(InetSocketAddress.createUnresolved("localhost", portRef.port())),
+          builder,
+          threadGroup,
+          null,
+          null,
+          false
+      );
+      client.start();
+      Assert.assertTrue(threadGroup.activeCount() > 0);
+      long start = System.currentTimeMillis();
+      try {
+        client.waitForConnection(10, TimeUnit.SECONDS);
+        Assert.fail();
+      } catch (RuntimeException exp) {
+  //    expected
+        Assert.assertNotNull(exp);
+        Assert.assertEquals(exp.getCause().getMessage(), "bad connection");
       }
-    };
-    
-    DistributedObjectClient client = new DistributedObjectClient(
-        Collections.singleton(InetSocketAddress.createUnresolved("localhost", new PortChooser().chooseRandomPort())),
-        builder,
-        threadGroup,
-        null,
-        null,
-        false
-    );
-    client.start();
-    Assert.assertTrue(threadGroup.activeCount() > 0);
-    long start = System.currentTimeMillis();
-    try {
-      client.waitForConnection(10, TimeUnit.SECONDS);
-      Assert.fail();
-    } catch (RuntimeException exp) {
-//    expected
-      Assert.assertNotNull(exp);
-      Assert.assertEquals(exp.getCause().getMessage(), "bad connection");
+      client.shutdown();
+      Assert.assertTrue(threadGroup.activeCount() == 0);
+      Assert.assertTrue(System.currentTimeMillis() - start < 11000);
     }
-    client.shutdown();
-    Assert.assertTrue(threadGroup.activeCount() == 0);
-    Assert.assertTrue(System.currentTimeMillis() - start < 11000);
     int count = Thread.activeCount();
     System.out.println("active threads:" + count);
     Thread[] t = new Thread[count];
@@ -122,5 +126,5 @@ public class DistributedObjectClientTest extends TestCase {
         System.out.println(z.getName());
       }
     }
-  }  
+  }
 }

@@ -206,6 +206,11 @@
         <artifactId>asm-util</artifactId>
         <version>${asm.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>terracotta-utilities-port-chooser</artifactId>
+        <version>${terracotta-utilities.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

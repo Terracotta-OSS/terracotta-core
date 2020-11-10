@@ -25,7 +25,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.util.PortChooser;
 
 import java.net.ConnectException;
 import java.net.Socket;
@@ -34,6 +33,8 @@ import javax.management.MBeanServer;
 
 import static org.junit.Assert.*;
 import org.junit.Ignore;
+import org.terracotta.utilities.test.net.PortManager;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,21 +53,22 @@ public class DSOTest {
 
   @Test @Ignore("some enviroments don't like the socket stuff going on here")
   public void testJMXRemote() throws Exception {
-    PortChooser portChooser = new PortChooser();
-    final int jmxRemotePort = portChooser.chooseRandomPort();
-    dso.setJmxRemotePort(String.valueOf(jmxRemotePort));
-    dso.startJMXRemote();
-    try {
-      Socket socket = new Socket("localhost", jmxRemotePort);
-      socket.close();
-    } catch (ConnectException ce) {
-      fail("couldn't connect to jmx remote at port " + jmxRemotePort);
-    }
+    try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+      final int jmxRemotePort = portRef.port();
+      dso.setJmxRemotePort(String.valueOf(jmxRemotePort));
+      dso.startJMXRemote();
+      try {
+        Socket socket = new Socket("localhost", jmxRemotePort);
+        socket.close();
+      } catch (ConnectException ce) {
+        fail("couldn't connect to jmx remote at port " + jmxRemotePort);
+      }
 
-    try {
-      dso.stopJMXRemote();
-      new Socket("localhost", jmxRemotePort);
-      fail("jmx remote stop failed");
-    } catch (ConnectException expected) {}
+      try {
+        dso.stopJMXRemote();
+        new Socket("localhost", jmxRemotePort);
+        fail("jmx remote stop failed");
+      } catch (ConnectException expected) {}
+    }
   }
 }

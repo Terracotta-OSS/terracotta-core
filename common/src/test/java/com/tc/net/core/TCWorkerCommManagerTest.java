@@ -55,7 +55,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.CallableWaiter;
-import com.tc.util.PortChooser;
+import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.properties.TCPropertiesConsts;
 
@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import org.junit.Ignore;
+import org.terracotta.utilities.test.net.PortManager;
 
 public class TCWorkerCommManagerTest extends TCTestCase {
 
@@ -77,13 +78,13 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   public TCWorkerCommManagerTest() {
 
   }
-  
+
   private synchronized ClientMessageTransport createClient(String clientName) {
     TCConnectionManager connection = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     clientConnectionMgrs.add(connection);
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
-                                                                   connection, 
+                                                                   connection,
                                                                    new NullConnectionPolicy());
 
     ClientMessageTransport cmt = new ClientMessageTransport(commsMgr.getConnectionManager(), createHandshakeErrorHandler(), new TransportMessageFactoryImpl(),
@@ -106,11 +107,11 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testReaderandWriterCommThread() throws Exception {
     // comms manager with 4 worker comms
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 4, 
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 4,
       new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
-                                                                   connMgr, 
+                                                                   connMgr,
                                                                    new NullConnectionPolicy());
     NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
@@ -127,9 +128,9 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     client2.open(serverAddress);
     client3.open(serverAddress);
     client4.open(serverAddress);
-    
+
     waitForConnected(client1, client2, client3, client4);
-    
+
     waitForWeight(commsMgr, 0, 1);
     waitForWeight(commsMgr, 1, 1);
     waitForWeight(commsMgr, 2, 1);
@@ -147,7 +148,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       Assert.eval(workerI.getTotalBytesWritten() > 0);
 
     }
-    
+
     client1.close();
     client2.close();
     client3.close();
@@ -159,7 +160,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   }
 
   public void testWorkerCommDistributionAfterClose() throws Exception {
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, 
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3,
       new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
@@ -170,7 +171,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
-    
+
     InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", port);
 
     ClientMessageChannel client1 = createClientMsgCh();
@@ -221,7 +222,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   @Ignore("this test expects add more weight from a thread not able to do it")
   public void WorkerCommDistributionAfterAddMoreWeight() throws Exception {
-    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, 
+    TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3,
       new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
     // comms manager with 3 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
@@ -232,7 +233,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
-    
+
     InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", port);
 
     ClientMessageChannel client1 = createClientMsgCh();
@@ -317,7 +318,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                  .getPropertiesFor(TCPropertiesConsts.L2_L1_HEALTH_CHECK_CATEGORY).addAllPropertiesTo(props);
       props.list(System.out);
       HealthCheckerConfigImpl config = new HealthCheckerConfigImpl(1000, 1000, 1, "test server", false, 1, 1);
-      TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3, 
+      TCConnectionManager connMgr = new TCConnectionManagerImpl("Server-TestCommsMgr", 3,
         new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
       CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                                                      new TCMessageRouterImpl(),
@@ -334,111 +335,123 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       listener.start(Collections.<ConnectionID>emptySet());
       int serverPort = listener.getBindPort();
 
-      int proxyPort = new PortChooser().chooseRandomPort();
-      TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
-      proxy.start();
+      try {
+        try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+          int proxyPort = portRef.port();
+          TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
+          try {
+            proxy.start();
 
-      InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", proxyPort);
+            InetSocketAddress serverAddress = InetSocketAddress.createUnresolved("localhost", proxyPort);
 
-      ClientMessageChannel client1 = createClientMsgCh();
-      ClientMessageChannel client2 = createClientMsgCh();
-      ClientMessageChannel client3 = createClientMsgCh();
+            ClientMessageChannel client1 = createClientMsgCh();
+            ClientMessageChannel client2 = createClientMsgCh();
+            ClientMessageChannel client3 = createClientMsgCh();
 
-      client1.open(serverAddress);
-      client2.open(serverAddress);
-      client3.open(serverAddress);
+            client1.open(serverAddress);
+            client2.open(serverAddress);
+            client3.open(serverAddress);
 
-      waitForConnected(client1, client2, client3);
+            waitForConnected(client1, client2, client3);
 
-      Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-      Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-      Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+            Assert.assertEquals(1, ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
+            Assert.assertEquals(1, ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
+            Assert.assertEquals(1, ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-      // case 1 : network problems .. both ends getting events
-      proxy.stop();
+            // case 1 : network problems .. both ends getting events
+            proxy.stop();
 
-      waitForWeight(commsMgr, 0, 0);
-      waitForWeight(commsMgr, 1, 0);
-      waitForWeight(commsMgr, 2, 0);
+            waitForWeight(commsMgr, 0, 0);
+            waitForWeight(commsMgr, 1, 0);
+            waitForWeight(commsMgr, 2, 0);
 
-      proxy.start();
+            proxy.start();
 
-      waitForConnected(client1, client2, client3);
+            waitForConnected(client1, client2, client3);
 
-      Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-      Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-      Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+            Assert.assertEquals(1, ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
+            Assert.assertEquals(1, ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
+            Assert.assertEquals(1, ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-      // case 2: problem with the client side connections .. but server still thinks clients are connected
-      proxy.closeClientConnections(true, false);
+            // case 2: problem with the client side connections .. but server still thinks clients are connected
+            proxy.closeClientConnections(true, false);
 
-      System.out.println("XXX waiting for clients to reconnect");
-      waitForWeight(commsMgr, 0, 1);
-      waitForWeight(commsMgr, 1, 1);
-      waitForWeight(commsMgr, 2, 1);
+            System.out.println("XXX waiting for clients to reconnect");
+            waitForWeight(commsMgr, 0, 1);
+            waitForWeight(commsMgr, 1, 1);
+            waitForWeight(commsMgr, 2, 1);
 
-      // case 3: connecting three more clients through server ports
+            // case 3: connecting three more clients through server ports
 
-      ClientMessageChannel client4 = createClientMsgCh();
-      ClientMessageChannel client5 = createClientMsgCh();
-      ClientMessageChannel client6 = createClientMsgCh();
+            ClientMessageChannel client4 = createClientMsgCh();
+            ClientMessageChannel client5 = createClientMsgCh();
+            ClientMessageChannel client6 = createClientMsgCh();
 
-      serverAddress = InetSocketAddress.createUnresolved("localhost", serverPort);
+            serverAddress = InetSocketAddress.createUnresolved("localhost", serverPort);
 
-      client4.open(serverAddress);
-      client5.open(serverAddress);
-      client6.open(serverAddress);
+            client4.open(serverAddress);
+            client5.open(serverAddress);
+            client6.open(serverAddress);
 
-      waitForConnected(client4, client5, client6);
+            waitForConnected(client4, client5, client6);
 
-      // Issue #414:  This intermittently fails so collect more information regarding the state of the workers.  While the
-      //  test expects them each to have 2 clients, we fail when one of them has a different number.  I suspect that there
-      //  is a race in how the connections are distributed to the worker threads meaning that 2 concurrent connection
-      //  attempts may choose the same worker, not realizing that each of them changes its weight.
-      int weightFor0 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0);
-      int weightFor1 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1);
-      int weightFor2 = ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2);
-      System.out.println("Issue #414 debug weights: " + weightFor0 + ", " + weightFor1 + ", " + weightFor2);
-      Assert.assertEquals(6, weightFor0 + weightFor1 + weightFor2);
-      // distribution may not be even since weighting is best efforts but horribly skewed
-      Assert.assertTrue(0 < weightFor0);
-      Assert.assertTrue(0 < weightFor1);
-      Assert.assertTrue(0 < weightFor2);
+            // Issue #414:  This intermittently fails so collect more information regarding the state of the workers.  While the
+            //  test expects them each to have 2 clients, we fail when one of them has a different number.  I suspect that there
+            //  is a race in how the connections are distributed to the worker threads meaning that 2 concurrent connection
+            //  attempts may choose the same worker, not realizing that each of them changes its weight.
+            int weightFor0 = ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0);
+            int weightFor1 = ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1);
+            int weightFor2 = ((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2);
+            System.out.println("Issue #414 debug weights: " + weightFor0 + ", " + weightFor1 + ", " + weightFor2);
+            Assert.assertEquals(6, weightFor0 + weightFor1 + weightFor2);
+            // distribution may not be even since weighting is best efforts but horribly skewed
+            Assert.assertTrue(0 < weightFor0);
+            Assert.assertTrue(0 < weightFor1);
+            Assert.assertTrue(0 < weightFor2);
 
-      // case 4: closing all connections from server side
-      System.out.println("XXX closing all client connections");
-      commsMgr.getConnectionManager().closeAllConnections(5000);
+            // case 4: closing all connections from server side
+            System.out.println("XXX closing all client connections");
+            commsMgr.getConnectionManager().closeAllConnections(5000);
 
-      // all clients should reconnect and should be distributed fairly among the worker comms.
+            // all clients should reconnect and should be distributed fairly among the worker comms.
 
-      // After connection close and reconnects, the weight balance depends on when comms get the close connection events
-      System.out.println("XXX waiting for all clients reconnect");
-      waitForTotalWeights(commsMgr, 3, 6);
+            // After connection close and reconnects, the weight balance depends on when comms get the close connection events
+            System.out.println("XXX waiting for all clients reconnect");
+            waitForTotalWeights(commsMgr, 3, 6);
 
-      // case 5: server detecting long gcs and kicking out the clients
-      proxy.setDelay(15 * 1000);
+            // case 5: server detecting long gcs and kicking out the clients
+            proxy.setDelay(15 * 1000);
 
-      System.out.println("XXX waiting for HC to kick out the clients those who connected thru proxy ports");
-      waitForTotalWeights(commsMgr, 3, 3);
+            System.out.println("XXX waiting for HC to kick out the clients those who connected thru proxy ports");
+            waitForTotalWeights(commsMgr, 3, 3);
 
-      proxy.setDelay(0);
+            proxy.setDelay(0);
 
-      ThreadUtil.reallySleep(10000);
-      System.out.println("XXX server after seeing client long GC will not open reconnect window for it");
-      Assert.assertEquals(3, (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
-                             + (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1))
-                             + (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2)));
+            ThreadUtil.reallySleep(10000);
+            System.out.println("XXX server after seeing client long GC will not open reconnect window for it");
+            Assert.assertEquals(3, (((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
+                + (((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1))
+                + (((TCCommImpl)commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2)));
 
-      client1.close();
-      client2.close();
-      client3.close();
-      client4.close();
-      client5.close();
-      client6.close();
-
-      listener.stop(5000);
-      commsMgr.shutdown();
-      connMgr.shutdown();
+            client1.close();
+            client2.close();
+            client3.close();
+            client4.close();
+            client5.close();
+            client6.close();
+          } finally {
+            proxy.stop();
+          }
+        }
+      } finally {
+        try {
+          listener.stop(5000);
+        } catch (TCTimeoutException e) {
+          // ignored
+        }
+        commsMgr.shutdown();
+        connMgr.shutdown();
+      }
     }
   }
 
