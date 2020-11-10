@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>galvan-root</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
   </parent>
 
   <artifactId>galvan</artifactId>
@@ -56,6 +56,11 @@ limitations under the License.
       <groupId>org.terracotta</groupId>
       <artifactId>test-interfaces</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
+      <version>1.7.1-pre1</version>
     </dependency>
   </dependencies>
 
