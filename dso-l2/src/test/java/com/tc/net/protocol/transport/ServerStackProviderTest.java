@@ -70,13 +70,16 @@ public class ServerStackProviderTest extends TCTestCase {
   }
 
   public void testAttachAlreadyConnectedTransport() throws Exception {
-    NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
-        any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class))).then(
-            invoke->{
+    NetworkStackHarnessFactory harnessFactory = mock(NetworkStackHarnessFactory.class);
+    when(harnessFactory
+        .createServerHarness(
+            any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class)))
+        .then(
+            invoke -> {
               Object[] args = invoke.getArguments();
               return new ServerNetworkStackHarness((ServerMessageChannelFactory)args[0], (MessageTransport)args[1]);
             }
-        ).getMock();
+        );
     ServerMessageChannelFactory serverMessageChannelFactory = mock(ServerMessageChannelFactory.class);
     when(serverMessageChannelFactory.createNewChannel(any(ChannelID.class))).then(invoke->{
       MessageChannelInternal channel = mock(MessageChannelInternal.class);
@@ -87,7 +90,7 @@ public class ServerStackProviderTest extends TCTestCase {
     });
     MessageTransportFactory messageTransportFactory = mock(MessageTransportFactory.class);
 
-    when(messageTransportFactory.createNewTransport(any(TCConnection.class), any(TransportHandshakeErrorHandler.class), 
+    when(messageTransportFactory.createNewTransport(any(TCConnection.class), any(TransportHandshakeErrorHandler.class),
         any(TransportHandshakeMessageFactory.class), any(List.class))).then(invoke->{
           Object[] args = invoke.getArguments();
           return new ServerMessageTransport((TCConnection)args[0], (TransportHandshakeErrorHandler)args[1], (TransportHandshakeMessageFactory)args[2]);
@@ -118,7 +121,7 @@ public class ServerStackProviderTest extends TCTestCase {
       // expected
     }
   }
-  
+
   public void testRebuildStack() throws Exception {
     NetworkStackHarnessFactory harnessFactory = when(mock(NetworkStackHarnessFactory.class).createServerHarness(
         any(ServerMessageChannelFactory.class), any(MessageTransport.class), any(MessageTransportListener[].class))).then(
