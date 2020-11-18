@@ -19,7 +19,6 @@
 package org.terracotta.testing.rules;
 
 import com.tc.util.Assert;
-import com.tc.util.PortChooser;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
@@ -46,14 +45,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
+import static java.util.stream.Collectors.toList;
+
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
+import org.terracotta.testing.support.PortTool;
+import org.terracotta.utilities.test.net.PortManager;
 
 /**
  * @author cdennis
@@ -164,17 +168,22 @@ class BasicExternalCluster extends Cluster {
     stateManager = new TestStateManager();
     interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
 
-    List<String> serverNames = new ArrayList<>();
-    List<Integer> serverPorts = new ArrayList<>();
-    List<Integer> serverGroupPorts = new ArrayList<>();
+    /*
+     * Debug ports, if requested, are reserved from a specified base port, first.  This
+     * provides the best chance of allocating a consecutive list of ports without interference
+     * from the server and group port reservations.
+     */
+    PortManager portManager = PortManager.getInstance();
+    List<PortManager.PortRef> debugPortRefs = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
-    int basePort = new PortChooser().chooseRandomPorts(stripeSize * 2);
-    for (int i = 0; i < stripeSize; i++) {
-      serverNames.add("testServer" + i);
-      serverPorts.add(basePort++);
-      serverGroupPorts.add(basePort++);
-      serverDebugPorts.add(serverDebugStartPort == 0 ? 0 : serverDebugStartPort++);
-    }
+    PortTool.assignDebugPorts(portManager, serverDebugStartPort, stripeSize, debugPortRefs, serverDebugPorts);
+
+    List<PortManager.PortRef> serverPortRefs = portManager.reservePorts(stripeSize);
+    List<PortManager.PortRef> groupPortRefs = portManager.reservePorts(stripeSize);
+
+    List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
+    List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
+    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testserver" + i).collect(toList());
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
@@ -227,25 +236,32 @@ class BasicExternalCluster extends Cluster {
           didPass = true;
         } catch (GalvanFailureException e) {
           didPass = false;
-        }
-        // Whether we passed or failed, bring everything down.
-        try {
-          interlock.forceShutdown();
-        } catch (GalvanFailureException e) {
-          e.printStackTrace();
-          didPass = false;
-        }
-        setSafeForRun(false);
-        if (!didPass) {
-          // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
-          // attempt, etc.  When Galvan is run in the purely multi-process mode, this is typically where all
-          // sub-processes would be terminated.  Since we are running the client as another thread, in-process, the
-          // best we can do is interrupt it from a lower-level blocking call.
-          // NOTE:  the "client" is also the thread which created us and will join on our termination, before
-          // returning back to the user code so it is possible that this interruption could be experienced in its
-          // join() call (in which case, we can safely ignore it).
-          isInterruptingClient = true;
-          clientThread.interrupt();
+        } finally {
+          // Whether we passed or failed, bring everything down.
+          try {
+            interlock.forceShutdown();
+          } catch (Exception e) {
+            e.printStackTrace();
+            didPass = false;
+          } finally {
+            setSafeForRun(false);
+
+            serverPortRefs.forEach(PortManager.PortRef::close);
+            groupPortRefs.forEach(PortManager.PortRef::close);
+            debugPortRefs.stream().filter(Objects::nonNull).forEach(PortManager.PortRef::close);
+
+            if (!didPass) {
+              // Typically, we want to interrupt the thread running as the "client" as it might be stuck in a connection
+              // attempt, etc.  When Galvan is run in the purely multi-process mode, this is typically where all
+              // sub-processes would be terminated.  Since we are running the client as another thread, in-process, the
+              // best we can do is interrupt it from a lower-level blocking call.
+              // NOTE:  the "client" is also the thread which created us and will join on our termination, before
+              // returning back to the user code so it is possible that this interruption could be experienced in its
+              // join() call (in which case, we can safely ignore it).
+              isInterruptingClient = true;
+              clientThread.interrupt();
+            }
+          }
         }
       }
     };

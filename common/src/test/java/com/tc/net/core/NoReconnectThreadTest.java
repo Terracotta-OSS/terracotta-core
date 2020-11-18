@@ -38,7 +38,6 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
@@ -48,11 +47,13 @@ import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
-import com.tc.util.PortChooser;
+import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
+
+import org.terracotta.utilities.test.net.PortManager;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -66,7 +67,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   private final AtomicInteger connections          = new AtomicInteger(0);
   private int baseAsyncThreads;
   private final List<TCConnectionManager> clientConnectionMgrs = Collections.synchronizedList(new ArrayList<>());
-  
+
 
   @Override
   protected void setUp() throws Exception {
@@ -117,52 +118,64 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     );
     NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory(), (MessageTransport t)->true);
-    listener.start(Collections.<ConnectionID>emptySet());
-    int serverPort = listener.getBindPort();
+    listener.start(Collections.emptySet());
+    try {
+      int serverPort = listener.getBindPort();
 
-    int proxyPort = new PortChooser().chooseRandomPort();
-    TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
-    proxy.start();
+      try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
+        int proxyPort = portRef.port();
+        TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
+        try {
+          proxy.start();
 
-    ClientMessageChannel client1 = createClientMsgCh();
-    ClientMessageChannel client2 = createClientMsgCh();
-    ClientMessageChannel client3 = createClientMsgCh();
-    
-    InetSocketAddress serverAddress = new InetSocketAddress("localhost", proxyPort);
+          ClientMessageChannel client1 = createClientMsgCh();
+          ClientMessageChannel client2 = createClientMsgCh();
+          ClientMessageChannel client3 = createClientMsgCh();
 
-    client1.addListener(this);
-    client1.open(serverAddress);
+          InetSocketAddress serverAddress = new InetSocketAddress("localhost", proxyPort);
 
-    client2.addListener(this);
-    client2.open(serverAddress);
+          client1.addListener(this);
+          client1.open(serverAddress);
 
-    client3.addListener(this);
-    client3.open(serverAddress);
+          client2.addListener(this);
+          client2.open(serverAddress);
 
-    ThreadUtil.reallySleep(2000);
-    assertTrue(client1.isConnected());
-    assertTrue(client2.isConnected());
-    assertTrue(client3.isConnected());
+          client3.addListener(this);
+          client3.open(serverAddress);
 
-    // closing all connections from server side
-    System.err.println("XXX closing all client connections");
-    serverCommsMgr.getConnectionManager().closeAllConnections(1000);
+          ThreadUtil.reallySleep(2000);
+          assertTrue(client1.isConnected());
+          assertTrue(client2.isConnected());
+          assertTrue(client3.isConnected());
 
-    while (connections.get() != 0) {
-      ThreadUtil.reallySleep(2000);
-      System.err.println(".");
+          // closing all connections from server side
+          System.err.println("XXX closing all client connections");
+          serverCommsMgr.getConnectionManager().closeAllConnections(1000);
+
+          while (connections.get() != 0) {
+            ThreadUtil.reallySleep(2000);
+            System.err.println(".");
+          }
+
+          // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client
+          // CommsManager is created with reconnect 0. we might need to wait till the created CCE gets quit request.
+          while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > baseAsyncThreads) {
+            ThreadUtil.reallySleep(1000);
+            System.err.println("-");
+          }
+        } finally {
+          proxy.stop();
+        }
+      }
+    } finally {
+      try {
+        listener.stop(5000);
+      } catch (TCTimeoutException e) {
+        // ignored
+      }
+      serverCommsMgr.shutdown();
+      connectionMgr.shutdown();
     }
-
-    // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client
-    // CommsManager is created with reconnect 0. we might need to wait till the created CCE gets quit request.
-    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > baseAsyncThreads) {
-      ThreadUtil.reallySleep(1000);
-      System.err.println("-");
-    }
-
-    listener.stop(5000);
-    serverCommsMgr.shutdown();
-    connectionMgr.shutdown();
   }
 
   private int getThreadCount(String absentThreadName) {

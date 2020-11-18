@@ -48,13 +48,15 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
-import com.tc.util.PortChooser;
+
+import org.terracotta.utilities.test.net.PortManager;
 
 /**
  * To Test Message Packup happening at the comms writer.
  */
 public class TCConnectionTransportTest extends TestCase {
   private TCConnectionManager connMgr;
+  private PortManager.PortRef portRef;
   private TCListener          server;
   private final AtomicLong    sentMessagesTotalLength  = new AtomicLong(0);
   private final AtomicLong    rcvdMessagesTotalLength  = new AtomicLong(0);
@@ -75,13 +77,15 @@ public class TCConnectionTransportTest extends TestCase {
       }
     };
 
-    server = connMgr.createListener(new TCSocketAddress(new PortChooser().chooseRandomPort()), factory);
+    portRef = PortManager.getInstance().reservePort();
+    server = connMgr.createListener(new TCSocketAddress(portRef.port()), factory);
   }
 
   @Override
   protected void tearDown() throws Exception {
     connMgr.shutdown();
     server.stop();
+    portRef.close();
   }
 
   Random r = new Random();
@@ -252,7 +256,7 @@ public class TCConnectionTransportTest extends TestCase {
       nvData[0].putInt(0, 2);
       this.setPayload(nvData);
     }
-    
+
     @Override
     protected void dehydrateValues() {
       putNVPair(SEQUENCE, seqID);

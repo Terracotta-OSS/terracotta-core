@@ -46,9 +46,10 @@ import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
 import com.tc.server.TCServer;
-import com.tc.util.PortChooser;
 import com.tc.util.State;
 import com.tc.util.concurrent.QueueFactory;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +72,9 @@ import com.tc.server.TCServerMain;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.Ignore;
+import org.terracotta.utilities.test.net.PortManager;
+
+import static java.util.stream.Collectors.toSet;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -87,8 +91,8 @@ public class StateManagerImplTest {
 
   private static final int NUM_OF_SERVERS = 3;
   private static final String LOCALHOST = "localhost";
-  private final int[] ports = new int[NUM_OF_SERVERS];
-  private final int[] groupPorts = new int[NUM_OF_SERVERS];
+  private List<PortManager.PortRef> ports;
+  private List<PortManager.PortRef> groupPorts;
   private final Node[] nodes = new Node[NUM_OF_SERVERS];
   private final TCGroupManagerImpl[] groupManagers = new TCGroupManagerImpl[NUM_OF_SERVERS];
   private final Set<Node> nodeSet = new HashSet<>();
@@ -103,7 +107,6 @@ public class StateManagerImplTest {
   @Before
   public void setUp() throws Exception {
     Logger tcLogger = mock(Logger.class);
-    PortChooser pc = new PortChooser();
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
     ConsistencyManager mgr = mock(ConsistencyManager.class);
@@ -115,17 +118,14 @@ public class StateManagerImplTest {
     TCServerMain.server = mock(TCServer.class);
     when(TCServerMain.server.getActivateTime()).thenReturn(System.currentTimeMillis());
 
-    Set<String> servers = new HashSet<>();
-    for(int i = 0; i < NUM_OF_SERVERS; i++) {
-      int port = pc.chooseRandom2Port();
-      ports[i] = port;
-      groupPorts[i] = port + 1;
-      servers.add("localhost:" + ports[i]);
-    }
-    
+    PortManager portManager = PortManager.getInstance();
+    ports = portManager.reservePorts(NUM_OF_SERVERS);
+    groupPorts = portManager.reservePorts(NUM_OF_SERVERS);
+    Set<String> servers = ports.stream().map(r -> "localhost:" + r.port()).collect(toSet());
+
     this.topologyManager = new TopologyManager(servers);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
-      nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
+      nodes[i] = new Node(LOCALHOST, ports.get(i).port(), groupPorts.get(i).port());
       nodeSet.add(nodes[i]);
       stageControllers[i] = mock(StageController.class);
       mgmt[i] = mock(ManagementTopologyEventCollector.class);
@@ -133,7 +133,7 @@ public class StateManagerImplTest {
       when(clusterStatePersistorMock.isDBClean()).thenReturn(Boolean.TRUE);
 //      tcServers[i] = mock(TCServer.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
-      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i],
+      groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
                                                 stageManagers[i], weightGeneratorFactory, topologyManager);
 
       stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mgr,
@@ -146,6 +146,16 @@ public class StateManagerImplTest {
       when(l2CoordinatorMock.getStateManager()).thenReturn(stateManagers[i]);
       ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl(stageManagers[i], null, null, null, l2CoordinatorMock);
       stageManagers[i].startAll(serverConfigurationContextMock, new ArrayList<>());
+    }
+  }
+
+  @After
+  public void tearDown() {
+    if (ports != null) {
+      ports.forEach(PortManager.PortRef::close);
+    }
+    if (groupPorts != null) {
+      groupPorts.forEach(PortManager.PortRef::close);
     }
   }
 
@@ -205,7 +215,7 @@ public class StateManagerImplTest {
   public void testInitialElectionDoesNotSetStandbyAsActive() throws Exception {
     Logger logger = mock(Logger.class);
     GroupManager grp = mock(GroupManager.class);
-    
+
     StageManager stageManager = mock(StageManager.class);
     StageController stageController = mock(StageController.class);
     ManagementTopologyEventCollector mgmtController = mock(ManagementTopologyEventCollector.class);
@@ -227,7 +237,7 @@ public class StateManagerImplTest {
         throw new UnsupportedOperationException("Not supported yet.");
       }
     });
-    
+
     ExecutorService threads = Executors.newCachedThreadPool();
     when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
         .then((invoke)->{
@@ -246,7 +256,7 @@ public class StateManagerImplTest {
           when(election.getSink()).thenReturn(electionSink);
           return election;
         });
-    
+
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
@@ -255,18 +265,18 @@ public class StateManagerImplTest {
     StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
                                                   statePersistor, topologyManager);
     state.initializeAndStartElection();
-    
+
     state.startElectionIfNecessary(mock(NodeID.class));
     state.waitForElectionsToFinish();
     Assert.assertTrue(state.getActiveNodeID().isNull());
     threads.shutdown();
   }
-  
+
   @Test
   public void testInitialElection() throws Exception {
     Logger logger = mock(Logger.class);
     GroupManager grp = mock(GroupManager.class);
-    
+
     StageController stageController = mock(StageController.class);
     ManagementTopologyEventCollector mgmtController = mock(ManagementTopologyEventCollector.class);
     StageManager stageManager = mock(StageManager.class);
@@ -287,7 +297,7 @@ public class StateManagerImplTest {
         throw new UnsupportedOperationException("Not supported yet.");
       }
     });
-    
+
     when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
         .then((invoke)->{
           Stage election = mock(Stage.class);
@@ -305,7 +315,7 @@ public class StateManagerImplTest {
           when(election.getSink()).thenReturn(electionSink);
           return election;
         });
-    
+
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
@@ -315,12 +325,12 @@ public class StateManagerImplTest {
     StateManagerImpl state = new StateManagerImpl(logger, grp, stageController, mgmtController, stageManager, 1, 5, weightGeneratorFactory, mgr,
                                                   statePersistor, topologyManager);
     state.initializeAndStartElection();
-    
+
     state.startElectionIfNecessary(mock(NodeID.class));
     state.waitForElectionsToFinish();
     Assert.assertEquals(node, state.getActiveNodeID());
   }
-  
+
   @Test
   public void testElectionWithNodeJoiningLater() throws Exception {
 
@@ -363,7 +373,7 @@ public class StateManagerImplTest {
     ServerMode mode = StateManager.convert(StateManager.ACTIVE_COORDINATOR);
     com.tc.util.Assert.assertEquals(ServerMode.ACTIVE, mode);
   }
-  
+
   @Test
   public void testZapAndSync() throws Exception {
     Logger tcLogger = mock(Logger.class);
@@ -384,7 +394,7 @@ public class StateManagerImplTest {
     mgr.initializeAndStartElection();
     Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
     Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
-    
+
     L2StateMessage sw = mock(L2StateMessage.class);
     when(sw.getType()).thenReturn(L2StateMessage.ABORT_ELECTION);
     when(sw.getState()).thenReturn(StateManager.ACTIVE_COORDINATOR);
@@ -401,7 +411,7 @@ public class StateManagerImplTest {
     } catch (Throwable t) {
       t.printStackTrace();
       Assert.assertTrue(t.toString(), t instanceof TCServerRestartException);
-    }    
+    }
   }
 
   private ArgumentMatcher<StateChangedEvent> stateChangeEvent(State oldState, State currentState) {
