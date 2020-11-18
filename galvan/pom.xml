@@ -35,6 +35,12 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>${logback.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
@@ -46,6 +52,11 @@ limitations under the License.
       <version>${ipc-eventbus.version}</version>
     </dependency>
     <!-- ipc-eventbus needs it for getting sub process PID on windows -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-port-chooser</artifactId>
+      <version>${terracotta-utilities.version}</version>
+    </dependency>
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna-platform</artifactId>

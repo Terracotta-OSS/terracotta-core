@@ -18,14 +18,16 @@ package org.terracotta.testing.master;
 import org.terracotta.testing.api.ITestClusterConfiguration;
 import org.terracotta.testing.api.ITestMaster;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.common.PortChooser;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
+import org.terracotta.utilities.test.net.PortManager;
 
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -34,7 +36,12 @@ import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
 
 
 public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> {
-  private final PortChooser chooser = new PortChooser();
+
+  /*
+   * Holds a strong reference to ports assigned through {@link #chooseRandomPortRange}.
+   * These ports are released when this {@code AbstractHarnessEntry} becomes weakly-reachable.
+   */
+  private final List<PortManager.PortRef> assignedPorts = new ArrayList<>(0);
 
   public void runTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions,
                              VerboseManager verboseManager) throws IOException, GalvanFailureException {
@@ -52,8 +59,68 @@ public abstract class AbstractHarnessEntry<C extends ITestClusterConfiguration> 
     }
   }
 
+  /**
+   * Allocate the specified number of consecutive TCP ports from a randomly chosen first port.
+   * The port range is held allocated until this {@code AbstractHarnessEntry} instance becomes
+   * weakly reachable.
+   * @deprecated Use {@code org.terracotta.utilities.test.net.PortManager.reservePorts}
+   *          in {@code org.terracotta:terracotta-utilities-port-chooser}
+   *          taking care to adopt the new usage semantics
+   */
+  @Deprecated
   public int chooseRandomPortRange(int number) {
-    return chooser.chooseRandomPorts(number);
+    if (number <= 0) {
+      throw new IllegalArgumentException("Requested port count must be positive");
+    }
+
+    int maxAttempts = 10;
+    final PortManager portManager = PortManager.getInstance();
+    List<PortManager.PortRef> portRefs = new ArrayList<>();
+    synchronized (portManager) {
+      for (int attemptCount = 0; attemptCount < maxAttempts && portRefs.size() != number; attemptCount++) {
+        PortManager.PortRef portRef = portManager.reservePort();
+        if (portRef.port() + number > 65535) {
+          // Too close to the end of the allocable range; skip this one and try again
+          portRefs.add(portRef);
+          continue;
+        }
+
+        /*
+         * Close and discard any previously obtained PortRefs now.
+         */
+        portRefs.forEach(PortManager.PortRef::close);
+        portRefs.clear();
+
+        portRefs.add(portRef);
+
+        /*
+         * Attempt to allocate the next (number - 1) ports following the one we just obtained.
+         */
+        for (int candidatePort = portRef.port() + 1, i = 1; i < number; candidatePort++, i++) {
+          try {
+            Optional<PortManager.PortRef> reservation = portManager.reserve(candidatePort);
+            if (reservation.isPresent()) {
+              portRefs.add(reservation.get());
+            } else {
+              break;
+            }
+          } catch (IllegalStateException | IllegalArgumentException e) {
+            // "Normal" reasons for failure to reserve a port; abandon this cycle and try again
+            break;
+          }
+        }
+      }
+
+      if (portRefs.size() != number) {
+        portRefs.forEach(PortManager.PortRef::close);
+        portRefs.clear();
+        throw new IllegalStateException("Failed to obtain " + number + " consecutive ports within " + maxAttempts + " attempts");
+      }
+
+      assignedPorts.addAll(portRefs);
+    }
+
+    return portRefs.get(0).port();
   }
 
   private void internalRunTestHarness(EnvironmentOptions environmentOptions, ITestMaster<C> master, DebugOptions debugOptions,

@@ -34,6 +34,8 @@ limitations under the License.
 
     <!-- External dependency versions for the project -->
     <ipc-eventbus.version>1.1.1</ipc-eventbus.version>
+    <terracotta-utilities.version>0.0.6</terracotta-utilities.version>
+    <logback.version>1.2.3</logback.version>
     <junit.version>4.12</junit.version>
   </properties>
 
