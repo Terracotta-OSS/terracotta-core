@@ -51,11 +51,11 @@ public class ClientHandshakeMessageImplTest {
         ClientHandshakeMessageImpl chm = new ClientHandshakeMessageImpl(mock(SessionID.class), mock(MessageMonitor.class),
                 new TCByteBufferOutputStream(), channel, TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         ResendVoltronEntityMessage msg1 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(1),
-                mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
+                mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, TCByteBufferFactory.getInstance(false, 0));
         ResendVoltronEntityMessage msg2 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(10),
-                mock(EntityDescriptor.class), VoltronEntityMessage.Type.CREATE_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
+                mock(EntityDescriptor.class), VoltronEntityMessage.Type.CREATE_ENTITY, false, TCByteBufferFactory.getInstance(false, 0));
         ResendVoltronEntityMessage msg3 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(40),
-                mock(EntityDescriptor.class), VoltronEntityMessage.Type.DESTROY_ENTITY, false, TCByteBufferFactory.getInstance(false, 0), mock(TransactionID.class));
+                mock(EntityDescriptor.class), VoltronEntityMessage.Type.DESTROY_ENTITY, false, TCByteBufferFactory.getInstance(false, 0));
 
         chm.addResendMessage(msg3);
         chm.addResendMessage(msg2);

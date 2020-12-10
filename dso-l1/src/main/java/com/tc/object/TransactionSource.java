@@ -19,32 +19,48 @@
 package com.tc.object;
 
 import com.tc.object.tx.TransactionID;
-
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.BitSet;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TransactionSource {
 
-  private static final AtomicLong nextTransactionId = new AtomicLong(1L);
-
-  private static final ConcurrentSkipListSet<Long> pending = new ConcurrentSkipListSet<>();
+  private final AtomicLong current = new AtomicLong();
+  private volatile TransactionID oldestCache = TransactionID.NULL_ID;
+  private long retiredBase = 1L;
+  private int retirePosition = 0;
+  private final long GC_THRESHOLD = 32 * 1024;
+  private BitSet retired = new BitSet();
 
   public TransactionID create() {
-    long txn;
-    while (!pending.add((txn = nextTransactionId.getAndIncrement())));
-    return new TransactionID(txn);
+    return new TransactionID(current.incrementAndGet());
   }
 
   public TransactionID oldest() {
-    Long first = pending.first();
-    if (first == null) {
-      return null;
-    } else {
-      return new TransactionID(first);
+    return oldestCache;
+  }
+
+  private void updateOldest() {
+    retirePosition = retired.nextClearBit(retirePosition);
+    long transactionId = retirePosition + retiredBase;
+    if (oldestCache.toLong() != transactionId) {
+      oldestCache = new TransactionID(transactionId);
     }
   }
 
-  public boolean retire(TransactionID txnId) {
-    return pending.remove(txnId.toLong());
+  private void gc() {
+    if (retirePosition > GC_THRESHOLD) {
+      retiredBase += retirePosition;
+      retired = retired.get(retirePosition, retired.size());
+      retirePosition = 0;
+    }
+  }
+
+  public synchronized boolean retire(TransactionID txnId) {
+    int index = (int)(txnId.toLong() - retiredBase);
+    boolean last = !retired.get(index);
+    retired.set(index);
+    updateOldest();
+    gc();
+    return last;
   }
 }

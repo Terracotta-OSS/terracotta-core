@@ -469,8 +469,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
 //  validate the locking on release and destroy on resends
 
       ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
-          message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData(), 
-          message.getOldestTransactionOnClient());
+          message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData());
       handshakeMessage.addResendMessage(packaged);
     }
   }
