@@ -19,7 +19,6 @@
 package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
@@ -44,20 +43,18 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
   private Type type;
   private boolean requiresReplication;
   private TCByteBuffer extendedData;
-  private TransactionID oldestTransactionPending;
 
   public ResendVoltronEntityMessage() {
     // to make TCSerializable happy
   }
 
-  public ResendVoltronEntityMessage(ClientID source, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, TCByteBuffer extendedData, TransactionID oldestTransactionPending) {
+  public ResendVoltronEntityMessage(ClientID source, TransactionID transactionID, EntityDescriptor entityDescriptor, Type type, boolean requiresReplication, TCByteBuffer extendedData) {
     this.source = source;
     this.transactionID = transactionID;
     this.entityDescriptor = entityDescriptor;
     this.type = type;
     this.requiresReplication = requiresReplication;
     this.extendedData = extendedData == null || extendedData.isReadOnly() ? extendedData : extendedData.asReadOnlyBuffer();
-    this.oldestTransactionPending = oldestTransactionPending;
   }
 
   @Override
@@ -108,7 +105,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
 
   @Override
   public TransactionID getOldestTransactionOnClient() {
-    return this.oldestTransactionPending;
+    return TransactionID.NULL_ID;
   }
 
   @Override
@@ -120,7 +117,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     serialOutput.writeBoolean(this.requiresReplication);
     serialOutput.writeInt(extendedData.remaining());
     serialOutput.write(extendedData.duplicate());
-    serialOutput.writeLong(this.oldestTransactionPending.toLong());
+    serialOutput.writeLong(TransactionID.NULL_ID.toLong());
   }
 
   @Override
@@ -132,7 +129,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     this.requiresReplication = serialInput.readBoolean();
     int bufferLength = serialInput.readInt();
     this.extendedData = serialInput.read(bufferLength);
-    this.oldestTransactionPending = new TransactionID(serialInput.readLong());
+    long compatRead = serialInput.readLong();
     return this;
   }
 
