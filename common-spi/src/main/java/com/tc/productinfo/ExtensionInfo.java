@@ -16,13 +16,12 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.product;
+package com.tc.productinfo;
 
-import java.util.ResourceBundle;
+/**
+ *
+ */
+public interface ExtensionInfo extends Description {
 
-public class StandardResourceBundleFactory extends AbstractResourceBundleFactory {
-  @Override
-  public ResourceBundle createBundle(Class<?> c) {
-    return ResourceBundle.getBundle(c.getName()+"Bundle");
-  }
+  public String getExtensionInfo();
 }

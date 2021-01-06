@@ -76,10 +76,10 @@ public class ServiceLocatorTest {
    @Test
    public void test() throws Exception {
      File f = folder.newFolder();
-     File impl = new File(f, Directories.SERVER_PLUGIN_LIB_DIR);
+     File impl = new File(f,  "plugins/lib");
      File meta = new File(impl, "META-INF/services");
      meta.mkdirs();
-     File api = new File(f, Directories.SERVER_PLUGIN_API_DIR);
+     File api = new File(f,  "plugins/api");
      api.mkdirs();
      writeClass(impl, "com.tc.classloader.TestInterfaceImpl");
      writeClass(impl, "com.tc.classloader.TestInterfaceHandle");
@@ -87,7 +87,7 @@ public class ServiceLocatorTest {
      System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
      
      ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, null);
-     ClassLoader testloader = new StrictURLClassLoader(new URL[] {impl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), true);
+     ClassLoader testloader = new StrictURLClassLoader(new URL[] {impl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker());
      
      FileOutputStream services1 = new FileOutputStream(new File(meta, "com.tc.classloader.TestInterface"));
      services1.write("com.tc.classloader.TestInterfaceImpl".getBytes());
@@ -113,9 +113,9 @@ public class ServiceLocatorTest {
    @Test
    public void testStrictMode() throws Exception {
      File f = folder.newFolder();
-     File impl = new File(f, Directories.SERVER_PLUGIN_LIB_DIR);
+     File impl = new File(f, "plugins/lib");
      impl.mkdirs();
-     File api = new File(f, Directories.SERVER_PLUGIN_API_DIR);
+     File api = new File(f,  "plugins/api");
      api.mkdirs();
      File overload = writeZip(new File(impl, "overload.jar"), "com.tc.classloader.OverloadTestInterfaceImpl");
      File testImpl = writeZip(new File(impl, "impl.jar"), "com.tc.classloader.TestInterfaceImpl", "com.tc.classloader.TestInterfaceHandle");
@@ -123,7 +123,7 @@ public class ServiceLocatorTest {
      System.setProperty(TC_INSTALL_ROOT_PROPERTY_NAME, f.getAbsolutePath());
 
      ClassLoader apiLoader = new ApiClassLoader(new URL[] {testApi.toURI().toURL()}, null);
-     ClassLoader testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), true);
+     ClassLoader testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker());
      ComponentURLClassLoader component = new ComponentURLClassLoader(new URL[] {overload.toURI().toURL()},
          testloader,new AnnotationOrDirectoryStrategyChecker());
      try {
@@ -132,7 +132,7 @@ public class ServiceLocatorTest {
      } catch (NoClassDefFoundError err) {
        //
      }
-     testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new AnnotationOrDirectoryStrategyChecker(), false);
+     testloader = new StrictURLClassLoader(new URL[] {overload.toURI().toURL(),testImpl.toURI().toURL()}, apiLoader, new UniversalCommonComponentChecker());
      component = new ComponentURLClassLoader(new URL[] {overload.toURI().toURL()}, testloader,new AnnotationOrDirectoryStrategyChecker());
       try {
         Class<?> interf = component.loadClass("com.tc.classloader.OverloadTestInterfaceImpl");

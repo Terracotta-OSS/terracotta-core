@@ -27,7 +27,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.TerracottaManagement;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.impl.JMXSubsystem;
-import com.tc.product.ProductInfo;
+import com.tc.util.ProductInfo;
 import com.tc.spi.Guardian;
 import com.tc.spi.Pauseable;
 import java.lang.management.ManagementFactory;
@@ -43,7 +43,6 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationException;
@@ -69,18 +68,16 @@ public class Bootstrap implements BootstrapService {
   @Override
   public Server createServer(String[] args, ClassLoader loader) throws ConfigurationException {
     TCLogbackLogging.bootstrapLogging();
-
-    writeVersion();
-    writePID();
-
-    ClassLoader base = ServiceLocator.resetPlatformClassLoader(loader);
-    ServiceLocator locator = new ServiceLocator(base);
+    ServiceLocator locator = ServiceLocator.createPlatformServiceLoader(loader);
 
     ServerConfigurationManager setup = new ServerConfigurationManager(
       getConfigurationProvider(locator),
       locator,
       args
     );
+
+    writeVersion(setup.getProductInfo());
+    writePID();
 
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
     TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
@@ -101,12 +98,15 @@ public class Bootstrap implements BootstrapService {
     return server;
   }
 
-  private static void writeVersion() {
-    ProductInfo info = ProductInfo.getInstance();
-
+  private static void writeVersion(ProductInfo info) {
     // Write build info always
     String longProductString = info.toLongString();
     CONSOLE.info(longProductString);
+
+    CONSOLE.info("Extensions:");
+    for (String ext : info.getExtensions()) {
+      CONSOLE.info(ext);
+    }
 
     // Write patch info, if any
     if (info.isPatched()) {

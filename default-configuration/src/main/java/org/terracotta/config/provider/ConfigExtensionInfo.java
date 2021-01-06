@@ -16,10 +16,27 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util;
+package org.terracotta.config.provider;
 
-import java.util.ResourceBundle;
+import com.tc.productinfo.ExtensionInfo;
 
-public interface ResourceBundleFactory {
-  ResourceBundle createBundle(Class<?> c);
+/**
+ *
+ */
+public class ConfigExtensionInfo implements ExtensionInfo {
+
+  @Override
+  public String getExtensionInfo() {
+    return "Default Configuration Provider 1.0";
+  }
+
+  @Override
+  public String getValue(String name) {
+    if (name.equals(DESCRIPTION)) {
+      return getExtensionInfo();
+    } else {
+      return "";
+    }
+  }
+
 }

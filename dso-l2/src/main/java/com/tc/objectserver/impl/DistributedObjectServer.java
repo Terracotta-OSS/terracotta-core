@@ -204,7 +204,6 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
@@ -480,7 +479,7 @@ public class DistributedObjectServer {
       // ignore
     }
     final int serverPort = l2DSOConfig.getTsaPort().getPort();
-    final ProductInfo pInfo = ProductInfo.getInstance();
+    final ProductInfo pInfo = server.productInfo();
     PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), ServerEnv.getServer().getStartTime());
 
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
@@ -517,7 +516,7 @@ public class DistributedObjectServer {
     //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
     persistor.getClusterStatePersistor().setDBClean(!wasZapped);
 
-    new ServerPersistenceVersionChecker().checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
+    new ServerPersistenceVersionChecker(pInfo).checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
@@ -783,6 +782,7 @@ public class DistributedObjectServer {
         new Timer("Reconnect timer", true),
         () -> l2DSOConfig.getClientReconnectWindow() * 1000L, //need to pass reconnect window as milliseconds
         fast.getSink(),
+        pInfo,
         consoleLogger
     );
 

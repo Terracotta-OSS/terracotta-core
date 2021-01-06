@@ -20,7 +20,9 @@ package com.tc.config;
 
 
 import com.tc.classloader.ServiceLocator;
+import com.tc.productinfo.Description;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.server.ServiceClassLoader;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.ServerConfiguration;
@@ -37,12 +39,14 @@ import java.util.Objects;
 import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.ProductInfo;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 
   private final ConfigurationProvider configurationProvider;
   private final ServiceLocator serviceLocator;
   private final String[] startUpArgs;
+  private final ProductInfo productInfo;
 
   private Configuration configuration;
   private ServerConfiguration serverConfiguration;
@@ -57,6 +61,15 @@ public class ServerConfigurationManager implements PrettyPrintable {
     this.configurationProvider = configurationProvider;
     this.serviceLocator = classLoader;
     this.startUpArgs = Arrays.copyOf(startUpArgs, startUpArgs.length);
+    this.productInfo = generateProductInfo(serviceLocator);
+  }
+
+  private ProductInfo generateProductInfo(ServiceLocator locator) {
+    return ProductInfo.getInstance(locator.createUniversalClassLoader());
+  }
+
+  public ProductInfo getProductInfo() {
+    return productInfo;
   }
 
   public void initialize() throws ConfigurationException {

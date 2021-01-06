@@ -106,6 +106,5 @@ public class PlatformServiceImpl implements PlatformService, StateDumpable {
   public void addStateTo(StateDumpCollector stateDumpCollector) {
     stateDumpCollector.addState("tcServerState", tcServer.getState());
     stateDumpCollector.addState("tcServerConfig", tcServer.getConfig());
-    stateDumpCollector.addState("tcServerDescriptionCapabilities", tcServer.getDescriptionOfCapabilities());
   }
 }

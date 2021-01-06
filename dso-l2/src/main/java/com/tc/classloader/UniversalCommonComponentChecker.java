@@ -16,17 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util;
+package com.tc.classloader;
 
-import java.util.ResourceBundle;
+import java.util.Set;
 
-public class EnterpriseResourceBundleFactory extends StandardResourceBundleFactory {
-  @Override
-  public ResourceBundle createBundle(Class<?> c) {
-    try {
-      return ResourceBundle.getBundle(c.getName()+"EnterpriseResourceBundle");
-    } catch(Exception e) {
-      return super.createBundle(c);
+/**
+ */
+public class UniversalCommonComponentChecker implements CommonComponentChecker {
+
+    public UniversalCommonComponentChecker() {
     }
-  }
+
+    /**
+     *
+     * @param clazz to be checked
+     * @return true if given class is a common component
+     */
+
+    @Override
+    public boolean check(Class<?> clazz) {
+        return true;
+    }
 }

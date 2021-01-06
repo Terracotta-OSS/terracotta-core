@@ -81,7 +81,6 @@ import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.util.Assert;
 import com.tc.util.CommonShutDownHook;
-import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.SetOnceFlag;
@@ -94,6 +93,7 @@ import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ProductID;
+import com.tc.util.ProductInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
@@ -257,7 +257,7 @@ public class DistributedObjectClient {
         return map;
       }, true);
     
-    final ProductInfo pInfo = ProductInfo.getInstance();
+    final ProductInfo pInfo = ProductInfo.getInstance(getClass().getClassLoader());
     
     ClientHandshakeMessageFactory chmf = (u, n, c)->{
       ClientMessageChannel cmc = getClientMessageChannel();

@@ -29,10 +29,6 @@ import com.tc.util.version.Version;
 public class ServerPersistenceVersionChecker {
   private final ProductInfo productInfo;
 
-  ServerPersistenceVersionChecker() {
-    this(ProductInfo.getInstance());
-  }
-
   ServerPersistenceVersionChecker(ProductInfo productInfo) {
     this.productInfo = productInfo;
   }

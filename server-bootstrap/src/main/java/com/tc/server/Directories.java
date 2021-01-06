@@ -20,6 +20,7 @@ package com.tc.server;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Paths;
 
 /**
  * Knows how to find certain directories. You should try <em>everything</em> you can to avoid using this class; using it
@@ -32,28 +33,26 @@ public class Directories {
    * The property name is "tc.install-root".
    */
   public static final String TC_INSTALL_ROOT_PROPERTY_NAME               = "tc.install-root";
-
+  /**
+   */
+  public static final String TC_PLUGINS_ROOT_PROPERTY_NAME               = "tc.plugins-dir";
+  /**
+   */
+  public static final String TC_PLUGINS_API_PROPERTY_NAME               = "tc.plugins-api";
+   /**
+   */
+  public static final String TC_PLUGINS_LIB_PROPERTY_NAME               = "tc.plugins-lib";
+   /**
+   */
+  public static final String TC_SERVER_DIR_PROPERTY_NAME               = "tc.server-dir";
+  /**
+   */
+  public static final String TC_SERVER_LIB_PROPERTY_NAME               = "tc.server-lib";
   /**
    * The property "tc.install-root.ignore-checks", which is used for testing to ignore checks for the installation root
    * directory.
    */
   public static final String TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME = "tc.install-root.ignore-checks";
-
-  /**
-   * Relative location for server lib directory under Terracotta installation directory
-   */
-  public static final String SERVER_LIB_DIR                                  = "lib";
-
-  /**
-   * Relative location for server plugin api directory under Terracotta installation directory
-   */
-  public static final String SERVER_PLUGIN_API_DIR                           = "plugins/api";
-
-  /**
-   * Relative location for server plugin lib directory under Terracotta installation directory
-   */
-  public static final String SERVER_PLUGIN_LIB_DIR                           = "plugins/lib";
-
   /**
    * Relative location for default configuration file under Terracotta installation directory
    */
@@ -95,15 +94,36 @@ public class Directories {
   }
 
   public static File getServerLibFolder() throws FileNotFoundException {
-    return new File(getInstallationRoot(), SERVER_LIB_DIR);
+    String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
+    String serverRoot = System.getProperty(TC_SERVER_DIR_PROPERTY_NAME, "server");
+    String serverLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
+    File f = Paths.get(installRoot, serverRoot, serverLib).toFile();
+    if (!f.isDirectory()) {
+      throw new FileNotFoundException("server library folder at " + f.getAbsolutePath() + " is not valid");
+    }
+    return f;
   }
 
   public static File getServerPluginsApiDir() throws FileNotFoundException {
-    return new File(getInstallationRoot(), SERVER_PLUGIN_API_DIR);
+    String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
+    String pluginsRoot = System.getProperty(TC_PLUGINS_ROOT_PROPERTY_NAME, "plugins");
+    String pluginsApi = System.getProperty(TC_PLUGINS_API_PROPERTY_NAME, "api");
+    File f = Paths.get(installRoot, pluginsRoot, pluginsApi).toFile();
+    if (!f.isDirectory()) {
+      throw new FileNotFoundException("server plugins api folder at " + f.getAbsolutePath() + " is not valid");
+    }
+    return f;
   }
 
   public static File getServerPluginsLibDir() throws FileNotFoundException {
-    return new File(getInstallationRoot(), SERVER_PLUGIN_LIB_DIR);
+    String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
+    String pluginsRoot = System.getProperty(TC_PLUGINS_ROOT_PROPERTY_NAME, "plugins");
+    String pluginsLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
+    File f = Paths.get(installRoot, pluginsRoot, pluginsLib).toFile();
+    if (!f.isDirectory()) {
+      throw new FileNotFoundException("server plugins implementations folder at " + f.getAbsolutePath() + " is not valid");
+    }
+    return f;
   }
 
 }

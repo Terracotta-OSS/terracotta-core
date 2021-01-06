@@ -47,8 +47,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getVersion();
 
-  String getMavenArtifactsVersion();
-
   String getBuildID();
 
   boolean isPatched();
@@ -62,8 +60,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getCopyright();
 
   String getHealthStatus();
-
-  String getDescriptionOfCapabilities();
 
   String getL2Identifier();
 

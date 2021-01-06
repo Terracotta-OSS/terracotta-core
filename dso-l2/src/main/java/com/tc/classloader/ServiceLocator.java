@@ -102,15 +102,24 @@ public class ServiceLocator extends ManagedServiceLoader {
     return createURLS(Directories.getServerPluginsLibDir());
   }
 
-  public static ClassLoader resetPlatformClassLoader(ClassLoader serverClassLoader) {
-    return createPlatformClassLoader(serverClassLoader);
+  public static ServiceLocator createPlatformServiceLoader(ClassLoader serverClassLoader) {
+    return new ServiceLocator(createPlatformClassLoader(serverClassLoader, STRICT));
   }
-  
-  private static ClassLoader createPlatformClassLoader(ClassLoader serverClassLoader) {
+
+  public ClassLoader createUniversalClassLoader() {
     try {
-      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
-      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
-      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(serverClassLoader),new AnnotationOrDirectoryStrategyChecker(),STRICT);
+      return new StrictURLClassLoader(findPluginURLS(), defaultClassLoader.getParent(), new UniversalCommonComponentChecker());
+    } catch (FileNotFoundException file) {
+      return ClassLoader.getSystemClassLoader();
+    }
+  }
+
+  private static ClassLoader createPlatformClassLoader(ClassLoader serverClassLoader, boolean strict) {
+    try {
+//      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
+//      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
+      CommonComponentChecker checker = (strict) ? new AnnotationOrDirectoryStrategyChecker() : new UniversalCommonComponentChecker();
+      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(serverClassLoader), checker);
       return purls;
     } catch (FileNotFoundException file) {
       return ClassLoader.getSystemClassLoader();

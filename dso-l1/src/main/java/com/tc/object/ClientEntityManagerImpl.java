@@ -802,15 +802,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   
   private static class StoppableSemaphore extends Semaphore {
 
-    private final int permits;
+    private final int permitCount;
 
-    public StoppableSemaphore(int permits) {
-      super(permits);
-      this.permits = permits;
+    public StoppableSemaphore(int permitCount) {
+      super(permitCount);
+      this.permitCount = permitCount;
     }
 
     private void stop() {
-      reducePermits(permits);
+      reducePermits(permitCount);
     }
   }
 }

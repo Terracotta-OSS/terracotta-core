@@ -168,7 +168,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.topologyManager = topologyManager;
-    this.version = getVersion();
+    this.version = configSetupManager.getProductInfo().version();
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.allCurrentlyKnownServers().length;
@@ -194,7 +194,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   protected final String getVersion() {
-    return ProductInfo.getInstance().version();
+    return this.version;
   }
 
   @Override

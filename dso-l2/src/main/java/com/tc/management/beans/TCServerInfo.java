@@ -79,7 +79,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       throws NotCompliantMBeanException {
     super(TCServerInfoMBean.class, true);
     this.server = server;
-    this.productInfo = ProductInfo.getInstance();
+    this.productInfo = server.productInfo();
     this.buildID = productInfo.buildID();
     this.nextSequenceNumber = 1;
     this.stateChangeNotificationInfo = new StateChangeNotificationInfo();
@@ -194,11 +194,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
-  public String getMavenArtifactsVersion() {
-    return productInfo.mavenArtifactsVersion();
-  }
-
-  @Override
   public String getBuildID() {
     return buildID;
   }
@@ -240,11 +235,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public String getCopyright() {
     return productInfo.copyright();
-  }
-
-  @Override
-  public String getDescriptionOfCapabilities() {
-    return server.getDescriptionOfCapabilities();
   }
 
   @Override
