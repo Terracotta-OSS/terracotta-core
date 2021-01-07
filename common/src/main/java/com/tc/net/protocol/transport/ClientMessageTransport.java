@@ -134,6 +134,9 @@ public class ClientMessageTransport extends MessageTransportBase {
    */
   TCConnection connect(TCSocketAddress sa) throws TCTimeoutException, IOException {
     TCConnection connection = this.connectionManager.createConnection(getProtocolAdapter());
+    if (connection == null) {
+      throw new IOException("failed to create a new connection");
+    }
     fireTransportConnectAttemptEvent();
     try {
       connection.connect(sa, this.timeout);

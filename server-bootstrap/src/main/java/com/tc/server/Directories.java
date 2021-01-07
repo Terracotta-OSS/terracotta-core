@@ -42,9 +42,6 @@ public class Directories {
    /**
    */
   public static final String TC_PLUGINS_LIB_PROPERTY_NAME               = "tc.plugins-lib";
-   /**
-   */
-  public static final String TC_SERVER_DIR_PROPERTY_NAME               = "tc.server-dir";
   /**
    */
   public static final String TC_SERVER_LIB_PROPERTY_NAME               = "tc.server-lib";
@@ -95,9 +92,8 @@ public class Directories {
 
   public static File getServerLibFolder() throws FileNotFoundException {
     String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
-    String serverRoot = System.getProperty(TC_SERVER_DIR_PROPERTY_NAME, "server");
     String serverLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
-    File f = Paths.get(installRoot, serverRoot, serverLib).toFile();
+    File f = Paths.get(installRoot, serverLib).toFile();
     if (!f.isDirectory()) {
       throw new FileNotFoundException("server library folder at " + f.getAbsolutePath() + " is not valid");
     }

@@ -222,7 +222,7 @@ class BasicExternalCluster extends Cluster {
 
     List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
     List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
-    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testserver" + i).collect(toList());
+    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testServer" + i).collect(toList());
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
@@ -312,13 +312,11 @@ class BasicExternalCluster extends Cluster {
 
   private Server startIsolatedServer(String serverName, Path serverWorking, String[] cmd) {
     Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
-    URL url = null;
     try {
-      url = tc.toUri().toURL();
+      URL url = tc.toUri().toURL();
       URL resource = serverWorking.toUri().toURL();
       ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
-      Method m = loader.loadClass("com.tc.server.TCServerMain").getMethod("createServer", String.class, List.class);
-      boolean start = true;
+      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", String.class, List.class);
       return (Server)m.invoke(null, serverName, Arrays.asList(cmd));
     } catch (RuntimeException mal) {
       throw mal;

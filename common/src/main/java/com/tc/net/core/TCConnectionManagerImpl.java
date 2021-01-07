@@ -183,7 +183,11 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
   @Override
   public final synchronized TCConnection createConnection(TCProtocolAdaptor adaptor) {
-    checkShutdown();
+    try {
+      checkShutdown();
+    } catch (IOException ie) {
+      return null;
+    }
 
     TCConnection rv = createConnectionImpl(adaptor, connEvents);
     newConnection(rv);
@@ -274,7 +278,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return connEvents;
   }
 
-  private void checkShutdown() {
+  private void checkShutdown() throws IOException {
     if (shutdown.isSet()) { throw new IllegalStateException("connection manager shutdown"); }
   }
 

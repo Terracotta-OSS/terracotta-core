@@ -36,7 +36,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import org.terracotta.entity.EndpointConnector;
 
 abstract class AbstractConnectionService implements ConnectionService {

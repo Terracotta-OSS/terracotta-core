@@ -70,7 +70,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
     List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
     List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
-    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testserver" + i).collect(toList());
+    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testServer" + i).collect(toList());
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
