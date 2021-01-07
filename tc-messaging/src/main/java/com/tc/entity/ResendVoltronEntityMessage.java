@@ -105,7 +105,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
 
   @Override
   public TransactionID getOldestTransactionOnClient() {
-    return TransactionID.NULL_ID;
+    return TransactionID.FIRST_ID;
   }
 
   @Override
@@ -117,7 +117,7 @@ public class ResendVoltronEntityMessage implements VoltronEntityMessage, TCSeria
     serialOutput.writeBoolean(this.requiresReplication);
     serialOutput.writeInt(extendedData.remaining());
     serialOutput.write(extendedData.duplicate());
-    serialOutput.writeLong(TransactionID.NULL_ID.toLong());
+    serialOutput.writeLong(TransactionID.FIRST_ID.toLong());
   }
 
   @Override

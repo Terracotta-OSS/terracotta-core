@@ -26,6 +26,7 @@ import static com.tc.util.Assert.assertTrue;
  */
 public class TransactionID extends AbstractIdentifier {
   public final static TransactionID NULL_ID = new TransactionID();
+  public final static TransactionID FIRST_ID = new TransactionID(true);
 
   public TransactionID(long id) {
     super(id);
@@ -34,6 +35,10 @@ public class TransactionID extends AbstractIdentifier {
 
   private TransactionID() {
     super();
+  }
+
+  private TransactionID(boolean first) {
+    super(first ? 0L : 1L);
   }
 
   @Override

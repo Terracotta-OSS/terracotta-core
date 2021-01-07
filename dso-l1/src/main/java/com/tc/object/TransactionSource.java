@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TransactionSource {
 
   private final AtomicLong current = new AtomicLong();
-  private volatile TransactionID oldestCache = TransactionID.NULL_ID;
+  private volatile TransactionID oldestCache = TransactionID.FIRST_ID;
   private long retiredBase = 1L;
   private int retirePosition = 0;
   private final long GC_THRESHOLD = 32 * 1024;
