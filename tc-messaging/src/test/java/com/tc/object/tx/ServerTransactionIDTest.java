@@ -24,6 +24,7 @@ import java.util.Random;
 
 import com.tc.net.ClientID;
 import com.tc.net.ServerID;
+import org.junit.Assert;
 
 import org.junit.Test;
 
@@ -101,6 +102,16 @@ public class ServerTransactionIDTest {
     }
   }
 
+  @Test
+  public void testValidTransactions() throws Exception {
+    Assert.assertTrue(new TransactionID(0L).isValid());
+    Assert.assertTrue(new TransactionID(1L).isValid());
+    Assert.assertTrue(new TransactionID(Long.MAX_VALUE).isValid());
+    Assert.assertFalse(new TransactionID(Long.MIN_VALUE).isValid());
+    Assert.assertFalse(TransactionID.NULL_ID.isValid());
+    Assert.assertTrue(TransactionID.NULL_ID.isNull());
+  }
+  
   private void serializeAndCompare(ServerTransactionID id) {
     byte[] b2 = id.getBytes();
     ServerTransactionID di2 = ServerTransactionID.createFrom(b2);

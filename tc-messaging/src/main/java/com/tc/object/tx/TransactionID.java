@@ -19,26 +19,19 @@
 package com.tc.object.tx;
 
 import com.tc.util.AbstractIdentifier;
-import static com.tc.util.Assert.assertTrue;
 
 /**
- * @author steve
  */
 public class TransactionID extends AbstractIdentifier {
   public final static TransactionID NULL_ID = new TransactionID();
-  public final static TransactionID FIRST_ID = new TransactionID(true);
+  public final static TransactionID FIRST_ID = new TransactionID(0L);
 
   public TransactionID(long id) {
     super(id);
-    assertTrue(id != 0L);
   }
 
   private TransactionID() {
     super();
-  }
-
-  private TransactionID(boolean first) {
-    super(first ? 0L : 1L);
   }
 
   @Override
