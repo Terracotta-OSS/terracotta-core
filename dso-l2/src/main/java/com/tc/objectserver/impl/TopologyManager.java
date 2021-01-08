@@ -33,6 +33,7 @@ import javax.management.NotCompliantMBeanException;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.lang.String.join;
+import org.terracotta.server.ServerEnv;
 
 public class TopologyManager {
 

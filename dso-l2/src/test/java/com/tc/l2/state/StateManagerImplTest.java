@@ -69,6 +69,7 @@ import static com.tc.l2.state.StateManager.START_STATE;
 import com.tc.net.ServerID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.server.TCServerMain;
+import com.tc.util.concurrent.ThreadUtil;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.junit.Ignore;
@@ -198,13 +199,17 @@ public class StateManagerImplTest {
         break;
       }
     }
+    
+    for (int i = 0; i < NUM_OF_SERVERS; i++) {
+      while (stateManagers[i].getCurrentMode() == ServerMode.START) {
+        ThreadUtil.reallySleep(1000);
+      }
+    }
 
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
       if (activeIndex == i) {
-//        verify(tcServers[i]).l2StateChanged(argThat(stateChangeEvent(START_STATE, ACTIVE_COORDINATOR)));
         verify(stageControllers[i]).transition(eq(START_STATE), eq(ACTIVE_COORDINATOR));
       } else {
-//        verify(tcServers[i]).l2StateChanged(argThat(stateChangeEvent(START_STATE, PASSIVE_UNINITIALIZED)));
         verify(stageControllers[i]).transition(eq(START_STATE), eq(PASSIVE_UNINITIALIZED));
       }
     }
