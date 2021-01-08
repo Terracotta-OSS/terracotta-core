@@ -169,7 +169,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         executePassiveSync(newNode, session);
       }
     } else {
-      Assert.assertTrue("passive node unable to prime and not in the list of passives", passiveNodes.containsKey(newNode));
+      if (!passiveNodes.containsKey(newNode)) {
+        LOGGER.info("passive node {} to requesting prime is no longer a valid passive", newNode);
+      } else {
+        LOGGER.info("unable to prime connection to {} for passive sync", newNode);
+        serverCheck.closeMember(newNode);
+      }
     }
   }
   /**
