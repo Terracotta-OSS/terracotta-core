@@ -502,7 +502,7 @@ public class StateManagerImpl implements StateManager {
     if (transition) {
       moveToPassiveReady(clusterMsg);
     } else {
-      groupManager.closeMember((ServerID)clusterMsg.messageFrom());
+      groupManager.closeMember(clusterMsg.messageFrom());
     }
   }
 
