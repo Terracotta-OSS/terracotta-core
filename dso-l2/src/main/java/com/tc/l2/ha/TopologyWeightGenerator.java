@@ -25,13 +25,19 @@ import org.terracotta.configuration.Configuration;
 public class TopologyWeightGenerator implements WeightGenerator {
 
   private final Configuration configuration;
+  private final int initialSize;
 
   public TopologyWeightGenerator(Configuration config) {
     this.configuration = config;
+    this.initialSize = config.getServerConfigurations().size();
   }
 
   @Override
   public long getWeight() {
-    return configuration.getServerConfigurations().size();
+    try {
+      return configuration.getServerConfigurations().size();
+    } catch (Throwable t) {
+      return initialSize;
+    }
   }
 }
