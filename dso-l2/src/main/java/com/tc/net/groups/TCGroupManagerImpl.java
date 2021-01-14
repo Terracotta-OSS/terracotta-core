@@ -80,7 +80,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
 import com.tc.spi.Guardian;
-import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.sequence.Sequence;
@@ -572,6 +571,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   }
 
+  @Override
   public GroupResponse<AbstractGroupMessage> sendToAndWaitForResponse(Set<String> nodes, AbstractGroupMessage msg) throws GroupException {
     return sendAllAndWaitForResponse(msg, members.keySet().stream().filter(id -> nodes.contains(id.getName())).collect(toSet()));
   }
@@ -584,7 +584,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   @Override
   public GroupResponse<AbstractGroupMessage> sendAllAndWaitForResponse(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) throws GroupException {
     if (isDebugLogging()) {
-      debugInfo("Sending to ALL and Waiting for Response : " + msg.getMessageID());
+      debugInfo("Sending to " + nodeIDs + " and Waiting for Response : " + msg.getMessageID());
     }
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
@@ -593,6 +593,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     groupResponse.sendAll(msg, nodeIDs);
     groupResponse.waitForResponses(getNodeID());
     pendingRequests.remove(msgID);
+    if (isDebugLogging()) {
+      debugInfo("Complete from " + nodeIDs + " : " + msg.getMessageID());
+    }
     return groupResponse;
   }
 

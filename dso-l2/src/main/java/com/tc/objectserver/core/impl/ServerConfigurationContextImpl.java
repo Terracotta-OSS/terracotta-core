@@ -25,6 +25,9 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * App specific configuration context
@@ -37,6 +40,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final ServerClientHandshakeManager   clientHandshakeManager;
   private final ChannelStats                   channelStats;
   private final L2Coordinator                  l2Coordinator;
+  private final List<Runnable>                shutdownItems = Collections.synchronizedList(new LinkedList<>());
 
   public ServerConfigurationContextImpl(StageManager stageManager,
                                         DSOChannelManager channelManager,
@@ -70,8 +74,14 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   }
 
   @Override
+  public void addShutdownItem(Runnable c) {
+    shutdownItems.add(c);
+  }
+
+  @Override
   public void shutdown() {
     l2Coordinator.getStateManager().moveToStopState();
     clientHandshakeManager.stop();
+    shutdownItems.forEach(Runnable::run);
   }
 }

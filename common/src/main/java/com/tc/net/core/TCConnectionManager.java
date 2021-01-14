@@ -38,7 +38,7 @@ public interface TCConnectionManager extends PrettyPrintable {
    * 
    * @param adaptor protocol adaptor to use for incoming network data
    */
-  public TCConnection createConnection(TCProtocolAdaptor adaptor);
+  public TCConnection createConnection(TCProtocolAdaptor adaptor) throws IOException;
 
   /**
    * Create a new listening socket (ie. java.net.ServerSocket) on the given socket address. A default accept queue depth

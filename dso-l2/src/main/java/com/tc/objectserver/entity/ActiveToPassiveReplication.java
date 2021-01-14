@@ -52,12 +52,14 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
+import com.tc.util.DaemonThreadFactory;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -76,7 +78,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final ReplicationSender replicationSender;
-  private final ExecutorService passiveSyncPool = Executors.newCachedThreadPool();
+  private final ExecutorService passiveSyncPool = Executors.newCachedThreadPool(new DaemonThreadFactory("active-to-passive-"));
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
@@ -361,6 +363,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       standByNodes.remove(nodeID);
       standByNodes.notifyAll();
     }
+  }
+
+  public void close() {
+    passiveSyncPool.shutdownNow();
   }
   // for test
   Map<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> getWaiters() {

@@ -30,10 +30,6 @@ public abstract class L2DebugLogging {
   private static final boolean ENABLED                    = TCPropertiesImpl.getProperties()
                                                               .getBoolean(L2_DEBUG_LOGGING_PROP_NAME, false);
 
-  static {
-    Logger logger = LoggerFactory.getLogger(L2DebugLogging.class);
-  }
-
   public static enum LogLevel {
     ERROR, WARN, INFO, DEBUG;
   }

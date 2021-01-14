@@ -791,6 +791,7 @@ public class DistributedObjectServer {
                                                                        clientHandshakeManager,
                                                                        this.connectionIdFactory,
                                                                        maxStageSize);
+    this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
 
     startStages(stageManager, toInit);

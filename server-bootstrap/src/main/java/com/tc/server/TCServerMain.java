@@ -31,7 +31,11 @@ public class TCServerMain {
   
   public static void main(String[] args) {
     while (startServer(args)) {
-      System.out.println("Restarting server...");
+      if (Boolean.getBoolean("restart.inline")) {
+        System.out.println("Restarting server...");
+      } else {
+        System.exit(11);
+      }
     };
   }
 

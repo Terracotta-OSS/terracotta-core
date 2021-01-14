@@ -101,15 +101,13 @@ class BasicExternalCluster extends Cluster {
   BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
                        Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
+    boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
       }
-    } else {
-      boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
-      if (!didCreateDirectories) {
-        throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
-      }
+    } else if (!didCreateDirectories) {
+      throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
     }
 
     this.clusterDirectory = clusterDirectory;
@@ -193,6 +191,7 @@ class BasicExternalCluster extends Cluster {
     String kitInstallationPath = System.getProperty("kitInstallationPath");
     harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
     System.setProperty("tc.install-root", kitInstallationPath + File.separator + "server");
+    System.setProperty("restart.inline", Boolean.TRUE.toString());
 
     MultiplexedEventingStream stdout = new MultiplexedEventingStream(System.out);
     System.setOut(new PrintStream(stdout));
