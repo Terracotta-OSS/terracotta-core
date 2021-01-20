@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
+import com.tc.l2.state.ServerMode;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;

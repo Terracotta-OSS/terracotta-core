@@ -31,6 +31,8 @@ import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import static com.tc.l2.state.ServerMode.ACTIVE;
+import static com.tc.l2.state.ServerMode.DIAGNOSTIC;
+import static com.tc.l2.state.ServerMode.STOP;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -41,7 +43,6 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -371,12 +372,23 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToStopState() {
-  //  noop for now
+      switchToState(ServerMode.STOP, EnumSet.allOf(ServerMode.class));
   }
 
   @Override
-  public synchronized boolean moveToStopStateIf(Set<ServerMode> validStates) {
-    return validStates.contains(this.getCurrentMode());
+  public void moveToDiagnosticMode() {
+      switchToState(ServerMode.DIAGNOSTIC, EnumSet.of(ServerMode.START));
+  }
+
+  @Override
+  public boolean moveToStopStateIf(Set<ServerMode> validStates) {
+    try {
+      switchToState(ServerMode.STOP, EnumSet.of(this.getCurrentMode()));
+      return true;
+    } catch (IllegalStateException state) {
+      logger.info("request to stop denied. Current state: {}", this.getCurrentMode());
+      return false;
+    }
   }
 
   private void moveToActiveState(Set<ServerID> passives, Topology topology) {
@@ -393,7 +405,9 @@ public class StateManagerImpl implements StateManager {
   }
   
   private synchronized ServerMode switchToState(ServerMode newState, Set<ServerMode> validOldStates) throws IllegalStateException {
-    synchronizedWaitForStart();
+    if (!EnumSet.of(DIAGNOSTIC, STOP).contains(newState)) {
+      synchronizedWaitForStart();
+    }
     if (!validOldStates.contains(state)) {
       throw new IllegalStateException("Cant move to " + newState + " from " + state + " valid states " + validOldStates);
     }
@@ -542,7 +556,6 @@ public class StateManagerImpl implements StateManager {
   
   private void zapAndResyncLocalNode(String msg) {
     clusterStatePersistor.setDBClean(false);
-    moveToStopState();
     throw new TCServerRestartException("Clear and resync - " + msg); 
   }
 

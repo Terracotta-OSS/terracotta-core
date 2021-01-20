@@ -82,20 +82,24 @@ public class Bootstrap implements BootstrapService {
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
     TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
 
-    TCServerImpl impl = new TCServerImpl(setup, threadGroup);
-    Server server = wrap(setup, args, locator, impl);
-    ServerEnv.setDefaultServer(server);
+    try {
+      TCServerImpl impl = new TCServerImpl(setup, threadGroup);
+      Server server = wrap(setup, args, locator, impl);
+      ServerEnv.setDefaultServer(server);
 
-    setup.initialize();
+      setup.initialize();
 
-    TCLogbackLogging.setServerName(setup.getServerConfiguration().getName());
-    TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation());
+      TCLogbackLogging.setServerName(setup.getServerConfiguration().getName());
+      TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation());
 
-    writeSystemProperties();
+      writeSystemProperties();
 
-    impl.start();
-
-    return server;
+      impl.start();
+      return server;
+    } catch (Throwable t) {
+      throwableHandler.handleThrowable(Thread.currentThread(), t);
+      throw t;
+    }
   }
 
   private static void writeVersion(ProductInfo info) {
@@ -185,11 +189,20 @@ public class Bootstrap implements BootstrapService {
   }
 
   private static interface PauseableServer extends Server, Pauseable {
-    
+    boolean isCrashed();
+    void crash();
   }
 
   private Server wrap(ServerConfigurationManager config, String[] args, ServiceLocator loader, TCServerImpl impl) {
     return new PauseableServer() {
+      public boolean isCrashed() {
+        return impl.isCrashed();
+      }
+      
+      public void crash() {
+        impl.crash();
+      }
+
       @Override
       public Map<String, ?> getStateMap() {
         return impl.getStateMap();

@@ -30,8 +30,10 @@ import org.terracotta.server.Server;
 public class TCServerMain {
   
   public static void main(String[] args) {
+    boolean inlineRestart = Boolean.getBoolean("restart.inline");
+
     while (startServer(args)) {
-      if (Boolean.getBoolean("restart.inline")) {
+      if (inlineRestart) {
         System.out.println("Restarting server...");
       } else {
         System.exit(11);

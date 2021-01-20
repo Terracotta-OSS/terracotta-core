@@ -25,6 +25,7 @@ import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import static com.tc.l2.state.StateManager.RECOVERING_STATE;
 import static com.tc.l2.state.StateManager.START_STATE;
 import static com.tc.l2.state.StateManager.STOP_STATE;
+import static com.tc.l2.state.StateManager.DIAGNOSTIC_STATE;
 import com.tc.util.State;
 import java.util.EnumSet;
 import java.util.Set;
@@ -64,7 +65,8 @@ public enum ServerMode {
       return true;
     }
   },
-  STOP(STOP_STATE);
+  STOP(STOP_STATE),
+  DIAGNOSTIC(DIAGNOSTIC_STATE);
 
   private final State name;
 

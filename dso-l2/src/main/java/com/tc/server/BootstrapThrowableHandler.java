@@ -25,9 +25,11 @@ import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
+import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
+import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
@@ -190,10 +192,18 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     try {
       // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
       // before the stacktrace prints
-      throwableState.getThrowable().printStackTrace(System.err);
+      Throwable cause = throwableState.getThrowable();
+      cause.printStackTrace(System.err);
       System.err.flush();
-      logger.error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers.",
-                   throwableState.getThrowable());
+      TCLogging.getConsoleLogger().error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers. " + cause.getMessage(),
+                   cause);
+      int tab = 0;
+      while (cause != null) {
+        StringBuilder spaces = new StringBuilder(tab * 2);
+        for (int x=0;x<tab*2;x++) spaces.setCharAt(x, ' ');
+        TCLogging.getConsoleLogger().error("{}{}:{}",spaces,cause.getClass().getName(),cause.getMessage());
+        cause = cause.getCause();
+      }
     } catch (Exception e) {
       // IGNORE EXCEPTION HERE
     }

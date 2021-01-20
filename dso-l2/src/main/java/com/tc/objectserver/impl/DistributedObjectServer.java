@@ -233,6 +233,7 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
 import org.terracotta.server.ServerEnv;
@@ -276,6 +277,8 @@ public class DistributedObjectServer {
   private final TerracottaServiceProviderRegistryImpl serviceRegistry;
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
+
+  private final SetOnceFlag  stopping = new SetOnceFlag();
 
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
@@ -403,12 +406,10 @@ public class DistributedObjectServer {
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
       consoleLogger.error("Restarting server: " + state.getThrowable().getMessage());
-      context.getL2Coordinator().getStateManager().moveToStopState();
       state.setRestartNeeded();
     });
     threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, state -> {
       Throwable t = state.getThrowable();
-      context.getL2Coordinator().getStateManager().moveToStopState();
       if(t.getCause() != null) {
         consoleLogger.error("Server exiting: " + t.getMessage(), t.getCause());
       } else {
@@ -808,25 +809,28 @@ public class DistributedObjectServer {
       startGroupManagers();
       this.l2Coordinator.start();
     } else {
+      this.l2Coordinator.getStateManager().moveToDiagnosticMode();
       TCLogging.getConsoleLogger().info("Started the server in diagnostic mode");
     }
     startDiagnosticListener();
-    setLoggerOnExit();
   }
 
   public void stop() throws Exception {
-    this.groupCommManager.stop();
-    this.l1Diagnostics.stop(1000);
-    this.l1Listener.stop(1000);
-    this.connectionManager.shutdown();
-    this.serviceRegistry.shutdown();
-    this.timer.cancelAll();
-    this.timer.stop();
-    this.context.shutdown();
-    this.configSetupManager.close();
-    Thread killer = new Thread(this::killThreads);
-    killer.setDaemon(true);
-    killer.start();
+    if (this.stopping.attemptSet()) {
+      this.groupCommManager.stop();
+      this.l1Diagnostics.stop(1000);
+      this.l1Listener.stop(1000);
+      this.connectionManager.shutdown();
+      this.serviceRegistry.shutdown();
+      this.timer.cancelAll();
+      this.timer.stop();
+      this.context.shutdown();
+      this.configSetupManager.close();
+      Thread killer = new Thread(this::killThreads);
+      killer.setDaemon(true);
+      killer.start();
+      logger.info("L2 Exiting...");
+    }
   }
 
   private void killThreads() {
@@ -1067,7 +1071,11 @@ public class DistributedObjectServer {
           try {
             startL1Listener(existingConnections);
           } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            if (!stopping.isSet()) {
+              throw new RuntimeException(ioe);
+            } else {
+              logger.debug("cannot start listeners, server shutting down");
+            }
           }
         }
       }
@@ -1119,15 +1127,6 @@ public class DistributedObjectServer {
 
   public ServerID getServerNodeID() {
     return this.thisServerNodeID;
-  }
-
-  private void setLoggerOnExit() {
-    CommonShutDownHook.addShutdownHook(new Runnable() {
-      @Override
-      public void run() {
-        logger.info("L2 Exiting...");
-      }
-    });
   }
 
   private void startActiveMode(ProcessTransactionHandler pth, boolean wasStandby) {

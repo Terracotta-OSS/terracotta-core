@@ -60,7 +60,12 @@ public class TCLogbackLogging {
 
   public static void setServerName(String name) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    loggerContext.setName(name);
+    if (loggerContext.getName() == null) {
+      loggerContext.setName(name);
+    } else if (name.equals(loggerContext.getName())) {
+      throw new RuntimeException("server names do not match exsiting:" + loggerContext.getName() + " given:" + name);
+
+    }
   }
 
   public static void bootstrapLogging() {

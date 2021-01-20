@@ -85,6 +85,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                            = false;
   private volatile boolean                  restart                             = false;
+  private boolean                          crashed;
 
   private final JMXSubsystem                subsystem = new JMXSubsystem(MBeanServerFactory.createMBeanServer());
   /**
@@ -140,26 +141,42 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
+  public boolean isCrashed() {
+    return crashed;
+  }
+
+  public void crash() {
+    try {
+      dsoServer.stop();
+    } catch (Exception e) {
+      logger.error("trouble crashing", e);
+    }
+    crashed = true;
+    notifyShutdown();
+  }
+
   @Override
   public void stop(StopAction...restartMode) {
     ServerEnv.getServer().audit("Stop invoked", new Properties());
     TCLogging.getConsoleLogger().info("Stopping server");
-    try {
-      dsoServer.stop();
-    } catch (Exception e) {
-      logger.error("trouble shutting down", e);
-    }
-    EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
-    for (StopAction s : restartMode) {
-      set.add(s);
-    }
-    if (set.contains(StopAction.ZAP)) {
-      TCLogging.getConsoleLogger().info("Setting data to dirty");
-      dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
-    }
-    if (set.contains(StopAction.RESTART)) {
-      TCLogging.getConsoleLogger().info("Requesting restart");
-      restart = true;
+    if (dsoServer != null) {
+      try {
+        dsoServer.stop();
+      } catch (Exception e) {
+        logger.error("trouble shutting down", e);
+      }
+      EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+      for (StopAction s : restartMode) {
+        set.add(s);
+      }
+      if (set.contains(StopAction.ZAP)) {
+        TCLogging.getConsoleLogger().info("Setting data to dirty");
+        dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
+      }
+      if (set.contains(StopAction.RESTART)) {
+        TCLogging.getConsoleLogger().info("Requesting restart");
+        restart = true;
+      }
     }
     notifyShutdown();
   }
@@ -258,7 +275,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public synchronized boolean isStopped() {
     // XXX:: introduce a new state when stop is officially supported.
-    return this.stateManager == null || this.stateManager.getCurrentMode() != ServerMode.STOP;
+    return this.stateManager == null || this.stateManager.getCurrentMode() == ServerMode.STOP;
   }
 
   @Override

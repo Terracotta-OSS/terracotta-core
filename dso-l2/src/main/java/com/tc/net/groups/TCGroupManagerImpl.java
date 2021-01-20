@@ -693,7 +693,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public void messageReceived(AbstractGroupMessage message, MessageChannel channel) {
 
-    if (isStopped.get()) {
+    if (isStopped()) {
       channel.close();
       return;
     }
@@ -714,6 +714,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       if (stateMachine != null && stateMachine.isFailureState()) {
         // message received after node left
         logger.warn(errInfo);
+        return;
+      } else if (isStopped()) {
         return;
       } else {
         throw new RuntimeException(errInfo);

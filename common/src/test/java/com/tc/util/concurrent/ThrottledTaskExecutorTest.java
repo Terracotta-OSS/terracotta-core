@@ -141,7 +141,7 @@ public class ThrottledTaskExecutorTest extends TCTestCase {
         int scheduledCount = throttledTaskExecutor.getScheduledTasksCount();
         System.err.println("XXX ScheduledCount: " + scheduledCount + "; Max: " + maxScheduledTasks);
         Assert.eval(throttledTaskExecutor.getScheduledTasksCount() + " vs " + maxScheduledTasks,
-                    throttledTaskExecutor.getScheduledTasksCount() <= maxScheduledTasks);
+                    maxScheduledTasks == 0 || throttledTaskExecutor.getScheduledTasksCount() <= maxScheduledTasks);
         ThreadUtil.reallySleep(2000);
       }
     }

@@ -19,6 +19,8 @@
 
 package com.tc.classloader;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServiceLocator extends ManagedServiceLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
-  private static final boolean STRICT = !Boolean.getBoolean("server.classloader.compatibility");
+  private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.PLUGIN_CLASSLOADER_COMPATIBILITY);
   private final ClassLoader defaultClassLoader;
   private final Map<String, ClassLoader> locationCache = new ConcurrentHashMap<>();
 

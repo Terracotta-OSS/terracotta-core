@@ -37,6 +37,7 @@ public interface StateManager extends PrettyPrintable {
   public final State       PASSIVE_STANDBY      = new State("PASSIVE-STANDBY");
   public final State       START_STATE          = new State("START-STATE");
   public final State       STOP_STATE           = new State("STOP-STATE");
+  public final State       DIAGNOSTIC_STATE           = new State("DIAGNOSTIC");
 
   public void initializeAndStartElection();
 
@@ -55,6 +56,8 @@ public interface StateManager extends PrettyPrintable {
   public void moveToPassiveStandbyState();
   
   public void moveToStopState();
+
+  public void moveToDiagnosticMode();
 
   public boolean moveToStopStateIf(Set<ServerMode> validStates);
 

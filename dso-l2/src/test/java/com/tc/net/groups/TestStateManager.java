@@ -89,6 +89,11 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
+  public void moveToDiagnosticMode() {
+
+  }
+
+  @Override
   public boolean moveToStopStateIf(Set<ServerMode> validStates) {
     isActive = false;
     return false;

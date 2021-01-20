@@ -58,8 +58,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -182,7 +182,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * @param newNode
    */
   private void executePassiveSync(final NodeID newNode, SessionID session) {
-    passiveSyncPool.execute(() -> {
+    executeOnPool(() -> {
       // start passive sync message
       LOGGER.debug("starting sync for " + newNode + " on session " + session);
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
@@ -307,10 +307,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     return waiter;
   }
 
+  private void executeOnPool(Runnable r) {
+    try {
+      passiveSyncPool.execute(r);
+    } catch (RejectedExecutionException exec) {
+      LOGGER.info("rejected execution", exec);
+    }
+  }
+
   private void removePassive(NodeID nodeID) {
     SessionID session = this.passiveNodes.putIfAbsent((ServerID)nodeID, SessionID.NULL_ID);
     LOGGER.info("removing passive: {} with session: {}", nodeID, session);
-    passiveSyncPool.execute(()->{
+    executeOnPool(()->{
       while (!consistencyMgr.requestTransition(ServerMode.ACTIVE, nodeID, ConsistencyManager.Transition.REMOVE_PASSIVE)) {
         try {
           TimeUnit.SECONDS.sleep(2);
