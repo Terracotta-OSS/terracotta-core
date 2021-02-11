@@ -119,7 +119,6 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     handlePossibleOOME(t);
 
     final CallbackOnExitState throwableState = new CallbackOnExitState(t);
-    scheduleExit(throwableState);
 
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
@@ -222,7 +221,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
 
   protected synchronized void exit(boolean status) {
     // let all the logging finish
-    ThreadUtil.reallySleep(2000);
+//    ThreadUtil.reallySleep(2000);
     StopAction[] actions = status ? new StopAction[] {StopAction.RESTART} : new StopAction[0];
     ServerEnv.getServer().stop(actions);
   }

@@ -25,19 +25,10 @@ import org.terracotta.server.Server;
 
 
 public class ServerFactory {
-  public static Server createServer(String[] args, ClassLoader loader) {
+  public static Server createServer(List<String> args, ClassLoader loader) {
     try {
       ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
       return s.iterator().next().createServer(args, loader);
-    } catch (Exception notfound) {
-      throw new RuntimeException(notfound);
-    }
-  }
-
-  public static Server createServer(String name, List<String> args, ClassLoader loader) {
-    try {
-      ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
-      return s.iterator().next().createServer(name, args, loader);
     } catch (Exception notfound) {
       throw new RuntimeException(notfound);
     }

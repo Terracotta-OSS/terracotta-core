@@ -252,7 +252,7 @@ class BasicExternalCluster extends Cluster {
           .consistentStartup(consistentStart);      
 
       String[] cmd = builder.build();
-      stripeInstaller.installNewServer(serverName, serverWorkingDir, stdout, ()->startIsolatedServer(serverName, serverWorkingDir, cmd));
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, stdout, ()->startIsolatedServer(serverWorkingDir, cmd));
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -309,14 +309,14 @@ class BasicExternalCluster extends Cluster {
     waitForSafe();
   }
 
-  private Server startIsolatedServer(String serverName, Path serverWorking, String[] cmd) {
+  private Server startIsolatedServer(Path serverWorking, String[] cmd) {
     Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
     try {
       URL url = tc.toUri().toURL();
       URL resource = serverWorking.toUri().toURL();
       ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
-      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", String.class, List.class);
-      return (Server)m.invoke(null, serverName, Arrays.asList(cmd));
+      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class);
+      return (Server)m.invoke(null, Arrays.asList(cmd));
     } catch (RuntimeException mal) {
       throw mal;
     } catch (Exception e) {

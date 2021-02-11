@@ -20,9 +20,7 @@ package com.tc.config;
 
 
 import com.tc.classloader.ServiceLocator;
-import com.tc.productinfo.Description;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.server.ServiceClassLoader;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.ServerConfiguration;
@@ -40,12 +38,13 @@ import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ProductInfo;
+import java.util.List;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 
   private final ConfigurationProvider configurationProvider;
   private final ServiceLocator serviceLocator;
-  private final String[] startUpArgs;
+  private final List<String> startUpArgs;
   private final ProductInfo productInfo;
 
   private Configuration configuration;
@@ -53,14 +52,14 @@ public class ServerConfigurationManager implements PrettyPrintable {
 
   public ServerConfigurationManager(ConfigurationProvider configurationProvider,
                                     ServiceLocator classLoader,
-                                    String[] startUpArgs) {
+                                    List<String> startUpArgs) {
     Objects.requireNonNull(configurationProvider);
     Objects.requireNonNull(classLoader);
     Objects.requireNonNull(startUpArgs);
 
     this.configurationProvider = configurationProvider;
     this.serviceLocator = classLoader;
-    this.startUpArgs = Arrays.copyOf(startUpArgs, startUpArgs.length);
+    this.startUpArgs = startUpArgs;
     this.productInfo = generateProductInfo(serviceLocator);
   }
 
@@ -73,7 +72,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public void initialize() throws ConfigurationException {
-    this.configurationProvider.initialize(Arrays.asList(this.startUpArgs));
+    this.configurationProvider.initialize(this.startUpArgs);
     
     this.configuration = configurationProvider.getConfiguration();
     this.serverConfiguration = this.configuration.getServerConfiguration();
@@ -89,7 +88,7 @@ public class ServerConfigurationManager implements PrettyPrintable {
   }
 
   public String[] getProcessArguments() {
-    return Arrays.copyOf(startUpArgs, startUpArgs.length);
+    return startUpArgs.toArray(new String[startUpArgs.size()]);
   }
 
   public ServerConfiguration getServerConfiguration() {

@@ -60,13 +60,7 @@ public class Bootstrap implements BootstrapService {
   private static final Logger CONSOLE = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
 
   @Override
-  public Server createServer(String name, List<String> args, ClassLoader loader) throws Exception {
-    TCLogbackLogging.setServerName(name);
-    return createServer(args.toArray(new String[args.size()]), loader);
-  }
-
-  @Override
-  public Server createServer(String[] args, ClassLoader loader) throws ConfigurationException {
+  public Server createServer(List<String> args, ClassLoader loader) throws ConfigurationException {
     TCLogbackLogging.bootstrapLogging();
     ServiceLocator locator = ServiceLocator.createPlatformServiceLoader(loader);
 
@@ -193,7 +187,7 @@ public class Bootstrap implements BootstrapService {
     void crash();
   }
 
-  private Server wrap(ServerConfigurationManager config, String[] args, ServiceLocator loader, TCServerImpl impl) {
+  private Server wrap(ServerConfigurationManager config, List<String> args, ServiceLocator loader, TCServerImpl impl) {
     return new PauseableServer() {
       public boolean isCrashed() {
         return impl.isCrashed();
@@ -225,7 +219,7 @@ public class Bootstrap implements BootstrapService {
 
       @Override
       public String[] processArguments() {
-        return args;
+        return args.toArray(new String[args.size()]);
       }
 
       @Override

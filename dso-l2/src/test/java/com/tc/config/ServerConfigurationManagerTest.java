@@ -31,6 +31,7 @@ import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -89,7 +90,7 @@ public class ServerConfigurationManagerTest {
     currentServer = TEST_SERVER_NAMES[0];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs);
+                                                                        Arrays.asList(processArgs));
 
     manager.initialize();
     GroupConfiguration groupConfiguration = manager.getGroupConfiguration();
@@ -118,7 +119,7 @@ public class ServerConfigurationManagerTest {
     currentServer = null;
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs);
+                                                                        Arrays.asList(processArgs));
 
     manager.initialize();
     ServerConfiguration serverConfiguration = manager.getServerConfiguration();
@@ -135,7 +136,7 @@ public class ServerConfigurationManagerTest {
     currentServer = "not-a-server-name";
     new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs).initialize();
+                                                                        Arrays.asList(processArgs)).initialize();
   }
 
   @Test
@@ -148,7 +149,7 @@ public class ServerConfigurationManagerTest {
     currentServer = TEST_SERVER_NAMES[currentServerIndex];
     ServerConfigurationManager manager = new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs);
+                                                                        Arrays.asList(processArgs));
 
     manager.initialize();
     GroupConfiguration groupConfiguration = manager.getGroupConfiguration();
@@ -177,7 +178,7 @@ public class ServerConfigurationManagerTest {
     currentServer = null;
     new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs).initialize();
+                                                                        Arrays.asList(processArgs)).initialize();
   }
 
   @Test
@@ -191,7 +192,7 @@ public class ServerConfigurationManagerTest {
     currentServer = "not-a-server-name";
     new ServerConfigurationManager(configurationProvider,
                                    new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                   processArgs).initialize();
+                                   Arrays.asList(processArgs)).initialize();
   }
 
   @Test
@@ -216,7 +217,7 @@ public class ServerConfigurationManagerTest {
     currentServer = TEST_SERVER_NAMES[currentServerIndex];
     new ServerConfigurationManager(configurationProvider,
                                                                         new ServiceLocator(Thread.currentThread().getContextClassLoader()),
-                                                                        processArgs).initialize();
+                                                                        Arrays.asList(processArgs)).initialize();
 
     assertThat(TCPropertiesImpl.getProperties().getProperty(testKey), is(testValue));
   }

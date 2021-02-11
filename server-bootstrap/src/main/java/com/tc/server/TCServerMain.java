@@ -23,6 +23,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.terracotta.server.Server;
@@ -36,6 +37,7 @@ public class TCServerMain {
       if (inlineRestart) {
         System.out.println("Restarting server...");
       } else {
+        // signaling to shell that restart is requested with special exit code 11
         System.exit(11);
       }
     };
@@ -47,7 +49,7 @@ public class TCServerMain {
 
       ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 
-      Server server = ServerFactory.createServer(args, serverClassLoader);
+      Server server = ServerFactory.createServer(Arrays.asList(args), serverClassLoader);
 
       return server.waitUntilShutdown();
     } catch (RuntimeException t) {
@@ -57,14 +59,13 @@ public class TCServerMain {
     }
   }
 
-
-  public static Server createServer(String name, List<String> args) {
+  public static Server createServer(List<String> args) {
     try {
       Optional<Path> p = Files.list(Directories.getServerLibFolder().toPath()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
 
       ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 
-      return ServerFactory.createServer(name, args, serverClassLoader);
+      return ServerFactory.createServer(args, serverClassLoader);
     } catch (RuntimeException t) {
       throw t;
     } catch (Exception e) {
