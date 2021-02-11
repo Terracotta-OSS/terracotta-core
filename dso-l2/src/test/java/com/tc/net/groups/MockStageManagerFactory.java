@@ -82,7 +82,30 @@ public class MockStageManagerFactory {
         when(stage.getSink()).thenReturn(sink);
         created.put(stageName, stage);
         return stage;
-      });   
+      });
+    
+    when(stages.createStage(ArgumentMatchers.anyString(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyBoolean(), ArgumentMatchers.anyBoolean()))
+      .then((invoke)->{
+        String stageName = invoke.getArguments()[0].toString();
+        int size = (Integer)invoke.getArguments()[4];
+        ExecutorService service = createExecutor(stageName, size);
+        Stage stage = mock(Stage.class);
+        Sink sink = mock(Sink.class);
+        EventHandler ev = (EventHandler)invoke.getArguments()[2];
+        doAnswer((invoke2)->{
+          service.submit(()->{
+            try {
+              ev.handleEvent(invoke2.getArguments()[0]);
+            } catch (EventHandlerException e) {
+            }
+          });
+          return null;
+        }).when(sink).addToSink(ArgumentMatchers.any());
+
+        when(stage.getSink()).thenReturn(sink);
+        created.put(stageName, stage);
+        return stage;
+      });
     
     when(stages.getStage(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
         .then((invoke)->{

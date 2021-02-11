@@ -96,7 +96,7 @@ public class StateManagerImpl implements StateManager {
     this.availabilityMgr = availabilityMgr;
     this.topologyManager = topologyManager;
     this.electionMgr = new ElectionManagerImpl(groupManager, electionTimeInSec);
-    this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
+    this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024, false, false).getSink();
     this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
     this.startState = StateManager.convert(clusterStatePersistor.getInitialState());

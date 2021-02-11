@@ -89,7 +89,7 @@ public class StageImplTest {
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false, true);
     instance.destroy();
     verify(handler, never()).destroy();
     
@@ -113,7 +113,7 @@ public class StageImplTest {
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false);
+    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false, true);
     Object event = new Object();
     instance.getSink().addToSink(context);
     instance.getSink().addToSink(context);
@@ -137,7 +137,7 @@ public class StageImplTest {
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
     EventHandler handler = mock(EventHandler.class);
 
-    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, null, 16, false);
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, null, 16, false, true);
     MultiThreadedEventContext event = new MultiThreadedEventContext() {
       @Override
       public Object getSchedulingKey() {
@@ -193,7 +193,7 @@ public class StageImplTest {
       cxts.add(queue);
       return queue;
     });
-    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, null, 16, false);
+    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, null, 16, false, true);
     assertEquals(cxts.size(), size);
     instance.start(null);
     

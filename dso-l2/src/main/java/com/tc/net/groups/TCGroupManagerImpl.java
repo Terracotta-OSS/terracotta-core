@@ -260,7 +260,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     int maxStageSize = 5000;
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
-    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize);
+    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize, false, false);
   }
 
   private Map<TCMessageType, Class<? extends TCMessage>> initMessageTypeClassMapping(Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping) {
@@ -344,12 +344,12 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       throw new RuntimeException(e);
     }
   }
-//  FOR TESTING ONLY
+
   public void stop(long timeout) throws TCTimeoutException {
+    isStopped.set(true);
     for (ServerID sid : members.keySet()) {
       closeMember(sid);
     }
-    isStopped.set(true);
     discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
@@ -674,14 +674,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public Timer getHandshakeTimer() {
     return (handshakeTimer);
-  }
-
-  public void shutdown() {
-    try {
-      stop(1000);
-    } catch (TCTimeoutException e) {
-      logger.warn("Timeout at shutting down " + e);
-    }
   }
 
   /*

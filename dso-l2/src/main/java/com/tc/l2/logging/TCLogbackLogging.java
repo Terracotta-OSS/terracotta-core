@@ -18,14 +18,17 @@
  */
 package com.tc.l2.logging;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
+import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.tripwire.EventAppender;
@@ -37,7 +40,7 @@ import java.util.Iterator;
 
 public class TCLogbackLogging {
 
-  public static final String CONSOLE = "org.terracotta.console";
+  public static final String CONSOLE = TCLogging.CONSOLE_LOGGER_NAME;
   private static final String TC_PATTERN = "%d [%t] %p %c - %m%n";
   private static final Logger LOGGER = LoggerFactory.getLogger(CONSOLE);
 
@@ -45,14 +48,6 @@ public class TCLogbackLogging {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
-//    Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
-//    while (appenders.hasNext()) {
-//      Appender<ILoggingEvent> a = appenders.next();
-//      if (a instanceof BufferingAppender) {
-//        root.detachAppender(a);
-//        a.stop();
-//      }
-//    }
     root.detachAndStopAllAppenders();
     console.detachAndStopAllAppenders();
     loggerContext.reset();
@@ -60,11 +55,11 @@ public class TCLogbackLogging {
 
   public static void setServerName(String name) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    if (loggerContext.getName() == null) {
+    String currentName = loggerContext.getName();
+    if (currentName == null || currentName.equals(CoreConstants.DEFAULT_CONTEXT_NAME)) {
       loggerContext.setName(name);
-    } else if (name.equals(loggerContext.getName())) {
+    } else if (!name.equals(currentName)) {
       throw new RuntimeException("server names do not match exsiting:" + loggerContext.getName() + " given:" + name);
-
     }
   }
 
@@ -107,6 +102,9 @@ public class TCLogbackLogging {
     if (!console.iteratorForAppenders().hasNext()) {
       attachConsoleLogger(loggerContext, console);
     }
+    ch.qos.logback.classic.Logger silent = loggerContext.getLogger(TCLogging.SILENT_LOGGER_NAME);
+    silent.setAdditive(false);
+    silent.setLevel(Level.OFF);
   }
 
   public static void redirectLogging(File logDirFile) {
@@ -155,6 +153,11 @@ public class TCLogbackLogging {
     append.setEncoder(encoder);
     append.start();
     console.addAppender(append);
+  }
+  
+  private static void attachSilentLogger(LoggerContext cxt, ch.qos.logback.classic.Logger silent) {
+    silent.setAdditive(false);
+    silent.setLevel(Level.OFF);
   }
 
   private static Appender<ILoggingEvent> installFileAppender(String logDir, LoggerContext loggerContext) {

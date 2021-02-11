@@ -27,6 +27,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageListener;
 import com.tc.async.api.StageManager;
 import com.tc.logging.DefaultLoggerProvider;
+import com.tc.logging.NoopLoggingProvider;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -55,7 +56,7 @@ public class StageManagerImpl implements StageManager {
 
   private final Map<String, Stage<?>>   stages        = new ConcurrentHashMap<>();
   private final Map<String, Class<?>> classVerifications = new ConcurrentHashMap<>();
-  private TCLoggerProvider           loggerProvider;
+  private TCLoggerProvider           loggerProvider = new DefaultLoggerProvider();
   private final ThreadGroup          group;
   private String[]                   stageNames    = new String[] {};
   private final QueueFactory queueFactory;
@@ -119,18 +120,18 @@ public class StageManagerImpl implements StageManager {
 
   @Override
   public <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int threads, int maxSize) {
-    return this.createStage(name, verification, handler, threads, maxSize, false);
+    return this.createStage(name, verification, handler, threads, maxSize, false, true);
   }
 
   @Override
-  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize, boolean canBeDirect) {
+  public synchronized <EC> Stage<EC> createStage(String name, Class<EC> verification, EventHandler<EC> handler, int queueCount, int maxSize, boolean canBeDirect, boolean stallWarn) {
     if (started) {
       throw new IllegalStateException("A new stage cannot be created, because StageManager is already started.");
     }
 
     int capacity = maxSize >= 0 ? maxSize : Integer.MAX_VALUE;
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
-    Stage<EC> s = new StageImpl<>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, listener, capacity, canBeDirect);
+    Stage<EC> s = new StageImpl<>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, listener, capacity, canBeDirect, stallWarn);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;

@@ -67,7 +67,6 @@ import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import static com.tc.l2.state.StateManager.START_STATE;
 import com.tc.net.ServerID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import com.tc.server.TCServerMain;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,6 +75,7 @@ import org.terracotta.utilities.test.net.PortManager;
 
 import static java.util.stream.Collectors.toSet;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -303,24 +303,11 @@ public class StateManagerImplTest {
       }
     });
 
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt(), anyBoolean(), anyBoolean()))
+        .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
     when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
-        .then((invoke)->{
-          Stage election = mock(Stage.class);
-          Sink electionSink = mock(Sink.class);
-          doAnswer((invoke2)-> {
-              new Thread(() -> {
-                try {
-                  ((EventHandler)invoke.getArguments()[2]).handleEvent(invoke2.getArguments()[0]);
-                } catch (Throwable t) {
-                  t.printStackTrace();
-                }
-              }).start();
-            return null;
-          }).when(electionSink).addToSink(any());
-          when(election.getSink()).thenReturn(electionSink);
-          return election;
-        });
-
+        .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
+    
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
@@ -334,6 +321,23 @@ public class StateManagerImplTest {
     state.startElectionIfNecessary(mock(NodeID.class));
     state.waitForElectionsToFinish();
     Assert.assertEquals(node, state.getActiveNodeID());
+  }
+
+  private Stage mockStage(EventHandler handler) {
+    Stage election = mock(Stage.class);
+    Sink electionSink = mock(Sink.class);
+    doAnswer((invoke)-> {
+        new Thread(() -> {
+          try {
+            handler.handleEvent(invoke.getArguments()[0]);
+          } catch (Throwable t) {
+            t.printStackTrace();
+          }
+        }).start();
+      return null;
+    }).when(electionSink).addToSink(any());
+    when(election.getSink()).thenReturn(electionSink);
+    return election;
   }
 
   @Test
