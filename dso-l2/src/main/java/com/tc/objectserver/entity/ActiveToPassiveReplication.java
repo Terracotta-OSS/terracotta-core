@@ -53,11 +53,13 @@ import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 
 /**
@@ -133,24 +135,20 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  */
   private SessionID prime(ServerID node) {
     Assert.assertFalse(node.isNull());
-    SessionID current = passiveNodes.get(node);
-    if (current == null) {
-      if (standByNodes.contains(node) && serverCheck.isNodeConnected(node)) {
-        if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
-          serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
-          return SessionID.NULL_ID;
-        } else {
-          if (serverCheck.isNodeConnected(node)) {
-            LOGGER.debug("Starting message sequence on " + node);
-            SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
-
-            boolean sent = this.replicationSender.addPassive(node, newSession, executionLane(newSession), SyncReplicationActivity.createStartMessage());
-            Assert.assertTrue(sent);
-            return newSession;
-          }
-        }
-      } else {
+    SessionID current = passiveNodes.getOrDefault(node, SessionID.NULL_ID);
+    if (standByNodes.contains(node) && serverCheck.isNodeConnected(node)) {
+      if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
+        serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
         return SessionID.NULL_ID;
+      } else {
+        if (serverCheck.isNodeConnected(node)) {
+          LOGGER.debug("Starting message sequence on " + node);
+          SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
+
+          boolean sent = this.replicationSender.addPassive(node, newSession, executionLane(newSession), SyncReplicationActivity.createStartMessage());
+          Assert.assertTrue(sent);
+          return newSession;
+        }
       }
     }
     return current;
@@ -224,7 +222,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   }
 
   public void batchAckReceived(ReplicationMessageAck context) {
-    NodeID messageFrom = context.messageFrom();
+    ServerID messageFrom = context.messageFrom();
     SessionID session = this.passiveNodes.getOrDefault(messageFrom, SessionID.NULL_ID);
     if (session.isValid()) {
       this.receiveHandler.addToSink(new ReplicationReceivingAction(executionLane(session), ()->{
@@ -247,7 +245,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * This internal handling for completed is split out since it happens for both completed acks but also situations which
    * implies no ack is forthcoming (the passive disappearing, for example).
    */
-  private void internalAckCompleted(SyncReplicationActivity.ActivityID activityID, NodeID passive, ReplicationResultCode payload) {
+  private void internalAckCompleted(SyncReplicationActivity.ActivityID activityID, ServerID passive, ReplicationResultCode payload) {
     ActivePassiveAckWaiter waiter = waiters.get(activityID);
     if (null != waiter) {
       boolean shouldDiscardWaiter = waiter.didCompleteOnPassive(passive, payload);
@@ -259,7 +257,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public Set<SessionID> passives() {
-    List<SessionID> copy = new ArrayList<>(passiveNodes.values());
+    Collection<SessionID> copy = passiveNodes.values().stream().filter(SessionID::isValid).collect(Collectors.toCollection(()->new ArrayList<>(passiveNodes.size())));
     return new AbstractSet<SessionID>() {
       @Override
       public Iterator<SessionID> iterator() {
