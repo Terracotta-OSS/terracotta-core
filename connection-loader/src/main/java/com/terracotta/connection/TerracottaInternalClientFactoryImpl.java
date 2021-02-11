@@ -24,7 +24,7 @@ import java.util.Properties;
 
 public class TerracottaInternalClientFactoryImpl implements TerracottaInternalClientFactory {
   @Override
-  public TerracottaInternalClient createL1Client(Iterable<InetSocketAddress> serverAddresses, Properties properties) {
-    return new TerracottaInternalClientImpl(serverAddresses, properties);
+  public TerracottaInternalClient createL1Client(String scheme, Iterable<InetSocketAddress> serverAddresses, Properties properties) {
+    return new TerracottaInternalClientImpl(scheme, serverAddresses, properties);
   }
 }

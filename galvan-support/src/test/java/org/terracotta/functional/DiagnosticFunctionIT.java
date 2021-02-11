@@ -20,11 +20,14 @@ package org.terracotta.functional;
 
 import java.net.InetSocketAddress;
 import java.util.Properties;
+import static org.junit.Assert.fail;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.DiagnosticsFactory;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.testing.rules.BasicExternalClusterBuilder;
 import org.terracotta.testing.rules.Cluster;
 
@@ -46,6 +49,30 @@ public class DiagnosticFunctionIT {
       try (Diagnostics d = DiagnosticsFactory.connect(inet, new Properties())) {
         System.out.println(d.getThreadDump());
       }
+    }
+
+    String[] hp = clusterHostPorts[0].split("[:]");
+    InetSocketAddress inet = InetSocketAddress.createUnresolved(hp[0], Integer.parseInt(hp[1]));
+    new Thread(()->{
+      try (Diagnostics d = DiagnosticsFactory.connect(inet, new Properties())) {
+        Thread.sleep(15_000);
+        d.forceTerminateServer();
+      } catch (InterruptedException ie) {
+
+      } catch (ConnectionException ce) {
+        
+      }
+    }).start();
+    CLUSTER.expectCrashes(true);
+    long start = System.currentTimeMillis();
+    try (Diagnostics d = DiagnosticsFactory.connect(inet, new Properties())) {
+      while (System.currentTimeMillis() - start < 30_000) {
+        System.out.println(d.getState());
+        Thread.sleep(1_000);
+      }
+      fail();
+    } catch (ConnectionClosedException e) {
+      System.out.println("success:" + (System.currentTimeMillis() - start));
     }
   }
 

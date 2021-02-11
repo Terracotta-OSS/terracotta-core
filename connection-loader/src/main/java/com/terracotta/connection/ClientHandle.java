@@ -30,4 +30,6 @@ public interface ClientHandle {
    * @return The client entity manager for end-points managed by this client.
    */
   ClientEntityManager getClientEntityManager();
+
+  boolean isShutdown();
 }

@@ -26,8 +26,8 @@ public class ClientHandleImpl implements ClientHandle {
 
   private final DistributedObjectClient client;
 
-  public ClientHandleImpl(Object client) {
-    this.client = (DistributedObjectClient) client;
+  public ClientHandleImpl(DistributedObjectClient client) {
+    this.client = client;
   }
 
   @Override
@@ -38,5 +38,10 @@ public class ClientHandleImpl implements ClientHandle {
   @Override
   public ClientEntityManager getClientEntityManager() {
     return client.getEntityManager();
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return client.isShutdown();
   }
 }

@@ -23,7 +23,6 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
-import com.tc.object.ClientBuilderFactory;
 import com.terracotta.connection.EndpointConnectorImpl;
 import com.terracotta.connection.TerracottaConnection;
 import com.terracotta.connection.TerracottaInternalClient;
@@ -96,13 +95,12 @@ abstract class AbstractConnectionService implements ConnectionService {
       int port = Math.max(oneHost.getPort(), 0);
       serverAddresses.add(InetSocketAddress.createUnresolved(oneHost.getHost(), port));
     }
-
     return createConnection(serverAddresses, properties);
   }
 
   @Override
   public final Connection connect(Iterable<InetSocketAddress> serverAddresses, Properties properties) throws ConnectionException {
-    String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, "terracotta");
+    String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, scheme);
     if (!handlesConnectionType(connectionType)) {
       throw new IllegalArgumentException("Unknown connectionType " + connectionType);
     }
@@ -111,11 +109,9 @@ abstract class AbstractConnectionService implements ConnectionService {
   }
 
   private Connection createConnection(Iterable<InetSocketAddress> serverAddresses, Properties properties) throws DetailedConnectionException {
-    properties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.of(scheme));
-    
-    final TerracottaInternalClient client = clientFactory.createL1Client(serverAddresses, properties);
+    final TerracottaInternalClient client = clientFactory.createL1Client(scheme, serverAddresses, properties);
     properties.put("connection", serverAddresses);
     client.init();
-    return new TerracottaConnection(properties, client.getClientEntityManager(), endpointConnector, client::shutdown);
+    return new TerracottaConnection(properties, client::getClientEntityManager, endpointConnector, client::shutdown);
   }
 }

@@ -38,11 +38,6 @@ public interface TerracottaInternalClient {
    * Returns whether this client has been shutdown or not
    */
   boolean isShutdown();
-
-  /**
-   * Returns whether this client is initialized or not
-   */
-  boolean isInitialized();
   
   /**
    * Required for TerracottaConnectionService Connection instantiation.

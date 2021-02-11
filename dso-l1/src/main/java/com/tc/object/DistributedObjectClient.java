@@ -140,7 +140,7 @@ public class DistributedObjectClient {
   private final String                                 uuid;
   private final String                               name;
 
-  private ClientShutdownManager                      shutdownManager;
+  private final ClientShutdownManager                      shutdownManager = new ClientShutdownManager(this);
 
   private final SetOnceFlag                          clientStopped                       = new SetOnceFlag();
   private final SetOnceFlag                          connectionMade                      = new SetOnceFlag();
@@ -156,7 +156,7 @@ public class DistributedObjectClient {
   
   public DistributedObjectClient(Iterable<InetSocketAddress> serverAddresses, TCThreadGroup threadGroup,
                                  Properties properties) {
-    this(serverAddresses, ClientBuilderFactory.get(ClientBuilderFactory.class).create(properties), threadGroup,
+    this(serverAddresses, new StandardClientBuilderFactory("terracotta").create(properties), threadGroup,
          UUID.NULL_ID.toString(), "", false);
   }
 
@@ -173,6 +173,10 @@ public class DistributedObjectClient {
     // We need a StageManager to create the SEDA stages used for handling the messages.
     final SEDA seda = new SEDA(threadGroup);
     communicationStageManager = seda.getStageManager();
+  }
+
+  public boolean isShutdown() {
+    return this.clientStopped.isSet();
   }
 
   public synchronized void start() {
@@ -279,9 +283,6 @@ public class DistributedObjectClient {
                                           this.uuid, this.name, pInfo.version(), this.clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);
-
-    this.shutdownManager = new ClientShutdownManager(this);
-
     final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager);
     // DO NOT create any stages after this call
     
@@ -330,7 +331,11 @@ public class DistributedObjectClient {
       connectionMade.notifyAll();
     }
   }
-  
+
+  public void addShutdownHook(Runnable r) {
+    this.shutdownManager.registerBeforeShutdownHook(r);
+  }
+
   public boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
     if (!connectionThread.isSet()) {
       throw new IllegalStateException("not started");

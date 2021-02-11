@@ -25,5 +25,5 @@ import java.util.Properties;
  * A factory for creating {@link TerracottaInternalClient}
  */
 public interface TerracottaInternalClientFactory {
-  TerracottaInternalClient createL1Client(Iterable<InetSocketAddress> serverAddresses, Properties properties);
+  TerracottaInternalClient createL1Client(String scheme, Iterable<InetSocketAddress> serverAddresses, Properties properties);
 }

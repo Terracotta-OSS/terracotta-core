@@ -32,6 +32,7 @@ import java.util.Properties;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.terracotta.entity.EndpointConnector;
@@ -44,7 +45,7 @@ public class DiagnosticConnectionServiceTest {
   @Test
   public void connect() throws Exception {
     TerracottaInternalClientFactory clientFactoryMock = mock(TerracottaInternalClientFactory.class);
-    when(clientFactoryMock.createL1Client(any(), any())).thenReturn(mock(TerracottaInternalClient.class));
+    when(clientFactoryMock.createL1Client(anyString(), any(), any())).thenReturn(mock(TerracottaInternalClient.class));
     DiagnosticConnectionService diagnosticConnectionService =
         new DiagnosticConnectionService(mock(EndpointConnector.class), clientFactoryMock);
     Connection connection =
@@ -55,7 +56,7 @@ public class DiagnosticConnectionServiceTest {
   @Test
   public void connectWithNonDiagnosticScheme() throws Exception {
     TerracottaInternalClientFactory clientFactoryMock = mock(TerracottaInternalClientFactory.class);
-    when(clientFactoryMock.createL1Client(any(), any())).thenReturn(mock(TerracottaInternalClient.class));
+    when(clientFactoryMock.createL1Client(anyString(), any(), any())).thenReturn(mock(TerracottaInternalClient.class));
     DiagnosticConnectionService diagnosticConnectionService =
         new DiagnosticConnectionService(mock(EndpointConnector.class), clientFactoryMock);
     expectedException.expect(IllegalArgumentException.class);

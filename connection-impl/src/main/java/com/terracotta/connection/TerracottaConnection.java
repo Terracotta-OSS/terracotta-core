@@ -38,11 +38,12 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import org.terracotta.entity.EndpointConnector;
 
 
 public class TerracottaConnection implements Connection, PrettyPrintable {
-  private final ClientEntityManager entityManager;
+  private final Supplier<ClientEntityManager> entityManager;
   private final EntityClientServiceFactory factory = new EntityClientServiceFactory();
   private final EndpointConnector endpointConnector;
   private final Runnable shutdown;
@@ -52,11 +53,11 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
   
   private boolean isShutdown = false;
 
-  public TerracottaConnection(Properties props, ClientEntityManager entityManager, Runnable shutdown) {
+  public TerracottaConnection(Properties props, Supplier<ClientEntityManager> entityManager, Runnable shutdown) {
     this(props, entityManager, new EndpointConnectorImpl(), shutdown);
   }
 
-  public TerracottaConnection(Properties props, ClientEntityManager entityManager, EndpointConnector endpointConnector, Runnable shutdown) {
+  public TerracottaConnection(Properties props, Supplier<ClientEntityManager> entityManager, EndpointConnector endpointConnector, Runnable shutdown) {
     this.entityManager = entityManager;
     this.endpointConnector = endpointConnector;
     this.shutdown = shutdown;
@@ -106,7 +107,11 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
   public Map<String, ?> getStateMap() {
     Map<String, Object> state = new LinkedHashMap<>();
     state.put("props" , connectionPropertiesForReporting);
-    state.put("stats" , this.entityManager.getStateMap());
+    try {
+      state.put("stats" , entityManager.get().getStateMap());
+    } catch (Exception e) {
+      // silent
+    }
     return state;
   }
 
@@ -146,6 +151,4 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
       return result;
     }
   }
-  
-  
 }

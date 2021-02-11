@@ -19,16 +19,18 @@
 package com.terracotta.connection;
 
 import com.tc.object.ClientBuilder;
-import com.tc.object.ClientBuilderFactory;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.DistributedObjectClientFactory;
 import com.tc.net.protocol.transport.ClientConnectionErrorDetails;
+import com.tc.object.StandardClientBuilderFactory;
+import com.tc.util.concurrent.SetOnceFlag;
 import com.terracotta.connection.api.DetailedConnectionException;
 
 import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
+import org.terracotta.exception.ConnectionClosedException;
 
 
 public class TerracottaInternalClientImpl implements TerracottaInternalClient {
@@ -39,20 +41,19 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   private final DistributedObjectClientFactory clientCreator;
   private final ClientConnectionErrorDetails errorListener = new ClientConnectionErrorDetails();
   private volatile ClientHandle       clientHandle;
-  private volatile boolean            shutdown             = false;
-  private volatile boolean            isInitialized        = false;
+  private SetOnceFlag           isInitialized        = new SetOnceFlag();
 
-  TerracottaInternalClientImpl(Iterable<InetSocketAddress> serverAddresses, Properties props) {
+  TerracottaInternalClientImpl(String scheme, Iterable<InetSocketAddress> serverAddresses, Properties props) {
     try {
-      this.clientCreator = buildClientCreator(serverAddresses, props);
+      this.clientCreator = buildClientCreator(scheme, serverAddresses, props);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private DistributedObjectClientFactory buildClientCreator(Iterable<InetSocketAddress> serverAddresses,
+  private DistributedObjectClientFactory buildClientCreator(String scheme, Iterable<InetSocketAddress> serverAddresses,
                                                             Properties props) {
-    ClientBuilder clientBuilder = ClientBuilderFactory.get(ClientBuilderFactory.class).create(props);
+    ClientBuilder clientBuilder = new StandardClientBuilderFactory(scheme).create(props);
     if (clientBuilder == null) {
       throw new RuntimeException("unable to build the client");
     }
@@ -61,20 +62,19 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   @Override
-  public synchronized void init() throws DetailedConnectionException {
-    if (isInitialized) { return; }
+  public void init() throws DetailedConnectionException {
+    if (!isInitialized.attemptSet()) { return; }
     DistributedObjectClient client = null;
     //Attach the internal collector in the listener
     errorListener.attachCollector();
     try {
       try {
-        client = clientCreator.create();
+        client = clientCreator.create(this::destroy);
       } catch (Exception e){
         throw new DetailedConnectionException(new Exception(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()), e), errorListener.getErrors());
       }
       if (client != null) {
         clientHandle = new ClientHandleImpl(client);
-        isInitialized = true;
       } else {
         TimeoutException e = new TimeoutException(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()));
         throw new DetailedConnectionException(e, errorListener.getErrors());
@@ -93,29 +93,43 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
   }
 
   @Override
-  public synchronized boolean isShutdown() {
-    return shutdown;
-  }
-
-  @Override
-  public synchronized void shutdown() {
-    shutdown = true;
+  public boolean isShutdown() {
     try {
-      if (clientHandle != null) {
-        clientHandle.shutdown();
-      }
-    } finally {
-      clientHandle = null;
+      return getHandle().isShutdown();
+    } catch (ConnectionClosedException closed) {
+      return true;
     }
   }
 
   @Override
-  public boolean isInitialized() {
-    return isInitialized;
+  public void shutdown() {
+    try {
+      getHandle().shutdown();
+    } catch (ConnectionClosedException closed) {
+      // silent
+    }
+  }
+
+// connection destroyed from below
+  private void destroy() {
+    clientHandle = null;
+  }
+
+  private ClientHandle getHandle() {
+    ClientHandle handle = clientHandle;
+    if (handle == null) {
+      throw new ConnectionClosedException("connection delared dead");
+    } else {
+      return handle;
+    }
   }
   
   @Override
   public ClientEntityManager getClientEntityManager() {
-    return clientHandle.getClientEntityManager();
+    try {
+      return clientHandle.getClientEntityManager();
+    } catch (NullPointerException n) {
+      throw new ConnectionClosedException("connection delared dead");
+    }
   }
 }

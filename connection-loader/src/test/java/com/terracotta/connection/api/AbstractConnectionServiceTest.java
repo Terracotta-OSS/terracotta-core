@@ -27,7 +27,6 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
 
-import com.tc.object.ClientBuilderFactory;
 import com.terracotta.connection.TerracottaInternalClient;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 
@@ -41,6 +40,7 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,7 +59,7 @@ public class AbstractConnectionServiceTest {
   public void setUp() {
     clientFactoryMock = mock(TerracottaInternalClientFactory.class);
     EndpointConnector endpointConnectorMock = mock(EndpointConnector.class);
-    when(clientFactoryMock.createL1Client(any(), any())).thenReturn(mock(TerracottaInternalClient.class));
+    when(clientFactoryMock.createL1Client(anyString(), any(), any())).thenReturn(mock(TerracottaInternalClient.class));
     connectionService = new AbstractConnectionService(TEST_SCHEME, endpointConnectorMock, clientFactoryMock) {};
   }
 
@@ -77,10 +77,9 @@ public class AbstractConnectionServiceTest {
     Properties connectionProperties = new Properties();
     connectionProperties.put(testProperty, testPropertyValue);
     connectionService.connect(URI.create(TEST_SCHEME + "://localhost:4000"), connectionProperties);
-    verify(clientFactoryMock).createL1Client(forClass(Iterable.class).capture(), propertiesArgumentCaptor.capture());
+    verify(clientFactoryMock).createL1Client(anyString(), forClass(Iterable.class).capture(), propertiesArgumentCaptor.capture());
     Properties genericProperties = propertiesArgumentCaptor.getValue();
 
-    assertThat(genericProperties.get(ClientBuilderFactory.CLIENT_BUILDER_TYPE), notNullValue());
     assertThat(genericProperties.get(testProperty), is(testPropertyValue));
   }
 
@@ -93,10 +92,9 @@ public class AbstractConnectionServiceTest {
     connectionProperties.put(testProperty, testPropertyValue);
     InetSocketAddress server = InetSocketAddress.createUnresolved("localhost", 4000);
     connectionService.connect(Collections.singletonList(server), connectionProperties);
-    verify(clientFactoryMock).createL1Client(forClass(Iterable.class).capture(), propertiesArgumentCaptor.capture());
+    verify(clientFactoryMock).createL1Client(anyString(), forClass(Iterable.class).capture(), propertiesArgumentCaptor.capture());
 
     Properties genericProperties = propertiesArgumentCaptor.getValue();
-    assertThat(genericProperties.get(ClientBuilderFactory.CLIENT_BUILDER_TYPE), notNullValue());
     assertThat(genericProperties.get(testProperty), is(testPropertyValue));
   }
 

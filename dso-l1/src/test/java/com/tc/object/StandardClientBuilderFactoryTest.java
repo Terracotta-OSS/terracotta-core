@@ -29,10 +29,11 @@ import java.util.Properties;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 public class StandardClientBuilderFactoryTest {
 
-  private final StandardClientBuilderFactory standardClientBuilderFactory = new StandardClientBuilderFactory();
+  private final StandardClientBuilderFactory standardClientBuilderFactory = new StandardClientBuilderFactory("terracotta");
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
@@ -40,8 +41,7 @@ public class StandardClientBuilderFactoryTest {
   @Test
   public void createStandardBuilder() throws Exception {
     Properties connectionProperties = new Properties();
-    connectionProperties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE,
-                             ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, "terracotta");
     ClientBuilder clientBuilder = standardClientBuilderFactory.create(connectionProperties);
     assertThat(clientBuilder, instanceOf(StandardClientBuilder.class));
   }
@@ -49,8 +49,7 @@ public class StandardClientBuilderFactoryTest {
   @Test
   public void createDiagnosticBuilder() throws Exception {
     Properties connectionProperties = new Properties();
-    connectionProperties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE,
-                             ClientBuilderFactory.ClientBuilderType.DIAGNOSTIC);
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, "diagnostic");
     ClientBuilder clientBuilder = standardClientBuilderFactory.create(connectionProperties);
     assertThat(clientBuilder, instanceOf(DiagnosticClientBuilder.class));
   }
@@ -58,9 +57,9 @@ public class StandardClientBuilderFactoryTest {
   @Test
   public void invalidConnectionType() throws Exception {
     Properties connectionProperties = new Properties();
-    connectionProperties.put(ClientBuilderFactory.CLIENT_BUILDER_TYPE, "invalid");
+    connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, "invalid");
     expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("Received invalid value");
+    expectedException.expectMessage("invalid is not a valid connection type");
     standardClientBuilderFactory.create(connectionProperties);
   }
 }

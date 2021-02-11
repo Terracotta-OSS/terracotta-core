@@ -66,7 +66,7 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(()->mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     Entity entity1 = testRef.fetchEntity(null);
     verify(mockClientEntityManager).fetchEntity(eq(new EntityID(Entity.class.getName(), "TEST")), anyLong(), any(ClientInstanceID.class), Mockito.<MessageCodec>any(), Mockito.<Runnable>any());
     verify(CONNECTOR).connect(mockTestEntityClientEndpoint, mockEntityClientService, null);
@@ -90,7 +90,7 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(()->mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
     boolean didDestroy = testRef.destroy();
     Assert.assertTrue(didDestroy);
@@ -110,7 +110,7 @@ public class TerracottaEntityRefTest {
     // Now, run the test.
     long version = 1;
 // clientids start at 1
-    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
+    TerracottaEntityRef<Entity, Void, Void> testRef = new TerracottaEntityRef(()->mockClientEntityManager, CONNECTOR, Entity.class, version, "TEST", mockEntityClientService, new AtomicLong(1));
     // We are going to delete this, directly.
     boolean didDestroy = testRef.destroy();
     Assert.assertFalse(didDestroy);

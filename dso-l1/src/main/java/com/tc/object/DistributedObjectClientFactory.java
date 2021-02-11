@@ -59,7 +59,7 @@ public class DistributedObjectClientFactory {
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(props);
   }
 
-  public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
+  public DistributedObjectClient create(Runnable shutdown) throws InterruptedException, ConfigurationSetupException {
     L1ThrowableHandler throwableHandler = new L1ThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class),
                                                                  new Callable<Void>() {
                                                                    @Override
@@ -73,6 +73,7 @@ public class DistributedObjectClientFactory {
     boolean async = Boolean.parseBoolean(this.properties.getProperty(ConnectionPropertyNames.CONNECTION_ASYNC, "false"));
     
     DistributedObjectClient client = ClientFactory.createClient(serverAddresses, builder, group, uuid, name, async);
+    client.addShutdownHook(shutdown);
 
     Reference<DistributedObjectClient> ref = new WeakReference<>(client);
     group.addCallbackOnExitDefaultHandler((state)->{

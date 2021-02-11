@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 import org.mockito.Mockito;
 
-import static com.tc.object.ClientBuilderFactory.CLIENT_BUILDER_TYPE;
 import static org.mockito.Mockito.when;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
@@ -47,7 +46,6 @@ public class DistributedObjectClientTest extends TestCase {
     try (PortManager.PortRef portRef = PortManager.getInstance().reservePort()) {
       TCThreadGroup threadGroup = new TCThreadGroup(new TestThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class)));
       Properties connectionProperties = new Properties();
-      connectionProperties.put(CLIENT_BUILDER_TYPE, ClientBuilderFactory.ClientBuilderType.TERRACOTTA);
       connectionProperties.put(ConnectionPropertyNames.CONNECTION_TYPE, ProductID.PERMANENT);
       DistributedObjectClient client =
           new DistributedObjectClient(
