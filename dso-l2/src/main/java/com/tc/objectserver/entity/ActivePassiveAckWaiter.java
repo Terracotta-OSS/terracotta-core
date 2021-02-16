@@ -119,15 +119,16 @@ public class ActivePassiveAckWaiter {
     return this.completedPending.isEmpty();
   }
   
-  private SessionID nodeToSession(NodeID node) {
-    return this.session.get(node);
+  private SessionID nodeToSession(ServerID node) {
+    return this.session.getOrDefault(node, SessionID.NULL_ID);
   }
 
-  public synchronized void didReceiveOnPassive(NodeID onePassive) {
-    boolean didContain = this.receivedPending.remove(nodeToSession(onePassive));
+  public synchronized void didReceiveOnPassive(ServerID onePassive) {
+    SessionID current = nodeToSession(onePassive);
+    boolean didContain = this.receivedPending.remove(current);
     // We must have contained this passive in order to receive.
     if (!didContain) {
-      Assert.assertTrue(onePassive + " " + toString(), this.receivedByComplete.contains(nodeToSession(onePassive)));
+      Assert.assertTrue(onePassive + " " + toString(), this.receivedByComplete.contains(current));
     }    
     // Wake everyone up if this changed something.
     if (this.receivedPending.isEmpty()) {
@@ -142,7 +143,7 @@ public class ActivePassiveAckWaiter {
    * @param payload
    * @return True if this was the last outstanding completion required and the waiter is now done.
    */
-  public boolean didCompleteOnPassive(NodeID onePassive, ReplicationResultCode payload) {
+  public boolean didCompleteOnPassive(ServerID onePassive, ReplicationResultCode payload) {
     // do this first to prevent updating the map while it is being checked
     this.results.put(onePassive, payload);
     return runFinalizerOnComplete(updateCompletionFlags(nodeToSession(onePassive), true));
