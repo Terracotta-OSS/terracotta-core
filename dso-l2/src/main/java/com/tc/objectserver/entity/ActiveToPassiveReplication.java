@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 
 /**
@@ -250,7 +251,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   @Override
   public Set<SessionID> passives() {
-    List<SessionID> copy = new ArrayList<>(passiveNodes.values());
+    List<SessionID> copy = passiveNodes.values().stream().filter(SessionID::isValid).collect(Collectors.toList());
     return new AbstractSet<SessionID>() {
       @Override
       public Iterator<SessionID> iterator() {
