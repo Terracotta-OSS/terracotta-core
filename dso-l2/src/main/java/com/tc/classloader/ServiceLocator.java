@@ -90,7 +90,7 @@ public class ServiceLocator extends ManagedServiceLoader {
   }
       
   private static URL[] createURLS(File plugins) {
-    if (plugins.exists()) {
+    if (plugins.exists() && plugins.isDirectory()) {
       return Arrays.stream(plugins.listFiles())
         .filter(ServiceLocator::fileFilter)
         .map(ServiceLocator::toURL)
