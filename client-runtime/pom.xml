@@ -26,7 +26,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>connection-loader</artifactId>
+      <artifactId>connection-impl</artifactId>
       <version>${project.version}</version>
       <optional>true</optional>
     </dependency>
