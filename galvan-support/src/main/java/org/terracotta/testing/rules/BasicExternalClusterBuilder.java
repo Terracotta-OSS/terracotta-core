@@ -46,6 +46,7 @@ public class BasicExternalClusterBuilder {
   private Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
+  private boolean inline = true;
   private Supplier<StartupCommandBuilder> startupBuilder = ArgOnlyStartupCommandBuilder::new;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
@@ -144,14 +145,25 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
+  public BasicExternalClusterBuilder inline(boolean yes) {
+    this.inline = yes;
+    return this;
+  }
+
   public BasicExternalClusterBuilder withConsistentStartup(boolean consistent) {
     this.consistentStart = consistent;
     return this;
   }
 
   public Cluster build() {
-    return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
+    if (inline) {
+      return new BasicInlineCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
         logConfigExt, serverHeapSize, startupBuilder);
+    } else {
+      return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
+        clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
+        logConfigExt, serverHeapSize, startupBuilder);
+    }
   }
 }

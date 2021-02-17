@@ -31,20 +31,22 @@ import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.GalvanFailureException;
-import org.terracotta.testing.master.GalvanStateInterlock;
 import org.terracotta.testing.master.ReadyStripe;
-import org.terracotta.testing.master.StripeInstaller;
 import org.terracotta.testing.master.TestStateManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URL;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -54,15 +56,20 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
+import org.terracotta.server.Server;
+
+import org.terracotta.testing.common.MultiplexedEventingStream;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
+import org.terracotta.testing.master.InlineStateInterlock;
+import org.terracotta.testing.master.InlineStripeInstaller;
 import org.terracotta.testing.support.PortTool;
 import org.terracotta.utilities.test.net.PortManager;
 
 /**
  * @author cdennis
  */
-class BasicExternalCluster extends Cluster {
+class BasicInlineCluster extends Cluster {
 
   private final Path clusterDirectory;
   private final int stripeSize;
@@ -81,7 +88,7 @@ class BasicExternalCluster extends Cluster {
 
   private String displayName;
   private ReadyStripe cluster;
-  private GalvanStateInterlock interlock;
+  private InlineStateInterlock interlock;
   private TestStateManager stateManager;
   // Note that the clientThread is actually the main thread of the JUnit runner.
   private final Thread clientThread;
@@ -91,7 +98,7 @@ class BasicExternalCluster extends Cluster {
   private Thread shepherdingThread;
   private boolean isSafe;
 
-  BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
+  BasicInlineCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
                        Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
     boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
@@ -183,6 +190,12 @@ class BasicExternalCluster extends Cluster {
 
     String kitInstallationPath = System.getProperty("kitInstallationPath");
     harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
+    System.setProperty("tc.install-root", kitInstallationPath + File.separator + "server");
+    System.setProperty("restart.inline", Boolean.TRUE.toString());
+
+    MultiplexedEventingStream stdout = new MultiplexedEventingStream(System.out);
+    System.setOut(new PrintStream(stdout));
+    
     Path kitDir = Paths.get(kitInstallationPath);
     File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
     testParentDir.delete();
@@ -191,7 +204,7 @@ class BasicExternalCluster extends Cluster {
     int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
     stateManager = new TestStateManager();
-    interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+    interlock = new InlineStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
 
     /*
      * Debug ports, if requested, are reserved from a specified base port, first.  This
@@ -221,18 +234,16 @@ class BasicExternalCluster extends Cluster {
 
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
         stripeName, serverHeapSize, logConfigExt, systemProperties);
-    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
+    InlineStripeInstaller stripeInstaller = new InlineStripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {
       String serverName = serverNames.get(i);
       Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
       Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
       Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
-      // Determine if we want a debug port.
-      int debugPort = stripeConfig.getServerDebugPorts().get(i);
 
       StartupCommandBuilder builder = startupBuilder.get()
-          .tcConfig(tcConfigRelative)
+          .tcConfig(serverWorkingDir.resolve(tcConfigRelative))
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDir(serverWorkingDir)
@@ -240,7 +251,8 @@ class BasicExternalCluster extends Cluster {
           .logConfigExtension(logConfigExt)
           .consistentStartup(consistentStart);      
 
-      stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
+      String[] cmd = builder.build();
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, stdout, ()->startIsolatedServer(serverWorkingDir, cmd));
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -295,6 +307,21 @@ class BasicExternalCluster extends Cluster {
     this.shepherdingThread.setName("Shepherding Thread");
     this.shepherdingThread.start();
     waitForSafe();
+  }
+
+  private Server startIsolatedServer(Path serverWorking, String[] cmd) {
+    Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
+    try {
+      URL url = tc.toUri().toURL();
+      URL resource = serverWorking.toUri().toURL();
+      ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
+      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class);
+      return (Server)m.invoke(null, Arrays.asList(cmd));
+    } catch (RuntimeException mal) {
+      throw mal;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private Path relativize(Path root, Path other) {
