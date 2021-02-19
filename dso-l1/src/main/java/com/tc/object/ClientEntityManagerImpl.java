@@ -342,6 +342,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       inFlight.sent();
       if (!inFlight.send()) {
         logger.debug("message not sent.  Make sure resend happens : {}", inFlight);
+        if (!this.channel.getProductID().isReconnectEnabled()) {
+          inFlight.setResult(null, new ConnectionClosedException("connection closed"));
+        }
       }
     } else {
       transactionSource.retire(inFlight.getTransactionID());
@@ -650,6 +653,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         }
       } else {
         logger.debug("message not sent.  Make sure resend happens " + inFlight);
+        if (!this.channel.getProductID().isReconnectEnabled()) {
+          inFlight.setResult(null, new ConnectionClosedException("connection closed"));
+        }
       }
     } else {
       transactionSource.retire(inFlight.getTransactionID());
