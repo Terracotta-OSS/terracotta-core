@@ -27,7 +27,6 @@ import org.terracotta.server.Server;
  */
 public class IsolatedClassLoader extends URLClassLoader {
 
-  private final static String LEAK = Server.class.getName();
   private final ClassLoader parent;
 
   public IsolatedClassLoader(URL[] urls, ClassLoader parent) {

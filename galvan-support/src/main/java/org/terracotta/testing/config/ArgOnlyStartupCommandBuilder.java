@@ -108,9 +108,9 @@ public class ArgOnlyStartupCommandBuilder implements StartupCommandBuilder {
         installServer();
         String startScript = getAbsolutePath(Paths.get("server","bin", "start-tc-server"));
         if (consistentStartup) {
-          builtCommand = new String[]{"-c", "-f", tcConfig.toString(), "-n", serverName};
+          builtCommand = new String[]{"-c", "-f", serverWorkingDir.resolve(tcConfig).toString(), "-n", serverName};
         } else {
-          builtCommand = new String[]{"-f", tcConfig.toString(), "-n", serverName};
+          builtCommand = new String[]{"-f", serverWorkingDir.resolve(tcConfig).toString(), "-n", serverName};
         }
       } catch (IOException e) {
         throw new RuntimeException(e);

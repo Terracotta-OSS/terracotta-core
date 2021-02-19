@@ -77,7 +77,6 @@ class BasicExternalCluster extends Cluster {
   private final String logConfigExt;
   private final int serverHeapSize;
   private final Supplier<StartupCommandBuilder> startupBuilder;
-  private final PortManager allocator = PortManager.getInstance();
 
   private String displayName;
   private ReadyStripe cluster;

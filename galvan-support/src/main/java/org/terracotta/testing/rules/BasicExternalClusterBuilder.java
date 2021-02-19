@@ -23,6 +23,7 @@ import org.terracotta.testing.config.StartupCommandBuilder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -31,6 +32,7 @@ import org.terracotta.testing.config.ArgOnlyStartupCommandBuilder;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_MB;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_VOTER_COUNT;
+import org.terracotta.testing.config.DefaultStartupCommandBuilder;
 
 public class BasicExternalClusterBuilder {
   private final int stripeSize;
@@ -47,7 +49,7 @@ public class BasicExternalClusterBuilder {
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
   private boolean inline = true;
-  private Supplier<StartupCommandBuilder> startupBuilder = ArgOnlyStartupCommandBuilder::new;
+  private Supplier<StartupCommandBuilder> startupBuilder;
 
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
@@ -159,11 +161,11 @@ public class BasicExternalClusterBuilder {
     if (inline) {
       return new BasicInlineCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
-        logConfigExt, serverHeapSize, startupBuilder);
+        logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(ArgOnlyStartupCommandBuilder::new));
     } else {
       return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
-        logConfigExt, serverHeapSize, startupBuilder);
+        logConfigExt, serverHeapSize, Optional.ofNullable(startupBuilder).orElse(DefaultStartupCommandBuilder::new));
     }
   }
 }

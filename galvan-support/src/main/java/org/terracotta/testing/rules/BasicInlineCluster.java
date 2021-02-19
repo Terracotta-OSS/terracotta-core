@@ -243,7 +243,7 @@ class BasicInlineCluster extends Cluster {
       Path kitLocationRelative = relativize(serverWorkingDir, kitLocation);
 
       StartupCommandBuilder builder = startupBuilder.get()
-          .tcConfig(serverWorkingDir.resolve(tcConfigRelative))
+          .tcConfig(tcConfigRelative)
           .serverName(serverName)
           .stripeName(stripeName)
           .serverWorkingDir(serverWorkingDir)
@@ -310,8 +310,13 @@ class BasicInlineCluster extends Cluster {
   }
 
   private Server startIsolatedServer(Path serverWorking, String[] cmd) {
+    if (cmd[0].contains("start-tc-server")) {
+      cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
+    }
+    ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
     Path tc = Paths.get(System.getProperty("tc.install-root"), "lib", "tc.jar");
     try {
+      Thread.currentThread().setContextClassLoader(null);
       URL url = tc.toUri().toURL();
       URL resource = serverWorking.toUri().toURL();
       ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
@@ -321,6 +326,8 @@ class BasicInlineCluster extends Cluster {
       throw mal;
     } catch (Exception e) {
       throw new RuntimeException(e);
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldLoader);
     }
   }
 
