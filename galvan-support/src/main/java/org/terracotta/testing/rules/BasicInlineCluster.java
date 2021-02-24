@@ -192,7 +192,8 @@ class BasicInlineCluster extends Cluster {
     harnessLogger.output("Using kitInstallationPath: \"" + kitInstallationPath + "\"");
     System.setProperty("tc.install-root", kitInstallationPath + File.separator + "server");
     System.setProperty("restart.inline", Boolean.TRUE.toString());
-
+    System.setProperty("com.tc.server.entity.processor.threads", "4");
+    System.setProperty("l2.tccom.workerthreads", "4");
     MultiplexedEventingStream stdout = new MultiplexedEventingStream(System.out);
     System.setOut(new PrintStream(stdout));
     
