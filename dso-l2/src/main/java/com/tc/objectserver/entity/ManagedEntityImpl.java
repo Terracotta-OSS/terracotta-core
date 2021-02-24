@@ -971,7 +971,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertTrue(clientReferenceCount > 0);
       }
       // The FETCH can only come directly from a client so we can down-cast.
-      ClientID clientID = (ClientID) getEntityRequest.getNodeID();
+      ClientID clientID = getEntityRequest.getNodeID();
       ClientDescriptorImpl descriptor = new ClientDescriptorImpl(clientID, getEntityRequest.getClientInstance());
       boolean added = clientEntityStateManager.addReference(descriptor, this.fetchID);
       if (this.isInActiveState) {
@@ -979,7 +979,13 @@ public class ManagedEntityImpl implements ManagedEntity {
         // Fire the event that the client fetched the entity.
         this.eventCollector.clientDidFetchEntity(clientID, this.id, this.consumerID, getEntityRequest.getClientInstance());
         // finally notify the entity that it was fetched
-        this.activeServerEntity.connected(descriptor);
+        try {
+          this.activeServerEntity.connected(descriptor);
+        } catch (RuntimeException runtime) {
+          logger.warn("unexpected exception.  rejecting reconnection of " + descriptor.getNodeID() + " to " + this.id, runtime);
+          response.failure(ServerException.createClosedException(id));
+          return;
+        }
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
 //   this is a reconnection, handle the extended reconnect data
           try {
