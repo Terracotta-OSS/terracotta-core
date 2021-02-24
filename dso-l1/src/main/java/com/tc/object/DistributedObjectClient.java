@@ -179,7 +179,17 @@ public class DistributedObjectClient {
     return this.clientStopped.isSet();
   }
 
-  public synchronized void start() {
+  public void start() {
+    final TCProperties tcProperties = TCPropertiesImpl.getProperties();
+    final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
+
+    if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
+                                                                       + socketConnectTimeout); }
+
+    start(false, socketConnectTimeout);
+  }
+
+  public synchronized boolean start(boolean directDrive, int socketTimeout) {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
@@ -210,7 +220,7 @@ public class DistributedObjectClient {
     this.connectionManager = (isAsync) ?
             new TCConnectionManagerImpl(communicationsManager.COMMSMGR_CLIENT, 0, hc, this.clientBuilder.createBufferManagerFactory())
             :
-            new BasicConnectionManager(name + "-" + uuid, this.clientBuilder.createBufferManagerFactory());
+            new BasicConnectionManager(name + "/" + uuid, this.clientBuilder.createBufferManagerFactory());
     this.communicationsManager = this.clientBuilder
         .createCommunicationsManager(mm,
                                      messageRouter,
@@ -223,12 +233,8 @@ public class DistributedObjectClient {
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
-    final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
-
-    if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
-                                                                       + socketConnectTimeout); }
     ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
-                                                                 sessionManager, socketConnectTimeout);
+                                                                 sessionManager, socketTimeout);
     this.channel = clientChannel;
     // add this listener so that the whole system is shutdown
     // if the transport is closed from underneath.
@@ -283,7 +289,7 @@ public class DistributedObjectClient {
                                           this.uuid, this.name, pInfo.version(), this.clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);
-    final ClientConfigurationContext cc = new ClientConfigurationContext(this.communicationStageManager);
+    final ClientConfigurationContext cc = new ClientConfigurationContext(clientChannel.getClientID().toString(), this.communicationStageManager);
     // DO NOT create any stages after this call
     
     String[] exclusion = clientChannel.getProductID() == ProductID.DIAGNOSTIC || !isAsync ? 
@@ -299,37 +305,50 @@ public class DistributedObjectClient {
     EventHandler<ClientHandshakeResponse> handshake = new ClientCoordinationHandler(this.clientHandshakeManager);
 
     initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), isAsync ? multiResponseStage.getSink() : EventHandler.directSink(mutil));
-    connectionThread.set(new Thread(threadGroup, ()->{
-          while (!clientStopped.isSet()) {
-            try {
-              openChannel(clientChannel);
-              waitForHandshake(clientChannel);
-              connectionMade();
-              break;
-            } catch (RuntimeException runtime) {
-              synchronized (connectionMade) {
-                exceptionMade.set(runtime);
-                connectionMade.notifyAll();
-              }
-              break;
-            } catch (InterruptedException ie) {
-              synchronized (connectionMade) {
-                exceptionMade.set(ie);
-                connectionMade.notifyAll();
-              }              // We are in the process of letting the thread terminate so we don't handle this in a special way.
-              break;
+
+    if (directDrive) {
+      return directConnect(clientChannel);
+    } else {
+      connectionThread.set(new Thread(threadGroup, ()->{
+            while (!connectionMade.isSet() && !clientStopped.isSet() && !exceptionMade.isSet()) {
+              connectionSequence(clientChannel);
             }
-          }
-          //  don't reset interrupted, thread is done
-        }, "Connection Maker - " + uuid));
-      connectionThread.get().start();
+            //  don't reset interrupted, thread is done
+          }, "Connection Maker - " + uuid));
+        connectionThread.get().start();
+    }
+    return false;
+  }
+
+  private boolean directConnect(ClientMessageChannel clientChannel) {
+    try {
+      clientChannel.open(serverAddresses);
+      waitForHandshake(clientChannel);
+      connectionMade();
+      return true;
+    } catch (CommStackMismatchException |
+            MaxConnectionsExceededException |
+            TCTimeoutException tt) {
+      DSO_LOGGER.error(tt.getMessage());
+      throw new IllegalStateException(tt);
+    } catch (IOException io) {
+      DSO_LOGGER.debug("connection error", io);
+      return false;
+    }
+  }
+
+  private void connectionSequence(ClientMessageChannel clientChannel) {
+    try {
+      openChannel(clientChannel);
+      waitForHandshake(clientChannel);
+      connectionMade();
+    } catch (RuntimeException | InterruptedException runtime) {
+      exceptionMade.set(runtime);
+    }
   }
 
   private void connectionMade() {
     connectionMade.attemptSet();
-    synchronized (connectionMade) {
-      connectionMade.notifyAll();
-    }
   }
 
   public void addShutdownHook(Runnable r) {

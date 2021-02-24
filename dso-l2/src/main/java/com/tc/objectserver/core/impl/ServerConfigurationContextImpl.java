@@ -40,13 +40,13 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final ServerClientHandshakeManager   clientHandshakeManager;
   private final ChannelStats                   channelStats;
   private final L2Coordinator                  l2Coordinator;
-  private final List<Runnable>                shutdownItems = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable>                 shutdownItems = Collections.synchronizedList(new LinkedList<>());
 
-  public ServerConfigurationContextImpl(StageManager stageManager,
+  public ServerConfigurationContextImpl(String identifier, StageManager stageManager,
                                         DSOChannelManager channelManager,
                                         ServerClientHandshakeManager clientHandshakeManager,
                                         ChannelStats channelStats, L2Coordinator l2Coordinator) {
-    super(stageManager);
+    super(identifier, stageManager);
     this.channelManager = channelManager;
     this.clientHandshakeManager = clientHandshakeManager;
     this.channelStats = channelStats;

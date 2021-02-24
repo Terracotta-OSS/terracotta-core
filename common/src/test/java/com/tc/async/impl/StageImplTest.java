@@ -93,9 +93,9 @@ public class StageImplTest {
     instance.destroy();
     verify(handler, never()).destroy();
     
-    instance.start(null);
+    instance.start(mock(ConfigurationContext.class));
     verify(handler).initializeContext(Mockito.<ConfigurationContext>any());
-    instance.start(null);
+    instance.start(mock(ConfigurationContext.class));
     verify(handler).initializeContext(Mockito.<ConfigurationContext>any());
     instance.destroy();
     verify(handler).destroy();
@@ -195,7 +195,7 @@ public class StageImplTest {
     });
     StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, size, null, context, null, 16, false, true);
     assertEquals(cxts.size(), size);
-    instance.start(null);
+    instance.start(mock(ConfigurationContext.class));
     
     MultiThreadedEventContext cxt = mock(MultiThreadedEventContext.class);
     when(cxt.flush()).thenReturn(Boolean.TRUE);

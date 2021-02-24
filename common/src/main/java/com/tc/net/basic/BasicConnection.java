@@ -349,7 +349,7 @@ public class BasicConnection implements TCConnection {
   private void readMessages() {
     Assert.assertNull(readerExec);
     readerExec = Executors.newFixedThreadPool(1, (r) -> {
-      serviceThread = new Thread(r, "BasicConnectionReader-" + this.src.getLocalSocketAddress() + "<-" + this.src.getRemoteSocketAddress() + " for (" + System.identityHashCode(this) + ") " + id);
+      serviceThread = new Thread(r, id + " - BasicConnectionReader-" + this.src.getLocalSocketAddress() + "<-" + this.src.getRemoteSocketAddress() + " for (" + System.identityHashCode(this) + ")");
       serviceThread.setDaemon(true);
       return serviceThread;
     });

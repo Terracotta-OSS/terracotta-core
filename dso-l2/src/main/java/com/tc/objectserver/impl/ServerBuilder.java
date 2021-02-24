@@ -48,7 +48,7 @@ public interface ServerBuilder extends PostInit {
                                                             StripeIDStateManager stripeStateManager, WeightGeneratorFactory weightGeneratorFactory,
                                                             BufferManagerFactory bufferManagerFactory, TopologyManager topologyManager);
 
-  ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, DSOChannelManager channelManager,
+  ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager, DSOChannelManager channelManager,
                                                               ChannelStatsImpl channelStats,
                                                               L2Coordinator l2HACoordinator,
                                                               ServerClientHandshakeManager clientHandshakeManager,

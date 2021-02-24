@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 
 
 public interface ConfigurationContext {
+  public String getIdentifier();
 
   public <EC> Stage<EC> getStage(String name, Class<EC> verification);
 

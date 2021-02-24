@@ -99,7 +99,8 @@ public class StandardClientBuilder implements ClientBuilder {
     return new ClientEntityManagerImpl(channel, stages);
   }
 
-  protected ProductID getTypeOfClient() {
+  @Override
+  public ProductID getTypeOfClient() {
     boolean noreconnect =
         Boolean.valueOf(connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_DISABLE_RECONNECT,
                                                          "false"));

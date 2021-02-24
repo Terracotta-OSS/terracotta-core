@@ -20,12 +20,14 @@ package com.tc.object;
 
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
+import com.tc.net.ClientID;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
+import com.tc.net.protocol.tcm.ChannelID;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -88,6 +90,8 @@ public class DistributedObjectClientTest extends TestCase {
 
           }
           when(channel.getProductID()).thenReturn(ProductID.PERMANENT);
+          when(channel.getClientID()).thenReturn(new ClientID(1));
+          when(channel.getChannelID()).thenReturn(new ChannelID(1));
           return channel;
         }
       };

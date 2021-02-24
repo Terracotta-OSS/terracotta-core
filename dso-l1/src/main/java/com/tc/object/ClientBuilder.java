@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 
 import com.tc.async.api.StageManager;
 import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.ProductID;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -70,4 +71,5 @@ public interface ClientBuilder {
   
   BufferManagerFactory createBufferManagerFactory();
 
+  ProductID getTypeOfClient();
 }

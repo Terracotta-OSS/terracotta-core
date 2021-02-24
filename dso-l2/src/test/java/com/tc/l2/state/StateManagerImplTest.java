@@ -86,6 +86,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 public class StateManagerImplTest {
@@ -107,6 +108,7 @@ public class StateManagerImplTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
+    ServerEnv.setDefaultServer(mock(Server.class));
     Logger tcLogger = mock(Logger.class);
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
@@ -145,7 +147,7 @@ public class StateManagerImplTest {
 
       L2Coordinator l2CoordinatorMock = mock(L2Coordinator.class);
       when(l2CoordinatorMock.getStateManager()).thenReturn(stateManagers[i]);
-      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl(stageManagers[i], null, null, null, l2CoordinatorMock);
+      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl("", stageManagers[i], null, null, null, l2CoordinatorMock);
       stageManagers[i].startAll(serverConfigurationContextMock, new ArrayList<>());
     }
   }

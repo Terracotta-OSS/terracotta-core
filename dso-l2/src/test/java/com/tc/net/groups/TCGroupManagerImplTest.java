@@ -63,6 +63,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 //TODO: Fix this test to use something other than concrete message types (that incidentally no longer exist)
@@ -80,6 +82,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
   private MockStageManagerFactory  stages;
 
   private void setupGroups(int n) throws Exception {
+    ServerEnv.setDefaultServer(mock(Server.class));
     groups = new TCGroupManagerImpl[n];
     listeners = new TestGroupMessageListener[n];
     groupEventListeners = new TestGroupEventListener[n];

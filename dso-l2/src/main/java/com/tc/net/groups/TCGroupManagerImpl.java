@@ -109,6 +109,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toSet;
+import org.terracotta.server.ServerEnv;
 
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyListener {
@@ -127,8 +128,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final Map<MessageID, GroupResponse<AbstractGroupMessage>>               pendingRequests             = new ConcurrentHashMap<>();
   private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
   private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<>();
-  private final Timer                                       handshakeTimer              = new Timer(
-                                                                                                    "TC Group Manager Handshake timer",
+  private final Timer                                       handshakeTimer              = new Timer(ServerEnv.getServer().getIdentifier() +
+                                                                                                    " - TC Group Manager Handshake timer",
                                                                                                     true);
   private final Set<NodeID>                                 zappedSet                   = Collections
                                                                                             .synchronizedSet(new HashSet<NodeID>());
@@ -232,7 +233,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
     
-    connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
+    connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
         serverCount, new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"), bufferManagerFactory);
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
@@ -616,7 +617,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
     ProductID product = ProductID.SERVER;
-    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 10000 /*  timeout */);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 2_000 /*  timeout */);
 
     channel.addListener(listener);
     channel.open(serverAddress);

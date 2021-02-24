@@ -37,6 +37,8 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 public class EntityMessengerProviderTest {
@@ -56,6 +58,7 @@ public class EntityMessengerProviderTest {
   @Before
   public void setUp() throws Exception {
     // Build the underlying components needed by the provider or common to tests.
+    ServerEnv.setDefaultServer(mock(Server.class));
     this.messageSink = mock(Sink.class);
     this.consumerID = 1;
     this.messageCodec = mock(MessageCodec.class);

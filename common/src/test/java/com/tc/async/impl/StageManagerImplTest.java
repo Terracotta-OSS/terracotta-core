@@ -80,7 +80,7 @@ public class StageManagerImplTest extends TestCase {
     s.getSink().addToSink(new TestEventContext());
     assertTrue(s.size() == 2);
     assertTrue(testEventHandler.getContexts().size() == 0);
-    s.start(new ConfigurationContextImpl(null));
+    s.start(new ConfigurationContextImpl("",null));
     testEventHandler.waitForEventContextCount(2, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
     assertTrue(s.size() == 0);
@@ -106,7 +106,7 @@ public class StageManagerImplTest extends TestCase {
     assertTrue(s.size() == 8);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
-    s.start(new ConfigurationContextImpl(null));
+    s.start(new ConfigurationContextImpl("",null));
     multiThreadedTestEventHandler.waitForEventContextCount(8, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
     assertTrue(s.size() == 0);
@@ -133,7 +133,7 @@ public class StageManagerImplTest extends TestCase {
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
     try {
-      s.start(new ConfigurationContextImpl(null));
+      s.start(new ConfigurationContextImpl("",null));
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
@@ -166,7 +166,7 @@ public class StageManagerImplTest extends TestCase {
     assertTrue(s.size() == 9);
     assertTrue(multiThreadedTestEventHandler.getContexts().size() == 0);
 
-    s.start(new ConfigurationContextImpl(null));
+    s.start(new ConfigurationContextImpl("",null));
     multiThreadedTestEventHandler.waitForEventContextCount(9, 60, SECONDS);
     ((StageImpl)s).waitForIdle();
     assertTrue(s.size() == 0);

@@ -34,6 +34,8 @@ import java.util.Collections;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 public class BestEffortsMonitoringTest {
@@ -44,6 +46,7 @@ public class BestEffortsMonitoringTest {
 
   @Before
   public void setUp() throws Exception {
+    ServerEnv.setDefaultServer(mock(Server.class));
     this.source = new TestTimeSource(1);
     this.timer = new SingleThreadedTimer(this.source, null);
     this.monitoring = new BestEffortsMonitoring(this.timer);

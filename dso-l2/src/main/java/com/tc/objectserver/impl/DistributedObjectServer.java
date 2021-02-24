@@ -541,7 +541,7 @@ public class DistributedObjectServer {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
-    this.connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
+    this.connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
     this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionManager,
@@ -787,7 +787,7 @@ public class DistributedObjectServer {
         consoleLogger
     );
 
-    this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
+    this.context = this.serverBuilder.createServerConfigurationContext(ServerEnv.getServer().getIdentifier(), stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
                                                                        clientHandshakeManager,
                                                                        this.connectionIdFactory,
@@ -805,6 +805,7 @@ public class DistributedObjectServer {
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 // don't join the group if the configuration is not complete
+    startDiagnosticListener();
     if (!configuration.isPartialConfiguration()) {
       startGroupManagers();
       this.l2Coordinator.start();
@@ -812,7 +813,6 @@ public class DistributedObjectServer {
       this.l2Coordinator.getStateManager().moveToDiagnosticMode();
       TCLogging.getConsoleLogger().info("Started the server in diagnostic mode");
     }
-    startDiagnosticListener();
   }
 
   public void stop() throws Exception {

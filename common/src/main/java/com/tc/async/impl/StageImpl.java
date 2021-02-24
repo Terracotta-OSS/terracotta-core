@@ -190,7 +190,7 @@ public class StageImpl<EC> implements Stage<EC> {
       shutdown = false;
     }
     handler.initializeContext(context);
-    startThreads();
+    startThreads(context.getIdentifier());
     event.register();
   }
 
@@ -229,9 +229,9 @@ public class StageImpl<EC> implements Stage<EC> {
     }
   }
  
-  private synchronized void startThreads() {
+  private synchronized void startThreads(String contextId) {
     for (int i = 0; i < threads.length; i++) {
-      String threadName = "WorkerThread(" + name + ", " + i;
+      String threadName = contextId + " - WorkerThread(" + name + ", " + i;
       if (threads.length > 1) {
         threadName = threadName + ", " + this.stageQueue.getSource(i).getSourceName() + ")";
       } else {

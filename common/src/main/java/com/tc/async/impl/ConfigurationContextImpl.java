@@ -35,8 +35,10 @@ import com.tc.async.api.StageManager;
 public class ConfigurationContextImpl implements ConfigurationContext {
 
   private final StageManager stageManager;
+  private final String identifier;
 
-  public ConfigurationContextImpl(StageManager stageManager) {
+  public ConfigurationContextImpl(String identifier, StageManager stageManager) {
+    this.identifier = identifier;
     this.stageManager = stageManager;
   }
 
@@ -48,5 +50,10 @@ public class ConfigurationContextImpl implements ConfigurationContext {
   @Override
   public Logger getLogger(Class<?> clazz) {
     return LoggerFactory.getLogger(clazz);
+  }
+
+  @Override
+  public String getIdentifier() {
+    return identifier;
   }
 }

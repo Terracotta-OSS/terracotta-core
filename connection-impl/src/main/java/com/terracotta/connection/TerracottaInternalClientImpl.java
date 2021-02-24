@@ -18,6 +18,7 @@
  */
 package com.terracotta.connection;
 
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.ClientBuilder;
 import com.tc.object.ClientEntityManager;
 import com.tc.object.DistributedObjectClient;
@@ -26,6 +27,7 @@ import com.tc.net.protocol.transport.ClientConnectionErrorDetails;
 import com.tc.object.StandardClientBuilderFactory;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.terracotta.connection.api.DetailedConnectionException;
+import java.io.IOException;
 
 import java.net.InetSocketAddress;
 import java.util.Properties;
@@ -70,14 +72,15 @@ public class TerracottaInternalClientImpl implements TerracottaInternalClient {
     try {
       try {
         client = clientCreator.create(this::destroy);
-      } catch (Exception e){
+      } catch (ConfigurationSetupException | TimeoutException | InterruptedException to) {
+        throw new DetailedConnectionException(to, errorListener.getErrors());
+      } catch (RuntimeException e){
         throw new DetailedConnectionException(new Exception(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()), e), errorListener.getErrors());
       }
       if (client != null) {
         clientHandle = new ClientHandleImpl(client);
       } else {
-        TimeoutException e = new TimeoutException(DetailedConnectionException.getDetailedMessage(errorListener.getErrors()));
-        throw new DetailedConnectionException(e, errorListener.getErrors());
+        throw new DetailedConnectionException(new IOException("Connection refused"), errorListener.getErrors());
       }
     } finally {
       /*
