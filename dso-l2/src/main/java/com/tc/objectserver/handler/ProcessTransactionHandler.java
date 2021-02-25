@@ -889,11 +889,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
           EntityExistenceHelpers.recordDestroyEntity(persistor.getEntityPersistor(), entityManager, getNodeID(), getTransaction(), getOldestTransactionOnClient(), eid, e);
           break;
         case FETCH_ENTITY:
+          disconnectClientDueToFailure(getNodeID());
+          break;
         case RELEASE_ENTITY:
-          if (e.getCause() instanceof ReconnectRejectedException) {
-            disconnectClientDueToFailure(getNodeID());
-            return;
-          }
           break;
         default:
 

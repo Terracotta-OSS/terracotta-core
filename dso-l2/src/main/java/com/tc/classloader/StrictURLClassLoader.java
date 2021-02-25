@@ -20,24 +20,18 @@ package com.tc.classloader;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  */
 public class StrictURLClassLoader extends URLClassLoader {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(StrictURLClassLoader.class);
-
   private final CommonComponentChecker checker;
-  private final boolean strict;
   ThreadLocal<String> topname = new ThreadLocal<>();
 
-  public StrictURLClassLoader(URL[] urls, ClassLoader cl, CommonComponentChecker checker, boolean enforce) {
+  public StrictURLClassLoader(URL[] urls, ClassLoader cl, CommonComponentChecker checker) {
     super(urls, cl);
     this.checker = checker;
-    this.strict = enforce;
   }
 
   @Override
@@ -55,7 +49,7 @@ public class StrictURLClassLoader extends URLClassLoader {
       if (target != null) {
         boolean thisLoader = target.getClassLoader() == this;
         if (thisLoader) {
-          boolean common = strict && top == null ? checker.check(target) : true;
+          boolean common = top == null ? checker.check(target) : true;
           if (!common) {
             target = null;
           }
@@ -83,11 +77,7 @@ public class StrictURLClassLoader extends URLClassLoader {
 
   @Override
   protected Package definePackage(String name, String specTitle, String specVersion, String specVendor, String implTitle, String implVersion, String implVendor, URL sealBase) throws IllegalArgumentException {
-    if (strict) {
-      return null;
-    } else {
-      return super.definePackage(name, specTitle, specVersion, specVendor, implTitle, implVersion, implVendor, sealBase);
-    }
+    return null;
   }
 
 

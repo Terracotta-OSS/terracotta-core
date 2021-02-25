@@ -86,7 +86,7 @@ public class StageImpl<EC> implements Stage<EC> {
    */
   @SuppressWarnings("unchecked")
   public StageImpl(TCLoggerProvider loggerProvider, String name, Class<EC> type, EventHandler<EC> handler, int queueCount,
-                   ThreadGroup group, QueueFactory queueFactory, StageListener listener, int queueSize, boolean canBeDirect) {
+                   ThreadGroup group, QueueFactory queueFactory, StageListener listener, int queueSize, boolean canBeDirect, boolean stallLogging) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     if (queueCount > 1 && !MultiThreadedEventContext.class.isAssignableFrom(type)) {
@@ -106,6 +106,9 @@ public class StageImpl<EC> implements Stage<EC> {
       logger.warn("Stage pausing is enabled for stage " + name);
     }
     this.event = TripwireFactory.createStageMonitor(name, queueCount);
+    if (!stallLogging) {
+      lastWarnTime = Long.MAX_VALUE;
+    }
   }
   
   private EventCreator<EC> eventCreator(boolean direct) {
@@ -187,7 +190,7 @@ public class StageImpl<EC> implements Stage<EC> {
       shutdown = false;
     }
     handler.initializeContext(context);
-    startThreads();
+    startThreads(context.getIdentifier());
     event.register();
   }
 
@@ -226,9 +229,9 @@ public class StageImpl<EC> implements Stage<EC> {
     }
   }
  
-  private synchronized void startThreads() {
+  private synchronized void startThreads(String contextId) {
     for (int i = 0; i < threads.length; i++) {
-      String threadName = "WorkerThread(" + name + ", " + i;
+      String threadName = contextId + " - WorkerThread(" + name + ", " + i;
       if (threads.length > 1) {
         threadName = threadName + ", " + this.stageQueue.getSource(i).getSourceName() + ")";
       } else {

@@ -62,7 +62,7 @@ public class StrictURLClassLoaderTest {
     boolean resolve = false;
     URLClassLoader loader = (URLClassLoader)this.getClass().getClassLoader();
     URL[] urls = loader.getURLs();
-    StrictURLClassLoader instance = new StrictURLClassLoader(urls,null,new AnnotationBasedCommonComponentChecker(),true);
+    StrictURLClassLoader instance = new StrictURLClassLoader(urls,null,new AnnotationBasedCommonComponentChecker());
     try {
       instance.loadClass("org.terracotta.config.Config");
     } catch (ClassNotFoundException cla) {

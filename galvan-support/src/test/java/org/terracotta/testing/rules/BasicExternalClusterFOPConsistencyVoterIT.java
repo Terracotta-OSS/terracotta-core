@@ -127,9 +127,7 @@ public class BasicExternalClusterFOPConsistencyVoterIT {
       properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
       try (Connection connection = ConnectionFactory.connect(URI.create("diagnostic://" + hostPort), properties)) {
       } catch (ConnectionException exception) {
-        if (exception.getCause() instanceof TimeoutException) {
-          return hostPort;
-        }
+        return hostPort;
       }
     }
 

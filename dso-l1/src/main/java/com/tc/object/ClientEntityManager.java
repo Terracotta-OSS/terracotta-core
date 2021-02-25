@@ -52,4 +52,6 @@ public interface ClientEntityManager extends PrettyPrintable, RequestResponseHan
   boolean destroyEntity(EntityID entityID, long version) throws EntityException;
 
   byte[] reconfigureEntity(EntityID entityID, long version, byte[] config) throws EntityException;
+
+  boolean isValid();
 }

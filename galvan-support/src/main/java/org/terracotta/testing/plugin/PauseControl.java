@@ -19,7 +19,6 @@
 package org.terracotta.testing.plugin;
 
 import com.tc.classloader.BuiltinService;
-import com.tc.server.TCServerMain;
 import com.tc.spi.Pauseable;
 import com.tc.text.MapListPrettyPrint;
 import java.lang.management.ManagementFactory;
@@ -37,6 +36,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.server.ServerEnv;
 
 /**
  *
@@ -74,7 +74,7 @@ public class PauseControl implements ServiceProvider {
   }
   
   public static class PauseController extends StandardMBean implements PauseControlInterface {
-    private final Pauseable pause = TCServerMain.getServer();
+    private final Pauseable pause = (Pauseable)ServerEnv.getServer();
     private boolean networkPaused = false;
     public PauseController() throws NotCompliantMBeanException {
       super(PauseControlInterface.class, false);

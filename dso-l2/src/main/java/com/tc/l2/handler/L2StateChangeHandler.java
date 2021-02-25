@@ -24,6 +24,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.objectserver.core.api.ITopologyEventCollector;
 import com.tc.server.TCServerMain;
 import com.tc.util.State;
+import org.terracotta.server.ServerEnv;
 
 
 public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent> {
@@ -45,7 +46,7 @@ public class L2StateChangeHandler extends AbstractEventHandler<StateChangedEvent
     // notify the collector that the server's state first to mark the start of transition
     if (sce.movedToActive()) {
 //  if this server just became active
-      eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());      
+      eventCollector.serverDidEnterState(newState, ServerEnv.getServer().getActivateTime());
     } else {
       eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
     }

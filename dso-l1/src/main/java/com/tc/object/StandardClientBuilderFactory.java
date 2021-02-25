@@ -21,17 +21,20 @@ package com.tc.object;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.BufferManagerFactorySupplier;
 import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.ProductID;
 import com.terracotta.diagnostic.DiagnosticClientBuilder;
 
-import java.util.Arrays;
 import java.util.Properties;
+import org.terracotta.connection.ConnectionPropertyNames;
 
 public class StandardClientBuilderFactory implements ClientBuilderFactory {
 
+  private final String scheme;
   private final BufferManagerFactorySupplier supplier;
 
-  public StandardClientBuilderFactory() {
+  public StandardClientBuilderFactory(String scheme) {
     BufferManagerFactorySupplier base = ClientBuilderFactory.get(BufferManagerFactorySupplier.class);
+    this.scheme = scheme;
     if (base == null) {
       supplier = (p)->new ClearTextBufferManagerFactory();
     } else {
@@ -47,21 +50,18 @@ public class StandardClientBuilderFactory implements ClientBuilderFactory {
   
   @Override
   public ClientBuilder create(Properties connectionProperties) {
-    Object clientBuilderTypeValue = connectionProperties.get(CLIENT_BUILDER_TYPE);
-    if (clientBuilderTypeValue instanceof ClientBuilderType) {
-      ClientBuilderType connectionType = (ClientBuilderType)clientBuilderTypeValue;
-      if (connectionType == ClientBuilderType.TERRACOTTA) {
-        return new StandardClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
-      } else if (connectionType == ClientBuilderType.DIAGNOSTIC) {
-        return new DiagnosticClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
-      } else {
-        throw new IllegalArgumentException(connectionType + " is not a valid client builder type, valid client " +
-                                           "builder types " + Arrays.toString(ClientBuilderType.values()));
-      }
+    String type = connectionProperties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, scheme);
+    if (type.equalsIgnoreCase("diagnostic")) {
+      return new DiagnosticClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
+    } else if (type.equalsIgnoreCase("terracotta")) {
+      return new StandardClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
     } else {
-      throw new IllegalArgumentException("Received invalid value (" + clientBuilderTypeValue + ") for property "
-                                         + CLIENT_BUILDER_TYPE + ", valid client builder types " +
-                                         Arrays.toString(ClientBuilderType.values()));
+      for (ProductID pid : ProductID.values()) {
+        if (pid.name().equalsIgnoreCase(type)) {
+          return new StandardClientBuilder(connectionProperties, supplier.createBufferManagerFactory(connectionProperties));
+        }
+      }
     }
+    throw new IllegalArgumentException(type + " is not a valid connection type");
   }
 }

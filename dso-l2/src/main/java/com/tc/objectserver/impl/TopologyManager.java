@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.management.AbstractTerracottaMBean;
 
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -112,7 +111,7 @@ public class TopologyManager {
       this.topologyManager = topologyManager;
 
       try {
-        ManagementFactory.getPlatformMBeanServer().registerMBean(this, TOPOLOGY_MBEAN);
+        ServerEnv.getServer().getManagement().registerMBean("TopologyMBean", this);
       } catch (Exception e) {
         LOGGER.warn("Problem registering MBean with name " + TOPOLOGY_MBEAN.getCanonicalName(), e);
       }

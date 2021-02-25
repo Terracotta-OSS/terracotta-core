@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.io.EOFException;
 
 /**
  * The {@link TCConnectionManager} implementation.
@@ -182,7 +183,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public final synchronized TCConnection createConnection(TCProtocolAdaptor adaptor) {
+  public final synchronized TCConnection createConnection(TCProtocolAdaptor adaptor) throws IOException {
     checkShutdown();
 
     TCConnection rv = createConnectionImpl(adaptor, connEvents);
@@ -274,8 +275,8 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     return connEvents;
   }
 
-  private void checkShutdown() {
-    if (shutdown.isSet()) { throw new IllegalStateException("connection manager shutdown"); }
+  private void checkShutdown() throws IOException {
+    if (shutdown.isSet()) { throw new IOException("connection manager shutdown"); }
   }
 
   static class ConnectionEvents implements TCConnectionEventListener {

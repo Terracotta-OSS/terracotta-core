@@ -118,14 +118,14 @@ public class ElectionManagerImpl implements ElectionManager {
           // This is either not a response to this node initiating election or a duplicate vote. Either case notify this
           // nodes vote
           L2StateMessage response = L2StateMessage.createElectionStartedMessage(msg, myVote, currentState);
-          logger.info("Casted vote from " + msg + " My Response : " + response);
+          logger.info("Cast vote from " + msg + " My Response : " + response);
           try {
             groupManager.sendTo(msg.messageFrom(), response);
           } catch (GroupException e) {
             logger.error("Error sending Votes to : " + msg.messageFrom(), e);
           }
         } else {
-          logger.info("Casted vote from " + msg);
+          logger.info("Cast vote from " + msg);
         }
         return true;
       }

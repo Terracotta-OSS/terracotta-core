@@ -93,13 +93,13 @@ public class RequestProcessorTest {
     StageManager mgr = mock(StageManager.class);
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(new HashMap<>());
     int minProcs = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.MIN_ENTITY_PROCESSOR_THREADS);
-    when(mgr.createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean())).then(inv->{
+    when(mgr.createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean(), anyBoolean())).then(inv->{
       Assert.assertThat((Integer)inv.getArguments()[3], greaterThanOrEqualTo(minProcs));
       return mock(Stage.class);
     });
     RequestProcessor instance = new RequestProcessor(mgr, 1024, true);
     // one for sync stage and once for regular
-    verify(mgr, times(2)).createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean());
+    verify(mgr, times(2)).createStage(anyString(), any(), any(), anyInt(), anyInt(), anyBoolean(), anyBoolean());
   }  
 
   /**

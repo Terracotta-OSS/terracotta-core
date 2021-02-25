@@ -25,6 +25,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 public class SingleThreadedTimerTest {
@@ -36,6 +39,7 @@ public class SingleThreadedTimerTest {
 
   @Before
   public void setUp() throws Exception {
+    ServerEnv.setDefaultServer(mock(Server.class));
     this.source = new TestTimeSource(1);
     this.timer = new SingleThreadedTimer(this.source, null);
     this.timer.start();

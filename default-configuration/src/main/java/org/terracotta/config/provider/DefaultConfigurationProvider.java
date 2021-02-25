@@ -18,8 +18,6 @@
  */
 package org.terracotta.config.provider;
 
-import com.tc.logging.TCLogging;
-import com.tc.server.ServiceClassLoader;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -45,8 +43,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
-import com.tc.services.MappedStateCollector;
 import com.tc.text.PrettyPrintable;
+import com.tc.server.Directories;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
 import java.net.InetAddress;
@@ -55,11 +53,11 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import org.terracotta.config.Consistency;
-import org.terracotta.configuration.Directories;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.config.Property;
 import org.terracotta.config.Server;
@@ -68,6 +66,8 @@ import org.terracotta.config.TcProperties;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.SERVER_NAME;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.server.ServerEnv;
 
 public class DefaultConfigurationProvider implements ConfigurationProvider {
 
@@ -119,16 +119,16 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     try {
       Path configurationPath = getConfiguration(configurationParams.toArray(new String[0])).toAbsolutePath();
 
-      TCLogging.getConsoleLogger().info("Attempting to load configuration from the file at '{}'...", configurationPath);
+      ServerEnv.getServer().console("Attempting to load configuration from the file at '{}'...", configurationPath);
 
       Thread.currentThread().setContextClassLoader(classLoader);
 //  using the service class loader because plugin implementations need to be isolated
 //  when grabbing ServiceConfigParsers in xml parsing code through services.
-      ServiceClassLoader serviceClassLoader = new ServiceClassLoader(classLoader, ExtendedConfigParser.class, ServiceConfigParser.class);
+      ClassLoader serviceClassLoader = ServerEnv.getServer().getServiceClassLoader(classLoader, ExtendedConfigParser.class, ServiceConfigParser.class);
 
       this.configuration = getTcConfiguration(configurationPath, serviceClassLoader);
 
-      TCLogging.getConsoleLogger().info("Successfully loaded configuration from the file at '{}'", configurationPath);
+      ServerEnv.getServer().console("Successfully loaded configuration from the file at '{}'", configurationPath);
 
       LOGGER.info("The configuration specified by the configuration file at '{}': \n\n{}",
                   configurationPath,
@@ -325,9 +325,23 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
     
     @Override
     public Map<String, ?> getStateMap() {
-      MappedStateCollector mappedStateCollector = new MappedStateCollector("collector");
-      this.configuration.addStateTo(mappedStateCollector);
-      return mappedStateCollector.getMap();
+      Map<String, Object> mappedStateCollector = new LinkedHashMap<>();
+      this.configuration.addStateTo(createStateDumpCollector("", mappedStateCollector));
+      return mappedStateCollector;
+    }
+
+    private StateDumpCollector createStateDumpCollector(String name, Map<String, Object> store) {
+      return new StateDumpCollector() {
+        @Override
+        public StateDumpCollector subStateDumpCollector(String sub) {
+          return createStateDumpCollector(name + sub + ".", store);
+        }
+
+        @Override
+        public void addState(String key, Object value) {
+          store.put(name + key, value);
+        }
+      };
     }
     
     private Server getDefaultServer(Servers servers) throws ConfigurationException {

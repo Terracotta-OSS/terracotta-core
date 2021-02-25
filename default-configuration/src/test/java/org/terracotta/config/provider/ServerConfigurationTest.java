@@ -22,8 +22,6 @@ import org.junit.Test;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 
-import com.tc.net.TCSocketAddress;
-
 import java.io.File;
 
 import static org.hamcrest.Matchers.is;
@@ -33,6 +31,7 @@ public class ServerConfigurationTest {
 
   private static final String SERVER_NAME = "server-1";
   private static final String LOCALHOST = "localhost";
+  private static final String WILDCARD_IP = "0.0.0.0";
   private static final String LOGS = "logs";
   private static final int    TSA_PORT = 1000;
   private static final int    GROUP_PORT = 1100;
@@ -63,7 +62,7 @@ public class ServerConfigurationTest {
   }
 
   private static Server createServer(boolean wildcards) {
-    String bindAddress = wildcards ? TCSocketAddress.WILDCARD_IP : LOCALHOST;
+    String bindAddress = wildcards ? WILDCARD_IP : LOCALHOST;
 
     Server server = new Server();
     server.setName(SERVER_NAME);

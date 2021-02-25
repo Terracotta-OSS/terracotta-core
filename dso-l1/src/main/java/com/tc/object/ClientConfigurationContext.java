@@ -29,7 +29,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
 
   public static final int                MAX_PENDING_REQUESTS                        = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.CLIENT_MAX_PENDING_REQUESTS, 5000);
   
-  public ClientConfigurationContext(StageManager stageManager) {
-    super(stageManager);
+  public ClientConfigurationContext(String identifier, StageManager stageManager) {
+    super(identifier, stageManager);
   }
 }

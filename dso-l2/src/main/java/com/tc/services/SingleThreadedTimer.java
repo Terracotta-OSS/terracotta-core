@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.PriorityQueue;
 
 import com.tc.util.Assert;
+import org.terracotta.server.ServerEnv;
 
 
 /**
@@ -63,7 +64,7 @@ public class SingleThreadedTimer implements ISimpleTimer {
         }
         nextRunnable = SingleThreadedTimer.this.getNextRunnable();
       }
-    }, "SingleThreadedTimer");
+    }, ServerEnv.getServer().getIdentifier() + " - SingleThreadedTimer");
   }
 
   @Override

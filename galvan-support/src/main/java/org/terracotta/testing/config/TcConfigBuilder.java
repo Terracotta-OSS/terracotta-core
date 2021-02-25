@@ -18,11 +18,13 @@
  */
 package org.terracotta.testing.config;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 public class TcConfigBuilder {
+  private final Path workingDir;
   private final List<String> serverNames;
   private final List<Integer> serverPorts;
   private final List<Integer> serverGroupPorts;
@@ -32,8 +34,9 @@ public class TcConfigBuilder {
   private final int voterCount;
   private final Properties tcProperties = new Properties();
 
-  public TcConfigBuilder(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
+  public TcConfigBuilder(Path workingDir, List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                          Properties tcProperties, String namespaceFragment, String serviceFragment, int clientReconnectWindow, int voterCount) {
+    this.workingDir = workingDir;
     this.serverNames = serverNames;
     this.serverPorts = serverPorts;
     this.serverGroupPorts = serverGroupPorts;
@@ -67,7 +70,7 @@ public class TcConfigBuilder {
       Integer groupPort = serverGroupPorts.get(i);
       String oneServer =
           "    <server host=\"localhost\" name=\"" + serverName + "\">\n"
-              + "      <logs>" + serverName + "/logs</logs>\n"
+              + "      <logs>" + workingDir.resolve(serverName).resolve("logs").toAbsolutePath() + "</logs>\n"
               + "      <tsa-port>" + port + "</tsa-port>\n"
               + "      <tsa-group-port>" + groupPort + "</tsa-group-port>\n"
               + "    </server>\n";

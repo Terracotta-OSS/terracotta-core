@@ -45,7 +45,6 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.server.TCServer;
 import com.tc.util.State;
 import com.tc.util.concurrent.QueueFactory;
 
@@ -68,7 +67,6 @@ import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
 import static com.tc.l2.state.StateManager.START_STATE;
 import com.tc.net.ServerID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
-import com.tc.server.TCServerMain;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -77,6 +75,7 @@ import org.terracotta.utilities.test.net.PortManager;
 
 import static java.util.stream.Collectors.toSet;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -86,6 +85,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 public class StateManagerImplTest {
@@ -107,6 +108,7 @@ public class StateManagerImplTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setUp() throws Exception {
+    ServerEnv.setDefaultServer(mock(Server.class));
     Logger tcLogger = mock(Logger.class);
     WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
@@ -116,8 +118,8 @@ public class StateManagerImplTest {
     when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
       return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
     });
-    TCServerMain.server = mock(TCServer.class);
-    when(TCServerMain.server.getActivateTime()).thenReturn(System.currentTimeMillis());
+    Server server = mock(Server.class);
+    when(server.getActivateTime()).thenReturn(System.currentTimeMillis());
 
     PortManager portManager = PortManager.getInstance();
     ports = portManager.reservePorts(NUM_OF_SERVERS);
@@ -145,7 +147,7 @@ public class StateManagerImplTest {
 
       L2Coordinator l2CoordinatorMock = mock(L2Coordinator.class);
       when(l2CoordinatorMock.getStateManager()).thenReturn(stateManagers[i]);
-      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl(stageManagers[i], null, null, null, l2CoordinatorMock);
+      ServerConfigurationContext serverConfigurationContextMock = new ServerConfigurationContextImpl("", stageManagers[i], null, null, null, l2CoordinatorMock);
       stageManagers[i].startAll(serverConfigurationContextMock, new ArrayList<>());
     }
   }
@@ -303,24 +305,11 @@ public class StateManagerImplTest {
       }
     });
 
+    when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt(), anyBoolean(), anyBoolean()))
+        .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
     when(stageManager.createStage(anyString(), any(Class.class), any(EventHandler.class), anyInt(), anyInt()))
-        .then((invoke)->{
-          Stage election = mock(Stage.class);
-          Sink electionSink = mock(Sink.class);
-          doAnswer((invoke2)-> {
-              new Thread(() -> {
-                try {
-                  ((EventHandler)invoke.getArguments()[2]).handleEvent(invoke2.getArguments()[0]);
-                } catch (Throwable t) {
-                  t.printStackTrace();
-                }
-              }).start();
-            return null;
-          }).when(electionSink).addToSink(any());
-          when(election.getSink()).thenReturn(electionSink);
-          return election;
-        });
-
+        .then((invoke)->mockStage((EventHandler)invoke.getArguments()[2]));
+    
     ConsistencyManager mgr = mock(ConsistencyManager.class);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
@@ -334,6 +323,23 @@ public class StateManagerImplTest {
     state.startElectionIfNecessary(mock(NodeID.class));
     state.waitForElectionsToFinish();
     Assert.assertEquals(node, state.getActiveNodeID());
+  }
+
+  private Stage mockStage(EventHandler handler) {
+    Stage election = mock(Stage.class);
+    Sink electionSink = mock(Sink.class);
+    doAnswer((invoke)-> {
+        new Thread(() -> {
+          try {
+            handler.handleEvent(invoke.getArguments()[0]);
+          } catch (Throwable t) {
+            t.printStackTrace();
+          }
+        }).start();
+      return null;
+    }).when(electionSink).addToSink(any());
+    when(election.getSink()).thenReturn(electionSink);
+    return election;
   }
 
   @Test

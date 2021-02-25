@@ -38,6 +38,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
+import com.tc.util.ProductInfo;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -77,7 +78,7 @@ public class ServerClientHandshakeManagerTest {
     when(stageManager.getStage(any(), any())).thenReturn(voltronStage);
     ConsistencyManager consistency = mock(ConsistencyManager.class);
     when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), any(ConsistencyManager.Transition.class))).thenReturn(Boolean.TRUE);
-    this.manager = new ServerClientHandshakeManager(logger, consistency, this.channelManager, timer, reconnectTimeoutSupplier, voltronSink, consoleLogger);
+    this.manager = new ServerClientHandshakeManager(logger, consistency, this.channelManager, timer, reconnectTimeoutSupplier, voltronSink, ProductInfo.getInstance(), consoleLogger);
   }
 
   @Test

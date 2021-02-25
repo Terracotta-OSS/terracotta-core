@@ -18,9 +18,9 @@
  */
 package com.tc.util;
 
-import com.tc.util.io.IOUtils;
-
-import com.tc.text.StringUtils;
+import com.tc.productinfo.BuildInfo;
+import com.tc.productinfo.ExtensionInfo;
+import com.tc.productinfo.PatchInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,55 +30,47 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.CodeSource;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
-import java.util.MissingResourceException;
-import java.util.Properties;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ServiceLoader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import com.tc.productinfo.Description;
+import java.util.ArrayList;
+import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  public static final String                ENTERPRISE                 = "Enterprise";
-  public static final String                OPENSOURCE                 = "Opensource";
-
-  private static final ResourceBundleHelper bundleHelper               = new ResourceBundleHelper(ProductInfo.class);
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(ProductInfo.class);
+  
   private static final String               DATE_FORMAT                = "yyyyMMdd-HHmmss";
   private static final Pattern              KITIDPATTERN               = Pattern.compile("(\\d+\\.\\d+.\\d+).*");
   private static final String               BUILD_DATA_RESOURCE_NAME   = "/build-data.txt";
   private static final String               PATCH_DATA_RESOURCE_NAME   = "/patch-data.txt";
 
-  private static final String               BUILD_DATA_ROOT_KEY        = "terracotta.build.";
-  private static final String               BUILD_DATA_VERSION_KEY     = "version";
-  private static final String               BUILD_DATA_TIMESTAMP_KEY   = "timestamp";
-  private static final String               BUILD_DATA_REVISION_KEY    = "revision";
-  private static final String               BUILD_DATA_BRANCH_KEY      = "branch";
-  private static final String               PATCH_DATA_ROOT_KEY        = "terracotta.patch.";
-  private static final String               PATCH_DATA_LEVEL_KEY       = "level";
   public static final String                UNKNOWN_VALUE              = "[unknown]";
-  public static final String                DEFAULT_LICENSE            = "Unlimited development";
 
   private static ProductInfo                INSTANCE                   = null;
 
-  private final String                      moniker;
-  private final String                      timestamp;
-  private final String                      branch;
-  private final String                      edition;
-  private final String                      revision;
-  private final String                      kitID;
+  private final BuildInfo                      buildInfo;
+  private final List<PatchInfo>                patchInfo = new ArrayList<>();
+  private final List<ExtensionInfo>            extensionInfo = new ArrayList<>();
+  private final String                         kitID;
+  private String                         buildID;
 
-  private final String                      patchLevel;
-  private final String                      patchTimestamp;
-  private final String                      patchRevision;
-  private final String                      patchBranch;
-
-  private final String                      buildVersion;
-  private String                            buildID;
-  private String                            copyright;
-  private final String                      license                    = DEFAULT_LICENSE;
+  ProductInfo(InputStream buildData, InputStream patchData) throws IOException {
+    this(buildData, patchData, null, null, null);
+  }
 
   /**
    * Construct a ProductInfo by reading properties from streams (most commonly by loading properties files as resources
@@ -91,62 +83,68 @@ public final class ProductInfo {
    * @throws IOException If there is an error reading the build or patch data streams
    * @throws ParseException If there is an error reading the timestamp format in build or patch data streams
    */
-  ProductInfo(InputStream buildData, InputStream patchData) throws IOException {
+  ProductInfo(InputStream buildData, InputStream patchData, BuildInfo build, List<PatchInfo> patches, List<ExtensionInfo> extensions) throws IOException {
     Assert.assertNotNull("buildData", buildData);
 
-    Properties properties = new Properties();
-    moniker = bundleHelper.getString("moniker");
-    properties.load(buildData);
-    if (patchData != null) properties.load(patchData);
+    BuildInfo baseBuild = new BaseBuildInfo(buildData);
+    PatchInfo basePatch = new BasePatchInfo(patchData);
 
-    // Get all release build properties
-    this.buildVersion = getBuildProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
-    this.edition = detectEdition();
-    if (!isOpenSource() && !isEnterprise() && !isDevMode()) { throw new AssertionError("Can't recognize kit edition: "
-                                                                                       + edition); }
+    if (build == null) {
+      buildInfo = baseBuild;
+    } else {
+      buildInfo = build;
+    }
 
-    this.timestamp = getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
-    this.branch = getBuildProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
-    this.revision = getBuildProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
+    patchInfo.add(basePatch);
+
+    if (patches != null) {
+      patchInfo.addAll(patches);
+    }
 
     // Get all patch build properties
-    this.patchLevel = getPatchProperty(properties, PATCH_DATA_LEVEL_KEY, UNKNOWN_VALUE);
-    this.patchTimestamp = getPatchProperty(properties, BUILD_DATA_TIMESTAMP_KEY, UNKNOWN_VALUE);
-    this.patchRevision = getPatchProperty(properties, BUILD_DATA_REVISION_KEY, UNKNOWN_VALUE);
-    this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
+    Collections.sort(patchInfo, (a, b)->b.count() - a.count());
 
-    Matcher matcher = KITIDPATTERN.matcher(buildVersion);
+    if (extensions != null) {
+      this.extensionInfo.addAll(extensions);
+    }
+
+    Matcher matcher = KITIDPATTERN.matcher(buildInfo.getVersion());
     kitID = matcher.matches() ? matcher.group(1) : UNKNOWN_VALUE;
   }
 
-  private static final String detectEdition() {
-    String edition = OPENSOURCE;
-    try {
-      Class.forName("com.tc.util.ProductInfoEnterpriseBundle");
-      edition = ENTERPRISE;
-    } catch (ClassNotFoundException e) {
-      // ignore
-    }
-    return edition;
-  }
-
-  static Date parseTimestamp(String timestampString) throws java.text.ParseException {
+  static Date parseTimestamp(String timestampString) throws ParseException {
     return (timestampString == null) ? null : new SimpleDateFormat(DATE_FORMAT).parse(timestampString);
   }
 
-  public static synchronized ProductInfo getInstance() {
+  public static ProductInfo getInstance() {
+    return getInstance(ProductInfo.class.getClassLoader());
+  }
+
+  public static synchronized ProductInfo getInstance(ClassLoader loader) {
     if (INSTANCE == null) {
       try {
-        InputStream buildData = null;        
-        InputStream patchData = null;
-        try {
-          buildData = getData(BUILD_DATA_RESOURCE_NAME);
-          patchData = getData(PATCH_DATA_RESOURCE_NAME);        
-          INSTANCE = new ProductInfo(buildData, patchData);
-        } finally {
-          IOUtils.closeQuietly(buildData);
-          IOUtils.closeQuietly(patchData);
+        ServiceLoader<Description> additional = ServiceLoader.load(Description.class, loader);
+        Iterator<Description> steps = additional.iterator();
+        BuildInfo build = null;
+        List<PatchInfo> patches = new LinkedList<>();
+        List<ExtensionInfo> info = new LinkedList<>();
+        while (steps.hasNext()) {
+          Description next = steps.next();
+          if (next instanceof BuildInfo) {
+            if (build != null) {
+              LOGGER.error("corrupt installation. multiple builds detected:\n{}\n\n{}", build, next);
+              throw new RuntimeException("corrupt installation. multiple builds detected");
+            }
+            build = (BuildInfo)next;
+          }
+          if (next instanceof PatchInfo) {
+            patches.add((PatchInfo)next);
+          }
+          if (next instanceof ExtensionInfo) {
+            info.add((ExtensionInfo)next);
+          }
         }
+        INSTANCE = new ProductInfo(getBuildData(), getPatchData(), build, patches, info);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -185,7 +183,7 @@ public final class ProductInfo {
 
     return ProductInfo.class.getResourceAsStream(name);
   }
-
+  
   static InputStream getBuildData() {
     return getData(BUILD_DATA_RESOURCE_NAME);
   }
@@ -194,80 +192,32 @@ public final class ProductInfo {
     return getData(PATCH_DATA_RESOURCE_NAME);
   }
 
-  private String getBuildProperty(Properties properties, String name, String defaultValue) {
-    return getProperty(properties, BUILD_DATA_ROOT_KEY, name, defaultValue);
-  }
-
-  private String getPatchProperty(Properties properties, String name, String defaultValue) {
-    return getProperty(properties, PATCH_DATA_ROOT_KEY, name, defaultValue);
-  }
-
-  private String getProperty(Properties properties, String root, String name, String defaultValue) {
-    String out = properties.getProperty(root + name);
-    if (StringUtils.isBlank(out)) out = defaultValue;
-    return out;
-  }
-
   public static void printRawData() {
-    try {
-      InputStream buildData = null;
-      try {
-        buildData = getBuildData();
-        if (buildData != null) IOUtils.copy(buildData, System.out);
-      } finally {
-        IOUtils.closeQuietly(buildData);
-      }
 
-      InputStream patchData = null;
-      try {
-        patchData = getPatchData();
-        if (patchData != null) IOUtils.copy(patchData, System.out);
-      } finally {
-        IOUtils.closeQuietly(patchData);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e.getMessage());
-    }
   }
 
-  public boolean isDevMode() {
-    return this.buildVersion.endsWith(UNKNOWN_VALUE);
+  public Collection<String> getExtensions() {
+    return this.extensionInfo.stream().map(e->e.getExtensionInfo()).collect(Collectors.toList());
   }
 
   public String moniker() {
-    return moniker;
-  }
-
-  public String edition() {
-    return edition;
+    return buildInfo.getMonkier();
   }
 
   public String version() {
-    return buildVersion;
+    return buildInfo.getVersion();
   }
 
   public String versionMessage() {
-    try {
-      return bundleHelper.getString("version.message");
-    } catch (MissingResourceException e) {
-      return "";
-    }
+    return buildInfo.getVersionMessage();
   }
 
-  /**
-   * Remains for backward compatible reason. It returns the maven artifact version we use for TC artifacts
-   * http://jira.terracotta.org/jira/browse/DEV-3130
-   */
   public String mavenArtifactsVersion() {
-    return buildVersion;
+    return buildInfo.getVersion();
   }
 
-  /**
-   * Version used during kit build for marketing purpose: 3.1.0-FC, 3.1.0-stable1, 3.1.0-nightly It should not be used
-   * to compare version between TC products. Use version() call for that purpose
-   */
   public String buildVersion() {
-    return buildVersion;
+    return buildInfo.getVersion();
   }
 
   public String kitID() {
@@ -275,58 +225,52 @@ public final class ProductInfo {
   }
 
   public String buildTimestamp() {
-    return timestamp;
+    return buildInfo.getTimestamp();
   }
 
   public String buildTimestampAsString() {
-    return timestamp;
+    return buildInfo.getTimestamp();
   }
 
   public String buildBranch() {
-    return branch;
+    return buildInfo.getBranch();
   }
 
   public String copyright() {
-    if (copyright == null) {
-      copyright = bundleHelper.getString("copyright");
-    }
-    return copyright;
-  }
-
-  public String license() {
-    return license;
+    return buildInfo.getCopyright();
   }
 
   public String buildRevision() {
-    return revision;
+    return buildInfo.getRevision();
   }
 
   public boolean isPatched() {
-    return !UNKNOWN_VALUE.equals(patchLevel);
+    PatchInfo info = patchInfo.get(0);
+    if (info instanceof BasePatchInfo) {
+      return ((BasePatchInfo)info).isPatched();
+    } else {
+      return true;
+    }
   }
 
   public String patchLevel() {
-    return patchLevel;
+    return patchInfo.get(0).getLevel();
   }
 
   public String patchTimestamp() {
-    return patchTimestamp;
-  }
-
-  public String patchTimestampAsString() {
-    return patchTimestamp;
+    return patchInfo.get(0).getTimestamp();
   }
 
   public String patchRevision() {
-    return patchRevision;
+    return patchInfo.get(0).getRevision();
   }
 
   public String patchBranch() {
-    return patchBranch;
+    return patchInfo.get(0).getBranch();
   }
 
   public String toShortString() {
-    return moniker + " " + (isOpenSource() ? "" : (edition + " ")) + buildVersion;
+    return buildInfo.getMonkier() + " " + buildInfo.getVersion();
   }
 
   public String toLongString() {
@@ -335,7 +279,7 @@ public final class ProductInfo {
 
   public String buildID() {
     if (buildID == null) {
-      buildID = buildTimestampAsString() + " (Revision " + revision + " from " + branch + ")";
+      buildID = buildInfo.getTimestamp() + " (Revision " + buildInfo.getRevision() + " from " + buildInfo.getBranch() + ")";
     }
     return buildID;
   }
@@ -345,20 +289,12 @@ public final class ProductInfo {
   }
 
   public String toShortPatchString() {
-    return "Patch Level " + patchLevel;
+    return "Patch Level " + patchInfo.get(0).getLevel();
   }
 
   public String patchBuildID() {
-    return patchTimestampAsString() + " (Revision " + patchRevision + " from "
-           + patchBranch + ")";
-  }
-
-  public boolean isOpenSource() {
-    return OPENSOURCE.equalsIgnoreCase(edition);
-  }
-
-  public boolean isEnterprise() {
-    return ENTERPRISE.equalsIgnoreCase(edition);
+    return patchTimestamp() + " (Revision " + patchInfo.get(0).getRevision() + " from "
+           + patchInfo.get(0).getBranch()+ ")";
   }
 
   @Override

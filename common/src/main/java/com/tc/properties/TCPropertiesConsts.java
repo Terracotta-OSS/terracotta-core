@@ -29,7 +29,6 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
 
   static final String[]      OLD_PROPERTIES                                                 = {
-    "l2.lockmanager.greedy.locks.enabled",
   };
 
   /*********************************************************************************************************************
@@ -97,7 +96,7 @@ public interface TCPropertiesConsts {
    *                                 directory while starting up
    * </code>
    ********************************************************************************************************************/
-  public static final String L2_STARTUPLOCK_RETRIES_ENABLED                                 = "l2.startuplock.retries.enabled";
+  public static final String PLUGIN_CLASSLOADER_COMPATIBILITY                               = "server.classloader.compatibility";
   public static final String ENTITY_DEFERMENT_QUEUE_SIZE                                    = "server.entity.deferment.queue.size";
   
   /*********************************************************************************************************************

@@ -209,11 +209,14 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public void shutdown() {
     if (shutdown.attemptSet()) {
       connectionHealthChecker.stop();
+      if (!serverID.isNull()) {
+        ConnectionHealthCheckerImpl.kill();
+      }
     } else {
       logger.warn("shutdown already started");
     }
   }
-
+  
   @Override
   public NetworkListener[] getAllListeners() {
     synchronized (listeners) {

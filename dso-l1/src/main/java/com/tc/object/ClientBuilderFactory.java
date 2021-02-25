@@ -28,8 +28,7 @@ public interface ClientBuilderFactory {
 
     T finalFactory = null;
 
-    for (T factory : ManagedServiceLoader.loadServices(type,
-                                                           ClientBuilderFactory.class.getClassLoader())) {
+    for (T factory : ManagedServiceLoader.loadServices(type, ClientBuilderFactory.class.getClassLoader())) {
       if (finalFactory == null) {
         finalFactory = factory;
       } else {
@@ -38,23 +37,6 @@ public interface ClientBuilderFactory {
     }
     
     return finalFactory;
-  }
-
-
-  String CLIENT_BUILDER_TYPE = "client.builder.type";
-
-  enum ClientBuilderType {
-    TERRACOTTA, DIAGNOSTIC;
-
-
-    public static ClientBuilderType of(String name) {
-      for (ClientBuilderType type : values()) {
-        if (type.name().equalsIgnoreCase(name)) {
-          return type;
-        }
-      }
-      throw new IllegalArgumentException("Couldn't find enum with name " + name);
-    }
   }
 
   ClientBuilder create(Properties connectionProperties);

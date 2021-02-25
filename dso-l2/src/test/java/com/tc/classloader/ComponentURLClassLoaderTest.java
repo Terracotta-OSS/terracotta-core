@@ -73,7 +73,7 @@ public class ComponentURLClassLoaderTest {
     when(checker.check(any(Class.class))).then(a->{
       return ((Class)a.getArgument(0)).getName().endsWith("CommonComponentClass");
     });
-    StrictURLClassLoader strict = new StrictURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, null, checker, true);
+    StrictURLClassLoader strict = new StrictURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, null, checker);
     ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, strict, checker);
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
     assertEquals(commonClass.getClassLoader(), strict);
@@ -87,7 +87,7 @@ public class ComponentURLClassLoaderTest {
     when(checker.check(any(Class.class))).then(a->{
       return ((Class)a.getArgument(0)).getName().endsWith("CommonComponentClass");
     });
-    StrictURLClassLoader strict = new StrictURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, null, checker, true);
+    StrictURLClassLoader strict = new StrictURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, null, checker);
     ClassLoader loader = new ComponentURLClassLoader(new URL[] {new File(System.getProperty("testClassesDir")).toURI().toURL()}, strict, checker);
     Class<?> commonClass = loader.loadClass("com.tc.classloader.CommonComponentClass");
     assertTrue(commonClass == loader.loadClass("com.tc.classloader.CommonComponentClass"));

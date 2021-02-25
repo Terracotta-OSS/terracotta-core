@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,12 +49,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
-
+import java.util.stream.IntStream;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
 import org.terracotta.testing.support.PortTool;
@@ -93,15 +93,13 @@ class BasicExternalCluster extends Cluster {
   BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
                        Properties systemProperties, String logConfigExt, int serverHeapSize, Supplier<StartupCommandBuilder> startupBuilder) {
+    boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
       }
-    } else {
-      boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
-      if (!didCreateDirectories) {
-        throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
-      }
+    } else if (!didCreateDirectories) {
+      throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
     }
 
     this.clusterDirectory = clusterDirectory;
@@ -138,17 +136,43 @@ class BasicExternalCluster extends Cluster {
     return super.apply(base, description);
   }
 
-  public void manualStart(String displayName) throws Throwable {
+  public CompletionStage<Void> manualStart(String displayName) {
     this.displayName = displayName;
-    internalStart();
+    CompletableFuture<Void> f = new CompletableFuture<>();
+    try {
+      internalStart(f);
+    } catch (Throwable t) {
+      f.completeExceptionally(t);
+    }
+    return f;
   }
 
   @Override
   protected void before() throws Throwable {
-    internalStart();
+    internalStart(new CompletableFuture<>());
   }
 
-  private void internalStart() throws Throwable {
+  @Override
+  public TestManager getTestManager() {
+    return new TestManager() {
+      @Override
+      public void testFinished() {
+        stateManager.setTestDidPassIfNotFailed();
+      }
+
+      @Override
+      public void testDidFail(GalvanFailureException failure) {
+        stateManager.testDidFail(failure);
+      }
+
+      @Override
+      public boolean isComplete() throws GalvanFailureException {
+        return stateManager.checkDidPass();
+      }
+    };
+  }
+
+  private void internalStart(CompletableFuture<Void> checker) throws Throwable {
     VerboseLogger harnessLogger = new VerboseLogger(System.out, null);
     VerboseLogger fileHelpersLogger = new VerboseLogger(null, null);
     VerboseLogger clientLogger = null;
@@ -183,7 +207,7 @@ class BasicExternalCluster extends Cluster {
 
     List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
     List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
-    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testserver" + i).collect(toList());
+    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testServer" + i).collect(toList());
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
@@ -213,7 +237,7 @@ class BasicExternalCluster extends Cluster {
           .serverWorkingDir(serverWorkingDir)
           .kitDir(kitLocationRelative)
           .logConfigExtension(logConfigExt)
-          .consistentStartup(consistentStart);
+          .consistentStartup(consistentStart);      
 
       stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
     }
@@ -235,6 +259,8 @@ class BasicExternalCluster extends Cluster {
           stateManager.waitForFinish();
           didPass = true;
         } catch (GalvanFailureException e) {
+          e.printStackTrace();
+          checker.completeExceptionally(e);
           didPass = false;
         } finally {
           // Whether we passed or failed, bring everything down.
@@ -276,7 +302,7 @@ class BasicExternalCluster extends Cluster {
 
   private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                               Path stripeInstallationDir) {
-    TcConfigBuilder configBuilder = new TcConfigBuilder(serverNames, serverPorts, serverGroupPorts, tcProperties,
+    TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, serverNames, serverPorts, serverGroupPorts, tcProperties,
         namespaceFragment, serviceFragment, clientReconnectWindow, voterCount);
     String tcConfig = configBuilder.build();
     try {
@@ -416,15 +442,8 @@ class BasicExternalCluster extends Cluster {
     return this.isSafe;
   }
 
-  public boolean checkForFailure() throws GalvanFailureException {
-    return stateManager.checkDidPass();
-  }
-
-  public void waitForFinish() throws GalvanFailureException {
-    stateManager.waitForFinish();
-  }
-
-  public void failTestOnServerCrash(boolean value) throws GalvanFailureException {
-    interlock.ignoreServerCrashes(value);
+  @Override
+  public void expectCrashes(boolean yes) {
+    interlock.ignoreServerCrashes(yes);
   }
 }

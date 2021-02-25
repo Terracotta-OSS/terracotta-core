@@ -42,12 +42,17 @@ import com.tc.object.session.SessionID;
 import java.util.function.Consumer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.Mockito;
 
 
 public class ActiveToPassiveReplicationTest {
   
   ServerID passive;
   private ActiveToPassiveReplication replication;
+  private ReplicationSender replicate;
+  private ConsistencyManager consistency;
+  private GroupManager group;
   
   
   public ActiveToPassiveReplicationTest() {
@@ -64,15 +69,15 @@ public class ActiveToPassiveReplicationTest {
   @Before
   public void setUp() {
     passive = mock(ServerID.class);
-    ReplicationSender replicate = mock(ReplicationSender.class);
+    replicate = mock(ReplicationSender.class);
     when(replicate.addPassive(any(ServerID.class), any(SessionID.class), anyInt(), any(SyncReplicationActivity.class))).thenReturn(Boolean.TRUE);
-    ConsistencyManager cmgr = mock(ConsistencyManager.class);
-    when(cmgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+    consistency = mock(ConsistencyManager.class);
+    when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     ProcessTransactionHandler pth = mock(ProcessTransactionHandler.class);
     when(pth.snapshotEntityList(any(Consumer.class))).thenReturn(Collections.emptyList());
-    GroupManager grp = mock(GroupManager.class);
-    when(grp.isNodeConnected(any(NodeID.class))).thenReturn(Boolean.TRUE);
-    replication = new ActiveToPassiveReplication(cmgr, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), grp);
+    group = mock(GroupManager.class);
+    when(group.isNodeConnected(any(NodeID.class))).thenReturn(Boolean.TRUE);
+    replication = new ActiveToPassiveReplication(consistency, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), group);
   }
   
   @Test
@@ -104,14 +109,27 @@ public class ActiveToPassiveReplicationTest {
     replication.finishPassiveSync(10000);
     Assert.assertTrue(replication.getWaiters().isEmpty());
   }
+
+
+  @Test
+  public void testNodeStuckRemoveBeforeAdd() throws Exception {
+    replication.enterActiveState(Collections.emptySet());
+    SyncReplicationActivity activity = mock(SyncReplicationActivity.class);
+    when(activity.getActivityID()).thenReturn(SyncReplicationActivity.ActivityID.getNextID());
+    when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), eq(Transition.REMOVE_PASSIVE))).thenReturn(Boolean.FALSE);
+    replication.nodeLeft(passive);
+    replication.nodeJoined(passive);
+    Assert.assertFalse(replication.startPassiveSync(passive));
+    Mockito.verify(group).closeMember(eq(passive));
+    when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), eq(Transition.REMOVE_PASSIVE))).thenReturn(Boolean.TRUE);
+    Mockito.verify(replicate, Mockito.never()).addPassive(eq(passive), any(SessionID.class), any(Integer.class), any(SyncReplicationActivity.class));
+    while (!replication.startPassiveSync(passive)) {
+      Thread.sleep(1000);
+    }
+    Mockito.verify(replicate).addPassive(eq(passive), any(SessionID.class), any(Integer.class), any(SyncReplicationActivity.class));
+  }
   
   @After
   public void tearDown() {
   }
-
-  // TODO add test methods here.
-  // The methods must be annotated with annotation @Test. For example:
-  //
-  // @Test
-  // public void hello() {}
 }

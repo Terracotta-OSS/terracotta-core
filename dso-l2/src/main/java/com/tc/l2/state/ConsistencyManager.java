@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 
 import java.util.Collection;
 import com.tc.text.PrettyPrintable;
+import org.terracotta.server.ServerEnv;
 
 public interface ConsistencyManager extends PrettyPrintable {
   
@@ -81,7 +82,8 @@ public interface ConsistencyManager extends PrettyPrintable {
       consoleLogger.error("*****************************************************************************");
       consoleLogger.error("* Failover priority is not specified and it is a mandatory configuration. *");
       consoleLogger.error("*****************************************************************************");
-      System.exit(-1);
+      ServerEnv.getServer().stop();
+      return -1;
     }
     if (priority.isAvailability()) {
       consoleLogger.info("Running the server in AVAILABILITY mode with the risk of split brain scenarios.");

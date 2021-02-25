@@ -35,7 +35,6 @@ import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 
 import com.tc.object.ClientEntityManager;
-import com.tc.object.ClientEntityManagerImpl;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
@@ -43,12 +42,14 @@ import com.tc.util.Throwables;
 import com.tc.util.Util;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import org.terracotta.entity.EndpointConnector;
+import org.terracotta.exception.ConnectionClosedException;
 
 
 public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T, C, U> {
   private final static Logger logger = LoggerFactory.getLogger(TerracottaEntityRef.class);
-  private final ClientEntityManager entityManager;
+  private final Supplier<ClientEntityManager> entityManager;
   private final EndpointConnector endpointConnector;
   private final Class<T> type;
   private final long version;
@@ -58,7 +59,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
   // Each instance fetched by this ref can be individually addressed by the server so it needs a unique ID.
   private final AtomicLong nextClientInstanceID;
 
-  public TerracottaEntityRef(ClientEntityManager entityManager, EndpointConnector endpointConnector,
+  public TerracottaEntityRef(Supplier<ClientEntityManager> entityManager, EndpointConnector endpointConnector,
                              Class<T> type, long version, String name, EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> entityClientService,
                              AtomicLong clientIds) {
     this.entityManager = entityManager;
@@ -69,9 +70,10 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     this.entityClientService = entityClientService;
     this.nextClientInstanceID = clientIds;
   }
-  
-  public boolean wasBusy() {
-    return ((ClientEntityManagerImpl)entityManager).checkBusy();
+
+  @Override
+  public boolean isValid() {
+    return entityManager.get().isValid();
   }
 
   @Override
@@ -79,7 +81,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     EntityClientEndpoint endpoint = null;
     try {
       final ClientInstanceID clientInstanceID = new ClientInstanceID(this.nextClientInstanceID.getAndIncrement());
-      endpoint = entityManager.fetchEntity(this.getEntityID(), this.version, clientInstanceID, entityClientService.getMessageCodec(), null);
+      endpoint = entityManager.get().fetchEntity(this.getEntityID(), this.version, clientInstanceID, entityClientService.getMessageCodec(), null);
     } catch (EntityException e) {
       // In this case, we want to close the endpoint but still throw back the exception.
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
@@ -91,6 +93,9 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
       } else {
         throw Assert.failure("Unsupported exception type returned to fetch", e);
       }
+    } catch (ConnectionClosedException closed) {
+      // just rethrow
+      throw closed;
     } catch (final Throwable t) {
       Util.printLogAndRethrowError(t, logger);
     }
@@ -116,7 +121,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
   public void create(final C configuration) throws EntityNotProvidedException, EntityAlreadyExistsException, EntityVersionMismatchException, EntityConfigurationException {
     final EntityID entityID = getEntityID();
     try {
-      entityManager.createEntity(entityID, version, entityClientService.serializeConfiguration(configuration));
+      entityManager.get().createEntity(entityID, version, entityClientService.serializeConfiguration(configuration));
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
@@ -140,7 +145,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     final EntityID entityID = getEntityID();
     try {
       return entityClientService.deserializeConfiguration(
-            entityManager.reconfigureEntity(entityID, version, entityClientService.serializeConfiguration(configuration)));
+            entityManager.get().reconfigureEntity(entityID, version, entityClientService.serializeConfiguration(configuration)));
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.
@@ -162,7 +167,7 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     EntityID entityID = getEntityID();
     
     try {
-      return this.entityManager.destroyEntity(entityID, this.version);
+      return entityManager.get().destroyEntity(entityID, this.version);
     } catch (EntityException e) {
       // Note that we must externally only present the specific exception types we were expecting.  Thus, we need to check
       // that this is one of those supported types, asserting that there was an unexpected wire inconsistency, otherwise.

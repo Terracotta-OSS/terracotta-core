@@ -22,6 +22,7 @@ import com.tc.client.ClientFactory;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
+import com.tc.net.core.ProductID;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.UUID;
 import java.lang.ref.Reference;
@@ -33,11 +34,15 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
 
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 
 public class DistributedObjectClientFactory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DistributedObjectClientFactory.class);
+
   private final Iterable<InetSocketAddress> serverAddresses;
   private final ClientBuilder builder;
   private final Properties        properties;
@@ -56,7 +61,7 @@ public class DistributedObjectClientFactory {
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(props);
   }
 
-  public DistributedObjectClient create() throws InterruptedException, ConfigurationSetupException {
+  public DistributedObjectClient create(Runnable shutdown) throws InterruptedException, ConfigurationSetupException, TimeoutException {
     L1ThrowableHandler throwableHandler = new L1ThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class),
                                                                  new Callable<Void>() {
                                                                    @Override
@@ -70,6 +75,7 @@ public class DistributedObjectClientFactory {
     boolean async = Boolean.parseBoolean(this.properties.getProperty(ConnectionPropertyNames.CONNECTION_ASYNC, "false"));
     
     DistributedObjectClient client = ClientFactory.createClient(serverAddresses, builder, group, uuid, name, async);
+    client.addShutdownHook(shutdown);
 
     Reference<DistributedObjectClient> ref = new WeakReference<>(client);
     group.addCallbackOnExitDefaultHandler((state)->{
@@ -81,26 +87,29 @@ public class DistributedObjectClientFactory {
     });
     
     try {
-      client.start();
+      ProductID type = builder.getTypeOfClient();
+      boolean reconnect = !type.isReconnectEnabled();
       String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
-      if (!client.waitForConnection(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
-//  timed out, shutdown the extra threads and return null;
-        client.shutdown();
-        return null;
+      if (reconnect && Integer.parseInt(timeout) < 0) {
+        while (!client.start(true, 5_000)) {
+          client.shutdown();
+          return null;
+        }
+      } else {
+        client.start();
+        if (!client.waitForConnection(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
+  //  timed out, shutdown the extra threads and return null;
+          LOGGER.warn("connection timeout {}", this);
+          client.shutdown();
+          throw new TimeoutException("connection timeout in " + timeout);
+        }
       }
-    } catch (InterruptedException ie) {
-// wait got interrupted, shutdown extra threads and return nothing
-      client.shutdown();
-      return null;
-    } catch (RuntimeException exp) {
+    } catch (InterruptedException | RuntimeException | Error exp) {
 //  something serious happened, try to shutdown extran threads and throw
       client.shutdown();
       throw exp;
-    } catch (Error e) {
-//  something serious happened, try to shutdown extran threads and throw
-      client.shutdown();
-      throw e;
     }
+//  something serious happened, try to shutdown extran threads and throw
     return client;
   }
 }

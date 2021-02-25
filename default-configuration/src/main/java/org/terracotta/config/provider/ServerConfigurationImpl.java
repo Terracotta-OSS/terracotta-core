@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.BindPort;
 import org.terracotta.config.Server;
 
-import com.tc.net.TCSocketAddress;
 import org.terracotta.configuration.ServerConfiguration;
 
 import java.io.File;
@@ -32,7 +31,10 @@ import java.net.InetSocketAddress;
 public class ServerConfigurationImpl implements ServerConfiguration {
   private static final Logger logger = LoggerFactory.getLogger(ServerConfigurationImpl.class);
 
+  private static volatile boolean WARNED = false;
+
   private static final String LOCALHOST = "localhost";
+  private static final String WILDCARD_IP    = "0.0.0.0";
 
   private final BindPort tsaPort;
   private final BindPort tsaGroupPort;
@@ -44,7 +46,8 @@ public class ServerConfigurationImpl implements ServerConfiguration {
   ServerConfigurationImpl(Server server, int clientReconnectWindow) {
     String bindAddress = server.getBind();
     this.host = server.getHost();
-    if (this.host.equalsIgnoreCase(LOCALHOST)) {
+    if (this.host.equalsIgnoreCase(LOCALHOST) && !WARNED) {
+      WARNED = true;
       logger.info("The specified hostname \"" + this.host
                   + "\" may not work correctly if clients and operator console are connecting from other hosts. " + "Replace \""
                   + this.host + "\" with an appropriate hostname in configuration.");
@@ -53,12 +56,12 @@ public class ServerConfigurationImpl implements ServerConfiguration {
     this.serverName = server.getName();
 
     this.tsaPort = server.getTsaPort();
-    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
+    if (WILDCARD_IP.equals(this.tsaPort.getBind()) && !WILDCARD_IP.equals(bindAddress)) {
       this.tsaPort.setBind(bindAddress);
     }
 
     this.tsaGroupPort = server.getTsaGroupPort();
-    if (TCSocketAddress.WILDCARD_IP.equals(this.tsaGroupPort.getBind()) && !TCSocketAddress.WILDCARD_IP.equals(bindAddress)) {
+    if (WILDCARD_IP.equals(this.tsaGroupPort.getBind()) && !WILDCARD_IP.equals(bindAddress)) {
       this.tsaGroupPort.setBind(bindAddress);
     }
 

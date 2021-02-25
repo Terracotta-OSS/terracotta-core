@@ -31,6 +31,8 @@ import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
 import static com.tc.l2.state.ServerMode.ACTIVE;
+import static com.tc.l2.state.ServerMode.DIAGNOSTIC;
+import static com.tc.l2.state.ServerMode.STOP;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -41,7 +43,6 @@ import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.objectserver.persistence.ClusterStatePersistor;
-import com.tc.server.TCServerMain;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -51,6 +52,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.terracotta.server.ServerEnv;
 
 
 public class StateManagerImpl implements StateManager {
@@ -94,7 +96,7 @@ public class StateManagerImpl implements StateManager {
     this.availabilityMgr = availabilityMgr;
     this.topologyManager = topologyManager;
     this.electionMgr = new ElectionManagerImpl(groupManager, electionTimeInSec);
-    this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024).getSink();
+    this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024, false, false).getSink();
     this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
     this.startState = StateManager.convert(clusterStatePersistor.getInitialState());
@@ -370,12 +372,23 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToStopState() {
-  //  noop for now
+      switchToState(ServerMode.STOP, EnumSet.allOf(ServerMode.class));
   }
 
   @Override
-  public synchronized boolean moveToStopStateIf(Set<ServerMode> validStates) {
-    return validStates.contains(this.getCurrentMode());
+  public void moveToDiagnosticMode() {
+      switchToState(ServerMode.DIAGNOSTIC, EnumSet.of(ServerMode.START));
+  }
+
+  @Override
+  public boolean moveToStopStateIf(Set<ServerMode> validStates) {
+    try {
+      switchToState(ServerMode.STOP, EnumSet.of(this.getCurrentMode()));
+      return true;
+    } catch (IllegalStateException state) {
+      logger.info("request to stop denied. Current state: {}", this.getCurrentMode());
+      return false;
+    }
   }
 
   private void moveToActiveState(Set<ServerID> passives, Topology topology) {
@@ -392,7 +405,9 @@ public class StateManagerImpl implements StateManager {
   }
   
   private synchronized ServerMode switchToState(ServerMode newState, Set<ServerMode> validOldStates) throws IllegalStateException {
-    synchronizedWaitForStart();
+    if (!EnumSet.of(DIAGNOSTIC, STOP).contains(newState)) {
+      synchronizedWaitForStart();
+    }
     if (!validOldStates.contains(state)) {
       throw new IllegalStateException("Cant move to " + newState + " from " + state + " valid states " + validOldStates);
     }
@@ -414,7 +429,13 @@ public class StateManagerImpl implements StateManager {
 //    stateChangeSink.addToSink(event);
     if (event.movedToActive()) {
 //  if this server just became active
-      eventCollector.serverDidEnterState(newState, TCServerMain.getServer().getActivateTime());      
+      long activate = System.currentTimeMillis();
+      try {
+        activate = ServerEnv.getServer().getActivateTime();
+      } catch (Exception e) {
+        // ignore
+      }
+      eventCollector.serverDidEnterState(newState, activate);
     } else {
       eventCollector.serverDidEnterState(newState, System.currentTimeMillis());      
     }
@@ -535,7 +556,6 @@ public class StateManagerImpl implements StateManager {
   
   private void zapAndResyncLocalNode(String msg) {
     clusterStatePersistor.setDBClean(false);
-    moveToStopState();
     throw new TCServerRestartException("Clear and resync - " + msg); 
   }
 

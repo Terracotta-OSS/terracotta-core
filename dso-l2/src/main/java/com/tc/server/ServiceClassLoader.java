@@ -31,6 +31,15 @@ public class ServiceClassLoader extends ClassLoader {
   private final Map<String, Class<?>> cached = new HashMap<>();
 
   @SuppressWarnings({"rawtypes","unchecked"})
+  public ServiceClassLoader(ServiceLocator loader, Class<?>...serviceTypes) {
+    super(loader.getServiceLoader());
+    for (Class serviceType : serviceTypes) {
+      List<Class<?>> svcs = loader.getImplementations(serviceType);
+      loadServiceClasses(svcs);
+    }
+  }
+
+  @SuppressWarnings({"rawtypes","unchecked"})
   public ServiceClassLoader(ClassLoader loader, Class<?>...serviceTypes) {
     super(loader);
     ServiceLocator locator = new ServiceLocator(loader);

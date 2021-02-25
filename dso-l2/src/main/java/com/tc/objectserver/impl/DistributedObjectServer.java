@@ -51,7 +51,6 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
 import com.tc.async.impl.StageController;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.entity.DiagnosticMessageImpl;
 import com.tc.entity.DiagnosticResponseImpl;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
@@ -155,7 +154,6 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.TCServer;
-import com.tc.server.TCServerMain;
 import com.tc.services.CommunicatorService;
 import com.tc.services.EntityMessengerProvider;
 import com.tc.services.LocalMonitoringProducer;
@@ -206,7 +204,6 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
-import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
@@ -236,7 +233,10 @@ import java.net.InetSocketAddress;
 import java.util.stream.Collectors;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.concurrent.SetOnceFlag;
+import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
+import org.terracotta.server.ServerEnv;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -278,9 +278,11 @@ public class DistributedObjectServer {
   private WeightGeneratorFactory globalWeightGeneratorFactory;
   private EntityManagerImpl entityManager;
 
+  private final SetOnceFlag  stopping = new SetOnceFlag();
+
   // used by a test
   public DistributedObjectServer(ServerConfigurationManager configSetupManager, TCThreadGroup threadGroup,
-                                 ConnectionPolicy connectionPolicy, TCServerInfoMBean tcServerInfoMBean) {
+                                 ConnectionPolicy connectionPolicy) {
     this(configSetupManager, threadGroup, connectionPolicy, new SEDA(threadGroup), null);
 
   }
@@ -404,12 +406,10 @@ public class DistributedObjectServer {
     threadGroup.addCallbackOnExitDefaultHandler((state) -> dumpOnExit());
     threadGroup.addCallbackOnExitExceptionHandler(TCServerRestartException.class, state -> {
       consoleLogger.error("Restarting server: " + state.getThrowable().getMessage());
-      context.getL2Coordinator().getStateManager().moveToStopState();
       state.setRestartNeeded();
     });
     threadGroup.addCallbackOnExitExceptionHandler(TCShutdownServerException.class, state -> {
       Throwable t = state.getThrowable();
-      context.getL2Coordinator().getStateManager().moveToStopState();
       if(t.getCause() != null) {
         consoleLogger.error("Server exiting: " + t.getMessage(), t.getCause());
       } else {
@@ -432,7 +432,7 @@ public class DistributedObjectServer {
       final String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
-      System.exit(-1);
+      ServerEnv.getServer().stop();
     }
 
     String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getHostName();
@@ -480,8 +480,8 @@ public class DistributedObjectServer {
       // ignore
     }
     final int serverPort = l2DSOConfig.getTsaPort().getPort();
-    final ProductInfo pInfo = ProductInfo.getInstance();
-    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), TCServerMain.getServer().getStartTime());
+    final ProductInfo pInfo = server.productInfo();
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), ServerEnv.getServer().getStartTime());
 
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
@@ -517,7 +517,7 @@ public class DistributedObjectServer {
     //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
     persistor.getClusterStatePersistor().setDBClean(!wasZapped);
 
-    new ServerPersistenceVersionChecker().checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
+    new ServerPersistenceVersionChecker(pInfo).checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
 
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
@@ -541,7 +541,7 @@ public class DistributedObjectServer {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
-    this.connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
+    this.connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
     this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionManager,
@@ -648,8 +648,8 @@ public class DistributedObjectServer {
     entityManager = new EntityManagerImpl(this.serviceRegistry, clientEntityStateManager, eventCollector, processor, this::flushLocalPipeline, this.configSetupManager.getServiceLocator());
     // We need to set up a stage to point at the ProcessTransactionHandler and we also need to register it for events, below.
     final ProcessTransactionHandler processTransactionHandler = new ProcessTransactionHandler(this.persistor, channelManager, entityManager);
-    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT).setSpinningCount(1000);
-    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize, false);
+    stageManager.createStage(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE, VoltronEntityMessage.class, processTransactionHandler.getVoltronMessageHandler(), 1, fastStageSize, USE_DIRECT, true).setSpinningCount(1000);
+    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE, ResponseMessage.class, processTransactionHandler.getMultiResponseSender(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize, false, true);
 //  add the server -> client communicator service
     final CommunicatorService communicatorService = new CommunicatorService(processTransactionHandler.getClientMessageSender());
     channelManager.addEventListener(communicatorService);
@@ -675,7 +675,7 @@ public class DistributedObjectServer {
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
-    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this), 1, 1);
+    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
 
     VoltronMessageSink voltronSink = new VoltronMessageSink(hydrator, fast.getSink(), entityManager);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
@@ -783,14 +783,16 @@ public class DistributedObjectServer {
         new Timer("Reconnect timer", true),
         () -> l2DSOConfig.getClientReconnectWindow() * 1000L, //need to pass reconnect window as milliseconds
         fast.getSink(),
+        pInfo,
         consoleLogger
     );
 
-    this.context = this.serverBuilder.createServerConfigurationContext(stageManager, channelManager,
+    this.context = this.serverBuilder.createServerConfigurationContext(ServerEnv.getServer().getIdentifier(), stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
                                                                        clientHandshakeManager,
                                                                        this.connectionIdFactory,
                                                                        maxStageSize);
+    this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
 
     startStages(stageManager, toInit);
@@ -803,14 +805,52 @@ public class DistributedObjectServer {
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 // don't join the group if the configuration is not complete
+    startDiagnosticListener();
     if (!configuration.isPartialConfiguration()) {
       startGroupManagers();
       this.l2Coordinator.start();
     } else {
+      this.l2Coordinator.getStateManager().moveToDiagnosticMode();
       TCLogging.getConsoleLogger().info("Started the server in diagnostic mode");
     }
-    startDiagnosticListener();
-    setLoggerOnExit();
+  }
+
+  public void stop() throws Exception {
+    if (this.stopping.attemptSet()) {
+      this.groupCommManager.stop();
+      this.l1Diagnostics.stop(1000);
+      this.l1Listener.stop(1000);
+      this.connectionManager.shutdown();
+      this.serviceRegistry.shutdown();
+      this.timer.cancelAll();
+      this.timer.stop();
+      this.context.shutdown();
+      this.configSetupManager.close();
+      Thread killer = new Thread(this::killThreads);
+      killer.setDaemon(true);
+      killer.start();
+      logger.info("L2 Exiting...");
+    }
+  }
+
+  private void killThreads() {
+    this.seda.getStageManager().stopAll();
+    boolean complete = false;
+    while (!complete) {
+      complete = true;
+      int ac = threadGroup.activeCount();
+      Thread[] list = new Thread[ac];
+      threadGroup.enumerate(list, true);
+      for (Thread t : list) {
+        if (t != null && !t.isDaemon()) {
+          t.interrupt();
+          complete = false;
+        }
+      }
+      if (!complete) {
+        ThreadUtil.reallySleep(2000);
+      }
+    }
   }
 
   private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
@@ -824,7 +864,7 @@ public class DistributedObjectServer {
       return new DiagnosticModeConsistencyManager();
     }
 
-    boolean consistentStartup = knownPeers > 0 && (configSetupManager.consistentStartup() || voteCount >= 0);
+    boolean consistentStartup = knownPeers > 0 && (configSetupManager.getConfiguration().isConsistentStartup() || voteCount >= 0);
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
@@ -1031,7 +1071,11 @@ public class DistributedObjectServer {
           try {
             startL1Listener(existingConnections);
           } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
+            if (!stopping.isSet()) {
+              throw new RuntimeException(ioe);
+            } else {
+              logger.debug("cannot start listeners, server shutting down");
+            }
           }
         }
       }
@@ -1083,15 +1127,6 @@ public class DistributedObjectServer {
 
   public ServerID getServerNodeID() {
     return this.thisServerNodeID;
-  }
-
-  private void setLoggerOnExit() {
-    CommonShutDownHook.addShutdownHook(new Runnable() {
-      @Override
-      public void run() {
-        logger.info("L2 Exiting...");
-      }
-    });
   }
 
   private void startActiveMode(ProcessTransactionHandler pth, boolean wasStandby) {

@@ -45,6 +45,7 @@ import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityException;
 
 /**
@@ -68,6 +69,11 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     }
     Assert.assertEquals("root", entity.getEntityName());
     return new EntityClientEndpointImpl(entity, version, EntityDescriptor.NULL_ID, this, new byte[] {}, codec, closeHook, null);
+  }
+
+  @Override
+  public boolean isValid() {
+    return channel.isOpen();
   }
 
   @Override
@@ -147,7 +153,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
 
   @Override
   public void shutdown() {
-
+    waitingForAnswer.forEach((id, in)->in.setResult(null, new ConnectionClosedException("connection closed")));
   }
 
   @Override
@@ -155,7 +161,10 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     DiagnosticMessage network = createMessage(payload);
     InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
-    network.send();
+    if (!message.send()) {
+      message.setResult(null, new ConnectionClosedException("connection closed"));
+      waitingForAnswer.remove(network.getTransactionID());
+    }
     return message;
   }
 

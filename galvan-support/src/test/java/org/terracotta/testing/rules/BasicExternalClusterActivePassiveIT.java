@@ -21,13 +21,13 @@ package org.terracotta.testing.rules;
 import java.io.IOException;
 import java.net.URI;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import org.junit.Rule;
 
 /**
  *
@@ -35,34 +35,31 @@ import static org.junit.Assert.assertThat;
  */
 public class BasicExternalClusterActivePassiveIT {
 
-  @ClassRule
-  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(3).withClientReconnectWindowTime(30)
+  @Rule
+  public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(3).withClientReconnectWindowTime(30)
       .withTcProperty("server.entity.processor.threads", "16")
       .build();
 
   @Test
   public void testFailover() throws IOException, ConnectionException, Exception {
+    CLUSTER.getClusterControl().waitForRunningPassivesInStandby();
     CLUSTER.getClusterControl().terminateActive();
     CLUSTER.getClusterControl().startOneServer();
     CLUSTER.getClusterControl().waitForActive();
     
-    Connection connection = CLUSTER.newConnection();
-    try {
-      //do nothing
-    } finally {
-      connection.close();
+    try (Connection connection = CLUSTER.newConnection()) {
+      System.out.println("testFailover " + connection);
     }
   }
 
   @Test
   public void testFailoverWithLiveConnection() throws IOException, ConnectionException, Exception {
-    Connection connection = CLUSTER.newConnection();
-    try {
+    try (Connection connection = CLUSTER.newConnection()) {
+      CLUSTER.getClusterControl().waitForRunningPassivesInStandby();
       CLUSTER.getClusterControl().terminateActive();
       CLUSTER.getClusterControl().startOneServer();
       CLUSTER.getClusterControl().waitForActive();
-    } finally {
-      connection.close();
+      System.out.println("testFailoverWithLiveConnection " + connection);
     }
   }
 

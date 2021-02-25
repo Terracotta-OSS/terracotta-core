@@ -69,14 +69,14 @@ public class StandardServerBuilder implements ServerBuilder {
   }
 
   @Override
-  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(String id, StageManager stageManager,
                                                                      DSOChannelManager channelManager,
                                                                      ChannelStatsImpl channelStats,
                                                                      L2Coordinator coordinator,
                                                                      ServerClientHandshakeManager clientHandshakeManager,
                                                                      ConnectionIDFactory connectionIdFactory,
                                                                      int maxStageSize) {
-    return new ServerConfigurationContextImpl(stageManager,
+    return new ServerConfigurationContextImpl(id, stageManager,
         channelManager,
         clientHandshakeManager, channelStats, coordinator
     );

@@ -37,43 +37,58 @@ import java.util.Objects;
 import java.util.Properties;
 import org.terracotta.configuration.ConfigurationException;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.ProductInfo;
+import java.util.List;
 
 public class ServerConfigurationManager implements PrettyPrintable {
 
   private final ConfigurationProvider configurationProvider;
-  private final Configuration configuration;
-  private final boolean consistentStartup;
-  private final ServerConfiguration serverConfiguration;
   private final ServiceLocator serviceLocator;
-  private final String[] startUpArgs;
+  private final List<String> startUpArgs;
+  private final ProductInfo productInfo;
+
+  private Configuration configuration;
+  private ServerConfiguration serverConfiguration;
 
   public ServerConfigurationManager(ConfigurationProvider configurationProvider,
-                                    boolean consistentStartup,
                                     ServiceLocator classLoader,
-                                    String[] startUpArgs) throws ConfigurationException {
+                                    List<String> startUpArgs) {
     Objects.requireNonNull(configurationProvider);
     Objects.requireNonNull(classLoader);
     Objects.requireNonNull(startUpArgs);
 
     this.configurationProvider = configurationProvider;
-    this.configuration = configurationProvider.getConfiguration();
     this.serviceLocator = classLoader;
+    this.startUpArgs = startUpArgs;
+    this.productInfo = generateProductInfo(serviceLocator);
+  }
 
-    this.serverConfiguration = this.configuration.getServerConfiguration();
+  private ProductInfo generateProductInfo(ServiceLocator locator) {
+    return ProductInfo.getInstance(locator.createUniversalClassLoader());
+  }
+
+  public ProductInfo getProductInfo() {
+    return productInfo;
+  }
+
+  public void initialize() throws ConfigurationException {
+    this.configurationProvider.initialize(this.startUpArgs);
     
+    this.configuration = configurationProvider.getConfiguration();
+    this.serverConfiguration = this.configuration.getServerConfiguration();
+
     if (this.serverConfiguration == null) {
       throw new ConfigurationException("unable to determine server configuration");
     }
-
-    this.consistentStartup = consistentStartup;
-
-    this.startUpArgs = Arrays.copyOf(startUpArgs, startUpArgs.length);
-
     processTcProperties(configuration.getTcProperties());
   }
 
+  public void close() {
+    configurationProvider.close();
+  }
+
   public String[] getProcessArguments() {
-    return Arrays.copyOf(startUpArgs, startUpArgs.length);
+    return startUpArgs.toArray(new String[startUpArgs.size()]);
   }
 
   public ServerConfiguration getServerConfiguration() {
@@ -91,12 +106,12 @@ public class ServerConfigurationManager implements PrettyPrintable {
     return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
   }
 
-  public String[] allCurrentlyKnownServers() {
-    return getGroupConfiguration().getMembers();
+  public String rawConfigString() {
+    return configuration.getRawConfiguration();
   }
 
-  public boolean consistentStartup() {
-    return this.consistentStartup;
+  public String[] allCurrentlyKnownServers() {
+    return getGroupConfiguration().getMembers();
   }
 
   public boolean isPartialConfiguration() {

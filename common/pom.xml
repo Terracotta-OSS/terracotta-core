@@ -30,7 +30,7 @@ Apache Ivy version: 2.2.0 20100923230623
   <parent>
     <groupId>org.terracotta.internal</groupId>
     <artifactId>build-parent</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.8-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
 
@@ -47,6 +47,7 @@ Apache Ivy version: 2.2.0 20100923230623
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common-spi</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
@@ -60,6 +61,7 @@ Apache Ivy version: 2.2.0 20100923230623
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

@@ -52,11 +52,13 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
+import com.tc.util.DaemonThreadFactory;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -76,7 +78,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
   private final Set<NodeID> standByNodes = new HashSet<>();
   private final ConcurrentHashMap<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> waiters = new ConcurrentHashMap<>();
   private final ReplicationSender replicationSender;
-  private final ExecutorService passiveSyncPool = Executors.newCachedThreadPool();
+  private final ExecutorService passiveSyncPool = Executors.newCachedThreadPool(new DaemonThreadFactory("active-to-passive-"));
   private final EntityPersistor persistor;
   private final GroupManager serverCheck;
   private final ProcessTransactionHandler snapshotter;
@@ -125,8 +127,6 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       SessionID session = prime(i);
       if (session.isNull()) {
         LOGGER.warn("add passive disallowed for " + i);
-      } else {
-        passiveNodes.putIfAbsent(i, session);
       }
     });
   }
@@ -135,37 +135,46 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
  */
   private SessionID prime(ServerID node) {
     Assert.assertFalse(node.isNull());
-    SessionID current = passiveNodes.getOrDefault(node, SessionID.NULL_ID);
-    if (standByNodes.contains(node) && serverCheck.isNodeConnected(node)) {
+    SessionID current = passiveNodes.get(node);
+    //  no session means we are allowed to proceed
+    if (current == null && serverIsValid(node)) {
       if (!consistencyMgr.requestTransition(ServerMode.ACTIVE, node, ConsistencyManager.Transition.ADD_PASSIVE)) {
         serverCheck.zapNode(node, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "unable to verify active");
         return SessionID.NULL_ID;
       } else {
-        if (serverCheck.isNodeConnected(node)) {
-          LOGGER.debug("Starting message sequence on " + node);
-          SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
-
+        LOGGER.debug("Starting message sequence on " + node);
+        SessionID newSession = new SessionID(sessionMaker.incrementAndGet());
+        if (passiveNodes.putIfAbsent(node, newSession) == null) {
           boolean sent = this.replicationSender.addPassive(node, newSession, executionLane(newSession), SyncReplicationActivity.createStartMessage());
           Assert.assertTrue(sent);
           return newSession;
         }
       }
     }
-    return current;
+    return SessionID.NULL_ID;
+  }
+
+  private boolean serverIsValid(ServerID server) {
+    boolean connected = serverCheck.isNodeConnected(server);
+    synchronized (standByNodes) {
+      if (connected) {
+        connected = standByNodes.contains(server);
+      }
+    }
+    return connected;
   }
 
   private static int executionLane(SessionID session) {
     return Long.hashCode(session.toLong());
   }
   
-  public void startPassiveSync(ServerID newNode) {
+  public boolean startPassiveSync(ServerID newNode) {
     Assert.assertTrue(activated);
     SessionID session = prime(newNode);
     if (session.isValid()) {
-      if (passiveNodes.putIfAbsent(newNode, session) == null) {
-        LOGGER.info("Starting sync to node: {} session: {}", newNode, session);
-        executePassiveSync(newNode, session);
-      }
+      LOGGER.info("Starting sync to node: {} session: {}", newNode, session);
+      executePassiveSync(newNode, session);
+      return true;
     } else {
       if (!passiveNodes.containsKey(newNode)) {
         LOGGER.info("passive node {} to requesting prime is no longer a valid passive", newNode);
@@ -173,6 +182,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         LOGGER.info("unable to prime connection to {} for passive sync", newNode);
         serverCheck.closeMember(newNode);
       }
+      return false;
     }
   }
   /**
@@ -180,7 +190,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * @param newNode
    */
   private void executePassiveSync(final NodeID newNode, SessionID session) {
-    passiveSyncPool.execute(() -> {
+    executeOnPool(() -> {
       // start passive sync message
       LOGGER.debug("starting sync for " + newNode + " on session " + session);
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
@@ -305,10 +315,18 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     return waiter;
   }
 
+  private void executeOnPool(Runnable r) {
+    try {
+      passiveSyncPool.execute(r);
+    } catch (RejectedExecutionException exec) {
+      LOGGER.info("rejected execution", exec);
+    }
+  }
+
   private void removePassive(NodeID nodeID) {
     SessionID session = this.passiveNodes.putIfAbsent((ServerID)nodeID, SessionID.NULL_ID);
     LOGGER.info("removing passive: {} with session: {}", nodeID, session);
-    passiveSyncPool.execute(()->{
+    executeOnPool(()->{
       while (!consistencyMgr.requestTransition(ServerMode.ACTIVE, nodeID, ConsistencyManager.Transition.REMOVE_PASSIVE)) {
         try {
           TimeUnit.SECONDS.sleep(2);
@@ -361,6 +379,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       standByNodes.remove(nodeID);
       standByNodes.notifyAll();
     }
+  }
+
+  public void close() {
+    passiveSyncPool.shutdownNow();
   }
   // for test
   Map<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> getWaiters() {

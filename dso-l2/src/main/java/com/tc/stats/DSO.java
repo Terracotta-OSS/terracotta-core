@@ -32,6 +32,7 @@ import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.VoltronMessageHandler;
 import com.tc.stats.api.DSOMBean;
+import com.tc.util.DaemonThreadFactory;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -50,7 +51,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -104,7 +107,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.messageSink = managementContext.getVoltronMessageSink();
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
-    
+    configContext.addShutdownItem(pool::shutdown);
     setupClients();
   }
 
@@ -175,7 +178,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  private static final ExecutorService pool = Executors.newCachedThreadPool();
+  private final ExecutorService pool = Executors.newCachedThreadPool(new DaemonThreadFactory("dso-mbean-"));
 
   private class ChannelManagerListener implements ChannelManagerEventListener {
     @Override
@@ -303,7 +306,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
           }
         }
       }
-    } catch (InterruptedException ie) {/**/
+    } catch (InterruptedException | RejectedExecutionException ie) {/**/
     }
     return result;
   }
@@ -376,7 +379,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
           }
         }
       }
-    } catch (InterruptedException ie) {/**/
+    } catch (InterruptedException | RejectedExecutionException ie) {/**/
     }
     return result;
   }

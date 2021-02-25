@@ -24,7 +24,7 @@ import com.tc.properties.TCPropertiesImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.terracotta.configuration.Directories;
+import com.tc.server.Directories;
 import com.tc.util.ManagedServiceLoader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ServiceLocator extends ManagedServiceLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceLocator.class);
-  private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_CLASSLOADER_COMPATIBILITY);
+  private static final boolean STRICT = !TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.PLUGIN_CLASSLOADER_COMPATIBILITY);
   private final ClassLoader defaultClassLoader;
   private final Map<String, ClassLoader> locationCache = new ConcurrentHashMap<>();
 
@@ -90,7 +90,7 @@ public class ServiceLocator extends ManagedServiceLoader {
   }
       
   private static URL[] createURLS(File plugins) {
-    if (plugins.exists()) {
+    if (plugins.exists() && plugins.isDirectory()) {
       return Arrays.stream(plugins.listFiles())
         .filter(ServiceLocator::fileFilter)
         .map(ServiceLocator::toURL)
@@ -103,18 +103,25 @@ public class ServiceLocator extends ManagedServiceLoader {
   private static URL[] findPluginURLS() throws FileNotFoundException {
     return createURLS(Directories.getServerPluginsLibDir());
   }
-  
-  public static ClassLoader PLATFORM_LOADER = createPlatformClassLoader();
-  
-  public static ClassLoader getPlatformLoader() {
-    return PLATFORM_LOADER;
+
+  public static ServiceLocator createPlatformServiceLoader(ClassLoader serverClassLoader) {
+    return new ServiceLocator(createPlatformClassLoader(serverClassLoader, STRICT));
   }
-  
-  private static ClassLoader createPlatformClassLoader() {
+
+  public ClassLoader createUniversalClassLoader() {
     try {
-      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
-      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
-      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(ServiceLocator.class.getClassLoader()),new AnnotationOrDirectoryStrategyChecker(),STRICT);
+      return new StrictURLClassLoader(findPluginURLS(), defaultClassLoader.getParent(), new UniversalCommonComponentChecker());
+    } catch (FileNotFoundException file) {
+      return ClassLoader.getSystemClassLoader();
+    }
+  }
+
+  private static ClassLoader createPlatformClassLoader(ClassLoader serverClassLoader, boolean strict) {
+    try {
+//      LOG.info("Entity/Service apis will be loaded from " + Directories.getServerPluginsApiDir().getAbsolutePath());
+//      LOG.info("Entity/Service implementations will be loaded from " + Directories.getServerPluginsLibDir().getAbsolutePath());
+      CommonComponentChecker checker = (strict) ? new AnnotationOrDirectoryStrategyChecker() : new UniversalCommonComponentChecker();
+      URLClassLoader purls = new StrictURLClassLoader(findPluginURLS(), createApiClassLoader(serverClassLoader), checker);
       return purls;
     } catch (FileNotFoundException file) {
       return ClassLoader.getSystemClassLoader();

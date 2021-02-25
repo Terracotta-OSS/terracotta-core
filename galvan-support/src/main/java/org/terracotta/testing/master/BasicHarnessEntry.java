@@ -70,7 +70,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
     List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
     List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
-    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testserver" + i).collect(toList());
+    List<String> serverNames = IntStream.range(0, stripeSize).mapToObj(i -> "testServer" + i).collect(toList());
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
@@ -140,7 +140,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
 
   private Path createTcConfig(List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                               Path stripeInstallationDir, CommonHarnessOptions harnessOpts) {
-    TcConfigBuilder configBuilder = new TcConfigBuilder(serverNames, serverPorts, serverGroupPorts, harnessOpts.tcProperties,
+    TcConfigBuilder configBuilder = new TcConfigBuilder(stripeInstallationDir, serverNames, serverPorts, serverGroupPorts, harnessOpts.tcProperties,
         harnessOpts.namespaceFragment, harnessOpts.serviceFragment, harnessOpts.clientReconnectWindow, harnessOpts.voterCount);
     String tcConfig = configBuilder.build();
     try {

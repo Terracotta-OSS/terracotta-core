@@ -43,7 +43,6 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public ClientID               clientID;
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
-  private boolean               enterpriseClient               = false;
   private boolean               diagnosticClient               = false;
   public NoExceptionLinkedQueue<List<SequenceID>> setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue<List<SequenceID>>();
   public NoExceptionLinkedQueue<List<TransactionID>> setTransactionIDsCalls         = new NoExceptionLinkedQueue<List<TransactionID>>();

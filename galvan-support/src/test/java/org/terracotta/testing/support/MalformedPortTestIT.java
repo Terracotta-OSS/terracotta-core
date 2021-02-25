@@ -19,14 +19,11 @@
 package org.terracotta.testing.support;
 
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClientTestEnvironment;
 import org.terracotta.passthrough.IClusterControl;
 
 import java.net.URI;
-import java.sql.Connection;
 import java.util.Properties;
 
 public class MalformedPortTestIT extends MultiProcessGalvanTest {

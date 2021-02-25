@@ -19,7 +19,7 @@
 package org.terracotta.config.provider;
 
 import com.tc.classloader.ServiceLocator;
-import com.tc.util.Assert;
+import com.tc.logging.TCLogging;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Before;
@@ -49,19 +49,25 @@ import java.nio.file.FileAlreadyExistsException;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.terracotta.config.Consistency;
 import org.terracotta.config.FailoverPriority;
 import org.terracotta.configuration.ConfigurationProvider;
-import org.terracotta.configuration.Directories;
+import com.tc.server.Directories;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.CONFIG_FILE_PROPERTY_NAME;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.DEFAULT_CONFIG_NAME;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
-import static org.terracotta.configuration.Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME;
+import static com.tc.server.Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME;
+import java.util.Arrays;
+import static org.hamcrest.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 public class DefaultConfigurationProviderTest {
 
@@ -98,6 +104,13 @@ public class DefaultConfigurationProviderTest {
     when(tcConfiguration.getPlatformConfiguration()).thenReturn(tcConfig);
     when(tcConfiguration.getExtendedConfiguration(any())).thenReturn(extendedConfigurations);
     when(tcConfiguration.toString()).thenReturn(rawConfiguration);
+
+    Server server = mock(Server.class);
+    doAnswer(a->{
+      TCLogging.getConsoleLogger().info(a.getArgument(0).toString(), Arrays.copyOfRange(a.getArguments(), 1, a.getArguments().length));
+      return null;
+    }).when(server).console(org.mockito.ArgumentMatchers.any(String.class), any());
+    ServerEnv.setServer(server);
 
     provider = new DefaultConfigurationProvider() {
       @Override

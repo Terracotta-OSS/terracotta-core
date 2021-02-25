@@ -21,8 +21,10 @@ package com.tc.server;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.spi.Pauseable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import org.terracotta.server.StopAction;
 
@@ -64,8 +66,6 @@ public interface TCServer extends Pauseable {
 
   String getConfig();
 
-  String getDescriptionOfCapabilities();
-
   String getL2Identifier();
 
   int getTSAListenPort();
@@ -74,11 +74,15 @@ public interface TCServer extends Pauseable {
   
   int getReconnectWindowTimeout();
 
-  void waitUntilShutdown();
+  boolean waitUntilShutdown();
 
   void dump();
 
   void reloadConfiguration() throws ConfigurationSetupException;
 
+  JMXSubsystem getJMX();
+
   String getClusterState(PrettyPrinter form);
+
+  ProductInfo productInfo();
 }

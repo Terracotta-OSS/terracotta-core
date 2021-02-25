@@ -76,9 +76,11 @@ public class ServerClientHandshakeManager {
   private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
   private final Logger consoleLogger;
   private final Sink<VoltronEntityMessage> voltron;
+  private final ProductInfo productInfo;
 
   public ServerClientHandshakeManager(Logger logger, ConsistencyManager consistency, DSOChannelManager channelManager,
                                       Timer timer, Supplier<Long> reconnectTimeoutSupplier, Sink<VoltronEntityMessage> voltron,
+                                      ProductInfo product,
                                       Logger consoleLogger) {
     this.logger = logger;
     this.channelManager = channelManager;
@@ -87,6 +89,7 @@ public class ServerClientHandshakeManager {
     this.voltron = voltron;
     this.consoleLogger = consoleLogger;
     this.consistency = consistency;
+    this.productInfo = product;
   }
 
   public synchronized boolean isStarting() {
@@ -98,7 +101,7 @@ public class ServerClientHandshakeManager {
   }
   
   private boolean canAcceptStats(String version) {
-    return SHOULD_SEND_STATS && version.equals(ProductInfo.getInstance().version());
+    return SHOULD_SEND_STATS && version.equals(productInfo.version());
   }
 
   public void notifyClientConnect(ClientHandshakeMessage handshake, EntityManager entityManager, ProcessTransactionHandler transactionHandler) throws ClientHandshakeException {
@@ -173,7 +176,7 @@ public class ServerClientHandshakeManager {
     clientMsg.getChannel().addAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, 
         new ClientHandshakeMonitoringInfo(clientMsg.getClientPID(), clientMsg.getUUID(), clientMsg.getName(), clientMsg.getClientVersion(), clientMsg.getClientAddress()), false);
     ClientHandshakeAckMessage ack = (ClientHandshakeAckMessage)clientMsg.getChannel().createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
-    ack.initialize(Collections.emptySet(), clientID, ProductInfo.getInstance().version());
+    ack.initialize(Collections.emptySet(), clientID, productInfo.version());
     ack.send();
   }  
 
@@ -222,6 +225,11 @@ public class ServerClientHandshakeManager {
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
     voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
+  }
+
+  public void stop() {
+    timer.cancel();
+    this.state = State.INIT;
   }
   
   public void notifyComplete() {

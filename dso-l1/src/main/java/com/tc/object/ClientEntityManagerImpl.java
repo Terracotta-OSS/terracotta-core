@@ -111,14 +111,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
     this.stages = mgr;      
   }
-  
-  public boolean checkBusy() {
-    try {
-      return wasBusy;
-    } finally {
-      wasBusy = false;
-    }
-  } 
+
+  @Override
+  public boolean isValid() {
+    return !stateManager.isShutdown() && channel.isOpen();
+  }
   
   private synchronized boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
     if (!this.stateManager.isRunning()) {
@@ -342,6 +339,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       inFlight.sent();
       if (!inFlight.send()) {
         logger.debug("message not sent.  Make sure resend happens : {}", inFlight);
+        if (!this.channel.getProductID().isReconnectEnabled()) {
+          inFlight.setResult(null, new ConnectionClosedException("connection closed"));
+        }
       }
     } else {
       transactionSource.retire(inFlight.getTransactionID());
@@ -650,6 +650,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
         }
       } else {
         logger.debug("message not sent.  Make sure resend happens " + inFlight);
+        if (!this.channel.getProductID().isReconnectEnabled()) {
+          inFlight.setResult(null, new ConnectionClosedException("connection closed"));
+        }
       }
     } else {
       transactionSource.retire(inFlight.getTransactionID());
@@ -802,15 +805,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   
   private static class StoppableSemaphore extends Semaphore {
 
-    private final int permits;
+    private final int permitCount;
 
-    public StoppableSemaphore(int permits) {
-      super(permits);
-      this.permits = permits;
+    public StoppableSemaphore(int permitCount) {
+      super(permitCount);
+      this.permitCount = permitCount;
     }
 
     private void stop() {
-      reducePermits(permits);
+      reducePermits(permitCount);
     }
   }
 }

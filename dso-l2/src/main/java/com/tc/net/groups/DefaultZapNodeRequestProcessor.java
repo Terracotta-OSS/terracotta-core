@@ -39,6 +39,7 @@ public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
     this.logger.error("DefaultZapNodeRequestProcessor : Received Zap Node request from " + nodeID + " type = "
                       + zapNodeType + " reason = " + reason);
+
     System.exit(zapNodeType);
   }
 

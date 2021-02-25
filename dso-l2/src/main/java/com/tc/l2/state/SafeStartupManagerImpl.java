@@ -27,7 +27,6 @@ import com.tc.management.TerracottaManagement;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 
-import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +41,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.terracotta.server.ServerEnv;
 
 public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsListener {
 
@@ -79,7 +79,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
   private void initMBean() {
     try {
       ObjectName mbeanName = TerracottaManagement.createObjectName(null, CONSISTENCY_BEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC);
-      ManagementFactory.getPlatformMBeanServer().registerMBean(new ConsistencyMBeanImpl(this), mbeanName);
+      ServerEnv.getServer().getManagement().getMBeanServer().registerMBean(new ConsistencyMBeanImpl(this), mbeanName);
     } catch (Exception e) {
       LOGGER.warn("SafeMode MBean not initialized", e);
     }

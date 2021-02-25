@@ -133,8 +133,8 @@ public class ProcessTransactionHandlerTest {
     this.clientEntityStateManager = new ClientEntityStateManagerImpl();
     this.eventCollector = new ManagementTopologyEventCollector(mock(IMonitoringProducer.class));
     this.eventCollector.serverDidEnterState(StateManager.ACTIVE_COORDINATOR, 0);
-    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
-    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean())).thenReturn(runnableStage);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean(), anyBoolean())).thenReturn(runnableStage);
+    when(stageManager.createStage(eq(ServerConfigurationContext.REQUEST_PROCESSOR_DURING_SYNC_STAGE), any(), any(), anyInt(), anyInt(), anyBoolean(), anyBoolean())).thenReturn(runnableStage);
     RequestProcessor processor = new RequestProcessor(stageManager, 1024, true);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());

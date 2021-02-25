@@ -18,20 +18,20 @@
  */
 package org.terracotta.testing.rules;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.Rule;
 
 public class BasicExternalClusterFOPAvailabilityIT {
 
-  @ClassRule
-  public static final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2)
-          .withFailoverPriorityVoterCount(-1).withConsistentStartup(true).build();
+  @Rule
+  public final Cluster CLUSTER = BasicExternalClusterBuilder.newCluster(2)
+          .withFailoverPriorityVoterCount(0).build();
 
-  @Test
+  @Test(expected = TimeoutException.class)
   public void testDirectConnection() throws Exception {
     CLUSTER.getClusterControl().waitForActive();
     CLUSTER.getClusterControl().waitForRunningPassivesInStandby();

@@ -162,18 +162,26 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
   private SocketConnectStartStatus initSocketConnectProbe() {
     // trigger the socket connect
-    presentConnection = getNewConnection(connectionManager);
-    sockectConnect = getHealthCheckerSocketConnector(presentConnection, transport, logger, config);
-    sockectConnect.addSocketConnectEventListener(this);
-    SocketConnectStartStatus status = sockectConnect.start();
-    if ((status == SocketConnectStartStatus.FAILED) || (status == SocketConnectStartStatus.NOT_STARTED)) {
-      clearPresentConnection();
+    try {
+      presentConnection = getNewConnection(connectionManager);
+      sockectConnect = getHealthCheckerSocketConnector(presentConnection, transport, logger, config);
+      sockectConnect.addSocketConnectEventListener(this);
+      SocketConnectStartStatus status = sockectConnect.start();
+      if ((status == SocketConnectStartStatus.FAILED) || (status == SocketConnectStartStatus.NOT_STARTED)) {
+        clearPresentConnection();
+      }
+      return status;
+    } catch (IOException ie) {
+      logger.warn("failed to create a new connection for health check", ie);
+      return SocketConnectStartStatus.FAILED;
     }
-    return status;
   }
 
-  protected TCConnection getNewConnection(TCConnectionManager connManager) {
+  protected TCConnection getNewConnection(TCConnectionManager connManager) throws IOException {
     TCConnection connection = connManager.createConnection(new NullProtocolAdaptor());
+    if (connection == null) {
+      throw new IOException("failed to create a new connection");
+    }
     return connection;
   }
 

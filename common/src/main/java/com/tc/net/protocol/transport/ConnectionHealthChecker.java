@@ -31,5 +31,5 @@ public interface ConnectionHealthChecker extends MessageTransportListener {
   public void start();
 
   public void stop();
-  
+
 }

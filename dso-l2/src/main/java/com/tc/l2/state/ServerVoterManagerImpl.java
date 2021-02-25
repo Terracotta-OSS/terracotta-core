@@ -24,10 +24,10 @@ import com.tc.services.TimeSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.terracotta.server.ServerEnv;
 
 public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements ServerVoterManager {
 
@@ -53,7 +53,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     super(ServerVoterManager.class, false);
     if (initMBean) {
       try {
-        ManagementFactory.getPlatformMBeanServer().registerMBean(this,
+        ServerEnv.getServer().getManagement().getMBeanServer().registerMBean(this,
           TerracottaManagement.createObjectName(null, MBEAN_NAME, TerracottaManagement.MBeanDomain.PUBLIC));
       } catch (Exception e) {
         logger.warn("problem registering MBean", e);

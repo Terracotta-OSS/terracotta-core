@@ -80,7 +80,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
 import com.tc.spi.Guardian;
-import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.sequence.Sequence;
@@ -110,6 +109,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.stream.Collectors.toSet;
+import org.terracotta.server.ServerEnv;
 
 
 public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, ChannelManagerEventListener, TopologyListener {
@@ -128,8 +128,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final Map<MessageID, GroupResponse<AbstractGroupMessage>>               pendingRequests             = new ConcurrentHashMap<>();
   private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
   private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<>();
-  private final Timer                                       handshakeTimer              = new Timer(
-                                                                                                    "TC Group Manager Handshake timer",
+  private final Timer                                       handshakeTimer              = new Timer(ServerEnv.getServer().getIdentifier() +
+                                                                                                    " - TC Group Manager Handshake timer",
                                                                                                     true);
   private final Set<NodeID>                                 zappedSet                   = Collections
                                                                                             .synchronizedSet(new HashSet<NodeID>());
@@ -168,7 +168,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.thisNodeID = thisNodeID;
     this.bufferManagerFactory = bufferManagerFactory;
     this.topologyManager = topologyManager;
-    this.version = getVersion();
+    this.version = configSetupManager.getProductInfo().version();
 
     ServerConfiguration l2DSOConfig = configSetupManager.getServerConfiguration();
     serverCount = configSetupManager.allCurrentlyKnownServers().length;
@@ -194,7 +194,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   protected final String getVersion() {
-    return ProductInfo.getInstance().version();
+    return this.version;
   }
 
   @Override
@@ -233,7 +233,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
     
-    connectionManager = new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
+    connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
         serverCount, new HealthCheckerConfigImpl(tcProperties
                                                               .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"), bufferManagerFactory);
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
@@ -261,7 +261,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     int maxStageSize = 5000;
     receiveGroupMessageStage = stageManager.createStage(ServerConfigurationContext.RECEIVE_GROUP_MESSAGE_STAGE, TCGroupMessageWrapper.class, new ReceiveGroupMessageHandler(this), 1, maxStageSize);
     handshakeMessageStage = stageManager.createStage(ServerConfigurationContext.GROUP_HANDSHAKE_MESSAGE_STAGE, TCGroupHandshakeMessage.class, new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
-    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize);
+    discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE, DiscoveryStateMachine.class, new TCGroupMemberDiscoveryHandler(this), 1, maxStageSize, false, false);
   }
 
   private Map<TCMessageType, Class<? extends TCMessage>> initMessageTypeClassMapping(Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping) {
@@ -336,17 +336,26 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       }
     });
   }
-//  FOR TESTING ONLY
+
+  @Override
+  public void stop() {
+    try {
+      stop(1000);
+    } catch (TCTimeoutException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public void stop(long timeout) throws TCTimeoutException {
+    isStopped.set(true);
     for (ServerID sid : members.keySet()) {
       closeMember(sid);
     }
-    isStopped.set(true);
-    stageManager.stopAll();
     discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
     connectionManager.shutdown();
+    handshakeTimer.cancel();
     for (TCGroupMember m : members.values()) {
       notifyAnyPendingRequests(m);
     }
@@ -563,6 +572,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   }
 
+  @Override
   public GroupResponse<AbstractGroupMessage> sendToAndWaitForResponse(Set<String> nodes, AbstractGroupMessage msg) throws GroupException {
     return sendAllAndWaitForResponse(msg, members.keySet().stream().filter(id -> nodes.contains(id.getName())).collect(toSet()));
   }
@@ -575,7 +585,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   @Override
   public GroupResponse<AbstractGroupMessage> sendAllAndWaitForResponse(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) throws GroupException {
     if (isDebugLogging()) {
-      debugInfo("Sending to ALL and Waiting for Response : " + msg.getMessageID());
+      debugInfo("Sending to " + nodeIDs + " and Waiting for Response : " + msg.getMessageID());
     }
     GroupResponseImpl groupResponse = new GroupResponseImpl(this);
     MessageID msgID = msg.getMessageID();
@@ -584,6 +594,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     groupResponse.sendAll(msg, nodeIDs);
     groupResponse.waitForResponses(getNodeID());
     pendingRequests.remove(msgID);
+    if (isDebugLogging()) {
+      debugInfo("Complete from " + nodeIDs + " : " + msg.getMessageID());
+    }
     return groupResponse;
   }
 
@@ -604,7 +617,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
     ProductID product = ProductID.SERVER;
-    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 10000 /*  timeout */);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 2_000 /*  timeout */);
 
     channel.addListener(listener);
     channel.open(serverAddress);
@@ -664,14 +677,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     return (handshakeTimer);
   }
 
-  public void shutdown() {
-    try {
-      stop(1000);
-    } catch (TCTimeoutException e) {
-      logger.warn("Timeout at shutting down " + e);
-    }
-  }
-
   /*
    * for testing only
    */
@@ -681,7 +686,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public void messageReceived(AbstractGroupMessage message, MessageChannel channel) {
 
-    if (isStopped.get()) {
+    if (isStopped()) {
       channel.close();
       return;
     }
@@ -697,11 +702,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (m == null) {
       TCGroupHandshakeStateMachine stateMachine = getHandshakeStateMachine(channel);
       String errInfo = "Received message for non-exist member from " + channel.getRemoteAddress() + " to "
-                       + channel.getLocalAddress() + "; Node: " + getMember(channel).getPeerNodeID() + "; " + stateMachine
+                       + channel.getLocalAddress() + "; " + stateMachine
                        + "; msg: " + message;
       if (stateMachine != null && stateMachine.isFailureState()) {
         // message received after node left
         logger.warn(errInfo);
+        return;
+      } else if (isStopped()) {
         return;
       } else {
         throw new RuntimeException(errInfo);

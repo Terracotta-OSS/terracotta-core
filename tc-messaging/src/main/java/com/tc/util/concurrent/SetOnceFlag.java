@@ -55,7 +55,6 @@ public final class SetOnceFlag implements Serializable {
   /**
    * Attempt to set the flag
    * 
-   * @return true if the flag was set, false otherwise
    * @throws IllegalArgumentException if the value has already been set by a different thread
    */
   public void set() {

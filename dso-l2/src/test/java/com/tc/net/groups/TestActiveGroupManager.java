@@ -156,6 +156,11 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
     }
   }
 
+  @Override
+  public void stop() {
+    
+  }
+
   static class SendToMessage {
     private final NodeID       nodeID;
     private final GroupMessage groupMessage;

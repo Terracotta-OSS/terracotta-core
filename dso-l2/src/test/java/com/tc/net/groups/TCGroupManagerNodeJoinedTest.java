@@ -51,6 +51,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import static org.mockito.Mockito.mock;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
@@ -65,6 +67,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
   @Override
   public void setUp() {
+    ServerEnv.setDefaultServer(mock(Server.class));
     throwableHandler = new TestThrowableHandler(logger);
     threadGroup = new TCThreadGroup(throwableHandler, "TCGroupManagerNodeJoinedTest");
     stages = new MockStageManagerFactory(logger, new ThreadGroup(threadGroup, "stage-managers"));
@@ -302,6 +305,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);
       }
     }
+    this.stages.shutdown();
     System.out.println("*** shutdown done");
   }
 

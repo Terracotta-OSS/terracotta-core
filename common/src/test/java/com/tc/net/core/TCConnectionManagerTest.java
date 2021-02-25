@@ -92,7 +92,7 @@ public class TCConnectionManagerTest extends TestCase {
     assertEquals(0, clientConnMgr.getAllConnections().length);
   }
 
-  public void testShutdown() {
+  public void testShutdown() throws Exception {
     assertEquals(1, serverConnMgr.getAllListeners().length);
     assertEquals(0, clientConnMgr.getAllConnections().length);
 

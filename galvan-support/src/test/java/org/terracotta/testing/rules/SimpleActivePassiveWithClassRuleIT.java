@@ -18,8 +18,6 @@
  */
 package org.terracotta.testing.rules;
 
-import java.io.File;
-import java.util.Collections;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;

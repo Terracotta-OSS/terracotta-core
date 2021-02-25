@@ -153,7 +153,6 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
         logger.error(message);
         if (zapNodeType == NODE_JOINED_WITH_DIRTY_DB) {
           clusterStatePersistor.setDBClean(false);
-          stateManager.moveToStopState();
           throw new ZapDirtyDbServerNodeException(message);
         } else if (zapNodeType == INSUFFICIENT_RESOURCES) {
           throw new TCShutdownServerException(message);

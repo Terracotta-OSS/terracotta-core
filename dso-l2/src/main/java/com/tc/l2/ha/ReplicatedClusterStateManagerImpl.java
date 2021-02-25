@@ -26,6 +26,7 @@ import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
+import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
@@ -70,16 +71,24 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   @Override
   public synchronized void goActiveAndSyncState() {
-    Assert.assertTrue(stateManager.getCurrentMode() == ServerMode.ACTIVE);
-    state.setCurrentState(stateManager.getCurrentMode().getState());
-    state.generateStripeIDIfNeeded();
-    state.syncActiveState();
+    switch (stateManager.getCurrentMode()) {
+      case ACTIVE:
+        state.setCurrentState(stateManager.getCurrentMode().getState());
+        state.generateStripeIDIfNeeded();
+        state.syncActiveState();
 
-    others.clear();
-    // Sync state to external passive servers
-    state.setConfigSyncData(configurationProvider.getSyncData());
-    others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
-    isActive = true;
+        others.clear();
+        // Sync state to external passive servers
+        state.setConfigSyncData(configurationProvider.getSyncData());
+        others.addAll(publishToAll(ClusterStateMessage.createClusterStateMessage(state)));
+        isActive = true;
+        break;
+      case STOP:
+        TCLogging.getConsoleLogger().warn("Failed to activate.  Server is stopping");
+        break;
+      default:
+        throw new AssertionError("cannot activate. State:" + stateManager.getCurrentMode());
+    }
     notifyAll();
   }
 

@@ -29,9 +29,11 @@ import org.slf4j.LoggerFactory;
 public class TCLogging {
 
   public static final String CONSOLE_LOGGER_NAME = "org.terracotta.console";
+  public static final String SILENT_LOGGER_NAME = "org.terracotta.silent";
   public static final String DUMP_LOGGER_NAME = "org.terracotta.dump";
 
   private static final Logger CONSOLE_LOGGER = LoggerFactory.getLogger(CONSOLE_LOGGER_NAME);
+  private static final Logger SILENT_LOGGER = LoggerFactory.getLogger(SILENT_LOGGER_NAME);
   private static final Logger DUMP_LOGGER = new DumpLogger(LoggerFactory.getLogger(DUMP_LOGGER_NAME));
 
   public static Logger getConsoleLogger() {
@@ -40,6 +42,10 @@ public class TCLogging {
 
   public static Logger getDumpLogger() {
     return DUMP_LOGGER;
+  }
+
+  public static Logger getSilentLogger() {
+    return SILENT_LOGGER;
   }
   
 }

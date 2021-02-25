@@ -21,14 +21,16 @@ package com.tc.services;
 import com.tc.lang.ServerExitStatus;
 import com.tc.logging.TCLogging;
 import com.tc.server.TCServer;
-import com.tc.server.TCServerMain;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.EnumSet;
 
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.monitoring.PlatformStopException;
+import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 import static org.terracotta.server.StopAction.RESTART;
 import static org.terracotta.server.StopAction.ZAP;
@@ -67,7 +69,7 @@ public class PlatformServiceImpl implements PlatformService, StateDumpable {
 
     @Override
     public InputStream getPlatformConfiguration() {
-      return TCServerMain.getSetupManager().rawConfigFile();
+      return new ByteArrayInputStream(ServerEnv.getServer().getConfiguration().getBytes(Charset.defaultCharset()));
     }
 
     private StopAction[] convert(RestartMode mode) {
@@ -104,6 +106,5 @@ public class PlatformServiceImpl implements PlatformService, StateDumpable {
   public void addStateTo(StateDumpCollector stateDumpCollector) {
     stateDumpCollector.addState("tcServerState", tcServer.getState());
     stateDumpCollector.addState("tcServerConfig", tcServer.getConfig());
-    stateDumpCollector.addState("tcServerDescriptionCapabilities", tcServer.getDescriptionOfCapabilities());
   }
 }
