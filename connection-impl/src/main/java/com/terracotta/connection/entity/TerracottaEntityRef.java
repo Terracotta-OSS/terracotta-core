@@ -35,7 +35,6 @@ import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 
 import com.tc.object.ClientEntityManager;
-import com.tc.object.ClientEntityManagerImpl;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.util.Assert;
@@ -71,9 +70,10 @@ public class TerracottaEntityRef<T extends Entity, C, U> implements EntityRef<T,
     this.entityClientService = entityClientService;
     this.nextClientInstanceID = clientIds;
   }
-  
-  public boolean wasBusy() {
-    return ((ClientEntityManagerImpl)entityManager).checkBusy();
+
+  @Override
+  public boolean isValid() {
+    return entityManager.get().isValid();
   }
 
   @Override

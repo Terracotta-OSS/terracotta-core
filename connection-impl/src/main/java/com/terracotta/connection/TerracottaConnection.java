@@ -97,6 +97,11 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
     isShutdown = true;
   }
 
+  @Override
+  public boolean isValid() {
+    return entityManager.get().isValid();
+  }
+  
   private void checkShutdown() {
     if (isShutdown) {
       throw new ConnectionShutdownException("Already shut down");

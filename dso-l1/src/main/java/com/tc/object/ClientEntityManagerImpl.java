@@ -111,14 +111,11 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
     this.stages = mgr;      
   }
-  
-  public boolean checkBusy() {
-    try {
-      return wasBusy;
-    } finally {
-      wasBusy = false;
-    }
-  } 
+
+  @Override
+  public boolean isValid() {
+    return !stateManager.isShutdown() && channel.isOpen();
+  }
   
   private synchronized boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
     if (!this.stateManager.isRunning()) {

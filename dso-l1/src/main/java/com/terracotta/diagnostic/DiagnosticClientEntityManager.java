@@ -72,6 +72,11 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   }
 
   @Override
+  public boolean isValid() {
+    return channel.isOpen();
+  }
+
+  @Override
   public void handleMessage(ClientInstanceID entityDescriptor, byte[] message) {
 
   }
