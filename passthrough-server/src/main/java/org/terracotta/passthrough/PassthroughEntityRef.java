@@ -58,6 +58,11 @@ public class PassthroughEntityRef<T extends Entity, C, U> implements EntityRef<T
   }
 
   @Override
+  public boolean isValid() {
+    return passthroughConnection.isValid();
+  }
+
+  @Override
   public T fetchEntity(U userData) throws EntityNotFoundException, EntityVersionMismatchException {
     long clientInstanceID = this.passthroughConnection.getNewInstanceID();
     PassthroughMessage getMessage = PassthroughMessageCodec.createFetchMessage(this.clazz, this.name, clientInstanceID, this.version);
