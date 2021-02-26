@@ -95,6 +95,11 @@ public class PassthroughConnection implements Connection {
     this.clientResponseWaitQueue = new Vector<Waiter>();
   }
 
+  @Override
+  public boolean isValid() {
+    return state == State.RUNNING;
+  }
+
   public void startProcessingRequests() {
     this.clientThread = new Thread(() -> runClientThread());
     this.clientThread.setName(readerThreadName);
