@@ -179,17 +179,45 @@ public class DistributedObjectClient {
     return this.clientStopped.isSet();
   }
 
-  public void start() {
+  public boolean connectFor(long timeout, TimeUnit units) throws InterruptedException {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
 
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
 
-    start(false, socketConnectTimeout);
+    ClientMessageChannel client = internalStart(socketConnectTimeout);
+    connectionThread.set(new Thread(threadGroup, ()->{
+          while (!connectionMade.isSet() && !clientStopped.isSet() && !exceptionMade.isSet()) {
+            connectionSequence(client);
+          }
+          //  don't reset interrupted, thread is done
+        }, "Connection Maker - " + uuid));
+      connectionThread.get().start();
+
+    try {
+      return waitForConnection(timeout, units);
+    } catch (InterruptedException | RuntimeException | Error e) {
+      shutdown();
+      throw e;
+    }
   }
 
-  public synchronized boolean start(boolean directDrive, int socketTimeout) {
+  public boolean connectOnce(int socketTimeout) {
+    try {
+      if (!directConnect(internalStart(socketTimeout))) {
+        shutdown();
+        return false;
+      } else {
+        return true;
+      }
+    } catch (RuntimeException | Error t) {
+      shutdown();
+      throw t;
+    }
+  }
+
+  private synchronized ClientMessageChannel internalStart(int socketTimeout) {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
@@ -306,18 +334,7 @@ public class DistributedObjectClient {
 
     initChannelMessageRouter(messageRouter, EventHandler.directSink(handshake), isAsync ? multiResponseStage.getSink() : EventHandler.directSink(mutil));
 
-    if (directDrive) {
-      return directConnect(clientChannel);
-    } else {
-      connectionThread.set(new Thread(threadGroup, ()->{
-            while (!connectionMade.isSet() && !clientStopped.isSet() && !exceptionMade.isSet()) {
-              connectionSequence(clientChannel);
-            }
-            //  don't reset interrupted, thread is done
-          }, "Connection Maker - " + uuid));
-        connectionThread.get().start();
-    }
-    return false;
+    return clientChannel;
   }
 
   private boolean directConnect(ClientMessageChannel clientChannel) {
@@ -355,17 +372,23 @@ public class DistributedObjectClient {
     this.shutdownManager.registerBeforeShutdownHook(r);
   }
 
-  public boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
+  private boolean waitForConnection(long timeout, TimeUnit units) throws InterruptedException {
     if (!connectionThread.isSet()) {
       throw new IllegalStateException("not started");
     }
     connectionThread.get().join(units.toMillis(timeout));
 
     if (exceptionMade.isSet()) {
+      shutdown();
       Exception exp = exceptionMade.get();
       throw new RuntimeException(exp);
     }
-    return connectionMade.isSet();
+    if (!connectionMade.isSet()) {
+      shutdown();
+      return false;
+    } else {
+      return true;
+    }
   }
 
   private void openChannel(ClientMessageChannel channel) throws InterruptedException {

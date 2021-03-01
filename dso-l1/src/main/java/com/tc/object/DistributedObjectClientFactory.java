@@ -86,29 +86,21 @@ public class DistributedObjectClientFactory {
       }
     });
     
-    try {
-      ProductID type = builder.getTypeOfClient();
-      boolean reconnect = !type.isReconnectEnabled();
-      String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
-      if (reconnect && Integer.parseInt(timeout) < 0) {
-        while (!client.start(true, 5_000)) {
-          client.shutdown();
-          return null;
-        }
-      } else {
-        client.start();
-        if (!client.waitForConnection(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
-  //  timed out, shutdown the extra threads and return null;
-          LOGGER.warn("connection timeout {}", this);
-          client.shutdown();
-          throw new TimeoutException("connection timeout in " + timeout);
-        }
+    ProductID type = builder.getTypeOfClient();
+    boolean reconnect = !type.isReconnectEnabled();
+    String timeout = properties.getProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "0");
+    if (reconnect && Integer.parseInt(timeout) < 0) {
+      if (!client.connectOnce(5_000)) {
+        return null;
       }
-    } catch (InterruptedException | RuntimeException | Error exp) {
-//  something serious happened, try to shutdown extran threads and throw
-      client.shutdown();
-      throw exp;
+    } else {
+      if (!client.connectFor(Long.parseLong(timeout), TimeUnit.MILLISECONDS)) {
+//  timed out, shutdown the extra threads and return null;
+        LOGGER.warn("connection timeout {}", this);
+        throw new TimeoutException("connection timeout in " + timeout);
+      }
     }
+
 //  something serious happened, try to shutdown extran threads and throw
     return client;
   }

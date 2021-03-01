@@ -101,6 +101,7 @@ public class ClientLeakIT {
     try {
       leak = CLUSTER.newConnection();
     } catch (ConnectionException ce) {
+      ce.printStackTrace();
       // expected
     }
     assertNull(leak);
