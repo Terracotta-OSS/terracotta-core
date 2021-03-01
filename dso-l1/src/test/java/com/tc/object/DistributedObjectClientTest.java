@@ -55,10 +55,8 @@ public class DistributedObjectClientTest extends TestCase {
               threadGroup,
               connectionProperties
           );
-      client.start();
-      Assert.assertTrue(threadGroup.activeCount() > 0);
       long start = System.currentTimeMillis();
-      boolean connected = client.waitForConnection(10, TimeUnit.SECONDS);
+      boolean connected = client.connectFor(10, TimeUnit.SECONDS);
       Assert.assertFalse(connected);
       client.shutdown();
       Assert.assertTrue(threadGroup.activeCount() == 0);
@@ -104,11 +102,9 @@ public class DistributedObjectClientTest extends TestCase {
           null,
           false
       );
-      client.start();
-      Assert.assertTrue(threadGroup.activeCount() > 0);
       long start = System.currentTimeMillis();
       try {
-        client.waitForConnection(10, TimeUnit.SECONDS);
+        client.connectFor(10, TimeUnit.SECONDS);
         Assert.fail();
       } catch (RuntimeException exp) {
   //    expected
