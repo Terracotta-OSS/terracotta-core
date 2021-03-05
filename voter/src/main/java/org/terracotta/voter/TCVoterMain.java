@@ -18,85 +18,44 @@
  */
 package org.terracotta.voter;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import org.terracotta.voter.options.Options;
+import org.terracotta.voter.options.OptionsParsing;
+import org.terracotta.voter.options.OptionsParsingImpl;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static org.terracotta.voter.TCVoterMain.Opt.HELP;
-import static org.terracotta.voter.TCVoterMain.Opt.OVERRIDE;
-import static org.terracotta.voter.TCVoterMain.Opt.SERVER;
-
 public class TCVoterMain {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterMain.class);
-  
-  enum Opt {
-    HELP("h", "help"),
-    OVERRIDE("o", "override"),
-    SERVER("s", "server");
-
-    String shortName;
-    String longName;
-
-    Opt(String shortName, String longName) {
-      Objects.requireNonNull(shortName);
-      Objects.requireNonNull(longName);
-      this.shortName = shortName;
-      this.longName = longName;
-    }
-
-    public String getShortName() {
-      return shortName;
-    }
-
-    public String getLongName() {
-      return longName;
-    }
-  }
 
   private static final String ID = UUID.randomUUID().toString();
 
-  public void processArgs(String[] args) throws ConfigurationSetupException, ParseException {
-    DefaultParser parser = new DefaultParser();
-    Options voterOptions = voterOptions();
-    CommandLine commandLine = parser.parse(voterOptions, args);
+  public void processArgs(String[] args) throws ConfigurationSetupException {
+    OptionsParsing optionsParsing = getParsingObject();
+    CustomJCommander jCommander = new CustomJCommander(optionsParsing);
+    jCommander.parse(args);
+    Options options = optionsParsing.process();
 
-    if (commandLine.getArgList().size() > 0) {
-      throw new ConfigurationSetupException("Invalid arguments provided: " + commandLine.getArgList());
-    }
-
-    if (commandLine.hasOption(HELP.getShortName())) {
-      Options options = createHelpOptions();
-      HelpFormatter helpFormatter = new HelpFormatter();
-      helpFormatter.printHelp("start-voter.sh[bat]", options);
+    if (options.isHelp()) {
+      jCommander.usage();
       return;
     }
 
-    if (commandLine.getOptions().length == 0) {
-      throw new ConfigurationSetupException("Neither the override option -o nor the regular options -s provided");
-    }
-    
-
-    Optional<Properties> connectionProps = getConnectionProperties(commandLine);
-    if (commandLine.hasOption(SERVER.getShortName())) {
-      processServerArg(connectionProps, commandLine.getOptionValues(SERVER.getShortName()));
-    } else if (commandLine.hasOption(OVERRIDE.getShortName())) {
-      String hostPort = commandLine.getOptionValue(OVERRIDE.getShortName());
+    writePID();
+    Optional<Properties> connectionProps = getConnectionProperties(options);
+    if (options.getServersHostPort() != null) {
+      processServerArg(connectionProps, options.getServersHostPort().toArray(new String[0]));
+    } else if (options.getOverrideHostPort() != null) {
+      String hostPort = options.getOverrideHostPort();
       validateHostPort(hostPort);
       getVoter(connectionProps).overrideVote(hostPort);
     } else {
@@ -104,21 +63,16 @@ public class TCVoterMain {
     }
   }
 
-  protected Options createHelpOptions() {
-    // creating new options with long name just for display purposes.
-    Options helpOptions = new Options()
-        .addOption(Option.builder(HELP.getLongName()).desc("Help").hasArg(false).build())
-        .addOption(Option.builder(OVERRIDE.getLongName()).desc("Override vote").hasArg().argName("host:port").build())
-        .addOption(Option.builder(SERVER.getLongName()).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
-    return helpOptions;
+  protected OptionsParsing getParsingObject() {
+    return new OptionsParsingImpl();
   }
   
-  protected Optional<Properties> getConnectionProperties(CommandLine commandLine) {
+  protected Optional<Properties> getConnectionProperties(Options option) {
     return Optional.empty();
   }
 
   protected void processServerArg(Optional<Properties> connectionProps, String[] stripes) throws ConfigurationSetupException {
-    validateStripesLimit(SERVER.getShortName(), stripes);
+    validateStripesLimit(stripes);
     String[] hostPorts = stripes[0].split(",");
     for (String hostPort : hostPorts) {
       validateHostPort(hostPort);
@@ -134,17 +88,10 @@ public class TCVoterMain {
     new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
   }
 
-  protected void validateStripesLimit(String option, String[] args) throws ConfigurationSetupException {
+  protected void validateStripesLimit(String[] args) throws ConfigurationSetupException {
     if (args.length > 1) {
-      throw new ConfigurationSetupException("Usage of multiple -" + option + " options not supported");
+      throw new ConfigurationSetupException("Usage of multiple -connect-to options not supported");
     }
-  }
-
-  protected Options voterOptions() {
-    return new Options()
-        .addOption(Option.builder(HELP.getShortName()).longOpt(HELP.getLongName()).desc("Help").hasArg(false).build())
-        .addOption(Option.builder(OVERRIDE.getShortName()).longOpt(OVERRIDE.getLongName()).desc("Override vote").hasArg().argName("host:port").build())
-        .addOption(Option.builder(SERVER.getShortName()).longOpt(SERVER.getLongName()).desc("Server host:port").hasArgs().argName("host:port[,host:port...]").valueSeparator().build());
   }
 
   protected void validateHostPort(String hostPort) throws ConfigurationSetupException {
@@ -160,9 +107,8 @@ public class TCVoterMain {
     }
   }
 
-  public static void main(String[] args) throws ConfigurationSetupException, ParseException {
+  public static void main(String[] args) throws ConfigurationSetupException {
     TCVoterMain main = new TCVoterMain();
-    writePID();
     main.processArgs(args);
   }
 
