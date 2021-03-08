@@ -93,6 +93,7 @@ public class DumpAppender extends AppenderBase<ILoggingEvent> {
       dest.toFile().mkdirs();
     }
     try {
+      new LogEvent(eventObject.getLoggerName(), eventObject.getLevel().toString(), eventObject.getFormattedMessage(), true).commit();
       continuous.dump(dest.resolve(timestamp + ".jfr"));
     } catch (IOException ioe) {
       throw new RuntimeException(ioe);

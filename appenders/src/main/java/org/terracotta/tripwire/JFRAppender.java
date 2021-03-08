@@ -196,6 +196,7 @@ public class JFRAppender extends AppenderBase<ILoggingEvent> {
       DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now).replace(':', '_');
     try {
       if (continuous != null) {
+        new LogEvent(eventObject.getLoggerName(), eventObject.getLevel().toString(), eventObject.getFormattedMessage(), true).commit();
         continuous.dump(recordings.resolve(timestamp + ".jfr"));
       }
     } catch (IOException ioe) {
