@@ -36,7 +36,7 @@ import org.terracotta.testing.master.TestStateManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -58,7 +58,6 @@ import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
 import org.terracotta.server.Server;
 
-import org.terracotta.testing.common.MultiplexedEventingStream;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
 import org.terracotta.testing.master.InlineStateInterlock;
@@ -194,9 +193,7 @@ class BasicInlineCluster extends Cluster {
     System.setProperty("restart.inline", Boolean.TRUE.toString());
     System.setProperty("com.tc.server.entity.processor.threads", "4");
     System.setProperty("l2.tccom.workerthreads", "4");
-    MultiplexedEventingStream stdout = new MultiplexedEventingStream(System.out);
-    System.setOut(new PrintStream(stdout));
-    
+
     Path kitDir = Paths.get(kitInstallationPath);
     File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
     testParentDir.delete();
@@ -253,7 +250,7 @@ class BasicInlineCluster extends Cluster {
           .consistentStartup(consistentStart);      
 
       String[] cmd = builder.build();
-      stripeInstaller.installNewServer(serverName, serverWorkingDir, stdout, ()->startIsolatedServer(serverWorkingDir, cmd));
+      stripeInstaller.installNewServer(serverName, serverWorkingDir, (stdout)->startIsolatedServer(serverWorkingDir, stdout, cmd));
     }
 
     cluster = ReadyStripe.configureAndStartStripe(interlock, stripeVerboseManager, stripeConfig, stripeInstaller);
@@ -310,7 +307,7 @@ class BasicInlineCluster extends Cluster {
     waitForSafe();
   }
 
-  private Server startIsolatedServer(Path serverWorking, String[] cmd) {
+  private Server startIsolatedServer(Path serverWorking, OutputStream out, String[] cmd) {
     if (cmd[0].contains("start-tc-server")) {
       cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
     }
@@ -321,8 +318,8 @@ class BasicInlineCluster extends Cluster {
       URL url = tc.toUri().toURL();
       URL resource = serverWorking.toUri().toURL();
       ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
-      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class);
-      return (Server)m.invoke(null, Arrays.asList(cmd));
+      Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class, OutputStream.class);
+      return (Server)m.invoke(null, Arrays.asList(cmd), out);
     } catch (RuntimeException mal) {
       throw mal;
     } catch (Exception e) {

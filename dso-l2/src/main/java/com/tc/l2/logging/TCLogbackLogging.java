@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.Iterator;
-import org.terracotta.server.ServerEnv;
 
 public class TCLogbackLogging {
 
@@ -116,26 +115,19 @@ public class TCLogbackLogging {
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
 
+    if (logDirFile != null) {
+      Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
+      root.addAppender(continuingAppender);
+    }
+
     Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
     if (appenders != null) {
-      if (logDir != null) {
-        Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
-        while (appenders.hasNext()) {
-          Appender<ILoggingEvent> current = appenders.next();
-          if (current instanceof BufferingAppender) {
-            root.detachAppender(current);
-            current.stop();
-            ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(continuingAppender);
-            root.addAppender(continuingAppender);
-          }
-        }
-      } else {
-        while (appenders.hasNext()) {
-          Appender<ILoggingEvent> current = appenders.next();
-          if (current instanceof BufferingAppender) {
-            ((BufferingAppender<ILoggingEvent>) current).disableBuffering();
-            console.detachAndStopAllAppenders();
-          }
+      while (appenders.hasNext()) {
+        Appender<ILoggingEvent> current = appenders.next();
+        if (current instanceof BufferingAppender) {
+          root.detachAppender(current);
+          current.stop();
+          ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(console);
         }
       }
     } else {
@@ -171,6 +163,7 @@ public class TCLogbackLogging {
 
       redirect.setEncoder(stdencoder);
       redirect.start();
+      console.addAppender(redirect);
     }
   }
 

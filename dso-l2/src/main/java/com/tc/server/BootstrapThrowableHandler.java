@@ -185,8 +185,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
       // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
       // before the stacktrace prints
       Throwable cause = throwableState.getThrowable();
-      cause.printStackTrace(System.err);
-      System.err.flush();
+
       TCLogging.getConsoleLogger().error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers. " + cause.getMessage(),
                    cause);
       int tab = 0;

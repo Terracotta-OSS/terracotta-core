@@ -19,6 +19,9 @@
 package com.tc.server;
 
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -44,32 +47,30 @@ public class TCServerMain {
   }
 
   public static boolean startServer(String[] args) {
-    try {
-      Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
-
-      ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
-
-      Server server = ServerFactory.createServer(Arrays.asList(args), serverClassLoader);
-
-      return server.waitUntilShutdown();
-    } catch (RuntimeException t) {
-      throw t;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    Server s = createServer(Arrays.asList(args));
+    return s.waitUntilShutdown();
   }
 
   public static Server createServer(List<String> args) {
+    return createServer(args, null);
+  }
+
+  public static Server createServer(List<String> args, OutputStream console) {
     try {
-      Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
+      if (Files.isDirectory(Directories.getServerLibFolder())) {
+        Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
 
-      ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
+        ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 
-      return ServerFactory.createServer(args, serverClassLoader);
+        return console != null ? ServerFactory.createServer(args, console, serverClassLoader) : ServerFactory.createServer(args, serverClassLoader);
+      }
     } catch (RuntimeException t) {
       throw t;
+    } catch (IOException io) {
+      throw new UncheckedIOException(io);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    throw new RuntimeException("server libraries not found");
   }
 }

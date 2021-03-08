@@ -92,7 +92,7 @@ public class ServiceLocator extends ManagedServiceLoader {
   }
       
   private static URL[] createURLS(Path plugins) {
-    if (Files.exists(plugins) && Files.isDirectory(plugins)) {
+    if (Files.isDirectory(plugins)) {
       try {
         return Files.list(plugins)
           .filter(ServiceLocator::fileFilter)
@@ -103,7 +103,7 @@ public class ServiceLocator extends ManagedServiceLoader {
         throw new UncheckedIOException(io);
       }
     }
-    return new URL[0];
+    throw new RuntimeException("plugins directory is not valid");
   }
   
   private static URL[] findPluginURLS() throws FileNotFoundException {

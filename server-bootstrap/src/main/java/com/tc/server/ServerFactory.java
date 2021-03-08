@@ -30,6 +30,8 @@ public class ServerFactory {
     try {
       ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
       return s.iterator().next().createServer(args, loader);
+    } catch (Error | RuntimeException notfound) {
+      throw notfound;
     } catch (Exception notfound) {
       throw new RuntimeException(notfound);
     }
@@ -39,6 +41,8 @@ public class ServerFactory {
     try {
       ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
       return s.iterator().next().createServer(args, console, loader);
+    } catch (Error | RuntimeException notfound) {
+      throw notfound;
     } catch (Exception notfound) {
       throw new RuntimeException(notfound);
     }
