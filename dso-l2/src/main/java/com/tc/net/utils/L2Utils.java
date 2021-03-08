@@ -18,12 +18,16 @@
  */
 package com.tc.net.utils;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import org.slf4j.Logger;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 public class L2Utils {
   private static final int MAX_DEFAULT_COMM_THREADS = 16;
@@ -98,5 +102,17 @@ public class L2Utils {
     int threadsCount = cpusCount.multiply(utilization).multiply(BigDecimal.ONE
         .add(waitTime.divide(computeTime, 1, RoundingMode.HALF_UP))).setScale(0, RoundingMode.HALF_UP).intValue();
     return (wait == 0) ? threadsCount + 1 : threadsCount;
+  }
+
+  public static void handleInterrupted(Logger log, InterruptedException ie) {
+    Server server = ServerEnv.getServer();
+    if (server == null || !server.isStopped()) {
+      if (log != null) {
+        log.error("thread was interrupted", ie);
+      }
+      throw new AssertionError(ie);
+    } else {
+      throw new TCNotRunningException(ie);
+    }
   }
 }

@@ -32,6 +32,7 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupResponse;
+import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.util.Collections;
@@ -41,6 +42,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.terracotta.server.ServerEnv;
 
 public class ElectionManagerImpl implements ElectionManager {
 
@@ -213,8 +215,9 @@ public class ElectionManagerImpl implements ElectionManager {
       try {
         winnerID = doElection(myNodeId, servers, isNew, weightsFactory, currentState);
       } catch (InterruptedException e) {
-        logger.error("Interrupted during election : ", e);
+        L2Utils.handleInterrupted(logger, e);
         reset(ServerID.NULL_ID, null);
+        return ServerID.NULL_ID;
       } catch (GroupException e1) {
         logger.error("Error during election : ", e1);
         reset(ServerID.NULL_ID, null);

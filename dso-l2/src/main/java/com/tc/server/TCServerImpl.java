@@ -37,6 +37,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
+import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -426,7 +427,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       try {
         wait();
       } catch (InterruptedException e) {
-        throw new AssertionError(e);
+        L2Utils.handleInterrupted(logger,e);
       }
     }
     return restart;

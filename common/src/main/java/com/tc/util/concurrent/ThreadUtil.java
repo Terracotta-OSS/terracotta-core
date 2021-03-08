@@ -18,6 +18,7 @@
  */
 package com.tc.util.concurrent;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,5 +55,12 @@ public class ThreadUtil {
         Thread.currentThread().interrupt();
       }
     }
+  }
+
+  public static Thread executeInThread(Runnable run, String name, boolean asDaemon) {
+    Thread t = new Thread(run, "Single Task Executor: " + name);
+    t.setDaemon(asDaemon);
+    t.start();
+    return t;
   }
 }

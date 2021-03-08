@@ -20,6 +20,7 @@ package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.NodeID;
+import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.impl.Topology;
 
 import java.util.Collection;
@@ -65,7 +66,7 @@ public class DiagnosticModeConsistencyManager implements ConsistencyManager {
     try {
       new CountDownLatch(1).await();
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+          L2Utils.handleInterrupted(null, e);
     }
   }
 

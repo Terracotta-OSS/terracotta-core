@@ -29,6 +29,7 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.utils.L2Utils;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -194,7 +195,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
       try {
         wait();
       } catch (InterruptedException e) {
-        throw new AssertionError(e);
+        L2Utils.handleInterrupted(logger, e);
       }
     }
   }

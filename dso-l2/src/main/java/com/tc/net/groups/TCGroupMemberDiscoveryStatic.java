@@ -27,6 +27,7 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.utils.L2Utils;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -234,8 +235,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
             logger.debug("Timeout occurred while waiting for connecting completed");
           }
         } catch (InterruptedException e) {
-          logger.debug("Interrupted while waiting for connecting completed");
-          Thread.currentThread().interrupt();
+          L2Utils.handleInterrupted(logger, e);
         }
       }
     }
@@ -275,18 +275,11 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   public synchronized void pauseDiscovery() {
-    boolean interrupted = false;
-    try {
-      while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
-        try {
-          this.wait();
-        } catch (InterruptedException e) {
-          interrupted = true;
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
+    while (joinedNodes == (nodeStateMap.size() - 1) && !stopAttempt.get()) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        L2Utils.handleInterrupted(logger, e);
       }
     }
   }

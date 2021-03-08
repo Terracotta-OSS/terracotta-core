@@ -22,6 +22,7 @@ import com.tc.exception.TCServerRestartException;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import java.util.Collections;
@@ -30,6 +31,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -37,6 +40,7 @@ import java.util.Set;
  * COMPLETED acknowledgement for a specific message.
  */
 public class ActivePassiveAckWaiter {
+  private final static Logger LOGGER = LoggerFactory.getLogger(ActivePassiveAckWaiter.class);
   private final Map<ServerID, SessionID> session;
   private final Set<SessionID> start;
   private final Set<SessionID> receivedPending;
@@ -62,7 +66,7 @@ public class ActivePassiveAckWaiter {
         wait();
       }
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(LOGGER, ie);
     }
   }
   
@@ -94,7 +98,7 @@ public class ActivePassiveAckWaiter {
         wait();
      }
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(LOGGER, ie);
     }
   }
   

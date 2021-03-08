@@ -29,6 +29,7 @@ import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -1345,14 +1346,14 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
 
     private synchronized ActivePassiveAckWaiter waitForPassives() {
-      try {
-        while (waitFor == null) {
+      while (waitFor == null) {
+        try {
           this.wait();
+        } catch (InterruptedException e) {
+          L2Utils.handleInterrupted(logger, e);
         }
-        return waitFor;
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
       }
+      return waitFor;
     }
 
     @Override
@@ -1429,16 +1430,12 @@ public class ManagedEntityImpl implements ManagedEntity {
     }
 
     private synchronized void pause() {
-      boolean interrupted = false;
       while (!deferCleared) {
         try {
           this.wait();
         } catch (InterruptedException ie) {
-          interrupted = true;
+          L2Utils.handleInterrupted(logger, ie);
         }
-      }
-      if (interrupted) {
-        Thread.currentThread().interrupt();
       }
     }
 

@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.l2.msg.IBatchableGroupMessage;
-import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.utils.L2Utils;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -132,7 +132,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         wait();
       }
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(LOGGER, ie);
     }
   }
 

@@ -38,6 +38,7 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.objectserver.impl.Topology;
@@ -97,7 +98,7 @@ public class StateManagerImpl implements StateManager {
     this.topologyManager = topologyManager;
     this.electionMgr = new ElectionManagerImpl(groupManager, electionTimeInSec);
     this.electionSink = mgr.createStage(ServerConfigurationContext.L2_STATE_ELECTION_HANDLER, ElectionContext.class, this.electionMgr.getEventHandler(), 1, 1024, false, false).getSink();
-    this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024).getSink();
+    this.publishSink = mgr.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE, StateChangedEvent.class, EventHandler.consumer(this::publishStateChange), 1, 1024, false, false).getSink();
     this.clusterStatePersistor = clusterStatePersistor;
     this.startState = StateManager.convert(clusterStatePersistor.getInitialState());
   }
@@ -261,8 +262,7 @@ public class StateManagerImpl implements StateManager {
       try {
         wait(timeout);
       } catch (InterruptedException e) {
-        logger.warn("Interrupted while waiting for ACTIVE to declare WON message ! ", e);
-        break;
+        L2Utils.handleInterrupted(logger, e);
       }
       timeout = timeout - (System.currentTimeMillis() - start);
     }
@@ -771,8 +771,7 @@ public class StateManagerImpl implements StateManager {
       try {
         wait();
       } catch (InterruptedException e) {
-        // We don't expect interruption.
-        throw Assert.failure("synchronizedWaitForStart() interrupted", e);
+        L2Utils.handleInterrupted(logger, e);
       }
     }
   }

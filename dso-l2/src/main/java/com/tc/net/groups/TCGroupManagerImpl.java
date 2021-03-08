@@ -79,6 +79,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
+import com.tc.net.utils.L2Utils;
 import com.tc.spi.Guardian;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
@@ -1101,7 +1102,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         try {
           wait();
         } catch (InterruptedException e) {
-          throw new AssertionError(e);
+          L2Utils.handleInterrupted(logger, e);
         }
       }
     }

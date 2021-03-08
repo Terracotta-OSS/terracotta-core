@@ -50,6 +50,7 @@ import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ServerID;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.session.SessionID;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.util.DaemonThreadFactory;
@@ -108,7 +109,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
           this.standByNodes.wait();
         }
       } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
+        L2Utils.handleInterrupted(LOGGER, ie);
       }
     }
   }
@@ -331,7 +332,7 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
         try {
           TimeUnit.SECONDS.sleep(2);
         } catch (InterruptedException ie) {
-          LOGGER.info("interrupted while waiting for permission to remove node");
+          L2Utils.handleInterrupted(LOGGER, ie);
         }
       }
 // first remove it from the list of passive nodes so that anything sending new messages 

@@ -80,8 +80,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
 
   @Override
   public void shutdown() {
+    l2Coordinator.getStateManager().moveToStopState();
     shutdownItems.forEach(Runnable::run);
     clientHandshakeManager.stop();
-    l2Coordinator.getStateManager().moveToStopState();
   }
 }

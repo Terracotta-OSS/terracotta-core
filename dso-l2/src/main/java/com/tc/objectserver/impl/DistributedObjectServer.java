@@ -161,7 +161,6 @@ import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
-import com.tc.util.CommonShutDownHook;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
@@ -823,13 +822,10 @@ public class DistributedObjectServer {
       this.connectionManager.shutdown();
       this.serviceRegistry.shutdown();
       this.timer.cancelAll();
-      this.timer.stop();
       this.context.shutdown();
+      this.timer.stop();
       this.configSetupManager.close();
-      Thread killer = new Thread(this::killThreads);
-      killer.setDaemon(true);
-      killer.start();
-      logger.info("L2 Exiting...");
+      ThreadUtil.executeInThread(this::killThreads, "Shutdown", false);
     }
   }
 
@@ -842,15 +838,18 @@ public class DistributedObjectServer {
       Thread[] list = new Thread[ac];
       threadGroup.enumerate(list, true);
       for (Thread t : list) {
-        if (t != null && !t.isDaemon()) {
+        if (t != null && t != Thread.currentThread()) {
           t.interrupt();
-          complete = false;
+          try {
+            t.join(500);
+          } catch (InterruptedException i) {
+            L2Utils.handleInterrupted(logger, i);
+          }
+          complete = complete && !t.isAlive();
         }
       }
-      if (!complete) {
-        ThreadUtil.reallySleep(2000);
-      }
     }
+    logger.info("L2 Exiting...");
   }
 
   private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
@@ -1179,7 +1178,7 @@ public class DistributedObjectServer {
         try {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException ie) {
-          logger.warn("client server port binding interrupted:", ie);
+          L2Utils.handleInterrupted(logger, ie);
           throw bind;
         }
       }

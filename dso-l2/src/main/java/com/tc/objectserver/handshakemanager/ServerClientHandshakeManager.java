@@ -31,6 +31,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeAckMessage;
@@ -210,7 +211,7 @@ public class ServerClientHandshakeManager {
       try {
         TimeUnit.SECONDS.sleep(5);
       } catch (InterruptedException i) {
-        throw new RuntimeException(i);
+        L2Utils.handleInterrupted(null, i);
       }
     }
     // It is important to start all the managers before sending the ack to the clients

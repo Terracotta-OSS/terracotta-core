@@ -26,6 +26,7 @@ import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
@@ -127,7 +128,9 @@ public abstract class AbstractServerEntityRequestResponse implements ServerEntit
       if(transactionOrderPersistenceFuture != null) {
         try {
           transactionOrderPersistenceFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException ie) {
+          L2Utils.handleInterrupted(null, ie);
+        } catch (ExecutionException e) {
           throw new RuntimeException("Caught exception while persisting transaction order", e);
         }
       }
