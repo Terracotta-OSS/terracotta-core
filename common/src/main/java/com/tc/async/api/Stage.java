@@ -24,6 +24,7 @@ import java.util.Map;
  * @author steve
  */
 public interface Stage<EC> {
+  public void stop();
 
   public void destroy();
 

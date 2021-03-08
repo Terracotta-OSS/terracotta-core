@@ -30,6 +30,8 @@ import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.ProductInfo;
 import com.tc.spi.Guardian;
 import com.tc.spi.Pauseable;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;
@@ -61,7 +63,12 @@ public class Bootstrap implements BootstrapService {
 
   @Override
   public Server createServer(List<String> args, ClassLoader loader) throws ConfigurationException {
-    TCLogbackLogging.bootstrapLogging();
+    return createServer(args, null, loader);
+  }
+
+  @Override
+  public Server createServer(List<String> args, OutputStream out, ClassLoader loader) throws ConfigurationException {
+    TCLogbackLogging.bootstrapLogging(out);
     ServiceLocator locator = ServiceLocator.createPlatformServiceLoader(loader);
 
     ServerConfigurationManager setup = new ServerConfigurationManager(

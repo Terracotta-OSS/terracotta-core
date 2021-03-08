@@ -162,7 +162,7 @@ public class StageManagerImpl implements StageManager {
   @Override
   public void stopAll() {
     for (Stage<?> s : stages.values()) {
-      s.destroy();
+      s.stop();
     }
     stages.clear();
     this.classVerifications.clear();
