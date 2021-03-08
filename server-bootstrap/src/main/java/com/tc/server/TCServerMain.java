@@ -45,7 +45,7 @@ public class TCServerMain {
 
   public static boolean startServer(String[] args) {
     try {
-      Optional<Path> p = Files.list(Directories.getServerLibFolder().toPath()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
+      Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
 
       ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 
@@ -61,7 +61,7 @@ public class TCServerMain {
 
   public static Server createServer(List<String> args) {
     try {
-      Optional<Path> p = Files.list(Directories.getServerLibFolder().toPath()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
+      Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
 
       ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 

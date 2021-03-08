@@ -26,13 +26,15 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.server.Directories;
 import com.tc.util.ManagedServiceLoader;
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -76,26 +78,30 @@ public class ServiceLocator extends ManagedServiceLoader {
     return null;
   }
     
-  private static boolean fileFilter(File target) {
-    String name = target.getName().toLowerCase();
+  private static boolean fileFilter(Path target) {
+    String name = target.toString().toLowerCase();
     return name.endsWith(".jar") || name.endsWith(".zip");
   }
   
-  private static URL toURL(File uri) {
+  private static URL toURL(Path uri) {
     try {
-      return uri.toURI().toURL();
+      return uri.toUri().toURL();
     } catch (MalformedURLException mal) {
       return null;
     }
   }
       
-  private static URL[] createURLS(File plugins) {
-    if (plugins.exists() && plugins.isDirectory()) {
-      return Arrays.stream(plugins.listFiles())
-        .filter(ServiceLocator::fileFilter)
-        .map(ServiceLocator::toURL)
-        .filter(u->u!=null)
-        .toArray(i->new URL[i]);
+  private static URL[] createURLS(Path plugins) {
+    if (Files.exists(plugins) && Files.isDirectory(plugins)) {
+      try {
+        return Files.list(plugins)
+          .filter(ServiceLocator::fileFilter)
+          .map(ServiceLocator::toURL)
+          .filter(u->u!=null)
+          .toArray(i->new URL[i]);
+      } catch (IOException io) {
+        throw new UncheckedIOException(io);
+      }
     }
     return new URL[0];
   }

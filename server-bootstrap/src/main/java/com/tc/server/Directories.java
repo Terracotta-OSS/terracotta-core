@@ -18,8 +18,9 @@
  */
 package com.tc.server;
 
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -63,10 +64,10 @@ public class Directories {
    * @throws FileNotFoundException If {@link #TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME} has not been set,
    *         this exception may be thrown if the installation root directory is not a directory
    */
-  static File getInstallationRoot() throws FileNotFoundException {
+  static Path getInstallationRoot() throws FileNotFoundException {
     boolean ignoreCheck = Boolean.getBoolean(TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME);
     if (ignoreCheck) {
-      return new File(System.getProperty("user.dir"));
+      return Paths.get(System.getProperty("user.dir"));
     } else {
       String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
       if (path == null || path.trim().isEmpty()) {
@@ -75,8 +76,8 @@ public class Directories {
         System.err.println("System property \"tc.install-root\" is not set, using working dir (" + path + ") as default location ");
       }
 
-      File rootPath = new File(path).getAbsoluteFile();
-      if (!rootPath.isDirectory()) {
+      Path rootPath = Paths.get(path);
+      if (!Files.isDirectory(rootPath)) {
         // formatting
         throw new FileNotFoundException("The specified Terracotta installation directory, '" + rootPath
                                         + "', located via the value of the system property '"
@@ -86,38 +87,38 @@ public class Directories {
     }
   }
 
-  public static File getDefaultConfigFile() throws FileNotFoundException {
-    return new File(getInstallationRoot(), DEFAULT_CONFIG_FILE_LOCATION);
+  public static Path getDefaultConfigFile() throws FileNotFoundException {
+    return getInstallationRoot().resolve(DEFAULT_CONFIG_FILE_LOCATION);
   }
 
-  public static File getServerLibFolder() throws FileNotFoundException {
+  public static Path getServerLibFolder() throws FileNotFoundException {
     String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
     String serverLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
-    File f = Paths.get(installRoot, serverLib).toFile();
-    if (!f.isDirectory()) {
-      throw new FileNotFoundException("server library folder at " + f.getAbsolutePath() + " is not valid");
+    Path f = Paths.get(installRoot, serverLib);
+    if (!Files.isDirectory(f)) {
+      throw new FileNotFoundException("server library folder at " + f.toAbsolutePath() + " is not valid");
     }
     return f;
   }
 
-  public static File getServerPluginsApiDir() throws FileNotFoundException {
+  public static Path getServerPluginsApiDir() throws FileNotFoundException {
     String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
     String pluginsRoot = System.getProperty(TC_PLUGINS_ROOT_PROPERTY_NAME, "plugins");
     String pluginsApi = System.getProperty(TC_PLUGINS_API_PROPERTY_NAME, "api");
-    File f = Paths.get(installRoot, pluginsRoot, pluginsApi).toFile();
-    if (!f.isDirectory()) {
-      throw new FileNotFoundException("server plugins api folder at " + f.getAbsolutePath() + " is not valid");
+    Path f = Paths.get(installRoot, pluginsRoot, pluginsApi);
+    if (!Files.isDirectory(f)) {
+      throw new FileNotFoundException("server plugins api folder at " + f.toAbsolutePath() + " is not valid");
     }
     return f;
   }
 
-  public static File getServerPluginsLibDir() throws FileNotFoundException {
+  public static Path getServerPluginsLibDir() throws FileNotFoundException {
     String installRoot = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME, System.getProperty("user.dir"));
     String pluginsRoot = System.getProperty(TC_PLUGINS_ROOT_PROPERTY_NAME, "plugins");
     String pluginsLib = System.getProperty(TC_PLUGINS_LIB_PROPERTY_NAME, "lib");
-    File f = Paths.get(installRoot, pluginsRoot, pluginsLib).toFile();
-    if (!f.isDirectory()) {
-      throw new FileNotFoundException("server plugins implementations folder at " + f.getAbsolutePath() + " is not valid");
+    Path f = Paths.get(installRoot, pluginsRoot, pluginsLib);
+    if (!Files.isDirectory(f)) {
+      throw new FileNotFoundException("server plugins implementations folder at " + f.toAbsolutePath() + " is not valid");
     }
     return f;
   }
