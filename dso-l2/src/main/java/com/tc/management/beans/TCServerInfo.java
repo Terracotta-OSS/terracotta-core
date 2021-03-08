@@ -120,6 +120,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public boolean isAcceptingClients() {
+    return server.isAcceptingClients();
+  }
+
+  @Override
   public int getReconnectWindowTimeout() {
     return server.getReconnectWindowTimeout();
   }

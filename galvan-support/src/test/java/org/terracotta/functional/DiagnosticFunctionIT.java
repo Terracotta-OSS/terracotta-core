@@ -48,6 +48,7 @@ public class DiagnosticFunctionIT {
       InetSocketAddress inet = InetSocketAddress.createUnresolved(hp[0], Integer.parseInt(hp[1]));
       try (Diagnostics d = DiagnosticsFactory.connect(inet, new Properties())) {
         System.out.println(d.getThreadDump());
+        System.out.println(d.invoke("Server", "isAcceptingClients"));
       }
     }
 

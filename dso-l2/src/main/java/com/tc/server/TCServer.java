@@ -51,6 +51,8 @@ public interface TCServer extends Pauseable {
   boolean isPassiveStandby();
   
   boolean isReconnectWindow();
+
+  boolean isAcceptingClients();
     
   State getState();
 
