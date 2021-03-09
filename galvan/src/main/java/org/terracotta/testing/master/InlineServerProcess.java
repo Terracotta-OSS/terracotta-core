@@ -44,7 +44,6 @@ public class InlineServerProcess {
   private final ITestStateManager stateManager;
   private final ContextualLogger harnessLogger;
   private final String serverName;
-  private OutputStream stdout;
   private final Path serverWorkingDir;
   private final Function<OutputStream, Server> serverStart;
   // make sure only one caller is messing around on the process
@@ -141,7 +140,7 @@ public class InlineServerProcess {
     notifyAll();
   }
 
-  private void buildEventingStream(OutputStream out) {
+  private OutputStream buildEventingStream(OutputStream out) {
     // Now, set up the event bus we will use to scrape the state from the sub-process.
     EventBus serverBus = new EventBus.Builder().id("server-bus").build();
     String pidEventName = "PID";
@@ -186,7 +185,7 @@ public class InlineServerProcess {
     serverBus.on(warn, (event) -> handleWarnLog(event));
     serverBus.on(warn, (event) -> handleErrorLog(event));
 
-    stdout = new SimpleEventingStream(serverBus, eventMap, out);
+    return new SimpleEventingStream(serverBus, eventMap, out);
   }
 
   private void handleWarnLog(Event e) {
@@ -299,18 +298,19 @@ public class InlineServerProcess {
     public void run() {
       boolean returnValue = true;
       try (OutputStream stdout = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
-        buildEventingStream(stdout);
-        while (returnValue) {
-          reset(true);
-          stateInterlock.serverDidStartup(InlineServerProcess.this);
-          try {
-            server = serverStart.apply(stdout);
-            returnValue = server.waitUntilShutdown();
-            harnessLogger.output("server process exit. restart=" + returnValue);
-            InlineServerProcess.this.didTerminateWithStatus(returnValue);
-          } catch (Exception e) {
-            didTerminateWithException(e);
-            returnValue = false;
+        try (OutputStream events = buildEventingStream(stdout)) {
+          while (returnValue) {
+            reset(true);
+            stateInterlock.serverDidStartup(InlineServerProcess.this);
+            try {
+              server = serverStart.apply(events);
+              returnValue = server.waitUntilShutdown();
+              harnessLogger.output("server process exit. restart=" + returnValue);
+              InlineServerProcess.this.didTerminateWithStatus(returnValue);
+            } catch (Exception e) {
+              didTerminateWithException(e);
+              returnValue = false;
+            }
           }
         }
       } catch (IOException io) {
