@@ -19,8 +19,11 @@
 
 package com.terracotta.connection.api;
 
+import com.tc.net.core.ProductID;
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
+import java.util.Arrays;
+import java.util.List;
 import org.terracotta.entity.EndpointConnector;
 
 
@@ -31,17 +34,17 @@ import org.terracotta.entity.EndpointConnector;
  * fail-over.
  */
 public class TerracottaConnectionService extends AbstractConnectionService {
-  private static final String SCHEME = "terracotta";
+  private static final List<String> SCHEMES = Arrays.asList("terracotta", ProductID.INFORMATIONAL.toString(), ProductID.SERVER.toString(), ProductID.STRIPE.toString());
 
   public TerracottaConnectionService() {
-    super(SCHEME);
+    super(SCHEMES);
   }
 
   public TerracottaConnectionService(EndpointConnector endpointConnector) {
-    super(SCHEME, endpointConnector, new TerracottaInternalClientFactoryImpl());
+    super(SCHEMES, endpointConnector, new TerracottaInternalClientFactoryImpl());
   }
 
   public TerracottaConnectionService(EndpointConnector endpointConnector, TerracottaInternalClientFactory clientFactory) {
-    super(SCHEME, endpointConnector, clientFactory);
+    super(SCHEMES, endpointConnector, clientFactory);
   }
 }

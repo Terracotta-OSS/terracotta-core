@@ -57,26 +57,9 @@ public class ClientShutdownManager {
     }
   }
 
-  public void execute(boolean forceImmediate) {
+  public void execute() {
     executeBeforeShutdownHooks();
 
-    closeLocalWork(forceImmediate);
-    shutdown();
-  }
-
-  private void closeLocalWork(boolean forceImmediate) {
-
-    // stop handshaking while shutting down
-    this.client.getClientHandshakeManager().shutdown();
-
-    ClientEntityManager entityMgr = this.client.getEntityManager();
-    if (entityMgr != null) {
-      entityMgr.shutdown();
-    }
-  }
-
-  private void shutdown() {
     client.shutdownResources();
   }
-
 }

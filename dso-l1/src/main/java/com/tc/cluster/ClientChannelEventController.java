@@ -28,14 +28,12 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.util.CallStackTrace;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientChannelEventController {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientChannelEventController.class);
 
   private final ClientHandshakeManager clientHandshakeManager;
-  private final AtomicBoolean          shutdown       = new AtomicBoolean(false);
   private final ClientMessageChannel channel;
 
   /**
@@ -49,10 +47,6 @@ public class ClientChannelEventController {
   private ClientChannelEventController(ClientMessageChannel channel, ClientHandshakeManager clientHandshakeManager) {
     this.clientHandshakeManager = clientHandshakeManager;
     this.channel = channel;
-  }
-
-  public void shutdown() {
-    shutdown.set(true);
   }
 
   private void channelOpened(ChannelEvent event) {
