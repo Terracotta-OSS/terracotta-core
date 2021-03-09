@@ -23,15 +23,19 @@ import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import org.terracotta.server.Server;
-import org.terracotta.testing.common.MultiplexedEventingStream;
+import org.terracotta.testing.common.SimpleEventingStream;
 
 
 
@@ -39,12 +43,10 @@ public class InlineServerProcess {
   private final InlineStateInterlock stateInterlock;
   private final ITestStateManager stateManager;
   private final ContextualLogger harnessLogger;
-  private final ContextualLogger serverLogger;
   private final String serverName;
-  private final MultiplexedEventingStream stdout;
-  private final Properties serverProperties;
+  private OutputStream stdout;
   private final Path serverWorkingDir;
-  private final Supplier<Server> serverStart;
+  private final Function<OutputStream, Server> serverStart;
   // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
 
@@ -60,18 +62,15 @@ public class InlineServerProcess {
 
 
   public InlineServerProcess(InlineStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
-                       String serverName, Path serverWorkingDir, MultiplexedEventingStream stdout, Properties serverProperties,
-                       Supplier<Server> serverStart) {
+                       String serverName, Path serverWorkingDir,
+                       Function<OutputStream, Server> serverStart) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
     this.harnessLogger = serverVerboseManager.createHarnessLogger();
-    this.serverLogger = serverVerboseManager.createServerLogger();
 
     this.serverName = serverName;
     // We need to specify a positive integer as the heap size.
-    this.stdout = stdout;
-    this.serverProperties = serverProperties;
     this.serverWorkingDir = serverWorkingDir;
     this.serverStart = serverStart;
     // We start up in the shutdown state so notify the interlock.
@@ -117,9 +116,6 @@ public class InlineServerProcess {
       // First thing we need to do is make sure that we aren't already running.
       Assert.assertFalse(this.stateInterlock.isServerRunning(this));
 
-      // Additionally, any information going through the stdout needs to be watched by the eventing stream for events.
-      buildEventingStream(stdout);
-
       ExitWaiter exitWaiter = new ExitWaiter();
       exitWaiter.start();
     } finally {
@@ -145,7 +141,7 @@ public class InlineServerProcess {
     notifyAll();
   }
 
-  private void buildEventingStream(MultiplexedEventingStream stdout) {
+  private void buildEventingStream(OutputStream out) {
     // Now, set up the event bus we will use to scrape the state from the sub-process.
     EventBus serverBus = new EventBus.Builder().id("server-bus").build();
     String pidEventName = "PID";
@@ -163,8 +159,6 @@ public class InlineServerProcess {
     eventMap.put("WARN", warn);
     eventMap.put("ERROR", err);
 
-    // We will attach the event stream to the stdout.
-    stdout.addEventMapForServer(this.serverName, serverBus, eventMap);
     serverBus.on(activeReadyName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
@@ -191,6 +185,8 @@ public class InlineServerProcess {
     });
     serverBus.on(warn, (event) -> handleWarnLog(event));
     serverBus.on(warn, (event) -> handleErrorLog(event));
+
+    stdout = new SimpleEventingStream(serverBus, eventMap, out);
   }
 
   private void handleWarnLog(Event e) {
@@ -302,19 +298,23 @@ public class InlineServerProcess {
     @Override
     public void run() {
       boolean returnValue = true;
-
-      while (returnValue) {
-        reset(true);
-        stateInterlock.serverDidStartup(InlineServerProcess.this);
-        try {
-          server = serverStart.get();
-          returnValue = server.waitUntilShutdown();
-          harnessLogger.output("server process exit. restart=" + returnValue);
-          InlineServerProcess.this.didTerminateWithStatus(returnValue);
-        } catch (Exception e) {
-          didTerminateWithException(e);
-          returnValue = false;
+      try (OutputStream stdout = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
+        buildEventingStream(stdout);
+        while (returnValue) {
+          reset(true);
+          stateInterlock.serverDidStartup(InlineServerProcess.this);
+          try {
+            server = serverStart.apply(stdout);
+            returnValue = server.waitUntilShutdown();
+            harnessLogger.output("server process exit. restart=" + returnValue);
+            InlineServerProcess.this.didTerminateWithStatus(returnValue);
+          } catch (Exception e) {
+            didTerminateWithException(e);
+            returnValue = false;
+          }
         }
+      } catch (IOException io) {
+        throw new UncheckedIOException(io);
       }
     }
   }

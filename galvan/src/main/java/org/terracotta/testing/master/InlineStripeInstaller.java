@@ -20,13 +20,13 @@ import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.logging.VerboseManager;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import org.terracotta.server.Server;
-import org.terracotta.testing.common.MultiplexedEventingStream;
 
 
 /**
@@ -47,7 +47,7 @@ public class InlineStripeInstaller {
     this.stripeConfig = stripeConfig;
   }
 
-  public void installNewServer(String serverName, Path workingDir, MultiplexedEventingStream stdout, Supplier<Server> serverStart) throws IOException {
+  public void installNewServer(String serverName, Path workingDir, Function<OutputStream, Server> serverStart) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // server install is now at the stripe level to use less disk
@@ -55,7 +55,7 @@ public class InlineStripeInstaller {
     // Create the object representing this single installation and add it to the list for this stripe.
     VerboseManager serverVerboseManager = this.stripeVerboseManager.createComponentManager("[" + serverName + "]");
     InlineServerProcess serverProcess = new InlineServerProcess(this.interlock, this.stateManager, serverVerboseManager, serverName,
-        workingDir, stdout, stripeConfig.getServerProperties(), serverStart);
+        workingDir, serverStart);
     serverProcesses.add(serverProcess);
   }
 
