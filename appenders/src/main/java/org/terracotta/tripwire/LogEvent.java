@@ -28,10 +28,16 @@ public class LogEvent extends Event {
   private final String level;
   private final String name;
   private final String statement;
+  private final boolean artifact;
   
   public LogEvent(String name, String level, String statement) {
+    this(name, level, statement, false);
+  }
+
+  public LogEvent(String name, String level, String statement, boolean dumpEvent) {
     this.name = name;
     this.level = level;
     this.statement = statement;
+    this.artifact = dumpEvent;
   }
 }
