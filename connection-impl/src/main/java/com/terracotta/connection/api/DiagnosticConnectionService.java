@@ -21,6 +21,7 @@ package com.terracotta.connection.api;
 
 import com.terracotta.connection.TerracottaInternalClientFactory;
 import com.terracotta.connection.TerracottaInternalClientFactoryImpl;
+import java.util.Collections;
 import org.terracotta.entity.EndpointConnector;
 
 /**
@@ -33,14 +34,14 @@ public class DiagnosticConnectionService extends AbstractConnectionService {
   private static final String SCHEME = "diagnostic";
 
   public DiagnosticConnectionService() {
-    super(SCHEME);
+    super(Collections.singletonList(SCHEME));
   }
 
   public DiagnosticConnectionService(EndpointConnector endpointConnector) {
-    super(SCHEME, endpointConnector, new TerracottaInternalClientFactoryImpl());
+    super(Collections.singletonList(SCHEME), endpointConnector, new TerracottaInternalClientFactoryImpl());
   }
 
   public DiagnosticConnectionService(EndpointConnector endpointConnector, TerracottaInternalClientFactory clientFactory) {
-    super(SCHEME, endpointConnector, clientFactory);
+    super(Collections.singletonList(SCHEME), endpointConnector, clientFactory);
   }
 }

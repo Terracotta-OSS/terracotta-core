@@ -39,15 +39,15 @@ import org.terracotta.entity.EndpointConnector;
 
 abstract class AbstractConnectionService implements ConnectionService {
 
-  private final String scheme;
+  private final List<String> scheme;
   private final EndpointConnector endpointConnector;
   private final TerracottaInternalClientFactory clientFactory;
 
-  AbstractConnectionService(String scheme) {
+  AbstractConnectionService(List<String> scheme) {
     this(scheme, new EndpointConnectorImpl(), new TerracottaInternalClientFactoryImpl());
   }
 
-  AbstractConnectionService(String scheme,
+  AbstractConnectionService(List<String> scheme,
                             EndpointConnector endpointConnector,
                             TerracottaInternalClientFactory clientFactory) {
     this.scheme = scheme;
@@ -62,7 +62,7 @@ abstract class AbstractConnectionService implements ConnectionService {
 
   @Override
   public boolean handlesConnectionType(String connectionType) {
-    return this.scheme.equals(connectionType);
+    return this.scheme.contains(connectionType);
   }
 
   @Override
@@ -95,21 +95,21 @@ abstract class AbstractConnectionService implements ConnectionService {
       int port = Math.max(oneHost.getPort(), 0);
       serverAddresses.add(InetSocketAddress.createUnresolved(oneHost.getHost(), port));
     }
-    return createConnection(serverAddresses, properties);
+    return createConnection(uri.getScheme(), serverAddresses, properties);
   }
 
   @Override
   public final Connection connect(Iterable<InetSocketAddress> serverAddresses, Properties properties) throws ConnectionException {
-    String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, scheme);
+    String connectionType = properties.getProperty(ConnectionPropertyNames.CONNECTION_TYPE, scheme.get(0));
     if (!handlesConnectionType(connectionType)) {
       throw new IllegalArgumentException("Unknown connectionType " + connectionType);
     }
 
-    return createConnection(serverAddresses, properties);
+    return createConnection(connectionType, serverAddresses, properties);
   }
 
-  private Connection createConnection(Iterable<InetSocketAddress> serverAddresses, Properties properties) throws DetailedConnectionException {
-    final TerracottaInternalClient client = clientFactory.createL1Client(scheme, serverAddresses, properties);
+  private Connection createConnection(String type, Iterable<InetSocketAddress> serverAddresses, Properties properties) throws DetailedConnectionException {
+    final TerracottaInternalClient client = clientFactory.createL1Client(type, serverAddresses, properties);
     properties.put("connection", serverAddresses);
     client.init();
     return new TerracottaConnection(properties, client::getClientEntityManager, endpointConnector, client::shutdown);
