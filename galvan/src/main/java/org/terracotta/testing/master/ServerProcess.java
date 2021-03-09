@@ -232,10 +232,10 @@ public class ServerProcess {
   }
 
   private String getJavaHome() {
-    String javaHome = System.getenv("JAVA_HOME");
+    String javaHome = System.getProperty("java.home");
     if (null == javaHome) {
       // Use the existing JRE path from the java.home in the current JVM instance as the JAVA_HOME.
-      javaHome = System.getProperty("java.home");
+      javaHome = System.getenv("JAVA_HOME");
       // This better exist.
       Assert.assertNotNull(javaHome);
       // Log that we did this.
