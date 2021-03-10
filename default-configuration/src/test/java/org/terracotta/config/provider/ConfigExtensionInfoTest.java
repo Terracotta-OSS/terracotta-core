@@ -18,14 +18,11 @@
  */
 package org.terracotta.config.provider;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.Enumeration;
 import java.util.ServiceLoader;
-import org.hamcrest.Description;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

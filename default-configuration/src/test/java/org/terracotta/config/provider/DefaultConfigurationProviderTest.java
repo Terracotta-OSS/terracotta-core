@@ -64,7 +64,6 @@ import static org.terracotta.config.provider.DefaultConfigurationProvider.DEFAUL
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CONFIG_PATH;
 import static com.tc.server.Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME;
 import java.util.Arrays;
-import static org.hamcrest.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;

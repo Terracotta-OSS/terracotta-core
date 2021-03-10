@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.tc.net.protocol.TCProtocolAdaptor;
-import java.io.EOFException;
 
 /**
  * The {@link TCConnectionManager} implementation.

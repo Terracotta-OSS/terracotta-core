@@ -18,7 +18,6 @@
  */
 package org.terracotta.testing.rules;
 
-import java.io.File;
 import java.io.IOException;
 import org.junit.Rule;
 import org.junit.Test;

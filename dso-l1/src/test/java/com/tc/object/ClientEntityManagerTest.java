@@ -32,7 +32,6 @@ import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.InvokeFuture;
-import org.terracotta.entity.InvokeMonitor;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.ConnectionClosedException;

@@ -19,7 +19,6 @@
 package com.tc.l2;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.tc.objectserver.impl.ThisServerNodeId;
 import com.tc.properties.TCPropertiesImpl;

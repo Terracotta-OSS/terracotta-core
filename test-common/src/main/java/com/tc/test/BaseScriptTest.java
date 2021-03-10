@@ -67,7 +67,6 @@ import static com.tc.test.ScriptTestUtil.extractArguments;
 import static com.tc.test.ScriptTestUtil.extractEnvironment;
 import static com.tc.test.ScriptTestUtil.extractProperties;
 import static java.lang.System.arraycopy;
-import java.nio.file.CopyOption;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 

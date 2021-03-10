@@ -19,7 +19,6 @@
 package com.tc.net.groups;
 
 import com.tc.io.TCSerializable;
-import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 

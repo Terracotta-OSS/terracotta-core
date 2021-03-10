@@ -27,7 +27,6 @@ import com.tc.config.ServerConfigurationManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
-import static com.tc.lang.ServerExitStatus.EXITCODE_RESTART_REQUEST;
 
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerMBean;

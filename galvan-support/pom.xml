@@ -96,7 +96,6 @@ limitations under the License.
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta-utilities-port-chooser</artifactId>
-      <version>0.0.6</version>
     </dependency>
   </dependencies>
 
