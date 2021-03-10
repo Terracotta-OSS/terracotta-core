@@ -154,10 +154,9 @@ public class ServerClientHandshakeManager {
 
         // Now that we have processed everything from this resend, see if it was the last one.
         this.logger.debug("Removing client " + clientID + " from set of existing unconnected clients.");
-        this.existingUnconnectedClients.remove(clientID);
-        if (this.existingUnconnectedClients.isEmpty()) {
+        
+        if (this.existingUnconnectedClients.remove(clientID) && this.existingUnconnectedClients.isEmpty()) {
           this.logger.debug("Last existing unconnected client (" + clientID + ") now connected.  Cancelling timer");
-          this.timer.cancel();
           start();
         }
       } else {
@@ -189,7 +188,7 @@ public class ServerClientHandshakeManager {
     this.channelManager.makeChannelActive(clientID);
   }
 
-  public synchronized void notifyTimeout() {
+  synchronized void notifyTimeout() {
     if (!isStarted()) {
       this.logger
           .info("Reconnect window closing.  Killing any previously connected clients that failed to connect in time: "
@@ -205,6 +204,7 @@ public class ServerClientHandshakeManager {
 
   // Should be called from within the sync block
   private void start() {
+    this.timer.cancel();
     final Set<NodeID> cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
     while (!cids.isEmpty() && !this.consistency.requestTransition(ServerMode.ACTIVE, ClientID.NULL_ID, ConsistencyManager.Transition.ADD_CLIENT)) {
       consoleLogger.info("request to add reconnect clients has been rejected, will try again in 5 seconds");
@@ -250,10 +250,11 @@ public class ServerClientHandshakeManager {
       for (ClientID connID : existingClients) {
         this.existingUnconnectedClients.add(connID);
       }
+      startReconnectWindow();
     }
   }
 
-  public void startReconnectWindow() {
+  private void startReconnectWindow() {
     long reconnectTimeout = reconnectTimeoutSupplier.get();
     String message = "Starting reconnect window: " + reconnectTimeout + " ms. Waiting for "
                      + this.existingUnconnectedClients.size() + " clients to connect.";
@@ -262,11 +263,27 @@ public class ServerClientHandshakeManager {
     }
     this.consoleLogger.info(message);
 
-    ReconnectTimerTask reconnectTimerTask = new ReconnectTimerTask(this, timer, reconnectTimeout);
+    ReconnectTimerTask reconnectTimerTask = new ReconnectTimerTask(reconnectTimeout);
     if (reconnectTimeout < RECONNECT_WARN_INTERVAL) {
-      this.timer.schedule(reconnectTimerTask, reconnectTimeout);
+      scheduleTask(reconnectTimerTask, reconnectTimeout);
     } else {
-      this.timer.schedule(reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
+      scheduleTask(reconnectTimerTask, RECONNECT_WARN_INTERVAL, RECONNECT_WARN_INTERVAL);
+    }
+  }
+
+  private void scheduleTask(ReconnectTimerTask task, long delay) {
+    try {
+      this.timer.schedule(task, delay);
+    } catch (IllegalStateException state) {
+      logger.info("task not scheduled", state);
+    }
+  }
+
+  private void scheduleTask(ReconnectTimerTask task, long delay, long period) {
+    try {
+      this.timer.schedule(task, delay, period);
+    } catch (IllegalStateException state) {
+      logger.info("task not scheduled", state);
     }
   }
 
@@ -287,38 +304,33 @@ public class ServerClientHandshakeManager {
    * 
    * @author orion
    */
-  private static class ReconnectTimerTask extends TimerTask {
+  private class ReconnectTimerTask extends TimerTask {
 
-    private final Timer                        timer;
-    private final ServerClientHandshakeManager handshakeManager;
     private long                               timeToWait;
 
-    private ReconnectTimerTask(ServerClientHandshakeManager handshakeManager, Timer timer, long timeToWait) {
-      this.handshakeManager = handshakeManager;
-      this.timer = timer;
+    private ReconnectTimerTask(long timeToWait) {
       this.timeToWait = timeToWait;
     }
 
     @Override
     public void run() {
       this.timeToWait -= RECONNECT_WARN_INTERVAL;
-      if (this.timeToWait > 0 && this.handshakeManager.getUnconnectedClientsSize() > 0) {
+      if (this.timeToWait > 0 && ServerClientHandshakeManager.this.getUnconnectedClientsSize() > 0) {
 
-        String message = "Reconnect window active.  Waiting for " + this.handshakeManager.getUnconnectedClientsSize()
+        String message = "Reconnect window active.  Waiting for " + ServerClientHandshakeManager.this.getUnconnectedClientsSize()
                          + " clients to connect. " + this.timeToWait + " ms remaining.";
-        if (this.handshakeManager.getUnconnectedClientsSize() <= 10) {
-          message += " Unconnected Clients - " + this.handshakeManager.getUnconnectedClients();
+        if (ServerClientHandshakeManager.this.getUnconnectedClientsSize() <= 10) {
+          message += " Unconnected Clients - " + ServerClientHandshakeManager.this.getUnconnectedClients();
         }
-        this.handshakeManager.consoleLogger.info(message);
+        ServerClientHandshakeManager.this.consoleLogger.info(message);
 
         if (this.timeToWait < RECONNECT_WARN_INTERVAL) {
           cancel();
-          final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer, this.timeToWait);
-          this.timer.schedule(task, this.timeToWait);
+          final ReconnectTimerTask task = new ReconnectTimerTask(this.timeToWait);
+          scheduleTask(task, this.timeToWait);
         }
       } else {
-        this.timer.cancel();
-        this.handshakeManager.notifyTimeout();
+        ServerClientHandshakeManager.this.notifyTimeout();
       }
     }
   }
