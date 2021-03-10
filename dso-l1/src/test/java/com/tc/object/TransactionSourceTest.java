@@ -97,4 +97,10 @@ public class TransactionSourceTest {
     service.shutdown();
     Assert.assertTrue(service.awaitTermination(5, TimeUnit.SECONDS));
   }
+
+  @Test
+  public void testOldestDoesNotAssert() {
+    TransactionSource instance = new TransactionSource();
+    Assert.assertTrue(new TransactionID(instance.oldest().toLong()).isValid());
+  }
 }
