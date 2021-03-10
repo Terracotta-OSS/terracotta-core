@@ -62,6 +62,7 @@ public class ServerClientHandshakeManagerTest {
   private ServerClientHandshakeManager manager;
   private Stage voltronStage;
   private Sink voltronSink;
+  private Timer timer = mock(Timer.class);
 
   @Before
   public void setUp() throws Exception {
@@ -69,7 +70,7 @@ public class ServerClientHandshakeManagerTest {
     this.channelManager = mock(DSOChannelManager.class);
     this.transactionHandler = mock(ProcessTransactionHandler.class);
     StageManager stageManager = mock(StageManager.class);
-    Timer timer = mock(Timer.class);
+    timer = mock(Timer.class);
     Supplier<Long> reconnectTimeoutSupplier = () -> 1000L;
     Logger consoleLogger = mock(Logger.class);
     voltronStage = mock(Stage.class);
@@ -106,7 +107,6 @@ public class ServerClientHandshakeManagerTest {
     ClientID connection = mock(ClientID.class);
     Set<ClientID> existingConnections = Collections.singleton(connection);
     this.manager.setStarting(existingConnections);
-    this.manager.startReconnectWindow();
     assertTrue(this.manager.isStarting());
     assertFalse(this.manager.isStarted());
     
@@ -142,7 +142,6 @@ public class ServerClientHandshakeManagerTest {
     existingConnections.add(client1);
     existingConnections.add(client2);
     this.manager.setStarting(existingConnections);
-    this.manager.startReconnectWindow();
     assertTrue(this.manager.isStarting());
     assertFalse(this.manager.isStarted());
     
@@ -185,5 +184,24 @@ public class ServerClientHandshakeManagerTest {
     this.manager.setStarting(existingConnections);
     this.manager.notifyTimeout();
     assertTrue(this.manager.getUnconnectedClients().isEmpty());
+  }
+
+  @Test
+  public void testNoTimer() throws Exception {
+    ClientID client1 = new ClientID(1);
+    ConnectionID connection1 = mock(ConnectionID.class);
+    when(connection1.getChannelID()).thenReturn(1L);
+    when(this.channelManager.getClientIDFor(new ChannelID(1))).thenReturn(client1);
+
+    Set<ClientID> existingConnections = new HashSet<>();
+    existingConnections.add(client1);
+    this.manager.setStarting(existingConnections);
+    ClientHandshakeMessage handshake = mock(ClientHandshakeMessage.class);
+    when(handshake.getSourceNodeID()).thenReturn(client1);
+    when(handshake.getChannel()).thenReturn(mock(MessageChannel.class));
+    this.manager.notifyClientConnect(handshake, entityManager, transactionHandler);
+    assertTrue(this.manager.isStarted());
+    assertTrue(this.manager.getUnconnectedClients().isEmpty());
+    verify(timer).cancel();
   }
 }

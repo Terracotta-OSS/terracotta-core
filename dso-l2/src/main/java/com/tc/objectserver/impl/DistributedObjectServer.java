@@ -1184,9 +1184,6 @@ public class DistributedObjectServer {
         }
       }
     }
-    if (!existingConnections.isEmpty()) {
-      this.context.getClientHandshakeManager().startReconnectWindow();
-    }
     consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(this.l1Listener)
                        + " successfully, and is now ready for work.");
   }
