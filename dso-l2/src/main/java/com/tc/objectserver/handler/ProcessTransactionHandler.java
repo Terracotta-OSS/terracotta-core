@@ -36,6 +36,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -464,7 +465,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
       if(future != null) {
         try {
           future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException ie) {
+          L2Utils.handleInterrupted(LOGGER, ie);
+        } catch (ExecutionException e) {
           throw new RuntimeException(e);
         }
       }

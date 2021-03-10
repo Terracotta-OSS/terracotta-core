@@ -37,6 +37,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
+import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -183,7 +184,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   
   @Override
   public void start() {
-    if (!this.isStarted()) {
+    if (this.stateManager == null) {
       try {
         startServer().get();
       } catch (Throwable t) {
@@ -264,7 +265,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public synchronized boolean isStarted() {
-    return this.stateManager != null && this.stateManager.getCurrentMode() != ServerMode.START;
+    return this.stateManager == null || this.stateManager.getCurrentMode() != ServerMode.START;
   }
 
   @Override
@@ -275,7 +276,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public synchronized boolean isStopped() {
     // XXX:: introduce a new state when stop is officially supported.
-    return this.stateManager == null || this.stateManager.getCurrentMode() == ServerMode.STOP;
+    return this.stateManager != null && this.stateManager.getCurrentMode() == ServerMode.STOP;
   }
 
   @Override
@@ -291,6 +292,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public boolean isReconnectWindow() {
     return dsoServer.getContext().getClientHandshakeManager().isStarting();
+  }
+
+  @Override
+  public boolean isAcceptingClients() {
+    return dsoServer.getContext().getClientHandshakeManager().isStarted();
   }
 
   @Override
@@ -364,7 +370,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   private void startDSOServer() throws Exception {
-    Assert.assertTrue(this.isStopped());
+    Assert.assertTrue(this.stateManager == null);
     DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
     server.start();
     MBeanServer mbean = ServerEnv.getServer().getManagement().getMBeanServer();
@@ -426,7 +432,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       try {
         wait();
       } catch (InterruptedException e) {
-        throw new AssertionError(e);
+        L2Utils.handleInterrupted(logger,e);
       }
     }
     return restart;

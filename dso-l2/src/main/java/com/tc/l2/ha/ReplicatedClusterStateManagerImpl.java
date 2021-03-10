@@ -21,7 +21,6 @@ package com.tc.l2.ha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.exception.TCRuntimeException;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.state.ServerMode;
@@ -36,6 +35,7 @@ import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
+import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import org.terracotta.configuration.ConfigurationProvider;
@@ -48,7 +48,7 @@ import java.util.Map;
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
     ConnectionIDFactoryListener {
 
-  private static final Logger logger = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
 
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
@@ -103,18 +103,18 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   private void waitUntilActive() {
     while (!isActive) {
-      logger.info("Waiting since ReplicatedClusterStateManager hasn't gone ACTIVE yet ...");
+      LOGGER.info("Waiting since ReplicatedClusterStateManager hasn't gone ACTIVE yet ...");
       try {
         wait(3000);
       } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
+        L2Utils.handleInterrupted(LOGGER, e);
       }
     }
   }
 
   private boolean validateResponse(NodeID nodeID, ClusterStateMessage msg) {
     if (msg == null || msg.getType() != ClusterStateMessage.OPERATION_SUCCESS) {
-      logger.error("Recd wrong response from : " + nodeID + " : msg = " + msg
+      LOGGER.error("Recd wrong response from : " + nodeID + " : msg = " + msg
                    + " while publishing Cluster State");
       return false;
     } else {
@@ -160,7 +160,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   private void handleClusterStateMessage(NodeID fromNode, ClusterStateMessage msg) {
     if (stateManager.isActiveCoordinator()) {
-      logger.warn("Recd ClusterStateMessage from " + fromNode
+      LOGGER.warn("Recd ClusterStateMessage from " + fromNode
                   + " while I am the cluster co-ordinator. This is bad. Sending NG response. ");
       sendNGSplitBrainResponse(fromNode, msg);
     } else {
@@ -187,7 +187,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     try {
       groupManager.sendTo(fromNode, ClusterStateMessage.createOKResponse(msg));
     } catch (GroupException e) {
-      logger.error("Error handling message : " + msg, e);
+      LOGGER.error("Error handling message : " + msg, e);
     }
   }
 
@@ -195,7 +195,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     try {
       groupManager.sendTo(fromNode, ClusterStateMessage.createNGSplitBrainResponse(msg));
     } catch (GroupException e) {
-      logger.error("Error handling message : " + msg, e);
+      LOGGER.error("Error handling message : " + msg, e);
     }
   }
 

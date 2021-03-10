@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 
 
@@ -43,7 +44,7 @@ public final class ManagedEntitySyncInterop {
       }
       syncsReadyToStart += 1;
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(null, ie);
     }
   }
 
@@ -54,7 +55,7 @@ public final class ManagedEntitySyncInterop {
       }
       lifecycleOccuring += 1;
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(null, ie);
     }
   }
   
@@ -74,7 +75,7 @@ public final class ManagedEntitySyncInterop {
       }
       lifecycleOccuring += 1;
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(null, ie);
     }
   } 
 

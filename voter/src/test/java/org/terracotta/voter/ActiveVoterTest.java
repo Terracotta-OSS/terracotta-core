@@ -248,7 +248,7 @@ public class ActiveVoterTest {
   }
 
   @Test
-  public void testReregistrationWhenAllStaticHostPortsNotAvailable() throws TimeoutException {
+  public void testReregistrationWhenAllStaticHostPortsNotAvailable() throws TimeoutException, InterruptedException {
     Map<String, String> servers = new HashMap<String, String>() {{
       put("ACTIVE-COORDINATOR", "localhost:1234");
       put("PASSIVE-STANDBY", "localhost:1235");
@@ -275,6 +275,7 @@ public class ActiveVoterTest {
 
     waitForLogMessage("Vote owner state: ACTIVE-COORDINATOR");
 
+    Thread.sleep(5000L); // wait for reg retry
     verify(passiveManager, atLeastOnce()).registerVoter(VOTER_ID);
   }
 

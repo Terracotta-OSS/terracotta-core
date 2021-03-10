@@ -88,6 +88,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   boolean isVerboseGC();
   
   boolean isReconnectWindow();
+
+  boolean isAcceptingClients();
   
   int getReconnectWindowTimeout();
 

@@ -38,6 +38,11 @@ public class MockStage implements Stage {
   }
 
   @Override
+  public void stop() {
+
+  }
+
+  @Override
   public void destroy() {
     //
   }

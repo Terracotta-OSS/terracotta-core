@@ -214,7 +214,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       return defaultUserHomeConfigurationPath;
     }
 
-    return Directories.getDefaultConfigFile().toPath();
+    return Directories.getDefaultConfigFile();
   }
 
   private static Options createOptions() {

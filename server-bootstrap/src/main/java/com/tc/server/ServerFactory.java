@@ -19,6 +19,7 @@
 
 package com.tc.server;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.ServiceLoader;
 import org.terracotta.server.Server;
@@ -29,6 +30,19 @@ public class ServerFactory {
     try {
       ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
       return s.iterator().next().createServer(args, loader);
+    } catch (Error | RuntimeException notfound) {
+      throw notfound;
+    } catch (Exception notfound) {
+      throw new RuntimeException(notfound);
+    }
+  }
+  
+  public static Server createServer(List<String> args, OutputStream console, ClassLoader loader) {
+    try {
+      ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
+      return s.iterator().next().createServer(args, console, loader);
+    } catch (Error | RuntimeException notfound) {
+      throw notfound;
     } catch (Exception notfound) {
       throw new RuntimeException(notfound);
     }

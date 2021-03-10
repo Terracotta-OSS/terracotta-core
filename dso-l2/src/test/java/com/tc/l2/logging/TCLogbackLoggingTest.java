@@ -70,7 +70,7 @@ public class TCLogbackLoggingTest {
   public void testBootstrapLogging() {
     System.out.println("bootstrapLogging");
     TCLogbackLogging.resetLogging();
-    TCLogbackLogging.bootstrapLogging();
+    TCLogbackLogging.bootstrapLogging(null);
 
     // test that console logger is properly installed
     Logger test = LoggerFactory.getLogger(CONSOLE);
@@ -89,7 +89,7 @@ public class TCLogbackLoggingTest {
   public void testRedirectLogging() throws Exception {
     System.out.println("bootstrapLogging");
     TCLogbackLogging.resetLogging();
-    TCLogbackLogging.bootstrapLogging();
+    TCLogbackLogging.bootstrapLogging(null);
 
     // test that console logger is properly installed
     Logger test = LoggerFactory.getLogger(CONSOLE);

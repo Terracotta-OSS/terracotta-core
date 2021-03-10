@@ -18,6 +18,7 @@
  */
 package com.tc.l2.logging;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
 
@@ -50,8 +51,6 @@ public class BufferingAppender<E> extends ConsoleAppender<E> {
 
   public void disableBuffering() {
     this.doBuffer = false;
-    this.printToConsole = e->true;
-    sendContentsTo(this);
   }
 
   @Override
@@ -72,4 +71,11 @@ public class BufferingAppender<E> extends ConsoleAppender<E> {
     }
   }
 
+  public void sendContentsTo(ch.qos.logback.classic.Logger logger) {
+    while (true) {
+      ILoggingEvent event = (ILoggingEvent)this.buffer.poll();
+      if (event == null) break;
+      logger.callAppenders(event);
+    }
+  }
 }

@@ -34,6 +34,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
+import com.tc.net.utils.L2Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -186,7 +187,7 @@ public class VoltronMessageHandler extends AbstractEventHandler<VoltronEntityMes
           maxBackoffTime = backoffTime;
         }
       } catch (InterruptedException ie) {
-        throw new RuntimeException(ie);
+        L2Utils.handleInterrupted(LOGGER, ie);
       }
     }
     

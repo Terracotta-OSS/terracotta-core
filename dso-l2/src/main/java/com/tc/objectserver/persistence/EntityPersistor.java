@@ -20,6 +20,7 @@ package com.tc.objectserver.persistence;
 
 import com.tc.exception.ServerException;
 import com.tc.net.ClientID;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.EntityID;
 import com.tc.objectserver.persistence.EntityData.JournalEntry;
 import com.tc.objectserver.persistence.EntityData.Key;
@@ -470,7 +471,7 @@ public class EntityPersistor {
         try {
           this.wait();
         } catch (InterruptedException ie) {
-          throw new RuntimeException(ie);
+          L2Utils.handleInterrupted(LOGGER, ie);
         }
       }
       if (failed != null) {

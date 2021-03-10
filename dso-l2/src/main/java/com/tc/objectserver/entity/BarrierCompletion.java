@@ -19,6 +19,7 @@
 package com.tc.objectserver.entity;
 
 import com.tc.exception.ServerException;
+import com.tc.net.utils.L2Utils;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +34,7 @@ public class BarrierCompletion implements SimpleCompletion {
     try {
       gate.acquire();
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(null, ie);
     }
   }
   
@@ -41,7 +42,7 @@ public class BarrierCompletion implements SimpleCompletion {
     try {
       gate.tryAcquire(time, units);
     } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
+      L2Utils.handleInterrupted(null, ie);
     }
   }
   

@@ -23,6 +23,7 @@ import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
+import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.impl.Topology;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.util.Assert;
@@ -174,8 +175,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
             allow = true;
           }
         } catch (InterruptedException ie) {
-          LOGGER.info("interrupted", ie);
-          break;
+          L2Utils.handleInterrupted(LOGGER, ie);
         }
       }
     } finally {

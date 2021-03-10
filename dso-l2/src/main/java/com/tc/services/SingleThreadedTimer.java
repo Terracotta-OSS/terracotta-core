@@ -18,6 +18,7 @@
  */
 package com.tc.services;
 
+import com.tc.net.utils.L2Utils;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.PriorityQueue;
@@ -89,8 +90,7 @@ public class SingleThreadedTimer implements ISimpleTimer {
       try {
         this.wait();
       } catch (InterruptedException e) {
-        // Not currently expected.
-        Assert.fail(e.getLocalizedMessage());
+        L2Utils.handleInterrupted(null, e);
       }
     }
   }
@@ -163,8 +163,7 @@ public class SingleThreadedTimer implements ISimpleTimer {
         try {
           this.wait(millisToSleep);
         } catch (InterruptedException e) {
-          // TODO:  Determine if we want to support interruption, here.  For now, we don't.
-          Assert.fail(e.getLocalizedMessage());
+          L2Utils.handleInterrupted(null, e);
         }
       }
     }

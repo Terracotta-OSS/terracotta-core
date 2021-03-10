@@ -25,6 +25,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
@@ -35,6 +36,7 @@ import org.terracotta.tripwire.EventAppender;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.Iterator;
 
@@ -63,7 +65,7 @@ public class TCLogbackLogging {
     }
   }
 
-  public static void bootstrapLogging() {
+  public static void bootstrapLogging(OutputStream out) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
@@ -99,8 +101,8 @@ public class TCLogbackLogging {
       events.start();
       root.addAppender(events);
     }
-    if (!console.iteratorForAppenders().hasNext()) {
-      attachConsoleLogger(loggerContext, console);
+    if (!console.iteratorForAppenders().hasNext() || out != null) {
+      attachConsoleLogger(loggerContext, console, out);
     }
     ch.qos.logback.classic.Logger silent = loggerContext.getLogger(TCLogging.SILENT_LOGGER_NAME);
     silent.setAdditive(false);
@@ -113,26 +115,19 @@ public class TCLogbackLogging {
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
 
+    if (logDirFile != null) {
+      Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
+      root.addAppender(continuingAppender);
+    }
+
     Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
     if (appenders != null) {
-      if (logDir != null) {
-        Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
-        while (appenders.hasNext()) {
-          Appender<ILoggingEvent> current = appenders.next();
-          if (current instanceof BufferingAppender) {
-            root.detachAppender(current);
-            current.stop();
-            ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(continuingAppender);
-            root.addAppender(continuingAppender);
-          }
-        }
-      } else {
-        while (appenders.hasNext()) {
-          Appender<ILoggingEvent> current = appenders.next();
-          if (current instanceof BufferingAppender) {
-            ((BufferingAppender<ILoggingEvent>) current).disableBuffering();
-            console.detachAndStopAllAppenders();
-          }
+      while (appenders.hasNext()) {
+        Appender<ILoggingEvent> current = appenders.next();
+        if (current instanceof BufferingAppender) {
+          root.detachAppender(current);
+          current.stop();
+          ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(console);
         }
       }
     } else {
@@ -140,21 +135,38 @@ public class TCLogbackLogging {
     }
   }
 
-  private static void attachConsoleLogger(LoggerContext cxt, ch.qos.logback.classic.Logger console) {
-    ConsoleAppender<ILoggingEvent> append = new ConsoleAppender<>();
-    append.setContext(cxt);
-    append.setName("STDOUT");
-    append.setTarget("System.out");
-    PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-    encoder.setContext(cxt);
-    encoder.setParent(append);
-    encoder.setPattern("%d %p - %m%n");
-    encoder.start();
-    append.setEncoder(encoder);
-    append.start();
-    console.addAppender(append);
+  private static void attachConsoleLogger(LoggerContext cxt, ch.qos.logback.classic.Logger console, OutputStream out) {
+    if (out == null) {
+      ConsoleAppender<ILoggingEvent> append = new ConsoleAppender<>();
+      append.setContext(cxt);
+      append.setName("STDOUT");
+      append.setTarget("System.out");
+      PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+      encoder.setContext(cxt);
+      encoder.setParent(append);
+      encoder.setPattern("%d %p - %m%n");
+      encoder.start();
+      append.setEncoder(encoder);
+      append.start();
+      console.addAppender(append);
+    } else {
+      OutputStreamAppender<ILoggingEvent> redirect = new OutputStreamAppender<>();
+      redirect.setContext(cxt);
+      redirect.setName("ServerStdOut");
+      redirect.setOutputStream(out);
+      redirect.setImmediateFlush(true);
+      PatternLayoutEncoder stdencoder = new PatternLayoutEncoder();
+      stdencoder.setContext(cxt);
+      stdencoder.setParent(redirect);
+      stdencoder.setPattern("%d %p - %m%n");
+      stdencoder.start();
+
+      redirect.setEncoder(stdencoder);
+      redirect.start();
+      console.addAppender(redirect);
+    }
   }
-  
+
   private static void attachSilentLogger(LoggerContext cxt, ch.qos.logback.classic.Logger silent) {
     silent.setAdditive(false);
     silent.setLevel(Level.OFF);

@@ -278,7 +278,7 @@ public class DefaultConfigurationProviderTest {
   public void testWithDefaultConfigurationInInstallationDirectory() throws Exception {
     Path temporaryDirectory = temporaryFolder.newFolder("conf").toPath();
     System.setProperty(Directories.TC_INSTALL_ROOT_PROPERTY_NAME, temporaryDirectory.getParent().toString());
-    Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), Directories.getDefaultConfigFile().toPath());
+    Files.copy(this.getClass().getResourceAsStream("/simple-tc-config.xml"), Directories.getDefaultConfigFile());
 
     provider.initialize(Collections.<String>emptyList());
 

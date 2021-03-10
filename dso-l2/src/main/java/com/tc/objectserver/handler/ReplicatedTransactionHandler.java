@@ -42,6 +42,7 @@ import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.EntityID;
@@ -190,12 +191,12 @@ public class ReplicatedTransactionHandler {
         me.clearQueue();
         me.addRequestMessage(req,
             MessagePayload.emptyPayload(), 
-            new ResultCaptureImpl(null, (result)->latch.complete(), null, exception->Assert.fail()));
+            new ResultCaptureImpl(null, (result)->latch.complete(), null, exception->latch.failure(exception)));
         latch.waitForCompletion();
       }
       BarrierCompletion latch = new BarrierCompletion();
       platform.addRequestMessage(req, MessagePayload.emptyPayload(), 
-          new ResultCaptureImpl(null, (result)->latch.complete(), null, exception->Assert.fail()));
+          new ResultCaptureImpl(null, (result)->latch.complete(), null, exception->latch.failure(exception)));
 
     }    
   };
@@ -598,7 +599,9 @@ public class ReplicatedTransactionHandler {
       if(future != null) {
         try {
           future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException ie) {
+          L2Utils.handleInterrupted(LOGGER, ie);
+        } catch (ExecutionException e) {
           throw new RuntimeException("Caught exception while persisting transaction order", e);
         }
       }

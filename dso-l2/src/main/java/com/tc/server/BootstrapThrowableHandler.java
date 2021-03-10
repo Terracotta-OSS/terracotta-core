@@ -24,8 +24,8 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.RuntimeExceptionHelper;
+import com.tc.exception.TCNotRunningException;
 import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
-import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
@@ -34,17 +34,13 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.TCDataFileLockingException;
 import com.tc.util.Throwables;
-import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.startuplock.FileNotCreatedException;
 import com.tc.util.startuplock.LocationNotCreatedException;
 
-import java.lang.reflect.Field;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
@@ -96,6 +92,9 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     addCallbackOnExitExceptionHandler(LocationNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(FileNotCreatedException.class, new CallbackStartupExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(TCDataFileLockingException.class, new CallbackStartupExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(TCNotRunningException.class, new CallbackShutdownExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(InterruptedException.class, new CallbackShutdownExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(IllegalStateException.class, new CallbackShutdownExceptionLoggingAdapter());
   }
 
   @Override
@@ -126,9 +125,17 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     Object registeredExitHandlerObject;
     try {
       if ((registeredExitHandlerObject = callbackOnExitExceptionHandlers.get(proximateCause.getClass())) != null) {
-        ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
+        try {
+          ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
+        } catch (Throwable unhandled) {
+          handleDefaultException(thread, new CallbackOnExitState(unhandled));
+        }
       } else if ((registeredExitHandlerObject = callbackOnExitExceptionHandlers.get(ultimateCause.getClass())) != null) {
-        ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
+        try {
+          ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
+        } catch (Throwable unhandled) {
+          handleDefaultException(thread, new CallbackOnExitState(unhandled));
+        }
       } else {
         handleDefaultException(thread, throwableState);
       }
@@ -160,20 +167,6 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     }
   }
 
-  private synchronized void scheduleExit(final CallbackOnExitState throwableState) {
-    if (isExitScheduled) { return; }
-    isExitScheduled = true;
-
-    TimerTask timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        exit(throwableState);
-      }
-    };
-    Timer timer = new Timer("Dump On Timeout Timer");
-    timer.schedule(timerTask, TIME_OUT);
-  }
-
   private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {
     logException(thread, throwableState);
 
@@ -192,8 +185,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
       // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
       // before the stacktrace prints
       Throwable cause = throwableState.getThrowable();
-      cause.printStackTrace(System.err);
-      System.err.flush();
+
       TCLogging.getConsoleLogger().error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers. " + cause.getMessage(),
                    cause);
       int tab = 0;
@@ -210,12 +202,13 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
 
   private void exit(CallbackOnExitState throwableState) {
     boolean autoRestart = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_AUTORESTART);
-
-    logger.info("ExitState : " + throwableState + "; AutoRestart: " + autoRestart);
-    if (autoRestart && throwableState.isRestartNeeded()) {
-      exit(true);
-    } else {
-      exit(false);
+    if (!ServerEnv.getServer().isStopped()) {
+      logger.info("ExitState : " + throwableState + "; AutoRestart: " + autoRestart);
+      if (autoRestart && throwableState.isRestartNeeded()) {
+        exit(true);
+      } else {
+        exit(false);
+      }
     }
   }
 
@@ -224,27 +217,5 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
 //    ThreadUtil.reallySleep(2000);
     StopAction[] actions = status ? new StopAction[] {StopAction.RESTART} : new StopAction[0];
     ServerEnv.getServer().stop(actions);
-  }
-
-  private static boolean isNotificationFetcherThread(Thread thread) {
-    // UGLY Way to Ignore exception in JMX Notification Forwarder Thread.
-    try {
-      Field runnableField = thread.getClass().getDeclaredField("target");
-      runnableField.setAccessible(true);
-      Object runnable = runnableField.get(thread);
-      if (runnable != null && runnable.getClass().getSimpleName().equals("NotifFetcher")) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (Throwable e) {
-      return false;
-    }
-
-  }
-
-  private static boolean isJMXTerminatedException(Throwable throwable) {
-    return throwable instanceof IllegalStateException &&
-           throwable.getMessage().contains("The Thread Service has been terminated.");
   }
 }

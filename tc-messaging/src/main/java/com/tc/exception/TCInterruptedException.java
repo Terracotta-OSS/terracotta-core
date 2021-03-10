@@ -16,37 +16,27 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.async.api;
-
-import java.util.Map;
+package com.tc.exception;
 
 /**
- * @author steve
+ * The base class for all runtime (non-checked) Terracotta exceptions. Normal production code should never catch this.
  */
-public interface Stage<EC> {
-  public void stop();
+public class TCInterruptedException extends RuntimeException {
 
-  public void destroy();
+  public TCInterruptedException() {
+    super();
+  }
 
-  public Sink<EC> getSink();
+  public TCInterruptedException(String message) {
+    super(message);
+  }
 
-  public void start(ConfigurationContext context);
+  public TCInterruptedException(Throwable cause) {
+    super(cause);
+  }
 
-  public int pause();
-  
-  public void unpause();
-    
-  public String getName();
+  public TCInterruptedException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-  public void clear();
-  
-  public boolean isEmpty();
-  
-  public int size();
-  
-  public void setSpinningCount(int spin);
-  
-  public boolean isStarted();
-  
-  public Map<String, ?> getState();
 }
