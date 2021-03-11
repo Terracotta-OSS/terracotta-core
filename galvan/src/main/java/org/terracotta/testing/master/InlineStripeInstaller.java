@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import org.terracotta.server.Server;
 
 
 /**
@@ -47,7 +46,7 @@ public class InlineStripeInstaller {
     this.stripeConfig = stripeConfig;
   }
 
-  public void installNewServer(String serverName, Path workingDir, Function<OutputStream, Server> serverStart) throws IOException {
+  public void installNewServer(String serverName, Path workingDir, Function<OutputStream, Object> serverStart) throws IOException {
     // Our implementation installs all servers before starting any (just an internal consistency check).
     Assert.assertFalse(this.isBuilt);
     // server install is now at the stripe level to use less disk
