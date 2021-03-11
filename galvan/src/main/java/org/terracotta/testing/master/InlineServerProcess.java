@@ -25,6 +25,8 @@ import org.terracotta.testing.logging.VerboseManager;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -34,18 +36,20 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.function.Function;
-import org.terracotta.server.Server;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.testing.common.SimpleEventingStream;
 
 
 
 public class InlineServerProcess {
+  private static final Logger LOGGER = LoggerFactory.getLogger(InlineServerProcess.class);
   private final InlineStateInterlock stateInterlock;
   private final ITestStateManager stateManager;
   private final ContextualLogger harnessLogger;
   private final String serverName;
   private final Path serverWorkingDir;
-  private final Function<OutputStream, Server> serverStart;
+  private final Function<OutputStream, Object> serverStart;
   // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
 
@@ -57,12 +61,12 @@ public class InlineServerProcess {
   private boolean isRunning;
   // When we are going to bring down the server, we need to record that we expected the crash so we don't conclude the test failed.
   private boolean isCrashExpected;
-  private Server server;
+  private Object server;
 
 
   public InlineServerProcess(InlineStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
                        String serverName, Path serverWorkingDir,
-                       Function<OutputStream, Server> serverStart) {
+                       Function<OutputStream, Object>serverStart) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -279,13 +283,45 @@ public class InlineServerProcess {
         // Mark this as expected.
         this.setCrashExpected(true);
 
-        server.stop();
+        invokeOnServerMBean("Server","stop",null);
 
-        harnessLogger.output("Attempt to kill server process resulted in:" + server.waitUntilShutdown());
+        harnessLogger.output("Attempt to kill server process resulted in:" + invokeOnObject(server, "waitUntilShutdown"));
         harnessLogger.output("server process killed");
       }
     } finally {
       exit(token);
+    }
+  }
+
+  private String invokeOnServerMBean(String target, String call, String arg) {
+    Object serverJMX = invokeOnObject(server, "getManagement");
+    try {
+      Method m = serverJMX.getClass().getMethod("call", String.class, String.class, String.class);
+      m.setAccessible(true);
+      return m.invoke(serverJMX, target, call, arg).toString();
+    } catch (NoSuchMethodException |
+            SecurityException |
+            IllegalAccessException |
+            IllegalArgumentException |
+            InvocationTargetException s) {
+      LOGGER.warn("unable to call", s);
+      return "ERROR";
+    }
+  }
+
+  private static Object invokeOnObject(Object server, String method, Object...args) {
+    try {
+      Class[] clazz = new Class[args.length];
+      for (int x=0;x<args.length;x++) {
+        Class sig = args[x] != null ? args[x].getClass() : null;
+        clazz[x] = sig;
+      }
+      Method m = server.getClass().getMethod(method, clazz);
+      m.setAccessible(true);
+      return m.invoke(server, args);
+    } catch (Exception s) {
+      LOGGER.warn("unable to invoke", s);
+      return "ERROR";
     }
   }
 
@@ -304,7 +340,7 @@ public class InlineServerProcess {
             stateInterlock.serverDidStartup(InlineServerProcess.this);
             try {
               server = serverStart.apply(events);
-              returnValue = server.waitUntilShutdown();
+              returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown");
               harnessLogger.output("server process exit. restart=" + returnValue);
               InlineServerProcess.this.didTerminateWithStatus(returnValue);
             } catch (Exception e) {
