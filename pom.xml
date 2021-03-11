@@ -43,7 +43,7 @@
 
     <terracotta-apis.version>1.8.0-pre1</terracotta-apis.version>
     <terracotta-configuration.version>10.7.1</terracotta-configuration.version>
-    <galvan.version>1.6.0-pre3</galvan.version>
+    <galvan.version>1.6.0-pre5</galvan.version>
     <tc-tripwire.version>1.0.1</tc-tripwire.version>
     <terracotta-utilities.version>0.0.8</terracotta-utilities.version>
   </properties>

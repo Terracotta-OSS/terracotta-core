@@ -33,7 +33,6 @@ import com.tc.net.protocol.RejectReconnectionException;
 import com.tc.net.protocol.ServerNetworkStackHarness;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
-import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.Assert;
 
 import java.io.IOException;

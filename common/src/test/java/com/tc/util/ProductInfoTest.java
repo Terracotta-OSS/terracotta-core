@@ -33,7 +33,6 @@ import java.security.ProtectionDomain;
 import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 

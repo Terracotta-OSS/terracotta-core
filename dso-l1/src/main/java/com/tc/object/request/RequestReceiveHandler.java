@@ -23,8 +23,6 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventHandlerException;
 import com.tc.entity.VoltronEntityAppliedResponse;
 import com.tc.entity.VoltronEntityResponse;
-import com.tc.exception.ServerException;
-import com.tc.object.ExceptionUtils;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
 

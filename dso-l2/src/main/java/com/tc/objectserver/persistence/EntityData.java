@@ -18,7 +18,6 @@
  */
 package com.tc.objectserver.persistence;
 
-import com.tc.exception.ServerException;
 import java.io.Serializable;
 
 

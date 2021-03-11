@@ -19,7 +19,6 @@
 package com.tc.objectserver.entity;
 
 import com.tc.l2.msg.ReplicationResultCode;
-import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.session.SessionID;
 import com.tc.util.Assert;

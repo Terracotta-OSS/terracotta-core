@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import org.terracotta.server.ServerEnv;
 
 public class ElectionManagerImpl implements ElectionManager {
 

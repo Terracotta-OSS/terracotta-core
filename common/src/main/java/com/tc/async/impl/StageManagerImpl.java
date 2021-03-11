@@ -27,7 +27,6 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageListener;
 import com.tc.async.api.StageManager;
 import com.tc.logging.DefaultLoggerProvider;
-import com.tc.logging.NoopLoggingProvider;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;

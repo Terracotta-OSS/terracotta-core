@@ -24,7 +24,6 @@ package com.tc.classloader;
 
 import static com.tc.server.Directories.TC_INSTALL_ROOT_PROPERTY_NAME;
 
-import com.tc.server.Directories;
 import com.tc.util.Assert;
 import com.tc.util.ZipBuilder;
 import java.io.ByteArrayOutputStream;

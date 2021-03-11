@@ -20,7 +20,6 @@ package com.tc.l2.state;
 
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.net.NodeID;
-import com.tc.objectserver.impl.Topology;
 import com.tc.util.State;
 
 import java.util.Set;

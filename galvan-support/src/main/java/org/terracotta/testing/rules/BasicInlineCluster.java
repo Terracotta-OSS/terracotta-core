@@ -56,7 +56,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
-import org.terracotta.server.Server;
 
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
@@ -307,7 +306,7 @@ class BasicInlineCluster extends Cluster {
     waitForSafe();
   }
 
-  private Server startIsolatedServer(Path serverWorking, OutputStream out, String[] cmd) {
+  private Object startIsolatedServer(Path serverWorking, OutputStream out, String[] cmd) {
     if (cmd[0].contains("start-tc-server")) {
       cmd = Arrays.copyOfRange(cmd, 1, cmd.length);
     }
@@ -319,7 +318,7 @@ class BasicInlineCluster extends Cluster {
       URL resource = serverWorking.toUri().toURL();
       ClassLoader loader = new IsolatedClassLoader(new URL[] {resource, url}, getClass().getClassLoader());
       Method m = Class.forName("com.tc.server.TCServerMain", true, loader).getMethod("createServer", List.class, OutputStream.class);
-      return (Server)m.invoke(null, Arrays.asList(cmd), out);
+      return m.invoke(null, Arrays.asList(cmd), out);
     } catch (RuntimeException mal) {
       throw mal;
     } catch (Exception e) {

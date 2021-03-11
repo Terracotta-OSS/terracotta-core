@@ -24,7 +24,6 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
-import com.tc.operatorevent.NodeNameProvider;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;

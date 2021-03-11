@@ -31,7 +31,6 @@ import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import org.mockito.internal.matchers.VarargMatcher;
 import org.terracotta.monitoring.PlatformStopException;
 import org.terracotta.server.StopAction;
 import static org.terracotta.server.StopAction.RESTART;

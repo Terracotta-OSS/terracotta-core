@@ -20,33 +20,23 @@ package org.terracotta.testing.rules;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import org.terracotta.server.Server;
 
 /**
  *
  */
 public class IsolatedClassLoader extends URLClassLoader {
 
-  private final ClassLoader parent;
-
   public IsolatedClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, null);
-    this.parent = parent;
   }
 
   @Override
   protected Class<?> findClass(String name) throws ClassNotFoundException {
-    if (name.startsWith("org.terracotta.server") && !name.endsWith("ServerEnv")) {
-      return parent.loadClass(name);
-    } else {
-      return super.findClass(name);
-    }
+    return super.findClass(name);
   }
 
   @Override
   protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
     return super.loadClass(name, resolve);
   }
-
-
 }

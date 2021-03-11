@@ -31,7 +31,6 @@ import com.tc.util.ProductInfo;
 import com.tc.spi.Guardian;
 import com.tc.spi.Pauseable;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.ArrayList;

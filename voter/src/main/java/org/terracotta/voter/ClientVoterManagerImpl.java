@@ -20,10 +20,8 @@ package org.terracotta.voter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;

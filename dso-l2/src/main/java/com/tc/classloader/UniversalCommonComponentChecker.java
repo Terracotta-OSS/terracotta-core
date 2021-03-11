@@ -18,8 +18,6 @@
  */
 package com.tc.classloader;
 
-import java.util.Set;
-
 /**
  */
 public class UniversalCommonComponentChecker implements CommonComponentChecker {
