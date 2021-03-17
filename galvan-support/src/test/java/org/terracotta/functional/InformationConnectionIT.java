@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Properties;
 import javax.management.MBeanServer;
@@ -53,14 +54,16 @@ public class InformationConnectionIT {
       InetSocketAddress inet = InetSocketAddress.createUnresolved(hp[0], Integer.parseInt(hp[1]));
       Properties props = new Properties();
       try {
-      Connection c = ConnectionFactory.connect(Collections.singleton(inet), props);
-      EntityRef<Entity, Void, Void> ref = c.getEntityRef(Entity.class, 1L, "test");
-      ref.create(null);
+        Connection c = ConnectionFactory.connect(Collections.singleton(inet), props);
+        EntityRef<Entity, Void, Void> ref = c.getEntityRef(Entity.class, 1L, "test");
+        ref.create(null);
       } catch (Exception e) {
         CLUSTER.getClusterControl().terminateAllServers();
-        e.printStackTrace();
         System.gc();
-        dumpHeap(Files.createTempFile("heap", ".hprof").toString(), true);
+        Path f = Files.createTempFile("heap", ".hprof");
+        String dump = f.toString();
+        Files.delete(f);
+        dumpHeap(dump, true);
       }
     }
   }
