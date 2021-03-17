@@ -191,7 +191,7 @@ class BasicInlineCluster extends Cluster {
     System.setProperty("tc.install-root", kitInstallationPath + File.separator + "server");
     System.setProperty("restart.inline", Boolean.TRUE.toString());
     System.setProperty("com.tc.server.entity.processor.threads", "4");
-    System.setProperty("l2.tccom.workerthreads", "4");
+    System.setProperty("com.tc.l2.tccom.workerthreads", "4");
 
     Path kitDir = Paths.get(kitInstallationPath);
     File testParentDir = File.createTempFile(displayName, "", clusterDirectory.toFile());
@@ -208,13 +208,12 @@ class BasicInlineCluster extends Cluster {
      * provides the best chance of allocating a consecutive list of ports without interference
      * from the server and group port reservations.
      */
-    PortManager portManager = PortManager.getInstance();
     List<PortManager.PortRef> debugPortRefs = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
-    PortTool.assignDebugPorts(portManager, serverDebugStartPort, stripeSize, debugPortRefs, serverDebugPorts);
+    PortTool.assignDebugPorts(allocator, serverDebugStartPort, stripeSize, debugPortRefs, serverDebugPorts);
 
-    List<PortManager.PortRef> serverPortRefs = portManager.reservePorts(stripeSize);
-    List<PortManager.PortRef> groupPortRefs = portManager.reservePorts(stripeSize);
+    List<PortManager.PortRef> serverPortRefs = allocator.reservePorts(stripeSize);
+    List<PortManager.PortRef> groupPortRefs = allocator.reservePorts(stripeSize);
 
     List<Integer> serverPorts = serverPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
     List<Integer> serverGroupPorts = groupPortRefs.stream().map(PortManager.PortRef::port).collect(toList());
