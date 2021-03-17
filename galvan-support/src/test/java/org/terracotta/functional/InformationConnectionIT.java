@@ -22,6 +22,7 @@ import com.sun.management.HotSpotDiagnosticMXBean;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Properties;
 import javax.management.MBeanServer;
@@ -59,7 +60,7 @@ public class InformationConnectionIT {
         CLUSTER.getClusterControl().terminateAllServers();
         e.printStackTrace();
         System.gc();
-        dumpHeap("test.hprof", true);
+        dumpHeap(Files.createTempFile("heap", ".hprof").toString(), true);
       }
     }
   }

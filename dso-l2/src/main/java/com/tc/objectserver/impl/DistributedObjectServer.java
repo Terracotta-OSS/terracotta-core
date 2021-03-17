@@ -221,6 +221,7 @@ import com.tc.objectserver.entity.VoltronMessageSink;
 import com.tc.objectserver.handler.ReplicationReceivingAction;
 import com.tc.objectserver.handler.ReplicationSendingAction;
 import com.tc.objectserver.handshakemanager.ClientHandshakePrettyPrintable;
+import com.tc.objectserver.persistence.NullPersistor;
 import com.tc.spi.DiagnosticFormat;
 import com.tc.spi.Guardian;
 import com.tc.spi.NetworkTranslator;
@@ -501,20 +502,25 @@ public class DistributedObjectServer {
       }
     }
 
-    persistor = serverBuilder.createPersistor(platformServiceRegistry);
-    boolean wasZapped = false;
-    while(!persistor.start(capablities.contains(ProductID.PERMANENT))) {
-      wasZapped = true;
-      // make sure peristor is not using any storage service
-      persistor.close();
-      // Log that that the state was not clean so we are going to clear all service provider state.
-      logger.warn("DB state not clean!  Clearing all ServiceProvider state (ZAP request)");
-      serviceRegistry.clearServiceProvidersState();
-      // create the persistor once again as underlying storage service might have cleared its internal state
+    if (configuration.isPartialConfiguration()) {
+      // don't persist anything for partial configurations
+      persistor = new NullPersistor();
+    } else {
       persistor = serverBuilder.createPersistor(platformServiceRegistry);
+      boolean wasZapped = false;
+      while(!persistor.start(capablities.contains(ProductID.PERMANENT))) {
+        wasZapped = true;
+        // make sure peristor is not using any storage service
+        persistor.close();
+        // Log that that the state was not clean so we are going to clear all service provider state.
+        logger.warn("DB state not clean!  Clearing all ServiceProvider state (ZAP request)");
+        serviceRegistry.clearServiceProvidersState();
+        // create the persistor once again as underlying storage service might have cleared its internal state
+        persistor = serverBuilder.createPersistor(platformServiceRegistry);
+      }
+      //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
+      persistor.getClusterStatePersistor().setDBClean(!wasZapped);
     }
-    //  if the DB was zapped and not started in diagnostic mode, reset the flag until the server has finished sync
-    persistor.getClusterStatePersistor().setDBClean(!wasZapped);
 
     new ServerPersistenceVersionChecker(pInfo).checkAndBumpPersistedVersion(persistor.getClusterStatePersistor());
 

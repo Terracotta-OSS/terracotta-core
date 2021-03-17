@@ -346,7 +346,7 @@ public class TCServerImpl extends SEDA implements TCServer {
       // the following code starts the jmx server as well
       try {
         startDSOServer();
-      } catch (Exception e) {
+      } catch (Throwable e) {
         finish.completeExceptionally(e);
       }
 
