@@ -162,6 +162,8 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
         this.diagnostics.close();
         LOGGER.info("Connection closed to {}", hostPort);
       }
+    } catch (Throwable t) {
+        LOGGER.info("Connection trouble closing", t);
     } finally {
       this.diagnostics = null;
     }
