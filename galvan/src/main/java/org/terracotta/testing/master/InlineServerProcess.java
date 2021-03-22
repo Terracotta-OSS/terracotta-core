@@ -232,7 +232,7 @@ public class InlineServerProcess {
     // See if we have a PID yet or if this was a failure, much earlier (hence, if we told the interlock that we are even running).
     GalvanFailureException failureException = null;
 //  no matter what, the server is gone so report it to interlock
-    if (!this.isCrashExpected() && (null == failureException)) {
+    if (!restart && !this.isCrashExpected() && (null == failureException)) {
       failureException = new GalvanFailureException("Unexpected server crash: " + this + " restart: " + restart);
     }
 
