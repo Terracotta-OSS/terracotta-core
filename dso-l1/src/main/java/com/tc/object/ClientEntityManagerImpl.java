@@ -75,13 +75,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
+import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityServerUncaughtException;
 
 
 public class ClientEntityManagerImpl implements ClientEntityManager {
   private final Logger logger;
-  
+
   private final ClientMessageChannel channel;
   private final ConcurrentMap<TransactionID, InFlightMessage> inFlightMessages;
   private final StoppableSemaphore requestTickets = new StoppableSemaphore(ClientConfigurationContext.MAX_PENDING_REQUESTS);
@@ -265,8 +266,8 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   @Override
-  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor, 
-          Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication, 
+  public InFlightMessage invokeActionWithTimeout(EntityID eid, EntityDescriptor entityDescriptor,
+          Set<VoltronEntityMessage.Acks> acks, InFlightMonitor monitor, boolean requiresReplication,
           boolean shouldBlockGetOnRetire, long invokeTimeout, TimeUnit units, byte[] payload) throws InterruptedException, TimeoutException {
     long start = System.nanoTime();
     InFlightMessage inFlightMessage = queueInFlightMessage(eid, ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, makeServerAcks(shouldBlockGetOnRetire, acks)),
@@ -281,7 +282,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     return inFlightMessage;
   }
-  // add the retired ack to the message if block on retired is requested, this will increase 
+  // add the retired ack to the message if block on retired is requested, this will increase
   // message efficiency by grouping the retired message with the result.
   private Set<VoltronEntityMessage.Acks> makeServerAcks(boolean blockOnRetire, Set<VoltronEntityMessage.Acks> requestedAcks) {
     Set<VoltronEntityMessage.Acks> serverAcks = requestedAcks;
@@ -291,12 +292,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     }
     return serverAcks;
   }
-  
+
   @Override
-  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks, 
+  public InFlightMessage invokeAction(EntityID eid, EntityDescriptor entityDescriptor, Set<VoltronEntityMessage.Acks> requestedAcks,
           InFlightMonitor monitor, boolean requiresReplication, boolean shouldBlockGetOnRetire, byte[] payload) {
-    try { 
-    InFlightMessage inFlightMessage = queueInFlightMessage(eid, 
+    try {
+    InFlightMessage inFlightMessage = queueInFlightMessage(eid,
             ()->createMessageWithDescriptor(eid, entityDescriptor, requiresReplication, payload, VoltronEntityMessage.Type.INVOKE_ACTION, makeServerAcks(shouldBlockGetOnRetire, requestedAcks)),
             requestedAcks, monitor, 0L, TimeUnit.MILLISECONDS, shouldBlockGetOnRetire);
       inFlightMessage.waitForAcks();
@@ -468,7 +469,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       VoltronEntityMessage message = inFlight.getMessage();
 //  validate the locking on release and destroy on resends
 
-      ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(), 
+      ResendVoltronEntityMessage packaged = new ResendVoltronEntityMessage(message.getSource(), message.getTransactionID(),
           message.getEntityDescriptor(), message.getVoltronType(), message.doesRequireReplication(), message.getExtendedData());
       handshakeMessage.addResendMessage(packaged);
     }

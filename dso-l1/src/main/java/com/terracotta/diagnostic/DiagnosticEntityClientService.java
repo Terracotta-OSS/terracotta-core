@@ -18,8 +18,10 @@
  */
 package com.terracotta.diagnostic;
 
+import com.tc.util.concurrent.ThreadUtil;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.ConnectException;
 import java.nio.charset.Charset;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -94,11 +96,14 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
             }
           }
         } catch (EntityException ee) {
-          
+          RuntimeException t = ThreadUtil.getRootCause(ee, RuntimeException.class);
+          if (t != null) {
+            throw t;
+          }
         } catch (InterruptedException ie) {
-          
+          return "ERROR:interrupted";
         } catch (MessageCodecException code) {
-          
+          return "ERROR:" + code.getClass() + ":" + code.getMessage();
         }
         return null;
       }}
@@ -125,7 +130,7 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
   @Override
   public MessageCodec<EntityMessage, EntityResponse> getMessageCodec() {
     final Charset charset = Charset.forName("UTF-8");
-    
+
     return new MessageCodec<EntityMessage, EntityResponse>() {
       @Override
       public byte[] encodeMessage(EntityMessage m) throws MessageCodecException {
@@ -158,5 +163,5 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
       }
     };
   }
-  
+
 }
