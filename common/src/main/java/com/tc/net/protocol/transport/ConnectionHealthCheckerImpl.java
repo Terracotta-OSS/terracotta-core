@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   private final Logger logger;
-  private static final Timer                           monitorThread = new Timer("HealthCheck-Timer", true);
+  private final Timer                           monitorThread = new Timer("HealthCheck-Timer", true);
   private final HealthCheckerMonitorThreadEngine monitorThreadEngine;
 
   private final SetOnceFlag                      shutdown = new SetOnceFlag();
@@ -82,16 +82,13 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
   public void stop() {
     if (shutdown.attemptSet()) {
       monitorThreadEngine.stop();
-// don't bother to join the monitorThread here.  shutdown should take care of all the 
+      monitorThread.cancel();
+// don't bother to join the monitorThread here.  shutdown should take care of all the
 // threads in the thread group
       logger.debug("HealthChecker STOP requested");
     } else {
       logger.warn("HealthChecker STOP already requested");
     }
-  }
-
-  public static void kill() {
-    monitorThread.cancel();
   }
 
   public boolean isRunning() {

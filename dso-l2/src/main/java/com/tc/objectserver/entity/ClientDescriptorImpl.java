@@ -83,7 +83,12 @@ public class ClientDescriptorImpl implements ClientDescriptor {
   }
 
   public boolean isValid() {
-    return nodeID.toLong() >= 0 && clientInstance.getID() >= 0;
+    return !nodeID.isNull() && clientInstance.getID() > 0;
+  }
+
+  @Override
+  public boolean isValidClient() {
+    return isValid();
   }
 
   @Override

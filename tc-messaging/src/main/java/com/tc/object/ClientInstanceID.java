@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * @author jdis
  * Used to identify a specific acquire result of an Entity, on a client.  Note that this ID isn't a global value, but must be
  * considered within the context of a specific Entity type on a specific client.
  */
@@ -37,7 +36,7 @@ public class ClientInstanceID implements TCSerializable<ClientInstanceID>, Seria
   public static final ClientInstanceID NULL_ID = new ClientInstanceID(0);
 
   private final long id;
-  
+
   public ClientInstanceID(long id) {
     this.id = id;
   }

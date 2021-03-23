@@ -1026,7 +1026,7 @@ public class ManagedEntityImpl implements ManagedEntity {
         Assert.assertTrue(clientReferenceCount >= 0);
       }
 
-      ClientID clientID = (ClientID) request.getNodeID();
+      ClientID clientID = request.getNodeID();
       ClientDescriptorImpl clientInstance = new ClientDescriptorImpl(clientID, request.getClientInstance());
       boolean removed = clientEntityStateManager.removeReference(clientInstance);
 
