@@ -18,9 +18,6 @@
  */
 package org.terracotta.entity;
 
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ClientSourceId;
-
 public class PassthroughClientSourceId implements ClientSourceId {
   final long id;
 
@@ -31,6 +28,11 @@ public class PassthroughClientSourceId implements ClientSourceId {
   @Override
   public long toLong() {
     return id;
+  }
+
+  @Override
+  public boolean isValidClient() {
+    return id >= 0;
   }
 
   @Override

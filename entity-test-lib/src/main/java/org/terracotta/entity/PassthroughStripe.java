@@ -18,7 +18,6 @@
  */
 package org.terracotta.entity;
 
-import com.google.common.util.concurrent.Futures;
 import com.tc.classloader.BuiltinService;
 import com.tc.classloader.OverrideService;
 import com.tc.classloader.OverrideServiceType;
@@ -56,7 +55,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private final Map<String, Integer> connectCountMap = new HashMap<String, Integer>();
   private final Map<String, ConcurrencyStrategy<M>> concurrencyMap = new HashMap<>();
   private final Map<ClientDescriptor, FakeEndpoint> endpoints = new HashMap<ClientDescriptor, FakeEndpoint>();
-  
+
   private int nextClientID = 1;
   private int consumerID = 1;
   private AtomicLong txIdGenerator=new AtomicLong(0);
@@ -67,7 +66,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     Assert.assertTrue(service.handlesEntityType(clazz.getName()));
     this.service = service;
   }
-  
+
   public boolean createServerEntity(String name, byte[] configuration) throws ConfigurationException {
     boolean didCreate = false;
     if (!activeMap.containsKey(name)) {
@@ -91,7 +90,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     }
     return didCreate;
   }
-  
+
   public EntityClientEndpoint<M, R> connectNewClientToEntity(String name) {
     FakeEndpoint endpoint = null;
     if (activeMap.containsKey(name)) {
@@ -109,7 +108,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
   private FakeEndpoint getEndpoint(String name, ClientDescriptor descriptor, MessageCodec<M, R> codec) {
     return new FakeEndpoint(name, descriptor, codec);
   }
-  
+
 
   @Override
   public void sendNoResponse(ClientDescriptor clientDescriptor, EntityResponse message) {
@@ -130,7 +129,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
 
   private class FakeServiceRegistry {
     private final Map<String, ServiceProvider> builtins = new HashMap<>();
-    
+
     FakeServiceRegistry() {
       java.util.ServiceLoader<ServiceProvider> loader = ServiceLoader.load(ServiceProvider.class);
       Map<String, Class<? extends ServiceProvider>> overrides = new HashMap<>();
@@ -194,7 +193,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
         }
       });
     }
-    
+
     public ServiceRegistry create(final long cid) {
       return new ServiceRegistry() {
         @Override
@@ -228,11 +227,11 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
           }
           return choices;
         }
-        
+
       };
     }
   }
-  
+
   private class FakeEndpoint implements TxIdAwareClientEndpoint<M, R> {
     private EndpointDelegate delegate;
     private final String entityName;
@@ -312,7 +311,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
       return eldestid;
     }
   }
-  
+
   private class FakeClientDescriptor implements ClientDescriptor {
     private final int id;
 
@@ -335,6 +334,11 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     public ClientSourceId getSourceId() {
       // todo
       return null;
+    }
+
+    @Override
+    public boolean isValidClient() {
+      return false;
     }
   }
 
@@ -442,7 +446,7 @@ public class PassthroughStripe<M extends EntityMessage, R extends EntityResponse
     public InvocationBuilder<M, R> asDeferredResponse() {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     private byte[] sendInvocation(long currentId, long eldestId, ActiveServerEntity<M, R> entity, MessageCodec<M, R>
       codec) throws EntityException {
       byte[] result = null;
