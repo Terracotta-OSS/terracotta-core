@@ -22,21 +22,28 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class TcConfigBuilder {
-  private final Path workingDir;
+  private final Function<String, String> logPath;
+  private final Supplier<String> serviceFragment;
   private final List<String> serverNames;
   private final List<Integer> serverPorts;
   private final List<Integer> serverGroupPorts;
   private final String namespaceFragment;
-  private final String serviceFragment;
   private final int clientReconnectWindow;
   private final int voterCount;
   private final Properties tcProperties = new Properties();
-
-  public TcConfigBuilder(Path workingDir, List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
+  
+  public TcConfigBuilder(Path stripePath, List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                          Properties tcProperties, String namespaceFragment, String serviceFragment, int clientReconnectWindow, int voterCount) {
-    this.workingDir = workingDir;
+    this(name->stripePath.resolve(name).resolve("logs").toString(), ()->serviceFragment == null ? "" : serviceFragment, serverNames, serverPorts, serverGroupPorts, tcProperties, namespaceFragment, clientReconnectWindow, voterCount);
+  }
+
+  public TcConfigBuilder(Function<String, String> serverLogs, Supplier<String> serviceFragment, List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
+                         Properties tcProperties, String namespaceFragment, int clientReconnectWindow, int voterCount) {
+    this.logPath = serverLogs;
     this.serverNames = serverNames;
     this.serverPorts = serverPorts;
     this.serverGroupPorts = serverGroupPorts;
@@ -46,14 +53,14 @@ public class TcConfigBuilder {
     this.clientReconnectWindow = clientReconnectWindow;
     this.voterCount = voterCount;
   }
-
+  
   public String build() {
     String namespaces = ((null != namespaceFragment) ? namespaceFragment : "");
 
     String pre =
         "<tc-config xmlns=\"http://www.terracotta.org/config\" " + namespaces + ">\n"
             + "  <plugins>\n";
-    String services = ((null != this.serviceFragment) ? this.serviceFragment : "");
+    String services = this.serviceFragment.get();
     String postservices =
         "  </plugins>\n" +
             "  <tc-properties>\n";
@@ -70,7 +77,7 @@ public class TcConfigBuilder {
       Integer groupPort = serverGroupPorts.get(i);
       String oneServer =
           "    <server host=\"localhost\" name=\"" + serverName + "\">\n"
-              + "      <logs>" + workingDir.resolve(serverName).resolve("logs").toAbsolutePath() + "</logs>\n"
+              + "      <logs>" + logPath.apply(serverName) + "</logs>\n"
               + "      <tsa-port>" + port + "</tsa-port>\n"
               + "      <tsa-group-port>" + groupPort + "</tsa-group-port>\n"
               + "    </server>\n";
