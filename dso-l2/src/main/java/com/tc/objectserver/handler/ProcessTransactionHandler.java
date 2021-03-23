@@ -31,6 +31,7 @@ import com.tc.entity.VoltronEntityMessage;
 import com.tc.entity.VoltronEntityMultiResponse;
 import com.tc.entity.VoltronEntityResponse;
 import com.tc.exception.ServerException;
+import com.tc.exception.ServerExceptionType;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -891,7 +892,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
           EntityExistenceHelpers.recordDestroyEntity(persistor.getEntityPersistor(), entityManager, getNodeID(), getTransaction(), getOldestTransactionOnClient(), eid, e);
           break;
         case FETCH_ENTITY:
-          disconnectClientDueToFailure(getNodeID());
+          if (e.getType() != ServerExceptionType.ENTITY_NOT_FOUND) {
+            // disconnect the client due to error after a reference count has been taken
+            // NOT_FOUND is pre-reference count
+            disconnectClientDueToFailure(getNodeID());
+          }
           break;
         case RELEASE_ENTITY:
           break;

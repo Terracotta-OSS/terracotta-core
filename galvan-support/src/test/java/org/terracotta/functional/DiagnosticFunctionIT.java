@@ -18,6 +18,7 @@
  */
 package org.terracotta.functional;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 import static org.junit.Assert.fail;
@@ -61,7 +62,7 @@ public class DiagnosticFunctionIT {
       } catch (InterruptedException ie) {
 
       } catch (ConnectionException ce) {
-        
+
       }
     }).start();
     CLUSTER.expectCrashes(true);
@@ -72,7 +73,7 @@ public class DiagnosticFunctionIT {
         Thread.sleep(1_000);
       }
       fail();
-    } catch (ConnectionClosedException e) {
+    } catch (ConnectionException | ConnectionClosedException e) {
       System.out.println("success:" + (System.currentTimeMillis() - start));
     }
   }

@@ -41,6 +41,11 @@ public class ClientSourceIdImpl implements ClientSourceId {
   }
 
   @Override
+  public boolean isValidClient() {
+    return id >= 0;
+  }
+
+  @Override
   public boolean matches(ClientDescriptor descriptor) {
     return descriptor.getSourceId().toLong() == id;
   }

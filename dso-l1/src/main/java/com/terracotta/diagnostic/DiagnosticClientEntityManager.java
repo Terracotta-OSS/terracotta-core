@@ -33,6 +33,7 @@ import com.tc.object.InFlightMonitor;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import org.terracotta.connection.ConnectionException;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -52,7 +54,7 @@ import org.terracotta.exception.EntityException;
  *
  */
 public class DiagnosticClientEntityManager implements ClientEntityManager {
-  
+
   private final ClientMessageChannel channel;
   private final AtomicLong tid = new AtomicLong();
   private final Map<TransactionID, InFlightMessage> waitingForAnswer = new ConcurrentHashMap<TransactionID, InFlightMessage>();
@@ -80,7 +82,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   public void handleMessage(ClientInstanceID entityDescriptor, byte[] message) {
 
   }
-  
+
   @Override
   public void handleMessage(TransactionID entityDescriptor, byte[] message) {
 
@@ -88,22 +90,22 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
 
   @Override
   public void handleStatistics(TransactionID transaction, long[] message) {
-    throw new UnsupportedOperationException(); 
+    throw new UnsupportedOperationException();
   }
-  
+
   @Override
   public byte[] createEntity(EntityID entityID, long version, byte[] config) throws EntityException {
-    throw new UnsupportedOperationException(); 
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public boolean destroyEntity(EntityID entityID, long version) throws EntityException {
-    throw new UnsupportedOperationException(); 
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public byte[] reconfigureEntity(EntityID entityID, long version, byte[] config) throws EntityException {
-    throw new UnsupportedOperationException(); 
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -162,7 +164,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     if (!message.send()) {
-      message.setResult(null, new ConnectionClosedException("connection closed"));
+      message.setResult(null, new ConnectionClosedException("message failed tp send"));
       waitingForAnswer.remove(network.getTransactionID());
     }
     return message;

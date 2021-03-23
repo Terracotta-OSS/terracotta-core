@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Some shortcut stuff for doing common thread stuff
- * 
+ *
  * @author steve
  */
 public class ThreadUtil {
@@ -30,7 +30,7 @@ public class ThreadUtil {
   public static void reallySleep(long millis) {
     reallySleep(millis, 0);
   }
-  
+
   public static void reallySleep(TimeUnit unit, long sleepTime) {
     reallySleep(unit.toMillis(sleepTime));
   }
@@ -61,5 +61,23 @@ public class ThreadUtil {
     t.setDaemon(asDaemon);
     t.start();
     return t;
+  }
+
+  public static Throwable getRootCause(Throwable t) {
+    while (t.getCause() != null) {
+      t = t.getCause();
+    }
+    return t;
+  }
+
+
+  public static  <R extends Throwable> R getRootCause(Throwable t, Class<? extends R> type) {
+    while (t != null) {
+      if (type.isInstance(t)) {
+        return type.cast(t);
+      }
+      t = t.getCause();
+    }
+    return type.cast(t);
   }
 }
