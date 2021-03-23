@@ -21,9 +21,6 @@ package org.terracotta.passthrough;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 
 /**
@@ -49,6 +46,12 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
     return result;
   }
 
+  @Override
+  public boolean isValidClient() {
+    return sender != null;
+  }
+
+  @Override
   public ClientSourceId getSourceId() {
     return new PassthroughClientSourceId(sender == null ? -1 : sender.getUniqueConnectionID());
   }
@@ -56,7 +59,7 @@ public class PassthroughClientDescriptor implements ClientDescriptor {
   @Override
   public boolean equals(Object obj) {
     boolean isEqual = (obj == this);
-    if (!isEqual && (obj instanceof PassthroughClientDescriptor)) { 
+    if (!isEqual && (obj instanceof PassthroughClientDescriptor)) {
       PassthroughClientDescriptor other = (PassthroughClientDescriptor) obj;
       // We can use instance compare, here, on the sender.
       isEqual = (other.sender.getUniqueConnectionID() == this.sender.getUniqueConnectionID())

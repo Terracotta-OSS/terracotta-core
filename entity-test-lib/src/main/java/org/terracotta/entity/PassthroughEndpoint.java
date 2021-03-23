@@ -18,7 +18,6 @@
  */
 package org.terracotta.entity;
 
-import com.google.common.util.concurrent.Futures;
 import org.junit.Assert;
 import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityServerException;
@@ -91,6 +90,11 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     @Override
     public ClientSourceId getSourceId() {
       return null;
+    }
+
+    @Override
+    public boolean isValidClient() {
+      return false;
     }
   }
 
@@ -179,7 +183,7 @@ public class PassthroughEndpoint<M extends EntityMessage, R extends EntityRespon
     public InvokeFuture<R> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
       return invoke();
     }
-    
+
     private byte[] sendInvocation(byte[] payload, InvokeMonitor<R> monitor) throws EntityException {
       byte[] result = null;
       try {
