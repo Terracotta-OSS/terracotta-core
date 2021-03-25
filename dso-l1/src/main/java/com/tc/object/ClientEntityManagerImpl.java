@@ -75,7 +75,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Supplier;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityServerUncaughtException;
 
@@ -110,27 +109,46 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     this.transactionSource = new TransactionSource();
     this.stateManager = new ClientEntityStateManager();
     this.objectStoreMap = new ConcurrentHashMap<>(10240, 0.75f, 128);
-    this.stages = mgr;      
+    this.stages = mgr;
   }
 
   @Override
-  public boolean isValid() {
+  public synchronized boolean isValid() {
     return !stateManager.isShutdown() && channel.isOpen();
   }
-  
-  private synchronized boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
-    if (!this.stateManager.isRunning()) {
+
+  private synchronized boolean waitUntilRunning(long timeout, long end) {
+    boolean interrupted = Thread.interrupted();
+    while (!stateManager.isRunning()) {
+      try {
+        if (stateManager.isShutdown()) {
+          break;
+        } else if (timeout == 0) {
+          wait();
+        } else {
+          long timing = end - System.nanoTime();
+          wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int) (timing % TimeUnit.MILLISECONDS.toNanos(1)));
+        }
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    return interrupted;
+  }
+
+  private boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
+    if (!this.isRunning()) {
       return false;
     }
     if (requestTickets.tryAcquire()) {
       inFlightMessages.put(msg.getTransactionID(), msg);
-      return true;
+      return !isShutdown();
     } else {
       throw new RejectedExecutionException("Output queue is full");
     }
   }
 
-  private synchronized boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
+  private boolean enqueueMessage(InFlightMessage msg, long timeout, TimeUnit unit, boolean waitUntilRunning) throws TimeoutException {
     boolean interrupted = Thread.interrupted();
     try {
       long end = 0;
@@ -141,25 +159,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       }
 
       if (waitUntilRunning) {
-        while (!stateManager.isRunning()) {
-          try {
-            if (stateManager.isShutdown()) {
-              return false;
-            } else if (timeout == 0) {
-              wait();
-            } else {
-              long timing = end - System.nanoTime();
-              wait(timing / TimeUnit.MILLISECONDS.toNanos(1), (int) (timing % TimeUnit.MILLISECONDS.toNanos(1)));
-            }
-          } catch (InterruptedException e) {
-            interrupted = true;
-          }
-        }
+        interrupted |= waitUntilRunning(timeout, end);
       }
 
       // stop drains the permits so even if asked to not waitUntilRunning, stop is still checked
 
-      while (!stateManager.isShutdown()) {
+      while (!isShutdown()) {
         try {
           if (timeout == 0) {
             requestTickets.acquire();
@@ -167,7 +172,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
             throw new TimeoutException();
           }
           inFlightMessages.put(msg.getTransactionID(), msg);
-          return true;
+          return !isShutdown();
         } catch (InterruptedException e) {
           interrupted = true;
         }
@@ -179,7 +184,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       }
     }
   }
-  
+
+  private synchronized boolean isRunning() {
+    return stateManager.isRunning();
+  }
+
+  private synchronized boolean isShutdown() {
+    return stateManager.isShutdown();
+  }
+
   @SuppressWarnings("rawtypes")
   @Override
   public EntityClientEndpoint fetchEntity(EntityID entity, long version, ClientInstanceID instance, MessageCodec<? extends EntityMessage, ? extends EntityResponse> codec, Runnable closeHook) throws EntityException {
