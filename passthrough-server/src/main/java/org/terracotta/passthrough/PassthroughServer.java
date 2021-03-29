@@ -165,33 +165,15 @@ public class PassthroughServer implements PassthroughDumper {
   private void addPermanentEntities() {
     // Populate the server with its services.
     for (EntityServerService<?,?> serverEntityService : this.savedServerEntityServices) {
-      if (serverEntityService.getClass().isAnnotationPresent(PermanentEntity.class)) {
-        PermanentEntity pe = serverEntityService.getClass().getAnnotation(PermanentEntity.class);
-        String type = pe.type();
-        String[] names = pe.names();
-        int version = pe.version();
-        for (String name : names) {
-          try {
-            serverProcess.create(type, name, version, new byte[0]);
-          } catch (EntityException exp) {
-            throw new RuntimeException(exp);
-          }
+      try {
+        for (PermanentEntity p : serverEntityService.getClass().getAnnotationsByType(PermanentEntity.class)) {
+          serverProcess.create(p.type(), p.name(), p.version(), new byte[0]);
         }
-      }
-    }
-    for (EntityServerService<?, ?> serverEntityService : this.savedServerEntityServices) {
-      if (serverEntityService.getClass().isAnnotationPresent(PermanentEntityType.class)) {
-        PermanentEntityType pe = serverEntityService.getClass().getAnnotation(PermanentEntityType.class);
-        Class type = pe.type();
-        String[] names = pe.names();
-        int version = pe.version();
-        for (String name : names) {
-          try {
-            serverProcess.create(type.getCanonicalName(), name, version, new byte[0]);
-          } catch (EntityException exp) {
-            throw new RuntimeException(exp);
-          }
+        for (PermanentEntityType p : serverEntityService.getClass().getAnnotationsByType(PermanentEntityType.class)) {
+          serverProcess.create(p.type().getName(), p.name(), p.version(), new byte[0]);
         }
+      } catch (EntityException exp) {
+        throw new RuntimeException(exp);
       }
     }
   }
