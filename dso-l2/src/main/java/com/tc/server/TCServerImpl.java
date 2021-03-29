@@ -161,18 +161,18 @@ public class TCServerImpl extends SEDA implements TCServer {
     ServerEnv.getServer().audit("Stop invoked", new Properties());
     TCLogging.getConsoleLogger().info("Stopping server");
     if (dsoServer != null) {
-      try {
-        dsoServer.stop();
-      } catch (Exception e) {
-        logger.error("trouble shutting down", e);
-      }
-      EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+       EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
       for (StopAction s : restartMode) {
         set.add(s);
       }
       if (set.contains(StopAction.ZAP)) {
         TCLogging.getConsoleLogger().info("Setting data to dirty");
         dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
+      }
+      try {
+        dsoServer.stop();
+      } catch (Throwable e) {
+        logger.error("trouble shutting down", e);
       }
       if (set.contains(StopAction.RESTART)) {
         TCLogging.getConsoleLogger().info("Requesting restart");

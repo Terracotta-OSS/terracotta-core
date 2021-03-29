@@ -34,6 +34,10 @@ public class StateChangedEvent {
   public boolean movedToActive() {
     return StateManager.ACTIVE_COORDINATOR.equals(to);
   }
+
+  public boolean movedToStop() {
+    return StateManager.STOP_STATE.equals(to);
+  }
   
   public State getCurrentState() {
     return to;

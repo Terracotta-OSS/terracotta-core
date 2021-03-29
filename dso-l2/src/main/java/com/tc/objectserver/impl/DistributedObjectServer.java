@@ -826,9 +826,9 @@ public class DistributedObjectServer {
       this.l1Diagnostics.stop(1000);
       this.l1Listener.stop(1000);
       this.connectionManager.shutdown();
+      this.context.shutdown();
       this.serviceRegistry.shutdown();
       this.timer.cancelAll();
-      this.context.shutdown();
       this.timer.stop();
       this.configSetupManager.close();
       ThreadUtil.executeInThread(this::killThreads, "Shutdown", false);
