@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.persistence;
 
+import com.tc.l2.state.StateManager;
 import com.tc.net.StripeID;
 import com.tc.util.State;
 import com.tc.util.version.Version;
@@ -66,7 +67,10 @@ public class ClusterStatePersistor {
   }
 
   public void setCurrentL2State(State state) {
-    putAndStore(L2_STATE_KEY, state.getName());
+    // do not persist stop state
+    if (!StateManager.STOP_STATE.equals(state)) {
+      putAndStore(L2_STATE_KEY, state.getName());
+    }
   }
 
   public State getCurrentL2State() {

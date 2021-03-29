@@ -826,9 +826,9 @@ public class DistributedObjectServer {
       this.l1Diagnostics.stop(1000);
       this.l1Listener.stop(1000);
       this.connectionManager.shutdown();
+      this.context.shutdown();
       this.serviceRegistry.shutdown();
       this.timer.cancelAll();
-      this.context.shutdown();
       this.timer.stop();
       this.configSetupManager.close();
       ThreadUtil.executeInThread(this::killThreads, "Shutdown", false);
@@ -838,7 +838,9 @@ public class DistributedObjectServer {
   private void killThreads() {
     this.seda.getStageManager().stopAll();
     boolean complete = false;
-    while (!complete) {
+    long killStart = System.currentTimeMillis();
+    logger.info("waiting for {} threads to exit", threadGroup.activeCount());
+    while (!complete && System.currentTimeMillis() < killStart + TimeUnit.MINUTES.toMillis(1L)) {
       complete = true;
       int ac = threadGroup.activeCount();
       Thread[] list = new Thread[ac];
@@ -847,6 +849,7 @@ public class DistributedObjectServer {
         if (t != null && t != Thread.currentThread()) {
           t.interrupt();
           try {
+            logger.info("waiting for {} to exit" + t.getName());
             t.join(500);
           } catch (InterruptedException i) {
             L2Utils.handleInterrupted(logger, i);
@@ -855,6 +858,7 @@ public class DistributedObjectServer {
         }
       }
     }
+    logger.info("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));
     logger.info("L2 Exiting...");
   }
 

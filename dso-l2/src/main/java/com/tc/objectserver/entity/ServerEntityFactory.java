@@ -84,37 +84,12 @@ public class ServerEntityFactory {
     List<VoltronEntityMessage> msgs = new ArrayList<>();
     List<Class<? extends EntityServerService>> serviceLoader = this.locator.getImplementations(EntityServerService.class);
     for (Class<? extends EntityServerService> serverService : serviceLoader) {
-        if (serverService.isAnnotationPresent(PermanentEntity.class)) {
-          PermanentEntity[] pe = serverService.getAnnotationsByType(PermanentEntity.class);
-          for (PermanentEntity p : pe) {
-            String type = p.type();
-            String[] names = p.names();
-            String single = p.name();
-            int version = p.version();
-            if (single != null && single.length() > 0) {
-              msgs.add(createMessage(type, single, version, TCByteBufferFactory.getInstance(false, 0)));
-            }
-            for (String name : names) {
-              msgs.add(createMessage(type, name, version, TCByteBufferFactory.getInstance(false, 0)));
-            }
-          }
-        }
-        if (serverService.isAnnotationPresent(PermanentEntityType.class)) {
-          PermanentEntityType[] pe = serverService.getAnnotationsByType(PermanentEntityType.class);
-          for (PermanentEntityType p : pe) {
-            Class<?> type = p.type();
-            String[] names = p.names();
-            String single = p.name();
-            int version = p.version();
-            if (single != null && single.length() > 0) {
-              msgs.add(createMessage(type.getName(), single, version, TCByteBufferFactory.getInstance(false, 0)));
-            }
-            
-            for (String name : names) {
-              msgs.add(createMessage(type.getName(), name, version, TCByteBufferFactory.getInstance(false, 0)));
-            }
-          }
-        }
+      for (PermanentEntity p : serverService.getAnnotationsByType(PermanentEntity.class)) {
+        msgs.add(createMessage(p.type(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+      }
+      for (PermanentEntityType p : serverService.getAnnotationsByType(PermanentEntityType.class)) {
+        msgs.add(createMessage(p.type().getName(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+      }
     }
     return msgs;
   }  
