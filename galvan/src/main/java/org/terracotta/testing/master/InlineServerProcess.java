@@ -147,7 +147,6 @@ public class InlineServerProcess {
   private OutputStream buildEventingStream(OutputStream out) {
     // Now, set up the event bus we will use to scrape the state from the sub-process.
     EventBus serverBus = new EventBus.Builder().id("server-bus").build();
-    String pidEventName = "PID";
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
     String diagnosticReadyName = "DIAGNOSTIC";
@@ -157,37 +156,20 @@ public class InlineServerProcess {
     Map<String, String> eventMap = new HashMap<>();
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
-    eventMap.put("Started the server in diagnostic mode", diagnosticReadyName);
+    eventMap.put("Moved to State[ DIAGNOSTIC ]", diagnosticReadyName);
     eventMap.put("Restarting the server", zapEventName);
+    eventMap.put("Requesting restart", zapEventName);
     eventMap.put("WARN", warn);
     eventMap.put("ERROR", err);
 
-    serverBus.on(activeReadyName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        InlineServerProcess.this.didBecomeActive(true);
-      }
+    serverBus.on(activeReadyName, (event) -> didBecomeActive(true));
+    serverBus.on(passiveReadyName, (event) -> didBecomeActive(false));
+    serverBus.on(diagnosticReadyName, (event) -> {
+      stateInterlock.serverBecameDiagnostic(InlineServerProcess.this);
     });
-    serverBus.on(passiveReadyName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        InlineServerProcess.this.didBecomeActive(false);
-      }
-    });
-    serverBus.on(diagnosticReadyName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        stateInterlock.serverBecameDiagnostic(InlineServerProcess.this);
-      }
-    });
-    serverBus.on(zapEventName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        InlineServerProcess.this.instanceWasZapped();
-      }
-    });
+    serverBus.on(zapEventName, (event)-> instanceWasZapped());
     serverBus.on(warn, (event) -> handleWarnLog(event));
-    serverBus.on(warn, (event) -> handleErrorLog(event));
+    serverBus.on(err, (event) -> handleErrorLog(event));
 
     return new SimpleEventingStream(serverBus, eventMap, out);
   }
@@ -336,12 +318,11 @@ public class InlineServerProcess {
       try (OutputStream stdout = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
         try (OutputStream events = buildEventingStream(stdout)) {
           while (returnValue) {
-            reset(true);
             server = serverStart.apply(events);
             returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown");
-            harnessLogger.output("server process exit. restart=" + returnValue);
           }
           didTerminateWithStatus(returnValue);
+          harnessLogger.output("server process exit.");
         } catch (Exception e) {
           didTerminateWithException(e);
         }
