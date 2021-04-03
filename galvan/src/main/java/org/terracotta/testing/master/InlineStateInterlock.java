@@ -147,7 +147,7 @@ public class InlineStateInterlock {
   public void waitForAllServerRunning() throws GalvanFailureException {
     synchronized (this.sharedLockState) {
       this.logger.output("> waitForAllServerRunning");
-      while (!this.sharedLockState.checkDidPass() && (!this.terminatedServers.isEmpty())) {
+      while (!this.sharedLockState.checkDidPass() && !this.terminatedServers.isEmpty()) {
         safeWait();
       }
       this.logger.output("< waitForAllServerRunning");
