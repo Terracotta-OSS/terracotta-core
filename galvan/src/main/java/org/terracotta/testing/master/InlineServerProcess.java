@@ -118,7 +118,7 @@ public class InlineServerProcess {
     try {
       // First thing we need to do is make sure that we aren't already running.
       Assert.assertFalse(this.stateInterlock.isServerRunning(this));
-
+      stateInterlock.serverDidStartup(InlineServerProcess.this);
       ExitWaiter exitWaiter = new ExitWaiter();
       exitWaiter.start();
     } finally {
@@ -337,17 +337,13 @@ public class InlineServerProcess {
         try (OutputStream events = buildEventingStream(stdout)) {
           while (returnValue) {
             reset(true);
-            stateInterlock.serverDidStartup(InlineServerProcess.this);
-            try {
-              server = serverStart.apply(events);
-              returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown");
-              harnessLogger.output("server process exit. restart=" + returnValue);
-              InlineServerProcess.this.didTerminateWithStatus(returnValue);
-            } catch (Exception e) {
-              didTerminateWithException(e);
-              returnValue = false;
-            }
+            server = serverStart.apply(events);
+            returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown");
+            harnessLogger.output("server process exit. restart=" + returnValue);
           }
+          didTerminateWithStatus(returnValue);
+        } catch (Exception e) {
+          didTerminateWithException(e);
         }
       } catch (IOException io) {
         throw new UncheckedIOException(io);
