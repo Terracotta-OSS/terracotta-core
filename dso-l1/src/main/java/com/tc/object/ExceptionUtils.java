@@ -37,6 +37,7 @@ import org.terracotta.exception.PermanentEntityException;
 public class ExceptionUtils {
   public static EntityException throwEntityException(Exception exp) {
     if (exp instanceof RuntimeException) {
+      exp.addSuppressed(new RuntimeException("caller local trace"));
       throw (RuntimeException)exp;
     } else {
       return convert(exp);
@@ -47,6 +48,7 @@ public class ExceptionUtils {
     if (server instanceof ServerException) {
       return convertServerException((ServerException)server);
     } else if (server instanceof EntityException) {
+      server.addSuppressed(new RuntimeException("caller local trace"));
       return (EntityException)server;
     } else {
       return new WrappedEntityException("", "", server.getMessage(), server);
