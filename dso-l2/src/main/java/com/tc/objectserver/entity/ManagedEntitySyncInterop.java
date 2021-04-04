@@ -46,6 +46,17 @@ public final class ManagedEntitySyncInterop implements Serializable {
     }
   }
 
+  public synchronized void abortSync() {
+    try {
+      while (lifecycleOccuring > 0) {
+        this.wait();
+      }
+      syncsReadyToStart -= 1;
+    } catch (InterruptedException ie) {
+      L2Utils.handleInterrupted(null, ie);
+    }
+  }
+  
   public synchronized void startLifecycle() {
     try {
       while (syncsStarted > 0 || syncsReadyToStart > 0) {

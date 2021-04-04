@@ -894,11 +894,15 @@ public class ManagedEntityImpl implements ManagedEntity {
 
   @Override
   public SyncReplicationActivity.EntityCreationTuple startSync() {
+    // make sure no lifecycle is occuring
     interop.startSync();
+    // clear the queue to make sure still no lifecycle
     clearQueue();
     if (!this.isDestroyed) {
       return new SyncReplicationActivity.EntityCreationTuple(this.id, this.version, this.constructorInfo, canDelete);
     } else {
+      // remove the sync reference that was taken
+      interop.abortSync();
       return null;
     }
   }
