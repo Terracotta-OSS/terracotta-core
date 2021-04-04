@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.msg.ClusterStateMessage;
 import com.tc.l2.state.ServerMode;
-import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -44,6 +43,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
     ConnectionIDFactoryListener {
@@ -53,16 +53,16 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final GroupManager<AbstractGroupMessage>    groupManager;
   private final ClusterState    state;
   private final ConfigurationProvider configurationProvider;
-  private final StateManager    stateManager;
+  private final Supplier<ServerMode>    currentMode;
 
   private boolean               isActive = false;
 
   private final Collection<NodeID>    others = new HashSet<>();
 
-  public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, StateManager stateManager,
+  public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, Supplier<ServerMode> currentMode,
                                            ClusterState clusterState, ConnectionIDFactory factory, ConfigurationProvider configurationProvider) {
     this.groupManager = groupManager;
-    this.stateManager = stateManager;
+    this.currentMode = currentMode;
     this.state = clusterState;
     this.configurationProvider = configurationProvider;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
@@ -71,9 +71,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   @Override
   public synchronized void goActiveAndSyncState() {
-    switch (stateManager.getCurrentMode()) {
+    switch (currentMode.get()) {
       case ACTIVE:
-        state.setCurrentState(stateManager.getCurrentMode().getState());
+        state.setCurrentState(currentMode.get().getState());
         state.generateStripeIDIfNeeded();
         state.syncActiveState();
 
@@ -87,7 +87,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
         TCLogging.getConsoleLogger().warn("Failed to activate.  Server is stopping");
         break;
       default:
-        throw new AssertionError("cannot activate. State:" + stateManager.getCurrentMode());
+        throw new AssertionError("cannot activate. State:" + currentMode.get());
     }
     notifyAll();
   }
@@ -124,14 +124,14 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
 
   @Override
   public synchronized void connectionIDCreated(ConnectionID connectionID) {
-    Assert.assertTrue(stateManager.isActiveCoordinator());
+    Assert.assertTrue(isActive);
     state.addNewConnection(connectionID);
     publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
   }
 
   @Override
   public synchronized void connectionIDDestroyed(ConnectionID connectionID) {
-    Assert.assertTrue(stateManager.isActiveCoordinator());
+    Assert.assertTrue(isActive);
     state.removeConnection(connectionID);
     publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
   }
@@ -159,7 +159,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   }
 
   private void handleClusterStateMessage(NodeID fromNode, ClusterStateMessage msg) {
-    if (stateManager.isActiveCoordinator()) {
+    if (isActive) {
       LOGGER.warn("Recd ClusterStateMessage from " + fromNode
                   + " while I am the cluster co-ordinator. This is bad. Sending NG response. ");
       sendNGSplitBrainResponse(fromNode, msg);
@@ -170,7 +170,7 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       if (msg.isSplitBrainMessage()) {
         return; // About to get zapped no need to actually do anything with the split brain message.
       }
-      if (ServerMode.PASSIVE_STATES.contains(this.stateManager.getCurrentMode())) {
+      if (ServerMode.PASSIVE_STATES.contains(this.currentMode.get())) {
         msg.initState(state);
         if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
           configurationProvider.sync(state.getConfigSyncData());
@@ -210,6 +210,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     Map<String, Object> cstate = new LinkedHashMap<>();
     state.put("state", cstate);
     this.state.reportStateToMap(cstate);
-    state.put("stateManager", this.stateManager.toString());
+    state.put("currentMode", this.currentMode.get().toString());
   }
 }

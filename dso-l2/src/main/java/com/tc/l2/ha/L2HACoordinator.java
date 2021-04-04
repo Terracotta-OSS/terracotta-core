@@ -82,7 +82,7 @@ public class L2HACoordinator implements L2Coordinator {
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(
                                                                   this.groupManager,
-                                                                  this.stateManager,
+                                                                  stateManager::getCurrentMode,
                                                                   clusterState,
                                                                   this.server.getConnectionIdFactory(),
                                                                   this.server.getConfigSetupManager().getConfigurationProvider());
