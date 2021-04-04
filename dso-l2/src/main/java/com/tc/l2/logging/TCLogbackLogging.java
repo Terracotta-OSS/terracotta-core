@@ -94,7 +94,7 @@ public class TCLogbackLogging {
       appender.start();
       root.addAppender(appender);
     }
-    if (!hasJfr) {
+    if (!hasJfr && EventAppender.isEnabled()) {
       EventAppender events = new EventAppender();
       events.setName("LogToJFR");
       events.setContext(loggerContext);
