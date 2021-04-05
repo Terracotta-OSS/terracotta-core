@@ -18,10 +18,12 @@
  */
 package com.tc.objectserver.entity;
 
+import com.tc.async.api.DirectExecutionMode;
 import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.exception.ServerException;
+import com.tc.l2.msg.SyncReplicationActivity;
 import com.tc.net.ClientID;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
@@ -145,6 +147,7 @@ public class ManagedEntityImplTest {
     executionSink = mock(Sink.class);
     PassiveReplicationBroker broker = mock(PassiveReplicationBroker.class);
     when(broker.passives()).thenReturn(Collections.emptySet());
+    when(broker.replicateActivity(any(SyncReplicationActivity.class), any(Set.class))).thenReturn(mock(ActivePassiveAckWaiter.class));
     RequestProcessor processor = new RequestProcessor(executionSink);
     processor.setReplication(broker);
     
@@ -820,12 +823,28 @@ public class ManagedEntityImplTest {
     verify(response4).complete();
   }
 
-  @Test
+@Test
   public void testSyncOrder() throws Exception {
     Mockito.doAnswer((m)->{
       ((Runnable)m.getArguments()[0]).run();
       return null;
     }).when(messageSelf).addToSink(any(VoltronEntityMessage.class));
+    ServerEntityRequest req = mock(ServerEntityRequest.class);
+    when(req.getAction()).thenReturn(ServerEntityAction.CREATE_ENTITY);
+    when(req.getNodeID()).thenReturn(new ClientID(1L));
+    when(req.getTransaction()).thenReturn(new TransactionID(1L));
+    when(req.getClientInstance()).thenReturn(new ClientInstanceID(1L));
+    MessagePayload payload = mock(MessagePayload.class);
+    when(payload.getRawPayload()).thenReturn(new byte[0]);
+    BarrierCompletion complete = new BarrierCompletion();
+    ResultCapture cap = mock(ResultCapture.class);
+    Mockito.doAnswer((m)->{
+      complete.complete();
+      return null;
+    }).when(cap).complete();
+    DirectExecutionMode.activate(true);
+    managedEntity.addRequestMessage(req, payload, cap);
+    complete.waitForCompletion();
     managedEntity.promoteEntity();
     managedEntity.startSync();
     verify(activeServerEntity, never()).prepareKeyForSynchronizeOnPassive(any(), eq(1));
@@ -833,7 +852,7 @@ public class ManagedEntityImplTest {
       verify(activeServerEntity).prepareKeyForSynchronizeOnPassive(any(), eq(1));
       return null;
     }).when(activeServerEntity).synchronizeKeyToPassive(any(), eq(1));
-    managedEntity.sync(mock(SessionID.class));
+    managedEntity.sync(new SessionID(1L));
   }
   
   @Test
