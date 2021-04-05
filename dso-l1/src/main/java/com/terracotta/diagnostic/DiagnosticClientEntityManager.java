@@ -164,7 +164,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     if (!message.send()) {
-      message.setResult(null, new ConnectionClosedException("message failed tp send"));
+      message.setResult(null, new ConnectionClosedException("message failed to send"));
       waitingForAnswer.remove(network.getTransactionID());
     }
     return message;
