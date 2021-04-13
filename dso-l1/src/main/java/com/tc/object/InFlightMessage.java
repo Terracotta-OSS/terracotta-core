@@ -311,7 +311,8 @@ public class InFlightMessage implements PrettyPrintable {
     timedWait(() -> getCanComplete, timeout, unit);
     this.got = System.nanoTime();
     if (exception != null) {
-      throw ExceptionUtils.throwEntityException(exception);
+      ExceptionUtils.throwEntityException(exception);
+      throw new AssertionError("exception conversion failed", exception);
     } else {
       if (this.message.getVoltronType() == VoltronEntityMessage.Type.INVOKE_ACTION) {
         Assert.assertNotNull(value);
