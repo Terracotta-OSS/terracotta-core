@@ -62,7 +62,7 @@ abstract class AbstractConnectionService implements ConnectionService {
 
   @Override
   public boolean handlesConnectionType(String connectionType) {
-    return this.scheme.contains(connectionType);
+    return this.scheme.stream().filter(c->c.equalsIgnoreCase(connectionType)).findAny().isPresent();
   }
 
   @Override
