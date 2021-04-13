@@ -18,49 +18,28 @@
  */
 package com.tc.l2.logging;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.AppenderBase;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Predicate;
 
 /**
  * An {@link Appender} that simply buffers records (in a bounded queue) until they're needed. This is used for making
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender<E> extends ConsoleAppender<E> {
+public class BufferingAppender<E> extends AppenderBase<E> {
 
   private final Queue<E> buffer;
-  private Predicate<E> printToConsole = e->false;
-  private boolean doBuffer = true;
 
   public BufferingAppender() {
     this.buffer = new ConcurrentLinkedQueue<>();
   }
 
-  public void setConsoleFilter(Predicate<E> filter) {
-    printToConsole = filter;
-  }
-
-  public void setConsole(boolean console) {
-    this.printToConsole = e->console;
-  }
-
-  public void disableBuffering() {
-    this.doBuffer = false;
-  }
-
   @Override
-  public void doAppend(E eventObject) {
-    if (printToConsole.test(eventObject)) {
-      super.doAppend(eventObject);
-    }
-    if (doBuffer) {
-      buffer.add(eventObject);
-    }
+  protected void append(E eventObject) {
+    buffer.add(eventObject);
   }
 
   public void sendContentsTo(Appender<E> otherAppender) {
@@ -68,14 +47,6 @@ public class BufferingAppender<E> extends ConsoleAppender<E> {
       E event = this.buffer.poll();
       if (event == null) break;
       otherAppender.doAppend(event);
-    }
-  }
-
-  public void sendContentsTo(ch.qos.logback.classic.Logger logger) {
-    while (true) {
-      ILoggingEvent event = (ILoggingEvent)this.buffer.poll();
-      if (event == null) break;
-      logger.callAppenders(event);
     }
   }
 }

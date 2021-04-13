@@ -85,12 +85,6 @@ public class TCLogbackLogging {
       BufferingAppender<ILoggingEvent> appender = new BufferingAppender<>();
       appender.setName("TC_BASE");
       appender.setContext(loggerContext);
-      appender.setTarget("System.out");
-      PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-      encoder.setContext(loggerContext);
-      encoder.setPattern("%d [%t] %p %c - %m%n");
-      encoder.start();
-      appender.setEncoder(encoder);
       appender.start();
       root.addAppender(appender);
     }
@@ -113,13 +107,20 @@ public class TCLogbackLogging {
     String logDir = getPathString(logDirFile);
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
-    ch.qos.logback.classic.Logger console = loggerContext.getLogger(CONSOLE);
 
     if (logDirFile != null) {
       Appender<ILoggingEvent> continuingAppender = installFileAppender(logDir, loggerContext);
       root.addAppender(continuingAppender);
+      disableBufferingAppender(continuingAppender);
+    } else {
+      LOGGER.warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
+      disableBufferingAppender(null);
     }
+  }
 
+  private static void disableBufferingAppender(Appender<ILoggingEvent> continuingAppender) {
+    LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+    ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
     Iterator<Appender<ILoggingEvent>> appenders = root.iteratorForAppenders();
     if (appenders != null) {
       while (appenders.hasNext()) {
@@ -127,14 +128,14 @@ public class TCLogbackLogging {
         if (current instanceof BufferingAppender) {
           root.detachAppender(current);
           current.stop();
-          ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(console);
+          if (continuingAppender != null) {
+            ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(continuingAppender);
+          }
         }
       }
-    } else {
-      LOGGER.warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
     }
   }
-
+  
   private static void attachConsoleLogger(LoggerContext cxt, ch.qos.logback.classic.Logger console, OutputStream out) {
     if (out == null) {
       ConsoleAppender<ILoggingEvent> append = new ConsoleAppender<>();
@@ -153,7 +154,6 @@ public class TCLogbackLogging {
       OutputStreamAppender<ILoggingEvent> redirect = new OutputStreamAppender<>();
       redirect.setContext(cxt);
       redirect.setName("ServerStdOut");
-      redirect.setOutputStream(out);
       redirect.setImmediateFlush(true);
       PatternLayoutEncoder stdencoder = new PatternLayoutEncoder();
       stdencoder.setContext(cxt);
@@ -162,6 +162,7 @@ public class TCLogbackLogging {
       stdencoder.start();
 
       redirect.setEncoder(stdencoder);
+      redirect.setOutputStream(out);
       redirect.start();
       console.addAppender(redirect);
     }
