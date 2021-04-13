@@ -405,7 +405,7 @@ public class Bootstrap implements BootstrapService {
 
       @Override
       public void audit(String msg, Properties additional) {
-        GuardianContext.validate(Guardian.Op.AUDIT_OP, msg, additional);
+        impl.audit(msg, additional);
       }
     };
   }

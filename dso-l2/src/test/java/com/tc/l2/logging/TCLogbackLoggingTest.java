@@ -22,6 +22,9 @@ import static com.tc.l2.logging.TCLogbackLogging.CONSOLE;
 import java.io.File;
 import java.io.FileReader;
 import java.io.LineNumberReader;
+import java.nio.file.Files;
+import java.util.Arrays;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import org.junit.After;
@@ -67,7 +70,7 @@ public class TCLogbackLoggingTest {
    * Test of bootstrapLogging method, of class TCLogbackLogging.
    */
   @Test
-  public void testBootstrapLogging() {
+  public void testBootstrapLogging() throws Exception {
     System.out.println("bootstrapLogging");
     TCLogbackLogging.resetLogging();
     TCLogbackLogging.bootstrapLogging(null);
@@ -78,8 +81,12 @@ public class TCLogbackLoggingTest {
     assertThat(sysout.getLog(), containsString("this is a test"));
     sysout.clearLog();
     assertThat(sysout.getLog(), not(containsString("this is a test")));
-    TCLogbackLogging.redirectLogging(null);
-    assertThat(sysout.getLog(), containsString("this is a test"));
+    File f = temp.newFolder();
+    TCLogbackLogging.redirectLogging(f);
+    System.out.println("PRINTING " + f.listFiles()[0].toPath());
+    Files.readAllLines(f.listFiles()[0].toPath()).forEach(System.out::println);
+    System.out.println("FINISHED " + f.listFiles()[0].toPath());
+    assertThat(Files.readAllLines(f.listFiles()[0].toPath()), contains(Arrays.asList(containsString("this is a test"), containsString("Log file:"))));
   }
 
   /**

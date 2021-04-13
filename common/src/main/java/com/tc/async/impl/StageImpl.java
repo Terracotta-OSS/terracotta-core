@@ -238,7 +238,8 @@ public class StageImpl<EC> implements Stage<EC> {
  
   private synchronized void startThreads(String contextId) {
     for (int i = 0; i < threads.length; i++) {
-      String threadName = contextId + " - WorkerThread(" + name + ", " + i;
+      String threadName = contextId != null ? contextId + " - " : "";
+      threadName += "WorkerThread(" + name + ", " + i;
       if (threads.length > 1) {
         threadName = threadName + ", " + this.stageQueue.getSource(i).getSourceName() + ")";
       } else {
