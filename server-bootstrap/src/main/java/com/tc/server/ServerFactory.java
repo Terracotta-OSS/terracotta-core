@@ -22,10 +22,24 @@ package com.tc.server;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.ServiceLoader;
+import javax.management.ObjectName;
 import org.terracotta.server.Server;
 
 
 public class ServerFactory {
+
+  public static ObjectName SERVER_DOMAIN = createObjectName();
+
+  private static ObjectName createObjectName() {
+    try {
+      return new ObjectName("org.terracotta.internal:name=ServerDomain");
+    } catch (Exception exp) {
+      // IGNORE
+    }
+    return null;
+  }
+
+
   public static Server createServer(List<String> args, ClassLoader loader) {
     try {
       ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);

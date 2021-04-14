@@ -546,7 +546,7 @@ public class DistributedObjectServer {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
-    this.connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
+    this.connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
     this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionManager,
@@ -792,7 +792,7 @@ public class DistributedObjectServer {
         consoleLogger
     );
 
-    this.context = this.serverBuilder.createServerConfigurationContext(ServerEnv.getServer().getIdentifier(), stageManager, channelManager,
+    this.context = this.serverBuilder.createServerConfigurationContext(configSetupManager.getServerConfiguration().getName(), stageManager, channelManager,
                                                                        channelStats, this.l2Coordinator,
                                                                        clientHandshakeManager,
                                                                        this.connectionIdFactory,

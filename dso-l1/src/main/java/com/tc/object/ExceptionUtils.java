@@ -22,6 +22,9 @@ import com.tc.exception.EntityBusyException;
 import com.tc.exception.EntityReferencedException;
 import com.tc.exception.ServerException;
 import com.tc.exception.WrappedEntityException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.exception.EntityAlreadyExistsException;
@@ -35,18 +38,42 @@ import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
 
 public class ExceptionUtils {
-  public static EntityException throwEntityException(Exception exp) {
-    if (exp instanceof RuntimeException) {
-      throw (RuntimeException)exp;
+  public static void throwEntityException(Exception exp) throws EntityException {
+    if (exp instanceof ConnectionClosedException) {
+      throw rewriteConnectionClosed((ConnectionClosedException)exp);
+    } else if (exp instanceof RuntimeException) {
+      throw addCallerStackTraceToRuntime((RuntimeException)exp);
     } else {
-      return convert(exp);
+      throw convert(exp);
     }
+  }
+
+  private static ConnectionClosedException rewriteConnectionClosed(ConnectionClosedException exp) {
+    ConnectionClosedException local = exp.getClassName() != null ? new ConnectionClosedException(exp.getClassName(), exp.getEntityName(), exp.getDescription(), !exp.messageWasNotSent(), exp)
+        : new ConnectionClosedException(!exp.messageWasNotSent(), exp.getDescription(), exp);
+
+    // remove this class from exception stack
+    local.setStackTrace(Arrays.asList(local.getStackTrace()).stream().filter(e->!e.getClassName().equals(ExceptionUtils.class.getName())).toArray(size->new StackTraceElement[size]));
+    return local;
+  }
+
+  private static RuntimeException addCallerStackTraceToRuntime(RuntimeException runtime) {
+    List<StackTraceElement> newStack = new LinkedList<>(Arrays.asList(Thread.currentThread().getStackTrace()));
+    // remove getStackTrace
+    newStack.remove(0);
+    // remove this classes stacks
+    newStack.removeIf(e->e.getClassName().equals(ExceptionUtils.class.getName()));
+    newStack.add(new StackTraceElement("##########  trace of exception cause", "starts here   ###########", null, -1));
+    newStack.addAll(Arrays.asList(runtime.getStackTrace()));
+    runtime.setStackTrace(newStack.toArray(new StackTraceElement[0]));
+    return runtime;
   }
   
   public static EntityException convert(Exception server) {
     if (server instanceof ServerException) {
       return convertServerException((ServerException)server);
     } else if (server instanceof EntityException) {
+      server.addSuppressed(new RuntimeException("caller local trace"));
       return (EntityException)server;
     } else {
       return new WrappedEntityException("", "", server.getMessage(), server);

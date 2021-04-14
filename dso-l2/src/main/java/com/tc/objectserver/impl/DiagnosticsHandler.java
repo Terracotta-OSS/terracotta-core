@@ -155,6 +155,9 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
             result = subsystem.call(cmd[1], cmd[2], cmd[3]).getBytes(set);
           }
           break;
+        case "list":
+          result = subsystem.info(cmd[1]).getBytes(set);
+          break;
         default:
           result = "UNKNOWN CMD".getBytes(set);
           break;

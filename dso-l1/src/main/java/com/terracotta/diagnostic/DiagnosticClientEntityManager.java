@@ -33,7 +33,6 @@ import com.tc.object.InFlightMonitor;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +41,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -164,7 +162,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
     InFlightMessage message = new InFlightMessage(eid, ()->network, Collections.<Acks>emptySet(), null, false, false);
     waitingForAnswer.put(network.getTransactionID(), message);
     if (!message.send()) {
-      message.setResult(null, new ConnectionClosedException("message failed tp send"));
+      message.setResult(null, new ConnectionClosedException("message failed to send"));
       waitingForAnswer.remove(network.getTransactionID());
     }
     return message;

@@ -25,6 +25,9 @@ import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaManagement.MBeanKeys;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.util.StringUtil;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import javax.management.Attribute;
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -104,16 +107,32 @@ public class JMXSubsystem {
     }
   }
 
-  private void printInfo(ObjectName name) throws IntrospectionException, InstanceNotFoundException, ReflectionException {
-    MBeanInfo info = server.getMBeanInfo(name);
-    for ( MBeanOperationInfo op : info.getOperations()) {
-      String method = op.getName();
-      String para = StringUtil.toString(op.getSignature());
-      System.out.println(method + " " + para);
+  public String info(String name) {
+    try {
+      return printInfo(getObjectName(name));
+    } catch (Throwable t) {
+      String error = "Invalid JMX object:" + name + " " + t.getMessage();
+      warn(t, error, name);
+      return error;
     }
-    System.out.println("ATTRIBUTES");
-    for (MBeanAttributeInfo att : info.getAttributes()) {
-      System.out.println(att.getName());
+  }
+
+  private String printInfo(ObjectName name) throws IntrospectionException, InstanceNotFoundException, ReflectionException {
+    MBeanInfo info = server.getMBeanInfo(name);
+    try (StringWriter writer = new StringWriter();PrintWriter pw = new PrintWriter(writer)) {
+      for ( MBeanOperationInfo op : info.getOperations()) {
+        String method = op.getName();
+        String para = StringUtil.toString(op.getSignature());
+        pw.println(method + " " + para);
+      }
+      pw.println("ATTRIBUTES");
+      for (MBeanAttributeInfo att : info.getAttributes()) {
+        pw.println(att.getName());
+      }
+      pw.flush();
+      return writer.toString();
+    } catch (IOException ioe) {
+      return ioe.toString();
     }
   }
   

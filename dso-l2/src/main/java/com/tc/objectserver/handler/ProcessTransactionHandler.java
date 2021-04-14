@@ -474,7 +474,8 @@ public class ProcessTransactionHandler implements ReconnectListener {
     }
   }
 
-  private void disconnectClientDueToFailure(ClientID clientID) {
+  private void disconnectClientDueToFailure(ClientID clientID, Exception exp) {
+    LOGGER.info("disconnecting " + clientID + " due to an error", exp);
     safeGetChannel(clientID).ifPresent(channel->channel.close());
   }
 
@@ -895,7 +896,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           if (e.getType() != ServerExceptionType.ENTITY_NOT_FOUND) {
             // disconnect the client due to error after a reference count has been taken
             // NOT_FOUND is pre-reference count
-            disconnectClientDueToFailure(getNodeID());
+            disconnectClientDueToFailure(getNodeID(), e);
           }
           break;
         case RELEASE_ENTITY:

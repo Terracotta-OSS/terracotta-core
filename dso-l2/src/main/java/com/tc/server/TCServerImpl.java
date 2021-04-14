@@ -43,6 +43,8 @@ import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.impl.JMXSubsystem;
+import static com.tc.server.ServerFactory.SERVER_DOMAIN;
+import com.tc.spi.Guardian;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
@@ -61,6 +63,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import com.tc.text.PrettyPrinter;
+import java.lang.management.ManagementFactory;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
@@ -68,7 +71,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import javax.management.MBeanServerFactory;
 
-import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
 
@@ -88,7 +90,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private volatile boolean                  restart                             = false;
   private boolean                          crashed;
 
-  private final JMXSubsystem                subsystem = new JMXSubsystem(MBeanServerFactory.createMBeanServer());
+  private final JMXSubsystem                subsystem;
   /**
    * This should only be used for tests.
    */
@@ -103,13 +105,24 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
                       ConnectionPolicy connectionPolicy) {
     super(group);
-
+    MBeanServer platform = ManagementFactory.getPlatformMBeanServer();
+    boolean globalMgmt = false;
+    try {
+      Object attr = platform.getAttribute(SERVER_DOMAIN, "inline");
+      if (attr != null && !(Boolean)attr) {
+        globalMgmt = false;
+      }
+    } catch (Exception exp) {
+      logger.info("unablr to determine server domain", exp);
+    }
+    subsystem = new JMXSubsystem(globalMgmt ? platform : MBeanServerFactory.createMBeanServer());
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
     GuardianContext.setServer(this);
   }
 
+  @Override
   public JMXSubsystem getJMX() {
     return subsystem;
   }
@@ -158,7 +171,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void stop(StopAction...restartMode) {
-    ServerEnv.getServer().audit("Stop invoked", new Properties());
+    audit("Stop invoked", new Properties());
     TCLogging.getConsoleLogger().info("Stopping server");
     if (dsoServer != null) {
        EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
@@ -230,6 +243,10 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public long getActivateTime() {
     return this.activateTime;
+  }
+
+  public void audit(String msg, Properties additional) {
+    GuardianContext.validate(Guardian.Op.AUDIT_OP, msg, additional);
   }
 
   @Override
@@ -373,7 +390,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     Assert.assertTrue(this.stateManager == null);
     DistributedObjectServer server = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, this);
     server.start();
-    MBeanServer mbean = ServerEnv.getServer().getManagement().getMBeanServer();
+    MBeanServer mbean = subsystem.getServer();
     registerDSOServer(server, mbean);
     registerServerMBeans(server, mbean);
   }
@@ -387,7 +404,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void dump() {
-    ServerEnv.getServer().audit("Dump invoked", new Properties());
+    audit("Dump invoked", new Properties());
     TCLogging.getDumpLogger().info(new String(this.dsoServer.getClusterState(Charset.defaultCharset(), null), Charset.defaultCharset()));
   }
 

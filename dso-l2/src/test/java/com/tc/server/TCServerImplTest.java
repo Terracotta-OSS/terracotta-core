@@ -62,6 +62,7 @@ public class TCServerImplTest {
     DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
     when(cm.getActiveChannels()).thenReturn(new MessageChannel[0]);
     when(smc.getChannelManager()).thenReturn(cm);    
+    when(smc.getOperationGuardian()).thenReturn((o,p)->true);
     when(dso.getManagementContext()).thenReturn(smc);
     ServerConfigurationContext cxt = mock(ServerConfigurationContext.class);
     when(dso.getContext()).thenReturn(cxt);

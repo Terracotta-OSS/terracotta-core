@@ -82,7 +82,15 @@ public class DiagnosticEntityClientService implements EntityClientService<Diagno
                 } else if (methodName.equals("invokeWithArg")) {
                   return "invokeWithArgJMX " + args[0] + " " + args[1] + " " + args[2];
                 } else {
-                  return methodName;
+                  StringBuilder cmd = new StringBuilder();
+                  cmd.append(methodName);
+                  if (args != null) {
+                    for (int x=0;x<args.length;x++) {
+                      cmd.append(' ');
+                      cmd.append(args[x]);
+                    }
+                  }
+                  return cmd.toString();
                 }
               }
             }).invoke();

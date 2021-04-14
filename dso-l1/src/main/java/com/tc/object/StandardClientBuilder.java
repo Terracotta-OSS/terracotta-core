@@ -108,7 +108,7 @@ public class StandardClientBuilder implements ClientBuilder {
     ProductID product = (noreconnect) ? ProductID.SERVER : ProductID.PERMANENT;
     try {
       if (typeName != null) {
-        product = ProductID.valueOf(typeName);
+        product = ProductID.valueOf(typeName.toUpperCase());
       }
     } catch (IllegalArgumentException arg) {
       // do nothing, just stick with the default

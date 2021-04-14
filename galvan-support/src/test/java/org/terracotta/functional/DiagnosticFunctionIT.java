@@ -18,7 +18,6 @@
  */
 package org.terracotta.functional;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 import static org.junit.Assert.fail;
@@ -47,9 +46,11 @@ public class DiagnosticFunctionIT {
     for (String hostPort: clusterHostPorts) {
       String[] hp = hostPort.split("[:]");
       InetSocketAddress inet = InetSocketAddress.createUnresolved(hp[0], Integer.parseInt(hp[1]));
-      try (Diagnostics d = DiagnosticsFactory.connect(inet, new Properties())) {
+      try (com.terracotta.diagnostic.Diagnostics d = (com.terracotta.diagnostic.Diagnostics)DiagnosticsFactory.connect(inet, new Properties())) {
         System.out.println(d.getThreadDump());
         System.out.println(d.invoke("Server", "isAcceptingClients"));
+        System.out.println(d.get("Server", "Version"));
+        System.out.println(d.list("Server"));
       }
     }
 
