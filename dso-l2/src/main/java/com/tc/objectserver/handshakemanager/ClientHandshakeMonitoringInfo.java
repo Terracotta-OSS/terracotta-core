@@ -63,4 +63,9 @@ public class ClientHandshakeMonitoringInfo {
   public boolean hasClientVersion() {
     return (this.version != null && this.version.length() > 0);
   }
+
+  @Override
+  public String toString() {
+    return "ClientHandshakeInfo{" + "pid=" + pid + ", uuid=" + uuid + ", name=" + name + ", version=" + version + ", address=" + address + '}';
+  }
 }
