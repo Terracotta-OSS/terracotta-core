@@ -53,6 +53,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
@@ -221,9 +222,6 @@ class BasicInlineCluster extends Cluster {
 
     String stripeName = "stripe1";
     Path stripeInstallationDir = testParentDir.toPath().resolve(stripeName);
-    Path home = Paths.get(System.getProperty("user.dir"));
-    System.out.println(home);
-    System.out.println(stripeInstallationDir);
     Files.createDirectory(stripeInstallationDir);
 
     VerboseManager stripeVerboseManager = displayVerboseManager.createComponentManager("[" + stripeName + "]");
