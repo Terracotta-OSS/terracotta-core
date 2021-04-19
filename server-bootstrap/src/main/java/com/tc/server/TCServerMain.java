@@ -19,7 +19,6 @@
 package com.tc.server;
 
 
-import static com.tc.server.ServerFactory.SERVER_DOMAIN;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
@@ -31,20 +30,13 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import javax.management.Attribute;
 import javax.management.MBeanServer;
 import org.terracotta.server.Server;
 
 public class TCServerMain {
   
   public static void main(String[] args) {
-    boolean inlineRestart = Boolean.getBoolean("restart.inline");
-    MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-    try {
-      server.setAttribute(SERVER_DOMAIN, new Attribute("inline", inlineRestart));
-    } catch (Exception mal) {
-      mal.printStackTrace();
-    }
+    boolean inlineRestart = Boolean.getBoolean(ServerFactory.RESTART_INLINE);
     while (startServer(args)) {
       if (inlineRestart) {
         System.out.println("Restarting server...");

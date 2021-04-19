@@ -105,19 +105,9 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected TCServerImpl(ServerConfigurationManager manager, TCThreadGroup group,
                       ConnectionPolicy connectionPolicy) {
     super(group);
-    MBeanServer platform = ManagementFactory.getPlatformMBeanServer();
-    boolean globalMgmt = false;
-    try {
-      Object attr = platform.getAttribute(SERVER_DOMAIN, "inline");
-      if (attr != null && !(Boolean)attr) {
-        globalMgmt = true;
-      }
-    } catch (InstanceNotFoundException notfound) {
-      // IGNORE
-    } catch (Exception exp) {
-      logger.info("unable to determine server domain", exp);
-    }
-    subsystem = new JMXSubsystem(globalMgmt ? platform : MBeanServerFactory.createMBeanServer());
+    boolean globalMgmt = !Boolean.getBoolean(ServerFactory.RESTART_INLINE);
+
+    subsystem = new JMXSubsystem(globalMgmt ? ManagementFactory.getPlatformMBeanServer() : MBeanServerFactory.createMBeanServer());
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
     this.configurationSetupManager = manager;
