@@ -19,6 +19,7 @@
 package org.terracotta.testing.config;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -38,7 +39,7 @@ public class TcConfigBuilder {
   
   public TcConfigBuilder(Path stripePath, List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,
                          Properties tcProperties, String namespaceFragment, String serviceFragment, int clientReconnectWindow, int voterCount) {
-    this(name->stripePath.resolve(name).resolve("logs").toString(), ()->serviceFragment == null ? "" : serviceFragment, serverNames, serverPorts, serverGroupPorts, tcProperties, namespaceFragment, clientReconnectWindow, voterCount);
+    this(name->stripePath != null ? stripePath.resolve(name).resolve("logs").toAbsolutePath().toString() : Paths.get(name).resolve("logs").toString(), ()->serviceFragment == null ? "" : serviceFragment, serverNames, serverPorts, serverGroupPorts, tcProperties, namespaceFragment, clientReconnectWindow, voterCount);
   }
 
   public TcConfigBuilder(Function<String, String> serverLogs, Supplier<String> serviceFragment, List<String> serverNames, List<Integer> serverPorts, List<Integer> serverGroupPorts,

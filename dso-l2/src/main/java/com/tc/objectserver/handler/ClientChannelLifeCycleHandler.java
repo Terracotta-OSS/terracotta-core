@@ -23,6 +23,7 @@ import com.tc.async.api.StageManager;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -37,6 +38,7 @@ import com.tc.objectserver.entity.ClientDisconnectMessage;
 import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.net.core.ProductID;
+import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +79,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(NodeID nodeID, ProductID productId) {
+  private void nodeDisconnected(NodeID nodeID, ProductID productId, TCSocketAddress address, Object clientInfo) {
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
@@ -87,7 +89,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     if (commsManager.isInShutdown()) {
       logger.info("Ignoring transport disconnect for " + nodeID + " while shutting down.");
     } else {
-      logger.info(": Received transport disconnect.  Shutting down client " + nodeID);
+      logger.info("Channel Management : Received transport disconnect.  Shutting down client " + nodeID + ":" +address + ":" + productId + ":" + clientInfo);
     }
   }
   
@@ -129,8 +131,8 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
       (e)->voltronSink.addToSink(createMessageForEntityDisconnect(clientID, target, latch)));
   }
 
-  private void nodeConnected(NodeID nodeID, ProductID productId) {
-
+  private void nodeConnected(NodeID nodeID, TCSocketAddress address, ProductID productId, Object clientInfo) {
+    logger.info("Channel Management : Received transport connect.  Starting client " + nodeID + ":" +address + ":" + productId + ":" + clientInfo);
   }
 /**
  * channel created is strangely connected.  When a new channel is created, it can be 
@@ -144,7 +146,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     ClientID clientID = (ClientID)channel.getRemoteNodeID();
     if (this.channelMgr.isActiveID(clientID)) {
    //  brand new member, broadcast the change if active
-      nodeConnected(clientID, channel.getProductID());
+      nodeConnected(clientID, channel.getRemoteAddress(), channel.getProductID(), channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT));
    //  client is connecting to the active
       notifyClientAdded(channel, clientID);
     } else {
@@ -185,6 +187,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     // Note that the remote node ID always refers to a client, in this path.
     ClientID clientID = (ClientID) channel.getRemoteNodeID();
     ProductID product = channel.getProductID();
+    TCSocketAddress address = channel.getRemoteAddress();
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. 
     // this will only get fired on the active as this is a client removal.
@@ -192,7 +195,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     // disconnect node.  This is done so that all messages issued by the client have fully run their course 
     // before an attempt is made to remove references.
     if (wasActive) {
-      nodeDisconnected(clientID, product);
+      nodeDisconnected(clientID, product, address, channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT));
     } else if (this.guardian) {
       GuardianContext.channelRemoved(channel);
     }

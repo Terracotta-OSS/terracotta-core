@@ -79,7 +79,7 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
     //Copy a custom logback configuration
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
     Properties props = new Properties();
-    props.setProperty("serverWorkingDir", serverWorkingDir.toString());
+    props.setProperty("serverWorkingDir", serverWorkingDir.toAbsolutePath().toString());
     props.store(new FileWriter(serverWorkingDir.resolve("logbackVars.properties").toFile()), "logging variables");
     if (logConfigExt != null) {
       InputStream logExt = this.getClass().getResourceAsStream("/" + logConfigExt);
