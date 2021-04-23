@@ -849,7 +849,7 @@ public class DistributedObjectServer {
         if (t != null && t != Thread.currentThread()) {
           t.interrupt();
           try {
-            logger.info("waiting for {} to exit" + t.getName());
+            logger.info("waiting for {} to exit", t.getName());
             t.join(500);
           } catch (InterruptedException i) {
             L2Utils.handleInterrupted(logger, i);

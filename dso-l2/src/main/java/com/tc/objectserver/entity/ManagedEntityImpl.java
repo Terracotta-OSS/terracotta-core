@@ -527,10 +527,10 @@ public class ManagedEntityImpl implements ManagedEntity {
       // Wrap this exception.
       logger.error("configuration error during a lifecyle operation ", ce);
       resp.failure(ServerException.createConfigurationException(id, ce));
-    } catch (TCShutdownServerException shutdown) {
-      throw shutdown;
-    } catch (TCServerRestartException shutdown) {
-      throw shutdown;
+    } catch (TCShutdownServerException | TCServerRestartException shutdown) {
+      throw shutdown;      
+    } catch (RuntimeException rt) {
+      throw rt;
     } catch (Exception e) {
       // Wrap this exception.
       ServerRuntimeException uncaught = ServerRuntimeException.createServerUncaught(getID(), e);
@@ -602,6 +602,8 @@ public class ManagedEntityImpl implements ManagedEntity {
         default:
           throw new IllegalArgumentException("Unknown request " + request);
       }
+    } catch (RuntimeException rt) {
+      throw rt;
     } catch (Exception e) {
       logger.error("caught exception during invoke ", e);
       throw new RuntimeException(e);

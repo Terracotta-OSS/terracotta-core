@@ -63,6 +63,7 @@ import org.terracotta.config.Property;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.TcProperties;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.HELP;
 import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.SERVER_NAME;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
@@ -78,6 +79,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   static final String CONFIG_FILE_PROPERTY_NAME = "tc.config";
 
   enum Opt {
+    HELP("h", "help"),
     SERVER_NAME("n", "name"),
     CONFIG_PATH("f", "config");
 
@@ -133,8 +135,10 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
       LOGGER.info("The configuration specified by the configuration file at '{}': \n\n{}",
                   configurationPath,
                   configuration.toString());
-
+    } catch (ConfigurationException config) {
+      throw config;
     } catch (Exception e) {
+      LOGGER.error("error during configuration handling", e);
       throw new ConfigurationException("Unable to initialize DefaultConfigurationProvider with " + configurationParams,
                                        e);
     } finally {
@@ -151,6 +155,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   public String getConfigurationParamsDescription() {
     StringWriter stringWriter = new StringWriter();
     try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+      printWriter.append('\n');
       new HelpFormatter().printOptions(printWriter, 100, createOptions(), 4, 4);
     }
     return stringWriter.toString();
@@ -173,6 +178,11 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
   private Path getConfiguration(String[] args) throws Exception {
     CommandLine commandLine = new DefaultParser().parse(createOptions(), args);
 
+    if (commandLine.hasOption(HELP.getShortName())) {
+      ServerEnv.getServer().console(getConfigurationParamsDescription());
+      throw new ConfigurationException("provided usage information");
+    }
+
     serverName = commandLine.getOptionValue(SERVER_NAME.getShortName());
     String cmdConfigurationFileName = commandLine.getOptionValue(CONFIG_PATH.getShortName());
     if (cmdConfigurationFileName != null && !cmdConfigurationFileName.isEmpty()) {
@@ -185,7 +195,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
             cmdConfigurationFileName,
             CONFIG_PATH.getShortOption() + "/" + CONFIG_PATH.getLongOption()
         );
-        throw new RuntimeException(errorMessage);
+        throw new ConfigurationException(errorMessage);
       }
     }
 
@@ -200,7 +210,7 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
             systemPropertyConfigurationFileName,
             CONFIG_FILE_PROPERTY_NAME
         );
-        throw new RuntimeException(errorMessage);
+        throw new ConfigurationException(errorMessage);
       }
     }
 
@@ -234,6 +244,12 @@ public class DefaultConfigurationProvider implements ConfigurationProvider {
               .hasArg()
               .argName("config-file")
               .desc("configuration file path")
+              .build()
+    );
+    options.addOption(
+        Option.builder(HELP.getShortName())
+              .longOpt(HELP.getLongName())
+              .desc("print usage information")
               .build()
     );
 
