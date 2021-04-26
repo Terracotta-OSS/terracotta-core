@@ -22,7 +22,6 @@ package com.tc.server;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -30,7 +29,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import javax.management.MBeanServer;
 import org.terracotta.server.Server;
 
 public class TCServerMain {
@@ -49,7 +47,11 @@ public class TCServerMain {
 
   public static boolean startServer(String[] args) {
     Server s = createServer(Arrays.asList(args));
-    return s.waitUntilShutdown();
+    if (s == null) {
+      return false;
+    } else {
+      return s.waitUntilShutdown();
+    }
   }
 
   public static Server createServer(List<String> args) {

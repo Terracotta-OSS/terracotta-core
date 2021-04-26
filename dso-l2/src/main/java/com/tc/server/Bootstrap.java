@@ -28,7 +28,6 @@ import com.tc.management.TerracottaManagement;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.util.ProductInfo;
-import com.tc.spi.Guardian;
 import com.tc.spi.Pauseable;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
@@ -61,12 +60,12 @@ public class Bootstrap implements BootstrapService {
   private static final Logger CONSOLE = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
 
   @Override
-  public Server createServer(List<String> args, ClassLoader loader) throws ConfigurationException {
+  public Server createServer(List<String> args, ClassLoader loader) {
     return createServer(args, null, loader);
   }
 
   @Override
-  public Server createServer(List<String> args, OutputStream out, ClassLoader loader) throws ConfigurationException {
+  public Server createServer(List<String> args, OutputStream out, ClassLoader loader) {
     TCLogbackLogging.bootstrapLogging(out);
     ServiceLocator locator = ServiceLocator.createPlatformServiceLoader(loader);
 
@@ -82,9 +81,9 @@ public class Bootstrap implements BootstrapService {
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
     TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)));
 
+    TCServerImpl impl = new TCServerImpl(setup, threadGroup);
+    Server server = wrap(setup, args, locator, impl);
     try {
-      TCServerImpl impl = new TCServerImpl(setup, threadGroup);
-      Server server = wrap(setup, args, locator, impl);
       ServerEnv.setDefaultServer(server);
 
       setup.initialize();
@@ -95,11 +94,13 @@ public class Bootstrap implements BootstrapService {
       writeSystemProperties();
 
       impl.start();
-      return server;
+    } catch (ConfigurationException config) {
+      throwableHandler.handleThrowable(Thread.currentThread(), config);
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
       throw t;
     }
+    return server;
   }
 
   private static void writeVersion(ProductInfo info) {

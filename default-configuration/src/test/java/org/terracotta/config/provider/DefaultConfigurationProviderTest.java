@@ -65,6 +65,7 @@ import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.CO
 import static com.tc.server.Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME;
 import java.util.Arrays;
 import static org.mockito.Mockito.doAnswer;
+import static org.terracotta.config.provider.DefaultConfigurationProvider.Opt.HELP;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 
@@ -208,7 +209,7 @@ public class DefaultConfigurationProviderTest {
     String[] args = {CONFIG_PATH.getShortOption(), configurationFile.toString()};
 
     String errorMessage = ".*using the .* option is not found";
-    expectedException.expect(new ThrowableCauseMatcher(RuntimeException.class, errorMessage));
+    expectedException.expect(new ExceptionMatcher(ConfigurationException.class, errorMessage));
     provider.initialize(asList(args));
   }
 
@@ -234,7 +235,7 @@ public class DefaultConfigurationProviderTest {
 
     try {
       String errorMessage = ".*using the system property.*not found";
-      expectedException.expect(new ThrowableCauseMatcher(RuntimeException.class, errorMessage));
+      expectedException.expect(new ExceptionMatcher(ConfigurationException.class, errorMessage));
       provider.initialize(Collections.<String>emptyList());
     } finally {
       System.clearProperty(CONFIG_FILE_PROPERTY_NAME);
@@ -293,6 +294,14 @@ public class DefaultConfigurationProviderTest {
     assertThat(provider.getConfigurationParamsDescription(), containsString(CONFIG_PATH.getShortOption()));
   }
 
+  @Test
+  public void testHelp() throws Exception {
+    String[] args = {HELP.getShortOption()};
+
+    expectedException.expect(ConfigurationException.class);
+    provider.initialize(asList(args));
+  }
+
   private String getFilePath(URL resource) {
     try {
       return Paths.get(resource.toURI()).toString();
@@ -305,6 +314,30 @@ public class DefaultConfigurationProviderTest {
     assertThat(configuration.getServiceConfigurations(), is(serviceProviderConfigurations));
     assertThat(configuration.getRawConfiguration(), is(rawConfiguration));
     assertThat(configuration.getExtendedConfiguration(Configuration.class), is(extendedConfigurations));
+  }
+
+  private static class ExceptionMatcher extends BaseMatcher<Throwable> {
+
+    private final Class<? extends Throwable> exceptionType;
+    private final Pattern errorMessage;
+
+    private ExceptionMatcher(Class<? extends Throwable> exceptionType, String errorMessage) {
+      this.exceptionType = exceptionType;
+      this.errorMessage = Pattern.compile(errorMessage);
+    }
+
+    @Override
+    public void describeTo(Description description) {
+    }
+
+    @Override
+    public boolean matches(Object o) {
+      if (!(o instanceof Throwable)) return false;
+      Throwable other = (Throwable)o;
+      if (other.getMessage() == null) return false;
+
+      return other.getClass().equals(exceptionType) && errorMessage.matcher(other.getMessage()).matches();
+    }
   }
 
   private static class ThrowableCauseMatcher extends BaseMatcher<Throwable> {

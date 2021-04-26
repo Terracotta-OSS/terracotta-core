@@ -74,8 +74,11 @@ public class ServerConfigurationManager implements PrettyPrintable {
     this.configurationProvider.initialize(this.startUpArgs);
     
     this.configuration = configurationProvider.getConfiguration();
-    this.serverConfiguration = this.configuration.getServerConfiguration();
+    if (this.configuration == null) {
+      throw new ConfigurationException("unable to determine server configuration");
+    }
 
+    this.serverConfiguration = this.configuration.getServerConfiguration();
     if (this.serverConfiguration == null) {
       throw new ConfigurationException("unable to determine server configuration");
     }

@@ -1,0 +1,21 @@
+<configuration>
+  <property resource="logbackVars.properties" />
+  <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender"/>
+
+  <appender name="JFR" class="org.terracotta.tripwire.JFRAppender">
+    <path>${serverWorkingDir}/artifacts</path>
+    <dumpOnExit>false</dumpOnExit>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="TC_BASE" />
+  </root>
+
+  <logger name="org.terracotta.dump" level="INFO">
+    <appender-ref ref="JFR" />
+  </logger>
+  <logger name="org.terracotta.console" level="INFO"/>
+
+  <include optional="true" resource="logback-ext-test.xml"/>
+
+</configuration>

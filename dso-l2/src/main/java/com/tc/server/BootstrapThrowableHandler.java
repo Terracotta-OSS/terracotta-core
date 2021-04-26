@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.terracotta.configuration.ConfigurationException;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
@@ -95,6 +96,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     addCallbackOnExitExceptionHandler(TCNotRunningException.class, new CallbackShutdownExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(InterruptedException.class, new CallbackShutdownExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(IllegalStateException.class, new CallbackShutdownExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(ConfigurationException.class, new ConfigurationExceptionLoggingAdapter());
   }
 
   @Override
