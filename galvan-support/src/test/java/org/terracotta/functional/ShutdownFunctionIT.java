@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.DiagnosticsFactory;
+import org.terracotta.exception.ConnectionClosedException;
 import org.terracotta.testing.rules.BasicExternalClusterBuilder;
 import org.terracotta.testing.rules.Cluster;
 
@@ -61,7 +62,7 @@ public class ShutdownFunctionIT {
         try (Diagnostics d = DiagnosticsFactory.connect(inet, new Properties())) {
           state = d.getState();
           System.out.println(state);
-        } catch (ConnectionException ce) {
+        } catch (ConnectionClosedException | ConnectionException ce) {
           ce.printStackTrace();
         }
       }

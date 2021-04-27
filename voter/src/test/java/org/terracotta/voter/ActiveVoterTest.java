@@ -25,6 +25,7 @@ import org.mockito.stubbing.Answer;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -253,17 +254,19 @@ public class ActiveVoterTest {
       put("PASSIVE-STANDBY", "localhost:1235");
     }};
 
-    Map<String, ClientVoterManager> managers =
+    Map<String, ClientVoterManager> managers = Collections.synchronizedMap(
         servers.entrySet()
                .stream()
                .map((e) -> manager(e.getKey(), e.getValue(), new HashSet<>(servers.values())))
-               .collect(toMap(ClientVoterManager::getTargetHostPort, identity()));
+               .collect(toMap(ClientVoterManager::getTargetHostPort, identity())));
 
     new ActiveVoter(VOTER_ID, new CompletableFuture<>(), empty(), managers::get, servers.get("ACTIVE-COORDINATOR")).start();
 
     waitForLogMessage("New Topology detected");
 
-    disconnectManagers(managers.values());
+    synchronized (managers) {
+      disconnectManagers(managers.values());
+    }
 
     waitForLogMessage("Attempting to re-register");
 
