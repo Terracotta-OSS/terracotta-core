@@ -82,14 +82,18 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
-      if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
+      if (isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()), productID);
 
       final NetworkStackID id = this.initiator.openMessageTransport(serverAddresses, cid);
 
       this.channelSessionID = this.sessionProvider.getSessionID();
-      channelOpened();
+      if (!isClosed()) {
+        channelOpened();
+      } else {
+        throw new IOException("connection closed");
+      }
       return id;
     }
   }
