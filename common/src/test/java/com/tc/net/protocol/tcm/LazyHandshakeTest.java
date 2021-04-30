@@ -82,7 +82,7 @@ public class LazyHandshakeTest extends TCTestCase {
   }
 
   private void lazySetUp(int proxyPort) {
-    serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverConn = new TCConnectionManagerImpl("Server-Connections",  0, new ClearTextBufferManagerFactory());
     clientConn = new BasicConnectionManager("", new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 serverConn,

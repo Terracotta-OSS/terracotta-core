@@ -254,7 +254,7 @@ public class DistributedObjectClient {
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
     this.connectionManager = (isAsync) ?
-            new TCConnectionManagerImpl(communicationsManager.COMMSMGR_CLIENT, 0, hc, this.clientBuilder.createBufferManagerFactory())
+            new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, 0, this.clientBuilder.createBufferManagerFactory())
             :
             new BasicConnectionManager(name + "/" + uuid, this.clientBuilder.createBufferManagerFactory());
     this.communicationsManager = this.clientBuilder

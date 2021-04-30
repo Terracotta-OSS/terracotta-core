@@ -58,7 +58,6 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final Logger logger                 = LoggerFactory.getLogger(TCConnectionManager.class);
 
   private final TCCommImpl              comm;
-  private final HealthCheckerConfig     healthCheckerConfig;
   private final Set<TCConnection>       connections            = new HashSet<TCConnection>();
   private final Set<TCListener>         listeners              = new HashSet<TCListener>();
   private final SetOnceFlag             shutdown               = new SetOnceFlag();
@@ -68,14 +67,13 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final BufferManagerFactory    bufferManagerFactory;
 
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"), new ClearTextBufferManagerFactory());
+    this("ConnectionMgr", 0, new ClearTextBufferManagerFactory());
   }
 
-  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig, BufferManagerFactory bufferManagerFactory) {
+  public TCConnectionManagerImpl(String name, int workerCommCount, BufferManagerFactory bufferManagerFactory) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
-    this.healthCheckerConfig = healthCheckerConfig;
     this.bufferManagerFactory = bufferManagerFactory;
     this.comm = new TCCommImpl(name, workerCommCount, socketParams);
     this.comm.start();
@@ -128,28 +126,6 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   public TCConnection[] getAllConnections() {
     synchronized (connections) {
       return connections.toArray(EMPTY_CONNECTION_ARRAY);
-    }
-  }
-
-  /**
-   * Connection is active if and only if it is Transport Established and the idle time is less than the HC max idle
-   * time.
-   */
-  @Override
-  public TCConnection[] getAllActiveConnections() {
-    synchronized (connections) {
-      List<TCConnection> activeConnections = new ArrayList<TCConnection>();
-      long maxIdleTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(healthCheckerConfig, false);
-      for (TCConnection conn : connections) {
-        if ((conn.getIdleTime() < maxIdleTime) && conn.isTransportEstablished()) {
-          activeConnections.add(conn);
-        } else {
-          logger.info(conn + "  is not active; Max allowed Idle time:" + maxIdleTime + "; Transport Established: "
-                      + conn.isTransportEstablished());
-        }
-      }
-      logger.info("Active connections : " + activeConnections.size() + " out of " + connections.size());
-      return activeConnections.toArray(new TCConnection[activeConnections.size()]);
     }
   }
 

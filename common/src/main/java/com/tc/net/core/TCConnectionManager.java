@@ -85,11 +85,6 @@ public interface TCConnectionManager extends PrettyPrintable {
   public TCConnection[] getAllConnections();
 
   /**
-   * Get all healthy connection instances created by this manager.
-   */
-  public TCConnection[] getAllActiveConnections();
-
-  /**
    * Get all active listener instances created by this manager
    */
   public TCListener[] getAllListeners();

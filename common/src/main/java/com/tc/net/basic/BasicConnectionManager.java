@@ -95,11 +95,6 @@ public class BasicConnectionManager implements TCConnectionManager {
     TCConnection[] all = new TCConnection[connections.size()];
     return connections.toArray(all);
   }
-  
-  @Override
-  public TCConnection[] getAllActiveConnections() {
-    return getAllConnections();
-  }
 
   @Override
   public TCListener[] getAllListeners() {

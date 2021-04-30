@@ -94,8 +94,7 @@ public class MBeanRegTest {
     when(chMgr.getChannel(cidCollector.capture())).thenReturn(channel);
     when(msg.getChannel()).thenReturn(channel);
 
-    channelMgrMbean = new DSOChannelManagerImpl(chMgr,
-                                                mock(TCConnectionManager.class), "1.0");
+    channelMgrMbean = new DSOChannelManagerImpl(chMgr, "1.0");
     Mockito.doAnswer(new Answer<Object>() {
 
       @Override

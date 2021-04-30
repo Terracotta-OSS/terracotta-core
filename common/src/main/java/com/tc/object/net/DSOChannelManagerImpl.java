@@ -62,15 +62,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   private final List<ChannelManagerEventListener> eventListeners = new CopyOnWriteArrayList<>();
 
   private final ChannelManager       genericChannelManager;
-  private final TCConnectionManager  connectionManager;
   private final String               serverVersion;
 
-  public DSOChannelManagerImpl(ChannelManager genericChannelManager,
-                               TCConnectionManager connectionManager, String serverVersion) {
+  public DSOChannelManagerImpl(ChannelManager genericChannelManager, String serverVersion) {
     this.genericChannelManager = genericChannelManager;
     this.genericChannelManager.addEventListener(new GenericChannelEventListener());
     this.serverVersion = serverVersion;
-    this.connectionManager = connectionManager;
   }
 
   @Override
@@ -130,12 +127,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     if (channel == null) { throw new NoSuchChannelException(); }
     return (ClientHandshakeAckMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE);
   }
-
-  @Override
-  public TCConnection[] getAllActiveClientConnections() {
-    return connectionManager.getAllActiveConnections();
-  }
-
+  
   @Override
   public void makeChannelActive(ClientID clientID) {
     try {
