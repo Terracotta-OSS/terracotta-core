@@ -50,9 +50,9 @@ public interface DSOMBean extends TerracottaMBean {
   Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit, Object[] args,
                                  String[] sigs);
 
-  int getActiveLicensedClientCount();
+  int getCurrentClientCount();
 
-  int getLicensedClientHighCount();
+  int getClientHighCount();
 
   String getJmxRemotePort();
 

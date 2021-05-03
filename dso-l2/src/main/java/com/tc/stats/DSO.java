@@ -384,12 +384,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   @Override
-  public int getActiveLicensedClientCount() {
+  public int getCurrentClientCount() {
     return connectionPolicy.getNumberOfActiveConnections();
   }
 
   @Override
-  public int getLicensedClientHighCount() {
+  public int getClientHighCount() {
     return connectionPolicy.getConnectionHighWatermark();
   }
 

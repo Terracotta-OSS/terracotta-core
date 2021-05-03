@@ -25,7 +25,7 @@ import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import com.tc.server.TCServerImpl;
 
-import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Set;
 
 import javax.management.MBeanServer;
@@ -34,16 +34,6 @@ import javax.management.ObjectName;
 
 public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   private static final Logger logger = LoggerFactory.getLogger(L2Dumper.class);
-
-  private static final boolean  DEBUG                         = false;
-
-  private static final String   THREAD_DUMP_METHOD_NAME       = "dumpThreadsMany";
-  private static final Class<?>[] THREAD_DUMP_METHOD_PARAMETERS = new Class[] { int.class, long.class };
-  private static final int      DEFAULT_THREAD_DUMP_COUNT     = 3;
-  private static final long     DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
-
-  private int                   threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
-  private long                  threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
 
   private final TCServerImpl        dumper;
 
@@ -62,34 +52,25 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   }
 
   @Override
-  public void setThreadDumpCount(int count) {
-    threadDumpCount = count;
-  }
-
-  @Override
-  public void setThreadDumpInterval(long interval) {
-    threadDumpInterval = interval;
-  }
-
-  @Override
-  public int doThreadDump() throws Exception {
-    debugPrintln("ThreadDumping:  count=[" + threadDumpCount + "] interval=[" + threadDumpInterval + "]");
-    Class<?> threadDumpClass = getClass().getClassLoader().loadClass("com.tc.util.runtime.ThreadDump");
-    Method method = threadDumpClass.getMethod(THREAD_DUMP_METHOD_NAME, THREAD_DUMP_METHOD_PARAMETERS);
-    Object[] args = { Integer.valueOf(threadDumpCount), Long.valueOf(threadDumpInterval) };
-    int pid = ((Integer) method.invoke(null, args)).intValue();
-    return pid;
+  public void doThreadDump() throws Exception {
+    logger.info("Server Threads: ");
+    Map<Thread,StackTraceElement[]> threads = Thread.getAllStackTraces();
+    StringBuilder allThreads = new StringBuilder("\n\n");
+    for (Map.Entry<Thread, StackTraceElement[]> s : threads.entrySet()) {
+      allThreads.append(s.getKey().getName());
+      allThreads.append(":\n");
+      for (StackTraceElement e : s.getValue()) {
+        allThreads.append("    ");
+        allThreads.append(e.toString());
+        allThreads.append('\n');
+      }
+    }
+    logger.info(allThreads.toString());
   }
 
   @Override
   public void reset() {
     //
-  }
-
-  private void debugPrintln(String s) {
-    if (DEBUG) {
-      System.err.println("##### L2Dumper: " + s);
-    }
   }
 
   @Override
