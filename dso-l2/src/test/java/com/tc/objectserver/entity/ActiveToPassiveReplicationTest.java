@@ -69,6 +69,8 @@ public class ActiveToPassiveReplicationTest {
   @Before
   public void setUp() {
     passive = mock(ServerID.class);
+    when(passive.getUID()).thenReturn("test".getBytes());
+    when(passive.getName()).thenReturn("test");
     replicate = mock(ReplicationSender.class);
     when(replicate.addPassive(any(ServerID.class), any(SessionID.class), anyInt(), any(SyncReplicationActivity.class))).thenReturn(Boolean.TRUE);
     consistency = mock(ConsistencyManager.class);

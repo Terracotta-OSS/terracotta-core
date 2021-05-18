@@ -79,6 +79,11 @@ public class ReplicationMessageAck extends AbstractGroupMessage implements IBatc
   public void setSequenceID(long rid) {
     //  unused
   }
+
+  @Override
+  public long getSequenceID() {
+    return -1L;
+  }
   
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {

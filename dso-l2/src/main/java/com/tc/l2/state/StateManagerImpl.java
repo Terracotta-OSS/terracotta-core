@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import org.terracotta.tripwire.ServerStateEvent;
 import com.tc.async.api.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -414,6 +415,7 @@ public class StateManagerImpl implements StateManager {
     try {
       logger.debug("Switching to " + newState);
       if (state != newState) {
+        new ServerStateEvent(newState.toString(), ACTIVE == newState).commit();
         publishSink.addToSink(new StateChangedEvent(state.getState(), newState.getState()));
       }
       return state;

@@ -113,7 +113,6 @@ public class TCLogbackLogging {
       root.addAppender(continuingAppender);
       disableBufferingAppender(continuingAppender);
     } else {
-      LOGGER.warn("Terracotta base logging configuration has been overridden. Log path provided in server config will be ignored.");
       disableBufferingAppender(null);
     }
   }

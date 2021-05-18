@@ -42,6 +42,8 @@ public interface IBatchableGroupMessage<E> {
   
   public void setSequenceID(long rid);
 
+  public long getSequenceID();
+
   /**
    * Casts the message into an AbstractGroupMessage for serialization and transmission over the wire.
    * 

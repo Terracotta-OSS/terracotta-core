@@ -42,6 +42,8 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.tripwire.Event;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 public class ReplicationSender {
@@ -72,8 +74,10 @@ public class ReplicationSender {
 
   public boolean addPassive(ServerID node, SessionID session, Integer execution, SyncReplicationActivity activity) {
     // Set up the sync state.
+    Event event = TripwireFactory.createPrimeEvent(node.getName(), node.getUID(), session.toLong(), activity.getSequenceID());
     SyncState state = createAndRegisterSyncState(node, session, execution);
     // Send the message.
+    event.commit();
     return state.attemptToSend(activity);
   }
 
@@ -353,7 +357,10 @@ public class ReplicationSender {
     private void flushBatch() {
       outgoing.addToSink(new ReplicationSendingAction(this.executionLane, ()->{
         try {
-          this.batchContext.flushBatch();
+          long seqId = this.batchContext.flushBatch();
+          if (seqId >= 0) {
+            TripwireFactory.createReplicationEvent(session.toLong(), seqId).commit();
+          }
         } catch (GroupException ge) {
           logger.warn("error sending message to passive ", ge);
         }

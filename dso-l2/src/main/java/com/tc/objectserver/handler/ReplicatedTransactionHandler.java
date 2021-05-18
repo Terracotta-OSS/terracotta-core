@@ -33,6 +33,7 @@ import com.tc.l2.msg.ReplicationMessage;
 import com.tc.l2.msg.ReplicationMessageAck;
 import com.tc.l2.msg.ReplicationResultCode;
 import com.tc.l2.msg.SyncReplicationActivity;
+import com.tc.l2.msg.SyncReplicationActivity.ActivityID;
 import com.tc.l2.msg.SyncReplicationActivity.ActivityType;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
@@ -80,6 +81,8 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ConcurrencyStrategy;
+import org.terracotta.tripwire.Event;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 public class ReplicatedTransactionHandler {
@@ -129,6 +132,9 @@ public class ReplicatedTransactionHandler {
     public void handleEvent(ReplicationMessage message) throws EventHandlerException {
       try {
         currentSequence = message.getSequenceID();
+        if (currentSequence >= 0) {
+          TripwireFactory.createReplicationEvent(SessionID.NULL_ID.toLong(), currentSequence).commit();
+        }
         processMessage(message);
       } catch (Throwable t) {
         // We don't expect to see an exception executing a replicated message.
@@ -212,7 +218,7 @@ public class ReplicatedTransactionHandler {
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("BATCH:" + rep.getSequenceID());
     }
-    ServerID activeSender = (ServerID) rep.messageFrom();
+    ServerID activeSender = rep.messageFrom();
     for (SyncReplicationActivity activity : rep.getActivities()) {
       EntityID eid = null;
       if (activity.getActivityType() != ActivityType.SYNC_BEGIN) {
@@ -255,7 +261,6 @@ public class ReplicatedTransactionHandler {
   private void syncBeginEntityListReceived(ServerID activeSender, SyncReplicationActivity activity) throws ServerException {
     ackReceived(activeSender, activity, null);
     beforeSyncAction(activity);
-    
     // In this case, we want to createCapture all the provided entities.
     SyncReplicationActivity.EntityCreationTuple[] entityTuples = activity.getEntitiesToCreateForSync();
     Assert.assertNotNull(entityTuples);
@@ -406,8 +411,10 @@ public class ReplicatedTransactionHandler {
     return new PassiveResultCapture(received, completed, failure);
   }
   
-  private void establishNewPassive() {
+  private void establishNewPassive(ActivityID sequence) {
+    Event event = TripwireFactory.createPrimeEvent(groupManager.getLocalNodeID().getName(), groupManager.getLocalNodeID().getUID(), SessionID.NULL_ID.toLong(), sequence.id);
     entityManager.resetReferences();
+    event.commit();
   }
   
   private void requestPassiveSync() {
@@ -562,7 +569,7 @@ public class ReplicatedTransactionHandler {
   private void beforeSyncAction(SyncReplicationActivity activity) {
     switch (activity.getActivityType()) {
       case SYNC_START:
-        establishNewPassive();
+        establishNewPassive(activity.getActivityID());
         break;
       case SYNC_BEGIN:
         start();

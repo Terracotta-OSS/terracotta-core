@@ -115,7 +115,7 @@ public class GroupMessageBatchContext<M extends IBatchableGroupMessage<E>, E> {
         if (messageToSend.getPayloadSize() > THRESHOLD) {
           waitForFlush();
         }
-        return msg.getMessageID().toLong();
+        return messageToSend.getSequenceID();
       } catch (GroupException e) {
         LOGGER.warn("replication message failed", e);
         //  message failed but we still need to reset state

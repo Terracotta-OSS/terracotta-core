@@ -48,7 +48,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public NodeID getLocalNodeID() {
+  public ServerID getLocalNodeID() {
     return thisNodeID;
   }
 

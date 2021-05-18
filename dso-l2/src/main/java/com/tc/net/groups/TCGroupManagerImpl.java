@@ -304,7 +304,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public NodeID getLocalNodeID() {
+  public ServerID getLocalNodeID() {
     return getNodeID();
   }
 
