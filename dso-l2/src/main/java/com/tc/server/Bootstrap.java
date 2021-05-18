@@ -79,7 +79,7 @@ public class Bootstrap implements BootstrapService {
     writePID();
 
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
-    TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)));
+    TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)), out != null);
 
     TCServerImpl impl = new TCServerImpl(setup, threadGroup);
     Server server = wrap(setup, args, locator, impl);

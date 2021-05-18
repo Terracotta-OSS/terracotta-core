@@ -70,7 +70,6 @@ public class ThreadUtil {
     return t;
   }
 
-
   public static  <R extends Throwable> R getRootCause(Throwable t, Class<? extends R> type) {
     while (t != null) {
       if (type.isInstance(t)) {

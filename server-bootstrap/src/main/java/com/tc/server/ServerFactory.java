@@ -30,7 +30,6 @@ public class ServerFactory {
 
   public static ObjectName SERVER_DOMAIN = createObjectName();
   public static String RESTART_INLINE = "restart.inline";
-  public static String GLOBAL_MANAGEMENT = "global.management";
 
   private static ObjectName createObjectName() {
     try {

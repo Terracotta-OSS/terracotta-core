@@ -35,7 +35,7 @@ public class TCServerMain {
   
   public static void main(String[] args) {
     boolean inlineRestart = Boolean.getBoolean(ServerFactory.RESTART_INLINE);
-    while (startServer(args)) {
+    while (startServer(args, inlineRestart)) {
       if (inlineRestart) {
         System.out.println("Restarting server...");
       } else {
@@ -45,8 +45,8 @@ public class TCServerMain {
     };
   }
 
-  public static boolean startServer(String[] args) {
-    Server s = createServer(Arrays.asList(args));
+  private static boolean startServer(String[] args, boolean requestStop) {
+    Server s = createServer(Arrays.asList(args), requestStop ? System.out : null);
     if (s == null) {
       return false;
     } else {
@@ -55,7 +55,7 @@ public class TCServerMain {
   }
 
   public static Server createServer(List<String> args) {
-    return createServer(args, null);
+    return createServer(args, Boolean.getBoolean(ServerFactory.RESTART_INLINE) ? System.out : null);
   }
 
   public static Server createServer(List<String> args, OutputStream console) {
