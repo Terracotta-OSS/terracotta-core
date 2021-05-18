@@ -18,34 +18,22 @@
  */
 package org.terracotta.tripwire;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
+import jdk.jfr.Category;
+import jdk.jfr.Event;
+import jdk.jfr.Label;
 
-public class EventAppender extends AppenderBase<ILoggingEvent> {
-  
-  private final static boolean ENABLED;
-  
-  static {
-    boolean check = false;
-    try {
-      Class.forName("jdk.jfr.Event");
-      check = true && !Boolean.getBoolean("tripwire.logging.disable");
-    } catch (ClassNotFoundException cnf) {
-    }
-    ENABLED = check;
-  }
-  
-  public EventAppender() {
+@Label("Replication")
+@Category("Tripwire")
+public class ReplicationEvent extends Event implements org.terracotta.tripwire.Event {
+  private final long session;
+  private final long sequence;
+
+  public ReplicationEvent(long session, long sequence) {
+    this.session = session;
+    this.sequence = sequence;
   }
 
   @Override
-  protected void append(ILoggingEvent e) {
-    if (ENABLED) {
-      new LogEvent(e.getLoggerName(), e.getLevel().toString(), e.getFormattedMessage()).commit();
-    }
-  }
-  
-  public static boolean isEnabled() {
-    return ENABLED;
+  public void setDescription(String description) {
   }
 }
