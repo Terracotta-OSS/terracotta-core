@@ -44,6 +44,22 @@ public class TripwireFactory {
   public static org.terracotta.tripwire.Event createStageEvent(String stage, String debug) {
     return (ENABLED) ? new MonitoringEvent(stage, debug) : new NullEvent();
   }
+
+  public static org.terracotta.tripwire.Event createPrimeEvent(String name, byte[] uid, long session, long id) {
+    return (ENABLED) ? new PrimeEvent(name, uid, session, id) : new NullEvent();
+  }
+
+  public static org.terracotta.tripwire.Event createReplicationEvent(long session, long sequence) {
+    return (ENABLED) ? new ReplicationEvent(session, sequence) : new NullEvent();
+  }
+
+  public static org.terracotta.tripwire.Event createServerStateEvent(String state, boolean active) {
+    return (ENABLED) ? new ServerStateEvent(state, active) : new NullEvent();
+  }
+
+  public static org.terracotta.tripwire.Event createSyncEvent(String name, byte[] uid, long session) {
+    return (ENABLED) ? new SyncEvent(name, uid, session) : new NullEvent();
+  }
   
   public static org.terracotta.tripwire.StageMonitor createStageMonitor(String stage, int threads) {
     return (ENABLED) ? new StageMonitorImpl(stage, threads) : new StageMonitor() {
