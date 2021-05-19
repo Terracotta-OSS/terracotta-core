@@ -23,13 +23,10 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.rolling.FixedWindowRollingPolicy;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.util.FileSize;
-import static com.tc.l2.L2DebugLogging.LogLevel.INFO;
 import com.tc.logging.TCLogging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,17 +71,12 @@ public class TCLogbackLogging {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     ch.qos.logback.classic.Logger root = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
 
-    boolean hasBuffer = false;
-    boolean hasJfr = false;
-
-    if (!hasBuffer) {
-      BufferingAppender<ILoggingEvent> appender = new BufferingAppender<>();
-      appender.setName("TC_BASE");
-      attachBaseLogging(loggerContext, appender, out);
-      root.addAppender(appender);
-    }
+    BufferingAppender<ILoggingEvent> appender = new BufferingAppender<>();
+    appender.setName("TC_BASE");
+    attachBaseLogging(loggerContext, appender, out);
+    root.addAppender(appender);
     
-    if (!hasJfr && EventAppender.isEnabled()) {
+    if (EventAppender.isEnabled()) {
       EventAppender events = new EventAppender();
       events.setName("LogToJFR");
       events.setContext(loggerContext);
@@ -125,13 +117,12 @@ public class TCLogbackLogging {
           // buffering.  If no continuing appender just shut off buffering
           if (continuingAppender != null) {
             root.detachAppender(current);
+            root.addAppender(continuingAppender);
             console.addAppender(current);
+            ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(continuingAppender::doAppend);
+          } else {
+            ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(e->{});
           }
-          ((BufferingAppender<ILoggingEvent>) current).sendContentsTo(e->{
-            if (continuingAppender != null) {
-              continuingAppender.doAppend(e);
-            }
-          });
         }
       }
     }

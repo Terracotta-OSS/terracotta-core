@@ -20,8 +20,11 @@ package com.tc.lang;
 
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.util.runtime.ThreadDumpUtil;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,33 +67,27 @@ public class TCThreadGroup extends ThreadGroup {
   }
 
   public void printLiveThreads(Consumer<String> reporter) {
-    int ac = activeCount();
-    Thread[] list = new Thread[ac];
-    enumerate(list, true);
-    for (Thread t : list) {
+    for (Thread t : threads()) {
       if (t != null && t != Thread.currentThread()) {
         reporter.accept(ThreadDumpUtil.getThreadDump(t));
       }
     }
   }
 
+  public void interruptThreads() {
+    threads().stream().filter(t -> t != Thread.currentThread() && t.isAlive()).forEach(Thread::interrupt);
+  }
+
   public boolean retire(long timeout, Consumer<InterruptedException> interruptHandler) {
     boolean complete = false;
     long killStart = System.currentTimeMillis();
     if (stoppable) {
-      while (!complete && System.currentTimeMillis() < killStart + TimeUnit.MINUTES.toMillis(1L)) {
+      while (!complete && System.currentTimeMillis() < killStart + timeout) {
         complete = true;
-        int ac = activeCount();
-        Thread[] list = new Thread[ac];
-        enumerate(list, true);
-        for (Thread t : list) {
-          if (t != null && t != Thread.currentThread()) {
+        for (Thread t : threads()) {
+          if (t != Thread.currentThread()) {
             try {
-              t.join(500);
-              if (t.isAlive()) {
-                LOGGER.info("waiting for {} to exit", t.getName());
-                t.interrupt();
-              }
+              t.join(1000);
             } catch (InterruptedException i) {
               interruptHandler.accept(i);
             }
@@ -106,5 +103,12 @@ public class TCThreadGroup extends ThreadGroup {
       LOGGER.info("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));
     }
     return complete;
+  }
+
+  private synchronized List<Thread> threads() {
+    int ac = activeCount();
+    Thread[] list = new Thread[ac];
+    enumerate(list, true);
+    return Arrays.stream(list).filter(t -> t != null && t.isAlive()).collect(Collectors.toList());
   }
 }

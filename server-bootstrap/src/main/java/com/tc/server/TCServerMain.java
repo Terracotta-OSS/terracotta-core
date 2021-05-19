@@ -43,6 +43,7 @@ public class TCServerMain {
         System.exit(11);
       }
     };
+    System.exit(0);
   }
 
   private static boolean startServer(String[] args, boolean requestStop) {

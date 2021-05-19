@@ -570,25 +570,24 @@ public class DistributedObjectClient {
     CommonShutDownHook.shutdown();
 
     if (this.threadGroup != null) {
-      boolean interrupted = false;
-
-      try {
-        final long timeout = TCPropertiesImpl.getProperties()
+      final long timeout = TCPropertiesImpl.getProperties()
                              .getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
-
-        long time = System.currentTimeMillis();
-        if (!threadGroup.retire(timeout, e->logger.error("Error destroying TC thread group", e))) {
-          logger.warn("Timed out waiting for TC thread group threads to die for connection " + name + "/" + uuid + " - probable shutdown memory leak\n"
+      SetOnceFlag interrupted = new SetOnceFlag();
+      try {
+        if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+            logger.warn("Timed out waiting for TC thread group threads to die for connection " + name + "/" + uuid + " - probable shutdown memory leak\n"
                      + " in thread group " + this.threadGroup);
-          threadGroup.printLiveThreads(s->logger.warn(s));
-          ThreadUtil.executeInThread(threadGroup.getParent(), ()->threadGroup.retire(timeout, e->logger.error("Error destroying TC thread group", e)), "connection cleaner", true);
-        } else {
-          logger.debug("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
+            threadGroup.printLiveThreads(logger::warn);
+            ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+            if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+              threadGroup.interrupt();
+            }
+          }, name + " - Connection Reaper", true);
         }
       } catch (final Throwable t) {
         logger.error("Error destroying TC thread group", t);
       } finally {
-        if (interrupted) {
+        if (interrupted.isSet()) {
           Thread.currentThread().interrupt();
         }
       }

@@ -825,7 +825,7 @@ public class DistributedObjectServer {
       CountDownLatch barrier = new CountDownLatch(1);
       ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
         try {
-          if (!barrier.await(20, TimeUnit.SECONDS)) {
+          if (!barrier.await(60, TimeUnit.SECONDS)) {
             logger.warn("Timeout waiting for clean shutdown.");
           }
           killThreads();
@@ -850,7 +850,9 @@ public class DistributedObjectServer {
 
   private void killThreads() {
     this.seda.getStageManager().stopAll();
-    threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), e->L2Utils.handleInterrupted(logger, e));
+    if (!threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), e->L2Utils.handleInterrupted(logger, e))) {
+      threadGroup.interruptThreads();
+    }
     logger.info("L2 Exiting...");
   }
 
