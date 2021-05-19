@@ -39,18 +39,6 @@ public class ServerFactory {
     }
     return null;
   }
-
-
-  public static Server createServer(List<String> args, ClassLoader loader) {
-    try {
-      ServiceLoader<BootstrapService> s = ServiceLoader.load(BootstrapService.class, loader);
-      return s.iterator().next().createServer(args, loader);
-    } catch (Error | RuntimeException notfound) {
-      throw notfound;
-    } catch (Exception notfound) {
-      throw new RuntimeException(notfound);
-    }
-  }
   
   public static Server createServer(List<String> args, OutputStream console, ClassLoader loader) {
     try {

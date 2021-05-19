@@ -58,12 +58,7 @@ import org.terracotta.server.StopAction;
  */
 public class Bootstrap implements BootstrapService {
   private static final Logger CONSOLE = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
-
-  @Override
-  public Server createServer(List<String> args, ClassLoader loader) {
-    return createServer(args, null, loader);
-  }
-
+  
   @Override
   public Server createServer(List<String> args, OutputStream out, ClassLoader loader) {
     TCLogbackLogging.bootstrapLogging(out);
