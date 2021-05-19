@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.terracotta.server.ServerEnv;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 public class StateManagerImpl implements StateManager {
@@ -415,7 +416,7 @@ public class StateManagerImpl implements StateManager {
     try {
       logger.debug("Switching to " + newState);
       if (state != newState) {
-        new ServerStateEvent(newState.toString(), ACTIVE == newState).commit();
+        TripwireFactory.createServerStateEvent(newState.toString(), ACTIVE == newState).commit();
         publishSink.addToSink(new StateChangedEvent(state.getState(), newState.getState()));
       }
       return state;

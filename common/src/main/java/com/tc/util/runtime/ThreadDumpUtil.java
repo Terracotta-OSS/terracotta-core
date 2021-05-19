@@ -110,6 +110,22 @@ public class ThreadDumpUtil {
     return rootThreadGroup;
   }
 
+  public static String getThreadDump(Thread t) {
+    final StringBuilder sb = new StringBuilder(100 * 1024);
+    sb.append("name=" + t.getName() + " id=" + t.getId());
+    sb.append('\n');
+
+    final StackTraceElement[] stea = t.getStackTrace();
+    for (StackTraceElement element : stea) {
+      sb.append("\tat ");
+      sb.append(element.toString());
+      sb.append('\n');
+    }
+    sb.append('\n');
+
+    return sb.toString();
+  }
+
   public static String getThreadDump() {
     final StringBuilder sb = new StringBuilder(100 * 1024);
     sb.append(new Date().toString());

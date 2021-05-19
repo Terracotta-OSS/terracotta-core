@@ -823,18 +823,16 @@ public class DistributedObjectServer {
   public void stop() throws Exception {
     if (this.threadGroup.isStoppable() && this.stopping.attemptSet()) {
       CountDownLatch barrier = new CountDownLatch(1);
-      Thread abort = new Thread(threadGroup.getParent(), ()->{
+      ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
         try {
-          if (!barrier.await(10, TimeUnit.SECONDS)) {
+          if (!barrier.await(20, TimeUnit.SECONDS)) {
             logger.warn("Timeout waiting for clean shutdown.");
           }
           killThreads();
         }catch(InterruptedException ie) {
           logger.warn("shutdown thread failed", ie);
         }
-      });
-      abort.setDaemon(true);
-      abort.start();
+      }, "server shutdown thread", true);
       this.groupCommManager.stop();
       this.l1Diagnostics.stop(1000);
       this.l1Listener.stop(1000);
@@ -845,12 +843,14 @@ public class DistributedObjectServer {
       this.timer.stop();
       this.configSetupManager.close();
       barrier.countDown();
+    } else {
+      logger.info("L2 Exiting...");
     }
   }
 
   private void killThreads() {
     this.seda.getStageManager().stopAll();
-    threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), L2Utils::handleInterrupted);
+    threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), e->L2Utils.handleInterrupted(logger, e));
     logger.info("L2 Exiting...");
   }
 

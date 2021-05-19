@@ -56,8 +56,8 @@ public class ThreadUtil {
     }
   }
 
-  public static Thread executeInThread(Runnable run, String name, boolean asDaemon) {
-    Thread t = new Thread(run, "Single Task Executor: " + name);
+  public static Thread executeInThread(ThreadGroup group, Runnable run, String name, boolean asDaemon) {
+    Thread t = new Thread(group, run, "Single Task Executor: " + name);
     t.setDaemon(asDaemon);
     t.start();
     return t;

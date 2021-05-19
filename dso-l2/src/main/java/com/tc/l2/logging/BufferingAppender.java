@@ -18,20 +18,23 @@
  */
 package com.tc.l2.logging;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.OutputStreamAppender;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 /**
  * An {@link Appender} that simply buffers records (in a bounded queue) until they're needed. This is used for making
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender<E> extends AppenderBase<E> {
+public class BufferingAppender<E extends ILoggingEvent> extends OutputStreamAppender<E> {
 
   private final Queue<E> buffer;
+  private boolean bufferLogs = true;
 
   public BufferingAppender() {
     this.buffer = new ConcurrentLinkedQueue<>();
@@ -39,14 +42,21 @@ public class BufferingAppender<E> extends AppenderBase<E> {
 
   @Override
   protected void append(E eventObject) {
-    buffer.add(eventObject);
+    if (bufferLogs) {
+      while (buffer.size() > 1024) {
+        buffer.poll();
+      }
+      buffer.add(eventObject);
+    }
+    super.append(eventObject);
   }
 
-  public void sendContentsTo(Appender<E> otherAppender) {
+  public void sendContentsTo(Consumer<E> otherAppender) {
     while (true) {
       E event = this.buffer.poll();
       if (event == null) break;
-      otherAppender.doAppend(event);
+      otherAppender.accept(event);
     }
+    bufferLogs = false;
   }
 }

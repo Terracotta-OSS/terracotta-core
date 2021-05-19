@@ -1,0 +1,8 @@
+<configuration>
+    
+  <root level="INFO"/>
+
+  <include optional="true" resource="logback-ext.xml"/>
+
+</configuration>
+
