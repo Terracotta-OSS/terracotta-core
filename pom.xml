@@ -45,7 +45,7 @@ limitations under the License.
     <junit.version>4.11</junit.version>
     <mockito.version>1.10.19</mockito.version>
     <hamcrest.version>1.3</hamcrest.version>
-    <tripwire.version>1.0.1</tripwire.version>
+    <tripwire.version>1.0.2</tripwire.version>
   </properties>
 
   <modules>
@@ -105,31 +105,31 @@ limitations under the License.
     <repository>
       <id>terracotta-os-releases</id>
       <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
+      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
     </repository>
     <snapshotRepository>
       <id>terracotta-os-snapshots</id>
       <uniqueVersion>false</uniqueVersion>
       <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
+      <url>https://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
 
   <repositories>
     <repository>
       <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <url>https://www.terracotta.org/download/reflector/snapshots</url>
     </repository>
     <repository>
       <id>terracotta-releases</id>
-      <url>http://www.terracotta.org/download/reflector/releases</url>
+      <url>https://www.terracotta.org/download/reflector/releases</url>
     </repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
       <id>terracotta-snapshots</id>
-      <url>http://www.terracotta.org/download/reflector/snapshots</url>
+      <url>https://www.terracotta.org/download/reflector/snapshots</url>
     </pluginRepository>
     <pluginRepository>
       <id>terracotta-releases</id>
