@@ -94,7 +94,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),
                                                 new TransportHandshakeErrorNullHandler(),  Collections.emptyMap(),
                                                 Collections.emptyMap());
-    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverConns = new TCConnectionManagerImpl("TestCommsMgr-Server", 0, new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(monitor, new TCMessageRouterImpl(),
                                                 new PlainNetworkStackHarnessFactory(), serverConns,
                                                 new NullConnectionPolicy(), new DisabledHealthCheckerConfigImpl(),

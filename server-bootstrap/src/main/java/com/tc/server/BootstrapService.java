@@ -26,6 +26,5 @@ import org.terracotta.server.Server;
  *
  */
 public interface BootstrapService {
-  Server createServer(List<String> args, ClassLoader loader) throws Exception;
   Server createServer(List<String> args, OutputStream console, ClassLoader loader) throws Exception;
 }

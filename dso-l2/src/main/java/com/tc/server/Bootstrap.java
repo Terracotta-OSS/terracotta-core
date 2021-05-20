@@ -58,12 +58,7 @@ import org.terracotta.server.StopAction;
  */
 public class Bootstrap implements BootstrapService {
   private static final Logger CONSOLE = LoggerFactory.getLogger(TCLogbackLogging.CONSOLE);
-
-  @Override
-  public Server createServer(List<String> args, ClassLoader loader) {
-    return createServer(args, null, loader);
-  }
-
+  
   @Override
   public Server createServer(List<String> args, OutputStream out, ClassLoader loader) {
     TCLogbackLogging.bootstrapLogging(out);
@@ -79,7 +74,7 @@ public class Bootstrap implements BootstrapService {
     writePID();
 
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
-    TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)));
+    TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)), out != null);
 
     TCServerImpl impl = new TCServerImpl(setup, threadGroup);
     Server server = wrap(setup, args, locator, impl);

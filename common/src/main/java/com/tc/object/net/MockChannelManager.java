@@ -68,11 +68,6 @@ public class MockChannelManager implements DSOChannelManager {
   }
 
   @Override
-  public TCConnection[] getAllActiveClientConnections() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void addEventListener(ChannelManagerEventListener listener) {
     throw new UnsupportedOperationException();
   }

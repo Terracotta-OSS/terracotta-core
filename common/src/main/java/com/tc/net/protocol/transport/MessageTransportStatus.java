@@ -133,12 +133,12 @@ class MessageTransportStatus {
     }
   }
 
-  synchronized boolean isEnd() {
+  boolean isEnd() {
     return checkState(MessageTransportState.STATE_END);
   }
   
-  synchronized boolean isOpen() {
-    return this.state.isOpen();
+  synchronized boolean isAlive() {
+    return this.state.isAlive();
   }
 
   @Override

@@ -90,6 +90,7 @@ public class ReplicationSenderTest {
   
   @Before
   public void setUp() throws Exception {
+    when(node.getUID()).thenReturn("test".getBytes());
     when(stage.getSink()).thenReturn(sink);
     this.testSender = new ReplicationSender(sink, groupMgr);
     doAnswer((invoke)-> {

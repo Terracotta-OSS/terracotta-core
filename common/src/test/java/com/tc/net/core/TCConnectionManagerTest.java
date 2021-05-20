@@ -142,7 +142,7 @@ public class TCConnectionManagerTest extends TestCase {
     conn2.setTransportEstablished();
     conn3.setTransportEstablished();
 
-    TCConnection activeConns[] = clientConnMgr.getAllActiveConnections();
+    TCConnection activeConns[] = clientConnMgr.getAllConnections();
     assertEquals(3, activeConns.length);
     assertTrue(Arrays.asList(activeConns).containsAll(Arrays.asList(new Object[] { conn1, conn2, conn3 })));
 
@@ -153,13 +153,12 @@ public class TCConnectionManagerTest extends TestCase {
 
     clientConnMgr.closeAllConnections(5000);
     assertEquals(0, clientConnMgr.getAllConnections().length);
-    assertEquals(0, clientConnMgr.getAllActiveConnections().length);
 
     while (serverConnMgr.getAllConnections().length > 0) {
       System.out.println("Waiting for server conn close");
       ThreadUtil.reallySleep(500);
     }
-    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
+    assertEquals(0, serverConnMgr.getAllConnections().length);
 
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     conn2 = clientConnMgr.createConnection(new NullProtocolAdaptor());
@@ -174,23 +173,23 @@ public class TCConnectionManagerTest extends TestCase {
 
     conn1.setTransportEstablished();
     conn2.setTransportEstablished();
-    assertEquals(2, clientConnMgr.getAllActiveConnections().length);
+    assertEquals(2, clientConnMgr.getAllConnections().length);
 
     for (TCConnection c : serverConnMgr.getAllConnections()) {
       c.setTransportEstablished();
     }
 
-    while (serverConnMgr.getAllActiveConnections().length < 2) {
+    while (serverConnMgr.getAllConnections().length < 2) {
       System.out.println("Waiting for client conns");
       ThreadUtil.reallySleep(500);
     }
-    assertEquals(2, serverConnMgr.getAllActiveConnections().length);
+    assertEquals(2, serverConnMgr.getAllConnections().length);
 
     conns = clientConnMgr.getAllConnections();
     assertEquals(2, conns.length);
     assertTrue(Arrays.asList(conns).containsAll(Arrays.asList(new Object[] { conn1, conn2 })));
 
-    activeConns = clientConnMgr.getAllActiveConnections();
+    activeConns = clientConnMgr.getAllConnections();
     assertEquals(2, activeConns.length);
     assertTrue(Arrays.asList(activeConns).containsAll(Arrays.asList(new Object[] { conn1, conn2 })));
 
@@ -198,18 +197,16 @@ public class TCConnectionManagerTest extends TestCase {
     conn2.close(5000);
 
     assertEquals(0, clientConnMgr.getAllConnections().length);
-    assertEquals(0, clientConnMgr.getAllActiveConnections().length);
 
     while (serverConnMgr.getAllConnections().length > 0) {
       System.out.println("Waiting for client conns to close");
       ThreadUtil.reallySleep(500);
     }
-    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
+    assertEquals(0, serverConnMgr.getAllConnections().length);
   }
 
   public void testInActiveClientConnections() throws Exception {
-    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(250, 250, 2, "testInActiveClientConnections", false);
-    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig, new ClearTextBufferManagerFactory());
+    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, new ClearTextBufferManagerFactory());
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {
@@ -225,7 +222,7 @@ public class TCConnectionManagerTest extends TestCase {
 
     conn1.setTransportEstablished();
     conn2.setTransportEstablished();
-    assertEquals(2, clientConnMgr.getAllActiveConnections().length);
+    assertEquals(2, clientConnMgr.getAllConnections().length);
 
     while (serverConnMgr.getAllConnections().length < 2) {
       System.out.println("waiting for clients");
@@ -237,14 +234,7 @@ public class TCConnectionManagerTest extends TestCase {
       conn.setTransportEstablished();
     }
 
-    assertEquals(2, serverConnMgr.getAllActiveConnections().length);
-
-    long sleepTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(hcConfig, false) * 2; /* buffer sleep time */;
-    System.out.println("making client connections inactive. sleeping for " + sleepTime + "ms.");
-    ThreadUtil.reallySleep(sleepTime);
-
     assertEquals(2, serverConnMgr.getAllConnections().length);
-    assertEquals(0, serverConnMgr.getAllActiveConnections().length);
   }
 
 }

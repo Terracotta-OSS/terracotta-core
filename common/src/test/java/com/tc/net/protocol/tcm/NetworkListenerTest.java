@@ -51,7 +51,7 @@ public class NetworkListenerTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    connMgr = new TCConnectionManagerImpl("TestCommMgr", 0, new ClearTextBufferManagerFactory());
     commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
                                              new PlainNetworkStackHarnessFactory(), connMgr, new NullConnectionPolicy());
   }

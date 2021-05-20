@@ -44,8 +44,6 @@ public interface DSOChannelManager {
 
   public String getChannelAddress(NodeID nid);
 
-  public TCConnection[] getAllActiveClientConnections();
-
   public void addEventListener(ChannelManagerEventListener listener);
 
   public Set<NodeID> getAllClientIDs();

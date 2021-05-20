@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.terracotta.server.ServerEnv;
 
 public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private static final Logger logger = LoggerFactory.getLogger(TCGroupMemberDiscoveryStatic.class);
@@ -185,7 +186,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         }
         running.set(false);
       }
-    }, "Static Member discovery");
+    }, ServerEnv.getServer().getIdentifier() + " - Static Member discovery");
     discover.setDaemon(true);
     discover.start();
   }

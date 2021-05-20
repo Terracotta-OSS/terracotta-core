@@ -48,7 +48,7 @@ public class ReplicationMessage extends AbstractGroupMessage implements OrderedE
 
 
   private List<SyncReplicationActivity> activities;
-  long rid = 0;
+  private long rid = -1L;
   // We will keep a flag to track whether this message is outgoing (created here and being sent to the network) or incoming
   //  (created elsewhere and decoded here) to ensure that it is being used correctly.
   // (Note that this check can be removed in the future - it is mostly to validate during refactoring and buffering

@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
   private final Logger logger;
-  private final Timer                           monitorThread = new Timer("HealthCheck-Timer", true);
+  private final Timer                           monitorThread;
   private final HealthCheckerMonitorThreadEngine monitorThreadEngine;
 
   private final SetOnceFlag                      shutdown = new SetOnceFlag();
@@ -54,6 +54,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
     logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                      + healthCheckerConfig.getHealthCheckerName());
+    monitorThread = new Timer(healthCheckerConfig.getHealthCheckerName() + " - HealthCheck-Timer", true);
     monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
   }
 

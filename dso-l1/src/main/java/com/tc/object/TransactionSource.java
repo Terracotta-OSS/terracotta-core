@@ -32,7 +32,7 @@ public class TransactionSource {
   private BitSet retired = new BitSet();
 
   public TransactionID create() {
-    return new TransactionID(current.incrementAndGet());
+    return new TransactionID(current.getAndIncrement());
   }
 
   public TransactionID oldest() {

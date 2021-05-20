@@ -117,7 +117,7 @@ try {
                                                 Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
-    serverConns = new TCConnectionManagerImpl("TestCommMgr-server", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    serverConns = new TCConnectionManagerImpl("TestCommMgr-server", 0, new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(mm, serverMessageRouter,
                                                 serverStackHarnessFactory, serverConns, new NullConnectionPolicy(),
                                                 new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorNullHandler(),
@@ -288,12 +288,12 @@ try {
                                                 clientConns, 
                                                 new NullConnectionPolicy());
 
-    TCConnectionManager serverConns1 = new TCConnectionManagerImpl("TestCommMgr-server-1", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    TCConnectionManager serverConns1 = new TCConnectionManagerImpl("TestCommMgr-server-1", 0, new ClearTextBufferManagerFactory());
     CommunicationsManagerImpl serverComms1 = new CommunicationsManagerImpl(mm,
                                                                        new PlainNetworkStackHarnessFactory(),
                                                                        serverConns1, 
                                                                        new NullConnectionPolicy());
-    TCConnectionManager serverConns2 = new TCConnectionManagerImpl("TestCommMgr-server-2", 0, new DisabledHealthCheckerConfigImpl(), new ClearTextBufferManagerFactory());
+    TCConnectionManager serverConns2 = new TCConnectionManagerImpl("TestCommMgr-server-2", 0, new ClearTextBufferManagerFactory());
     CommunicationsManagerImpl serverComms2 = new CommunicationsManagerImpl(mm,
                                                                        new PlainNetworkStackHarnessFactory(),
                                                                        serverConns2, new NullConnectionPolicy());

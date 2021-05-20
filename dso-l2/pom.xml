@@ -91,10 +91,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tc-tripwire-appenders</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>management</artifactId>
       <version>${project.version}</version>

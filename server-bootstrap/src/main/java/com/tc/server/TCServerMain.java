@@ -34,19 +34,15 @@ import org.terracotta.server.Server;
 public class TCServerMain {
   
   public static void main(String[] args) {
-    boolean inlineRestart = Boolean.getBoolean(ServerFactory.RESTART_INLINE);
     while (startServer(args)) {
-      if (inlineRestart) {
-        System.out.println("Restarting server...");
-      } else {
         // signaling to shell that restart is requested with special exit code 11
         System.exit(11);
-      }
     };
+    System.exit(0);
   }
 
-  public static boolean startServer(String[] args) {
-    Server s = createServer(Arrays.asList(args));
+  private static boolean startServer(String[] args) {
+    Server s = createServer(Arrays.asList(args), null);
     if (s == null) {
       return false;
     } else {
@@ -55,7 +51,7 @@ public class TCServerMain {
   }
 
   public static Server createServer(List<String> args) {
-    return createServer(args, null);
+    return createServer(args, System.out);
   }
 
   public static Server createServer(List<String> args, OutputStream console) {
@@ -65,7 +61,7 @@ public class TCServerMain {
 
         ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 
-        return console != null ? ServerFactory.createServer(args, console, serverClassLoader) : ServerFactory.createServer(args, serverClassLoader);
+        return ServerFactory.createServer(args, console, serverClassLoader);
       }
     } catch (RuntimeException t) {
       throw t;

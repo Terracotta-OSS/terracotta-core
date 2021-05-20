@@ -18,35 +18,74 @@
  */
 package com.tc.l2.logging;
 
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.joran.spi.ConsoleTarget;
+import static com.tc.l2.logging.TCLogbackLogging.STDOUT_APPENDER;
+import java.io.OutputStream;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 /**
  * An {@link Appender} that simply buffers records (in a bounded queue) until they're needed. This is used for making
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender<E> extends AppenderBase<E> {
+public class BufferingAppender extends OutputStreamAppender<ILoggingEvent> {
 
-  private final Queue<E> buffer;
+  private final Queue<ILoggingEvent> buffer;
+  private boolean bufferLogs = true;
 
   public BufferingAppender() {
     this.buffer = new ConcurrentLinkedQueue<>();
+    setName(STDOUT_APPENDER);
+    setImmediateFlush(true);
   }
 
   @Override
-  protected void append(E eventObject) {
-    buffer.add(eventObject);
+  public void start() {
+    if (this.getEncoder() == null) {
+      PatternLayoutEncoder defaultEncoder = new PatternLayoutEncoder();
+      defaultEncoder.setPattern("%d %p - %m%n");
+      defaultEncoder.setParent(this);
+      defaultEncoder.setContext(context);
+      defaultEncoder.start();
+      this.setEncoder(defaultEncoder);
+    }
+    if (this.getOutputStream() == null) {
+      this.setOutputStream(ConsoleTarget.SystemOut.getStream());
+    }
+    super.start();
+  }
+  
+  @Override
+  public void setContext(Context context) {
+    super.setContext(context);
   }
 
-  public void sendContentsTo(Appender<E> otherAppender) {
-    while (true) {
-      E event = this.buffer.poll();
-      if (event == null) break;
-      otherAppender.doAppend(event);
+  @Override
+  protected void append(ILoggingEvent eventObject) {
+    if (bufferLogs) {
+      while (buffer.size() > 1024) {
+        buffer.poll();
+      }
+      buffer.add(eventObject);
     }
+    super.append(eventObject);
+  }
+
+  public void sendContentsTo(Consumer<ILoggingEvent> otherAppender) {
+    while (true) {
+      ILoggingEvent event = this.buffer.poll();
+      if (event == null) break;
+      otherAppender.accept(event);
+    }
+    bufferLogs = false;
   }
 }

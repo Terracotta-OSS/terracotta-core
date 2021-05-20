@@ -24,7 +24,7 @@ enum MessageTransportState {
    */
   STATE_START("START") {
     @Override
-    public boolean isOpen() {
+    public boolean isAlive() {
       return false;
     }
   },
@@ -66,7 +66,7 @@ enum MessageTransportState {
    */
   STATE_END("END") {
     @Override
-    public boolean isOpen() {
+    public boolean isAlive() {
       return false;
     }
   };
@@ -82,7 +82,7 @@ enum MessageTransportState {
     return this.name;
   }
   
-  public boolean isOpen() {
+  public boolean isAlive() {
     return true;
   }
 }

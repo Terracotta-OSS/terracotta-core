@@ -31,7 +31,7 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
 
   public NodeID join(GroupConfiguration groupConfiguration) throws GroupException;
 
-  public NodeID getLocalNodeID();
+  public ServerID getLocalNodeID();
 
   public void sendAll(M msg);
 

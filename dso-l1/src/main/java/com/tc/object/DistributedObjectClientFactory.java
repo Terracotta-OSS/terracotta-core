@@ -69,7 +69,7 @@ public class DistributedObjectClientFactory {
                                                                  });
     String uuid = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_UUID, UUID.getUUID().toString());
     String name = this.properties.getProperty(ConnectionPropertyNames.CONNECTION_NAME, "");
-    final TCThreadGroup group = new TCThreadGroup(throwableHandler, name + "/" + uuid);
+    final TCThreadGroup group = new TCThreadGroup(throwableHandler, name + "/" + uuid, true);
     boolean async = Boolean.parseBoolean(this.properties.getProperty(ConnectionPropertyNames.CONNECTION_ASYNC, "false"));
     
     DistributedObjectClient client = ClientFactory.createClient(serverAddresses, builder, group, uuid, name, async);

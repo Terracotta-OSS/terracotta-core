@@ -79,6 +79,8 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
+import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.utils.L2Utils;
 import com.tc.spi.Guardian;
 import com.tc.util.TCTimeoutException;
@@ -233,16 +235,16 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
     initMessageTypeClassMapping(messageTypeClassMapping);
+    HealthCheckerConfig hcconfig = new HealthCheckerConfigImpl(tcProperties
+                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), ServerEnv.getServer().getIdentifier() + " - TCGroupManager");
     
     connectionManager = new TCConnectionManagerImpl(ServerEnv.getServer().getIdentifier() + " - " + CommunicationsManager.COMMSMGR_GROUPS, serverCount <= 1 ? 0 :
-        serverCount, new HealthCheckerConfigImpl(tcProperties
-                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"), bufferManagerFactory);
+        serverCount, bufferManagerFactory);
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), messageRouter,
                                                           networkStackHarnessFactory, 
                                                           this.connectionManager,
                                                           this.connectionPolicy,
-                                                          new HealthCheckerConfigImpl(tcProperties
-                                                              .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY), "TCGroupManager"),
+                                                          hcconfig,
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
                                                           messageTypeClassMapping, Collections.emptyMap(), bufferManagerFactory
     );
@@ -302,7 +304,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public NodeID getLocalNodeID() {
+  public ServerID getLocalNodeID() {
     return getNodeID();
   }
 

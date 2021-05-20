@@ -1,10 +1,6 @@
 <configuration>
-
-  <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender"/>
-
-  <root level="INFO">
-    <appender-ref ref="TC_BASE" />
-  </root>
+    
+  <root level="INFO"/>
 
   <include optional="true" resource="logback-ext.xml"/>
 

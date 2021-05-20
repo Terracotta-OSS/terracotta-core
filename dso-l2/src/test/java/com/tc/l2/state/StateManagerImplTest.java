@@ -231,7 +231,7 @@ public class StateManagerImplTest {
     when(statePersistor.isDBClean()).thenReturn(Boolean.TRUE);
     when(statePersistor.getInitialState()).thenReturn(new State("PASSIVE-STANDBY"));
 
-    NodeID node = mock(NodeID.class);
+    ServerID node = mock(ServerID.class);
     when(grp.getLocalNodeID()).thenReturn(node);
     when(grp.sendAllAndWaitForResponse(any())).thenReturn(new GroupResponse() {
       @Override
@@ -291,7 +291,7 @@ public class StateManagerImplTest {
     ClusterStatePersistor statePersistor = mock(ClusterStatePersistor.class);
     when(statePersistor.isDBClean()).thenReturn(Boolean.TRUE);
 
-    NodeID node = mock(NodeID.class);
+    ServerID node = mock(ServerID.class);
     when(grp.getLocalNodeID()).thenReturn(node);
     when(grp.sendToAndWaitForResponse(anySet(), any())).thenReturn(new GroupResponse() {
       @Override

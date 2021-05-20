@@ -95,6 +95,8 @@ public class TransactionSourceTest {
     }
     Assert.assertTrue(seed.get());
     service.shutdown();
+    Assert.assertTrue(instance.create().toLong() == instance.oldest().toLong());
+    System.out.println(instance.oldest());
     Assert.assertTrue(service.awaitTermination(5, TimeUnit.SECONDS));
   }
 

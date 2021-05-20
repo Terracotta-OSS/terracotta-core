@@ -101,6 +101,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
@@ -254,7 +255,7 @@ public class DistributedObjectClient {
                                          .getPropertiesFor(TCPropertiesConsts.L1_L2_HEALTH_CHECK_CATEGORY), "TC Client");
 
     this.connectionManager = (isAsync) ?
-            new TCConnectionManagerImpl(communicationsManager.COMMSMGR_CLIENT, 0, hc, this.clientBuilder.createBufferManagerFactory())
+            new TCConnectionManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, 0, this.clientBuilder.createBufferManagerFactory())
             :
             new BasicConnectionManager(name + "/" + uuid, this.clientBuilder.createBufferManagerFactory());
     this.communicationsManager = this.clientBuilder
@@ -569,51 +570,24 @@ public class DistributedObjectClient {
     CommonShutDownHook.shutdown();
 
     if (this.threadGroup != null) {
-      boolean interrupted = false;
-
-      try {
-        final long end = System.currentTimeMillis()
-                         + TCPropertiesImpl.getProperties()
+      final long timeout = TCPropertiesImpl.getProperties()
                              .getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
-
-        List<Thread> liveThreads = getLiveThreads(threadGroup);
-        final long time = System.currentTimeMillis();
-        while (!liveThreads.isEmpty() && System.currentTimeMillis() < end) {
-          for (Thread t : liveThreads) {
-            if (System.currentTimeMillis() > end) {
-              break;
+      SetOnceFlag interrupted = new SetOnceFlag();
+      try {
+        if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+            logger.warn("Timed out waiting for TC thread group threads to die for connection " + name + "/" + uuid + " - probable shutdown memory leak\n"
+                     + " in thread group " + this.threadGroup);
+            threadGroup.printLiveThreads(logger::warn);
+            ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+            if (!threadGroup.retire(timeout, e->interrupted.attemptSet())) {
+              threadGroup.interrupt();
             }
-            long start = System.currentTimeMillis();
-            if (t.isAlive() && Thread.currentThread() != t) {
-              t.join(1000);
-            }
-            if (!t.isAlive()) {
-              logger.debug("Destroyed thread " + t.getName() + " time to destroy:" + (System.currentTimeMillis() - start) + " millis");
-            }
-          }
-          liveThreads = getLiveThreads(threadGroup);
-        }
-        logger.debug("time to destroy thread group:"  + TimeUnit.SECONDS.convert(System.currentTimeMillis() - time, TimeUnit.MILLISECONDS) + " seconds");
-        if (!getLiveThreads(threadGroup).isEmpty()) {
-          logger.warn("Timed out waiting for TC thread group threads to die for connection " + name + "/" + uuid + " - probable shutdown memory leak\n"
-                      + "Live threads: " + getLiveThreads(this.threadGroup) + " in thread group " + this.threadGroup);
-          Thread threadGroupCleanerThread = new Thread(this.threadGroup.getParent(),
-                                                       new TCThreadGroupCleanerRunnable(threadGroup),
-                                                       "TCThreadGroup last chance cleaner thread");
-          logger.warn(ThreadDumpUtil.getThreadDump());
-          threadGroupCleanerThread.setDaemon(true);
-          threadGroupCleanerThread.start();
-          logger.warn("Spawning TCThreadGroup last chance cleaner thread");
-        } else {
-          logger.debug("Destroying TC thread group");
-          if (this.threadGroup != Thread.currentThread().getThreadGroup()) {
-            this.threadGroup.destroy();
-          }
+          }, name + " - Connection Reaper", true);
         }
       } catch (final Throwable t) {
         logger.error("Error destroying TC thread group", t);
       } finally {
-        if (interrupted) {
+        if (interrupted.isSet()) {
           Thread.currentThread().interrupt();
         }
       }
@@ -621,56 +595,6 @@ public class DistributedObjectClient {
 
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L1_SHUTDOWN_FORCE_FINALIZATION)) System
         .runFinalization();
-  }
-
-  private static List<Thread> getLiveThreads(ThreadGroup group) {
-    final int estimate = group.activeCount();
-
-    Thread[] threads = new Thread[estimate + 1];
-
-    while (true) {
-      final int count = group.enumerate(threads);
-
-      if (count < threads.length) {
-        final List<Thread> l = new ArrayList<>(count);
-        for (final Thread t : threads) {
-          if (t != null && t != Thread.currentThread()) {
-            l.add(t);
-          }
-        }
-        return l;
-      } else {
-        threads = new Thread[threads.length * 2];
-      }
-    }
-  }
-
-  private static class TCThreadGroupCleanerRunnable implements Runnable {
-    private final TCThreadGroup threadGroup;
-
-    public TCThreadGroupCleanerRunnable(TCThreadGroup threadGroup) {
-      this.threadGroup = threadGroup;
-    }
-
-    @Override
-    public void run() {
-      for (Thread liveThread : getLiveThreads(threadGroup)) {
-        Exception e = new Exception("thread is stuck " + liveThread.getName());
-        e.setStackTrace(liveThread.getStackTrace());
-        DSO_LOGGER.warn("stray connection threads not stopping", e);
-        liveThread.interrupt();
-        try {
-          liveThread.join(2000);
-        } catch (InterruptedException ie) {
-        //  ignore
-        }
-      }
-      try {
-        threadGroup.destroy();
-      } catch (Exception e) {
-        // the logger is closed by now so we can't even log that
-      }
-    }
   }
 
   public void shutdown() {

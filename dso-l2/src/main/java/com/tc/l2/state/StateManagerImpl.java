@@ -18,6 +18,7 @@
  */
 package com.tc.l2.state;
 
+import org.terracotta.tripwire.ServerStateEvent;
 import com.tc.async.api.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import org.terracotta.server.ServerEnv;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 public class StateManagerImpl implements StateManager {
@@ -414,6 +416,7 @@ public class StateManagerImpl implements StateManager {
     try {
       logger.debug("Switching to " + newState);
       if (state != newState) {
+        TripwireFactory.createServerStateEvent(newState.toString(), ACTIVE == newState).commit();
         publishSink.addToSink(new StateChangedEvent(state.getState(), newState.getState()));
       }
       return state;

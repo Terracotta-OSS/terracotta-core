@@ -36,14 +36,17 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.TCExceptionResultException;
-import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Client implementation of the transport network layer.
@@ -54,9 +57,8 @@ public class ClientMessageTransport extends MessageTransportBase {
                                                                                    .getLong(TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
                                                                                             10000);
   private final TCConnectionManager connectionManager;
-  private boolean                           wasOpened                          = false;
-  private boolean                           isOpening                          = false;
-  private TCFuture                          waitForSynAckResult;
+  private CompletableFuture<NetworkStackID>                         opener;
+  private CompletableFuture<SynAckMessage>                          waitForSynAckResult;
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final int                         callbackPort;
   private final int                         timeout;
@@ -100,29 +102,44 @@ public class ClientMessageTransport extends MessageTransportBase {
     // while the lock on isOpen is held here. That will cause a deadlock because the close event is thrown on the
     // comms thread which means that the handshake messages can't be sent.
     // The state machine here needs to be rationalized.
-    if (startOpen()) {
-      if (waitForOpen()) {
-        return new NetworkStackID(getConnectionID().getChannelID());
+    Future<NetworkStackID> opening = startOpen();
+    if (opening != null) {
+      try {
+        return opening.get();
+      } catch (java.util.concurrent.ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof TCTimeoutException) {
+          throw (TCTimeoutException)cause;
+        } else if (cause instanceof IOException) {
+          throw (IOException)cause;
+        } else if (cause instanceof MaxConnectionsExceededException) {
+          throw (MaxConnectionsExceededException)cause;
+        } else if (cause instanceof CommStackMismatchException) {
+          throw (CommStackMismatchException)cause;
+        } else {
+          throw new IOException(cause);
+        }
+      } catch (java.lang.InterruptedException e) {
+        throw new IOException(e);
       }
     }
-    Assert.eval("can't open an already open transport", !this.status.isOpen());
+    Assert.eval("can't open an already open transport", !this.status.isAlive());
     Assert.eval("can't open an already connected transport", !this.isConnected());
     TCSocketAddress socket = new TCSocketAddress(serverAddress);
-    boolean didOpen = false;
     TCConnection connection = null;
     try {
       connection = connect(socket);
       openConnection(connection);
-      didOpen = true;
-    } finally {
-      finishOpen(didOpen);
-      if (connection != null && !didOpen) {
+      NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
+      finishOpen(nid);
+      return nid;
+    } catch (CommStackMismatchException | IOException | MaxConnectionsExceededException | TCTimeoutException | RuntimeException e) {
+      finishOpenWithException(e);
+      if (connection != null) {
         connection.close(1000);
       }
+      throw e;
     }
-    Assert.eval(!getConnectionID().isNull());
-    NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
-    return (nid);
   }
   /**
    * Tries to make a connection. This is a blocking call.
@@ -209,41 +226,34 @@ public class ClientMessageTransport extends MessageTransportBase {
    * Returns true if the MessageTransport was ever in an open state.
    */
   public synchronized boolean wasOpened() {
-    return this.wasOpened;
+    return this.opener != null && this.opener.isDone() && !this.opener.isCompletedExceptionally();
   }
-  
-  private synchronized boolean waitForOpen() {
-    try {
-      while (this.isOpening) {
-        wait();
-      }
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-    }
-    return wasOpened;
-  }
-  
-  private synchronized boolean startOpen() {
-    try {
-      return this.isOpening;
-    } finally {
-      this.isOpening = true;
+
+  private synchronized CompletableFuture<NetworkStackID> startOpen() {
+    if (this.opener == null) {
+      this.opener = new CompletableFuture<>();
+      return null;
+    } else {
+      return this.opener;
     }
   }
-  
-  private synchronized void finishOpen(boolean didOpen) {
-    this.isOpening = false;
-    this.wasOpened = didOpen;
-    notifyAll();
+
+  private synchronized void finishOpenWithException(Throwable e) {
+    this.opener.completeExceptionally(e);
+    this.opener = null;
+  }
+
+  private synchronized void finishOpen(NetworkStackID didOpen) {
+    this.opener.complete(didOpen);
   }
 
   private synchronized boolean isOpening() {
-    return this.isOpening;
+    return this.opener != null && !this.opener.isDone();
   }
 
   @Override
   public void closeEvent(TCConnectionEvent event) {
-    if (!status.isOpen()) { 
+    if (!isOpening() && !status.isAlive()) {
       return; 
     }
     super.closeEvent(event);
@@ -301,17 +311,24 @@ public class ClientMessageTransport extends MessageTransportBase {
       setRemoteCallbackPort(synAck.getCallbackPort());
     }
   }
+
+  private synchronized CompletableFuture<SynAckMessage> createAckWaiter() {
+    if (this.waitForSynAckResult == null) {
+      this.waitForSynAckResult = new CompletableFuture<>();
+    } else {
+      throw new AssertionError("duplicate handshake");
+    }
+    return this.waitForSynAckResult;
+  }
   
-  private void setSynAckResult(Object msg) {
-    synchronized (status) {
-      if (this.waitForSynAckResult != null) {
-        if (msg instanceof Exception) {
-          this.waitForSynAckResult.setException((Exception)msg);
-        } else {
-          this.waitForSynAckResult.set(msg);
-        }
-        this.waitForSynAckResult = null;
+  private synchronized void setSynAckResult(Object msg) {
+    if (this.waitForSynAckResult != null) {
+      if (msg instanceof Exception) {
+        this.waitForSynAckResult.completeExceptionally((Exception)msg);
+      } else {
+        this.waitForSynAckResult.complete((SynAckMessage)msg);
       }
+      this.waitForSynAckResult = null;
     }
   }
 
@@ -345,22 +362,26 @@ public class ClientMessageTransport extends MessageTransportBase {
    */
   HandshakeResult handShake() throws TCTimeoutException, TransportHandshakeException {
     try {
-      SynAckMessage synAck = (SynAckMessage)sendSyn().get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
+      SynAckMessage synAck = sendSyn().get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT, TimeUnit.MILLISECONDS);
       return new HandshakeResult(synAck);
     } catch (InterruptedException e) {
       throw new TransportHandshakeException(e);
-    } catch (TCExceptionResultException e) {
+    } catch (ExecutionException | TimeoutException e) {
       throw new TransportHandshakeException("Client was able to establish connection with server but handshake " +
           "with server failed.", e);
     }
   }
 
-  private TCFuture sendSyn() {
-    TCFuture targetFuture = new TCFuture(this.status);
+  private Future<SynAckMessage> sendSyn() {
+    CompletableFuture<SynAckMessage> targetFuture = createAckWaiter();
     synchronized (this.status) {
+      if (!this.status.isAlive()) {
+        targetFuture.completeExceptionally(new IOException("closed"));
+        return targetFuture;
+      }
+      
       if (this.status.isEstablished() || this.status.isSynSent()) { throw new AssertionError(" ERROR !!! "
                                                                                              + this.status); }
-      this.waitForSynAckResult = targetFuture;
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
       TransportHandshakeMessage syn = this.messageFactory.createSyn(getConnectionID(), getConnection(),
@@ -368,7 +389,9 @@ public class ClientMessageTransport extends MessageTransportBase {
       // send syn message
       try {
         this.sendToConnection(syn);
-        this.status.synSent();
+        if (!targetFuture.isCompletedExceptionally()) {
+          this.status.synSent();
+        }
       } catch (IOException ioe) {
         logger.warn("trouble syn", ioe);
       }

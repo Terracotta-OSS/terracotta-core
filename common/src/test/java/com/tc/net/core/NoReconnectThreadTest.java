@@ -97,10 +97,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExit() throws Exception {
-    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new HealthCheckerConfigImpl(TCPropertiesImpl
-                                                                             .getProperties()
-                                                                             .getPropertiesFor(TCPropertiesConsts.L2_L2_HEALTH_CHECK_CATEGORY),
-                                                                                                     "Test Server"), new ClearTextBufferManagerFactory());
+    TCConnectionManager connectionMgr = new TCConnectionManagerImpl("TestCommsMgr-Server", 3, new ClearTextBufferManagerFactory());
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
                                                                          new NullMessageMonitor(),
                                                                          new TCMessageRouterImpl(),

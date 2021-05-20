@@ -236,6 +236,8 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import org.terracotta.server.ServerEnv;
 
 /**
@@ -546,7 +548,7 @@ public class DistributedObjectServer {
 
     BufferManagerFactory bufferManagerFactory = getBufferManagerFactory(platformServiceRegistry);
 
-    this.connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, new DisabledHealthCheckerConfigImpl(), bufferManagerFactory);
+    this.connectionManager = new TCConnectionManagerImpl(configSetupManager.getServerConfiguration().getName() + " - " + CommunicationsManager.COMMSMGR_SERVER, commWorkerThreadCount, bufferManagerFactory);
     this.communicationsManager = new CommunicationsManagerImpl(mm,
                                                                messageRouter, networkStackHarnessFactory,
                                                                this.connectionManager,
@@ -585,9 +587,7 @@ public class DistributedObjectServer {
 
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
-    final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(),
-                                                                       this.communicationsManager
-                                                                           .getConnectionManager(), pInfo.version());
+    final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(), pInfo.version());
     channelManager.addEventListener(this.connectionIdFactory);
 
     final boolean availableMode = voteCount < 0;
@@ -821,7 +821,18 @@ public class DistributedObjectServer {
   }
 
   public void stop() throws Exception {
-    if (this.stopping.attemptSet()) {
+    if (this.threadGroup.isStoppable() && this.stopping.attemptSet()) {
+      CountDownLatch barrier = new CountDownLatch(1);
+      ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
+        try {
+          if (!barrier.await(60, TimeUnit.SECONDS)) {
+            logger.warn("Timeout waiting for clean shutdown.");
+          }
+          killThreads();
+        }catch(InterruptedException ie) {
+          logger.warn("shutdown thread failed", ie);
+        }
+      }, "server shutdown thread", true);
       this.groupCommManager.stop();
       this.l1Diagnostics.stop(1000);
       this.l1Listener.stop(1000);
@@ -831,34 +842,17 @@ public class DistributedObjectServer {
       this.timer.cancelAll();
       this.timer.stop();
       this.configSetupManager.close();
-      ThreadUtil.executeInThread(this::killThreads, "Shutdown", false);
+      barrier.countDown();
+    } else {
+      logger.info("L2 Exiting...");
     }
   }
 
   private void killThreads() {
     this.seda.getStageManager().stopAll();
-    boolean complete = false;
-    long killStart = System.currentTimeMillis();
-    logger.info("waiting for {} threads to exit", threadGroup.activeCount());
-    while (!complete && System.currentTimeMillis() < killStart + TimeUnit.MINUTES.toMillis(1L)) {
-      complete = true;
-      int ac = threadGroup.activeCount();
-      Thread[] list = new Thread[ac];
-      threadGroup.enumerate(list, true);
-      for (Thread t : list) {
-        if (t != null && t != Thread.currentThread()) {
-          t.interrupt();
-          try {
-            logger.info("waiting for {} to exit", t.getName());
-            t.join(500);
-          } catch (InterruptedException i) {
-            L2Utils.handleInterrupted(logger, i);
-          }
-          complete = complete && !t.isAlive();
-        }
-      }
+    if (!threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), e->L2Utils.handleInterrupted(logger, e))) {
+      threadGroup.interruptThreads();
     }
-    logger.info("finished thread exiting in {} seconds", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - killStart));
     logger.info("L2 Exiting...");
   }
 
@@ -1199,6 +1193,7 @@ public class DistributedObjectServer {
 
   public void startDiagnosticListener() throws IOException {
     this.l1Diagnostics.start(Collections.emptySet());
+    consoleLogger.info("Terracotta Server instance has started diagnostic listening on " + format(this.l1Diagnostics));
   }
 
   private static String format(NetworkListener listener) {

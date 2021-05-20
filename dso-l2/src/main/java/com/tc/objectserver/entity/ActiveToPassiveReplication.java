@@ -63,6 +63,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import org.terracotta.tripwire.Event;
+import org.terracotta.tripwire.TripwireFactory;
 
 
 /**
@@ -190,8 +192,10 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
    * Using an executor service here to sync multiple passives at once
    * @param newNode
    */
-  private void executePassiveSync(final NodeID newNode, SessionID session) {
+  private void executePassiveSync(final ServerID newNode, SessionID session) {
+    Event sync = TripwireFactory.createSyncEvent(newNode.getName(), newNode.getUID(), session.toLong());
     executeOnPool(() -> {
+      sync.begin();
       // start passive sync message
       LOGGER.debug("starting sync for " + newNode + " on session " + session);
       Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
@@ -221,6 +225,8 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       //  passive sync done message.  causes passive to go into passive standby mode
       LOGGER.debug("ending sync " + newNode);
       replicateActivity(SyncReplicationActivity.createEndSyncMessage(TCByteBufferFactory.wrap(replicateEntityPersistor())), Collections.singleton(session)).waitForCompleted();
+      sync.end();
+      sync.commit();
     });
   }
   
