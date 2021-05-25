@@ -57,7 +57,7 @@ public class TCServerMain {
   public static Server createServer(List<String> args, OutputStream console) {
     try {
       if (Files.isDirectory(Directories.getServerLibFolder())) {
-        Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("dso-l2")).findFirst();
+        Optional<Path> p = Files.list(Directories.getServerLibFolder()).filter(f->f.getFileName().toString().startsWith("tc-server")).findFirst();
 
         ClassLoader serverClassLoader = new URLClassLoader(new URL[] {p.get().toUri().toURL()}, TCServerMain.class.getClassLoader());
 

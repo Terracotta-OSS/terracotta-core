@@ -41,13 +41,13 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>server-bootstrap</artifactId>
+      <artifactId>terracotta</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l2</artifactId>
+      <artifactId>tc-server</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>

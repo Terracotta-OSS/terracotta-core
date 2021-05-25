@@ -23,7 +23,7 @@
         </dependency>
         <dependency>
             <groupId>org.terracotta.internal</groupId>
-            <artifactId>dso-l2</artifactId>
+            <artifactId>tc-server</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -20,7 +20,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l1</artifactId>
+      <artifactId>tc-client</artifactId>
       <version>${project.version}</version>
       <optional>true</optional>
     </dependency>

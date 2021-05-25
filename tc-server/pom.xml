@@ -34,9 +34,9 @@
     <relativePath>../build-parent</relativePath>
   </parent>
 
-  <artifactId>dso-l2</artifactId>
+  <artifactId>tc-server</artifactId>
   <packaging>jar</packaging>
-  <name>dso-l2</name>
+  <name>tc-server</name>
 
   <properties>
     <jersey.version>2.6</jersey.version>
@@ -73,7 +73,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>server-bootstrap</artifactId>
+      <artifactId>terracotta</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
