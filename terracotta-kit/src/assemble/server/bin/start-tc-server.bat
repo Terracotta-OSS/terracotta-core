@@ -74,14 +74,13 @@ exit /b 1
 
 :setJavaOptsAndClasspath
 
-set "CLASSPATH=%TC_SERVER_DIR%\lib\tc.jar;%TC_SERVER_DIR%\lib\;."
 set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
 
 :START_TCSERVER
-%JAVA_COMMAND% %JAVA_OPTS% -cp "%CLASSPATH%" com.tc.server.TCServerMain %*
+%JAVA_COMMAND% %JAVA_OPTS% -jar "%TC_SERVER_DIR%\lib\tc.jar" %*
 if %ERRORLEVEL% EQU 11 (
 	echo start-tc-server: Restarting the server...
 	goto START_TCSERVER

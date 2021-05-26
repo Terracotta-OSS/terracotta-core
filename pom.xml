@@ -54,11 +54,10 @@
     <module>test-common</module>
     <module>common-spi</module>
     <module>server-spi</module>
-    <module>server-bootstrap</module>
     <module>tc-messaging</module>
     <module>common</module>
-    <module>dso-l1</module>
-    <module>dso-l2</module>
+    <module>tc-client</module>
+    <module>tc-server</module>
     <module>voter</module>
     <module>connection-impl</module>
     <module>management</module>

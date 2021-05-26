@@ -51,8 +51,7 @@ while [ 1 ] ; do
 	-XX:+HeapDumpOnOutOfMemoryError \
         -Dtc.install-root="${TC_SERVER_DIR}" \
         ${JAVA_OPTS} \
-        -cp "${TC_SERVER_DIR}/lib/tc.jar:${TC_SERVER_DIR}/lib/:." \
-        com.tc.server.TCServerMain "$@"
+        -jar "${TC_SERVER_DIR}/lib/tc.jar" "$@"
     exitValue=$?
 
     if [ $exitValue -eq 11 ] ; then

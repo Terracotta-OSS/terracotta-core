@@ -3,9 +3,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>terracotta-core-root</artifactId>
-        <groupId>org.terracotta.internal</groupId>
-        <version>5.8-SNAPSHOT</version>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>build-parent</artifactId>
+      <version>5.8-SNAPSHOT</version>
+      <relativePath>../build-parent</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -18,47 +19,24 @@
     </properties>
 
     <dependencies>
-        <!-- got most of its dependencies from terracotta-parent -->
         <dependency>
-            <groupId>org.terracotta.internal</groupId>
-            <artifactId>server-bootstrap</artifactId>
-            <version>${project.version}</version>
+          <groupId>org.terracotta</groupId>
+          <artifactId>standard-cluster-services</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest-all</artifactId>
+          <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!--plugin>
-                <groupId>org.terracotta</groupId>
-                <artifactId>maven-forge-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <rootPath>${basedir}/..</rootPath>
-                            <addClasspath>true</addClasspath>
-                            <excludeGroupIds>org.terracotta.internal</excludeGroupIds>
-                            <excludeArtifactIds>server-bootstrap</excludeArtifactIds>
-                            <manifestEntries>
-                                <Main-Class>com.tc.cli.CommandLineMain</Main-Class>
-                                <Class-Path>resources/</Class-Path>
-                            </manifestEntries>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestFile>${project.build.directory}/MANIFEST.MF</manifestFile>
-                    </archive>
-                </configuration>
-            </plugin-->
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-jar-plugin</artifactId>
@@ -66,6 +44,7 @@
                   <archive>
                     <manifest>
                       <addClasspath>true</addClasspath>
+                      <mainClass>com.tc.server.TCServerMain</mainClass>
                     </manifest>
                   </archive>
               </configuration>
