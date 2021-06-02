@@ -43,12 +43,13 @@ import java.util.regex.Pattern;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
+import java.util.EnumSet;
 import static java.util.stream.Collectors.joining;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 
-public class ServerProcess {
-  private final GalvanStateInterlock stateInterlock;
+public class ServerProcess implements IGalvanServer {
+  private final StateInterlock stateInterlock;
   private final ITestStateManager stateManager;
   private final ContextualLogger harnessLogger;
   private final ContextualLogger serverLogger;
@@ -65,8 +66,6 @@ public class ServerProcess {
 
   //  flag if the server was zapped so it can be logged
   private boolean wasZapped;
-
-  private boolean isRunning;
   // The PID of the actual server, underneath the start script.  This is 0 until we are killable and can tell the interlock that we are running.
   private long pid;
   // When we are going to bring down the server, we need to record that we expected the crash so we don't conclude the test failed.
@@ -76,7 +75,9 @@ public class ServerProcess {
   private OutputStream outputStream;
   private OutputStream errorStream;
 
-  public ServerProcess(GalvanStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
+  private ServerMode currentState = ServerMode.UNKNOWN;
+
+  public ServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
                        String serverName, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties,
                        Supplier<String[]> startupCommandSupplier) {
     this.stateInterlock = stateInterlock;
@@ -132,9 +133,6 @@ public class ServerProcess {
   public void start() throws IOException {
     UUID token = enter();
     try {
-      // First thing we need to do is make sure that we aren't already running.
-      Assert.assertFalse(this.stateInterlock.isServerRunning(this));
-
       String[] command = startupCommandSupplier.get();
       // Now, open the log files.
       // We want to create an output log file for both STDOUT and STDERR.
@@ -164,8 +162,7 @@ public class ServerProcess {
           .pipeStderr(stderr)
           .build();
 
-      reset(true);
-      this.stateInterlock.serverDidStartup(this);
+      reset();
       Assert.assertNull(this.outputStream);
       this.outputStream = outputStream;
       Assert.assertNull(this.errorStream);
@@ -187,13 +184,13 @@ public class ServerProcess {
     this.isCrashExpected = expect;
   }
 
-  public synchronized boolean isRunning() {
-    return this.isRunning;
+  public boolean isRunning() {
+    return getCurrentState() != ServerMode.TERMINATED;
   }
 
   private synchronized long waitForPid() {
     try {
-      while (this.isRunning && this.pid == 0) {
+      while (isRunning() && this.pid == 0) {
         this.wait();
       }
     } catch (InterruptedException ie) {
@@ -202,10 +199,16 @@ public class ServerProcess {
     return this.pid;
   }
 
-  private synchronized void reset(boolean running) {
+  private synchronized ServerMode setCurrentState(ServerMode mode) {
+    ServerMode previous = currentState;
+    currentState = mode;
+    notifyAll();
+    return previous;
+  }
+  
+  private synchronized void reset() {
     this.pid = 0;
-    this.wasZapped = this.isRunning;
-    this.isRunning = running;
+    this.wasZapped = isRunning();
     notifyAll();
   }
 
@@ -286,19 +289,19 @@ public class ServerProcess {
     serverBus.on(activeReadyName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
-        ServerProcess.this.didBecomeActive(true);
+        setCurrentState(ServerMode.ACTIVE);
       }
     });
     serverBus.on(passiveReadyName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
-        ServerProcess.this.didBecomeActive(false);
+        setCurrentState(ServerMode.PASSIVE);
       }
     });
     serverBus.on(diagnosticReadyName, new EventListener() {
       @Override
       public void onEvent(Event event) throws Throwable {
-        stateInterlock.serverBecameDiagnostic(ServerProcess.this);
+        setCurrentState(ServerMode.DIAGNOSTIC);
       }
     });
     serverBus.on(zapEventName, new EventListener() {
@@ -321,28 +324,13 @@ public class ServerProcess {
   }
 
   /**
-   * Called by the inline EventListener implementations when the server becomes either active or passive.
-   *
-   * @param isActive True if active, false if passive.
-   */
-  private void didBecomeActive(boolean isActive) {
-    if (pid != 0) { //  zapped, don't do anything
-      if (isActive) {
-        this.stateInterlock.serverBecameActive(this);
-      } else {
-        this.stateInterlock.serverBecamePassive(this);
-      }
-    }
-  }
-
-  /**
    * Called by the inline EventListener when the instance goes down for a restart due to ZAP.
    * This is really just a special case of a shut-down (we accept it, even if we weren't expecting it).
    */
   private void instanceWasZapped() {
     this.harnessLogger.output("Server restarted due to ZAP");
-    reset(true);
-    this.stateInterlock.serverWasZapped(this);
+    setCurrentState(ServerMode.UNKNOWN);
+    reset();
   }
 
   /**
@@ -388,14 +376,13 @@ public class ServerProcess {
       Assert.unexpected(e);
     }
 
-    this.stateInterlock.serverDidShutdown(this);
-    // In either case, we are not running.
+    setCurrentState(ServerMode.TERMINATED);
 
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
 
-    reset(false);
+    reset();
   }
 
   /**
@@ -409,7 +396,7 @@ public class ServerProcess {
     UUID token = enter();
     try {
       // Can't stop something not running.
-      if (this.stateInterlock.isServerRunning(this)) {
+      if (isServerRunning()) {
         // Can't stop something unless we determined the PID.
         long localPid = 0;
         while (localPid == 0) {
@@ -443,6 +430,7 @@ public class ServerProcess {
         int result = process.exitValue();
         harnessLogger.output("Attempt to kill server process resulted in:" + result);
         harnessLogger.output("server process killed");
+        setCurrentState(ServerMode.TERMINATED);
       }
     } finally {
       exit(token);
@@ -495,6 +483,54 @@ public class ServerProcess {
       Assert.unexpected(e);
     }
     return process;
+  }
+
+  public boolean isServerRunning() {
+      return getCurrentState() != ServerMode.TERMINATED;
+  }
+
+  public boolean isActive() {
+    return getCurrentState() == ServerMode.ACTIVE;
+  }
+  
+  public synchronized void waitForRunning() {
+    boolean loop = true;
+    while (loop && currentState == ServerMode.TERMINATED) {
+      loop = uninterruptableWait();
+    }
+  }
+
+  public synchronized void waitForReady() {
+    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.UNKNOWN);
+    boolean loop = true;
+    while (loop && modes.contains(currentState)) {
+      loop = uninterruptableWait();
+    }
+  }
+
+  public synchronized void waitForTermination() {
+    boolean loop = true;
+    while (loop && currentState != ServerMode.TERMINATED) {
+      loop = uninterruptableWait();
+    }
+  }
+
+  private synchronized boolean uninterruptableWait() {
+    try {
+      if (isRunning() && !this.stateInterlock.checkDidPass()) {
+        wait();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (Exception ie) {
+      return false;
+    }
+  }
+  
+  @Override
+  public synchronized ServerMode getCurrentState() {
+    return currentState;
   }
 
   private class ExitWaiter extends Thread {

@@ -32,14 +32,14 @@ import java.util.function.Function;
  * Handles the description, installation, and start-up of a stripe of servers in a cluster.
  */
 public class InlineStripeInstaller {
-  private final InlineStateInterlock interlock;
+  private final StateInterlock interlock;
   private final ITestStateManager stateManager;
   private final VerboseManager stripeVerboseManager;
   private final StripeConfiguration stripeConfig;
   private final List<InlineServerProcess> serverProcesses = new ArrayList<>();
   private boolean isBuilt;
 
-  public InlineStripeInstaller(InlineStateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, StripeConfiguration stripeConfig) {
+  public InlineStripeInstaller(StateInterlock interlock, ITestStateManager stateManager, VerboseManager stripeVerboseManager, StripeConfiguration stripeConfig) {
     this.interlock = interlock;
     this.stateManager = stateManager;
     this.stripeVerboseManager = stripeVerboseManager;

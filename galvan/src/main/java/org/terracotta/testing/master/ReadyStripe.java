@@ -54,7 +54,7 @@ public class ReadyStripe {
    * @return The objects required to interact with and control the stripe.
    * @throws GalvanFailureException Thrown in case starting the servers in the stripe experienced a failure.
    */
-  public static ReadyStripe configureAndStartStripe(GalvanStateInterlock interlock, VerboseManager stripeVerboseManager,
+  public static ReadyStripe configureAndStartStripe(StateInterlock interlock, VerboseManager stripeVerboseManager,
                                                     StripeConfiguration stripeConfig, StripeInstaller stripeInstaller) throws GalvanFailureException {
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
@@ -73,11 +73,11 @@ public class ReadyStripe {
     }
 
     // We can now create the information required by the ReadyStripe and return control to the caller to run the test or install clients.
-    SynchronousProcessControl processControl = new SynchronousProcessControl(interlock, processControlLogger);
+    ServerProcessControl processControl = new ServerProcessControl(interlock, processControlLogger);
     return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo());
   }
 
-  public static ReadyStripe configureAndStartStripe(InlineStateInterlock interlock, VerboseManager stripeVerboseManager,
+  public static ReadyStripe configureAndStartStripe(StateInterlock interlock, VerboseManager stripeVerboseManager,
                                                     StripeConfiguration stripeConfig, InlineStripeInstaller stripeInstaller) throws GalvanFailureException {
     // Create the process control object.
     ContextualLogger processControlLogger = stripeVerboseManager.createComponentManager("[ProcessControl]").createHarnessLogger();
@@ -96,7 +96,7 @@ public class ReadyStripe {
     }
 
     // We can now create the information required by the ReadyStripe and return control to the caller to run the test or install clients.
-    InlineServerProcessControl processControl = new InlineServerProcessControl(interlock, processControlLogger);
+    ServerProcessControl processControl = new ServerProcessControl(interlock, processControlLogger);
     return new ReadyStripe(processControl, stripeConfig.getUri(), stripeConfig.getClusterInfo());
   }
 }
