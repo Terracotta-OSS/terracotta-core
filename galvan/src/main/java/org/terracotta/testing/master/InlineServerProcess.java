@@ -17,7 +17,6 @@ package org.terracotta.testing.master;
 
 import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
-import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
@@ -31,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -39,12 +39,13 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.testing.common.SimpleEventingStream;
+import static org.terracotta.testing.master.ServerMode.ACTIVE;
 
 
 
-public class InlineServerProcess {
+public class InlineServerProcess implements IGalvanServer {
   private static final Logger LOGGER = LoggerFactory.getLogger(InlineServerProcess.class);
-  private final InlineStateInterlock stateInterlock;
+  private final StateInterlock stateInterlock;
   private final ITestStateManager stateManager;
   private final ContextualLogger harnessLogger;
   private final String serverName;
@@ -58,15 +59,15 @@ public class InlineServerProcess {
   //  flag if the server was zapped so it can be logged
   private boolean wasZapped;
 
-  private boolean isRunning;
   // When we are going to bring down the server, we need to record that we expected the crash so we don't conclude the test failed.
   private boolean isCrashExpected;
   private Object server;
 
+  private ServerMode currentState = ServerMode.TERMINATED;
 
-  public InlineServerProcess(InlineStateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
+  public InlineServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
                        String serverName, Path serverWorkingDir,
-                       Function<OutputStream, Object>serverStart) {
+                       Function<OutputStream, Object> serverStart) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
     // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
@@ -117,8 +118,8 @@ public class InlineServerProcess {
     UUID token = enter();
     try {
       // First thing we need to do is make sure that we aren't already running.
-      Assert.assertFalse(this.stateInterlock.isServerRunning(this));
-      stateInterlock.serverDidStartup(InlineServerProcess.this);
+      Assert.assertFalse(this.isServerRunning());
+      setCurrentState(ServerMode.UNKNOWN);
       ExitWaiter exitWaiter = new ExitWaiter();
       exitWaiter.start();
     } finally {
@@ -134,13 +135,12 @@ public class InlineServerProcess {
     this.isCrashExpected = expect;
   }
 
-  public synchronized boolean isRunning() {
-    return this.isRunning;
+  public boolean isRunning() {
+    return getCurrentState() != ServerMode.TERMINATED;
   }
 
-  private synchronized void reset(boolean running) {
-    this.wasZapped = this.isRunning;
-    this.isRunning = running;
+  private synchronized void reset() {
+    this.wasZapped = isRunning();
     notifyAll();
   }
 
@@ -162,11 +162,9 @@ public class InlineServerProcess {
     eventMap.put("WARN", warn);
     eventMap.put("ERROR", err);
 
-    serverBus.on(activeReadyName, (event) -> didBecomeActive(true));
-    serverBus.on(passiveReadyName, (event) -> didBecomeActive(false));
-    serverBus.on(diagnosticReadyName, (event) -> {
-      stateInterlock.serverBecameDiagnostic(InlineServerProcess.this);
-    });
+    serverBus.on(activeReadyName, (event) -> didBecomeActive());
+    serverBus.on(passiveReadyName, (event) -> setCurrentState(ServerMode.PASSIVE));
+    serverBus.on(diagnosticReadyName, (event) -> setCurrentState(ServerMode.DIAGNOSTIC));
     serverBus.on(zapEventName, (event)-> instanceWasZapped());
     serverBus.on(warn, (event) -> handleWarnLog(event));
     serverBus.on(err, (event) -> handleErrorLog(event));
@@ -187,22 +185,72 @@ public class InlineServerProcess {
    *
    * @param isActive True if active, false if passive.
    */
-  private void didBecomeActive(boolean isActive) {
-    if (isActive) {
-      this.stateInterlock.serverBecameActive(this);
-    } else {
-      this.stateInterlock.serverBecamePassive(this);
+  private void didBecomeActive() {
+    ServerMode previous = setCurrentState(ACTIVE);
+    this.stateInterlock.serverBecameActive(this, previous);
+  }
+
+  public synchronized ServerMode getCurrentState() {
+    return currentState;
+  }
+
+  private synchronized ServerMode setCurrentState(ServerMode mode) {
+    ServerMode previous = currentState;
+    currentState = mode;
+    notifyAll();
+    return previous;
+  }
+
+  public synchronized void waitForRunning() {
+    boolean loop = true;
+    while (loop && currentState == ServerMode.TERMINATED) {
+      loop = uninterruptableWait();
     }
   }
 
+  public synchronized void waitForReady() {
+    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.UNKNOWN);
+    boolean loop = true;
+    while (loop && modes.contains(currentState)) {
+      loop = uninterruptableWait();
+    }
+  }
+
+  public synchronized void waitForTermination() {
+    boolean loop = true;
+    while (loop && currentState != ServerMode.TERMINATED) {
+      loop = uninterruptableWait();
+    }
+  }
+
+  private synchronized boolean uninterruptableWait() {
+    try {
+      if (isRunning() && !this.stateInterlock.checkDidPass()) {
+        wait();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (Exception ie) {
+      return false;
+    }
+  }
+
+  public boolean isServerRunning() {
+      return getCurrentState() != ServerMode.TERMINATED;
+  }
+
+  public boolean isActive() {
+    return getCurrentState() == ServerMode.ACTIVE;
+  }
   /**
    * Called by the inline EventListener when the instance goes down for a restart due to ZAP.
    * This is really just a special case of a shut-down (we accept it, even if we weren't expecting it).
    */
   private void instanceWasZapped() {
     this.harnessLogger.output("Server restarted due to ZAP");
-    reset(true);
-    this.stateInterlock.serverWasZapped(this);
+    setCurrentState(ServerMode.UNKNOWN);
+    reset();
   }
 
   /**
@@ -218,14 +266,14 @@ public class InlineServerProcess {
       failureException = new GalvanFailureException("Unexpected server crash: " + this + " restart: " + restart);
     }
 
-    this.stateInterlock.serverDidShutdown(this);
+    setCurrentState(ServerMode.TERMINATED);
     // In either case, we are not running.
 
     if (null != failureException) {
       this.stateManager.testDidFail(failureException);
     }
 
-    reset(false);
+    reset();
   }
   /**
    * Called by the exit waiter when the underlying process terminates.
@@ -244,9 +292,9 @@ public class InlineServerProcess {
       this.stateManager.testDidFail(failureException);
     }
     
-    this.stateInterlock.serverDidShutdown(this);
+    setCurrentState(ServerMode.TERMINATED);
     // In either case, we are not running.
-    reset(false);
+    reset();
   }
   /**
    * Called from outside to asynchronously kill the underlying process.
@@ -259,7 +307,7 @@ public class InlineServerProcess {
     UUID token = enter();
     try {
       // Can't stop something not running.
-      if (this.stateInterlock.isServerRunning(this)) {
+      if (isServerRunning()) {
         // Log the intent.
         this.harnessLogger.output("Crashing server process: " + server);
         // Mark this as expected.
@@ -269,6 +317,7 @@ public class InlineServerProcess {
 
         harnessLogger.output("Attempt to kill server process resulted in:" + invokeOnObject(server, "waitUntilShutdown"));
         harnessLogger.output("server process killed");
+        setCurrentState(ServerMode.TERMINATED);
       }
     } finally {
       exit(token);
@@ -301,9 +350,11 @@ public class InlineServerProcess {
       Method m = server.getClass().getMethod(method, clazz);
       m.setAccessible(true);
       return m.invoke(server, args);
+    } catch (RuntimeException rt) {
+      throw rt;
     } catch (Exception s) {
       LOGGER.warn("unable to invoke", s);
-      return "ERROR";
+      throw new RuntimeException(s);
     }
   }
 
@@ -334,6 +385,6 @@ public class InlineServerProcess {
 
   @Override
   public String toString() {
-    return "Server " + this.serverName + " (has been zapped: " + this.wasZapped + ")";
+    return "Server " + this.serverName + "-" + this.getCurrentState() + " (has been zapped: " + this.wasZapped + ")";
   }
 }

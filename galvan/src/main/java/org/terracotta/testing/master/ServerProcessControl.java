@@ -16,6 +16,7 @@
 package org.terracotta.testing.master;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -30,11 +31,11 @@ import org.terracotta.testing.logging.ContextualLogger;
  * 
  * Hence, all the public methods are synchronized, even though we don't actually wait/notify here.
  */
-public class InlineServerProcessControl implements IMultiProcessControl {
-  private final InlineStateInterlock stateInterlock;
+public class ServerProcessControl implements IMultiProcessControl {
+  private final StateInterlock stateInterlock;
   private final ContextualLogger logger;
 
-  public InlineServerProcessControl(InlineStateInterlock stateInterlock, ContextualLogger logger) {
+  public ServerProcessControl(StateInterlock stateInterlock, ContextualLogger logger) {
     this.stateInterlock = stateInterlock;
     this.logger = logger;
   }
@@ -51,15 +52,12 @@ public class InlineServerProcessControl implements IMultiProcessControl {
     this.logger.output(">>> terminateActive");
     
     // Get the active and stop it.
-    InlineServerProcess active = this.stateInterlock.getActiveServer();
+    IGalvanServer active = this.stateInterlock.getActiveServer();
     // We expect that the test knows there is an active (might change in the future).
     if (null == active) {
       throw new IllegalStateException("No server in active state");
     }
     safeStop(active);
-    
-    // Wait until the server has gone down.
-    this.stateInterlock.waitForServerTermination(active);
     
     this.logger.output("<<< terminateActive");
   }
@@ -69,13 +67,11 @@ public class InlineServerProcessControl implements IMultiProcessControl {
     this.logger.output(">>> terminateOnePassive");
     
     // Pick an arbitrary passive.
-    InlineServerProcess onePassive = this.stateInterlock.getOnePassiveServer();
+    IGalvanServer onePassive = this.stateInterlock.getOnePassiveServer();
     // It is acceptable to call this in the case where there is no passive.  That is a "do nothing" situation.
     if (null != onePassive) {
       // Stop the server
       safeStop(onePassive);
-      // Wait until the server has gone down.
-      this.stateInterlock.waitForServerTermination(onePassive);
     }
     
     this.logger.output("<<< terminateOnePassive");
@@ -86,13 +82,11 @@ public class InlineServerProcessControl implements IMultiProcessControl {
     this.logger.output(">>> terminateOneDiagnostic");
 
     // Pick an arbitrary server.
-    InlineServerProcess oneDiagnosticServer = this.stateInterlock.getOneDiagnosticServer();
+    IGalvanServer oneDiagnosticServer = this.stateInterlock.getOneDiagnosticServer();
     // It is acceptable to call this in the case where there is no diagnostic server. That is a "do nothing" situation.
     if (null != oneDiagnosticServer) {
       // Stop the server
       safeStop(oneDiagnosticServer);
-      // Wait until the server has gone down.
-      this.stateInterlock.waitForServerTermination(oneDiagnosticServer);
     }
 
     this.logger.output("<<< terminateOneDiagnostic");
@@ -106,15 +100,13 @@ public class InlineServerProcessControl implements IMultiProcessControl {
   }
 
   public synchronized void startServer() throws GalvanFailureException {
-    InlineServerProcess server = this.stateInterlock.getOneTerminatedServer();
+    IGalvanServer server = this.stateInterlock.getOneTerminatedServer();
     if (null == server) {
       throw new IllegalStateException("Tried to start one server when none are terminated");
     }
     safeStart(server);
     
-    // Wait for it to start up (otherwise, later calls to wait for the servers to become ready may not know that
-    //  this one was still expected, just not started).
-    this.stateInterlock.waitForServerRunning(server);
+    server.waitForRunning();
   }
 
   @Override
@@ -125,13 +117,13 @@ public class InlineServerProcessControl implements IMultiProcessControl {
   }
 
   private void startServers() throws GalvanFailureException {
-    InlineServerProcess server = this.stateInterlock.getOneTerminatedServer();
+    IGalvanServer server = this.stateInterlock.getOneTerminatedServer();
     while (null != server) {
       safeStart(server);
 
       // Wait for it to start up (since we need to grab a different one in the next call).
-      this.stateInterlock.waitForServerRunning(server);
-      InlineServerProcess nextServer = this.stateInterlock.getOneTerminatedServer();
+      server.waitForRunning();
+      IGalvanServer nextServer = this.stateInterlock.getOneTerminatedServer();
       // Ensure that we don't somehow get the same instance (since we just watched it come online).
       Assert.assertTrue(server != nextServer);
       server = nextServer;
@@ -146,26 +138,9 @@ public class InlineServerProcessControl implements IMultiProcessControl {
     
     // NOTE:  We want to get the passives, first, to avoid active fail-over causing us not to know the state of a server when looking for it.
     // Get all the passives.
-    InlineServerProcess passive = this.stateInterlock.getOnePassiveServer();
-    while (null != passive) {
-      safeStop(passive);
-      this.stateInterlock.waitForServerTermination(passive);
-      passive = this.stateInterlock.getOnePassiveServer();
-    }
-    
-    // Get the active.
-    InlineServerProcess active = this.stateInterlock.getActiveServer();
-    if (null != active) {
-      safeStop(active);
-      this.stateInterlock.waitForServerTermination(active);
-    }
-
-    InlineServerProcess diagnosticServer = this.stateInterlock.getOneDiagnosticServer();
-    while (null != diagnosticServer) {
-      safeStop(diagnosticServer);
-      this.stateInterlock.waitForServerTermination(diagnosticServer);
-      diagnosticServer = this.stateInterlock.getOneDiagnosticServer();
-    }
+    this.stateInterlock.collectAllRunningServers().forEach(s->{
+      safeStop(s);
+    });
 
     this.logger.output("<<< terminateAllServers");
   }
@@ -189,7 +164,7 @@ public class InlineServerProcessControl implements IMultiProcessControl {
   }
 
 
-  private void safeStart(InlineServerProcess server) {
+  private void safeStart(IGalvanServer server) {
     try {
       server.start();
     } catch (IOException e) {
@@ -198,9 +173,13 @@ public class InlineServerProcessControl implements IMultiProcessControl {
     }
   }
 
-  private void safeStop(InlineServerProcess server) {
+  private void safeStop(IGalvanServer server) {
     try {
+    long start = System.currentTimeMillis();
+    this.logger.output(">>> stoppingServer " + server.toString());
       server.stop();
+      server.waitForTermination();
+    this.logger.output("<<< stoppingServer " + server.toString() + " " + (System.currentTimeMillis() - start) + "ms");
     } catch (InterruptedException e) {
       // Interruption not expected in these tests.
       Assert.unexpected(e);

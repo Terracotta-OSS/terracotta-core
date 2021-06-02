@@ -33,7 +33,7 @@ public interface IGalvanStateInterlock {
    * 
    * @param newServer The server to register.
    */
-  public void registerNewServer(ServerProcess newServer);
+  public void registerNewServer(IGalvanServer newServer);
   /**
    * Registers a new client within the interlock.  Note that all servers an interlock knows about are assumed to be
    *  running, as it will drop them when they terminate.
@@ -62,14 +62,14 @@ public interface IGalvanStateInterlock {
    * @param startingUpServer The server instance to check.
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public void waitForServerRunning(ServerProcess startingUpServer) throws GalvanFailureException;
+//  public void waitForServerRunning(ServerProcess startingUpServer) throws GalvanFailureException;
   /**
    * Waits until the given server has informed the interlock that it has terminated.
    * 
    * @param terminatedServer The server instance to check.
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public void waitForServerTermination(ServerProcess terminatedServer) throws GalvanFailureException;
+//  public void waitForServerTermination(ServerProcess terminatedServer) throws GalvanFailureException;
   /**
    * Waits until all running servers, known to the interlock, have at least reported that they are running.
    * This will block until there are no more terminated or zapped servers.
@@ -91,7 +91,7 @@ public interface IGalvanStateInterlock {
    * @return The active server instance or null, if there isn't one.
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public ServerProcess getActiveServer() throws GalvanFailureException;
+  public IGalvanServer getActiveServer() throws GalvanFailureException;
   /**
    * Gets one passive server, if there is one.  Note that there may be multiple passives and this method can choose which
    *  one it returns.
@@ -99,7 +99,7 @@ public interface IGalvanStateInterlock {
    * @return A passive server instance or null, if there isn't one.
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public ServerProcess getOnePassiveServer() throws GalvanFailureException;
+  public IGalvanServer getOnePassiveServer() throws GalvanFailureException;
   /**
    * Gets one diagnostic server, if there is one.  Note that there may be multiple such servers and this method can choose
    * which one it returns.
@@ -107,7 +107,7 @@ public interface IGalvanStateInterlock {
    * @return A diagnostic server instance or null, if there isn't one.
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public ServerProcess getOneDiagnosticServer() throws GalvanFailureException;
+  public IGalvanServer getOneDiagnosticServer() throws GalvanFailureException;
 
   /**
    * Gets a terminated server, if there is one.  Note that there may be multiple terminated server and this method can
@@ -116,30 +116,7 @@ public interface IGalvanStateInterlock {
    * @return A terminated server instance or null, if there isn't one.
    * @throws GalvanFailureException The test failure description, if it already failed.
    */
-  public ServerProcess getOneTerminatedServer() throws GalvanFailureException;
-
-  // ----- CHANGE STATE-----
-  /**
-   * Notifies the interlock that the given server became active.  Note that it must have already been registered with
-   *  the interlock.
-   * 
-   * @param server The newly-active server.
-   */
-  public void serverBecameActive(ServerProcess server);
-  /**
-   * Notifies the interlock that the given server became passive.  Note that it must have already been registered with
-   *  the interlock.
-   * 
-   * @param server The newly-passive server.
-   */
-  public void serverBecamePassive(ServerProcess server);
-  /**
-   * Notifies the interlock that the given server reached diagnostic state. Note that it must have already been registered
-   * with the interlock.
-   *
-   * @param server The newly-diagnostic server.
-   */
-  public void serverBecameDiagnostic(ServerProcess server);
+  public IGalvanServer getOneTerminatedServer() throws GalvanFailureException;
 
   /**
    * Notifies the interlock that the given server went offline (became terminated).  Note that it must have already been
@@ -147,21 +124,14 @@ public interface IGalvanStateInterlock {
    * 
    * @param server The now-terminated server.
    */
-  public void serverDidShutdown(ServerProcess server);
+//  public void serverDidShutdown(ServerProcess server);
   /**
    * Notifies the interlock that the given server came online (but it not yet in a known, active/passive, state).  Note
    *  that it must have already been registered with the interlock.
    * 
    * @param server The now-online server.
    */
-  public void serverDidStartup(ServerProcess server);
-  /**
-   * Similar to serverDidShutdown() but different in that zapped servers have technically already been "started".
-   * This server will send us a serverDidStartup() message once it has finished restarting, with a new PID.
-   * 
-   * @param server The zapped server.
-   */
-  public void serverWasZapped(ServerProcess server);
+//  public void serverDidStartup(ServerProcess server);
   /**
    * Notifies the interlock that the given client terminated.  Note that it must have already been registered with the
    *  interlock.
