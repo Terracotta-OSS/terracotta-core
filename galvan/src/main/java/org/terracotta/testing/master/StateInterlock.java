@@ -91,7 +91,7 @@ public class StateInterlock implements IGalvanStateInterlock {
   }
 
   public synchronized void waitForActiveServer() throws GalvanFailureException {
-    this.logger.output("> waitForActiveServer");
+    this.logger.output("> waitForActiveServer " + this.servers);
     IGalvanServer active = getActiveServer();
     while (!this.sharedLockState.checkDidPass() &&  active == null) {
       safeWait();
@@ -101,13 +101,13 @@ public class StateInterlock implements IGalvanStateInterlock {
   }
 
   public void waitForAllServerRunning() throws GalvanFailureException {
-    this.logger.output("> waitForAllServerRunning");
+    this.logger.output("> waitForAllServerRunning " + this.servers);
     this.servers.forEach(server->server.waitForRunning());
     this.logger.output("< waitForAllServerRunning");
   }
 
   public void waitForAllServerReady() throws GalvanFailureException {
-    this.logger.output("> waitForAllServerReady");
+    this.logger.output("> waitForAllServerReady " + this.servers);
     this.servers.forEach(server->server.waitForReady());
     this.logger.output("< waitForAllServerReady");
   }

@@ -119,7 +119,7 @@ public class InlineServerProcess implements IGalvanServer {
     try {
       // First thing we need to do is make sure that we aren't already running.
       Assert.assertFalse(this.isServerRunning());
-      setCurrentState(ServerMode.UNKNOWN);
+      setCurrentState(ServerMode.STARTUP);
       ExitWaiter exitWaiter = new ExitWaiter();
       exitWaiter.start();
     } finally {
@@ -135,18 +135,15 @@ public class InlineServerProcess implements IGalvanServer {
     this.isCrashExpected = expect;
   }
 
-  public boolean isRunning() {
-    return getCurrentState() != ServerMode.TERMINATED;
-  }
-
   private synchronized void reset() {
-    this.wasZapped = isRunning();
+    this.wasZapped = isServerRunning();
     notifyAll();
   }
 
   private OutputStream buildEventingStream(OutputStream out) {
     // Now, set up the event bus we will use to scrape the state from the sub-process.
     EventBus serverBus = new EventBus.Builder().id("server-bus").build();
+    String starting = "BOOTSTRAPPED";
     String activeReadyName = "ACTIVE";
     String passiveReadyName = "PASSIVE";
     String diagnosticReadyName = "DIAGNOSTIC";
@@ -154,6 +151,7 @@ public class InlineServerProcess implements IGalvanServer {
     String warn = "WARN";
     String err = "ERROR";
     Map<String, String> eventMap = new HashMap<>();
+    eventMap.put("Terracotta Server instance has started diagnostic listening", starting);
     eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
     eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
     eventMap.put("Moved to State[ DIAGNOSTIC ]", diagnosticReadyName);
@@ -162,6 +160,7 @@ public class InlineServerProcess implements IGalvanServer {
     eventMap.put("WARN", warn);
     eventMap.put("ERROR", err);
 
+    serverBus.on(starting, (event) -> setCurrentState(ServerMode.UNKNOWN));
     serverBus.on(activeReadyName, (event) -> didBecomeActive());
     serverBus.on(passiveReadyName, (event) -> setCurrentState(ServerMode.PASSIVE));
     serverBus.on(diagnosticReadyName, (event) -> setCurrentState(ServerMode.DIAGNOSTIC));
@@ -201,19 +200,23 @@ public class InlineServerProcess implements IGalvanServer {
     return previous;
   }
 
-  public synchronized void waitForRunning() {
+  public synchronized ServerMode waitForRunning() {
     boolean loop = true;
-    while (loop && currentState == ServerMode.TERMINATED) {
-      loop = uninterruptableWait();
-    }
-  }
-
-  public synchronized void waitForReady() {
-    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.UNKNOWN);
-    boolean loop = true;
+    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ZAPPED, ServerMode.STARTUP);
+    this.harnessLogger.output("wait for running " + currentState);
     while (loop && modes.contains(currentState)) {
       loop = uninterruptableWait();
     }
+    return currentState;
+  }
+
+  public synchronized ServerMode waitForReady() {
+    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ACTIVE, ServerMode.PASSIVE, ServerMode.DIAGNOSTIC);
+    boolean loop = true;
+    while (loop && !modes.contains(currentState)) {
+      loop = uninterruptableWait();
+    }
+    return currentState;
   }
 
   public synchronized void waitForTermination() {
@@ -225,7 +228,7 @@ public class InlineServerProcess implements IGalvanServer {
 
   private synchronized boolean uninterruptableWait() {
     try {
-      if (isRunning() && !this.stateInterlock.checkDidPass()) {
+      if (isServerRunning() && !this.stateInterlock.checkDidPass()) {
         wait();
         return true;
       } else {
@@ -237,7 +240,7 @@ public class InlineServerProcess implements IGalvanServer {
   }
 
   public boolean isServerRunning() {
-      return getCurrentState() != ServerMode.TERMINATED;
+    return getCurrentState() != ServerMode.TERMINATED;
   }
 
   public boolean isActive() {
@@ -249,7 +252,7 @@ public class InlineServerProcess implements IGalvanServer {
    */
   private void instanceWasZapped() {
     this.harnessLogger.output("Server restarted due to ZAP");
-    setCurrentState(ServerMode.UNKNOWN);
+    setCurrentState(ServerMode.ZAPPED);
     reset();
   }
 
@@ -266,7 +269,9 @@ public class InlineServerProcess implements IGalvanServer {
       failureException = new GalvanFailureException("Unexpected server crash: " + this + " restart: " + restart);
     }
 
-    setCurrentState(ServerMode.TERMINATED);
+    if (!restart) {
+      setCurrentState(ServerMode.TERMINATED);
+    }
     // In either case, we are not running.
 
     if (null != failureException) {
@@ -313,11 +318,10 @@ public class InlineServerProcess implements IGalvanServer {
         // Mark this as expected.
         this.setCrashExpected(true);
 
-        invokeOnServerMBean("Server","stop",null);
+        harnessLogger.output("Server Stop Command Result: " + invokeOnServerMBean("Server","stop",null));
 
         harnessLogger.output("Attempt to kill server process resulted in:" + invokeOnObject(server, "waitUntilShutdown"));
         harnessLogger.output("server process killed");
-        setCurrentState(ServerMode.TERMINATED);
       }
     } finally {
       exit(token);
@@ -366,19 +370,19 @@ public class InlineServerProcess implements IGalvanServer {
     @Override
     public void run() {
       boolean returnValue = true;
-      try (OutputStream stdout = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
-        try (OutputStream events = buildEventingStream(stdout)) {
-          while (returnValue) {
+      while (returnValue) {
+        try (OutputStream stdout = Files.newOutputStream(serverWorkingDir.resolve("stdout.txt"), CREATE, APPEND)) {
+          try (OutputStream events = buildEventingStream(stdout)) {
             server = serverStart.apply(events);
             returnValue = (Boolean)invokeOnObject(server, "waitUntilShutdown");
+            didTerminateWithStatus(returnValue);
+            harnessLogger.output("server process exit.");
+          } catch (Exception e) {
+            didTerminateWithException(e);
           }
-          didTerminateWithStatus(returnValue);
-          harnessLogger.output("server process exit.");
-        } catch (Exception e) {
-          didTerminateWithException(e);
+        } catch (IOException io) {
+          throw new UncheckedIOException(io);
         }
-      } catch (IOException io) {
-        throw new UncheckedIOException(io);
       }
     }
   }

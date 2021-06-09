@@ -23,9 +23,9 @@ import java.io.IOException;
 public interface IGalvanServer {
   void setCrashExpected(boolean expect);
 
-  void waitForRunning();
+  ServerMode waitForRunning();
 
-  void waitForReady();
+  ServerMode waitForReady();
 
   ServerMode getCurrentState();
 

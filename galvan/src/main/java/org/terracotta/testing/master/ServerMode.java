@@ -24,4 +24,7 @@ public enum ServerMode {
   DIAGNOSTIC,
   PASSIVE,
   ACTIVE,
+  STARTUP,
+  SHUTDOWN,
+  ZAPPED
 }
