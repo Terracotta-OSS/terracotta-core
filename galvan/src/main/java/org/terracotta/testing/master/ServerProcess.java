@@ -15,13 +15,8 @@
  */
 package org.terracotta.testing.master;
 
-import org.terracotta.ipceventbus.event.Event;
-import org.terracotta.ipceventbus.event.EventBus;
-import org.terracotta.ipceventbus.event.EventListener;
 import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
-import org.terracotta.testing.common.SimpleEventingStream;
-import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.logging.VerboseOutputStream;
 
@@ -31,62 +26,32 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
-import java.util.EnumSet;
 import static java.util.stream.Collectors.joining;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 
-public class ServerProcess implements IGalvanServer {
-  private final StateInterlock stateInterlock;
-  private final ITestStateManager stateManager;
-  private final ContextualLogger harnessLogger;
-  private final ContextualLogger serverLogger;
-  private final String serverName;
+public class ServerProcess extends AbstractServerProcess {
   private final int heapInM;
   private final int debugPort;
   private final Properties serverProperties;
   private final Path serverWorkingDir;
   private final Supplier<String[]> startupCommandSupplier;
-  // make sure only one caller is messing around on the process
-  private final Semaphore oneUser = new Semaphore(1);
-
-  private UUID userToken;
-
-  //  flag if the server was zapped so it can be logged
-  private boolean wasZapped;
-  // The PID of the actual server, underneath the start script.  This is 0 until we are killable and can tell the interlock that we are running.
-  private long pid;
-  // When we are going to bring down the server, we need to record that we expected the crash so we don't conclude the test failed.
-  private boolean isCrashExpected;
 
   // OutputStreams to close when the server is down.
   private OutputStream outputStream;
   private OutputStream errorStream;
 
-  private ServerMode currentState = ServerMode.TERMINATED;
-
   public ServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager serverVerboseManager,
                        String serverName, Path serverWorkingDir, int heapInM, int debugPort, Properties serverProperties,
                        Supplier<String[]> startupCommandSupplier) {
-    this.stateInterlock = stateInterlock;
-    this.stateManager = stateManager;
-    // We just want to create the harness logger and the one for the inferior process but then discard the verbose manager.
-    this.harnessLogger = serverVerboseManager.createHarnessLogger();
-    this.serverLogger = serverVerboseManager.createServerLogger();
-
-    this.serverName = serverName;
+    super(stateInterlock, stateManager, serverVerboseManager, serverName);
     // We need to specify a positive integer as the heap size.
     this.heapInM = heapInM;
     this.debugPort = debugPort;
@@ -94,30 +59,7 @@ public class ServerProcess implements IGalvanServer {
     this.serverWorkingDir = serverWorkingDir;
     this.startupCommandSupplier = startupCommandSupplier;
     // We start up in the shutdown state so notify the interlock.
-    this.stateInterlock.registerNewServer(this);
   }
-
-  /**
-   * enter/exit is used by start and stop to make sure those methods are called one
-   * at a time.
-   *
-   * @return a unique token used to make sure the starter is the finisher (passed to exit)
-   */
-  private UUID enter() {
-    try {
-      oneUser.acquire();
-      userToken = UUID.randomUUID();
-      return this.userToken;
-    } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
-    }
-  }
-
-  private void exit(UUID token) {
-    Assert.assertTrue(token.equals(this.userToken));
-    oneUser.release();
-  }
-
   /**
    * Starts the server, in the background, using its constructed name to find its config in the stripe's config file.
    * <p>
@@ -146,7 +88,7 @@ public class ServerProcess implements IGalvanServer {
         VerboseOutputStream stderr = new VerboseOutputStream(rawErr, this.serverLogger, true);
 
         // Additionally, any information going through the stdout needs to be watched by the eventing stream for events.
-        SimpleEventingStream outputStream = buildEventingStream(stdout);
+        OutputStream outputStream = buildEventingStream(stdout);
 
         // Check to see if we need to explicitly set the JAVA_HOME environment variable or it if already exists.
         String javaHome = getJavaHome();
@@ -186,37 +128,6 @@ public class ServerProcess implements IGalvanServer {
     this.errorStream = err;
   }
 
-  private synchronized boolean isCrashExpected() {
-    return this.isCrashExpected;
-  }
-
-  public synchronized void setCrashExpected(boolean expect) {
-    this.isCrashExpected = expect;
-  }
-
-  private synchronized long waitForPid() {
-    try {
-      while (isServerRunning() && this.pid == 0) {
-        this.wait();
-      }
-    } catch (InterruptedException ie) {
-      throw new RuntimeException(ie);
-    }
-    return this.pid;
-  }
-
-  private synchronized ServerMode setCurrentState(ServerMode mode) {
-    ServerMode previous = currentState;
-    currentState = mode;
-    notifyAll();
-    return previous;
-  }
-  
-  private synchronized void reset() {
-    this.pid = 0;
-    this.wasZapped = isServerRunning();
-    notifyAll();
-  }
 
   private String getJavaArguments(int debugPort) {
     // We want to bootstrap the variable with whatever is in our current environment.
@@ -229,7 +140,7 @@ public class ServerProcess implements IGalvanServer {
       // Set up the client to block while waiting for connection.
       javaOpts += " -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=" + debugPort;
       // Log that debug is enabled.
-      this.harnessLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + debugPort);
+      serverLogger.output("NOTE:  Starting server \"" + this.serverName + "\" with debug port: " + debugPort);
     }
     String propertiesAsOptions = serverProperties.entrySet().stream()
         .map(e -> "-D" + e.getKey() + "=" + e.getValue())
@@ -248,109 +159,9 @@ public class ServerProcess implements IGalvanServer {
       // This better exist.
       Assert.assertNotNull(javaHome);
       // Log that we did this.
-      this.harnessLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
+      this.serverLogger.output("WARNING:  JAVA_HOME not set!  Defaulting to \"" + javaHome + "\"");
     }
     return javaHome;
-  }
-
-  private SimpleEventingStream buildEventingStream(VerboseOutputStream stdout) {
-    // Now, set up the event bus we will use to scrape the state from the sub-process.
-    EventBus serverBus = new EventBus.Builder().id("server-bus").build();
-    String starting = "BOOTSTRAPPED";
-    String pidEventName = "PID";
-    String activeReadyName = "ACTIVE";
-    String passiveReadyName = "PASSIVE";
-    String diagnosticReadyName = "DIAGNOSTIC";
-    String zapEventName = "ZAP";
-    String warn = "WARN";
-    String err = "ERROR";
-    Map<String, String> eventMap = new HashMap<>();
-    eventMap.put("PID is", pidEventName);
-    eventMap.put("Terracotta Server instance has started diagnostic listening", starting);
-    eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
-    eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
-    eventMap.put("Started the server in diagnostic mode", diagnosticReadyName);
-    eventMap.put("Restarting the server", zapEventName);
-    eventMap.put("WARN", warn);
-    eventMap.put("ERROR", err);
-
-    // We will attach the event stream to the stdout.
-    SimpleEventingStream outputStream = new SimpleEventingStream(serverBus, eventMap, stdout);
-    serverBus.on(pidEventName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        String line = event.getData(String.class);
-        Matcher m = Pattern.compile("PID is ([0-9]*)").matcher(line);
-        if (m.find()) {
-          try {
-            String pid = m.group(1);
-            ServerProcess.this.didStartWithPid(Long.parseLong(pid));
-          } catch (NumberFormatException format) {
-            Assert.unexpected(format);
-          }
-        } else {
-          // This is a little unusual, since it is a partial match, so at least log it in case something is wrong.
-          ServerProcess.this.harnessLogger.error("Unexpected PID-like line from server: " + line);
-        }
-      }
-    });
-    serverBus.on(starting, e->setCurrentState(ServerMode.UNKNOWN));
-    serverBus.on(activeReadyName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        setCurrentState(ServerMode.ACTIVE);
-      }
-    });
-    serverBus.on(passiveReadyName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        setCurrentState(ServerMode.PASSIVE);
-      }
-    });
-    serverBus.on(diagnosticReadyName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        setCurrentState(ServerMode.DIAGNOSTIC);
-      }
-    });
-    serverBus.on(zapEventName, new EventListener() {
-      @Override
-      public void onEvent(Event event) throws Throwable {
-        ServerProcess.this.instanceWasZapped();
-      }
-    });
-    serverBus.on(warn, (event) -> handleWarnLog(event));
-    serverBus.on(warn, (event) -> handleErrorLog(event));
-    return outputStream;
-  }
-
-  private void handleWarnLog(Event e) {
-
-  }
-
-  private void handleErrorLog(Event e) {
-
-  }
-
-  /**
-   * Called by the inline EventListener when the instance goes down for a restart due to ZAP.
-   * This is really just a special case of a shut-down (we accept it, even if we weren't expecting it).
-   */
-  private void instanceWasZapped() {
-    this.harnessLogger.output("Server restarted due to ZAP");
-    setCurrentState(ServerMode.ZAPPED);
-    reset();
-  }
-
-  /**
-   * Called by the inline EventListener implementations when the server under the script reports its PID.
-   *
-   * @param pid The PID of the server process.
-   */
-  private synchronized void didStartWithPid(long pid) {
-    Assert.assertTrue(pid > 0);
-    this.pid = pid;
-    notifyAll();
   }
 
   /**
@@ -424,7 +235,7 @@ public class ServerProcess implements IGalvanServer {
           }
         }
         // Log the intent.
-        this.harnessLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
+        this.serverLogger.output("Crashing server process: " + this + " (PID " + localPid + ")");
         // Mark this as expected.
         this.setCrashExpected(true);
 
@@ -438,15 +249,15 @@ public class ServerProcess implements IGalvanServer {
           process = killProcessUnix(localPid);
         }
         while (process.isAlive()) {
-          harnessLogger.output("Waiting for server to exit PID:" + localPid);
+          serverLogger.output("Waiting for server to exit PID:" + localPid);
           //  give up the synchronized lock while waiting for the kill process to
           //  do it's job.  This can deadlock since the event bus will need this lock
           //  to log events
           process.waitFor(5, TimeUnit.SECONDS);
         }
         int result = process.exitValue();
-        harnessLogger.output("Attempt to kill server process resulted in:" + result);
-        harnessLogger.output("server process killed");
+        serverLogger.output("Attempt to kill server process resulted in:" + result);
+        serverLogger.output("server process killed");
       }
     } finally {
       exit(token);
@@ -455,13 +266,13 @@ public class ServerProcess implements IGalvanServer {
 
   private Process killProcessWindows(long pid) throws InterruptedException {
     Assert.assertTrue(pid != 0);
-    harnessLogger.output("killing windows process");
+    serverLogger.output("killing windows process");
     Process p = startStandardProcess("taskkill", "/F", "/t", "/pid", String.valueOf(pid));
     // We don't care about the output but we want to make sure that the process can be terminated.
     discardProcessOutput(p);
 
     //not checking exit code here..taskkill may faill if server process was crashed during the test.
-    harnessLogger.output("killed server with PID " + pid);
+    serverLogger.output("killed server with PID " + pid);
     return p;
   }
 
@@ -471,7 +282,7 @@ public class ServerProcess implements IGalvanServer {
     // We don't care about the output but we want to make sure that the process can be terminated.
     discardProcessOutput(killProcess);
 
-    harnessLogger.output("killed server with PID " + pid);
+    serverLogger.output("killed server with PID " + pid);
     // (note that the server may have raced to die so we can't assert that the kill succeeded)
     return killProcess;
   }
@@ -501,58 +312,6 @@ public class ServerProcess implements IGalvanServer {
     return process;
   }
 
-  public boolean isServerRunning() {
-      return getCurrentState() != ServerMode.TERMINATED;
-  }
-
-  public boolean isActive() {
-    return getCurrentState() == ServerMode.ACTIVE;
-  }
-  
-  public synchronized ServerMode waitForRunning() {
-    boolean loop = true;
-    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ZAPPED, ServerMode.STARTUP);
-    this.harnessLogger.output("wait for running " + currentState);
-    while (loop && modes.contains(currentState)) {
-      loop = uninterruptableWait();
-    }
-    return currentState;
-  }
-
-  public synchronized ServerMode waitForReady() {
-    EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ACTIVE, ServerMode.PASSIVE, ServerMode.DIAGNOSTIC);
-    boolean loop = true;
-    while (loop && !modes.contains(currentState)) {
-      loop = uninterruptableWait();
-    }
-    return currentState;
-  }
-
-  public synchronized void waitForTermination() {
-    boolean loop = true;
-    while (loop && currentState != ServerMode.TERMINATED) {
-      loop = uninterruptableWait();
-    }
-  }
-
-  private synchronized boolean uninterruptableWait() {
-    try {
-      if (isServerRunning() && !this.stateInterlock.checkDidPass()) {
-        wait();
-        return true;
-      } else {
-        return false;
-      }
-    } catch (Exception ie) {
-      return false;
-    }
-  }
-  
-  @Override
-  public synchronized ServerMode getCurrentState() {
-    return currentState;
-  }
-
   private class ExitWaiter extends Thread {
     private AnyProcess process;
 
@@ -565,7 +324,7 @@ public class ServerProcess implements IGalvanServer {
       int returnValue = -1;
       try {
         returnValue = this.process.waitFor();
-        harnessLogger.output("server process died with rc=" + returnValue);
+        serverLogger.output("server process died with rc=" + returnValue);
       } catch (java.util.concurrent.CancellationException e) {
         returnValue = this.process.exitValue();
       } catch (InterruptedException e) {
@@ -574,10 +333,5 @@ public class ServerProcess implements IGalvanServer {
       }
       ServerProcess.this.didTerminateWithStatus(returnValue);
     }
-  }
-
-  @Override
-  public String toString() {
-    return "Server " + this.serverName + " (has been zapped: " + this.wasZapped + ")";
   }
 }

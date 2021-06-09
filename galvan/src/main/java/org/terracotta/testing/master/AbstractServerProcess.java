@@ -15,58 +15,48 @@
  */
 package org.terracotta.testing.master;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.CREATE;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import static java.util.stream.Collectors.joining;
 import org.terracotta.ipceventbus.event.Event;
 import org.terracotta.ipceventbus.event.EventBus;
 import org.terracotta.ipceventbus.event.EventListener;
-import org.terracotta.ipceventbus.proc.AnyProcess;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.common.SimpleEventingStream;
-import static org.terracotta.testing.demos.TestHelpers.isWindows;
 import org.terracotta.testing.logging.ContextualLogger;
-import org.terracotta.testing.logging.VerboseOutputStream;
+import org.terracotta.testing.logging.VerboseManager;
+import static org.terracotta.testing.master.ServerMode.ACTIVE;
 
 
 public abstract class AbstractServerProcess implements IGalvanServer {
-  private final StateInterlock stateInterlock;
-  private final ITestStateManager stateManager;
-  private final ContextualLogger harnessLogger;
-  private final ContextualLogger serverLogger;
-  private final String serverName;
+  protected final StateInterlock stateInterlock;
+  protected final ITestStateManager stateManager;
+//  protected final ContextualLogger harnessLogger;
+  protected final ContextualLogger serverLogger;
+  protected final String serverName;
   // make sure only one caller is messing around on the process
   private final Semaphore oneUser = new Semaphore(1);
 
   private UUID userToken;
-
+  // The PID of the actual server, underneath the start script.  This is 0 until we are killable and can tell the interlock that we are running.
+  private long pid;
   // When we are going to bring down the server, we need to record that we expected the crash so we don't conclude the test failed.
   private boolean isCrashExpected;
 
   private ServerMode currentState = ServerMode.TERMINATED;
 
-  public AbstractServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, ContextualLogger harnessLogger, ContextualLogger serverLogger, String serverName) {
+  public AbstractServerProcess(StateInterlock stateInterlock, ITestStateManager stateManager, VerboseManager logging, String serverName) {
     this.stateInterlock = stateInterlock;
     this.stateManager = stateManager;
-    this.harnessLogger = harnessLogger;
-    this.serverLogger = serverLogger;
+    this.serverLogger = logging.createServerLogger();
     this.serverName = serverName;
+    this.stateInterlock.registerNewServer(this);
   }
 
   /**
@@ -75,7 +65,7 @@ public abstract class AbstractServerProcess implements IGalvanServer {
    *
    * @return a unique token used to make sure the starter is the finisher (passed to exit)
    */
-  private UUID enter() {
+  protected UUID enter() {
     try {
       oneUser.acquire();
       userToken = UUID.randomUUID();
@@ -85,7 +75,7 @@ public abstract class AbstractServerProcess implements IGalvanServer {
     }
   }
 
-  private void exit(UUID token) {
+  protected void exit(UUID token) {
     Assert.assertTrue(token.equals(this.userToken));
     oneUser.release();
   }
@@ -104,7 +94,7 @@ public abstract class AbstractServerProcess implements IGalvanServer {
    */
   public abstract void start() throws IOException;
 
-  private synchronized boolean isCrashExpected() {
+  protected synchronized boolean isCrashExpected() {
     return this.isCrashExpected;
   }
 
@@ -112,13 +102,63 @@ public abstract class AbstractServerProcess implements IGalvanServer {
     this.isCrashExpected = expect;
   }
 
-  private synchronized ServerMode setCurrentState(ServerMode mode) {
+  protected synchronized ServerMode setCurrentState(ServerMode mode) {
     ServerMode previous = currentState;
     currentState = mode;
     notifyAll();
     return previous;
   }
 
+  protected OutputStream buildEventingStream(OutputStream out) {
+    // Now, set up the event bus we will use to scrape the state from the sub-process.
+    EventBus serverBus = new EventBus.Builder().id("server-bus").build();
+    String starting = "BOOTSTRAPPED";
+    String pidEventName = "PID";
+    String activeReadyName = "ACTIVE";
+    String passiveReadyName = "PASSIVE";
+    String diagnosticReadyName = "DIAGNOSTIC";
+    String zapEventName = "ZAP";
+    String warn = "WARN";
+    String err = "ERROR";
+    Map<String, String> eventMap = new HashMap<>();
+    eventMap.put("PID is", pidEventName);
+    eventMap.put("Terracotta Server instance has started diagnostic listening", starting);
+    eventMap.put("Terracotta Server instance has started up as ACTIVE node", activeReadyName);
+    eventMap.put("Moved to State[ PASSIVE-STANDBY ]", passiveReadyName);
+    eventMap.put("Moved to State[ DIAGNOSTIC ]", diagnosticReadyName);
+    eventMap.put("Restarting the server", zapEventName);
+    eventMap.put("Requesting restart", zapEventName);
+    eventMap.put("WARN", warn);
+    eventMap.put("ERROR", err);
+
+      serverBus.on(pidEventName, new EventListener() {
+      @Override
+      public void onEvent(Event event) throws Throwable {
+        String line = event.getData(String.class);
+        Matcher m = Pattern.compile("PID is ([0-9]*)").matcher(line);
+        if (m.find()) {
+          try {
+            String pid = m.group(1);
+            didStartWithPid(Long.parseLong(pid));
+          } catch (NumberFormatException format) {
+            Assert.unexpected(format);
+          }
+        } else {
+          // This is a little unusual, since it is a partial match, so at least log it in case something is wrong.
+          serverLogger.error("Unexpected PID-like line from server: " + line);
+        }
+      }
+    });
+    serverBus.on(starting, (event) -> setCurrentState(ServerMode.UNKNOWN));
+    serverBus.on(activeReadyName, (event) -> didBecomeActive());
+    serverBus.on(passiveReadyName, (event) -> setCurrentState(ServerMode.PASSIVE));
+    serverBus.on(diagnosticReadyName, (event) -> setCurrentState(ServerMode.DIAGNOSTIC));
+    serverBus.on(zapEventName, (event)-> instanceWasZapped());
+    serverBus.on(warn, (event) -> handleWarnLog(event));
+    serverBus.on(err, (event) -> handleErrorLog(event));
+
+    return new SimpleEventingStream(serverBus, eventMap, out);
+  }
   /**
    * Called from outside to asynchronously kill the underlying process.
    * Note that this does do some interruptable blocking, since it interacts with some sub-processes to discover the server process.
@@ -130,20 +170,55 @@ public abstract class AbstractServerProcess implements IGalvanServer {
 
 
   public boolean isServerRunning() {
-      return getCurrentState() != ServerMode.TERMINATED;
+    return getCurrentState() != ServerMode.TERMINATED;
   }
 
   public boolean isActive() {
     return getCurrentState() == ServerMode.ACTIVE;
   }
 
+  protected synchronized long waitForPid() {
+    try {
+      while (isServerRunning() && this.pid == 0) {
+        this.wait();
+      }
+    } catch (InterruptedException ie) {
+      throw new RuntimeException(ie);
+    }
+    return this.pid;
+  }
+  /**
+   * Called by the inline EventListener implementations when the server under the script reports its PID.
+   *
+   * @param pid The PID of the server process.
+   */
+  private synchronized void didStartWithPid(long pid) {
+    Assert.assertTrue(pid > 0);
+    this.pid = pid;
+    notifyAll();
+  }
+
+  protected synchronized void reset() {
+    this.pid = 0;
+    notifyAll();
+  }
+
+  private void handleWarnLog(Event e) {
+
+  }
+
+  private void handleErrorLog(Event e) {
+
+  }
+
   public synchronized ServerMode waitForRunning() {
     boolean loop = true;
     EnumSet<ServerMode> modes = EnumSet.of(ServerMode.ZAPPED, ServerMode.STARTUP);
-    this.harnessLogger.output("wait for running " + currentState);
+    serverLogger.output("wait for running " + currentState);
     while (loop && modes.contains(currentState)) {
       loop = uninterruptableWait();
     }
+    serverLogger.output("running " + currentState);
     return currentState;
   }
 
@@ -153,6 +228,7 @@ public abstract class AbstractServerProcess implements IGalvanServer {
     while (loop && !modes.contains(currentState)) {
       loop = uninterruptableWait();
     }
+    serverLogger.output("ready " + currentState);
     return currentState;
   }
 
@@ -175,7 +251,25 @@ public abstract class AbstractServerProcess implements IGalvanServer {
       return false;
     }
   }
-
+  /**
+   * Called by the inline EventListener implementations when the server becomes either active or passive.
+   *
+   * @param isActive True if active, false if passive.
+   */
+  private void didBecomeActive() {
+    ServerMode previous = setCurrentState(ACTIVE);
+    this.stateInterlock.serverBecameActive(this, previous);
+  }
+  /**
+   * Called by the inline EventListener when the instance goes down for a restart due to ZAP.
+   * This is really just a special case of a shut-down (we accept it, even if we weren't expecting it).
+   */
+  private void instanceWasZapped() {
+    serverLogger.output("Server restarted due to ZAP");
+    setCurrentState(ServerMode.ZAPPED);
+    reset();
+  }
+  
   @Override
   public synchronized ServerMode getCurrentState() {
     return currentState;

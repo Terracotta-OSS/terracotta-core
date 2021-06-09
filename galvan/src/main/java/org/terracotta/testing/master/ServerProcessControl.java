@@ -16,7 +16,8 @@
 package org.terracotta.testing.master;
 
 import java.io.IOException;
-import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -116,13 +117,14 @@ public class ServerProcessControl implements IMultiProcessControl {
 
   private void startServers() throws GalvanFailureException {
     IGalvanServer server = this.stateInterlock.getOneTerminatedServer();
+    List<IGalvanServer> started = new LinkedList<>();
     while (null != server) {
       safeStart(server);
-
+      started.add(server);
       // Wait for it to start up (since we need to grab a different one in the next call).
-      server.waitForRunning();
       server = this.stateInterlock.getOneTerminatedServer();
     }
+    started.forEach(IGalvanServer::waitForRunning);
   }
 
   @Override
