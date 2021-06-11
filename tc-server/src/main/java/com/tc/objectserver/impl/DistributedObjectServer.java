@@ -87,6 +87,7 @@ import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
+import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationMessage;
@@ -236,8 +237,8 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import org.terracotta.server.ServerEnv;
 
 /**
@@ -373,7 +374,7 @@ public class DistributedObjectServer {
     try {
       prettyPrintable.prettyPrint(prettyPrinter);
     } catch (Throwable t) {
-      prettyPrinter.println("unable to collect cluster state for " + prettyPrintable.getClass().getName() + " : " + t.getLocalizedMessage());
+      prettyPrinter.println("unable to collect cluster state for " + prettyPrintable + " : " + t.getLocalizedMessage());
       StringWriter w = new StringWriter();
       PrintWriter p = new PrintWriter(w);
       t.printStackTrace(p);
@@ -820,15 +821,20 @@ public class DistributedObjectServer {
     }
   }
 
-  public void stop() throws Exception {
+  public CompletableFuture<Void> stop() throws Exception {
+    return stop(false);
+  }
+
+  public CompletableFuture<Void> stop(boolean immediate) throws Exception {
+    CompletableFuture<Void> stopped = new CompletableFuture<>();
     if (this.threadGroup.isStoppable() && this.stopping.attemptSet()) {
-      CountDownLatch barrier = new CountDownLatch(1);
+      CountDownLatch barrier = new CountDownLatch(immediate ? 0 : 1);
       ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
         try {
           if (!barrier.await(60, TimeUnit.SECONDS)) {
             logger.warn("Timeout waiting for clean shutdown.");
           }
-          killThreads();
+          killThreads(stopped, immediate);
         }catch(InterruptedException ie) {
           logger.warn("shutdown thread failed", ie);
         }
@@ -845,15 +851,27 @@ public class DistributedObjectServer {
       barrier.countDown();
     } else {
       logger.info("L2 Exiting...");
+      TCLogbackLogging.resetLogging();
+      stopped.complete(null);
     }
+    return stopped;
   }
 
-  private void killThreads() {
-    this.seda.getStageManager().stopAll();
-    if (!threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), e->L2Utils.handleInterrupted(logger, e))) {
-      threadGroup.interruptThreads();
+  private void killThreads(CompletableFuture<Void> stopped, boolean immediate) {
+    try {
+      this.seda.getStageManager().stopAll();
+      if (immediate) {
+        threadGroup.interrupt();
+      } else if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+        logger.warn("unable to retire server threads");
+        threadGroup.printLiveThreads(logger::warn);
+        threadGroup.interrupt();
+      }
+      logger.info("L2 Exiting...");
+    } finally {
+      TCLogbackLogging.resetLogging();
+      stopped.complete(null);
     }
-    logger.info("L2 Exiting...");
   }
 
   private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
@@ -1153,9 +1171,11 @@ public class DistributedObjectServer {
           try {
             ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
           } catch (RuntimeException e) {
-            throw e;
+            this.persistor.getClusterStatePersistor().setDBClean(false);
+            throw new TCServerRestartException("error creating permanent entities", e);
           } catch (Exception e) {
-            throw new RuntimeException(e);
+            this.persistor.getClusterStatePersistor().setDBClean(false);
+            throw new TCServerRestartException("error creating permanent entities", e);
           }
         }
       } else {

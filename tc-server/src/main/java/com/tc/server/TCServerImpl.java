@@ -43,7 +43,6 @@ import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.impl.JMXSubsystem;
-import static com.tc.server.ServerFactory.SERVER_DOMAIN;
 import com.tc.spi.Guardian;
 import com.tc.stats.DSO;
 import com.tc.stats.api.DSOMBean;
@@ -68,6 +67,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import javax.management.MBeanServerFactory;
 
@@ -86,9 +86,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   
   private final ServerConfigurationManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
-  private boolean                           shutdown                            = false;
-  private volatile boolean                  restart                             = false;
-  private boolean                          crashed;
+  private final CompletableFuture<Boolean>                      shutdownGate                        = new CompletableFuture<>();
 
   private final JMXSubsystem                subsystem;
   /**
@@ -146,44 +144,35 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  public boolean isCrashed() {
-    return crashed;
-  }
-
-  public void crash() {
-    try {
-      dsoServer.stop();
-    } catch (Exception e) {
-      logger.error("trouble crashing", e);
-    }
-    crashed = true;
-    notifyShutdown();
-  }
-
   @Override
   public void stop(StopAction...restartMode) {
     audit("Stop invoked", new Properties());
+    
     TCLogging.getConsoleLogger().info("Stopping server");
     if (dsoServer != null) {
-       EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
-      for (StopAction s : restartMode) {
-        set.add(s);
-      }
-      if (set.contains(StopAction.ZAP)) {
-        TCLogging.getConsoleLogger().info("Setting data to dirty");
-        dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
-      }
       try {
-        dsoServer.stop();
+        EnumSet<StopAction> set = EnumSet.noneOf(StopAction.class);
+        for (StopAction s : restartMode) {
+          set.add(s);
+        }
+        if (set.contains(StopAction.ZAP)) {
+          TCLogging.getConsoleLogger().info("Setting data to dirty");
+          dsoServer.getPersistor().getClusterStatePersistor().setDBClean(false);
+        }
+        CompletableFuture<Void> dsoStop = dsoServer.stop(set.contains(StopAction.IMMEDIATE));
+        if (set.contains(StopAction.RESTART)) {
+          TCLogging.getConsoleLogger().info("Requesting restart");
+          dsoStop.thenRun(()->shutdownGate.complete(true));
+        } else {
+          dsoStop.thenRun(()->shutdownGate.complete(false));
+        }
       } catch (Throwable e) {
         logger.error("trouble shutting down", e);
+        shutdownGate.completeExceptionally(e);
       }
-      if (set.contains(StopAction.RESTART)) {
-        TCLogging.getConsoleLogger().info("Requesting restart");
-        restart = true;
-      }
+    } else {
+      shutdownGate.complete(false);
     }
-    notifyShutdown();
   }
   
   @Override
@@ -429,21 +418,20 @@ public class TCServerImpl extends SEDA implements TCServer {
     mbs.unregisterMBean(L2MBeanNames.DSO);
   }
 
-  private synchronized void notifyShutdown() {
-    shutdown = true;
-    notifyAll();
-  }
-
   @Override
-  public synchronized boolean waitUntilShutdown() {
-    while (!shutdown) {
-      try {
-        wait();
-      } catch (InterruptedException e) {
-        L2Utils.handleInterrupted(logger,e);
+  public boolean waitUntilShutdown() {
+    try {
+      return shutdownGate.get();
+    } catch (ExecutionException ee) {
+      Throwable cause = ee.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException)cause;
+      } else {
+        throw new RuntimeException(cause);
       }
+    } catch (InterruptedException ie) {
+      throw new RuntimeException(ie);
     }
-    return restart;
   }
 
   @Override

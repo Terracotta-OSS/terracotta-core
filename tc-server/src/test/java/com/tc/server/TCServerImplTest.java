@@ -38,8 +38,11 @@ import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import javax.management.MBeanServer;
+import org.mockito.ArgumentMatchers;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,6 +61,8 @@ public class TCServerImplTest {
   public void setUp() throws Exception {
     tcServer = new TCServerImpl(mock(ServerConfigurationManager.class));
     dso = mock(DistributedObjectServer.class);
+    when(dso.stop()).thenReturn(CompletableFuture.completedFuture(null));
+    when(dso.stop(anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
     ServerManagementContext smc = mock(ServerManagementContext.class);
     DSOChannelManagerMBean cm = mock(DSOChannelManagerMBean.class);
     when(cm.getActiveChannels()).thenReturn(new MessageChannel[0]);
@@ -92,13 +97,13 @@ public class TCServerImplTest {
   @Test
   public void testForceStop() throws Exception {
     tcServer.stop();
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
   }
 
   @Test
   public void testForceRestart() throws Exception {
     tcServer.stop(RESTART);
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 
@@ -106,21 +111,21 @@ public class TCServerImplTest {
   public void testStopIfPassive() throws Exception {
     setState(ServerMode.PASSIVE);
     tcServer.stopIfPassive();
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsUninitialized() throws Exception {
     setState(ServerMode.UNINITIALIZED);
     tcServer.stopIfPassive();
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
   }
 
   @Test
   public void testStopIfPassiveWhenStateStateIsSyncing() throws Exception {
     setState(ServerMode.SYNCING);
     tcServer.stopIfPassive();
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
   }
 
   @Test
@@ -134,7 +139,7 @@ public class TCServerImplTest {
   public void testStopIfPassiveWithRestart() throws Exception {
     setState(ServerMode.PASSIVE);
     tcServer.stopIfPassive(RESTART);
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 
@@ -142,7 +147,7 @@ public class TCServerImplTest {
   public void testStopIfActive() throws Exception {
     setState(ServerMode.ACTIVE);
     tcServer.stopIfActive();
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
   }
 
   @Test
@@ -156,7 +161,7 @@ public class TCServerImplTest {
   public void testStopIfActiveWithRestart() throws Exception {
     setState(ServerMode.ACTIVE);
     tcServer.stopIfActive(RESTART);
-    verify(dso).stop();
+    verify(dso).stop(ArgumentMatchers.anyBoolean());
     Assert.assertTrue(tcServer.waitUntilShutdown());
   }
 }
