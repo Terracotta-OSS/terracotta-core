@@ -58,7 +58,6 @@ import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -79,7 +78,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.net.core.ProductID;
-import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.utils.L2Utils;
 import com.tc.spi.Guardian;
@@ -351,10 +349,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   public void stop(long timeout) throws TCTimeoutException {
     isStopped.set(true);
+    discover.stop(timeout);
     for (ServerID sid : members.keySet()) {
       closeMember(sid);
     }
-    discover.stop(timeout);
     groupListener.stop(timeout);
     communicationsManager.shutdown();
     connectionManager.shutdown();
@@ -398,7 +396,6 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       return false;
     }
     if (isStopped.get()) {
-      closeMember(member);
       return false;
     }
 
@@ -423,7 +420,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     discover.setupNodes(groupConfiguration.getCurrentNode(), groupConfiguration.getNodes());
     discover.start();
     try {
-      groupListener.start(new HashSet<ConnectionID>());
+      groupListener.start(new HashSet<>());
     } catch (IOException e) {
       throw new GroupException(e);
     }
@@ -1004,6 +1001,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
    * TCGroupHandshakeStateMachine -- State machine for group handshaking
    */
   private static class TCGroupHandshakeStateMachine {
+    private final HandshakeState     STATE_NEW         = new HandshakeState("NEW");
     private final HandshakeState     STATE_NODEID         = new NodeIDState();
     private final HandshakeState     STATE_TRY_ADD_MEMBER = new TryAddMemberState();
     private final HandshakeState     STATE_ACK_OK         = new AckOkState();
@@ -1022,11 +1020,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     private final WeightGeneratorFactory weightGeneratorFactory;
     private final String               version;
 
-    private HandshakeState           current;
+    private HandshakeMonitor         current;
     private ServerID                 peerNodeID;
     private TimerTask                timerTask;
     private TCGroupMember            member;
-    private boolean                  stateTransitionInProgress;
 
     public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID,
                                         WeightGeneratorFactory weightGeneratorFactory, String version) {
@@ -1035,7 +1032,8 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       this.localNodeID = localNodeID;
       this.weightGeneratorFactory = weightGeneratorFactory;
       this.version = version;
-      this.stateTransitionInProgress = false;
+      this.current = STATE_NEW.createMonitor();
+      this.current.complete();
     }
 
     public final void start() {
@@ -1043,7 +1041,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     }
 
     public synchronized boolean isFailureState() {
-      return (current == STATE_FAILURE);
+      return (current.getState() == STATE_FAILURE);
     }
 
     public void execute(TCGroupHandshakeMessage msg) {
@@ -1051,7 +1049,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         debugInfo("[TCGroupHandshakeStateMachine]: Executing state machine, currentState=" + current + ", msg: " + msg
                 + ", channel: " + channel);
       }
-      current.execute(msg);
+      getCurrentState().execute(msg);
+    }
+
+    private synchronized HandshakeState getCurrentState() {
+      return current.getState();
     }
 
     protected HandshakeState initialState() {
@@ -1067,7 +1069,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     @Override
     public String toString() {
-      return "TCGroupHandshakeStateMachine: " + stateInfo(current);
+      return "TCGroupHandshakeStateMachine: " + stateInfo(current.getState());
     }
 
     protected void switchToState(HandshakeState state) {
@@ -1076,37 +1078,25 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         debugInfo("[TCGroupHandshakeStateMachine]: Attempting to switch state (" + current + "->" + state + "): "
                 + stateInfo(state));
       }
+      HandshakeMonitor previous = null;
+      HandshakeMonitor next = state.createMonitor();
+      
       synchronized (this) {
-        if (current == STATE_FAILURE) {
+        previous = this.current;
+        if (current.getState() == STATE_FAILURE) {
           if (isDebugLogging()) {
             debugWarn("Ignored switching to " + state + " as current is " + current + ", " + stateInfo(state));
           }
           return;
         }
-        this.current = state;
-        waitForStateTransitionToComplete();
-        stateTransitionInProgress = true;
+        this.current = next;
       }
+      
       if (isDebugLogging()) {
         debugInfo("[TCGroupHandshakeStateMachine]: Entering state: " + state + ", for channel: " + channel);
       }
-      state.enter();
-      notifyStateTransitionComplete();
-    }
-
-    private synchronized void notifyStateTransitionComplete() {
-      stateTransitionInProgress = false;
-      notifyAll();
-    }
-
-    private void waitForStateTransitionToComplete() {
-      while (stateTransitionInProgress) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          L2Utils.handleInterrupted(logger, e);
-        }
-      }
+      previous.waitForCompletion();
+      next.complete();
     }
 
     MessageChannel getChannel() {
@@ -1136,13 +1126,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     void handshakeTimeout() {
       cancelTimerTask();
       synchronized (this) {
-        if (current == STATE_SUCCESS) {
+        if (current.getState() == STATE_SUCCESS) {
           if (isDebugLogging()) {
-            debugInfo("Handshake successed. Ignore timeout " + stateInfo(current));
+            debugInfo("Handshake successed. Ignore timeout " + stateInfo(current.getState()));
           }
           return;
         }
-        logger.warn("Group member handshake timeout. " + stateInfo(current));
+        logger.warn("Group member handshake timeout. " + stateInfo(current.getState()));
       }
       switchToState(STATE_FAILURE);
       channel.close();
@@ -1151,7 +1141,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     void disconnected() {
       synchronized (this) {
         if (isDebugLogging()) {
-          debugWarn("[TCGroupHandshakeStateMachine]: Group member handshake disconnected. " + stateInfo(current)
+          debugWarn("[TCGroupHandshakeStateMachine]: Group member handshake disconnected. " + stateInfo(current.getState())
                 + ", for channel: " + channel);
         }
       }
@@ -1161,7 +1151,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     /*
      * HandshakeState -- base class for handshaking states
      */
-    private abstract class HandshakeState {
+    private class HandshakeState {
       private final String name;
 
       public HandshakeState(String name) {
@@ -1180,6 +1170,55 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       public String toString() {
         return name;
       }
+
+      public HandshakeMonitor createMonitor() {
+        return new HandshakeMonitor() {
+          boolean completed = false;
+          Thread owner = null;
+          @Override
+          public HandshakeState getState() {
+            return HandshakeState.this;
+          }
+
+          @Override
+          public synchronized void waitForCompletion() {
+            // don't block the current thread's execution if the thread started the execution
+            while (Thread.currentThread() != owner && !completed) {
+              try {
+                wait();
+              } catch (InterruptedException ee) {
+                L2Utils.handleInterrupted(logger, ee);
+              }
+            }
+          }
+
+          private void start() {
+            Assert.assertNull(owner);
+            owner = Thread.currentThread();
+            getState().enter();
+          }
+
+          @Override
+          public synchronized void complete() {
+            start();
+            signalComplete();
+          }
+
+          private synchronized void signalComplete() {
+            completed = true;
+            notifyAll();
+          }
+
+        };
+      }
+    }
+
+    private static interface HandshakeMonitor {
+      HandshakeState getState();
+
+      void waitForCompletion();
+
+      void complete();
     }
 
     /*
