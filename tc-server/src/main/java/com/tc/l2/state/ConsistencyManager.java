@@ -73,9 +73,9 @@ public interface ConsistencyManager extends PrettyPrintable {
   
   Enrollment createVerificationEnrollment(NodeID lastActive, WeightGeneratorFactory weightFactory);
   
-  static int parseVoteCount(FailoverBehavior priority, Collection<ServerConfiguration> config) {
+  static int parseVoteCount(FailoverBehavior priority, int serverCount) {
     Logger consoleLogger = TCLogging.getConsoleLogger();
-    if (config.size() == 1) {
+    if (serverCount == 1) {
       return -1;
     }
     if (priority == null) {

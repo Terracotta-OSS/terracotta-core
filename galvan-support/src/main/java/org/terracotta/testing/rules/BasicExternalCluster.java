@@ -31,7 +31,6 @@ import org.terracotta.testing.config.TcConfigBuilder;
 import org.terracotta.testing.logging.VerboseLogger;
 import org.terracotta.testing.logging.VerboseManager;
 import org.terracotta.testing.master.GalvanFailureException;
-import org.terracotta.testing.master.GalvanStateInterlock;
 import org.terracotta.testing.master.ReadyStripe;
 import org.terracotta.testing.master.StripeInstaller;
 import org.terracotta.testing.master.TestStateManager;
@@ -56,6 +55,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.stream.IntStream;
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
+import org.terracotta.testing.master.StateInterlock;
 import org.terracotta.testing.support.PortTool;
 import org.terracotta.utilities.test.net.PortManager;
 
@@ -80,7 +80,7 @@ class BasicExternalCluster extends Cluster {
 
   private String displayName;
   private ReadyStripe cluster;
-  private GalvanStateInterlock interlock;
+  private StateInterlock interlock;
   private TestStateManager stateManager;
   // Note that the clientThread is actually the main thread of the JUnit runner.
   private final Thread clientThread;
@@ -190,7 +190,7 @@ class BasicExternalCluster extends Cluster {
     int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
     stateManager = new TestStateManager();
-    interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+    interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
 
     /*
      * Debug ports, if requested, are reserved from a specified base port, first.  This

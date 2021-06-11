@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import org.terracotta.server.ServerEnv;
 
 public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements ServerVoterManager {
@@ -35,7 +36,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   static final long VOTEBEAT_TIMEOUT = 5000;  // In milliseconds
 
-  private final int voterLimit;
+  private final Supplier<Integer> voterLimit;
   final Map<String, Long> voters = new ConcurrentHashMap<>();
   private final TimeSource timeSource;
 
@@ -45,11 +46,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
 
   private volatile boolean overrideVote = false;
 
-  public ServerVoterManagerImpl(int voterLimit) throws Exception {
+  public ServerVoterManagerImpl(Supplier<Integer> voterLimit) throws Exception {
     this(voterLimit, TimeSource.SYSTEM_TIME_SOURCE, true);
   }
 
-  ServerVoterManagerImpl(int voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
+  ServerVoterManagerImpl(Supplier<Integer> voterLimit, TimeSource timeSource, boolean initMBean) throws Exception {
     super(ServerVoterManager.class, false);
     if (initMBean) {
       try {
@@ -62,11 +63,6 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
     this.voterLimit = voterLimit;
     this.timeSource = timeSource;
     this.electionTerm = 0;
-  }
-
-  @Override
-  public int getVoterLimit() {
-    return voterLimit;
   }
 
   @Override
@@ -87,7 +83,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   boolean canAcceptVoter() {
-    return !votingInProgress && getRegisteredVoters() < voterLimit;
+    return !votingInProgress && getRegisteredVoters() < voterLimit.get();
   }
 
   @Override
@@ -160,7 +156,7 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   @Override
   public int getVoteCount() {
     if (overrideVote) {
-      return voterLimit;
+      return Integer.MAX_VALUE;
     }
     return votes.size();
   }

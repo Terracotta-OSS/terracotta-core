@@ -95,6 +95,11 @@ public class L2HACoordinator implements L2Coordinator {
   }
 
   @Override
+  public void shutdown() {
+    this.stateManager.shutdown();
+  }
+
+  @Override
   public StateManager getStateManager() {
     return this.stateManager;
   }

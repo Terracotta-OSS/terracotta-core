@@ -339,7 +339,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   @Override
-  public void stop() {
+  public void shutdown() {
     try {
       stop(1000);
     } catch (TCTimeoutException e) {

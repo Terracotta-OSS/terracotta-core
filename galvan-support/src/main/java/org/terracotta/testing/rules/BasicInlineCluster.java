@@ -60,7 +60,7 @@ import java.util.stream.IntStream;
 
 import org.terracotta.testing.logging.ContextualLogger;
 import org.terracotta.testing.master.FileHelpers;
-import org.terracotta.testing.master.InlineStateInterlock;
+import org.terracotta.testing.master.StateInterlock;
 import org.terracotta.testing.master.InlineStripeInstaller;
 import org.terracotta.testing.support.PortTool;
 import org.terracotta.utilities.test.net.PortManager;
@@ -87,7 +87,7 @@ class BasicInlineCluster extends Cluster {
 
   private String displayName;
   private ReadyStripe cluster;
-  private InlineStateInterlock interlock;
+  private StateInterlock interlock;
   private TestStateManager stateManager;
   // Note that the clientThread is actually the main thread of the JUnit runner.
   private final Thread clientThread;
@@ -202,7 +202,7 @@ class BasicInlineCluster extends Cluster {
     int serverDebugStartPort = debugPortString != null ? Integer.parseInt(debugPortString) : 0;
 
     stateManager = new TestStateManager();
-    interlock = new InlineStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+    interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
 
     /*
      * Debug ports, if requested, are reserved from a specified base port, first.  This

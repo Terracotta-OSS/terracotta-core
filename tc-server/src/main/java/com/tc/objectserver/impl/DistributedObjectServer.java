@@ -24,7 +24,6 @@ import com.tc.async.api.EventHandlerException;
 
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.GroupConfiguration;
-import com.tc.l2.state.AvailabilityManagerImpl;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
@@ -239,6 +238,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 
 /**
@@ -308,7 +308,15 @@ public class DistributedObjectServer {
     this.timer = new SingleThreadedTimer(null, threadGroup);
     this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
-    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts());
+    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
+      Configuration config = this.configSetupManager.getConfiguration();
+      FailoverBehavior consistent = config.getFailoverPriority();
+      if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
+        return -1;
+      } else {
+        return consistent.getExternalVoters();
+      }
+    });
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -565,7 +573,7 @@ public class DistributedObjectServer {
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations());
+        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations().size());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -839,11 +847,14 @@ public class DistributedObjectServer {
           logger.warn("shutdown thread failed", ie);
         }
       }, "server shutdown thread", true);
-      this.groupCommManager.stop();
-      this.l1Diagnostics.stop(1000);
-      this.l1Listener.stop(1000);
+      this.l2Coordinator.shutdown();
+      this.persistor.shutdown();
+      this.l1Diagnostics.stop(60000);
+      this.l1Listener.stop(60000);
       this.connectionManager.shutdown();
+      this.groupCommManager.shutdown();
       this.context.shutdown();
+      this.entityManager.shutdown();
       this.serviceRegistry.shutdown();
       this.timer.cancelAll();
       this.timer.stop();
@@ -889,8 +900,7 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() :
-            new ConsistencyManagerImpl(this.topologyManager, voteCount)
+        new ConsistencyManagerImpl(this.topologyManager)
     );
   }
 

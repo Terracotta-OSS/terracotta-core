@@ -157,7 +157,7 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   }
 
   @Override
-  public void stop() {
+  public void shutdown() {
     
   }
 

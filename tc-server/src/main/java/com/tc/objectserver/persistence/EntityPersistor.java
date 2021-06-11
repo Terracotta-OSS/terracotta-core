@@ -460,6 +460,10 @@ public class EntityPersistor {
       throw new RuntimeException("Failure storing EntityPersistor map file", e);
     }
   }
+
+  public void close() {
+    this.result.values().forEach(r->r.setResult(-1L, new IOException("closed")));
+  }
   
   private static class PermanentEntityResult {
     boolean finished;

@@ -342,9 +342,9 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     TCConnection conn;
     if ((conn = getConnection()) != null) {
       conn.close(10000);
-      this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
       conn.removeListener(this);
       this.connection = null;
+      resetIfNotEnd();
     }
   }
 
@@ -365,7 +365,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         return true;
       }
     }
-
   }
 
   /**
@@ -397,10 +396,14 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public final void initConnectionID(ConnectionID cid) {
+  public synchronized final void initConnectionID(ConnectionID cid) {
     connectionId = cid;
   }
-  
+
+  protected synchronized final void clearConnectionID() {
+    this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
+  }
+
   void log(String msg) {
     if (!getProductID().isInternal()) {
       getLogger().info(msg);

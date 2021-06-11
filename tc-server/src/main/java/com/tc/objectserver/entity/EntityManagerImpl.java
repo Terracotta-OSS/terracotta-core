@@ -54,7 +54,9 @@ import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.io.Closeable;
 import java.util.LinkedHashMap;
+import java.util.function.Function;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -117,6 +119,21 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public ServerEntityFactory getEntityLoader() {
     return this.creationLoader;
+  }
+
+  public void shutdown() {
+    for (EntityServerService<?,?> service : entityServices.values()) {
+      try {
+        if (service instanceof Closeable) {
+          ((Closeable)service).close();
+        }
+        if (service instanceof AutoCloseable) {
+          ((AutoCloseable)service).close();
+        }
+      } catch (Exception e) {
+        LOGGER.warn("error closing entity service", e);
+      }
+    }
   }
 
   @Override
@@ -267,11 +284,11 @@ public class EntityManagerImpl implements EntityManager {
     List<ManagedEntity> sortingList = new ArrayList<>(this.entityIndex.values());
     try {
       Collections.sort(sortingList, this.consumerIdSorter);
-      return sortingList;
-    } finally {
+        return sortingList;
+      } finally {
       snapshotLock.release();
       if (runFirst != null) {
-        runFirst.accept(sortingList);
+          runFirst.accept(sortingList);
       }
     }
   }

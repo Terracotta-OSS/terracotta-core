@@ -34,4 +34,5 @@ public interface L2Coordinator extends GroupEventsListener, PrettyPrintable {
 
   public GroupManager<AbstractGroupMessage> getGroupManager();
 
+  public void shutdown();
 }

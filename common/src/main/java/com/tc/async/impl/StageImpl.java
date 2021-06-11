@@ -367,6 +367,7 @@ public class StageImpl<EC> implements Stage<EC> {
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
         } finally {
+          this.setToIdle();
           // Aggressively null out the reference before going around the loop again. If you don't do this, the reference
           // to the context will exist until another context comes in. This can potentially keep many objects in memory
           // longer than necessary
