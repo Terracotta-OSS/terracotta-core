@@ -198,25 +198,25 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       sync.begin();
       // start passive sync message
       LOGGER.debug("starting sync for " + newNode + " on session " + session);
-      Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
-        @Override
-        public void accept(List<ManagedEntity> sortedEntities) {
+      List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
+      Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(entity -> {
           // We want to create the array of activity data.
-          List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
-          for (ManagedEntity e : sortedEntities) {
-            SyncReplicationActivity.EntityCreationTuple data = e.startSync();
+            SyncReplicationActivity.EntityCreationTuple data = entity.startSync();
             // null creation data means that the entity, while in the list of entities, is
             // not to be synced because it has been destroyed or not yet fully created and
             // initiated
             if (data != null) {
-              tuplesForCreation.add(data);              
+              tuplesForCreation.add(data);
+              return true;
+            } else {
+              return false;
             }
-          }
-          replicateActivity(SyncReplicationActivity.
+          });
+
+      replicateActivity(SyncReplicationActivity.
               createStartSyncMessage(tuplesForCreation.
                   toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(session)).waitForCompleted();
-        }}
-      );
+
       for (ManagedEntity entity : e) {
         LOGGER.debug("starting sync for entity " + newNode + "/" + entity.getID());
         entity.sync(session);

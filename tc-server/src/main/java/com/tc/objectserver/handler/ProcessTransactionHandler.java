@@ -285,7 +285,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
    * startSync is called on each one so that internal state of the entity is locked down until 
    * the sync has happened on that particular entity
    */
-  public Iterable<ManagedEntity> snapshotEntityList(Consumer<List<ManagedEntity>> runFirst) {
+  public Iterable<ManagedEntity> snapshotEntityList(Predicate<ManagedEntity> runFirst) {
     return entityManager.snapshot(runFirst);
   }
 
