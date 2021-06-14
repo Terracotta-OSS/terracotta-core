@@ -21,6 +21,7 @@ package com.tc.net.protocol.transport;
 import com.tc.net.StripeID;
 import com.tc.net.core.ProductID;
 import static com.tc.net.core.ProductID.DIAGNOSTIC;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.util.Assert;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -48,7 +49,7 @@ public class NullConnectionIDFactoryImpl implements ConnectionIDFactory {
         requested = ProductID.INFORMATIONAL;
     }
     ConnectionID connection = new ConnectionID(connectionID.getJvmID(), cid.decrementAndGet(), requested);
-    Assert.assertTrue(!connection.isValid());
+    Assert.assertTrue(connection.getChannelID() < ChannelID.NULL_ID.toLong());
     return connection;
   }
 

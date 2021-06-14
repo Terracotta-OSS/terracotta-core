@@ -46,9 +46,9 @@ import java.io.Closeable;
 import java.io.EOFException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -72,8 +72,8 @@ public class BasicConnection implements TCConnection {
   private final BufferManagerFactory bufferManagerFactory;
   private Socket src;
   private boolean established = false;
-  private boolean connected = true;
-  private final List<TCConnectionEventListener> listeners = new CopyOnWriteArrayList<>();
+  private boolean connected = false;
+  private final List<TCConnectionEventListener> listeners = new ArrayList<>();
   private volatile Thread serviceThread;
   private volatile ExecutorService readerExec;
   private final String id;
@@ -86,6 +86,7 @@ public class BasicConnection implements TCConnection {
     this.adaptor = null;
     this.bufferManagerFactory = null;
     this.id = "";
+    this.connected = src.isConnected();
   }
   
   public BasicConnection(String id, TCProtocolAdaptor adapter, BufferManagerFactory buffers, Function<TCConnection, Socket> close) {
@@ -149,13 +150,17 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public void addListener(TCConnectionEventListener listener) {
-    listeners.add(listener);
+  public synchronized void addListener(TCConnectionEventListener listener) {
+    if (!listeners.contains(listener)) {
+      listeners.add(listener);
+    }
   }
 
   @Override
-  public void removeListener(TCConnectionEventListener listener) {
-    listeners.remove(listener);
+  public synchronized void removeListener(TCConnectionEventListener listener) {
+    if (listeners.contains(listener)) {
+      listeners.remove(listener);
+    }
   }
 
   @Override
@@ -241,25 +246,29 @@ public class BasicConnection implements TCConnection {
     }
     return true;
   }
+
+  private synchronized List<TCConnectionEventListener> getListeners() {
+    return new ArrayList<>(listeners);
+  }
   
   private void fireClosed() {
     TCConnectionEvent event = new TCConnectionEvent(this);
-    listeners.forEach(l->l.closeEvent(event));
+    getListeners().forEach(l->l.closeEvent(event));
   }
   
   private void fireConnect() {
     TCConnectionEvent event = new TCConnectionEvent(this);
-    listeners.forEach(l->l.connectEvent(event));
+    getListeners().forEach(l->l.connectEvent(event));
   }
   
   private void fireEOF() {
     TCConnectionEvent event = new TCConnectionEvent(this);
-    listeners.forEach(l->l.endOfFileEvent(event));
+    getListeners().forEach(l->l.endOfFileEvent(event));
   }
   
   private void fireError(Exception err, TCNetworkMessage cxt) {
     TCConnectionErrorEvent event = new TCConnectionErrorEvent(this, err, cxt);
-    listeners.forEach(l->l.errorEvent(event));
+    getListeners().forEach(l->l.errorEvent(event));
   }
   
   @Override
@@ -267,7 +276,6 @@ public class BasicConnection implements TCConnection {
     boolean interrupted = Thread.interrupted();
     Assert.assertNull(readerExec);
     Assert.assertNull(src);
-    Assert.assertTrue(connected);
     
     SocketChannel channel = SocketChannel.open(new InetSocketAddress(addr.getAddress(), addr.getPort()));
     src = channel.socket();

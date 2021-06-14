@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
+import static com.tc.net.protocol.tcm.ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -77,7 +78,6 @@ public class ClientChannelEventController {
     clientHandshakeManager.fireNodeError();
     //Shutdown instead of disconnect as now it should go into disconnected state
     clientHandshakeManager.shutdown();
-    LOGGER.error("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
   }
 
   private static class ChannelEventListenerImpl implements ChannelEventListener {
@@ -90,10 +90,9 @@ public class ClientChannelEventController {
 
     @Override
     public void notifyChannelEvent(ChannelEvent event) {
-      if (!event.getChannel().getProductID().isInternal()) {
-        LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
+      LOGGER.info("Got channel event - type: " + event.getType() + ", event: " + event
                       + CallStackTrace.getCallStack());
-      }
+
       if (controller.clientHandshakeManager.isShutdown()) { return; }
       ChannelID eventChannelId = event.getChannelID();
       ClientMessageChannel currentChannel = controller.channel;

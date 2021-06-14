@@ -131,7 +131,11 @@ public class ClientMessageTransport extends MessageTransportBase {
       connection = connect(socket);
       openConnection(connection);
       NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
-      finishOpen(nid);
+      if (connection.isClosed()) {
+        throw new IOException("closed");
+      } else {
+        finishOpen(nid);
+      }
       return nid;
     } catch (CommStackMismatchException | IOException | MaxConnectionsExceededException | TCTimeoutException | RuntimeException e) {
       finishOpenWithException(e);
@@ -226,7 +230,7 @@ public class ClientMessageTransport extends MessageTransportBase {
    * Returns true if the MessageTransport was ever in an open state.
    */
   public synchronized boolean wasOpened() {
-    return this.opener != null && this.opener.isDone() && !this.opener.isCompletedExceptionally();
+    return this.opener != null && this.opener.isDone();
   }
 
   private synchronized CompletableFuture<NetworkStackID> startOpen() {
@@ -304,7 +308,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
       if (!getConnectionID().isNewConnection() && getConnectionID().isValid()) {
         // This is a reconnect
-        Assert.eval(!synAck.getConnectionId().isValid() || getConnectionID().equals(synAck.getConnectionId()));
+        Assert.eval(getConnectionID().equals(synAck.getConnectionId()));
       }
       getConnection().setTransportEstablished();
       setSynAckResult(synAck);
@@ -460,7 +464,10 @@ public class ClientMessageTransport extends MessageTransportBase {
     if (wireNewConnection(connection)) {
       try {
         handshakeConnection();
-      } catch (Exception t) {
+        if (!connection.isConnected()) {
+          throw new IOException("closed");
+        }
+      } catch (Throwable t) {
         clearConnection();
         throw t;
       }

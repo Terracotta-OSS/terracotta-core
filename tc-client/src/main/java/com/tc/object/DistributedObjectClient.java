@@ -196,6 +196,7 @@ public class DistributedObjectClient {
                                                                        + socketConnectTimeout); }
 
     ClientMessageChannel client = internalStart(socketConnectTimeout);
+    setClientMessageChannel(client);
     connectionThread.set(new Thread(threadGroup, ()->{
           while (!connectionMade.isSet() && !clientStopped.isSet() && !exceptionMade.isSet()) {
             connectionSequence(client);
@@ -272,21 +273,7 @@ public class DistributedObjectClient {
 
     ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
                                                                  sessionManager, socketTimeout);
-    this.channel = clientChannel;
-    // add this listener so that the whole system is shutdown
-    // if the transport is closed from underneath.
-    //  this typically happens when the transport is disconnected and 
-    // reconnect is disabled
-    clientChannel.addListener(new ChannelEventListener() {
-      @Override
-      public void notifyChannelEvent(ChannelEvent event) {
-        switch(event.getType()) {
-          case TRANSPORT_CLOSED_EVENT:
-          case TRANSPORT_RECONNECTION_REJECTED_EVENT:
-            shutdown();
-        }
-      }
-    });
+
 
     final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(clientChannel::getClientID);
     this.communicationStageManager.setLoggerProvider(cidLoggerProvider);
@@ -349,6 +336,7 @@ public class DistributedObjectClient {
 
   private boolean directConnect(ClientMessageChannel clientChannel) {
     try {
+      setClientMessageChannel(clientChannel);
       clientChannel.open(serverAddresses);
       waitForHandshake(clientChannel);
       connectionMade();
@@ -624,5 +612,29 @@ public class DistributedObjectClient {
   
   private synchronized ClientMessageChannel getClientMessageChannel() {
     return this.channel;
+  }
+
+  private synchronized void setClientMessageChannel(ClientMessageChannel channel) {
+    ClientMessageChannel old = this.channel;
+    this.channel = channel;
+
+    // add this listener so that the whole system is shutdown
+    // if the transport is closed from underneath.
+    //  this typically happens when the transport is disconnected and
+    // reconnect is disabled
+    channel.addListener(new ChannelEventListener() {
+      @Override
+      public void notifyChannelEvent(ChannelEvent event) {
+        switch(event.getType()) {
+          case TRANSPORT_CLOSED_EVENT:
+          case TRANSPORT_RECONNECTION_REJECTED_EVENT:
+            DSO_LOGGER.info("shutting down due to " + event);
+            shutdown();
+        }
+      }
+    });
+    if (old != null) {
+      old.close();
+    }
   }
 }

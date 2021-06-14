@@ -52,7 +52,11 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
     // internal or redirect
     if (connectionID.getProductId().isInternal() || this.stripe == null) {
-      return internalClients.populateConnectionID(connectionID);
+      ConnectionID cid = internalClients.populateConnectionID(connectionID);
+      if (connectionID.getProductId().isReconnectEnabled()) {
+        fireCreationEvent(cid);
+      }
+      return cid;
     } else if (!new ChannelID(connectionID.getChannelID()).isValid()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
     } else if (!stripe.getName().equals(connectionID.getServerID())) {
@@ -140,7 +144,9 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
   @Override
   public void channelRemoved(MessageChannel channel)  {
     Assert.assertNotNull(stripe);
-    fireDestroyedEvent(channel.getConnectionID());
+    if (channel.getProductID().isReconnectEnabled()) {
+      fireDestroyedEvent(channel.getConnectionID());
+    }
   }
 
   @Override
