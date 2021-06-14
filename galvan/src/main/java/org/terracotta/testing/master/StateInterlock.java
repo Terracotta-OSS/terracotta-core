@@ -91,7 +91,7 @@ public class StateInterlock implements IGalvanStateInterlock {
   }
 
   public synchronized void waitForActiveServer() throws GalvanFailureException {
-    this.logger.output("> waitForActiveServer");
+    this.logger.output("> waitForActiveServer " + this.servers);
     IGalvanServer active = getActiveServer();
     while (!this.sharedLockState.checkDidPass() &&  active == null) {
       safeWait();
@@ -101,15 +101,15 @@ public class StateInterlock implements IGalvanStateInterlock {
   }
 
   public void waitForAllServerRunning() throws GalvanFailureException {
-    this.logger.output("> waitForAllServerRunning");
+    this.logger.output("> waitForAllServerRunning " + this.servers);
     this.servers.forEach(server->server.waitForRunning());
-    this.logger.output("< waitForAllServerRunning");
+    this.logger.output("< waitForAllServerRunning " + this.servers);
   }
 
   public void waitForAllServerReady() throws GalvanFailureException {
-    this.logger.output("> waitForAllServerReady");
+    this.logger.output("> waitForAllServerReady " + this.servers);
     this.servers.forEach(server->server.waitForReady());
-    this.logger.output("< waitForAllServerReady");
+    this.logger.output("< waitForAllServerReady " + this.servers);
   }
   
   private void safeWait() {
@@ -145,10 +145,12 @@ public class StateInterlock implements IGalvanStateInterlock {
   public IGalvanServer getOneTerminatedServer() throws GalvanFailureException {
       this.logger.output("getOneTerminatedServer");
       this.sharedLockState.checkDidPass();
+      IGalvanServer one = null;
       if (!isShuttingDown) {
-        return this.servers.stream().filter(s->s.getCurrentState() == ServerMode.TERMINATED).findAny().orElse(null);
+        one = this.servers.stream().filter(s->s.getCurrentState() == ServerMode.TERMINATED).findAny().orElse(null);
       }
-      return null;
+      this.logger.output("getOneTerminatedServer " + one);
+      return one;
   }
 
   boolean checkDidPass() throws GalvanFailureException {
@@ -156,7 +158,7 @@ public class StateInterlock implements IGalvanStateInterlock {
   }
 
   // ----- CHANGE STATE-----
-  public synchronized void serverBecameActive(InlineServerProcess server, ServerMode previous) {
+  public synchronized void serverBecameActive(IGalvanServer server, ServerMode previous) {
       this.logger.output("serverBecameActive: " + server + " was passive:" + (previous == ServerMode.PASSIVE));
       notifyAll();
   }

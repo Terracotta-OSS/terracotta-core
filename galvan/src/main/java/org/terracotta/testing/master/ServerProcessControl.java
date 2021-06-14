@@ -16,7 +16,8 @@
 package org.terracotta.testing.master;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.logging.ContextualLogger;
@@ -94,7 +95,7 @@ public class ServerProcessControl implements IMultiProcessControl {
 
   @Override
   public synchronized void startOneServer() throws GalvanFailureException {
-    this.logger.output(">>> startOneServer");
+    this.logger.output(">>> startOneServer " + this.stateInterlock);
     startServer();
     this.logger.output("<<< startOneServer");
   }
@@ -105,36 +106,32 @@ public class ServerProcessControl implements IMultiProcessControl {
       throw new IllegalStateException("Tried to start one server when none are terminated");
     }
     safeStart(server);
-    
-    server.waitForRunning();
   }
 
   @Override
   public synchronized void startAllServers() throws GalvanFailureException {
-    this.logger.output(">>> startAllServers");
+    this.logger.output(">>> startAllServers " + this.stateInterlock);
     startServers();
-    this.logger.output("<<< startAllServers");
+    this.logger.output("<<< startAllServers " + this.stateInterlock);
   }
 
   private void startServers() throws GalvanFailureException {
     IGalvanServer server = this.stateInterlock.getOneTerminatedServer();
+    List<IGalvanServer> started = new LinkedList<>();
     while (null != server) {
       safeStart(server);
-
+      started.add(server);
       // Wait for it to start up (since we need to grab a different one in the next call).
-      server.waitForRunning();
-      IGalvanServer nextServer = this.stateInterlock.getOneTerminatedServer();
-      // Ensure that we don't somehow get the same instance (since we just watched it come online).
-      Assert.assertTrue(server != nextServer);
-      server = nextServer;
+      server = this.stateInterlock.getOneTerminatedServer();
     }
+    started.forEach(IGalvanServer::waitForRunning);
   }
 
   @Override
   public synchronized void terminateAllServers() throws GalvanFailureException {
-    this.logger.output(">>> terminateAllServers");
+    this.logger.output(">>> terminateAllServers " + this.stateInterlock);
     // Wait until all servers are in a reasonable state.
-    this.stateInterlock.waitForAllServerReady();
+    this.stateInterlock.waitForAllServerRunning();
     
     // NOTE:  We want to get the passives, first, to avoid active fail-over causing us not to know the state of a server when looking for it.
     // Get all the passives.
@@ -156,11 +153,11 @@ public class ServerProcessControl implements IMultiProcessControl {
 
   @Override
   public synchronized void waitForRunningPassivesInStandby() throws GalvanFailureException {
-    this.logger.output(">>> waitForRunningPassivesInStandby");
+    this.logger.output(">>> waitForRunningPassivesInStandby " + this.stateInterlock);
     
     this.stateInterlock.waitForAllServerReady();
     
-    this.logger.output("<<< waitForRunningPassivesInStandby");
+    this.logger.output("<<< waitForRunningPassivesInStandby " + this.stateInterlock);
   }
 
 
