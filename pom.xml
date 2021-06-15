@@ -31,7 +31,7 @@
 
   <groupId>org.terracotta.internal</groupId>
   <artifactId>terracotta-core-root</artifactId>
-  <version>5.8-SNAPSHOT</version>
+  <version>5.8.2-pre1</version>
   <name>terracotta-core-root</name>
   <packaging>pom</packaging>
 
