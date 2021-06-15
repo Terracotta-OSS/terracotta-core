@@ -82,6 +82,11 @@ public class ElectionManagerImpl implements ElectionManager {
       }
     });
   }
+
+  public synchronized void shutdown() {
+    state = INIT;
+    notifyAll();
+  }
   
   public EventHandler<ElectionContext> getEventHandler() {
     return new AbstractEventHandler<ElectionContext> () {
@@ -89,6 +94,12 @@ public class ElectionManagerImpl implements ElectionManager {
       public void handleEvent(ElectionContext context) throws EventHandlerException {
           context.setWinner(runElection(context.getNode(), context.getServers(), context.isNew(), context.getFactory(),
                                         context.getCurrentState()));
+      }
+
+      @Override
+      public void destroy() {
+        super.destroy();
+        reset(ServerID.NULL_ID, null);
       }
     };
   }
@@ -269,7 +280,9 @@ public class ElectionManagerImpl implements ElectionManager {
     logger.info("Election took " + TimeUnit.MILLISECONDS.toSeconds(electionTime - waited) + " sec. ending in " + this.state);
     // Step 3: Compute Winner
     Enrollment lWinner = computeResult();
-    if (lWinner != e) {
+    if (lWinner == null) {
+      return ServerID.NULL_ID;
+    } else if (lWinner != e) {
       logger.info("Election lost : Winner is : " + lWinner);
       Assert.assertNotNull(lWinner);
       return active;

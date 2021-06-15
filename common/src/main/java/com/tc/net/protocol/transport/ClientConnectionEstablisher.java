@@ -183,15 +183,17 @@ public class ClientConnectionEstablisher {
       if (!cmt.getProductID().isReconnectEnabled() && !isReconnectBetweenL2s()) {
         cmt.getLogger().info("Got reconnect request for ClientMessageTransport that does not support it.  skipping");
         return;
+      } else {
+        cmt.getLogger().info("reconnecting " + cmt.getConnectionID());
       }
 
       this.asyncReconnecting.set(true);
       boolean reconnectionRejected = false;
       InetSocketAddress target = null;
 
-      for (int i = 0; tryToConnect(connected) && !stopCheck.get(); i++) {
+      for (int i = 0; tryToConnect(connected, stopCheck); i++) {
         Iterator<InetSocketAddress> serverAddressIterator = getServerAddressIterator();
-        while ((target != null || serverAddressIterator.hasNext()) && tryToConnect(connected)) {
+        while ((target != null || serverAddressIterator.hasNext()) && tryToConnect(connected, stopCheck)) {
 
           if (reconnectionRejected) {
             if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
@@ -263,10 +265,14 @@ public class ClientConnectionEstablisher {
           } catch (Exception e) {
             target = null;
             handleConnectException(e, true, connectionErrorLossyLogger);
+          } catch (Throwable t) {
+            target = null;
+            LOGGER.warn("unknown error", t);
           }
         }
       }
     } finally {
+      LOGGER.info("reconnection complete " + cmt.isConnected());
       asyncReconnecting.set(false);
     }
   }
@@ -292,8 +298,11 @@ public class ClientConnectionEstablisher {
     return reconnectionRejectedHandler.isRetryOnReconnectionRejected();
   }
   
-  private boolean tryToConnect(boolean connected) {
-    return !connected && !asyncReconnect.isStopped();
+  private boolean tryToConnect(boolean connected, Supplier<Boolean> stopCheck) {
+    boolean stopper = stopCheck.get();
+    boolean stopped = asyncReconnect.isStopped();
+    LOGGER.debug("trying to connect connected:{} stopCheck: {} isStopped: {}", connected, stopper, stopped);
+    return !connected && !stopper && !stopped;
   }
 
   void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
@@ -308,7 +317,7 @@ public class ClientConnectionEstablisher {
     this.asyncReconnecting.set(true);
     try {
       boolean reconnectionRejected = false;
-      while (tryToConnect(connected)) {
+      while (tryToConnect(connected, ()->false)) {
 
         if (reconnectionRejected) {
           if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
@@ -375,7 +384,11 @@ public class ClientConnectionEstablisher {
 
   public void asyncReconnect(ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
     if (cmt.getConnectionID().isValid()) {
+      LOGGER.info("async reconnect initiated " + cmt.getConnectionID());
       putConnectionRequest(ConnectionRequest.newReconnectRequest(cmt, stopCheck));
+    } else {
+      LOGGER.info("async reconnect ignored connection not valid " + cmt.getConnectionID());
+      cmt.close();
     }
   }
 
@@ -473,6 +486,8 @@ public class ClientConnectionEstablisher {
         Thread oldThread = getConnectionThread();
         waitForThread(oldThread, true);
         startThreadIfNecessary(request);
+      } else {
+        LOGGER.info("connect request ignored, stopped:" + isStopped());
       }
     }
 
@@ -482,12 +497,13 @@ public class ClientConnectionEstablisher {
         Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + this.cce.serverAddresses.toString() + "-" + System.identityHashCode(request));
         thread.setDaemon(true);
         thread.start();
+        LOGGER.info("connection establisher started " + thread.getName());
         connectionEstablisherThread = thread;
       }
     }
 
     public void execute(ConnectionRequest request) {
-      logger.debug("Connection establisher starting. " + System.identityHashCode(this));
+      logger.info("Connection establisher starting. " + System.identityHashCode(this));
       if (request != null) {
         logger.info("Handling connection request: " + request);
         ClientMessageTransport cmt = request.getClientMessageTransport();

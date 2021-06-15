@@ -48,13 +48,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
-import java.util.function.Consumer;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.MessageCodec;
 import com.tc.objectserver.api.ManagementKeyCallback;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
+import java.io.Closeable;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.function.Predicate;
 
 
 public class EntityManagerImpl implements EntityManager {
@@ -117,6 +119,21 @@ public class EntityManagerImpl implements EntityManager {
   @Override
   public ServerEntityFactory getEntityLoader() {
     return this.creationLoader;
+  }
+
+  public void shutdown() {
+    for (EntityServerService<?,?> service : entityServices.values()) {
+      try {
+        if (service instanceof Closeable) {
+          ((Closeable)service).close();
+        }
+        if (service instanceof AutoCloseable) {
+          ((AutoCloseable)service).close();
+        }
+      } catch (Exception e) {
+        LOGGER.warn("error closing entity service", e);
+      }
+    }
   }
 
   @Override
@@ -262,17 +279,22 @@ public class EntityManagerImpl implements EntityManager {
   }
   
   @Override
-  public List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst) {
+  public List<ManagedEntity> snapshot(Predicate<ManagedEntity> runFirst) {
     snapshotLock.acquireUninterruptibly();
     List<ManagedEntity> sortingList = new ArrayList<>(this.entityIndex.values());
     try {
       Collections.sort(sortingList, this.consumerIdSorter);
+      if (runFirst != null) {
+        Iterator<ManagedEntity> list = sortingList.iterator();
+        while (list.hasNext()) {
+          if (!runFirst.test(list.next())) {
+            list.remove();
+          }
+        }
+      }
       return sortingList;
     } finally {
       snapshotLock.release();
-      if (runFirst != null) {
-        runFirst.accept(sortingList);
-      }
     }
   }
 

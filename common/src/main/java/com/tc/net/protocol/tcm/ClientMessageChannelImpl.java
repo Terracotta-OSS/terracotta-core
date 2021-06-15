@@ -36,6 +36,7 @@ import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
+import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -50,6 +51,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   private int                             connectAttemptCount;
   private int                             connectCount;
+  private volatile ChannelID                       channelID = ChannelID.NULL_ID;
   private final ProductID                 productID;
   private final SessionProvider           sessionProvider;
   private MessageTransportInitiator       initiator;
@@ -110,10 +112,10 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public ChannelID getChannelID() {
-    final ChannelStatus status = getStatus();
-    synchronized (status) {
-      return new ChannelID(this.sendLayer.getConnectionID().getChannelID());
+    if (isConnected()) {
+      Assert.assertEquals(this.channelID, super.getChannelID());
     }
+    return this.channelID;
   }
 
   @Override
@@ -140,6 +142,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   public void notifyTransportConnected(MessageTransport transport) {
     if (!transport.getConnectionID().isNull()) {
       long channelIdLong = transport.getConnectionID().getChannelID();
+      channelID = new ChannelID(channelIdLong);
       setLocalNodeID(new ClientID(channelIdLong));
       this.connectCount++;
     }

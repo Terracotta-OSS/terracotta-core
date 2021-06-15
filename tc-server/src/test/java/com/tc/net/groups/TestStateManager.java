@@ -54,6 +54,11 @@ public class TestStateManager implements StateManager {
   }
 
   @Override
+  public void shutdown() {
+
+  }
+
+  @Override
   public NodeID getActiveNodeID() {
     return localNodeID;
   }

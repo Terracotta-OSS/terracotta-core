@@ -30,7 +30,7 @@ import com.tc.text.PrettyPrintable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
 
@@ -89,7 +89,7 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
    * @param runFirst Consumes the entire list before it is iterated.
    * @return The sorted list.
    */
-  List<ManagedEntity> snapshot(Consumer<List<ManagedEntity>> runFirst);
+  List<ManagedEntity> snapshot(Predicate<ManagedEntity> runFirst);
   
   Collection<ManagedEntity> getAll();
   /**

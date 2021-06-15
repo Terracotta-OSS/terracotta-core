@@ -81,8 +81,8 @@ public class ConsistencyManagerImplTest {
     when(jmx.getMBeanServer()).thenReturn(mServer);
     when(server.getManagement()).thenReturn(jmx);
     ServerEnv.setServer(server);
-    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager);
     caller.call(ServerVoterManager.MBEAN_NAME, "registerVoter", voter);
     long term = Long.parseLong(caller.call(ServerVoterManager.MBEAN_NAME, "heartbeat", voter));
     Assert.assertTrue(term == 0);
@@ -112,11 +112,10 @@ public class ConsistencyManagerImplTest {
 
   @Test
   public void testVoteConfig() throws Exception {
-    List servers = mock(List.class);
-    when(servers.size()).thenReturn(1);
+    int servers = 1;
     
     Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.AVAILABILITY, 0), servers));
-    when(servers.size()).thenReturn(2);
+    servers = 2;
     
     Assert.assertEquals(1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), servers));    
     Assert.assertEquals(2, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 2), servers));
@@ -124,8 +123,8 @@ public class ConsistencyManagerImplTest {
   
   @Test
   public void testAddClientIsNotPersistent() throws Exception {
-    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);
@@ -136,8 +135,8 @@ public class ConsistencyManagerImplTest {
 
   @Test
   public void testAddClientDoesntVote() throws Exception {
-    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")));
-    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager, 1);
+    TopologyManager topologyManager = new TopologyManager(new HashSet<>(asList("localhost:9410", "localhost:9510")), ()->1);
+    ConsistencyManagerImpl impl = new ConsistencyManagerImpl(topologyManager);
     long cterm = impl.getCurrentTerm();
     boolean granted = impl.requestTransition(ServerMode.ACTIVE, mock(NodeID.class), ConsistencyManager.Transition.ADD_CLIENT);
     Assert.assertTrue(granted);
@@ -154,19 +153,17 @@ public class ConsistencyManagerImplTest {
 
   @Test
   public void testVoteConfigMandatoryForMultiNode() throws Exception {
-    List serverList = mock(List.class);
-    when(serverList.size()).thenReturn(2);
+    int servers = 2;
     Server server = mock(Server.class);
     ServerEnv.setServer(server);
-    int count = ConsistencyManager.parseVoteCount(null, serverList);
+    int count = ConsistencyManager.parseVoteCount(null, servers);
     verify(server).stop();
   }
 
   @Test
   public void testVoteConfigNotMandatoryForSingleNode() throws Exception {
-    List serverList = mock(List.class);
-    when(serverList.size()).thenReturn(1);
-    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), serverList));
+    int servers = 1;
+    Assert.assertEquals(-1, ConsistencyManager.parseVoteCount(new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, 1), servers));
   }
 
 }

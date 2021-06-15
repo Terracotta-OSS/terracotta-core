@@ -146,6 +146,12 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public boolean stopAndWait() {
+    server.stop();
+    return server.waitUntilShutdown();
+  }
+
+  @Override
   public boolean isShutdownable() {
     return server.canShutdown();
   }

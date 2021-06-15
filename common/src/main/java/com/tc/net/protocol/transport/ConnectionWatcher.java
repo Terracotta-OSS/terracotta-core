@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -30,25 +31,53 @@ public class ConnectionWatcher implements MessageTransportListener {
   private static Logger LOGGER = LoggerFactory.getLogger(ConnectionWatcher.class);
   private final ClientMessageTransport      cmt;
   private final ClientConnectionEstablisher cce;
-  private final ReferenceQueue<MessageTransportListener> stopQueue = new ReferenceQueue<>();
+  private final ReferenceQueue<ClientMessageChannel> stopQueue = new ReferenceQueue<>();
   private final SetOnceFlag stopped = new SetOnceFlag();
-  private final WeakReference<MessageTransportListener> targetHolder;
+  private final WeakReference<ClientMessageChannel> targetHolder;
 
   /**
    * Listens to events from a MessageTransport, acts on them, and passes events through to target
    */
-  public ConnectionWatcher(ClientMessageTransport cmt, MessageTransportListener target, ClientConnectionEstablisher cce) {
+  public ConnectionWatcher(ClientMessageTransport cmt, ClientMessageChannel target, ClientConnectionEstablisher cce) {
     this.cmt = cmt;
     this.targetHolder = new WeakReference<>(target, stopQueue);
     this.cce = cce;
+    cmt.addTransportListener(new MessageTransportListener() {
+      @Override
+      public void notifyTransportConnected(MessageTransport transport) {
+        LOGGER.info("transport connected {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+      }
+
+      @Override
+      public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
+        LOGGER.info("transport disconnected {} {} {}", targetHolder.get(),cmt, cmt.getConnectionID());
+      }
+
+      @Override
+      public void notifyTransportConnectAttempt(MessageTransport transport) {
+        LOGGER.info("transport connect attempt {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+      }
+
+      @Override
+      public void notifyTransportClosed(MessageTransport transport) {
+        LOGGER.info("transport closed {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+      }
+
+      @Override
+      public void notifyTransportReconnectionRejected(MessageTransport transport) {
+        LOGGER.info("transport reconnect rejected {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+      }
+
+    });
   }
   
   private boolean checkForStop() {
-    Reference<? extends MessageTransportListener> target = stopQueue.poll();
+    Reference<? extends ClientMessageChannel> target = stopQueue.poll();
     if (target != null) {
       if (target == targetHolder) {
           stopped.set();
-          LOGGER.warn("unreferenced connection left open");
+          LOGGER.warn("unreferenced connection left open {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+          cmt.close();
       }
     }
     return stopped.isSet();

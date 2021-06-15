@@ -85,7 +85,7 @@ public class ConnectionID {
   }
   
   public boolean isValid() {
-    return channelID >= 0;
+    return !isNull();
   }
 
   public boolean isNewConnection() {

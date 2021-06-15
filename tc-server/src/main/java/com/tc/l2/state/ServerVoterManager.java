@@ -21,13 +21,6 @@ package com.tc.l2.state;
 import com.tc.voter.VoterManagerMBean;
 
 public interface ServerVoterManager extends VoterManagerMBean {
-
-  /**
-   *
-   * @return the configured limit of voters
-   */
-  int getVoterLimit();
-
   /**
    * Notify all voters to start voting the given election term.
    *

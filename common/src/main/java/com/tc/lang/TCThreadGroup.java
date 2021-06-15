@@ -87,7 +87,7 @@ public class TCThreadGroup extends ThreadGroup {
         for (Thread t : threads()) {
           if (t != Thread.currentThread()) {
             try {
-              t.join(1000);
+              t.join(500);
             } catch (InterruptedException i) {
               interruptHandler.accept(i);
             }

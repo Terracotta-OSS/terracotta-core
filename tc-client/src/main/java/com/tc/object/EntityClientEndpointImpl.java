@@ -38,17 +38,22 @@ import org.terracotta.exception.EntityException;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.InvokeMonitor;
 
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
+
+  private static Logger LOGGER = LoggerFactory.getLogger(EntityClientEndpointImpl.class);
+
   private final InvocationHandler invocationHandler;
   private final byte[] configuration;
   private final EntityDescriptor invokeDescriptor;
@@ -397,22 +402,23 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
   @Override
   public synchronized Future<Void> release() {
     if (releaseFuture == null) {
-      Callable<Void> call = new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          close();
-          return null;
-        }
-      };
       if (this.closer == null) {
         close();
-        releaseFuture = new CompletedFuture();
+        releaseFuture = CompletableFuture.completedFuture(null);
       } else {
         try {
+          Callable<Void> call = new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              close();
+              return null;
+            }
+          };
           releaseFuture = this.closer.submit(call);
         } catch (RejectedExecutionException re) {
           // connection already shutdown
-          releaseFuture = new CompletedFuture(new IllegalStateException("connection has already been shutdown"));
+          LOGGER.debug("connection already closed", re);
+          releaseFuture = CompletableFuture.completedFuture(null);
         }
       }
     }
@@ -434,45 +440,4 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
       throw new IllegalStateException("Endpoint closed");
     }
   }
-  
-  private static class CompletedFuture implements Future<Void> {
-    public final Exception failure;
-
-    public CompletedFuture() {
-      this.failure = null;
-    }
-
-    public CompletedFuture(Exception failure) {
-      this.failure = failure;
-    }
-    
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return false;
-    }
-
-    @Override
-    public boolean isDone() {
-      return true;
-    }
-
-    @Override
-    public Void get() throws InterruptedException, ExecutionException {
-      if (failure != null) {
-        throw new ExecutionException(failure);
-      } else {
-        return null;
-      }
-    }
-
-    @Override
-    public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      return get();
-    }
-  };
 }

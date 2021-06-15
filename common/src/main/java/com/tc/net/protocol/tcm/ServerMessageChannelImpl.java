@@ -57,10 +57,8 @@ public class ServerMessageChannelImpl extends AbstractMessageChannel implements 
   public ChannelID getChannelID() {
     if (this.isConnected()) {
       Assert.assertEquals(super.getChannelID(), channel);
-      return channel;
-    } else {
-      return channel;
     }
+    return channel;
   }
 
   @Override

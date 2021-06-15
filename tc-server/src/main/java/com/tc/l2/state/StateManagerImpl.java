@@ -18,7 +18,6 @@
  */
 package com.tc.l2.state;
 
-import org.terracotta.tripwire.ServerStateEvent;
 import com.tc.async.api.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,6 +177,13 @@ public class StateManagerImpl implements StateManager {
       this.notifyAll();
     }
   }
+
+  @Override
+  public void shutdown() {
+    logger.info("shutting down elections");
+    this.electionMgr.shutdown();
+  }
+
 /**
  * A brief explanation of elections.  There are two phases of election.  The first is started
  * here with a broadcast to all connected servers initiated with the addition of an ElectionContext
@@ -235,7 +241,7 @@ public class StateManagerImpl implements StateManager {
             rerun = true;
           }
         } else if (nodeid.isNull()) {
-          Assert.fail();
+          rerun = true;
         } else {
           // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
           // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
@@ -248,7 +254,7 @@ public class StateManagerImpl implements StateManager {
           }
         }
         electionFinished();
-        if (rerun) {
+        if (rerun && canStartElection()) {
           electionMgr.reset(ServerID.NULL_ID, null);
           runElection();
         }

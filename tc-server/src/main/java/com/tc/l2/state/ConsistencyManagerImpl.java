@@ -73,16 +73,16 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
     Map<String, Object> voteMap = new LinkedHashMap<>();
     voteMap.put("registered", voter.getRegisteredVoters());
     voteMap.put("count", voter.getVoteCount());
-    voteMap.put("limit", voter.getVoterLimit());
+    voteMap.put("limit", this.topologyManager.getExternalVoters());
     voteMap.put("overridden", voter.overrideVoteReceived());
     map.put("voter", voteMap);
     return map;
   }
   
-  public ConsistencyManagerImpl(TopologyManager topologyManager, int voters) {
+  public ConsistencyManagerImpl(TopologyManager topologyManager) {
     this.topologyManager = topologyManager;
     try {
-      this.voter = new ServerVoterManagerImpl(voters);
+      this.voter = new ServerVoterManagerImpl(topologyManager::getExternalVoters);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -114,9 +114,15 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
         
   @Override
   public boolean requestTransition(ServerMode mode, NodeID sourceNode, Topology topology, Transition newMode) throws IllegalStateException {
+
     if (topology == null) {
       topology = this.topologyManager.getTopology();
     }
+    if (this.topologyManager.isAvailability()) {
+      // availability mode
+      return true;
+    }
+
     if (newMode == Transition.ADD_PASSIVE) {
  //  starting passive sync to a new node, at this point the passive can be consisdered a
  //  vote for the current active and the passive sync rules will make sure all the data is replicated      
@@ -179,7 +185,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
         }
       }
     } finally {
-      CONSOLE.info("Action:{} granted:{} vote tally servers:{} external:{} of total:{}", newMode, allow, serverVotes + 1, voter.getVoteCount(), peerServers + voter.getVoterLimit() + 1);
+      CONSOLE.info("Action:{} granted:{} vote tally servers:{} external:{} of total:{}", newMode, allow, serverVotes + 1, voter.getVoteCount(), peerServers + topologyManager.getExternalVoters() + 1);
       endVoting(allow, newMode, topology);
     }
     return allow;
@@ -206,7 +212,7 @@ public class ConsistencyManagerImpl implements ConsistencyManager, GroupEventsLi
 
   private int voteThreshold(ServerMode mode, int peerServers) {
     //  peer servers plus extra votes plus self is the total votes available
-    int voteCount = peerServers + voter.getVoterLimit() + 1;
+    int voteCount = peerServers + this.topologyManager.getExternalVoters() + 1;
     if (mode == ServerMode.ACTIVE) {
       // only half the votes needed to continue as active
       return voteCount - (voteCount>>1) - 1; // ceiling of half minus the vote for self

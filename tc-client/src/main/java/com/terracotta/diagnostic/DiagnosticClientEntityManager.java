@@ -154,6 +154,7 @@ public class DiagnosticClientEntityManager implements ClientEntityManager {
   @Override
   public void shutdown() {
     waitingForAnswer.forEach((id, in)->in.setResult(null, new ConnectionClosedException("connection closed")));
+    waitingForAnswer.clear();
   }
 
   @Override

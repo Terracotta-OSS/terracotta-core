@@ -112,7 +112,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     try {
       for (TCGroupManagerImpl group : groups) {
         System.out.println("Shutting down " + group);
-        group.stop();
+        group.shutdown();
       }
       stages.shutdown();
     } finally {

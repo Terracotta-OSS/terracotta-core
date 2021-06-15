@@ -126,14 +126,16 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public synchronized void connectionIDCreated(ConnectionID connectionID) {
     Assert.assertTrue(isActive);
     state.addNewConnection(connectionID);
-    publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
+    Collection<NodeID> sentTo = publishToAll(ClusterStateMessage.createNewConnectionCreatedMessage(connectionID));
+    LOGGER.debug("applied to " + sentTo);
   }
 
   @Override
   public synchronized void connectionIDDestroyed(ConnectionID connectionID) {
     Assert.assertTrue(isActive);
     state.removeConnection(connectionID);
-    publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
+    Collection<NodeID> sentTo = publishToAll(ClusterStateMessage.createConnectionDestroyedMessage(connectionID));
+    LOGGER.debug("applied to " + sentTo);
   }
 
   private Collection<NodeID> publishToAll(AbstractGroupMessage message) {
@@ -144,6 +146,8 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
         ClusterStateMessage msg = (ClusterStateMessage) resp;
         if (validateResponse(msg.messageFrom(), msg)) {
           success.add(msg.messageFrom());
+        } else {
+          LOGGER.info("message not validated {} by {} result {}", message, msg.messageFrom(), msg.getType());
         }
       }
       return success;

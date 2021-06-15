@@ -24,14 +24,15 @@ import org.slf4j.LoggerFactory;
 import com.tc.management.AbstractTerracottaMBean;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.management.NotCompliantMBeanException;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.lang.String.join;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Supplier;
 import org.terracotta.server.ServerEnv;
 
 public class TopologyManager {
@@ -39,10 +40,20 @@ public class TopologyManager {
   private Topology topology;
   private volatile TopologyMbean topologyMbean;
   private final List<TopologyListener> listeners = new ArrayList<>();
+  private final Supplier<Integer> voters;
 
-  public TopologyManager(Set<String> hostPorts) {
-    this.topology = new Topology(hostPorts);
+  public TopologyManager(Set<String> servers, Supplier<Integer> voters) {
+    this.topology = new Topology(servers);
+    this.voters = voters;
     initializeMbean();
+  }
+
+  public int getExternalVoters() {
+    return voters.get();
+  }
+
+  public boolean isAvailability() {
+    return voters.get() < 0;
   }
 
   public synchronized Topology getTopology() {

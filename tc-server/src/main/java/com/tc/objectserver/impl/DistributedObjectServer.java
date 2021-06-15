@@ -24,7 +24,6 @@ import com.tc.async.api.EventHandlerException;
 
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.GroupConfiguration;
-import com.tc.l2.state.AvailabilityManagerImpl;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
@@ -87,6 +86,7 @@ import com.tc.l2.handler.GroupEvent;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.PlatformInfoRequestHandler;
+import com.tc.l2.logging.TCLogbackLogging;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.PlatformInfoRequest;
 import com.tc.l2.msg.ReplicationMessage;
@@ -236,8 +236,9 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
+import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 
 /**
@@ -307,7 +308,15 @@ public class DistributedObjectServer {
     this.timer = new SingleThreadedTimer(null, threadGroup);
     this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
-    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts());
+    this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
+      Configuration config = this.configSetupManager.getConfiguration();
+      FailoverBehavior consistent = config.getFailoverPriority();
+      if (this.configSetupManager.isPartialConfiguration() || consistent == null || consistent.isAvailability()) {
+        return -1;
+      } else {
+        return consistent.getExternalVoters();
+      }
+    });
   }
 
   protected final ServerBuilder createServerBuilder(GroupConfiguration groupConfiguration, Logger tcLogger,
@@ -373,7 +382,7 @@ public class DistributedObjectServer {
     try {
       prettyPrintable.prettyPrint(prettyPrinter);
     } catch (Throwable t) {
-      prettyPrinter.println("unable to collect cluster state for " + prettyPrintable.getClass().getName() + " : " + t.getLocalizedMessage());
+      prettyPrinter.println("unable to collect cluster state for " + prettyPrintable + " : " + t.getLocalizedMessage());
       StringWriter w = new StringWriter();
       PrintWriter p = new PrintWriter(w);
       t.printStackTrace(p);
@@ -564,7 +573,7 @@ public class DistributedObjectServer {
     ClientStatePersistor clientStateStore = this.persistor.getClientStatePersistor();
     this.connectionIdFactory = new ConnectionIDFactoryImpl(infoConnections, clientStateStore, capablities);
     int voteCount =
-        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations());
+        ConsistencyManager.parseVoteCount(configuration.getFailoverPriority(), configuration.getServerConfigurations().size());
     int knownPeers = this.configSetupManager.allCurrentlyKnownServers().length - 1;
 
     if (voteCount >= 0 && (voteCount + knownPeers + 1) % 2 == 0) {
@@ -820,24 +829,32 @@ public class DistributedObjectServer {
     }
   }
 
-  public void stop() throws Exception {
+  public CompletableFuture<Void> stop() throws Exception {
+    return stop(false);
+  }
+
+  public CompletableFuture<Void> stop(boolean immediate) throws Exception {
+    CompletableFuture<Void> stopped = new CompletableFuture<>();
     if (this.threadGroup.isStoppable() && this.stopping.attemptSet()) {
-      CountDownLatch barrier = new CountDownLatch(1);
+      CountDownLatch barrier = new CountDownLatch(immediate ? 0 : 1);
       ThreadUtil.executeInThread(threadGroup.getParent(), ()->{
         try {
           if (!barrier.await(60, TimeUnit.SECONDS)) {
             logger.warn("Timeout waiting for clean shutdown.");
           }
-          killThreads();
+          killThreads(stopped, immediate);
         }catch(InterruptedException ie) {
           logger.warn("shutdown thread failed", ie);
         }
       }, "server shutdown thread", true);
-      this.groupCommManager.stop();
-      this.l1Diagnostics.stop(1000);
-      this.l1Listener.stop(1000);
+      this.l2Coordinator.shutdown();
+      this.persistor.shutdown();
+      this.l1Diagnostics.stop(60000);
+      this.l1Listener.stop(60000);
       this.connectionManager.shutdown();
+      this.groupCommManager.shutdown();
       this.context.shutdown();
+      this.entityManager.shutdown();
       this.serviceRegistry.shutdown();
       this.timer.cancelAll();
       this.timer.stop();
@@ -845,15 +862,27 @@ public class DistributedObjectServer {
       barrier.countDown();
     } else {
       logger.info("L2 Exiting...");
+      TCLogbackLogging.resetLogging();
+      stopped.complete(null);
     }
+    return stopped;
   }
 
-  private void killThreads() {
-    this.seda.getStageManager().stopAll();
-    if (!threadGroup.retire(TimeUnit.MINUTES.toMillis(1L), e->L2Utils.handleInterrupted(logger, e))) {
-      threadGroup.interruptThreads();
+  private void killThreads(CompletableFuture<Void> stopped, boolean immediate) {
+    try {
+      this.seda.getStageManager().stopAll();
+      if (immediate) {
+        threadGroup.interrupt();
+      } else if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
+        logger.warn("unable to retire server threads");
+        threadGroup.printLiveThreads(logger::warn);
+        threadGroup.interrupt();
+      }
+      logger.info("L2 Exiting...");
+    } finally {
+      TCLogbackLogging.resetLogging();
+      stopped.complete(null);
     }
-    logger.info("L2 Exiting...");
   }
 
   private ConsistencyManager createConsistencyManager(ServerConfigurationManager configSetupManager,
@@ -871,8 +900,7 @@ public class DistributedObjectServer {
     return new SafeStartupManagerImpl(
         consistentStartup,
         knownPeers,
-        (voteCount < 0 || knownPeers == 0) ? new AvailabilityManagerImpl() :
-            new ConsistencyManagerImpl(this.topologyManager, voteCount)
+        new ConsistencyManagerImpl(this.topologyManager)
     );
   }
 
@@ -1153,9 +1181,11 @@ public class DistributedObjectServer {
           try {
             ep.waitForPermanentEntityCreation(vem.getEntityDescriptor().getEntityID());
           } catch (RuntimeException e) {
-            throw e;
+            this.persistor.getClusterStatePersistor().setDBClean(false);
+            throw new TCServerRestartException("error creating permanent entities", e);
           } catch (Exception e) {
-            throw new RuntimeException(e);
+            this.persistor.getClusterStatePersistor().setDBClean(false);
+            throw new TCServerRestartException("error creating permanent entities", e);
           }
         }
       } else {

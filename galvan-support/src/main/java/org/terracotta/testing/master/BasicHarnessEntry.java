@@ -82,7 +82,7 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
         stripeName, DEFAULT_SERVER_HEAP_MB, "logback-ext.xml", harnessOptions.serverProperties);
     TestStateManager stateManager = new TestStateManager();
-    GalvanStateInterlock interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+    StateInterlock interlock = new StateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
     StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
     // Configure and install each server in the stripe.
     for (int i = 0; i < stripeSize; ++i) {

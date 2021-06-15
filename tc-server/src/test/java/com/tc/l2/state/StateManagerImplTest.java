@@ -126,7 +126,7 @@ public class StateManagerImplTest {
     groupPorts = portManager.reservePorts(NUM_OF_SERVERS);
     Set<String> servers = ports.stream().map(r -> "localhost:" + r.port()).collect(toSet());
 
-    this.topologyManager = new TopologyManager(servers);
+    this.topologyManager = new TopologyManager(servers, ()->-1);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
       nodes[i] = new Node(LOCALHOST, ports.get(i).port(), groupPorts.get(i).port());
       nodeSet.add(nodes[i]);

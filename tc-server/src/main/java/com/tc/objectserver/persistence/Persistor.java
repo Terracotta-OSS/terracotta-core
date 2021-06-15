@@ -104,6 +104,10 @@ public class Persistor implements PrettyPrintable {
     }
   }
 
+  public void shutdown() {
+    this.entityPersistor.close();
+  }
+
   @Override
   public Map<String, ?> getStateMap() {
     Map<String,Object> map = new LinkedHashMap<>();

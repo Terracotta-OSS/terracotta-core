@@ -137,12 +137,12 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
   }
 
   private boolean enqueueMessage(InFlightMessage msg) throws RejectedExecutionException {
-    if (!this.isRunning()) {
+    if (!this.stateManager.isRunning()) {
       return false;
     }
     if (requestTickets.tryAcquire()) {
       inFlightMessages.put(msg.getTransactionID(), msg);
-      return !isShutdown();
+      return true;
     } else {
       throw new RejectedExecutionException("Output queue is full");
     }
@@ -172,7 +172,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
             throw new TimeoutException();
           }
           inFlightMessages.put(msg.getTransactionID(), msg);
-          return !isShutdown();
+          return true;
         } catch (InterruptedException e) {
           interrupted = true;
         }
@@ -349,16 +349,15 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw t;
     }
 
-    if (queued) {
+    if (queued && !stateManager.isShutdown()) {
       inFlight.sent();
       if (!inFlight.send()) {
         logger.debug("message not sent.  Make sure resend happens : {}", inFlight);
         if (!this.channel.getProductID().isReconnectEnabled()) {
-          inFlight.setResult(null, new ConnectionClosedException("connection closed"));
+          throwClosedExceptionOnMessage(inFlight, "connection closed");
         }
       }
     } else {
-      transactionSource.retire(inFlight.getTransactionID());
       throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
     }
   }
@@ -528,6 +527,9 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
     ConnectionClosedException closed = new ConnectionClosedException(msg.getEntityID().getClassName(), msg.getEntityID().getEntityName(), description, false, null);
     msg.setResult(null, closed);
     msg.retired();
+    // may or may not be there.
+    inFlightMessages.remove(msg.getTransactionID());
+    transactionSource.retire(msg.getTransactionID());
   }
 
   private <M extends EntityMessage, R extends EntityResponse> EntityClientEndpoint<M, R> internalLookup(final EntityID entity, long version, final ClientInstanceID instance, final MessageCodec<M, R> codec, final Runnable closeHook) throws EntityException {
@@ -653,7 +655,7 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       throw t;
     }
 
-    if (queued) {
+    if (queued && !stateManager.isShutdown()) {
       inFlight.sent();
       if (inFlight.send()) {
         //  when encountering a send for anything other than an invoke, wait here before sending anything else
@@ -665,11 +667,10 @@ public class ClientEntityManagerImpl implements ClientEntityManager {
       } else {
         logger.debug("message not sent.  Make sure resend happens " + inFlight);
         if (!this.channel.getProductID().isReconnectEnabled()) {
-          inFlight.setResult(null, new ConnectionClosedException("connection closed"));
+          throwClosedExceptionOnMessage(inFlight, "connection not capable of resend");
         }
       }
     } else {
-      transactionSource.retire(inFlight.getTransactionID());
       throwClosedExceptionOnMessage(inFlight, "Connection closed before sending message");
     }
     return inFlight;

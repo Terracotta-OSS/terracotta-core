@@ -39,7 +39,7 @@ import com.tc.l2.state.ConsistencyManager.Transition;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -76,7 +76,7 @@ public class ActiveToPassiveReplicationTest {
     consistency = mock(ConsistencyManager.class);
     when(consistency.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
     ProcessTransactionHandler pth = mock(ProcessTransactionHandler.class);
-    when(pth.snapshotEntityList(any(Consumer.class))).thenReturn(Collections.emptyList());
+    when(pth.snapshotEntityList(any(Predicate.class))).thenReturn(Collections.emptyList());
     group = mock(GroupManager.class);
     when(group.isNodeConnected(any(NodeID.class))).thenReturn(Boolean.TRUE);
     replication = new ActiveToPassiveReplication(consistency, pth, mock(EntityPersistor.class), replicate, mock(Sink.class), group);

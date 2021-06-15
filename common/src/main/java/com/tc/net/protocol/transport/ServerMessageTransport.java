@@ -121,7 +121,7 @@ public class ServerMessageTransport extends MessageTransportBase {
     synchronized (status) {
       Assert.eval(status.isConnected());
       Assert.eval("Wrong connection ID: [" + getConnectionID() + "] != [" + ack.getConnectionId() + "]",
-                  !getConnectionID().isValid() || getConnectionID().equals(ack.getConnectionId()));
+                  !getConnectionID().isNull() || getConnectionID().equals(ack.getConnectionId()));
       status.established();
     }
   }

@@ -131,7 +131,11 @@ public class ClientMessageTransport extends MessageTransportBase {
       connection = connect(socket);
       openConnection(connection);
       NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
-      finishOpen(nid);
+      if (connection.isClosed()) {
+        throw new IOException("closed");
+      } else {
+        finishOpen(nid);
+      }
       return nid;
     } catch (CommStackMismatchException | IOException | MaxConnectionsExceededException | TCTimeoutException | RuntimeException e) {
       finishOpenWithException(e);
@@ -172,7 +176,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     getLogger().info("Resetting connection " + getConnectionID());
     this.disconnect();
     clearConnection();
-    resetIfNotEnd();
+    clearConnectionID();
   }
 
   private void handleHandshakeError(HandshakeResult result) throws TransportHandshakeException, MaxConnectionsExceededException,
@@ -193,8 +197,8 @@ public class ClientMessageTransport extends MessageTransportBase {
           cleanConnectionWithoutNotifyListeners();
           throw new CommStackMismatchException("Disconnected due to comm stack mismatch");
         case ERROR_RECONNECTION_REJECTED:
-          cleanConnectionWithoutNotifyListeners();
           fireTransportReconnectionRejectedEvent();
+          cleanConnectionWithoutNotifyListeners();
           throw new ReconnectionRejectedException(
                                                   "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
         case ERROR_REDIRECT_CONNECTION:
@@ -218,15 +222,15 @@ public class ClientMessageTransport extends MessageTransportBase {
     List<MessageTransportListener> tl = new ArrayList<MessageTransportListener>(this.getTransportListeners());
     this.removeTransportListeners();
     clearConnection();
+    clearConnectionID();
     this.addTransportListeners(tl);
-    resetIfNotEnd();
   }
 
   /**
    * Returns true if the MessageTransport was ever in an open state.
    */
   public synchronized boolean wasOpened() {
-    return this.opener != null && this.opener.isDone() && !this.opener.isCompletedExceptionally();
+    return this.opener != null && this.opener.isDone();
   }
 
   private synchronized CompletableFuture<NetworkStackID> startOpen() {
@@ -304,7 +308,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
       if (!getConnectionID().isNewConnection() && getConnectionID().isValid()) {
         // This is a reconnect
-        Assert.eval(!synAck.getConnectionId().isValid() || getConnectionID().equals(synAck.getConnectionId()));
+        Assert.eval(getConnectionID().equals(synAck.getConnectionId()));
       }
       getConnection().setTransportEstablished();
       setSynAckResult(synAck);
@@ -427,13 +431,13 @@ public class ClientMessageTransport extends MessageTransportBase {
         handshakeConnection();
       } catch (TCTimeoutException e) {
         clearConnection();
-        resetIfNotEnd();
+        clearConnectionID();
         throw e;
       } catch (ReconnectionRejectedException e) {
         throw new TCRuntimeException("Should not happen here: " + e);
       } catch (TransportHandshakeException e) {
         clearConnection();
-        resetIfNotEnd();
+        clearConnectionID();
         throw e;
       }
     } else {
@@ -460,9 +464,11 @@ public class ClientMessageTransport extends MessageTransportBase {
     if (wireNewConnection(connection)) {
       try {
         handshakeConnection();
-      } catch (Exception t) {
-        connection.close(100);
-        resetIfNotEnd();
+        if (!connection.isConnected()) {
+          throw new IOException("closed");
+        }
+      } catch (Throwable t) {
+        clearConnection();
         throw t;
       }
     }

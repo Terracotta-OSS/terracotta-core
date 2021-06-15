@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ServerID;
@@ -62,6 +61,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.terracotta.tripwire.Event;
 import org.terracotta.tripwire.TripwireFactory;
@@ -198,25 +198,25 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
       sync.begin();
       // start passive sync message
       LOGGER.debug("starting sync for " + newNode + " on session " + session);
-      Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(new Consumer<List<ManagedEntity>>() {
-        @Override
-        public void accept(List<ManagedEntity> sortedEntities) {
+      List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
+      Iterable<ManagedEntity> e = snapshotter.snapshotEntityList(entity -> {
           // We want to create the array of activity data.
-          List<SyncReplicationActivity.EntityCreationTuple> tuplesForCreation = new ArrayList<>();
-          for (ManagedEntity e : sortedEntities) {
-            SyncReplicationActivity.EntityCreationTuple data = e.startSync();
+            SyncReplicationActivity.EntityCreationTuple data = entity.startSync();
             // null creation data means that the entity, while in the list of entities, is
             // not to be synced because it has been destroyed or not yet fully created and
             // initiated
             if (data != null) {
-              tuplesForCreation.add(data);              
+              tuplesForCreation.add(data);
+              return true;
+            } else {
+              return false;
             }
-          }
-          replicateActivity(SyncReplicationActivity.
+          });
+
+      replicateActivity(SyncReplicationActivity.
               createStartSyncMessage(tuplesForCreation.
                   toArray(new SyncReplicationActivity.EntityCreationTuple[tuplesForCreation.size()])), Collections.singleton(session)).waitForCompleted();
-        }}
-      );
+
       for (ManagedEntity entity : e) {
         LOGGER.debug("starting sync for entity " + newNode + "/" + entity.getID());
         entity.sync(session);
@@ -298,7 +298,12 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
     ActivePassiveAckWaiter waiter = new ActivePassiveAckWaiter(this.passiveNodes, all, this);
     if (!all.isEmpty()) {
       SyncReplicationActivity.ActivityID activityID = activity.getActivityID();
-      waiters.put(activityID, waiter);
+
+      if (this.serverCheck.isStopped() || passiveSyncPool.isShutdown()) {
+        all.forEach(waiter::failedToSendToPassive);
+      } else {
+        waiters.put(activityID, waiter);
+      }
       // Note that we want to explicitly create the ReplicationEnvelope using a different helper if it is a local flush
       //  command.
       boolean isLocalFlush = (SyncReplicationActivity.ActivityType.FLUSH_LOCAL_PIPELINE == activity.getActivityType());
@@ -390,6 +395,14 @@ public class ActiveToPassiveReplication implements PassiveReplicationBroker, Gro
 
   public void close() {
     passiveSyncPool.shutdownNow();
+    while (!waiters.isEmpty()) {
+      LOGGER.info("waiters not empty on shutdown.  Removing:" + passiveNodes);
+      Iterator<Map.Entry<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter>> items = waiters.entrySet().iterator();
+      while (items.hasNext()) {
+        items.next().getValue().abandon();
+        items.remove();
+      }
+    }
   }
   // for test
   Map<SyncReplicationActivity.ActivityID, ActivePassiveAckWaiter> getWaiters() {

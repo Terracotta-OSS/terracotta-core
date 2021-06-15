@@ -27,8 +27,8 @@ import com.tc.logging.TCLogging;
 import com.tc.management.TerracottaManagement;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.impl.JMXSubsystem;
-import com.tc.util.ProductInfo;
 import com.tc.spi.Pauseable;
+import com.tc.util.ProductInfo;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -185,19 +185,11 @@ public class Bootstrap implements BootstrapService {
   }
 
   private static interface PauseableServer extends Server, Pauseable {
-    boolean isCrashed();
-    void crash();
+
   }
 
   private Server wrap(ServerConfigurationManager config, List<String> args, ServiceLocator loader, TCServerImpl impl) {
     return new PauseableServer() {
-      public boolean isCrashed() {
-        return impl.isCrashed();
-      }
-      
-      public void crash() {
-        impl.crash();
-      }
 
       @Override
       public Map<String, ?> getStateMap() {

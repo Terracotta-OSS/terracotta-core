@@ -49,6 +49,7 @@ public class ActivePassiveAckWaiter {
   private Runnable finalizer;
   private final Map<NodeID, ReplicationResultCode> results;
   private final PassiveReplicationBroker parent;
+  private volatile boolean abandoned = false;
 
   public ActivePassiveAckWaiter(Map<ServerID, SessionID> map, Set<SessionID> allPassiveNodes, PassiveReplicationBroker parent) {
     this.session = map;
@@ -62,12 +63,20 @@ public class ActivePassiveAckWaiter {
 
   public synchronized void waitForReceived() {
     try {
-      while (!this.receivedPending.isEmpty()) {
+      while (!abandoned && !this.receivedPending.isEmpty()) {
         wait();
+      }
+      if (abandoned) {
+        throw new InterruptedException();
       }
     } catch (InterruptedException ie) {
       L2Utils.handleInterrupted(LOGGER, ie);
     }
+  }
+
+  public synchronized void abandon() {
+    abandoned = true;
+    notifyAll();
   }
   
   public void runWhenCompleted(Runnable r) {
@@ -94,9 +103,12 @@ public class ActivePassiveAckWaiter {
 
   public synchronized void waitForCompleted() {
     try {
-      while (!this.completedPending.isEmpty()) {
+      while (!abandoned && !this.completedPending.isEmpty()) {
         wait();
-     }
+      }
+      if (abandoned) {
+        throw new InterruptedException();
+      }
     } catch (InterruptedException ie) {
       L2Utils.handleInterrupted(LOGGER, ie);
     }

@@ -26,4 +26,8 @@ public class TCServerRestartException extends TCRuntimeException {
   public TCServerRestartException(String message) {
     super(message);
   }
+
+  public TCServerRestartException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
