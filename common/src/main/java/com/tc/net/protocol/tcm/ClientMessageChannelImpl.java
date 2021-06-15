@@ -112,9 +112,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   @Override
   public ChannelID getChannelID() {
-    if (isConnected()) {
-      Assert.assertEquals(this.channelID, super.getChannelID());
-    }
     return this.channelID;
   }
 
