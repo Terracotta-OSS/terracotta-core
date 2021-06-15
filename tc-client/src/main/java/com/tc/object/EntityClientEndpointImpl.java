@@ -39,17 +39,21 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.InvokeMonitor;
 
 
 public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityResponse> implements EntityClientEndpoint<M, R> {
+
+  private static Logger LOGGER = LoggerFactory.getLogger(EntityClientEndpointImpl.class);
+
   private final InvocationHandler invocationHandler;
   private final byte[] configuration;
   private final EntityDescriptor invokeDescriptor;
@@ -413,7 +417,7 @@ public class EntityClientEndpointImpl<M extends EntityMessage, R extends EntityR
           releaseFuture = this.closer.submit(call);
         } catch (RejectedExecutionException re) {
           // connection already shutdown
-          close();
+          LOGGER.debug("connection already closed", re);
           releaseFuture = CompletableFuture.completedFuture(null);
         }
       }

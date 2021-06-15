@@ -347,7 +347,7 @@ public class ClientEntityManagerTest extends TestCase {
       // Expected.
       didRelease = false;
     }
-    assertFalse(didRelease);
+    assertTrue(didRelease);
   }
   
   // That that we can shut down while in a paused state without locking up.

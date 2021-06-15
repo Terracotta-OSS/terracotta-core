@@ -61,7 +61,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   @Override
   public synchronized boolean connectClient(ConnectionID connID) {
-    if (connID.getProductId().isInternal() || !connID.isValid()) {
+    if (connID.getProductId().isInternal() || connID.getChannelID() < 0) {
       // Always allow connections from internal products
       return true;
     }

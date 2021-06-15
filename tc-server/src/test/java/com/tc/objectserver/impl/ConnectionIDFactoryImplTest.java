@@ -119,11 +119,12 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   
   public void testListenerGetsRightProductType() {
     MessageChannel channel = mock(MessageChannel.class);
-    when(channel.getConnectionID()).thenReturn(new ConnectionID(JvmIDUtil.getJvmID(), 1L, ProductID.SERVER));
+    when(channel.getConnectionID()).thenReturn(new ConnectionID(JvmIDUtil.getJvmID(), 1L, ProductID.PERMANENT));
+    when(channel.getProductID()).thenReturn(ProductID.PERMANENT);
     connectionIDFactory.channelRemoved(channel);
     ArgumentCaptor<ConnectionID> cap = ArgumentCaptor.forClass(ConnectionID.class);
     verify(listener).connectionIDDestroyed(cap.capture());
-    Assert.assertEquals(ProductID.SERVER, cap.getValue().getProductId());
+    Assert.assertEquals(ProductID.PERMANENT, cap.getValue().getProductId());
   }
   
   private static MutableSequence createSequence() {
@@ -138,7 +139,9 @@ public class ConnectionIDFactoryImplTest extends TCTestCase {
   }
 
   private static MessageChannel channelWithId(long id) {
-    return when(mock(MessageChannel.class).getChannelID()).thenReturn(new ChannelID(id)).getMock();
+    MessageChannel channel = mock(MessageChannel.class);
+    when(channel.getProductID()).thenReturn(ProductID.PERMANENT);
+    return when(channel.getChannelID()).thenReturn(new ChannelID(id)).getMock();
   }
 
   private static ConnectionID idWith(String jvmId, long channelId) {
