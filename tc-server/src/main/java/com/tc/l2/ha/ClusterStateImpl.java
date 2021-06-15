@@ -137,6 +137,7 @@ public class ClusterStateImpl implements ClusterState {
       persistor.getClientStatePersistor().getConnectionIDSequence().setNext(nextAvailChannelID);
     }
     connections.add(connID);
+    logger.info("connection added {}", connID);
     if (connID.getProductId().isReconnectEnabled()) {
       persistor.addClientState(connID.getClientID(), connID.getProductId());
     }
@@ -147,6 +148,8 @@ public class ClusterStateImpl implements ClusterState {
     boolean removed = connections.remove(connectionID);
     if (!removed) {
       logger.debug("Connection ID not found, must be a failed reconnect : " + connectionID + " Current Connections count : " + connections.size());
+    } else {
+      logger.info("connection removed {}", connectionID);
     }
     try {
       if (connectionID.getProductId().isReconnectEnabled()) {

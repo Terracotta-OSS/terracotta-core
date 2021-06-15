@@ -197,8 +197,8 @@ public class ClientMessageTransport extends MessageTransportBase {
           cleanConnectionWithoutNotifyListeners();
           throw new CommStackMismatchException("Disconnected due to comm stack mismatch");
         case ERROR_RECONNECTION_REJECTED:
-          cleanConnectionWithoutNotifyListeners();
           fireTransportReconnectionRejectedEvent();
+          cleanConnectionWithoutNotifyListeners();
           throw new ReconnectionRejectedException(
                                                   "Reconnection rejected by L2 due to stack not found. Client will be unable to join the cluster again unless rejoin is enabled.");
         case ERROR_REDIRECT_CONNECTION:

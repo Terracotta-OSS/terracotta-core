@@ -50,8 +50,8 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
 
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
-    // internal or redirect
-    if (connectionID.getProductId().isInternal() || this.stripe == null) {
+    if (this.stripe == null || connectionID.getProductId().isInternal()) {
+    // internal client on active or diagnostic
       ConnectionID cid = internalClients.populateConnectionID(connectionID);
       if (connectionID.getProductId().isReconnectEnabled()) {
         fireCreationEvent(cid);
