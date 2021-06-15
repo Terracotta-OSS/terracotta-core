@@ -70,4 +70,6 @@ public interface GroupManager<M extends GroupMessage> extends PrettyPrintable {
   public TCConnectionManager getConnectionManager();
 
   public void stop();
+
+  public boolean isStopped();
 }

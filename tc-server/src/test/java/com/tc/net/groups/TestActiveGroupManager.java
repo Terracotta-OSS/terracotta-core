@@ -207,4 +207,11 @@ public class TestActiveGroupManager implements GroupManager<GroupMessage> {
   public TCConnectionManager getConnectionManager() {
     return null;
   }
+
+  @Override
+  public boolean isStopped() {
+    return false;
+  }
+
+
 }
