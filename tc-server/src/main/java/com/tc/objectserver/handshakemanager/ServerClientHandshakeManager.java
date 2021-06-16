@@ -47,6 +47,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -74,7 +75,7 @@ public class ServerClientHandshakeManager {
   private final DSOChannelManager        channelManager;
   private final ConsistencyManager       consistency;
   private final Logger logger;
-  private final Set<ClientID>            existingUnconnectedClients        = new HashSet<>();
+  private final Set<ClientID>            unconnectedClients        = new HashSet<>();
   private final Logger consoleLogger;
   private final Sink<VoltronEntityMessage> voltron;
   private final ProductInfo productInfo;
@@ -155,8 +156,8 @@ public class ServerClientHandshakeManager {
         // Now that we have processed everything from this resend, see if it was the last one.
         this.logger.debug("Removing client " + clientID + " from set of existing unconnected clients.");
         
-        if (this.existingUnconnectedClients.remove(clientID) && this.existingUnconnectedClients.isEmpty()) {
-          this.logger.debug("Last existing unconnected client (" + clientID + ") now connected.  Cancelling timer");
+        if (connectClient(clientID)) {
+          this.consoleLogger.info("Last unconnected client ({}) now connected.  Reconnection starting", clientID);
           start();
         }
       } else {
@@ -192,9 +193,9 @@ public class ServerClientHandshakeManager {
     if (!isStarted()) {
       this.logger
           .info("Reconnect window closing.  Killing any previously connected clients that failed to connect in time: "
-                + this.existingUnconnectedClients);
-      this.channelManager.closeAll(this.existingUnconnectedClients);
-      this.existingUnconnectedClients.clear();
+                + this.unconnectedClients);
+      this.channelManager.closeAll(this.unconnectedClients);
+      this.unconnectedClients.clear();
       this.consoleLogger.info("Reconnect window closed. All dead clients removed.");
       start();
     } else {
@@ -206,6 +207,12 @@ public class ServerClientHandshakeManager {
   private void start() {
     this.timer.cancel();
     final Set<NodeID> cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
+    if (!cids.isEmpty()) {
+      this.consoleLogger.info("Reconnection with {} clients ", cids.size());
+      if (cids.size() <= 10) {
+        this.consoleLogger.info("Reconnected clients - {}", cids);
+      }
+    }
     while (!cids.isEmpty() && !this.consistency.requestTransition(ServerMode.ACTIVE, ClientID.NULL_ID, ConsistencyManager.Transition.ADD_CLIENT)) {
       consoleLogger.info("request to add reconnect clients has been rejected, will try again in 5 seconds");
       try {
@@ -222,7 +229,7 @@ public class ServerClientHandshakeManager {
       }
     }
     this.state = State.STARTED;
-    notifyComplete();
+    notifyComplete(!cids.isEmpty());
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
     voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
@@ -233,7 +240,8 @@ public class ServerClientHandshakeManager {
     this.state = State.INIT;
   }
   
-  public void notifyComplete() {
+  private void notifyComplete(boolean log) {
+    consoleLogger.info("Reconnection complete");
     waitingForReconnect.forEach(ReconnectListener::reconnectComplete);
   }
   
@@ -248,7 +256,7 @@ public class ServerClientHandshakeManager {
       start();
     } else {
       for (ClientID connID : existingClients) {
-        this.existingUnconnectedClients.add(connID);
+        this.unconnectedClients.add(connID);
       }
       startReconnectWindow();
     }
@@ -257,9 +265,9 @@ public class ServerClientHandshakeManager {
   private void startReconnectWindow() {
     long reconnectTimeout = reconnectTimeoutSupplier.get();
     String message = "Starting reconnect window: " + reconnectTimeout + " ms. Waiting for "
-                     + this.existingUnconnectedClients.size() + " clients to connect.";
-    if (this.existingUnconnectedClients.size() <= 10) {
-      message += " Unconnected Clients - " + this.existingUnconnectedClients;
+                     + getUnconnectedClientsSize() + " clients to connect.";
+    if (getUnconnectedClientsSize() <= 10) {
+      message += " Unconnected Clients - " + getUnconnectedClients();
     }
     this.consoleLogger.info(message);
 
@@ -291,12 +299,17 @@ public class ServerClientHandshakeManager {
     if (this.state != State.INIT) { throw new AssertionError("Should be in STARTING state: " + this.state); }
   }
 
-  synchronized int getUnconnectedClientsSize() {
-    return this.existingUnconnectedClients.size();
+  synchronized Collection<ClientID> getUnconnectedClients() {
+    return new ArrayList<>(this.unconnectedClients);
   }
 
-  synchronized Set<ClientID> getUnconnectedClients() {
-    return this.existingUnconnectedClients;
+  synchronized int getUnconnectedClientsSize() {
+    return this.unconnectedClients.size();
+  }
+
+  synchronized boolean connectClient(ClientID cid) {
+    consoleLogger.info("Connecting client {}", cid);
+    return this.unconnectedClients.remove(cid) && this.unconnectedClients.isEmpty();
   }
 
   /**
@@ -313,6 +326,11 @@ public class ServerClientHandshakeManager {
     }
 
     @Override
+    public boolean cancel() {
+      return super.cancel();
+    }
+
+    @Override
     public void run() {
       this.timeToWait -= RECONNECT_WARN_INTERVAL;
       if (this.timeToWait > 0 && ServerClientHandshakeManager.this.getUnconnectedClientsSize() > 0) {
@@ -320,7 +338,7 @@ public class ServerClientHandshakeManager {
         String message = "Reconnect window active.  Waiting for " + ServerClientHandshakeManager.this.getUnconnectedClientsSize()
                          + " clients to connect. " + this.timeToWait + " ms remaining.";
         if (ServerClientHandshakeManager.this.getUnconnectedClientsSize() <= 10) {
-          message += " Unconnected Clients - " + ServerClientHandshakeManager.this.getUnconnectedClients();
+          message += " Unconnected Clients - " + getUnconnectedClients();
         }
         ServerClientHandshakeManager.this.consoleLogger.info(message);
 

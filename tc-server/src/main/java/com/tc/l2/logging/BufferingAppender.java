@@ -23,10 +23,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.OutputStreamAppender;
-import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.joran.spi.ConsoleTarget;
 import static com.tc.l2.logging.TCLogbackLogging.STDOUT_APPENDER;
-import java.io.OutputStream;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
