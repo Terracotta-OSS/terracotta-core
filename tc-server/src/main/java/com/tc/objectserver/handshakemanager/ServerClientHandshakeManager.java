@@ -241,7 +241,9 @@ public class ServerClientHandshakeManager {
   }
   
   private void notifyComplete(boolean log) {
-    consoleLogger.info("Reconnection complete");
+    if (log) {
+      consoleLogger.info("Reconnection complete");
+    }
     waitingForReconnect.forEach(ReconnectListener::reconnectComplete);
   }
   
