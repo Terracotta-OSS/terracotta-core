@@ -514,30 +514,40 @@ public class ProcessTransactionHandler implements ReconnectListener {
 
   public void handleResentMessage(VoltronEntityMessage resentMessage) {
     boolean cached = false;
+    ServerEntityAction cachedType = null;
     byte[] result = null;
     int index = -1;
     try {
       switch (resentMessage.getVoltronType()) {
         case CREATE_ENTITY:
           cached = this.persistor.getEntityPersistor().wasEntityCreatedInJournal(resentMessage.getEntityDescriptor().getEntityID(), resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+          cachedType = ServerEntityAction.CREATE_ENTITY;
           break;
         case DESTROY_ENTITY:
           cached = this.persistor.getEntityPersistor().wasEntityDestroyedInJournal(resentMessage.getEntityDescriptor().getEntityID(), resentMessage.getSource(), resentMessage.getTransactionID().toLong());
+          cachedType = ServerEntityAction.DESTROY_ENTITY;
           break;
         case RECONFIGURE_ENTITY:
           result = this.persistor.getEntityPersistor().reconfiguredResultInJournal(resentMessage.getEntityDescriptor().getEntityID(), resentMessage.getSource(), resentMessage.getTransactionID().toLong());
           if (result != null) {
             cached = true;
+            cachedType = ServerEntityAction.RECONFIGURE_ENTITY;
           }
           break;
         case FETCH_ENTITY:
+          cached = true;
+          cachedType = ServerEntityAction.FETCH_ENTITY;
+          throw ServerException.createBusyException(resentMessage.getEntityDescriptor().getEntityID());
         case RELEASE_ENTITY:
+          cached = true;
+          cachedType = ServerEntityAction.RELEASE_ENTITY;
+          throw ServerException.createBusyException(resentMessage.getEntityDescriptor().getEntityID());
         default:
           index = this.persistor.getTransactionOrderPersistor().getIndexToReplay(resentMessage.getSource(), resentMessage.getTransactionID());
           break;
       }
       if (cached) {
-        ServerEntityRequest request = new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
+        ServerEntityRequest request = new ServerEntityRequestImpl(resentMessage.getEntityDescriptor().getClientInstanceID(), cachedType, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
         ServerEntityRequestResponse response = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(resentMessage.getSource()), null, null, false);
         response.received();
         if (result != null) {
@@ -552,7 +562,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
         this.resendNewList.add(resentMessage);
       }
     } catch (ServerException ee) {
-      ServerEntityRequest request = new ServerEntityRequestImpl(ClientInstanceID.NULL_ID, ServerEntityAction.CREATE_ENTITY, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
+      ServerEntityRequest request = new ServerEntityRequestImpl(resentMessage.getEntityDescriptor().getClientInstanceID(), cachedType, resentMessage.getSource(), resentMessage.getTransactionID(), resentMessage.getOldestTransactionOnClient(), true);
       ServerEntityRequestResponse response = new ServerEntityRequestResponse(request, this::insertMessageInStream, ()->safeGetChannel(resentMessage.getSource()), null, null, false);
 
       response.received();
@@ -894,7 +904,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
           EntityExistenceHelpers.recordDestroyEntity(persistor.getEntityPersistor(), entityManager, getNodeID(), getTransaction(), getOldestTransactionOnClient(), eid, e);
           break;
         case FETCH_ENTITY:
-          if (e.getType() != ServerExceptionType.ENTITY_NOT_FOUND) {
+          if (e.getType() != ServerExceptionType.ENTITY_NOT_FOUND && e.getType() != ServerExceptionType.ENTITY_BUSY_EXCEPTION) {
             // disconnect the client due to error after a reference count has been taken
             // NOT_FOUND is pre-reference count
             disconnectClientDueToFailure(getNodeID(), e);
