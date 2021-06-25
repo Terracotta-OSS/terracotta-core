@@ -105,11 +105,7 @@ public class DefaultStartupCommandBuilder implements StartupCommandBuilder {
       try {
         installServer();
         String startScript = getAbsolutePath(Paths.get("server","bin", "start-tc-server"));
-        if (consistentStartup) {
-          builtCommand = new String[]{startScript, "-c", "-f", tcConfig.toString(), "-n", serverName};
-        } else {
-          builtCommand = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName};
-        }
+        builtCommand = new String[]{startScript, "-f", tcConfig.toString(), "-n", serverName, "JAVA_OPTS=-Dlogback.configurationFile=logback-test.xml"};
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
