@@ -66,7 +66,9 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
 
   @Override
   public synchronized <T extends Entity, C, U> EntityRef<T, C, U> getEntityRef(Class<T> cls, long version, String name) throws EntityNotProvidedException {
-    checkShutdown();
+    if (isShutdown) {
+      throw new ConnectionShutdownException("Already shut down");
+    }
     @SuppressWarnings("unchecked")
     EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> service = (EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U>)getEntityService(cls);
     if (null == service) {
@@ -92,20 +94,15 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
 
   @Override
   public synchronized void close() {
-    checkShutdown();
-    shutdown.run();
-    isShutdown = true;
+    if (!isShutdown) {
+      shutdown.run();
+      isShutdown = true;
+    }
   }
 
   @Override
   public boolean isValid() {
     return entityManager.get().isValid();
-  }
-  
-  private void checkShutdown() {
-    if (isShutdown) {
-      throw new ConnectionShutdownException("Already shut down");
-    }
   }
 
   @Override
@@ -125,35 +122,5 @@ public class TerracottaConnection implements Connection, PrettyPrintable {
     MapListPrettyPrint print = new MapListPrettyPrint();
     this.prettyPrint(print);
     return "TerracottaConnection{" + print + '}';
-  }
-  
-  private static class EntityKey<T extends Entity> {
-    private final Class<T> cls;
-    private final String name;
-
-    private EntityKey(Class<T> cls, String name) {
-      this.cls = cls;
-      this.name = name;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final EntityKey<?> entityKey = (EntityKey<?>) o;
-
-      if (!cls.equals(entityKey.cls)) return false;
-      if (!name.equals(entityKey.name)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = cls.hashCode();
-      result = 31 * result + name.hashCode();
-      return result;
-    }
   }
 }
