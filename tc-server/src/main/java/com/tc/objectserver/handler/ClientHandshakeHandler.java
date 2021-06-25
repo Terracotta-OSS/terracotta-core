@@ -18,12 +18,9 @@
  */
 package com.tc.objectserver.handler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
-import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -34,33 +31,36 @@ import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.net.core.ProductID;
 import com.tc.spi.Guardian;
+import com.tc.util.ProductInfo;
+import com.tc.util.version.Version;
+import com.tc.util.version.VersionCompatibility;
 
 public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshakeMessage> {
 
-  private static final Logger LOGGER                     = LoggerFactory.getLogger(ClientHandshakeHandler.class);
-
   private ServerClientHandshakeManager handshakeManager;
   private StateManager                 stateManager;
-  private final String                 serverName;
   private final EntityManager          entityManager;
   private final ProcessTransactionHandler transactionHandler;
-  private final ConsistencyManager     consistencyMgr;
+  private final Version               serverVersion;
 
-  public ClientHandshakeHandler(String serverName, EntityManager entityManager, ProcessTransactionHandler transactionHandler, ConsistencyManager cm) {
-    this.serverName = serverName;
+  public ClientHandshakeHandler(EntityManager entityManager, ProcessTransactionHandler transactionHandler) {
     this.entityManager = entityManager;
     this.transactionHandler = transactionHandler;
-    this.consistencyMgr = cm;
+    this.serverVersion = new Version(ProductInfo.getInstance().version());
   }
 
   @Override
   public void handleEvent(ClientHandshakeMessage clientMsg) {
     String cid = clientMsg.getClientVersion() + ":" + clientMsg.getName() + ":" + clientMsg.getUUID() + ":" + clientMsg.getClientPID();
+    String version = clientMsg.getClientVersion();
+    Version client = new Version(version);
+
     try {
       if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
-      }
-      if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
+      } else if (VersionCompatibility.isNewer(client, serverVersion)) {
+        this.handshakeManager.notifyClientRefused(clientMsg, "client version is newer than the server");
+      } else if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
       } else if (stateManager.isActiveCoordinator()) {
         this.handshakeManager.notifyClientConnect(clientMsg, entityManager, transactionHandler);
