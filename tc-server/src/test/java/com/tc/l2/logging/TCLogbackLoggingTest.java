@@ -78,11 +78,12 @@ public class TCLogbackLoggingTest {
     // test that console logger is properly installed
     Logger test = LoggerFactory.getLogger(CONSOLE);
     test.info("this is a test");
-    assertThat(sysout.getLog(), containsString("this is a test"));
-    sysout.clearLog();
     assertThat(sysout.getLog(), not(containsString("this is a test")));
     File f = temp.newFolder();
     TCLogbackLogging.redirectLogging(f);
+    assertThat(sysout.getLog(), containsString("this is a test"));
+    sysout.clearLog();
+    assertThat(sysout.getLog(), not(containsString("this is a test")));
     System.out.println("PRINTING " + f.listFiles()[0].toPath());
     Files.readAllLines(f.listFiles()[0].toPath()).forEach(System.out::println);
     System.out.println("FINISHED " + f.listFiles()[0].toPath());
@@ -101,10 +102,11 @@ public class TCLogbackLoggingTest {
     // test that console logger is properly installed
     Logger test = LoggerFactory.getLogger(CONSOLE);
     test.info("this is a test");
-    assertThat(sysout.getLog(), containsString("this is a test"));
+    assertThat(sysout.getLog(), not(containsString("this is a test")));
 
     File folder = temp.newFolder();
     TCLogbackLogging.redirectLogging(folder);
+    assertThat(sysout.getLog(), containsString("this is a test"));
     LoggerFactory.getLogger(CONSOLE).info("flush1");
     LoggerFactory.getLogger(CONSOLE).info("flush2");
     LoggerFactory.getLogger(CONSOLE).info("flush3");

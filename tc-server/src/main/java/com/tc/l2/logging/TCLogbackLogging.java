@@ -134,9 +134,9 @@ public class TCLogbackLogging {
           // buffering.  If no continuing appender just shut off buffering
           if (continuingAppender != null) {
             root.detachAppender(current);
+            ((BufferingAppender) current).sendContentsTo(continuingAppender::doAppend);
             root.addAppender(continuingAppender);
             console.addAppender(current);
-            ((BufferingAppender) current).sendContentsTo(continuingAppender::doAppend);
           } else {
             ((BufferingAppender) current).sendContentsTo(e->{});
           }
