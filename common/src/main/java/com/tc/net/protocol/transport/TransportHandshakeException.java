@@ -29,11 +29,11 @@ public class TransportHandshakeException extends IOException {
     super(message);
   }
   
-  TransportHandshakeException(Exception parent) {
+  TransportHandshakeException(Throwable parent) {
     super(parent);
   }
 
-  TransportHandshakeException(String message, Exception parent) {
+  TransportHandshakeException(String message, Throwable parent) {
     super(message, parent);
   }
 }

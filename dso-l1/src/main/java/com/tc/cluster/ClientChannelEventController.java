@@ -65,17 +65,12 @@ public class ClientChannelEventController {
 
   private void channelClosed(ChannelEvent event) {
     LOGGER.debug("channel closed:" + event.getChannelID());
-    requestDisconnect();
+    clientHandshakeManager.shutdown();
   }
 
   private void channelReconnectionRejected() {
     LOGGER.debug("channel rejected");
-    requestDisconnect();
-  }
-
-  private void requestDisconnect() {
     clientHandshakeManager.fireNodeError();
-    //Shutdown instead of disconnect as now it should go into disconnected state
     clientHandshakeManager.shutdown();
     LOGGER.error("Reconnection was rejected from server, but rejoin is not enabled. This client will never be able to join the cluster again.");
   }
@@ -117,6 +112,9 @@ public class ClientChannelEventController {
           break;        
         case TRANSPORT_RECONNECTION_REJECTED_EVENT:
           controller.channelReconnectionRejected();
+          break;
+        case TRANSPORT_CLOSED_EVENT:
+          controller.channelClosed(event);
           break;
         default:
           LOGGER.warn("Ignoring unexpected channel event " + event.getType() + " for channel " + eventChannelId);

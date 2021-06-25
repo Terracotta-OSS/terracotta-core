@@ -257,7 +257,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       return; 
     }
     super.closeEvent(event);
-    setSynAckResult(new IOException("connection closed"));
+    clearAckWaiter(new IOException("connection closed"));
   }
 
   @Override
@@ -289,6 +289,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       handleHandshakeError(new TransportHandshakeErrorContext(
                                                               "Received a message that was not a SYN_ACK while waiting for SYN_ACK: "
                                                                   + message, TransportHandshakeError.ERROR_HANDSHAKE));
+      clearAckWaiter(new IOException("expecting syn ack but got " + message.getClass().getName()));
     } else {
       SynAckMessage synAck = (SynAckMessage) message;
       if (synAck.hasErrorContext()) {
@@ -312,22 +313,25 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  private synchronized CompletableFuture<SynAckMessage> createAckWaiter() {
+  private synchronized CompletableFuture<SynAckMessage> createAckWaiter() throws TransportHandshakeException {
     if (this.waitForSynAckResult == null) {
       this.waitForSynAckResult = new CompletableFuture<>();
     } else {
-      throw new AssertionError("duplicate handshake");
+      throw new TransportHandshakeException("duplicate handshake");
     }
     return this.waitForSynAckResult;
   }
-  
-  private synchronized void setSynAckResult(Object msg) {
+
+  private synchronized void clearAckWaiter(Throwable e) {
     if (this.waitForSynAckResult != null) {
-      if (msg instanceof Exception) {
-        this.waitForSynAckResult.completeExceptionally((Exception)msg);
-      } else {
-        this.waitForSynAckResult.complete((SynAckMessage)msg);
-      }
+      this.waitForSynAckResult.completeExceptionally(e);
+      this.waitForSynAckResult = null;
+    }
+  }
+
+  private synchronized void setSynAckResult(SynAckMessage msg) {
+    if (this.waitForSynAckResult != null) {
+      this.waitForSynAckResult.complete(msg);
       this.waitForSynAckResult = null;
     }
   }
@@ -364,19 +368,29 @@ public class ClientMessageTransport extends MessageTransportBase {
     try {
       SynAckMessage synAck = sendSyn().get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT, TimeUnit.MILLISECONDS);
       return new HandshakeResult(synAck);
+    } catch (TransportHandshakeException t) {
+      clearAckWaiter(t);
+      throw t;
     } catch (InterruptedException e) {
+      clearAckWaiter(e);
       throw new TransportHandshakeException(e);
-    } catch (ExecutionException | TimeoutException e) {
-      throw new TransportHandshakeException("Client was able to establish connection with server but handshake " +
-          "with server failed.", e);
+    } catch (ExecutionException e) {
+      clearAckWaiter(e.getCause());
+      throw new TransportHandshakeException(e.getCause());
+    } catch (TimeoutException e) {
+      clearAckWaiter(e);
+      throw new TCTimeoutException(e);
+    } catch (Throwable t) {
+      clearAckWaiter(t);
+      throw new TransportHandshakeException(t);
     }
   }
 
-  private Future<SynAckMessage> sendSyn() {
+  private Future<SynAckMessage> sendSyn() throws TransportHandshakeException {
     CompletableFuture<SynAckMessage> targetFuture = createAckWaiter();
     synchronized (this.status) {
       if (!this.status.isAlive()) {
-        targetFuture.completeExceptionally(new IOException("closed"));
+        clearAckWaiter(new IOException("closed"));
         return targetFuture;
       }
       
