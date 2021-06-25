@@ -102,7 +102,7 @@ public class Bootstrap implements BootstrapService {
     String longProductString = info.toLongString();
     CONSOLE.info(longProductString);
 
-    CONSOLE.info("Extensions:");
+    CONSOLE.info("Installed extensions:");
     for (String ext : info.getExtensions()) {
       CONSOLE.info(ext);
     }
