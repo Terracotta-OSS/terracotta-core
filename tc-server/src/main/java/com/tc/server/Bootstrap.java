@@ -70,9 +70,6 @@ public class Bootstrap implements BootstrapService {
       args
     );
 
-    writeVersion(setup.getProductInfo());
-    writePID();
-
     ThrowableHandler throwableHandler = new BootstrapThrowableHandler(LoggerFactory.getLogger(TCServerImpl.class));
     TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler, Integer.toString(System.identityHashCode(this)), out != null);
 
@@ -86,6 +83,8 @@ public class Bootstrap implements BootstrapService {
       TCLogbackLogging.setServerName(setup.getServerConfiguration().getName());
       TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation());
 
+      writeVersion(setup.getProductInfo());
+      writePID();
       writeSystemProperties();
 
       impl.start();
