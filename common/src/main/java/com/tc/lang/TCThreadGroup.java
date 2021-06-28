@@ -113,7 +113,7 @@ public class TCThreadGroup extends ThreadGroup {
         (t instanceof ForkJoinWorkerThread && ((ForkJoinWorkerThread)t).getPool() == ForkJoinPool.commonPool()))) {
       //  this is horrible but skip threads that are system threads created by either
       //  an ExecutorService using the default thread factory or the ForkJoin common pool
-      //  in the case of the ThreadPoolExecutorService, these threads will be cleaned up with an executor
+      //  in the case of the ThreadPoolExecutorService, these threads will be cleaned up with an executor finalizer
       //  in the case of commonPool, that's up to the JDK to manage
       return true;
     } else {

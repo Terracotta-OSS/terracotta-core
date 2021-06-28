@@ -78,6 +78,7 @@ public class Bootstrap implements BootstrapService {
 
     TCServerImpl impl = new TCServerImpl(setup, threadGroup);
     Server server = wrap(setup, args, locator, impl);
+    boolean redirected = false;
     try {
       ServerEnv.setDefaultServer(server);
 
@@ -85,15 +86,24 @@ public class Bootstrap implements BootstrapService {
 
       TCLogbackLogging.setServerName(setup.getServerConfiguration().getName());
       TCLogbackLogging.redirectLogging(setup.getServerConfiguration().getLogsLocation());
+      redirected = true;
 
       writeSystemProperties();
 
       impl.start();
     } catch (ConfigurationException config) {
       throwableHandler.handleThrowable(Thread.currentThread(), config);
+      if (config.getMessage().equals("print usage information")) {
+        // unfortunate but this is how we swallow logging for now.
+        redirected = true;
+      }
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
       throw t;
+    } finally {
+      if (!redirected) {
+        TCLogbackLogging.redirectLogging(null);
+      }
     }
     return server;
   }
