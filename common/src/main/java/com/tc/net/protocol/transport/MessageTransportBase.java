@@ -193,7 +193,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   @Override
   public void sendToConnection(TCNetworkMessage message) throws IOException {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
-    if (!status.isClosed()) {
+    if (!status.isEnd()) {
       connection.putMessage(message);
     } else {
       throw new IOException("Couldn't send message status: " + status);
@@ -350,7 +350,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected boolean wireNewConnection(TCConnection conn) {
     synchronized (status) {
-      if (this.status.isClosed()) {
+      if (this.status.isEnd()) {
         getLogger().warn("Connection stack is already closed. " + this.status + "; Conn: " + conn);
         conn.removeListener(this);
         conn.asynchClose();
