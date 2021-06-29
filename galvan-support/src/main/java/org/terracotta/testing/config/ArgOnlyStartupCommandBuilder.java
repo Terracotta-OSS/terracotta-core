@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.Properties;
@@ -106,12 +105,7 @@ public class ArgOnlyStartupCommandBuilder implements StartupCommandBuilder {
     if (builtCommand == null) {
       try {
         installServer();
-        String startScript = getAbsolutePath(Paths.get("server","bin", "start-tc-server"));
-        if (consistentStartup) {
-          builtCommand = new String[]{"-c", "-f", serverWorkingDir.resolve(tcConfig).toString(), "-n", serverName};
-        } else {
-          builtCommand = new String[]{"-f", serverWorkingDir.resolve(tcConfig).toString(), "-n", serverName};
-        }
+        builtCommand = new String[]{"-f", serverWorkingDir.resolve(tcConfig).toString(), "-n", serverName};
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

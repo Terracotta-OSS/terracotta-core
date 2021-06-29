@@ -1,5 +1,5 @@
 <configuration>
-  <property resource="logbackVars.properties" />
+  <property file="logbackVars.properties" />
   <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender"/>
 
   <appender name="JFR" class="org.terracotta.tripwire.JFRAppender">

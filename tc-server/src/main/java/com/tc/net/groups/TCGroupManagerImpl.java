@@ -126,7 +126,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   private final ConnectionPolicy                            connectionPolicy;
   private final CopyOnWriteArrayList<GroupEventsListener>   groupListeners              = new CopyOnWriteArrayList<>();
   private final Map<String, GroupMessageListener<? extends GroupMessage>>           messageListeners            = new ConcurrentHashMap<>();
-  private final Map<MessageID, GroupResponse<AbstractGroupMessage>>               pendingRequests             = new ConcurrentHashMap<>();
+  private final Map<MessageID, GroupResponseImpl>               pendingRequests             = new ConcurrentHashMap<>();
   private final AtomicBoolean                               isStopped                   = new AtomicBoolean(false);
   private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<>();
   private final Timer                                       handshakeTimer              = new Timer(ServerEnv.getServer().getIdentifier() +
@@ -475,8 +475,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
   private void notifyAnyPendingRequests(TCGroupMember member) {
     synchronized (pendingRequests) {
-      for (GroupResponse<AbstractGroupMessage> groupResponse : pendingRequests.values()) {
-        GroupResponseImpl response = (GroupResponseImpl) groupResponse;
+      for (GroupResponseImpl response : pendingRequests.values()) {
         response.notifyMemberDead(member);
       }
     }
@@ -551,14 +550,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (isDebugLogging()) {
       debugInfo("Sending to " + nodeID + " and Waiting for Response : " + msg.getMessageID());
     }
-    GroupResponseImpl groupResponse = new GroupResponseImpl(this);
+    GroupResponseImpl groupResponse = new GroupResponseImpl();
     MessageID msgID = msg.getMessageID();
     TCGroupMember m = getMember(nodeID);
     if ((m != null) && m.isReady()) {
       GroupResponse<AbstractGroupMessage> old = pendingRequests.put(msgID, groupResponse);
       Assert.assertNull(old);
       groupResponse.sendTo(m, msg);
-      groupResponse.waitForResponses(getNodeID());
       pendingRequests.remove(msgID);
     } else {
       String errorMsg = "Node " + nodeID + " not present in the group. Ignoring Message : " + msg;
@@ -587,12 +585,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     if (isDebugLogging()) {
       debugInfo("Sending to " + nodeIDs + " and Waiting for Response : " + msg.getMessageID());
     }
-    GroupResponseImpl groupResponse = new GroupResponseImpl(this);
+    GroupResponseImpl groupResponse = new GroupResponseImpl();
     MessageID msgID = msg.getMessageID();
     GroupResponse<AbstractGroupMessage> old = pendingRequests.put(msgID, groupResponse);
     Assert.assertNull(old);
     groupResponse.sendAll(msg, nodeIDs);
-    groupResponse.waitForResponses(getNodeID());
     pendingRequests.remove(msgID);
     if (isDebugLogging()) {
       debugInfo("Complete from " + nodeIDs + " : " + msg.getMessageID());
@@ -725,7 +722,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   }
 
   private boolean notifyPendingRequests(MessageID requestID, AbstractGroupMessage gmsg, ServerID nodeID) {
-    GroupResponseImpl response = (GroupResponseImpl) pendingRequests.get(requestID);
+    GroupResponseImpl response = pendingRequests.get(requestID);
     if (response != null) {
       response.addResponseFrom(nodeID, gmsg);
       return true;
@@ -835,14 +832,12 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.discover.removeNode(new Node(host, port, group));
   }
 
-  private static class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {
+  private class GroupResponseImpl implements GroupResponse<AbstractGroupMessage> {
 
     private final Set<ServerID>      waitFor   = new HashSet<>();
     private final List<AbstractGroupMessage> responses = new ArrayList<>();
-    private final TCGroupManagerImpl manager;
 
-    GroupResponseImpl(TCGroupManagerImpl manager) {
-      this.manager = manager;
+    GroupResponseImpl() {
     }
 
     @Override
@@ -871,18 +866,19 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         Runnable sentCallback = null;
         member.send(msg, sentCallback);
       } else {
-        manager.closeMember(member);
+        closeMember(member);
         throw new GroupException("Send to a not ready member " + member);
       }
+      waitForResponses(getNodeID());
     }
 
     // public synchronized void sendAll(GroupMessage msg) {
     // sendAll(msg, manager.members.keySet());
     // }
 
-    public synchronized void sendAll(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) {
+    public synchronized void sendAll(AbstractGroupMessage msg, Set<? extends NodeID> nodeIDs) throws GroupException {
       final boolean debug = msg instanceof L2StateMessage;
-      for (TCGroupMember m : manager.getMembers()) {
+      for (TCGroupMember m : getMembers()) {
         if (!nodeIDs.contains(m.getPeerNodeID())) {
           if (debug) {
             if (isDebugLogging()) {
@@ -904,6 +900,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
           logger.warn("SendAllAndWait to a not ready member " + m);
         }
       }
+      waitForResponses(getNodeID());
     }
 
     public synchronized void addResponseFrom(ServerID nodeID, AbstractGroupMessage gmsg) {
@@ -928,9 +925,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
       notifyAll();
     }
 
-    public synchronized void waitForResponses(ServerID sender) throws GroupException {
+    private void waitForResponses(ServerID sender) throws GroupException {
       long start = System.currentTimeMillis();
-      while (!waitFor.isEmpty() && !manager.isStopped()) {
+      while (!waitFor.isEmpty() && !isStopped()) {
         try {
           this.wait(5000);
           long end = System.currentTimeMillis();
@@ -941,6 +938,9 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
         } catch (InterruptedException e) {
           throw new GroupException(e);
         }
+      }
+      if (isStopped()) {
+        waitFor.clear();
       }
     }
   }

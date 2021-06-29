@@ -19,7 +19,6 @@
 package com.tc.net.groups;
 
 import com.tc.net.NodeID;
-import com.tc.net.groups.GroupMessage;
 
 import java.util.List;
 

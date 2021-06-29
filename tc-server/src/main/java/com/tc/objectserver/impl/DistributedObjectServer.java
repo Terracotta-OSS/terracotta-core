@@ -686,7 +686,7 @@ public class DistributedObjectServer {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
     }
 
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, consistencyMgr), 1, maxStageSize);
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
     Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
@@ -861,7 +861,7 @@ public class DistributedObjectServer {
       this.configSetupManager.close();
       barrier.countDown();
     } else {
-      logger.info("L2 Exiting...");
+      consoleLogger.info("Server Exiting...");
       TCLogbackLogging.resetLogging();
       stopped.complete(null);
     }
@@ -874,11 +874,11 @@ public class DistributedObjectServer {
       if (immediate) {
         threadGroup.interrupt();
       } else if (!threadGroup.retire(TimeUnit.SECONDS.toMillis(30L), e->L2Utils.handleInterrupted(logger, e))) {
-        logger.warn("unable to retire server threads");
+        consoleLogger.warn("unable to retire server threads");
         threadGroup.printLiveThreads(logger::warn);
         threadGroup.interrupt();
       }
-      logger.info("L2 Exiting...");
+      consoleLogger.info("Server Exiting...");
     } finally {
       TCLogbackLogging.resetLogging();
       stopped.complete(null);
@@ -1282,9 +1282,8 @@ public class DistributedObjectServer {
     return configSetupManager;
   }
 
-  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, ConsistencyManager cm) {
-    return new ClientHandshakeHandler(this.configSetupManager.getServerConfiguration().getName(), entities,
-                                      processTransactionHandler, cm);
+  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler) {
+    return new ClientHandshakeHandler(entities, processTransactionHandler);
   }
 
   // for tests only

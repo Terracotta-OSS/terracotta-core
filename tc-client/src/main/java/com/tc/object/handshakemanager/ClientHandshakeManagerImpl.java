@@ -81,8 +81,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   @Override
   public  void shutdown() {
     synchronized (this) {
-      isShutdown = true;
-      notifyAll();
+      if (!isShutdown) {
+        isShutdown = true;
+        notifyAll();
+      } else {
+        return;
+      }
     }
     shutdownCallbacks();
   }

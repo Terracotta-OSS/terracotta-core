@@ -70,20 +70,31 @@ public class BufferingAppender extends OutputStreamAppender<ILoggingEvent> {
   @Override
   protected void append(ILoggingEvent eventObject) {
     if (bufferLogs) {
-      while (buffer.size() > 1024) {
+      while (buffer.size() > 4096) {
         buffer.poll();
       }
       buffer.add(eventObject);
+    } else {
+      //  be paranoid about not losing any buffer lines in the
+      // buffer during transition.  
+      drainBuffer(null);
+      super.append(eventObject);
     }
-    super.append(eventObject);
   }
 
-  public void sendContentsTo(Consumer<ILoggingEvent> otherAppender) {
+  private void drainBuffer(Consumer<ILoggingEvent> other) {
     while (true) {
       ILoggingEvent event = this.buffer.poll();
       if (event == null) break;
-      otherAppender.accept(event);
+      super.append(event);
+      if (other != null) {
+        other.accept(event);
+      }
     }
+  }
+
+  public void sendContentsTo(Consumer<ILoggingEvent> otherAppender) {
+    drainBuffer(otherAppender);
     bufferLogs = false;
   }
 }

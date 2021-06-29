@@ -54,9 +54,6 @@ enum MessageTransportState {
    */
   STATE_ESTABLISHED("ESTABLISHED"),
 
-  // Transport Closed
-  STATE_CLOSED("CLOSED"),
-
   // Transport got disconnected -- probably health checker didnt like the client
   STATE_DISCONNECTED("DISCONNECTED"),
 

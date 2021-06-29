@@ -64,10 +64,6 @@ class MessageTransportStatus {
   void established() {
     stateChange(MessageTransportState.STATE_ESTABLISHED);
   }
-
-  void closed() {
-    stateChange(MessageTransportState.STATE_CLOSED);
-  }
   
   void connected() {
     stateChange(MessageTransportState.STATE_CONNECTED);
@@ -114,10 +110,6 @@ class MessageTransportStatus {
   
   boolean isDisconnected() {
     return checkState(MessageTransportState.STATE_DISCONNECTED);
-  }
-  
-  boolean isClosed() {
-    return checkState(MessageTransportState.STATE_CLOSED);
   }
   
   boolean isConnected() {
