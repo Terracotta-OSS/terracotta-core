@@ -33,9 +33,12 @@ import com.tc.util.sequence.MutableSequence;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelManagerEventListener {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionIDFactoryImpl.class);
   private final MutableSequence                   connectionIDSequence;
   private final ConnectionIDFactory                        internalClients;
   private StripeID                                stripe;
@@ -50,16 +53,14 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
 
   @Override
   public ConnectionID populateConnectionID(ConnectionID connectionID) {
-    if (this.stripe == null || connectionID.getProductId().isInternal()) {
+    StripeID stripeid = getStripeID();
+    if (stripeid == null || !connectionID.getProductId().isReconnectEnabled()) {
     // internal client on active or diagnostic
       ConnectionID cid = internalClients.populateConnectionID(connectionID);
-      if (connectionID.getProductId().isReconnectEnabled()) {
-        fireCreationEvent(cid);
-      }
       return cid;
     } else if (!new ChannelID(connectionID.getChannelID()).isValid()) {
       return nextConnectionId(connectionID.getJvmID(), connectionID.getProductId());
-    } else if (!stripe.getName().equals(connectionID.getServerID())) {
+    } else if (!stripeid.getName().equals(connectionID.getServerID())) {
       return ConnectionID.NULL_ID;
     } else {
       return makeConnectionId(connectionID.getJvmID(), connectionID.getChannelID(), connectionID.getProductId());
@@ -71,12 +72,12 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
     }
 
   private ConnectionID formConnectionId(String jvmID, long channelID, ProductID productId) {
-    Assert.assertNotNull(stripe);
+    Assert.assertNotNull(getStripeID());
     productId = checkCompatibility(productId);
     if (productId == null) {
       return ConnectionID.NULL_ID;
     }
-    ConnectionID rv = new ConnectionID(jvmID, channelID, stripe.getName(), productId);
+    ConnectionID rv = new ConnectionID(jvmID, channelID, getStripeID().getName(), productId);
     fireCreationEvent(rv);
     return rv;
   }
@@ -124,11 +125,16 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
   }
 
   @Override
-  public void activate(StripeID stripeID, long nextAvailChannelID) {
+  public synchronized void activate(StripeID stripeID, long nextAvailChannelID) {
     this.stripe = stripeID;
+    LOGGER.info("activating connectionid factory stripe:{} next id: {}", stripeID, nextAvailChannelID);
     if (nextAvailChannelID >= 0) {
       this.connectionIDSequence.setNext(nextAvailChannelID);
     }
+  }
+
+  private synchronized StripeID getStripeID() {
+    return this.stripe;
   }
 
   @Override
@@ -143,7 +149,7 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, ChannelMana
 
   @Override
   public void channelRemoved(MessageChannel channel)  {
-    Assert.assertNotNull(stripe);
+    Assert.assertNotNull(getStripeID());
     if (channel.getProductID().isReconnectEnabled()) {
       fireDestroyedEvent(channel.getConnectionID());
     }
