@@ -24,6 +24,7 @@ import com.tc.l2.ha.ClusterState;
 import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.util.Assert;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -146,11 +147,11 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   public void initMessage(ClusterState state) {
     switch (getType()) {
       case COMPLETE_STATE:
-        nextAvailableChannelID = state.getNextAvailableChannelID();
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
         configSyncData = state.getConfigSyncData();
         nextAvailableGID = state.getStartGlobalMessageID();
+        nextAvailableChannelID = state.getNextAvailableChannelID();
         break;
       default:
         throw new AssertionError("Wrong Type : " + getType());
@@ -162,6 +163,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case COMPLETE_STATE:
         state.setNextAvailableChannelID(nextAvailableChannelID);
         for (ConnectionID id : connectionIDs) {
+          Assert.assertTrue(id.getChannelID() < nextAvailableChannelID);
           state.addNewConnection(id);
         }
         // trigger local stripeID ready event after StripeIDMap loaded.

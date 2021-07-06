@@ -49,7 +49,7 @@ public class ClusterStateImpl implements ClusterState {
   private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<ConnectionID>());
   private long                                      nextAvailChannelID     = -1;
   private long                                      globalMessageID = -1;
-  private State                                     currentState;
+  private volatile State                                     currentState;
   private byte[]                                    configSyncData = new byte[0];
 
   public ClusterStateImpl(Persistor persistor, 
@@ -61,27 +61,28 @@ public class ClusterStateImpl implements ClusterState {
   }
 
   @Override
-  public long getNextAvailableChannelID() {
+  public synchronized long getNextAvailableChannelID() {
     return nextAvailChannelID;
   }
 
   @Override
-  public long getStartGlobalMessageID() {
+  public synchronized long getStartGlobalMessageID() {
     return globalMessageID;
   }
 
-  public void setStartGlobalMessageID(long id) {
+  public synchronized void setStartGlobalMessageID(long id) {
     globalMessageID = id;
   }
 
   @Override
-  public void setNextAvailableChannelID(long nextAvailableCID) {
+  public synchronized void setNextAvailableChannelID(long nextAvailableCID) {
     if (nextAvailableCID < nextAvailChannelID) {
       // Could happen when two actives fight it out. Dont want to assert, let the state manager fight it out.
       logger.error("Trying to set Next Available ChannelID to a lesser value : known = " + nextAvailChannelID
                    + " new value = " + nextAvailableCID + " IGNORING");
       return;
     }
+    logger.info("setting next available cid: {}", nextAvailableCID);
     this.nextAvailChannelID = nextAvailableCID;
     persistor.getClientStatePersistor().getConnectionIDSequence().setNext(nextAvailChannelID);
   }
@@ -92,8 +93,8 @@ public class ClusterStateImpl implements ClusterState {
 // this happens for active only
 // when going active, start the next available ID+10 so that on restarts with persistent state, 
 // this active is picked via the additional election weightings
-    setNextAvailableChannelID(nextAvailChannelID + 10);
-    connectionIdFactory.activate(stripeIDStateManager.getStripeID(), nextAvailChannelID);
+    logger.info("going to active state with the following connection info - next:{} connections:{}", getNextAvailableChannelID(), getAllConnections());
+    connectionIdFactory.activate(stripeIDStateManager.getStripeID(), getNextAvailableChannelID());
   }
 
   @Override
@@ -132,9 +133,10 @@ public class ClusterStateImpl implements ClusterState {
 
   @Override
   public void addNewConnection(ConnectionID connID) {
-    if (connID.getChannelID() >= nextAvailChannelID) {
-      nextAvailChannelID = connID.getChannelID() + 1;
-      persistor.getClientStatePersistor().getConnectionIDSequence().setNext(nextAvailChannelID);
+    if (connID.getChannelID() >= getNextAvailableChannelID()) {
+      long cid = connID.getChannelID() + 1;
+      setNextAvailableChannelID(cid);
+      persistor.getClientStatePersistor().getConnectionIDSequence().setNext(cid);
     }
     connections.add(connID);
     logger.info("connection added {}", connID);
@@ -189,8 +191,8 @@ public class ClusterStateImpl implements ClusterState {
   public void reportStateToMap(Map<String, Object> state) {
     List<String> connects = new ArrayList<>(this.connections.size());
     this.connections.forEach((c)->connects.add(c.toString()));
-    state.put("connections", connects);
-    state.put("nextChannelID", this.nextAvailChannelID);
+    state.put("connections", getAllConnections());
+    state.put("nextChannelID", getNextAvailableChannelID());
     state.put("currentState", this.currentState);
     state.put("stripeID", stripeIDStateManager.getStripeID());
   }

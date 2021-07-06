@@ -301,7 +301,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
           member.close();
         }
         groupMgr[i].stop(1000);
-      } catch (Exception ex) {
+      } catch (Throwable ex) {
         System.out.println("*** Failed to stop Server[" + i + "] " + groupMgr[i] + " " + ex);
       }
     }
