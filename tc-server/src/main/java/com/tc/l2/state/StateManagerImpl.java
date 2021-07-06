@@ -280,7 +280,7 @@ public class StateManagerImpl implements StateManager {
   }
   // should be called from synchronized code
   private synchronized void setActiveNodeID(NodeID nodeID) {
-    debugInfo("SETTING activeNode=" + nodeID);
+    info("SETTING activeNode=" + nodeID);
     this.activeNode = nodeID;
     if (!nodeID.isNull()) {
       // only set synced to if this is a real node
@@ -693,10 +693,11 @@ public class StateManagerImpl implements StateManager {
     }
     Assert.assertFalse(disconnectedNode.equals(getLocalNodeID()));
     boolean elect = false;
-
+    
     synchronized (this) {
       if (state == ServerMode.START || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
+        info("ACTIVE is gone");
         setActiveNodeID(ServerID.NULL_ID);
       }
       if (state == ServerMode.SYNCING && this.activeNode.equals(disconnectedNode)) {

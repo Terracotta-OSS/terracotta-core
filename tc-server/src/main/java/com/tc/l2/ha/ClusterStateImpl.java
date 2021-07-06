@@ -46,9 +46,9 @@ public class ClusterStateImpl implements ClusterState {
   private final ConnectionIDFactory                 connectionIdFactory;
   private final StripeIDStateManager                stripeIDStateManager;
 
-  private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<ConnectionID>());
+  private final Set<ConnectionID>                   connections            = Collections.synchronizedSet(new HashSet<>());
   private long                                      nextAvailChannelID     = -1;
-  private long                                      globalMessageID = -1;
+  private volatile long                                      globalMessageID = -1;
   private volatile State                                     currentState;
   private byte[]                                    configSyncData = new byte[0];
 
@@ -66,11 +66,12 @@ public class ClusterStateImpl implements ClusterState {
   }
 
   @Override
-  public synchronized long getStartGlobalMessageID() {
+  public long getStartGlobalMessageID() {
     return globalMessageID;
   }
 
-  public synchronized void setStartGlobalMessageID(long id) {
+  @Override
+  public void setStartGlobalMessageID(long id) {
     globalMessageID = id;
   }
 
@@ -93,8 +94,9 @@ public class ClusterStateImpl implements ClusterState {
 // this happens for active only
 // when going active, start the next available ID+10 so that on restarts with persistent state, 
 // this active is picked via the additional election weightings
-    logger.info("going to active state with the following connection info - next:{} connections:{}", getNextAvailableChannelID(), getAllConnections());
-    connectionIdFactory.activate(stripeIDStateManager.getStripeID(), getNextAvailableChannelID());
+    long nextId = getNextAvailableChannelID() + 1;
+    setNextAvailableChannelID(nextId);
+    connectionIdFactory.activate(stripeIDStateManager.getStripeID(), nextId);
   }
 
   @Override
@@ -136,7 +138,6 @@ public class ClusterStateImpl implements ClusterState {
     if (connID.getChannelID() >= getNextAvailableChannelID()) {
       long cid = connID.getChannelID() + 1;
       setNextAvailableChannelID(cid);
-      persistor.getClientStatePersistor().getConnectionIDSequence().setNext(cid);
     }
     connections.add(connID);
     logger.info("connection added {}", connID);

@@ -177,7 +177,6 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
       if (ServerMode.PASSIVE_STATES.contains(this.currentMode.get())) {
         msg.initState(state);
         if (msg.getType() == ClusterStateMessage.COMPLETE_STATE) {
-          LOGGER.info("handled cluster state message: {}", msg);
           configurationProvider.sync(state.getConfigSyncData());
         }
         state.syncSequenceState();

@@ -26,7 +26,8 @@ public enum ProductID {
   INFORMATIONAL(true, true, true, false),
   STRIPE(false, true, true, false),
   SERVER(false, false, true, false),
-  PERMANENT(false, true, true, true);
+  PERMANENT(false, true, true, true),
+  DISCOVERY(true, false, false, false);
 
   private final boolean internal;
   private final boolean reconnect;
