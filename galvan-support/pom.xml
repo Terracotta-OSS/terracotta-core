@@ -93,10 +93,6 @@ limitations under the License.
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-utilities-port-chooser</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
