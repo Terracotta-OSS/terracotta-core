@@ -613,7 +613,7 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
-    ProductID product = ProductID.SERVER;
+    ProductID product = ProductID.DISCOVERY;
     ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 2_000 /*  timeout */);
 
     channel.addListener(listener);
