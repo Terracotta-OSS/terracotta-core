@@ -47,18 +47,9 @@ public class VersionCompatibility {
     return ((v1.major() == v2.major()) && (v1.minor() == v2.minor()));
   }
 
-  public static boolean isNewer(Version v1, Version v2) {
+  public static boolean isNewer(Version v1, Version v2, int depth) {
     if (v1 == null || v2 == null) { throw new NullPointerException(); }
-    if (v1.major() > v2.major()) {
-      return true;
-    }
-    if (v1.minor() > v2.minor()) {
-      return true;
-    }
-    if (v1.micro() > v2.micro()) {
-      return true;
-    }
-    return false;
+    return v1.isNewer(v2, depth);
   }
 
   public Version getMinimumCompatiblePersistence() {

@@ -118,6 +118,32 @@ public class Version implements Comparable<Version> {
   }
 
   /**
+   * Tests if this Version is newer than Version 'v' up to a maximum 'depth' of digits.
+   * @param v Version to compare against
+   * @param depth Maximum number of digits in version string to compare
+   * @return TRUE if this Version is newer than Version 'v' up to 'depth' digits comparison, FALSE otherwise
+   */
+  public boolean isNewer(Version v, int depth) {
+    if (v == null) { throw new NullPointerException(); }
+    if (depth < 1 || depth > 5) {throw new IndexOutOfBoundsException(); }
+    int[] v1 = {major, minor, micro, patch, build};
+    int[] v2 = {v.major, v.minor, v.micro, v.patch, v.build};
+    int i = 0;
+    while (i < depth) {
+      if (v1[i] > v2[i]) {
+        return true;
+      }
+      if (v1[i] != v2[i]) {
+        return false;
+      }
+      i++;
+    }
+    return false;
+  }
+
+
+
+  /**
    * May be null
    */
   public String qualifier() {

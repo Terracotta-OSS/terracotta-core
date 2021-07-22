@@ -111,4 +111,64 @@ public class VersionTest extends TestCase {
     Collections.sort(stuff);
     assertEquals("[1.0.0.0.0, 1.1.0.0.0_preview, 1.1.0.0.0-SNAPSHOT, 1.1.0.0.0, 1.2.0.0.0, 2.1.0.0.0-SNAPSHOT, 2.1.0.0.0]", stuff.toString());
   }
+
+  public void testIsNewer() {
+    try {
+      helpTestIsNewer ("1", "1", 0);
+      fail("depth must be >= 1 and <= 5");
+    } catch(IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      helpTestIsNewer ("1", "1", 6);
+      fail("depth must be >= 1 and <= 5");
+    } catch(IndexOutOfBoundsException e) {
+      // expected
+    }
+
+    assertTrue(helpTestIsNewer("11", "10", 1));
+    assertTrue(helpTestIsNewer("11", "10", 2));
+    assertTrue(helpTestIsNewer("11", "10", 3));
+    assertTrue(helpTestIsNewer("11", "10", 4));
+    assertTrue(helpTestIsNewer("11", "10", 5));
+
+    assertFalse(helpTestIsNewer("11.1", "11.0", 1));
+    assertTrue(helpTestIsNewer ("11.2", "11.1", 2));
+    assertTrue(helpTestIsNewer ("11.3", "11.2", 3));
+    assertTrue(helpTestIsNewer ("11.4", "11.3", 4));
+    assertTrue(helpTestIsNewer ("11.5", "11.4", 5));
+
+    assertFalse(helpTestIsNewer("11.0.1", "11.0.0", 1));
+    assertFalse(helpTestIsNewer("11.0.2", "11.0.1", 2));
+    assertTrue(helpTestIsNewer ("11.0.3", "11.0.2", 3));
+    assertTrue(helpTestIsNewer ("11.0.4", "11.0.3", 4));
+    assertTrue(helpTestIsNewer ("11.0.5", "11.0.4", 5));
+
+    assertFalse(helpTestIsNewer("11.0.0.1", "11.0.0.0", 1));
+    assertFalse(helpTestIsNewer("11.0.0.2", "11.0.0.1", 2));
+    assertFalse(helpTestIsNewer("11.0.0.3", "11.0.0.2", 3));
+    assertTrue(helpTestIsNewer ("11.0.0.4", "11.0.0.3", 4));
+    assertTrue(helpTestIsNewer ("11.0.0.5", "11.0.0.4", 5));
+
+    assertFalse(helpTestIsNewer("11.0.0.0.1", "11.0.0.0.0", 1));
+    assertFalse(helpTestIsNewer("11.0.0.0.2", "11.0.0.0.1", 2));
+    assertFalse(helpTestIsNewer("11.0.0.0.3", "11.0.0.0.2", 3));
+    assertFalse(helpTestIsNewer("11.0.0.0.4", "11.0.0.0.3", 4));
+    assertTrue(helpTestIsNewer ("11.0.0.0.5", "11.0.0.0.4", 5));
+
+    assertFalse(helpTestIsNewer("1.1.1.1.1", "10.10.10.10.10", 1));
+    assertFalse(helpTestIsNewer("1.1.1.1.1", "10.10.10.10.10", 2));
+    assertFalse(helpTestIsNewer("1.1.1.1.1", "10.10.10.10.10", 3));
+    assertFalse(helpTestIsNewer("1.1.1.1.1", "10.10.10.10.10", 4));
+    assertFalse(helpTestIsNewer("1.1.1.1.1", "10.10.10.10.10", 5));
+
+    assertTrue(helpTestIsNewer("10.7.0", "10.3.1.4.11", 3));
+    assertFalse(helpTestIsNewer("10.3.1.4.11", "10.7.0", 3));
+  }
+
+  private boolean helpTestIsNewer(String s1, String s2, int depth) {
+    Version v1 = new Version(s1);
+    Version v2 = new Version(s2);
+    return v1.isNewer(v2, depth);
+  }
 }
