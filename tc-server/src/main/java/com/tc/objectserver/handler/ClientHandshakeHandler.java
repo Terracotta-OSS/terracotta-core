@@ -58,7 +58,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
     try {
       if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
-      } else if (VersionCompatibility.isNewer(client, serverVersion)) {
+      } else if (VersionCompatibility.isNewer(client, serverVersion, 3)) {
         this.handshakeManager.notifyClientRefused(clientMsg, "client version is newer than the server");
       } else if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
