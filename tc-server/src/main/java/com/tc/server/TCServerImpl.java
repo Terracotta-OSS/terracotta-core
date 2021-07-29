@@ -19,6 +19,7 @@
 package com.tc.server;
 
 
+import com.tc.stats.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.monitoring.PlatformStopException;
@@ -37,7 +38,6 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
-import com.tc.net.utils.L2Utils;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
@@ -45,7 +45,6 @@ import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.impl.JMXSubsystem;
 import com.tc.spi.Guardian;
 import com.tc.stats.DSO;
-import com.tc.stats.api.DSOMBean;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
@@ -64,6 +63,7 @@ import javax.management.NotCompliantMBeanException;
 import com.tc.text.PrettyPrinter;
 import java.lang.management.ManagementFactory;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -89,6 +89,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final CompletableFuture<Boolean>                      shutdownGate                        = new CompletableFuture<>();
 
   private final JMXSubsystem                subsystem;
+  private DSO dso;
   /**
    * This should only be used for tests.
    */
@@ -410,8 +411,8 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext, DistributedObjectServer tcDumper,
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
-    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer);
-    mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
+      dso = new DSO(mgmtContext, configContext, mBeanServer);
+      mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
   }
 
   protected void unregisterDSOMBeans(MBeanServer mbs) throws MBeanRegistrationException, InstanceNotFoundException {
@@ -447,6 +448,12 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public String getClusterState(PrettyPrinter form) {
     return new String(dsoServer.getClusterState(Charset.defaultCharset(), form), Charset.defaultCharset());
+  }
+
+  @Override
+  public List<Client> getConnectedClients()
+  {
+    return dso.getConnectedClients();
   }
 
   @Override

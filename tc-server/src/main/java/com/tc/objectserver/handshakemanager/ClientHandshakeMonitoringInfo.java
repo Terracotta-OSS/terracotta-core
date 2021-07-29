@@ -28,13 +28,15 @@ public class ClientHandshakeMonitoringInfo {
   private final String uuid;
   private final String name;
   private final String version;
+  private final String revision;
   private final String address;
 
-  public ClientHandshakeMonitoringInfo(int pid, String uuid, String name, String version, String address) {
+  public ClientHandshakeMonitoringInfo(int pid, String uuid, String name, String version, String revision, String address) {
     this.pid = pid;
     this.uuid = uuid;
     this.name = name;
     this.version = version;
+    this.revision = revision;
     this.address = address;
   }
 
@@ -51,6 +53,8 @@ public class ClientHandshakeMonitoringInfo {
   }
 
   public String getVersion() { return version; }
+
+  public String getRevision() { return revision; }
   
   public String getClientReportedAddress() {
     return this.address;
@@ -64,8 +68,12 @@ public class ClientHandshakeMonitoringInfo {
     return (this.version != null && this.version.length() > 0);
   }
 
+  public boolean hasClientRevision() {
+    return (this.revision != null && this.revision.length() > 0);
+  }
+
   @Override
   public String toString() {
-    return "ClientHandshakeInfo{" + "pid=" + pid + ", uuid=" + uuid + ", name=" + name + ", version=" + version + ", address=" + address + '}';
+    return "ClientHandshakeInfo{" + "pid=" + pid + ", uuid=" + uuid + ", name=" + name + ", version=" + version + ", revision=" + revision + ", address=" + address + '}';
   }
 }

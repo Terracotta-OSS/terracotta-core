@@ -63,6 +63,7 @@ public interface ClientBuilder {
                                                       String uuid,
                                                       String name,
                                                       String clientVersion,
+                                                      String clientRevision,
                                                       ClientEntityManager entity);
 
   ClientEntityManager createClientEntityManager(ClientMessageChannel channel, StageManager stages);

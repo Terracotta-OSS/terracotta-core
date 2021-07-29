@@ -47,11 +47,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte   CLIENT_UUID              = 8;
   private static final byte   CLIENT_NAME              = 9;
   private static final byte   CLIENT_ADDRESS           = 10;
+  private static final byte   CLIENT_REVISION          = 11;
 
   private long                currentLocalTimeMills    = System.currentTimeMillis();
-  private String                uuid                     = com.tc.util.UUID.NULL_ID.toString();
+  private String              uuid                     = com.tc.util.UUID.NULL_ID.toString();
   private String              name                     = "";
   private String              clientVersion            = "";
+  private String              clientRevision           = "";
   private String              clientAddress            = ""; 
   private int                 pid                      = -1;
   private final Set<ClientEntityReferenceContext> reconnectReferences = new HashSet<ClientEntityReferenceContext>();
@@ -79,6 +81,11 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   @Override
   public String getClientVersion() {
     return this.clientVersion;
+  }
+
+  @Override
+  public String getClientRevision() {
+    return this.clientRevision;
   }
 
   @Override
@@ -117,6 +124,11 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   }
 
   @Override
+  public void setClientRevision(String revision) {
+    this.clientRevision = revision;
+  }
+
+  @Override
   public long getLocalTimeMills() {
     return this.currentLocalTimeMills;
   }
@@ -142,6 +154,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       putNVPair(RESEND_MESSAGES, resendMessage);
     }
     putNVPair(CLIENT_ADDRESS, this.clientAddress);
+    putNVPair(CLIENT_REVISION, this.clientRevision);
   }
 
   @Override
@@ -176,6 +189,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         return true;
       case CLIENT_ADDRESS:
         this.clientAddress = getStringValue();
+        return true;
+      case CLIENT_REVISION:
+        this.clientRevision = getStringValue();
         return true;
       default:
         return false;

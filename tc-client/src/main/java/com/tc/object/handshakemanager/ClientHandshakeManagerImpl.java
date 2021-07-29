@@ -54,8 +54,9 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
   private final Logger logger;
   private final SessionManager sessionManager;
   private final String clientVersion;
+  private final String clientRevision;
   
-  private final String   uuid;
+  private final String uuid;
   private final String name;
 
   private State state;
@@ -64,7 +65,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
 
   public ClientHandshakeManagerImpl(Logger logger, ClientHandshakeMessageFactory chmf,
                                     SessionManager sessionManager,
-                                    String uuid, String name, String clientVersion,
+                                    String uuid, String name, String clientVersion, String clientRevision,
                                     ClientHandshakeCallback entities) {
     this.logger = logger;
     this.chmf = chmf;
@@ -72,6 +73,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     this.uuid = uuid;
     this.name = name;
     this.clientVersion = clientVersion;
+    this.clientRevision = clientRevision;
     this.callBacks = entities;
     this.state = State.PAUSED;
     this.disconnected = true;
@@ -108,7 +110,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
     ClientHandshakeMessage handshakeMessage;
 
     changeToStarting();
-    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion);
+    handshakeMessage = this.chmf.newClientHandshakeMessage(this.uuid, this.name, this.clientVersion, this.clientRevision);
     if (handshakeMessage != null) {
       notifyCallbackOnHandshake(handshakeMessage);
 

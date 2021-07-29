@@ -52,6 +52,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   private String                uuid;
   private String                name;
   private String                clientVersion;
+  private String                clientRevision;
   private int                   pid;
   private final Set<ClientEntityReferenceContext> reconnectReferenceSet = new HashSet<ClientEntityReferenceContext>();
   private final Set<ResendVoltronEntityMessage> resendMessageSet = new HashSet<ResendVoltronEntityMessage>();
@@ -106,6 +107,11 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   }
 
   @Override
+  public String getClientRevision() {
+    return this.clientRevision;
+  }
+
+  @Override
   public void setClientPID(int pid) {
     this.pid = pid;
   }
@@ -118,6 +124,11 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   @Override
   public void setClientVersion(String v) {
     this.clientVersion = v;
+  }
+
+  @Override
+  public void setClientRevision(String v) {
+    this.clientRevision = v;
   }
 
   @Override

@@ -293,11 +293,12 @@ public class DistributedObjectClient {
     
     final ProductInfo pInfo = ProductInfo.getInstance(getClass().getClassLoader());
     
-    ClientHandshakeMessageFactory chmf = (u, n, c)->{
+    ClientHandshakeMessageFactory chmf = (u, n, c, r)->{
       ClientMessageChannel cmc = getClientMessageChannel();
       if (cmc != null) {
         final ClientHandshakeMessage rv = (ClientHandshakeMessage)cmc.createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         rv.setClientVersion(c);
+        rv.setClientRevision(r);
         rv.setClientPID(getPID());
         rv.setUUID(u);
         rv.setName(n);
@@ -310,7 +311,7 @@ public class DistributedObjectClient {
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(new ClientIDLogger(clientChannel, LoggerFactory
                                           .getLogger(ClientHandshakeManagerImpl.class)), chmf, sessionManager,
-                                          this.uuid, this.name, pInfo.version(), clientEntityManager);
+                                          this.uuid, this.name, pInfo.version(), pInfo.buildRevision(), clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);
     final ClientConfigurationContext cc = new ClientConfigurationContext(clientChannel.getClientID().toString(), this.communicationStageManager);

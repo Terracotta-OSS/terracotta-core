@@ -128,6 +128,22 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
     }
     return "";
   }
+
+  @Override
+  public String getVersion() {
+    if (minfo !=null) {
+      return minfo.getVersion();
+    }
+    return "";
+  }
+
+  @Override
+  public String getRevision() {
+    if (minfo !=null) {
+      return minfo.getRevision();
+    }
+    return "";
+  }
  
   private void beanRegistered(ObjectName beanName) {
 

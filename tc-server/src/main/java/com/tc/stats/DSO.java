@@ -122,6 +122,13 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  @Override
+  public List<Client> getConnectedClients() {
+    synchronized (clientMap) {
+      return new ArrayList<>(clientMap.values());
+    }
+  }
+
   private void setupClients() {
     MessageChannel[] channels = channelMgr.getActiveChannels();
     for (MessageChannel channel : channels) {

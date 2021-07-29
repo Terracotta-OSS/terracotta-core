@@ -18,6 +18,7 @@
  */
 package com.tc.server;
 
+import com.tc.stats.Client;
 import org.terracotta.monitoring.PlatformStopException;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -28,6 +29,7 @@ import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import org.terracotta.server.StopAction;
 
+import java.util.List;
 
 public interface TCServer extends Pauseable {
   String[] processArguments();
@@ -87,4 +89,6 @@ public interface TCServer extends Pauseable {
   String getClusterState(PrettyPrinter form);
 
   ProductInfo productInfo();
+
+  List<Client> getConnectedClients();
 }

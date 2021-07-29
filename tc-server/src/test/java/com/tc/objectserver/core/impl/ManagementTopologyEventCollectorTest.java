@@ -262,11 +262,12 @@ public class ManagementTopologyEventCollectorTest {
     final String uuid = UUID.getUUID().toString();
     final String name = "TEST";
     final String version = "1.2.0";
+    final String revision = "b03ca894bb1d4072b8c8140aa6296ce4";
     final String address = "unknown";
 
     // prepare and call collector.clientDidConnect(...)
     MessageChannel channel = mock(MessageChannel.class);
-    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name, version, address);
+    ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name, version, revision, address);
     when(channel.getAttachment(eq(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT))).thenReturn(info);
     when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("localhost", 1234));
     when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("localhost", 4567));
