@@ -72,7 +72,7 @@ public class ClientHandshakeManagerTest {
 
   private void checkClientServerVersionCompatibility(String clientVersion, String serverVersion) {
     ClientHandshakeManagerImpl manager = new ClientHandshakeManagerImpl(logger, chmf, sessionManager,
-            UUID.getUUID().toString(), "name", clientVersion, entities);
+            UUID.getUUID().toString(), "name", clientVersion, "revision", entities);
     manager.checkClientServerVersionCompatibility(serverVersion);
   }
 

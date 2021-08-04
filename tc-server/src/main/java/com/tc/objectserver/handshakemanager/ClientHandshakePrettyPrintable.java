@@ -46,6 +46,7 @@ public class ClientHandshakePrettyPrintable implements PrettyPrintable {
             hs.put("pid", target.getPid());
             hs.put("uuid", target.getUuid());
             hs.put("version", target.getVersion());
+            hs.put("revision", target.getRevision());
             hs.put("clientReportedAddress", target.getClientReportedAddress());
             map.put(c.toString(), hs);
           }

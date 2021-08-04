@@ -90,8 +90,9 @@ public class StandardClientBuilder implements ClientBuilder {
                                                              String uuid, 
                                                              String name, 
                                                              String clientVersion,
+                                                             String clientRevision,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, uuid, name, clientVersion, entity);
+    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, uuid, name, clientVersion, clientRevision, entity);
   }
 
   @Override

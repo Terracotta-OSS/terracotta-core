@@ -38,6 +38,10 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   String getClientVersion();
 
+  void setClientRevision(String v);
+
+  String getClientRevision();
+
   void setClientPID(int pid);
 
   int getClientPID();

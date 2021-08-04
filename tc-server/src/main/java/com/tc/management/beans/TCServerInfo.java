@@ -19,6 +19,7 @@
 package com.tc.management.beans;
 
 import com.tc.async.impl.MonitoringEventCreator;
+import com.tc.stats.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,9 @@ import com.tc.text.PrettyPrinter;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
+
+import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 
 import java.util.ArrayList;
@@ -361,6 +365,26 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public String getConfig() {
     return server.getConfig();
+  }
+
+  @Override
+  public String getConnectedClients() throws IOException {
+    Properties props = new Properties();
+    final String format = "clients.%d.%s";
+    final List<Client> clients = server.getConnectedClients();
+    final int numClients = clients.size();
+    props.setProperty("clients.count", Integer.toString(numClients));
+    for (int i = 0; i < numClients; i++) {
+      Client c = clients.get(i);
+      props.setProperty(String.format(format, i, "id"), c.getRemoteUUID());
+      props.setProperty(String.format(format, i, "name"), c.getRemoteName());
+      props.setProperty(String.format(format, i, "version"), c.getVersion());
+      props.setProperty(String.format(format, i, "revision"), c.getRevision());
+      props.setProperty(String.format(format, i, "ipAddress"), c.getRemoteAddress());
+    }
+    StringWriter writer = new StringWriter();
+    props.store(writer, null);
+    return writer.toString();
   }
 
   @Override

@@ -148,6 +148,9 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
       if (minfo.hasClientReportedAddress()) {
         this.serviceInterface.addNode(extrasPath, "clientReportedAddress", minfo.getClientReportedAddress());
       }
+      if (minfo.hasClientRevision()) {
+        this.serviceInterface.addNode(extrasPath, "clientRevision", minfo.getRevision());
+      }
       if (earlyFetches != null && !earlyFetches.isEmpty()) {
         for (ResolvedDescriptors ed : earlyFetches) {
           String fetchIdentifier = fetchIdentifierForService(client, ed.id, ed.consumerID, ed.instance);

@@ -21,6 +21,7 @@ package com.tc.management.beans;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
+import java.io.IOException;
 import java.util.Map;
 
 public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
@@ -102,4 +103,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   void setPipelineMonitoring(boolean monitor);
   
   String getClusterState(boolean shortForm);
+
+  String getConnectedClients() throws IOException;
 }

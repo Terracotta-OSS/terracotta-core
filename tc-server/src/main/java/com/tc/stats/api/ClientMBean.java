@@ -39,4 +39,8 @@ public interface ClientMBean extends TerracottaMBean {
   String getRemoteName();
   
   String getRemoteUUID();
+
+  String getVersion();
+
+  String getRevision();
 }

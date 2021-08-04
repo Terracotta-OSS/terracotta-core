@@ -19,7 +19,9 @@
 package com.tc.stats.api;
 
 import com.tc.management.TerracottaMBean;
+import com.tc.stats.Client;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +39,8 @@ public interface DSOMBean extends TerracottaMBean {
   static final String CLIENT_DETACHED = "dso.client.detached";
 
   ObjectName[] getClients();
+
+  List<Client> getConnectedClients();
 
   Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue);
 
