@@ -55,7 +55,7 @@ public interface CommunicationsManager extends PrettyPrintable {
 
   public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout);
     
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
+  public NetworkListener createListener(TCSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation);
 
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 

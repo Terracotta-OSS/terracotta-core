@@ -393,7 +393,8 @@ public class ClientMessageTransport extends MessageTransportBase {
   private Future<SynAckMessage> sendSyn() throws TransportHandshakeException {
     CompletableFuture<SynAckMessage> targetFuture = createAckWaiter();
     synchronized (this.status) {
-      if (!this.status.isAlive()) {
+      if (!this.status.isAlive() || !this.status.isConnected()) {
+        logger.warn("transport in the incorrect state {}", this.status);
         clearAckWaiter(new IOException("closed"));
         return targetFuture;
       }

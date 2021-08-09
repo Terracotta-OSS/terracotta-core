@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 
 /**
  * provides the sessionIDs
@@ -40,11 +41,11 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
   private static final MessageChannelInternal[]        EMPTY_CHANNEL_ARARY = new MessageChannelInternal[] {};
 
   private final Map<ChannelID, MessageChannelInternal> channels;
-  private final boolean                                transportDisconnectRemovesChannel;
+  private final Predicate<MessageChannel>                                transportDisconnectRemovesChannel;
   private final ServerMessageChannelFactory            channelFactory;
   private final List<ChannelManagerEventListener>      eventListeners      = new CopyOnWriteArrayList<ChannelManagerEventListener>();
 
-  public ChannelManagerImpl(boolean transportDisconnectRemovesChannel, ServerMessageChannelFactory channelFactory) {
+  public ChannelManagerImpl(Predicate<MessageChannel> transportDisconnectRemovesChannel, ServerMessageChannelFactory channelFactory) {
     this.channels = new HashMap<ChannelID, MessageChannelInternal>();
     this.transportDisconnectRemovesChannel = transportDisconnectRemovesChannel;
     this.channelFactory = channelFactory;
@@ -120,7 +121,7 @@ class ChannelManagerImpl implements ChannelManager, ChannelEventListener, Server
     if (ChannelEventType.CHANNEL_CLOSED_EVENT.matches(event)) {
       removeChannel(channel);
     } else if (ChannelEventType.TRANSPORT_DISCONNECTED_EVENT.matches(event)) {
-      if (this.transportDisconnectRemovesChannel) {
+      if (this.transportDisconnectRemovesChannel.test(channel)) {
         channel.close();
       }
     } else if (ChannelEventType.TRANSPORT_CONNECTED_EVENT.matches(event)) {

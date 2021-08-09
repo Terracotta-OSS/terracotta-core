@@ -173,10 +173,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     };
   }
 
-  NetworkStackHarness removeNetworkStack(ConnectionID connectionId) {
-    return harnesses.remove(connectionId.getClientID());
-  }
-
   /*********************************************************************************************************************
    * MessageTransportListener methods.
    */
@@ -196,14 +192,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.connectionPolicy.clientDisconnected(transport.getConnectionID());
   }
 
-  private void close(ConnectionID connectionId) {
-    NetworkStackHarness harness = removeNetworkStack(connectionId);
-    if (harness == null) { 
-      throw new AssertionError("Receive a transport closed event for a transport that isn't in the map :"
-                                                        + connectionId); 
-    }
-  }
-
   @Override
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     // don't care
@@ -215,9 +203,20 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
    */
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    close(transport.getConnectionID());
-    if (!transport.getConnectionID().isJvmIDNull()) this.connectionPolicy.clientDisconnected(transport
-        .getConnectionID());
+    ConnectionID connectionId = transport.getConnectionID();
+    ClientID cid = connectionId.getClientID();
+    ServerNetworkStackHarness harness = harnesses.get(cid);
+    if (harness != null && harness.getChannel().isClosed()) {
+      harnesses.remove(cid);
+      // should have been removed by the disconnect, leave this call here
+      // in case that is not the case, evaluate assertion or removal at a later time
+      if (!connectionId.isJvmIDNull()) {
+        boolean removed = this.connectionPolicy.clientDisconnected(connectionId);
+        if (removed) {
+          logger.warn("connectionid not removed be transport disconnect");
+        }
+      }
+    }
   }
 
   @Override

@@ -272,11 +272,11 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   @Override
   public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
                                         ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
-    return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider, (t)->true);
+    return createListener(addr, (c)->transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider, (t)->true);
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,
+  public NetworkListener createListener(TCSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
           ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation) {
     return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, null, validation);
   }
@@ -285,7 +285,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * Creates a network listener with a default network stack.
    */
   NetworkListener createListener(TCSocketAddress addr,
-                                         boolean transportDisconnectRemovesChannel,
+                                         Predicate<MessageChannel> transportDisconnectRemovesChannel,
                                          ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
                                          WireProtocolMessageSink wireProtoMsgSnk, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation) {
     if (shutdown.isSet()) { throw new IllegalStateException("Comms manger shut down"); }

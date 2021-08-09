@@ -86,10 +86,10 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   }
 
   @Override
-  public synchronized void clientDisconnected(ConnectionID connID) {
+  public synchronized boolean clientDisconnected(ConnectionID connID) {
     if (connID.getProductId().isInternal() || !connID.isValid()) {
       // ignore internal clients
-      return;
+      return false;
     }
 
     // not all times clientSet has connID client disconnect removes the connID. after reconnect timeout, for close event
@@ -97,13 +97,15 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
     HashSet<ConnectionID> jvmClients = clientsByJvm.get(connID.getJvmID());
 
-    if (jvmClients == null) return; // must have already received the event for this client
+    if (jvmClients == null) return false; // must have already received the event for this client
 
-    jvmClients.remove(connID);
+    boolean removed = jvmClients.remove(connID);
 
-    if (jvmClients.size() == 0) {
+    if (removed && jvmClients.isEmpty()) {
       clientsByJvm.remove(connID.getJvmID());
     }
+
+    return removed;
   }
 
   @Override

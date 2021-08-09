@@ -45,27 +45,27 @@ public class ConnectionWatcher implements MessageTransportListener {
     cmt.addTransportListener(new MessageTransportListener() {
       @Override
       public void notifyTransportConnected(MessageTransport transport) {
-        LOGGER.info("transport connected {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+        LOGGER.info("transport connected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
       }
 
       @Override
       public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
-        LOGGER.info("transport disconnected {} {} {}", targetHolder.get(),cmt, cmt.getConnectionID());
+        LOGGER.info("transport disconnected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
       }
 
       @Override
       public void notifyTransportConnectAttempt(MessageTransport transport) {
-        LOGGER.info("transport connect attempt {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+        LOGGER.info("transport connect attempt {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
       }
 
       @Override
       public void notifyTransportClosed(MessageTransport transport) {
-        LOGGER.info("transport closed {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+        LOGGER.info("transport closed {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
       }
 
       @Override
       public void notifyTransportReconnectionRejected(MessageTransport transport) {
-        LOGGER.info("transport reconnect rejected {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+        LOGGER.info("transport reconnect rejected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
       }
 
     });

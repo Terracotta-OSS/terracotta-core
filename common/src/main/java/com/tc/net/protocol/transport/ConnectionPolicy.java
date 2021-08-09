@@ -22,7 +22,7 @@ public interface ConnectionPolicy {
 
   public boolean connectClient(ConnectionID connID);
 
-  public void clientDisconnected(ConnectionID connID);
+  public boolean clientDisconnected(ConnectionID connID);
 
   public boolean isMaxConnectionsReached();
 

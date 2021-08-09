@@ -211,7 +211,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   @Override
   public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
-    if (this.connection != null) { throw new IllegalReconnectException(); }
     getConnectionAttacher().attachNewConnection(this.connectionCloseEvent.getAndSet(null), this.connection,
                                                 newConnection);
   }

@@ -112,7 +112,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    connMgr,
                                                                    new NullConnectionPolicy());
-    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), (c)->true,
                                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
@@ -165,7 +165,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    getNetworkStackHarnessFactory(),
                                                                    connMgr,
                                                                    new NullConnectionPolicy());
-    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), (c)->true,
                                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
@@ -226,7 +226,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                    getNetworkStackHarnessFactory(),
                                                                    connMgr,
                                                                    new NullConnectionPolicy());
-    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
+    NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), (c)->true,
                                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.<ConnectionID>emptySet());
     int port = listener.getBindPort();
@@ -326,7 +326,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                      new TransportHandshakeErrorNullHandler(),
                                                                      Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                                      Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
-      NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), true,
+      NetworkListener listener = commsMgr.createListener(new TCSocketAddress(0), (c)->true,
                                                          new DefaultConnectionIdFactory(), (MessageTransport t)->true);
       listener.start(Collections.<ConnectionID>emptySet());
       int serverPort = listener.getBindPort();

@@ -53,7 +53,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validate) {
+  public NetworkListener createListener(TCSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validate) {
     throw new UnsupportedOperationException(); 
   }
 

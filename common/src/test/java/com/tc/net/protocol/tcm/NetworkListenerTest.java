@@ -72,7 +72,7 @@ public class NetworkListenerTest extends TestCase {
     assertTrue(commsMgr.getAllListeners().length == 0);
 
     ConnectionIDFactory cidf = new DefaultConnectionIdFactory();
-    NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), true, cidf, (MessageTransport t)->true);
+    NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), (c)->true, cidf, (MessageTransport t)->true);
 
     try {
       lsnr.start(Collections.<ConnectionID>emptySet());
@@ -80,7 +80,7 @@ public class NetworkListenerTest extends TestCase {
       fail(ioe.getMessage());
     }
 
-    NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), true, cidf, (MessageTransport t)->true);
+    NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), (c)->true, cidf, (MessageTransport t)->true);
     try {
       lsnr2.start(Collections.<ConnectionID>emptySet());
       // NOTE (issue-529):  When running on Windows, in a pre-Java7u25 JVM, this bind succeeds.
@@ -109,7 +109,7 @@ public class NetworkListenerTest extends TestCase {
 
     for (int i = 0; i < cnt; i++) {
       NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(InetAddress
-          .getByName("127.0.0.1"), 0), true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
+          .getByName("127.0.0.1"), 0), (c)->true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
       try {
         lsnr.start(Collections.<ConnectionID>emptySet());
