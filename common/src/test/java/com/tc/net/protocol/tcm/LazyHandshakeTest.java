@@ -91,7 +91,7 @@ public class LazyHandshakeTest extends TCTestCase {
             clientConn,
             new NullConnectionPolicy());
 
-    listener = serverComms.createListener(new TCSocketAddress(0), true,
+    listener = serverComms.createListener(new TCSocketAddress(0), (c)->true,
                                           new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
     try {

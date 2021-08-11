@@ -209,6 +209,7 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.HydrateHandler;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageHydrateSink;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
@@ -587,7 +588,7 @@ public class DistributedObjectServer {
     ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
 
     final String dsoBind = l2DSOConfig.getTsaPort().getHostName();
-    this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), true,
+    this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
                                                                 this.connectionIdFactory, (MessageTransport t)->{
                                                                   return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(),
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);

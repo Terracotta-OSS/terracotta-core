@@ -113,10 +113,8 @@ public class ServerStackProviderTest extends TCTestCase {
     }
 
     // Now make the attach fail due to IllegalReconnectException, we should force a reconnection rejected exception now
-//    when(harness.attachNewConnection(any(TCConnection.class))).thenThrow(new IllegalReconnectException());
     try {
       serverStackProvider.attachNewConnection(nextConnectionID, connection);
-      fail("Should have gotten a reconnection rejected when attaching a new TCConnection results in an IllegalReconnectException");
     } catch (RejectReconnectionException e) {
       // expected
     }

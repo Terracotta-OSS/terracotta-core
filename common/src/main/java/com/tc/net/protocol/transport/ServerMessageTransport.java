@@ -134,7 +134,6 @@ public class ServerMessageTransport extends MessageTransportBase {
 
     @Override
     public void attachNewConnection(TCConnectionEvent closeEvent, TCConnection oldConnection, TCConnection newConnection) {
-      Assert.assertNull(oldConnection);
       wireNewConnection(newConnection);
       log("Attaching new connection to transport: " + newConnection);
     }

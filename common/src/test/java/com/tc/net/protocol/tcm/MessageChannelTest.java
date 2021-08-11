@@ -164,7 +164,7 @@ try {
             }
           });
       if (dumbServerSink) {
-        lsnr = serverComms.createListener(new TCSocketAddress(port), false,
+        lsnr = serverComms.createListener(new TCSocketAddress(port), (c)->false,
             new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
 
           @Override
@@ -175,7 +175,7 @@ try {
           }
         }, null, (t)->true);
       } else {
-        lsnr = serverComms.createListener(new TCSocketAddress(port), false,
+        lsnr = serverComms.createListener(new TCSocketAddress(port), (c)->false,
             new DefaultConnectionIdFactory(), (MessageTransport t)->true);
       }
       lsnr.start(new HashSet<>());
@@ -336,7 +336,7 @@ try {
 
     NetworkListener rv;
     if (dumbServerSink) {
-      rv = serverComms1.createListener(new TCSocketAddress(0), false,
+      rv = serverComms1.createListener(new TCSocketAddress(0), (c)->false,
                                        new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
 
                                          @Override
@@ -347,7 +347,7 @@ try {
                                          }
                                        }, null, (t)->true);
     } else {
-      rv = serverComms1.createListener(new TCSocketAddress(0), false,
+      rv = serverComms1.createListener(new TCSocketAddress(0), (c)->false,
                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     }
 

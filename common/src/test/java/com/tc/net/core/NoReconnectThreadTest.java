@@ -113,7 +113,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                          Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
                                                                          Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
     );
-    NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), true,
+    NetworkListener listener = serverCommsMgr.createListener(new TCSocketAddress(0), (c)->true,
                                                              new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     listener.start(Collections.emptySet());
     try {

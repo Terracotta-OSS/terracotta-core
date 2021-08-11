@@ -24,8 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
-import com.tc.net.core.TCConnection;
-import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;

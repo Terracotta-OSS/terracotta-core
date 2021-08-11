@@ -26,8 +26,8 @@ public class NullConnectionPolicy implements ConnectionPolicy {
   }
 
   @Override
-  public void clientDisconnected(ConnectionID id) {
-    return;
+  public boolean clientDisconnected(ConnectionID id) {
+    return false;
   }
 
   @Override
