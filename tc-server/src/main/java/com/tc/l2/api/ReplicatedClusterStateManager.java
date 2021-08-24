@@ -20,10 +20,11 @@ package com.tc.l2.api;
 
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
+import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.util.State;
 import java.util.Map;
 
-public interface ReplicatedClusterStateManager {
+public interface ReplicatedClusterStateManager extends ConnectionIDFactoryListener {
 
   public void goActiveAndSyncState();
 

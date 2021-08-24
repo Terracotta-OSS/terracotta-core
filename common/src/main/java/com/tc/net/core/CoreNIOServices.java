@@ -476,6 +476,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       if (null == ch) {
         // not expected
+        callback.run();
         logger.warn("null channel passed to cleanupChannel()", new Throwable());
         return;
       }
@@ -825,9 +826,9 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
           throw new TCInternalError();
         }
       } catch (ClosedChannelException cce) {
-        logger.warn("Exception trying to process interest request: " + cce);
+        logger.warn("Exception trying to process interest request:" + request, cce);
       } catch (CancelledKeyException cke) {
-        logger.warn("Exception trying to process interest request: " + cke);
+        logger.warn("Exception trying to process interest request:" + request, cke);
       }
     }
 

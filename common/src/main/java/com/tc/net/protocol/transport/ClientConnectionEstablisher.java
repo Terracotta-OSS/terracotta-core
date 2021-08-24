@@ -237,7 +237,7 @@ public class ClientConnectionEstablisher {
               cmt.getLogger().info("Reconnect attempt " + i + " to " + target);
             }
             cmt.reopen(target);
-            connected = cmt.getConnectionID().isValid();        
+            connected = cmt.isConnected() && cmt.getConnectionID().isValid();
           } catch (TransportRedirect redirect) {
             target = InetSocketAddress.createUnresolved(redirect.getHostname(), redirect.getPort());
           } catch (NoActiveException noactive) {
@@ -403,11 +403,19 @@ public class ClientConnectionEstablisher {
                   + ", asyncReconnect.isStopped(): " + asyncReconnect.isStopped());
       return;
     }
+
+    ClientMessageTransport transport = request.getClientMessageTransport();
     // Allow the async thread reconnects/restores only when cmt was connected atleast once
-    if (request.getClientMessageTransport() != null && request.getClientMessageTransport().wasOpened()) {
-      this.asyncReconnect.putConnectionRequest(request);
+    if (transport != null) {
+      if (transport.isConnected()) {
+        LOGGER.info("Ignoring connection request.  The connection is already open. {}", transport);
+      } else if (!transport.wasOpened()) {
+        LOGGER.info("Ignoring connection request as transport was not connected even once");
+      } else {
+        this.asyncReconnect.putConnectionRequest(request);
+      }
     } else {
-      LOGGER.info("Ignoring connection request as transport was not connected even once");
+      LOGGER.warn("no transport {}", request);
     }
   }
 
@@ -484,8 +492,15 @@ public class ClientConnectionEstablisher {
     public void putConnectionRequest(ConnectionRequest request) {
       if (!isStopped()) {
         Thread oldThread = getConnectionThread();
-        waitForThread(oldThread, true);
-        startThreadIfNecessary(request);
+        while (oldThread != null && oldThread.isAlive()) {
+          waitForThread(oldThread, true);
+          oldThread = getConnectionThread();
+        }
+        if (!request.getClientMessageTransport().isConnected()) {
+          startThreadIfNecessary(request);
+        } else {
+          LOGGER.info("ignoring connection request.  Already connected: {}", request.getClientMessageTransport());
+        }
       } else {
         LOGGER.info("connect request ignored, stopped:" + isStopped());
       }

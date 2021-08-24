@@ -850,10 +850,10 @@ public class DistributedObjectServer {
       }, "server shutdown thread", true);
       this.l2Coordinator.shutdown();
       this.persistor.shutdown();
-      this.l1Diagnostics.stop(60000);
-      this.l1Listener.stop(60000);
       this.connectionManager.shutdown();
       this.groupCommManager.shutdown();
+      this.l1Diagnostics.stop(60000);
+      this.l1Listener.stop(60000);
       this.context.shutdown();
       this.entityManager.shutdown();
       this.serviceRegistry.shutdown();
