@@ -29,7 +29,14 @@ import com.tc.util.TCTimeoutException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A handle to a specific server port listener
@@ -37,11 +44,13 @@ import java.util.function.Predicate;
  * @author teck
  */
 class NetworkListenerImpl implements NetworkListener {
+  private static Logger LOGGER = LoggerFactory.getLogger(NetworkListenerImpl.class);
+
   private final ChannelManagerImpl channelManager;
   private final CommunicationsManagerImpl commsMgr;
   private final TCSocketAddress addr;
   private TCListener lsnr;
-  private boolean started;
+  private CompletableFuture<Boolean> started = null;
   private final boolean reuseAddr;
   private final ConnectionIDFactory connectionIdFactory;
   private final WireProtocolMessageSink wireProtoMsgSnk;
@@ -57,7 +66,6 @@ class NetworkListenerImpl implements NetworkListener {
     this.addr = addr;
     this.connectionIdFactory = connectionIdFactory;
     this.wireProtoMsgSnk = wireProtoMsgSnk;
-    this.started = false;
     this.reuseAddr = reuseAddr;
     this.activeProvider = activeProvider;
     this.validation = validation;
@@ -70,24 +78,78 @@ class NetworkListenerImpl implements NetworkListener {
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified port/address)
    */
   @Override
-  public synchronized void start(Set<ConnectionID> initialConnectionIDs) throws IOException {
-    this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
+  public void start(Set<ConnectionID> initialConnectionIDs) throws IOException {
+    CompletableFuture<Boolean> startDone = start();
+    try {
+      this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
                                                   this.validation, this.connectionIdFactory, this.wireProtoMsgSnk);
-    this.started = true;
-    this.commsMgr.registerListener(this);
+      this.commsMgr.registerListener(this);
+      startDone.complete(true);
+    } catch (IOException ioe) {
+      startDone.completeExceptionally(ioe);
+      throw ioe;
+    } finally {
+      if (!startDone.isDone()) {
+        startDone.complete(false);
+      }
+    }
   }
 
   @Override
-  public synchronized void stop(long timeout) throws TCTimeoutException {
-    if (!this.started) { return; }
-
+  public void stop(long timeout) throws TCTimeoutException {
+    Future<Boolean> startDone = stop();
+    boolean stop;
     try {
-      if (this.lsnr != null) {
-        this.lsnr.stop(timeout);
+      if (timeout == 0L) {
+        stop = startDone.get();
+      } else {
+        long time = System.currentTimeMillis();
+        stop = startDone.get(timeout, TimeUnit.MILLISECONDS);
+        timeout -= System.currentTimeMillis() - time;
+        if (timeout <= 0L) {
+          throw new TCTimeoutException("unable to stop network listener in time alloted");
+        }
       }
-    } finally {
-      this.started = false;
-      this.commsMgr.unregisterListener(this);
+      if (stop) {
+        this.lsnr.stop(timeout);
+        this.commsMgr.unregisterListener(this);
+      }
+    } catch (ExecutionException | InterruptedException e) {
+      LOGGER.warn("listener not stopped", e);
+    } catch (TimeoutException to) {
+      throw new TCTimeoutException(to);
+    }
+  }
+
+  private synchronized CompletableFuture<Boolean> start() {
+    if (started == null) {
+      started = new CompletableFuture<>();
+      return started;
+    } else {
+      return null;
+    }
+  }
+
+  private synchronized CompletableFuture<Boolean> stop() {
+    if (started == null) {
+      started = CompletableFuture.completedFuture(false);
+    }
+    return started;
+  }
+
+  private boolean isStarted() {
+    Future<Boolean> startDone = null;
+    synchronized (this) {
+      if (started == null) {
+        return false;
+      } else {
+        startDone = started;
+      }
+    }
+    try {
+      return startDone.get();
+    } catch (ExecutionException | InterruptedException e) {
+      return false;
     }
   }
 
@@ -98,13 +160,13 @@ class NetworkListenerImpl implements NetworkListener {
 
   @Override
   public synchronized InetAddress getBindAddress() {
-    if (!this.started) { throw new IllegalStateException("Listener not running"); }
+    if (!isStarted()) { throw new IllegalStateException("Listener not running"); }
     return this.lsnr.getBindAddress();
   }
 
   @Override
   public synchronized int getBindPort() {
-    if (!this.started) { throw new IllegalStateException("Listener not running"); }
+    if (!isStarted()) { throw new IllegalStateException("Listener not running"); }
     return this.lsnr.getBindPort();
   }
 

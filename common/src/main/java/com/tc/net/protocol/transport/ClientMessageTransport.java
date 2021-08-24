@@ -464,7 +464,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
     // don't do reconnect if open is still going on
     if (!wasOpened()) {
-      this.getLogger().info("Transport was opened already. Skip reconnect " + serverAddress);
+      this.getLogger().info("Transport never opened. Skip reconnect " + serverAddress);
       return;
     }
     

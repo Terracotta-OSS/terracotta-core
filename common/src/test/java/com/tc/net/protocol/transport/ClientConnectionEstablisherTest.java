@@ -197,8 +197,12 @@ public class ClientConnectionEstablisherTest {
     Mockito.doReturn(logger).when(cmt).getLogger();
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
     Mockito.doReturn(null).when(spyConnEstablisher).connectTryAllOnce(any(Iterable.class), any(ClientMessageTransport.class), any(ClientConnectionErrorListener.class));
+    Mockito.doReturn(true).when(cmt).wasOpened();
     spyConnEstablisher.open(Collections.singletonList(serverAddress), cmt, errorListener);
-    spyConnEstablisher.reconnect(cmt, ()->false);
+    spyConnEstablisher.reconnect(cmt, ()-> {
+      Mockito.doReturn(true).when(cmt).isConnected();
+      return false;
+    });
     Mockito.verify(cmt).reopen(any(InetSocketAddress.class));
   }
 
@@ -230,8 +234,12 @@ public class ClientConnectionEstablisherTest {
     Mockito.doThrow(new UnknownHostException("Host can not be resolved!")).when(spyConnEstablisher)
         .getHostByName(serverAddress);
     Mockito.doReturn(tcConnection).when(connManager).createConnection((TCProtocolAdaptor) any());
+    Mockito.doReturn(true).when(cmt).wasOpened();
     try {
-      spyConnEstablisher.reconnect(cmt, ()->false);
+      spyConnEstablisher.reconnect(cmt, ()-> {
+      Mockito.doReturn(true).when(cmt).isConnected();
+      return false;
+    });
     } catch (RuntimeException re) {
       String msg = "failed due to:" + re.getMessage();
       if (re.getCause() instanceof UnknownHostException) {

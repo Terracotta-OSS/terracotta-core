@@ -32,11 +32,10 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.GroupMessageListener;
 import com.tc.net.groups.GroupResponse;
 import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.net.utils.L2Utils;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import com.tc.util.concurrent.SetOnceFlag;
 import org.terracotta.configuration.ConfigurationProvider;
 
 import java.util.Collection;
@@ -45,8 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage>,
-    ConnectionIDFactoryListener {
+public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterStateManager, GroupMessageListener<ClusterStateMessage> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ReplicatedClusterStateManagerImpl.class);
 
@@ -60,13 +58,12 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   private final Collection<NodeID>    others = new HashSet<>();
 
   public ReplicatedClusterStateManagerImpl(GroupManager<AbstractGroupMessage> groupManager, Supplier<ServerMode> currentMode,
-                                           ClusterState clusterState, ConnectionIDFactory factory, ConfigurationProvider configurationProvider) {
+                                           ClusterState clusterState, ConfigurationProvider configurationProvider) {
     this.groupManager = groupManager;
     this.currentMode = currentMode;
     this.state = clusterState;
     this.configurationProvider = configurationProvider;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
-    factory.registerForConnectionIDEvents(this);
   }
 
   @Override

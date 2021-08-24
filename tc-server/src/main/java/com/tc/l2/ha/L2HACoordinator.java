@@ -30,16 +30,19 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
+import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.util.Assert;
+import com.tc.util.State;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 
 
-public class L2HACoordinator implements L2Coordinator {
+public class L2HACoordinator implements L2Coordinator, ConnectionIDFactoryListener  {
   private static final Logger logger = LoggerFactory.getLogger(L2HACoordinator.class);
 
   private final Logger consoleLogger;
@@ -84,11 +87,20 @@ public class L2HACoordinator implements L2Coordinator {
                                                                   this.groupManager,
                                                                   stateManager::getCurrentMode,
                                                                   clusterState,
-                                                                  this.server.getConnectionIdFactory(),
                                                                   this.server.getConfigSetupManager().getConfigurationProvider());
-    
+    this.server.getConnectionIdFactory().registerForConnectionIDEvents(this);
   }
 
+  @Override
+  public void connectionIDCreated(ConnectionID connectionID) {
+    getReplicatedClusterStateManager().connectionIDCreated(connectionID);
+  }
+
+  @Override
+  public void connectionIDDestroyed(ConnectionID connectionID) {
+    getReplicatedClusterStateManager().connectionIDDestroyed(connectionID);
+  }
+  
   @Override
   public void start() {
     this.stateManager.initializeAndStartElection();
@@ -97,6 +109,7 @@ public class L2HACoordinator implements L2Coordinator {
   @Override
   public void shutdown() {
     this.stateManager.shutdown();
+    shutdownReplicatedClusterStateManager();
   }
 
   @Override
@@ -104,8 +117,43 @@ public class L2HACoordinator implements L2Coordinator {
     return this.stateManager;
   }
 
+  private synchronized void shutdownReplicatedClusterStateManager() {
+    this.rClusterStateMgr = new ReplicatedClusterStateManager() {
+      @Override
+      public void goActiveAndSyncState() {
+        //  noop
+      }
+
+      @Override
+      public void publishClusterState(NodeID nodeID) throws GroupException {
+        //  noop
+      }
+
+      @Override
+      public void setCurrentState(State currentState) {
+        //  noop
+      }
+
+      @Override
+      public void reportStateToMap(Map<String, Object> state) {
+        state.put("type", "NOOP");
+        state.put("state", "SHUTDOWN");
+      }
+
+      @Override
+      public void connectionIDCreated(ConnectionID connectionID) {
+        //  noop
+      }
+
+      @Override
+      public void connectionIDDestroyed(ConnectionID connectionID) {
+        //  noop
+      }
+    };
+  }
+
   @Override
-  public ReplicatedClusterStateManager getReplicatedClusterStateManager() {
+  public synchronized ReplicatedClusterStateManager getReplicatedClusterStateManager() {
     return this.rClusterStateMgr;
   }
 
