@@ -47,7 +47,7 @@ public class ConnectionWatcher implements MessageTransportListener {
       public void notifyTransportConnected(MessageTransport transport) {
         LOGGER.info("transport connected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
       }
-
+  
       @Override
       public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
         LOGGER.info("transport disconnected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
@@ -70,14 +70,14 @@ public class ConnectionWatcher implements MessageTransportListener {
 
     });
   }
-  
+
   private boolean checkForStop() {
     Reference<? extends ClientMessageChannel> target = stopQueue.poll();
     if (target != null) {
       if (target == targetHolder) {
-          stopped.set();
-          LOGGER.warn("unreferenced connection left open {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
-          cmt.close();
+        stopped.set();
+        LOGGER.warn("unreferenced connection left open {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
+        cmt.close();
       }
     }
     return stopped.isSet();
