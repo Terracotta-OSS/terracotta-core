@@ -70,17 +70,13 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
       throw Assert.failure("Attempt to finalize an already finalized stack");
     }
   }
-  
-  protected ClientConnectionEstablisher createClientConnectionEstablisher() {
-    return transportFactory.createClientConnectionEstablisher();
-  }
 
   protected void connectStack() {
     final NetworkLayer last = chainNetworkLayers(transport);
   //  connect up the channel the end of the chain
     last.setReceiveLayer(channel);
     
-    final ClientConnectionEstablisher cce = createClientConnectionEstablisher();
+    final ClientConnectionEstablisher cce = new ClientConnectionEstablisher(transport);
     channel.setMessageTransportInitiator(new MessageTransportInitiator() {
       @Override
       public NetworkStackID openMessageTransport(Iterable<InetSocketAddress> serverAddresses, ConnectionID connection) throws CommStackMismatchException, IOException, MaxConnectionsExceededException, TCTimeoutException {
@@ -89,18 +85,14 @@ public class ClientNetworkStackHarness extends LayeredNetworkStackHarness {
 //  to maintain the transport layer under the channel
         channel.setSendLayer(last);
         transport.initConnectionID(connection);
-        return cce.open(serverAddresses, transport, channel);
+        return cce.open(serverAddresses, channel);
       }
     });
     
-    MessageTransportListener watcher = createTransportListener(transport, cce);
+    MessageTransportListener watcher = new ConnectionWatcher(channel, cce);
     transport.addTransportListener(watcher);
   }
   
-  protected MessageTransportListener createTransportListener(ClientMessageTransport transport, ClientConnectionEstablisher cce) {
-    return new ConnectionWatcher(transport, channel, cce);
-  }
-
   @Override
   public MessageTransport getTransport() {
     return this.transport;

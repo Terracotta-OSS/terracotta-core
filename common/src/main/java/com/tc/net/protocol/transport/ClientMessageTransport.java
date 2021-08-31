@@ -62,6 +62,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final int                         callbackPort;
   private final int                         timeout;
+  private final ReconnectionRejectedHandler reconnectionRejectedHandler;
 
   public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -86,6 +87,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;
     this.timeout = timeout;
+    this.reconnectionRejectedHandler = reconnectionRejectedHandler;
   }
 
   /**
@@ -564,6 +566,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     super.sendToConnection(message); 
   }
   
-  
-
+  boolean isRetryOnReconnectionRejected() {
+    return this.reconnectionRejectedHandler.isRetryOnReconnectionRejected();
+  }
 }

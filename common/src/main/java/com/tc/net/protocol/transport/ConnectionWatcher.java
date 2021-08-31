@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 
 public class ConnectionWatcher implements MessageTransportListener {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ConnectionWatcher.class);
-  private final ClientMessageTransport      cmt;
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionWatcher.class);
+  private volatile ConnectionID connection;
   private final ClientConnectionEstablisher cce;
   private final ReferenceQueue<ClientMessageChannel> stopQueue = new ReferenceQueue<>();
   private final SetOnceFlag stopped = new SetOnceFlag();
@@ -38,37 +38,10 @@ public class ConnectionWatcher implements MessageTransportListener {
   /**
    * Listens to events from a MessageTransport, acts on them, and passes events through to target
    */
-  public ConnectionWatcher(ClientMessageTransport cmt, ClientMessageChannel target, ClientConnectionEstablisher cce) {
-    this.cmt = cmt;
+  public ConnectionWatcher(ClientMessageChannel target, ClientConnectionEstablisher cce) {
     this.targetHolder = new WeakReference<>(target, stopQueue);
     this.cce = cce;
-    cmt.addTransportListener(new MessageTransportListener() {
-      @Override
-      public void notifyTransportConnected(MessageTransport transport) {
-        LOGGER.info("transport connected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
-      }
-  
-      @Override
-      public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
-        LOGGER.info("transport disconnected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
-      }
-
-      @Override
-      public void notifyTransportConnectAttempt(MessageTransport transport) {
-        LOGGER.info("transport connect attempt {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
-      }
-
-      @Override
-      public void notifyTransportClosed(MessageTransport transport) {
-        LOGGER.info("transport closed {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
-      }
-
-      @Override
-      public void notifyTransportReconnectionRejected(MessageTransport transport) {
-        LOGGER.info("transport reconnect rejected {} {} {}", targetHolder.get(), transport.getConnectionID(), cmt.getConnectionID());
-      }
-
-    });
+    this.connection = target.getConnectionID();
   }
 
   private boolean checkForStop() {
@@ -76,8 +49,8 @@ public class ConnectionWatcher implements MessageTransportListener {
     if (target != null) {
       if (target == targetHolder) {
         stopped.set();
-        LOGGER.warn("unreferenced connection left open {} {} {}", targetHolder.get(), cmt, cmt.getConnectionID());
-        cmt.close();
+        LOGGER.warn("unreferenced connection left open {} {}", targetHolder.get(), connection);
+        cce.shutdown();
       }
     }
     return stopped.isSet();
@@ -85,7 +58,7 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   @Override
   public void notifyTransportClosed(MessageTransport transport) {
-    cce.quitReconnectAttempts();
+    cce.shutdown();
     MessageTransportListener target = targetHolder.get();
     if (target != null) {
       target.notifyTransportClosed(transport);
@@ -95,10 +68,9 @@ public class ConnectionWatcher implements MessageTransportListener {
   @Override
   public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
     if (transport.getProductID().isReconnectEnabled()) {
-      cce.asyncReconnect(cmt, this::checkForStop);
+      cce.asyncReconnect(this::checkForStop);
     } else {
-      cce.quitReconnectAttempts();
-      transport.close();
+      cce.shutdown();
     }
     MessageTransportListener target = targetHolder.get();
     if (target != null) {
@@ -116,6 +88,7 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   @Override
   public void notifyTransportConnected(MessageTransport transport) {
+    connection = transport.getConnectionID();
     MessageTransportListener target = targetHolder.get();
     if (target != null) {
       target.notifyTransportConnected(transport);
@@ -124,7 +97,7 @@ public class ConnectionWatcher implements MessageTransportListener {
 
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
-    cce.quitReconnectAttempts();
+    cce.shutdown();
     MessageTransportListener target = targetHolder.get();
     if (target != null) {
       target.notifyTransportReconnectionRejected(transport);

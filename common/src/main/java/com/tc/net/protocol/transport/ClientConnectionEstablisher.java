@@ -41,7 +41,6 @@ import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
@@ -59,12 +58,11 @@ public class ClientConnectionEstablisher {
 
   private volatile Iterable<InetSocketAddress>       serverAddresses;
   private final Set<InetSocketAddress>      redirects = new LinkedHashSet<>();
+  private final ClientMessageTransport transport;
   //  tie these two variables in synchronized blocks
   private boolean               allowReconnects       = false;
   private AsyncReconnect        asyncReconnect;
-  
-  private final ReconnectionRejectedHandler reconnectionRejectedHandler;
-  
+    
   static {
     Logger logger = LoggerFactory.getLogger(ClientConnectionEstablisher.class);
     long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
@@ -76,8 +74,8 @@ public class ClientConnectionEstablisher {
     CONNECT_RETRY_INTERVAL = value;
   }
 
-  public ClientConnectionEstablisher(ReconnectionRejectedHandler reconnectionRejectedHandler) {
-    this.reconnectionRejectedHandler = reconnectionRejectedHandler;
+  public ClientConnectionEstablisher(ClientMessageTransport cmt) {
+    this.transport = cmt;
   }
   /**
    * Blocking open. Causes a connection to be made. Will throw exceptions if the connect fails.
@@ -87,17 +85,18 @@ public class ClientConnectionEstablisher {
    * @throws CommStackMismatchException
    * @throws MaxConnectionsExceededException
    */
-  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses, ClientMessageTransport cmt,
+  public NetworkStackID open(Iterable<InetSocketAddress> serverAddresses,
                              ClientConnectionErrorListener reporter) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
-    Assert.assertNotNull(cmt);
+    Assert.assertNotNull(transport);
     Assert.assertNotNull(reporter);
     Assert.assertNotNull(serverAddresses);
+    Assert.assertFalse(transport.wasOpened());
 
-    if (!cmt.wasOpened() && enableReconnects()) {
+    if (enableReconnects()) {
       setServerAddresses(serverAddresses);
       try {
-        return connectTryAllOnce(cmt, reporter);
+        return connectTryAllOnce(reporter);
       } catch (CommStackMismatchException |
               IOException |
               MaxConnectionsExceededException |
@@ -113,14 +112,18 @@ public class ClientConnectionEstablisher {
     }
   }
 
+  void shutdown() {
+    this.quitReconnectAttempts();
+    this.transport.close();
+  }
+
   private void setServerAddresses(Iterable<InetSocketAddress> serverAddresses) {
     this.serverAddresses = serverAddresses;
   }
 
-  NetworkStackID connectTryAllOnce(ClientMessageTransport cmt,
-                                   ClientConnectionErrorListener reporter) throws TCTimeoutException, IOException,
+  NetworkStackID connectTryAllOnce(ClientConnectionErrorListener reporter) throws TCTimeoutException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    Assert.assertFalse(cmt.isConnected());
+    Assert.assertFalse(transport.isConnected());
     Iterator<InetSocketAddress> serverAddressIterator = getServerAddressIterator();
     InetSocketAddress target = null;
     
@@ -129,7 +132,7 @@ public class ClientConnectionEstablisher {
         target = nextServerAddress(serverAddressIterator);
       }
       try {
-        return cmt.open(target);
+        return transport.open(target);
       } catch (TransportRedirect redirect) {
         reporter.onError(target, redirect);
         target = InetSocketAddress.createUnresolved(redirect.getHostname(), redirect.getPort());
@@ -155,20 +158,20 @@ public class ClientConnectionEstablisher {
     return "ClientConnectionEstablisher[" + this.serverAddresses + "]";
   }
 
-  void reconnect(ClientMessageTransport cmt, Supplier<Boolean> stopCheck) throws MaxConnectionsExceededException {
+  void reconnect(Supplier<Boolean> stopCheck) throws MaxConnectionsExceededException {
     try {
       // Lossy logging for connection errors. Log the errors once in every 10 seconds
-      LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(cmt.getLogger(), 10000,
+      LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(transport.getLogger(), 10000,
                                                                    LossyTCLoggerType.TIME_BASED, true);
 
-      boolean connected = cmt.isConnected();
-      if (!cmt.getProductID().isReconnectEnabled() && !isReconnectBetweenL2s()) {
-        cmt.getLogger().info("Got reconnect request for ClientMessageTransport that does not support it.  skipping");
+      if (!transport.getProductID().isReconnectEnabled() && !transport.isRetryOnReconnectionRejected()) {
+        transport.getLogger().info("Got reconnect request for ClientMessageTransport that does not support it.  skipping");
         return;
       } else {
-        cmt.getLogger().info("reconnecting " + cmt.getConnectionID());
+        transport.getLogger().info("reconnecting " + transport.getConnectionID());
       }
 
+      boolean connected = transport.isConnected();
       boolean reconnectionRejected = false;
       InetSocketAddress target = null;
 
@@ -177,10 +180,10 @@ public class ClientConnectionEstablisher {
         while ((target != null || serverAddressIterator.hasNext()) && tryToConnect(connected, stopCheck)) {
 
           if (reconnectionRejected) {
-            if (reconnectionRejectedHandler.isRetryOnReconnectionRejected()) {
-              LOGGER.info("Reconnection rejected by L2, trying again to reconnect - " + cmt);
+            if (transport.isRetryOnReconnectionRejected()) {
+              LOGGER.info("Reconnection rejected by L2, trying again to reconnect - " + transport);
             } else {
-              LOGGER.info("Reconnection rejected by L2, no more trying to reconnect - " + cmt);
+              LOGGER.info("Reconnection rejected by L2, no more trying to reconnect - " + transport);
               return;
             }
           }
@@ -193,9 +196,9 @@ public class ClientConnectionEstablisher {
           if (i == 0) {
             String previousConnectHost = "";
             int previousConnectHostPort = -1;
-            if (cmt.getRemoteAddress() != null) {
-              previousConnectHost = cmt.getRemoteAddress().getAddress().getHostAddress();
-              previousConnectHostPort = cmt.getRemoteAddress().getPort();
+            if (transport.getRemoteAddress() != null) {
+              previousConnectHost = transport.getRemoteAddress().getAddress().getHostAddress();
+              previousConnectHostPort = transport.getRemoteAddress().getPort();
             }
             String connectingToHost = "";
             try {
@@ -215,10 +218,10 @@ public class ClientConnectionEstablisher {
           }
           try {
             if (i % 20 == 0 && i > 0) {
-              cmt.getLogger().info("Reconnect attempt " + i + " to " + target);
+              transport.getLogger().info("Reconnect attempt " + i + " to " + target);
             }
-            cmt.reopen(target);
-            connected = cmt.isConnected() && cmt.getConnectionID().isValid();
+            transport.reopen(target);
+            connected = transport.isConnected() && transport.getConnectionID().isValid();
           } catch (TransportRedirect redirect) {
             target = InetSocketAddress.createUnresolved(redirect.getHostname(), redirect.getPort());
           } catch (NoActiveException noactive) {
@@ -253,7 +256,7 @@ public class ClientConnectionEstablisher {
         }
       }
     } finally {
-      LOGGER.info("reconnection complete " + cmt.isConnected());
+      LOGGER.info("reconnection complete connected:" + transport.isConnected());
     }
   }
 
@@ -271,11 +274,6 @@ public class ClientConnectionEstablisher {
 
   String getHostByName(InetSocketAddress serverAddress) throws UnknownHostException {
     return InetAddress.getByName(serverAddress.getHostName()).getHostAddress();
-  }
-
-  // TRUE for L2, for L1 only if not stopped
-  boolean isReconnectBetweenL2s() {
-    return reconnectionRejectedHandler.isRetryOnReconnectionRejected();
   }
   
   private boolean tryToConnect(boolean connected, Supplier<Boolean> stopCheck) {
@@ -299,13 +297,13 @@ public class ClientConnectionEstablisher {
     }
   }
 
-  public boolean asyncReconnect(ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
-    if (cmt.getConnectionID().isValid()) {
-      LOGGER.info("async reconnect initiated " + cmt.getConnectionID());
-      return putConnectionRequest(ConnectionRequest.newReconnectRequest(cmt, stopCheck));
+  public boolean asyncReconnect(Supplier<Boolean> stopCheck) {
+    if (transport.getConnectionID().isValid()) {
+      LOGGER.info("async reconnect initiated " + transport.getConnectionID());
+      return putConnectionRequest(ConnectionRequest.newReconnectRequest(stopCheck));
     } else {
-      LOGGER.info("async reconnect ignored connection not valid " + cmt.getConnectionID());
-      cmt.close();
+      LOGGER.info("async reconnect ignored connection not valid " + transport.getConnectionID());
+      transport.close();
       return false;
     }
   }
@@ -318,7 +316,6 @@ public class ClientConnectionEstablisher {
       return false;
     }
 
-    ClientMessageTransport transport = request.getClientMessageTransport();
     // Allow the async thread reconnects/restores only when cmt was connected atleast once
     if (transport != null) {
       if (transport.isConnected()) {
@@ -339,7 +336,7 @@ public class ClientConnectionEstablisher {
     if (!allowReconnects) {
       allowReconnects = true;
       Assert.assertTrue(asyncReconnect == null);
-      asyncReconnect = new AsyncReconnect(this);
+      asyncReconnect = new AsyncReconnect();
       return true;
     } else {
       return false;
@@ -363,42 +360,33 @@ public class ClientConnectionEstablisher {
   private synchronized AsyncReconnect getReconnectHandler() {
     if (allowReconnects) {
       Assert.assertNotNull(asyncReconnect);
-      Assert.assertTrue(!asyncReconnect.isStopped());
       return asyncReconnect;
     } else {
       return null;
     }
   }
 
-  public void quitReconnectAttempts() {
+  private void quitReconnectAttempts() {
     AsyncReconnect reconnect = disableReconnects();
     if (reconnect != null) {
       reconnect.stop();
-      if (!isReconnectBetweenL2s()) {
+      if (!transport.isRetryOnReconnectionRejected()) {
         reconnect.awaitTermination(true);
       }
     }
   }
 
+  // for testing only
   void waitForTermination() {
     AsyncReconnect reconnect = getReconnectHandler();
     if (reconnect != null) {
       reconnect.waitForThreadToComplete();
     }
   }
-  
-  static class AsyncReconnect {
-    private final ClientConnectionEstablisher cce;
+
+  private class AsyncReconnect {
     private boolean stopped = false;
     private Thread connectionEstablisherThread;
-
-    public AsyncReconnect(ClientConnectionEstablisher cce) {
-      this.cce = cce;
-    }
-
-    public synchronized boolean isStopped() {
-      return stopped;
-    }
 
     /**
      *
@@ -427,16 +415,22 @@ public class ClientConnectionEstablisher {
       return false; //  even if interrupted, don't reschedule
     }
 
+    // for testing only
     private boolean waitForThreadToComplete() {
       return waitForThread(getConnectionThread(), false);
     }
 
     private void awaitTermination(boolean mayInterruptIfRunning) {
+      Assert.assertTrue(isStopped());
       waitForThread(getConnectionThread(), mayInterruptIfRunning);
     }
 
+    public synchronized boolean isStopped() {
+      return stopped;
+    }
+    
     public synchronized void stop() {
-      LOGGER.debug("Connection establisher stopping " + System.identityHashCode(this));
+      LOGGER.debug("Connection establisher stopping for connection {} to {}", transport.getConnectionID(), serverAddresses);
       stopped = true;
       this.notifyAll();
     }
@@ -446,12 +440,12 @@ public class ClientConnectionEstablisher {
     }
 
     public boolean putConnectionRequest(ConnectionRequest request) {
-      if (waitForThread(getConnectionThread(), true)) {
-        if (!request.getClientMessageTransport().isConnected()) {
+      if (!isStopped() && waitForThread(getConnectionThread(), true)) {
+        if (!transport.isConnected()) {
           startThreadIfNecessary(request);
           return true;
         } else {
-          LOGGER.info("ignoring connection request.  Already connected: {}", request.getClientMessageTransport());
+          LOGGER.info("ignoring connection request.  Already connected: {}", transport);
         }
       } else {
         LOGGER.info("connect request ignored, already reconnecting");
@@ -461,7 +455,7 @@ public class ClientConnectionEstablisher {
 
     private synchronized void startThreadIfNecessary(ConnectionRequest request) {
       if (!stopped) {
-        Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + this.cce.serverAddresses.toString() + "-" + System.identityHashCode(request));
+        Thread thread = new Thread(()->execute(request), RECONNECT_THREAD_NAME + "-" + serverAddresses.toString() + "-" + transport.getConnectionID());
         thread.setDaemon(true);
         thread.start();
         LOGGER.info("connection establisher started " + thread.getName());
@@ -470,52 +464,35 @@ public class ClientConnectionEstablisher {
     }
 
     public void execute(ConnectionRequest request) {
-      LOGGER.info("Connection establisher starting. " + System.identityHashCode(this));
+      LOGGER.info("reconnection starting for connection {} to {}", transport.getConnectionID(), serverAddresses);
       if (request != null) {
-        LOGGER.info("Handling connection request: " + request);
-        ClientMessageTransport cmt = request.getClientMessageTransport();
+        Logger clientLogger = transport.getLogger();
         try {
-          this.cce.reconnect(cmt, ()->(isStopped() || request.checkForStop()));
+          reconnect(()->(isStopped() || request.checkForStop()));
         } catch (MaxConnectionsExceededException e) {
-          String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
-          cmt.getLogger().error(connInfo + e.getMessage());
-          return;
+          String connInfo = ((transport == null) ? "" : (transport.getLocalAddress() + "->" + transport.getRemoteAddress() + " "));
+          transport.getLogger().error(connInfo + e.getMessage());
         } catch (Throwable t) {
-          if (cmt != null) cmt.getLogger().warn("Reconnect failed !", t);
+          if (transport != null) clientLogger.warn("Reconnect failed !", t);
         }
       }
-      LOGGER.info("Connection establisher exiting." + System.identityHashCode(this));
+      LOGGER.info("reconnection exiting for connection {} to {}", transport.getConnectionID(), serverAddresses);
     }
   }
 
   static class ConnectionRequest {
-    private final ClientMessageTransport cmt;
     private final Supplier<Boolean> stopCheck;
 
-    ConnectionRequest() {
-      this(null, ()->false);
-    }
-
-    ConnectionRequest(ClientMessageTransport cmt, Supplier<Boolean> stopCheck) {
-      this.cmt = cmt;
+    ConnectionRequest(Supplier<Boolean> stopCheck) {
       this.stopCheck = stopCheck;
-    }
-
-    ClientMessageTransport getClientMessageTransport() {
-      return this.cmt;
     }
     
     boolean checkForStop() {
       return stopCheck.get();
     }
 
-    public static ConnectionRequest newReconnectRequest(ClientMessageTransport cmtParam, Supplier<Boolean> stopCheck) {
-      return new ConnectionRequest(cmtParam, stopCheck);
-    }
-
-    @Override
-    public String toString() {
-      return "ConnectionRequest [cmt=" + cmt + "]";
+    public static ConnectionRequest newReconnectRequest(Supplier<Boolean> stopCheck) {
+      return new ConnectionRequest(stopCheck);
     }
   }
 }

@@ -57,12 +57,6 @@ public class MessageTransportFactoryImpl implements MessageTransportFactory {
     this.defaultHandshakeErrorHandler = defaultHandshakeErrorHandler;
     this.reconnectionRejectedHandler = reconnectionRejectedBehaviour;
   }
-  
-  @Override
-  public ClientConnectionEstablisher createClientConnectionEstablisher() {
-    ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(reconnectionRejectedHandler);
-    return clientConnectionEstablisher;
-  }
 
   @Override
   public ClientMessageTransport createNewTransport() {
