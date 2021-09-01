@@ -36,7 +36,6 @@ import com.tc.net.protocol.transport.MessageTransportInitiator;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
-import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;

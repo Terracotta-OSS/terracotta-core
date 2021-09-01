@@ -23,7 +23,6 @@ import com.tc.net.core.TCConnection;
 import java.util.List;
 
 public interface MessageTransportFactory {
-  ClientConnectionEstablisher createClientConnectionEstablisher();
 
   ClientMessageTransport createNewTransport();
 

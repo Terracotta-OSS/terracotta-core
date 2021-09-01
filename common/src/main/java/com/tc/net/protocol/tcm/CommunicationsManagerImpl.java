@@ -325,12 +325,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                  boolean resueAddr, Set<ConnectionID> initialConnectionIDs, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 
-    MessageTransportFactory transportFactory = new MessageTransportFactory() {
-      @Override
-      public ClientConnectionEstablisher createClientConnectionEstablisher() {
-        throw new AssertionError();
-      }
-      
+    MessageTransportFactory transportFactory = new MessageTransportFactory() {      
       @Override
       public ClientMessageTransport createNewTransport() {
         throw new AssertionError();

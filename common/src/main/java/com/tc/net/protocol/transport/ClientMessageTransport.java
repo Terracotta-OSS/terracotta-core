@@ -62,6 +62,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   private final WireProtocolAdaptorFactory  wireProtocolAdaptorFactory;
   private final int                         callbackPort;
   private final int                         timeout;
+  private final ReconnectionRejectedHandler reconnectionRejectedHandler;
 
   public ClientMessageTransport(TCConnectionManager clientConnectionEstablisher,
                                 TransportHandshakeErrorHandler handshakeErrorHandler,
@@ -86,6 +87,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     this.connectionManager = connectionManager;
     this.callbackPort = callbackPort;
     this.timeout = timeout;
+    this.reconnectionRejectedHandler = reconnectionRejectedHandler;
   }
 
   /**
@@ -460,7 +462,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
   }
 
-  void reopen(InetSocketAddress serverAddress) throws Exception {
+  void reopen(InetSocketAddress serverAddress) throws TCTimeoutException, ReconnectionRejectedException, MaxConnectionsExceededException, CommStackMismatchException, IOException {
 
     // don't do reconnect if open is still going on
     if (!wasOpened()) {
@@ -472,7 +474,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     reconnect(socket);
   }
   
-  void reconnect(TCSocketAddress socket) throws Exception {
+  void reconnect(TCSocketAddress socket) throws TCTimeoutException, ReconnectionRejectedException, MaxConnectionsExceededException, CommStackMismatchException, IOException {
     TCConnection connection = connect(socket);
       
     Assert.eval(!isConnected());
@@ -482,9 +484,12 @@ public class ClientMessageTransport extends MessageTransportBase {
         if (!connection.isConnected()) {
           throw new IOException("closed");
         }
-      } catch (Throwable t) {
+      } catch (TCTimeoutException exp) {
         clearConnection();
-        throw t;
+        throw exp;
+      } catch (IOException io) {
+        clearConnection();
+        throw io;
       }
     }
   }
@@ -561,6 +566,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     super.sendToConnection(message); 
   }
   
-  
-
+  boolean isRetryOnReconnectionRejected() {
+    return this.reconnectionRejectedHandler.isRetryOnReconnectionRejected();
+  }
 }

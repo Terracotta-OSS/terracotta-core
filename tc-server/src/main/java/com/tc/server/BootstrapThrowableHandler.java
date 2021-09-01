@@ -25,6 +25,7 @@ import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.exception.TCNotRunningException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.CallbackOnExitHandler;
@@ -96,6 +97,7 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
     addCallbackOnExitExceptionHandler(TCNotRunningException.class, new CallbackShutdownExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(InterruptedException.class, new CallbackShutdownExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(IllegalStateException.class, new CallbackShutdownExceptionLoggingAdapter());
+    addCallbackOnExitExceptionHandler(TCRuntimeException.class, new CallbackShutdownExceptionLoggingAdapter());
     addCallbackOnExitExceptionHandler(ConfigurationException.class, new ConfigurationExceptionLoggingAdapter());
   }
 
