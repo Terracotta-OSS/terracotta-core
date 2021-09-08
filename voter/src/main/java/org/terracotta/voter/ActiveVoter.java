@@ -251,6 +251,7 @@ public class ActiveVoter implements AutoCloseable {
                 }
               }
               voterManager.close();
+              sleepFor10();
             }
 
             // heartbeat with the server until a vote is requested
