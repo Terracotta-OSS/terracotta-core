@@ -308,7 +308,7 @@ public class InFlightMessage implements PrettyPrintable {
 
   public byte[] getWithTimeout(long timeout, TimeUnit unit) throws InterruptedException, EntityException, TimeoutException {
     trace.log("getWithTimeout()");
-    timedWait(this::isDone, timeout, unit);
+    timedWait(() -> getCanComplete, timeout, unit);
     this.got = System.nanoTime();
     if (exception != null) {
       ExceptionUtils.throwEntityException(exception);

@@ -1196,16 +1196,17 @@ public class DistributedObjectServer {
   }
 
   public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
-    try {
-      this.l1Diagnostics.stop(0L);
-    } catch (TCTimeoutException to) {
-      throw Assert.failure("no timeout set!", to);
-    }
-    boolean clientBound = false;
-    while (!clientBound) {
+    while (!server.isStopped()) {
+      try {
+        this.l1Diagnostics.stop(1000L);
+      } catch (TCTimeoutException to) {
+        logger.warn("unable to stop diagnostics listener");
+        continue;
+      }
+
       try {
         this.l1Listener.start(existingConnections);
-        clientBound = true;
+        break;
       } catch (BindException bind) {
   // this seems to happen on windows but should not.  we just gave up the port.
   // loop forever as a hack.
