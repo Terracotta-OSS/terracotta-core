@@ -18,10 +18,14 @@
  */
 package com.tc.objectserver.handshakemanager;
 
+import com.tc.text.PrettyPrintable;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  *
  */
-public class ClientHandshakeMonitoringInfo {
+public class ClientHandshakeMonitoringInfo implements PrettyPrintable {
   public static String MONITORING_INFO_ATTACHMENT = "client_monitoring_info_attachment";
   
   private final int pid;
@@ -70,6 +74,18 @@ public class ClientHandshakeMonitoringInfo {
 
   public boolean hasClientRevision() {
     return (this.revision != null && this.revision.length() > 0);
+  }
+
+  @Override
+  public Map<String, ?> getStateMap() {
+    Map<String, String> map = new LinkedHashMap<>();
+    map.put("uuid", uuid);
+    map.put("pid", Integer.toString(pid));
+    map.put("name", name);
+    map.put("version", version);
+    map.put("revision", revision);
+    map.put("address", address);
+    return map;
   }
 
   @Override

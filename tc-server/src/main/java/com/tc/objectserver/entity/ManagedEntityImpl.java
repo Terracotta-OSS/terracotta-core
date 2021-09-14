@@ -90,6 +90,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
 import org.terracotta.tripwire.Event;
 import org.terracotta.tripwire.TripwireFactory;
 
@@ -995,10 +996,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
 //   this is a reconnection, handle the extended reconnect data
           try {
-            if (this.reconnect == null) {
+            ReconnectHandler handler = this.reconnect;
+            if (handler == null) {
               throw new ReconnectRejectedException("no reconnect handler registered");
             } else {
-              this.reconnect.handleReconnect(descriptor, extendedData);
+              handler.handleReconnect(descriptor, extendedData);
             }
           } catch (ReconnectRejectedException rejected) {
             response.failure(ServerException.createReconnectRejected(getID(), rejected));

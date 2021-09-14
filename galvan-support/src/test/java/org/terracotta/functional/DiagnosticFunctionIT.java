@@ -50,6 +50,7 @@ public class DiagnosticFunctionIT {
         System.out.println(d.getThreadDump());
         System.out.println(d.invoke("Server", "isAcceptingClients"));
         System.out.println(d.get("Server", "Version"));
+        System.out.println(d.get("Server", "CurrentChannelProperties"));
         System.out.println(d.list("Server"));
       }
     }

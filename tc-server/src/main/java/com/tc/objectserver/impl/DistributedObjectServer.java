@@ -908,9 +908,6 @@ public class DistributedObjectServer {
   private Guardian getOperationGuardian(ServiceRegistry platformRegistry, ClientChannelLifeCycleHandler handler) {
     Collection<Guardian> userProvided = platformRegistry.getServices(()->Guardian.class);
 
-    if (!userProvided.isEmpty()) {
-      handler.activateGuardian();
-    }
     return (o, p)->{
       try {
         return userProvided.stream().map(g->g.validate(o, p)).reduce(Boolean.TRUE, Boolean::logicalAnd);

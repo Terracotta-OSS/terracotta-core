@@ -54,7 +54,6 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
   private final ClientEntityStateManager      clientEvents;
   private final ProcessTransactionHandler   pth;
   private final ManagementTopologyEventCollector collector;
-  private boolean guardian = false;
   
   private final Set<ClientID>  knownClients = new HashSet<>();
 
@@ -153,9 +152,8 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
       //  well, either the client already died and is not active or this is an internal 
       //  connection
     }
-    if (this.guardian) {
-      GuardianContext.channelCreated(channel);
-    }
+
+    GuardianContext.channelCreated(channel);
   }
   
   private void notifyClientAdded(MessageChannel channel, ClientID clientID) {
@@ -168,9 +166,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
   private void notifyClientRemoved(ClientID clientID) {
     synchronized (knownClients) {
       if (knownClients.contains(clientID)) {
-        if (this.guardian) {
-          GuardianContext.clientRemoved(clientID);
-        }
+        GuardianContext.clientRemoved(clientID);
         knownClients.remove(clientID);
       }
     }
@@ -196,7 +192,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     // before an attempt is made to remove references.
     if (wasActive) {
       nodeDisconnected(clientID, product, address, channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT));
-    } else if (this.guardian) {
+    } else {
       GuardianContext.channelRemoved(channel);
     }
   }  
@@ -204,9 +200,5 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
   @Override
   public void channelRemoved(MessageChannel channel) {
     channelRemoved(channel, this.channelMgr.isActiveID(channel.getRemoteNodeID()));
-  }
-  
-  public void activateGuardian() {
-    this.guardian = true;
   }
 }
