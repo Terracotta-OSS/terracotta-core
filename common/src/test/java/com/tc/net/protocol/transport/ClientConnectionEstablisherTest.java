@@ -52,6 +52,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.net.Socket;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
 public class ClientConnectionEstablisherTest {
@@ -230,5 +231,29 @@ public class ClientConnectionEstablisherTest {
     }
     verify(cmt).open(eq(serverAddresses.get(0)));
     verify(cmt).open(eq(serverAddresses.get(1)));
+  }
+
+  @Test
+  public void test_client_tries_next_after_unknown_host_from_redirect() throws Exception {
+    List<InetSocketAddress> serverAddresses = new ArrayList<>();
+    serverAddresses.add(serverAddress);
+    serverAddresses.add(InetSocketAddress.createUnresolved("localhost", 9610));
+    Mockito.doAnswer((iom) -> {
+      InetSocketAddress add = (InetSocketAddress)iom.getArguments()[0];
+      if (add.equals(serverAddress)) {
+        throw new TransportRedirect("unknown:9410");
+      } else if (add.getHostString().equals("unknown")) {
+        Socket s = new Socket(add.getHostString(), add.getPort());
+        boolean connected = s.isConnected();
+        throw new UnknownHostException("connected:" + connected);
+      } else {
+        throw new IOException("checked");
+      }
+    }).when(cmt).open(any(InetSocketAddress.class));
+    try {
+      spyConnEstablisher.open(serverAddresses, errorListener);
+    } catch (IOException ioe) {
+      assertTrue(ioe.getMessage().startsWith("checked"));
+    }
   }
 }

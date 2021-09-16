@@ -476,7 +476,9 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       if (null == ch) {
         // not expected
-        callback.run();
+        if (callback != null) {
+          callback.run();
+        }
         logger.warn("null channel passed to cleanupChannel()", new Throwable());
         return;
       }
