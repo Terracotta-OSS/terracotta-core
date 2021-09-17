@@ -820,7 +820,6 @@ public class DistributedObjectServer {
     final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 // don't join the group if the configuration is not complete
-    startDiagnosticListener();
     if (!configuration.isPartialConfiguration()) {
       startGroupManagers();
       this.l2Coordinator.start();
@@ -1079,6 +1078,8 @@ public class DistributedObjectServer {
 
   private void connectServerStateToReplicatedState(LocalMonitoringProducer monitoringShimService, StateManager mgr, ClientEntityStateManager clients, ReplicatedClusterStateManager rcs) {
     mgr.registerForStateChangeEvents(new StateChangeListener() {
+      private boolean diagnosticsStarted = false;
+      
       @Override
       public void l2StateChanged(StateChangedEvent sce) {
         rcs.setCurrentState(sce.getCurrentState());
@@ -1097,15 +1098,10 @@ public class DistributedObjectServer {
               .map(cid->new ConnectionID(ConnectionID.NULL_JVM_ID, cid.toLong(), stripeIDStateManager.getStripeID().getName())).collect(Collectors.toSet());
           getContext().getClientHandshakeManager().setStarting(existingClients);
           l2Coordinator.getReplicatedClusterStateManager().goActiveAndSyncState();
-          try {
-            startL1Listener(existingConnections);
-          } catch (IOException ioe) {
-            if (!stopping.isSet()) {
-              throw new RuntimeException(ioe);
-            } else {
-              logger.debug("cannot start listeners, server shutting down");
-            }
-          }
+          startL1Listener(existingConnections);
+        } else if (!diagnosticsStarted) {
+          startDiagnosticListener();
+          diagnosticsStarted = true;
         }
       }
     });
@@ -1192,7 +1188,7 @@ public class DistributedObjectServer {
     }
   }
 
-  public void startL1Listener(Set<ConnectionID> existingConnections) throws IOException {
+  public void startL1Listener(Set<ConnectionID> existingConnections) {
     while (!server.isStopped()) {
       try {
         this.l1Diagnostics.stop(1000L);
@@ -1212,17 +1208,33 @@ public class DistributedObjectServer {
           TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException ie) {
           L2Utils.handleInterrupted(logger, ie);
-          throw bind;
+          throw new RuntimeException(bind);
+        }
+      } catch (IOException ioe) {
+        if (!stopping.isSet()) {
+          consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", format(this.l1Diagnostics), ioe);
+          throw new RuntimeException(ioe);
+        } else {
+          logger.debug("cannot start listeners, server shutting down");
         }
       }
     }
-    consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(this.l1Listener)
+    consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on {}",format(this.l1Listener)
                        + " successfully, and is now ready for work.");
   }
 
-  public void startDiagnosticListener() throws IOException {
-    this.l1Diagnostics.start(Collections.emptySet());
-    consoleLogger.info("Terracotta Server instance has started diagnostic listening on " + format(this.l1Diagnostics));
+  public void startDiagnosticListener() {
+    try {
+      this.l1Diagnostics.start(Collections.emptySet());
+      consoleLogger.info("Terracotta Server instance has started diagnostic listening on  {}",format(this.l1Diagnostics));
+    } catch (IOException ioe) {
+      if (!stopping.isSet()) {
+        consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", format(this.l1Diagnostics), ioe);
+        throw new RuntimeException(ioe);
+      } else {
+        logger.debug("cannot start listeners, server shutting down");
+      }
+    }
   }
 
   private static String format(NetworkListener listener) {

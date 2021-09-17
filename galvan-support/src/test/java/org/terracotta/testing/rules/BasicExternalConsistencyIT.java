@@ -67,7 +67,7 @@ public class BasicExternalConsistencyIT {
     String state = checker.getState();
     while (!state.startsWith("ACTIVE")) {
       System.out.println(state);
-      checker.invoke("ConsistencyManager", "allowRequestedTransition");
+      System.out.println(checker.invoke("ConsistencyManager", "allowRequestedTransition"));
       TimeUnit.SECONDS.sleep(10);
       state = checker.getState();
     }
