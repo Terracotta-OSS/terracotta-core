@@ -61,6 +61,7 @@ import com.tc.objectserver.entity.NoopResultCapture;
 import com.tc.objectserver.entity.PassiveResultCapture;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ResultCaptureImpl;
+import com.tc.objectserver.entity.ServerEntityFactory;
 import com.tc.objectserver.persistence.Persistor;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.tracing.Trace;
@@ -273,7 +274,8 @@ public class ReplicatedTransactionHandler {
       boolean canDelete = tuple.canDelete;
       
       if (!this.entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(eid, version)).isPresent()) {
-        this.entityManager.createEntity(eid, version, consumerID, canDelete);
+        ManagedEntity entity = this.entityManager.createEntity(eid, version, consumerID);
+        Assert.assertTrue(entity.canDelete() == canDelete);
         this.persistor.getEntityPersistor().entityCreatedNoJournal(eid, version, consumerID, canDelete, config);
       } else {
         Assert.fail("this entity should not be here");
@@ -313,18 +315,17 @@ public class ReplicatedTransactionHandler {
       this.persistor.getEntityPersistor().setNextConsumerID(activity.getFetchID().toLong());
       try {
         // TODO:  When a permanent entity is being synced, should we be creating it or ensuring it already exists?
-        boolean canDelete = !sourceNodeID.isNull();
-        ManagedEntity temp = entityManager.createEntity(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete);
+        ManagedEntity temp = entityManager.createEntity(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong());
+        boolean canDelete = temp.canDelete();
         Assert.assertTrue(temp.getConsumerID() + " == " + activity.getFetchID().toLong(), temp.getConsumerID() == activity.getFetchID().toLong());
         temp.addRequestMessage(request, MessagePayload.rawDataOnly(extendedData), createCapture(()->ackReceived(activeSender, activity, transactionOrderPersistenceFuture),
           (result) -> {
-            if (canDelete) {
-              this.persistor.getEntityPersistor().entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, TCByteBufferFactory.unwrap(extendedData));
-              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
+            if (!sourceNodeID.isNull()) {
+              this.persistor.getEntityPersistor().entityCreated(sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), true, TCByteBufferFactory.unwrap(extendedData));
             } else {
               this.persistor.getEntityPersistor().entityCreatedNoJournal(activity.getEntityID(), activity.getVersion(), activity.getFetchID().toLong(), canDelete, TCByteBufferFactory.unwrap(extendedData));
-              acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
             }
+            acknowledge(activeSender, activity, ReplicationResultCode.SUCCESS);
           }, (exception) -> {
             this.persistor.getEntityPersistor().entityCreateFailed(activity.getEntityID(), sourceNodeID, transactionID.toLong(), oldestTransactionOnClient.toLong(), exception);
             LOGGER.debug("create fail:" + temp.getID());

@@ -31,7 +31,7 @@ import com.tc.util.Assert;
  * ReplicatedTransactionHandler.
  */
 public class EntityExistenceHelpers {
-  public static boolean createEntityReturnWasCached(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration, boolean canDelete) throws ServerException {
+  public static boolean createEntityReturnWasCached(EntityPersistor entityPersistor, EntityManager entityManager, ClientID clientID, TransactionID transactionIDObject, TransactionID oldestTransactionOnClientObject, EntityID entityID, long version, long consumerID, byte[] configuration) throws ServerException {
     boolean resultWasCached = false;
     // We can't have a null client, transaction, or oldest transaction when an entity is created - even synthetic clients shouldn't do this as they will disrupt clients.
     Assert.assertNotNull(clientID);
@@ -45,7 +45,7 @@ public class EntityExistenceHelpers {
       resultWasCached = true;
     } else {
       // There is no record of this, so give it a try.
-      entityManager.createEntity(entityID, version, consumerID, canDelete);
+      entityManager.createEntity(entityID, version, consumerID);
     }
     return resultWasCached;
   }

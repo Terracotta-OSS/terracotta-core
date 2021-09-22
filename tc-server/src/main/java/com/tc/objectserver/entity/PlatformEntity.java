@@ -84,6 +84,9 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
+  public boolean canDelete() { return false; }
+
+  @Override
   public void sync(SessionID passive) {
   //  never sync
   }

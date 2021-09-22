@@ -121,6 +121,11 @@ public class EntityManagerImpl implements EntityManager {
     return this.creationLoader;
   }
 
+  @Override
+  public boolean canDelete(EntityID entityID) {
+    return !creationLoader.isPermanentEntity(entityID);
+  }
+
   public void shutdown() {
     for (EntityServerService<?,?> service : entityServices.values()) {
       try {
@@ -174,17 +179,16 @@ public class EntityManagerImpl implements EntityManager {
   }
 
   @Override
-  public ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws ServerException {
+  public ManagedEntity createEntity(EntityID id, long version, long consumerID) throws ServerException {
     // Valid entity versions start at 1.
     EntityServerService service = getVersionCheckedService(id, version);
     snapshotLock.acquireUninterruptibly();
     try {
     //  if active, reuse the managed entity if it is mapped to an id.  if passive, MUST map the id to the index of the managed entity
       FetchID current = entities.compute(id, (eid, fetch)-> shouldCreateActiveEntities ? Optional.ofNullable(fetch).orElse(new FetchID(consumerID)) : new FetchID(consumerID));
-      
       ManagedEntity temp = entityIndex.computeIfAbsent(current, (fetch)->
         new ManagedEntityImpl(id, version, consumerID, flushLocalPipeline, serviceRegistry.subRegistry(consumerID),
-          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete));
+          clientEntityStateManager, eventCollector, this.messageSelf, processorPipeline, service, shouldCreateActiveEntities, canDelete(id)));
 
       return temp;
     } finally {

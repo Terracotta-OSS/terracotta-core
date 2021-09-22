@@ -52,12 +52,14 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.EntityServerService;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author twu
  */
 public class ServerEntityFactory {
   private final ServiceLocator locator;
+  private List<VoltronEntityMessage> entityMessages;
   
   public ServerEntityFactory(ServiceLocator loader) {
     this.locator = loader;
@@ -80,19 +82,29 @@ public class ServerEntityFactory {
   }
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public List<VoltronEntityMessage> getAnnotatedEntities() {
-    List<VoltronEntityMessage> msgs = new ArrayList<>();
-    List<Class<? extends EntityServerService>> serviceLoader = this.locator.getImplementations(EntityServerService.class);
-    for (Class<? extends EntityServerService> serverService : serviceLoader) {
-      for (PermanentEntity p : serverService.getAnnotationsByType(PermanentEntity.class)) {
-        msgs.add(createMessage(p.type(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
-      }
-      for (PermanentEntityType p : serverService.getAnnotationsByType(PermanentEntityType.class)) {
-        msgs.add(createMessage(p.type().getName(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+  public synchronized List<VoltronEntityMessage> getAnnotatedEntities() {
+    if (entityMessages == null) {
+      entityMessages = new ArrayList<>();
+      List<Class<? extends EntityServerService>> serviceLoader = this.locator.getImplementations(EntityServerService.class);
+      for (Class<? extends EntityServerService> serverService : serviceLoader) {
+        for (PermanentEntity p : serverService.getAnnotationsByType(PermanentEntity.class)) {
+          entityMessages.add(createMessage(p.type(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+        }
+        for (PermanentEntityType p : serverService.getAnnotationsByType(PermanentEntityType.class)) {
+          entityMessages.add(createMessage(p.type().getName(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+        }
       }
     }
-    return msgs;
-  }  
+    return entityMessages;
+  }
+
+  public boolean isPermanentEntity(EntityID entity) {
+    Predicate<EntityID> sameName = e -> e.getEntityName().equals(entity.getEntityName());
+    Predicate<EntityID> sameClass = e -> e.getClassName().equals(entity.getClassName());
+    return getAnnotatedEntities().stream()
+        .map(p -> p.getEntityDescriptor().getEntityID())
+        .anyMatch(sameName.and(sameClass));
+  }
 
   public static VoltronEntityMessage createMessage(String type, String name, int version, TCByteBuffer data) {
     return new CreateSystemEntityMessage(new EntityID(type, name),version, data);

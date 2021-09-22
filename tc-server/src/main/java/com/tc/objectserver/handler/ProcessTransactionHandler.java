@@ -388,7 +388,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
       capture.setTransactionOrderPersistenceFuture(transactionOrderPersistenceFuture);
       try {
         EntityID entityID = descriptor.getEntityID();
-        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID, !capture.getNodeID().isNull());
+        ManagedEntity temp = entityManager.createEntity(entityID, descriptor.getClientSideVersion(), consumerID);
         temp.addRequestMessage(capture, entityMessage, capture);
       } catch (ServerException ee) {
         capture.failure(ee);
@@ -929,10 +929,10 @@ public class ProcessTransactionHandler implements ReconnectListener {
     public void complete() {
       switch(this.getAction()) {
         case CREATE_ENTITY:
-          if (getNodeID().isNull()) {
-            persistor.getEntityPersistor().entityCreatedNoJournal(eid, version, consumerID, false, config);
+          if (!getNodeID().isNull()) {
+            persistor.getEntityPersistor().entityCreated(getNodeID(), getTransaction().toLong(), getOldestTransactionOnClient().toLong(), eid, version, consumerID, true, config);
           } else {
-            persistor.getEntityPersistor().entityCreated(getNodeID(), getTransaction().toLong(), getOldestTransactionOnClient().toLong(), eid, version, consumerID, !getNodeID().isNull(), config);
+            persistor.getEntityPersistor().entityCreatedNoJournal(eid, version, consumerID, entityManager.canDelete(eid), config);
           }
           break;
         case RECONFIGURE_ENTITY:
@@ -959,7 +959,11 @@ public class ProcessTransactionHandler implements ReconnectListener {
     public void complete(byte[] value) {
       switch(this.getAction()) {
         case CREATE_ENTITY:
-          persistor.getEntityPersistor().entityCreated(getNodeID(), getTransaction().toLong(), getOldestTransactionOnClient().toLong(), eid, version, consumerID, !getNodeID().isNull(), config);
+          if (!getNodeID().isNull()) {
+            persistor.getEntityPersistor().entityCreated(getNodeID(), getTransaction().toLong(), getOldestTransactionOnClient().toLong(), eid, version, consumerID, true, config);
+          } else {
+            persistor.getEntityPersistor().entityCreatedNoJournal(eid, version, consumerID, entityManager.canDelete(eid), config);
+          }
           break;
         case RECONFIGURE_ENTITY:
           EntityExistenceHelpers.recordReconfigureEntity(persistor.getEntityPersistor(), entityManager, getNodeID(), getTransaction(), getOldestTransactionOnClient(), eid, version, config, null);
