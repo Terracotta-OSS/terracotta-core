@@ -76,6 +76,8 @@ public interface ManagedEntity {
   boolean isActive();
   
   boolean isRemoveable();
+
+  boolean canDelete();
   
   boolean clearQueue();
   

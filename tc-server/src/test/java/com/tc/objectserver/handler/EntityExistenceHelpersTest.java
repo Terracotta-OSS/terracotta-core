@@ -70,15 +70,15 @@ public class EntityExistenceHelpersTest {
     TransactionID tid = mock(TransactionID.class);
     EntityID eid = new EntityID("test", "test");
     when(cid.isNull()).thenReturn(Boolean.FALSE);
-    boolean result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration, true);
+    boolean result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration);
 // first run through should be false
     Assert.assertFalse(result);
     when(persistor.wasEntityCreatedInJournal(any(), any(), anyLong())).thenReturn(Boolean.TRUE);
-    result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration, true);
+    result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration);
 // if the persistor thinks the entity was created, the entity return was cached
     Assert.assertTrue(result);
     when(cid.isNull()).thenReturn(Boolean.TRUE);
-    result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration, true);
+    result = EntityExistenceHelpers.createEntityReturnWasCached(persistor, manager, cid, tid, TransactionID.NULL_ID, eid, 1, 1, configuration);
 // if the client id is null then the transaction was generated on the server and the return is never cached and the create never resent
     Assert.assertFalse(result);
   }

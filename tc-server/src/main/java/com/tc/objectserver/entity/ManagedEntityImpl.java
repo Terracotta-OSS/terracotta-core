@@ -691,6 +691,9 @@ public class ManagedEntityImpl implements ManagedEntity {
     return this.isDestroyed && runnables.isEmpty() && runnables.deferCleared;
   }
 
+  @Override
+  public boolean canDelete() { return this.canDelete; }
+
   private void destroyEntity(ServerEntityRequest request, ResultCapture response) throws ConfigurationException {
     CommonServerEntity<EntityMessage, EntityResponse> commonServerEntity = this.isInActiveState
         ? activeServerEntity

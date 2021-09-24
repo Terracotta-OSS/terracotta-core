@@ -67,7 +67,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.Mockito;
@@ -167,8 +166,9 @@ public class ReplicatedTransactionHandlerTest {
     when(msg.messageFrom()).thenReturn(sid);
     when(msg.getActivities()).thenReturn(Collections.singletonList(activity));
     when(entity.getCodec()).thenReturn(mock(MessageCodec.class));
+    when(entity.canDelete()).thenReturn(true);
     when(this.entityManager.getEntity(any())).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+    when(this.entityManager.createEntity(any(), anyLong(), anyLong())).then((invoke)->{
       when(this.entityManager.getEntity(any())).thenReturn(Optional.of(entity));
       return entity;
     });
@@ -259,7 +259,7 @@ public class ReplicatedTransactionHandlerTest {
       ((ResultCapture)in.getArguments()[2]).complete(new byte[0]);
       return null;
     }).when(entity).addRequestMessage(any(), any(), any());
-    when(entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).thenReturn(entity);
+    when(entityManager.createEntity(any(), anyLong(), anyLong())).thenReturn(entity);
     when(entityManager.getEntity(EntityDescriptor.NULL_ID)).thenReturn(Optional.empty());
     this.rth.getEventHandler().handleEvent(start);
     this.rth.getEventHandler().handleEvent(end);
@@ -291,7 +291,7 @@ public class ReplicatedTransactionHandlerTest {
       }
     });
     
-    when(this.entityManager.createEntity(Mockito.eq(entityID), Mockito.anyLong(), anyLong(), anyBoolean())).thenReturn(entity);
+    when(this.entityManager.createEntity(Mockito.eq(entityID), Mockito.anyLong(), anyLong())).thenReturn(entity);
     this.rth.getEventHandler().handleEvent(ReplicationMessage.createLocalContainer(SyncReplicationActivity.createStartSyncMessage(new SyncReplicationActivity.EntityCreationTuple[0])));
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     ObjectOutputStream out = new ObjectOutputStream(bout);
@@ -316,12 +316,13 @@ public class ReplicatedTransactionHandlerTest {
     ManagedEntity entity = mock(ManagedEntity.class);
     MessageCodec codec = mock(MessageCodec.class);
     when(this.entityManager.getEntity(any())).thenReturn(Optional.empty());
-    when(this.entityManager.createEntity(any(), anyLong(), anyLong(), anyBoolean())).then((invoke)->{
+    when(this.entityManager.createEntity(any(), anyLong(), anyLong())).then((invoke)->{
       when(this.entityManager.getEntity(any())).thenReturn(Optional.of(entity));
       return entity;
     });
     when(this.entityManager.getMessageCodec(any())).thenReturn(codec);
     when(entity.getCodec()).thenReturn(codec);
+    when(entity.canDelete()).thenReturn(true);
     
     Mockito.doAnswer(invocation->{
       ServerEntityRequest req = (ServerEntityRequest)invocation.getArguments()[0];

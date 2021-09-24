@@ -45,10 +45,9 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
    * @param id id of the entity to create
    * @param version the version of the entity on the calling client
    * @param consumerID the unique consumerID this entity uses when interacting with services
-   * @param canDelete True if this is an entity which can be deleted, false if it is permanent.
    * @return an uninitialized ManagedEntity
    */
-  ManagedEntity createEntity(EntityID id, long version, long consumerID, boolean canDelete) throws ServerException;
+  ManagedEntity createEntity(EntityID id, long version, long consumerID) throws ServerException;
  
   /**
    * Once a ManagedEntity is destroyed it must be removed from the EntityManager manually. 
@@ -80,6 +79,8 @@ public interface EntityManager extends MessageCodecSupplier, PrettyPrintable {
   void loadExisting(EntityID entityID, long recordedVersion, long consumerID, boolean canDelete, byte[] configuration) throws ServerException;
   
   void resetReferences();
+
+  boolean canDelete(EntityID entityID);
 
   /**
    * Gets a snapshot of the entity list, sorted by order in which they were initially instantiated, under lock.

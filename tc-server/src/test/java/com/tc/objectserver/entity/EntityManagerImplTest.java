@@ -99,7 +99,7 @@ public class EntityManagerImplTest {
   @Test
   public void testCreateEntity() throws Exception {
     try {
-      entityManager.createEntity(id, version, consumerID, true);
+      entityManager.createEntity(id, version, consumerID);
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
@@ -109,8 +109,8 @@ public class EntityManagerImplTest {
 
   @Test
   public void testCreateExistingEntity() throws Exception {
-    ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
-    ManagedEntity second = entityManager.createEntity(id, version, consumerID, true);
+    ManagedEntity entity = entityManager.createEntity(id, version, consumerID);
+    ManagedEntity second = entityManager.createEntity(id, version, consumerID);
     Assert.assertEquals(entity, second);
   }
   
@@ -118,7 +118,7 @@ public class EntityManagerImplTest {
   public void testNullEntityChecks() throws Exception {
     Optional<ManagedEntity> check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(EntityID.NULL_ID, version));
     Assert.assertFalse(check.isPresent());
-    ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
+    ManagedEntity entity = entityManager.createEntity(id, version, consumerID);
     Assert.assertNotNull(entity);
     check = entityManager.getEntity(EntityDescriptor.createDescriptorForLifecycle(id, version));
     Assert.assertTrue(check.isPresent());
@@ -133,7 +133,7 @@ public class EntityManagerImplTest {
   @Test
   public void testDestroyEntity() throws Exception {
     entityManager.enterActiveState();
-    ManagedEntity entity = entityManager.createEntity(id, version, consumerID, true);
+    ManagedEntity entity = entityManager.createEntity(id, version, consumerID);
     Thread.currentThread().setName(ServerConfigurationContext.VOLTRON_MESSAGE_STAGE);
     ServerEntityRequest req = new ServerEntityRequest() {
       @Override
