@@ -19,7 +19,6 @@
 package com.tc.net.basic;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManager;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCConnection;
@@ -44,6 +43,7 @@ import com.tc.net.protocol.TCProtocolException;
 import com.tc.text.PrettyPrintable;
 import java.io.Closeable;
 import java.io.EOFException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -272,12 +272,12 @@ public class BasicConnection implements TCConnection {
   }
   
   @Override
-  public synchronized Socket connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
+  public synchronized Socket connect(InetSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
     boolean interrupted = Thread.interrupted();
     Assert.assertNull(readerExec);
     Assert.assertNull(src);
-    
-    SocketChannel channel = SocketChannel.open(new InetSocketAddress(addr.getAddress(), addr.getPort()));
+    // always rebuild the socket address with exerything that comes with it UnkownHostException etc
+    SocketChannel channel = SocketChannel.open(new InetSocketAddress(InetAddress.getByName(addr.getHostString()), addr.getPort()));
     src = channel.socket();
     this.buffer = bufferManagerFactory.createBufferManager(channel, true);
     if (this.buffer == null) {
@@ -299,7 +299,7 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public boolean asynchConnect(TCSocketAddress addr) throws IOException {
+  public boolean asynchConnect(InetSocketAddress addr) throws IOException {
     try {
       connect(addr, 0);
     } catch (TCTimeoutException timeout) {
@@ -319,13 +319,13 @@ public class BasicConnection implements TCConnection {
   }
 
   @Override
-  public TCSocketAddress getLocalAddress() {
-    return new TCSocketAddress(this.src.getLocalAddress(), this.src.getLocalPort());
+  public InetSocketAddress getLocalAddress() {
+    return src != null ? new InetSocketAddress(this.src.getLocalAddress(), this.src.getLocalPort()) : null;
   }
 
   @Override
-  public TCSocketAddress getRemoteAddress() {
-    return new TCSocketAddress(this.src.getInetAddress(), this.src.getPort());
+  public InetSocketAddress getRemoteAddress() {
+    return src != null ? new InetSocketAddress(this.src.getInetAddress(), this.src.getPort()) : null;
   }
 
   @Override
@@ -436,9 +436,9 @@ public class BasicConnection implements TCConnection {
 
   private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
     final WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
-    hdr.setSourceAddress(getLocalAddress().getAddressBytes());
+    hdr.setSourceAddress(getLocalAddress().getAddress().getAddress());
     hdr.setSourcePort(getLocalAddress().getPort());
-    hdr.setDestinationAddress(getRemoteAddress().getAddressBytes());
+    hdr.setDestinationAddress(getRemoteAddress().getAddress().getAddress());
     hdr.setDestinationPort(getRemoteAddress().getPort());
     hdr.setMessageCount(messageCount);
     hdr.computeChecksum();

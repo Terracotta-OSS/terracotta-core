@@ -18,12 +18,8 @@
  */
 package com.tc.net.core;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NullProtocolAdaptor;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
-import com.tc.net.protocol.transport.HealthCheckerConfig;
-import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
@@ -31,6 +27,8 @@ import java.util.Arrays;
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.properties.TCPropertiesImpl;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 
 /**
@@ -48,7 +46,7 @@ public class TCConnectionManagerTest extends TestCase {
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(Collections.emptyMap());
     this.clientConnMgr = new TCConnectionManagerImpl();
     this.serverConnMgr = new TCConnectionManagerImpl();
-    this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
+    this.lsnr = this.serverConnMgr.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();
@@ -207,7 +205,7 @@ public class TCConnectionManagerTest extends TestCase {
 
   public void testInActiveClientConnections() throws Exception {
     this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, new ClearTextBufferManagerFactory());
-    this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
+    this.lsnr = this.serverConnMgr.createListener(new InetSocketAddress(0), new ProtocolAdaptorFactory() {
       @Override
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();

@@ -21,7 +21,6 @@ package com.tc.net.protocol;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ProductID;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.util.TCTimeoutException;
@@ -91,9 +90,9 @@ public interface NetworkLayer {
 
   public void close();
 
-  public TCSocketAddress getRemoteAddress();
+  public InetSocketAddress getRemoteAddress();
 
-  public TCSocketAddress getLocalAddress();
+  public InetSocketAddress getLocalAddress();
 
   public ProductID getProductID();
   

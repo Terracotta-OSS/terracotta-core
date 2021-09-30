@@ -25,7 +25,6 @@ import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -247,7 +246,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public TCSocketAddress getLocalAddress() {
+  public InetSocketAddress getLocalAddress() {
     NetworkLayer sendLyr = this.sendLayer;
     if (sendLyr != null) {
       return sendLyr.getLocalAddress();
@@ -257,7 +256,7 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public TCSocketAddress getRemoteAddress() {
+  public InetSocketAddress getRemoteAddress() {
     NetworkLayer sendLyr = this.sendLayer;
     if (sendLyr != null) {
       return sendLyr.getRemoteAddress();

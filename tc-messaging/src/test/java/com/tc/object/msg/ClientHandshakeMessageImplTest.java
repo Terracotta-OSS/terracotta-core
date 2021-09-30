@@ -23,13 +23,13 @@ import com.tc.entity.ResendVoltronEntityMessage;
 import com.tc.entity.VoltronEntityMessage;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.EntityDescriptor;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+import java.net.InetSocketAddress;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,7 +45,7 @@ public class ClientHandshakeMessageImplTest {
     @Test
     public void testGetResendMessages() throws Exception {
         MessageChannel channel = mock(MessageChannel.class);
-        TCSocketAddress socket = new TCSocketAddress(65432);
+        InetSocketAddress socket = new InetSocketAddress(65432);
         when(channel.getLocalAddress()).thenReturn(socket);
     
         ClientHandshakeMessageImpl chm = new ClientHandshakeMessageImpl(mock(SessionID.class), mock(MessageMonitor.class),

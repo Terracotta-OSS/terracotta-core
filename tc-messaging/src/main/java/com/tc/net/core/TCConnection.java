@@ -18,12 +18,12 @@
  */
 package com.tc.net.core;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.NetworkMessageSink;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Map;
 
@@ -93,7 +93,7 @@ public interface TCConnection extends NetworkMessageSink {
    * @throws IOException if there is an error connecting to the destination address
    * @throws TCTimeoutException if a timeout occurs
    */
-  public Socket connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
+  public Socket connect(InetSocketAddress addr, int timeout) throws IOException, TCTimeoutException;
 
   /**
    * Connect asynchronously to the given destination address
@@ -103,7 +103,7 @@ public interface TCConnection extends NetworkMessageSink {
    *         indication of error)
    * @throws IOException if there is an error connecting to the destination
    */
-  public boolean asynchConnect(TCSocketAddress addr) throws IOException;
+  public boolean asynchConnect(InetSocketAddress addr) throws IOException;
 
   /**
    * Whether or not this connection is connected
@@ -124,14 +124,14 @@ public interface TCConnection extends NetworkMessageSink {
    * 
    * @throws IllegalStateException if connection has never been connected
    */
-  public TCSocketAddress getLocalAddress();
+  public InetSocketAddress getLocalAddress();
 
   /**
    * Get remote side connection details
    * 
    * @throws IllegalStateException if connection has never been connected
    */
-  public TCSocketAddress getRemoteAddress();
+  public InetSocketAddress getRemoteAddress();
 
   /**
    * After TC Transport handshake, a connection is said to be Transport Established

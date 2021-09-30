@@ -29,6 +29,7 @@ import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.transport.WireProtocolHeader;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
@@ -99,7 +100,7 @@ public class BasicConnectionTest {
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         long expResult = 0L;
         assertEquals(expResult, instance.getConnectTime());
-        instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
+        instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         assertNotEquals(expResult, instance.getConnectTime());
         instance.close(0);
       }
@@ -120,7 +121,7 @@ public class BasicConnectionTest {
         when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mgr);
         Function<TCConnection, Socket> close = s -> null;
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
-        instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
+        instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         long idleTime = instance.getIdleTime();
         Thread.sleep(1000);
         assertNotEquals(idleTime, instance.getIdleTime());
@@ -150,7 +151,7 @@ public class BasicConnectionTest {
         when(buffer.createBufferManager(any(SocketChannel.class), any(boolean.class))).thenReturn(mock(BufferManager.class));
         Function<TCConnection, Socket> close = s -> null;
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
-        instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
+        instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         long idleTime = instance.getIdleTime();
         Thread.sleep(1000);
         assertNotEquals(idleTime, instance.getIdleTime());
@@ -174,7 +175,7 @@ public class BasicConnectionTest {
         BasicConnection instance = new BasicConnection("", adapter, buffer, close);
         TCConnectionEventListener listener = mock(TCConnectionEventListener.class);
         instance.addListener(listener);
-        instance.connect(new TCSocketAddress(server.getLocalPort()), 0);
+        instance.connect(new InetSocketAddress(server.getLocalPort()), 0);
         instance.close(0);
         verify(listener).closeEvent(any(TCConnectionEvent.class));
         verify(listener).connectEvent(any(TCConnectionEvent.class));

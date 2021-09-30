@@ -26,7 +26,6 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -216,12 +215,12 @@ public class MockMessageChannel implements MessageChannelInternal {
   }
 
   @Override
-  public TCSocketAddress getLocalAddress() {
+  public InetSocketAddress getLocalAddress() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public TCSocketAddress getRemoteAddress() {
+  public InetSocketAddress getRemoteAddress() {
     throw new UnsupportedOperationException();
   }
 

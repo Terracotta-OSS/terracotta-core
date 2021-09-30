@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
@@ -26,13 +25,13 @@ import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
-import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Collections;
 
@@ -72,7 +71,7 @@ public class NetworkListenerTest extends TestCase {
     assertTrue(commsMgr.getAllListeners().length == 0);
 
     ConnectionIDFactory cidf = new DefaultConnectionIdFactory();
-    NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(0), (c)->true, cidf, (MessageTransport t)->true);
+    NetworkListener lsnr = commsMgr.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), (c)->true, cidf, (MessageTransport t)->true);
 
     try {
       lsnr.start(Collections.<ConnectionID>emptySet());
@@ -80,7 +79,7 @@ public class NetworkListenerTest extends TestCase {
       fail(ioe.getMessage());
     }
 
-    NetworkListener lsnr2 = commsMgr.createListener(new TCSocketAddress(lsnr.getBindPort()), (c)->true, cidf, (MessageTransport t)->true);
+    NetworkListener lsnr2 = commsMgr.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), lsnr.getBindPort()), (c)->true, cidf, (MessageTransport t)->true);
     try {
       lsnr2.start(Collections.<ConnectionID>emptySet());
       // NOTE (issue-529):  When running on Windows, in a pre-Java7u25 JVM, this bind succeeds.
@@ -108,7 +107,7 @@ public class NetworkListenerTest extends TestCase {
     NetworkListener[] listeners = new NetworkListener[cnt];
 
     for (int i = 0; i < cnt; i++) {
-      NetworkListener lsnr = commsMgr.createListener(new TCSocketAddress(InetAddress
+      NetworkListener lsnr = commsMgr.createListener(new InetSocketAddress(InetAddress
           .getByName("127.0.0.1"), 0), (c)->true, new DefaultConnectionIdFactory(), (MessageTransport t)->true);
 
       try {

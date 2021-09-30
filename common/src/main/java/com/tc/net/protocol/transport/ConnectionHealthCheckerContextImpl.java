@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -30,6 +29,7 @@ import com.tc.net.protocol.transport.HealthCheckerSocketConnect.SocketConnectSta
 import com.tc.util.Assert;
 import com.tc.util.State;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -93,7 +93,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     this.timeDiffThreshold = config.getTimeDiffThreshold();
     this.logger = LoggerFactory.getLogger(ConnectionHealthCheckerImpl.class.getName() + ". "
                                           + config.getHealthCheckerName());
-    this.remoteNodeDesc = mtb.getRemoteAddress().getCanonicalStringForm();
+    this.remoteNodeDesc = mtb.getRemoteAddress().toString();
     logger.info("Health monitoring agent started for " + remoteNodeDesc);
     currentState = INIT;
     callbackPort = transport.getRemoteCallbackPort();
@@ -195,7 +195,7 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
 
     // TODO: do we need to exchange the address as well ??? (since it might be different than the remote IP on this
     // conn)
-    TCSocketAddress sa = new TCSocketAddress(transportBase.getRemoteAddress().getAddress(), callbackPort);
+    InetSocketAddress sa = new InetSocketAddress(transportBase.getRemoteAddress().getAddress(), callbackPort);
     return new HealthCheckerSocketConnectImpl(sa, connection, remoteNodeDesc + "(callbackport:" + callbackPort + ")",
                                               loger, cnfg.getSocketConnectTimeout());
   }

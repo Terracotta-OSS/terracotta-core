@@ -21,26 +21,20 @@ package com.tc.net.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
-import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
-import com.tc.net.protocol.transport.HealthCheckerConfig;
-import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -94,7 +88,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @SuppressWarnings("resource")
-  protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
+  protected TCListener createListenerImpl(InetSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
                                           boolean reuseAddr) throws IOException {
     ServerSocketChannel ssc = ServerSocketChannel.open();
     ssc.configureBlocking(false);
@@ -102,7 +96,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     this.socketParams.applyServerSocketParams(serverSocket, reuseAddr);
 
     try {
-      serverSocket.bind(new InetSocketAddress(addr.getAddress(), addr.getPort()), backlog);
+      serverSocket.bind(addr, backlog);
     } catch (IOException ioe) {
       logger.warn("Unable to bind socket on address " + addr.getAddress() + ", port " + addr.getPort() + ", "
                   + ioe.getMessage());
@@ -137,13 +131,13 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   @Override
-  public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory)
+  public final synchronized TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory)
       throws IOException {
     return createListener(addr, factory, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, true);
   }
 
   @Override
-  public final synchronized TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory,
+  public final synchronized TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory,
                                                       int backlog, boolean reuseAddr) throws IOException {
     checkShutdown();
 

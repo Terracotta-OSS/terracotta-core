@@ -20,7 +20,6 @@ package com.tc.net.protocol.transport;
 
 import org.slf4j.Logger;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -28,6 +27,7 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -39,7 +39,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnect {
 
-  private final TCSocketAddress      peerNodeAddr;
+  private final InetSocketAddress      peerNodeAddr;
   private final TCConnection         conn;
   private final Logger logger;
   private final int                  timeoutInterval;
@@ -53,7 +53,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
   private static final State         SOCKETCONNECT_IN_PROGRESS     = new State("SOCKETCONNECT_IN_PROGRESS");
   private static final State         SOCKETCONNECT_FAIL            = new State("SOCKETCONNECT_FAIL");
 
-  public HealthCheckerSocketConnectImpl(TCSocketAddress peerNode, TCConnection conn, String remoteNodeDesc,
+  public HealthCheckerSocketConnectImpl(InetSocketAddress peerNode, TCConnection conn, String remoteNodeDesc,
                                         Logger logger, int timeoutInterval) {
     this.conn = conn;
     this.peerNodeAddr = peerNode;

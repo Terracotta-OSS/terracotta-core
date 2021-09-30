@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.Constants;
 import com.tc.net.core.TCConnection;
@@ -31,7 +30,6 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
-import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
@@ -64,6 +62,7 @@ import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -270,13 +269,13 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * Creates a network listener with a default network stack.
    */
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel,  
+  public NetworkListener createListener(InetSocketAddress addr, boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
     return createListener(addr, (c)->transportDisconnectRemovesChannel, connectionIdFactory, true, null, activeNameProvider, (t)->true);
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
+  public NetworkListener createListener(InetSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
           ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation) {
     return createListener(addr, transportDisconnectRemovesChannel, connectionIdFactory, true, null, null, validation);
   }
@@ -284,7 +283,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   /**
    * Creates a network listener with a default network stack.
    */
-  NetworkListener createListener(TCSocketAddress addr,
+  NetworkListener createListener(InetSocketAddress addr,
                                          Predicate<MessageChannel> transportDisconnectRemovesChannel,
                                          ConnectionIDFactory connectionIdFactory, boolean reuseAddr,
                                          WireProtocolMessageSink wireProtoMsgSnk, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation) {
@@ -321,7 +320,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    connectionIdFactory, wireProtoMsgSnk, activeProvider, validation);
   }
 
-  TCListener createCommsListener(TCSocketAddress addr, ServerMessageChannelFactory channelFactory,
+  TCListener createCommsListener(InetSocketAddress addr, ServerMessageChannelFactory channelFactory,
                                  boolean resueAddr, Set<ConnectionID> initialConnectionIDs, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation, ConnectionIDFactory connectionIdFactory,
                                  WireProtocolMessageSink wireProtocolMessageSink) throws IOException {
 

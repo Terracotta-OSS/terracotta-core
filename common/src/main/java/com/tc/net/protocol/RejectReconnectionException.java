@@ -18,14 +18,15 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.net.TCSocketAddress;
+import java.net.InetSocketAddress;
+
 
 /**
  * Thrown by Stack providers when reconnection attempt is rejected (meaning subsequent reconnects will also be rejected)
  */
 public class RejectReconnectionException extends Exception {
 
-  public RejectReconnectionException(String reason, TCSocketAddress socketAddress) {
+  public RejectReconnectionException(String reason, InetSocketAddress socketAddress) {
     super("Connection attempts from the Terracotta node at " + socketAddress
           + " are being rejected by the Terracotta server array. Reason: " + reason);
   }

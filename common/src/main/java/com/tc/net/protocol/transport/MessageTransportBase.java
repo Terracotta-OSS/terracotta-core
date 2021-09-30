@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -34,6 +33,7 @@ import com.tc.net.core.ProductID;
 import com.tc.util.Assert;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -318,12 +318,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public TCSocketAddress getRemoteAddress() {
+  public InetSocketAddress getRemoteAddress() {
     return (connection != null ? this.connection.getRemoteAddress() : null);
   }
 
   @Override
-  public TCSocketAddress getLocalAddress() {
+  public InetSocketAddress getLocalAddress() {
     return (connection != null ? this.connection.getLocalAddress() : null);
   }
 

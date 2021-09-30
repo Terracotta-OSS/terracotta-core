@@ -20,7 +20,6 @@ package com.tc.net.core;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -43,6 +42,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.net.InetSocketAddress;
 
 /**
  *
@@ -67,7 +67,7 @@ public class TCConnectionImplTest {
           return new ClearTextBufferManager((SocketChannel) invocationOnMock.getArguments()[0]);
         });
         TCConnection conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams, bufferManagerFactory);
-        TCSocketAddress addr = new TCSocketAddress("localhost", port);
+        InetSocketAddress addr = new InetSocketAddress("localhost", port);
         conn.connect(addr, 0);
         verify(listener).connectEvent(any(TCConnectionEvent.class));
 
@@ -113,7 +113,7 @@ public class TCConnectionImplTest {
             });
         TCConnectionImpl conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams,
             bufferManagerFactory);
-        TCSocketAddress addr = new TCSocketAddress("localhost", port);
+        InetSocketAddress addr = new InetSocketAddress("localhost", port);
         conn.connect(addr, 0);
 
         TCNetworkMessage msg = mock(TCNetworkMessage.class);
@@ -157,7 +157,7 @@ public class TCConnectionImplTest {
             });
         TCConnectionImpl conn = new TCConnectionImpl(listener, adaptor, mgr, nioServiceThread, socketParams,
             bufferManagerFactory);
-        TCSocketAddress addr = new TCSocketAddress("localhost", port);
+        InetSocketAddress addr = new InetSocketAddress("localhost", port);
         conn.connect(addr, 0);
 
         conn.close(100);

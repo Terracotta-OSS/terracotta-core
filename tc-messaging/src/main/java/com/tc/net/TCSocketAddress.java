@@ -19,9 +19,7 @@
 package com.tc.net;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.util.Assert;
 
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -42,7 +40,10 @@ public class TCSocketAddress {
   /**
    * String form the loopback adaptor address (ie. 127.0.0.1)
    */
-  public static final String      LOOPBACK_IPv6  = "::1";
+  public static final String      COMPRESSED_LOOPBACK_IPv6  = "::1";
+
+
+  public static final String      NATURAL_LOOPBACK_IPv6  = "0:0:0:0:0:0:0:1";
 
   /**
    * String form of the wildcard IP address (ie. 0.0.0.0)
@@ -52,29 +53,32 @@ public class TCSocketAddress {
   /**
    * String form of the wildcard IPv6 address (ie. ::)
    */
-  public static final String      WILDCARD_IPv6  = "::";
+  public static final String      COMPRESSED_WILDCARD_IPv6  = "::";
 
+
+  public static final String      NATURAL_WILDCARD_IPv6  = "0:0:0:0:0:0:0:0";
   /**
    * java.net.InetAddress form of the wildcard IPv4 address (ie. 0.0.0.0)
    */
-  public static final InetAddress WILDCARD_ADDR;
+  private static final InetAddress WILDCARD_ADDR;
 
   /**
    * java.net.InetAddress form of the wildcard IPv6 address (ie. ::)
    */
-  public static final InetAddress WILDCARD_ADDR_IPv6;
+  private static final InetAddress WILDCARD_ADDR_IPv6;
 
   /**
    * java.net.InetAddress form of the wildcard IPv4 address (ie. 127.0.0.1)
    */
-  public static final InetAddress LOOPBACK_ADDR;
+  private static final InetAddress LOOPBACK_ADDR;
 
   /**
    * java.net.InetAddress form of the wildcard IPv6 address (ie. ::1)
    */
-  public static final InetAddress LOOPBACK_ADDR_IPv6;
+  private static final InetAddress LOOPBACK_ADDR_IPv6;
 
   static {
+    InetAddress lookup = null;
     try {
       WILDCARD_ADDR = InetAddress.getByName(WILDCARD_IP);
     } catch (UnknownHostException e) {
@@ -82,10 +86,15 @@ public class TCSocketAddress {
     }
 
     try {
-      WILDCARD_ADDR_IPv6 = InetAddress.getByName(WILDCARD_IPv6);
+      lookup = InetAddress.getByName(COMPRESSED_WILDCARD_IPv6);
     } catch (UnknownHostException e) {
-      throw new TCRuntimeException("Cannot create InetAddress instance for " + WILDCARD_IPv6);
+      try {
+        lookup = InetAddress.getByName(NATURAL_WILDCARD_IPv6);
+      } catch (UnknownHostException f) {
+        throw new TCRuntimeException("Cannot create InetAddress instance for " + NATURAL_WILDCARD_IPv6);
+      }
     }
+    WILDCARD_ADDR_IPv6 = lookup;
 
     try {
       LOOPBACK_ADDR = InetAddress.getByName(LOOPBACK_IP);
@@ -93,98 +102,17 @@ public class TCSocketAddress {
       throw new TCRuntimeException("Cannot create InetAddress instance for " + LOOPBACK_IP);
     }
 
+    lookup = null;
     try {
-      LOOPBACK_ADDR_IPv6 = InetAddress.getByName(LOOPBACK_IPv6);
+      lookup = InetAddress.getByName(COMPRESSED_LOOPBACK_IPv6);
     } catch (UnknownHostException e) {
-      throw new TCRuntimeException("Cannot create InetAddress instance for " + LOOPBACK_IPv6);
-    }
-  }
-
-  private String                  stringForm;
-  private String                  canonicalStringForm;
-
-  /**
-   * Creates an address for localhost on the given port
-   * 
-   * @param port the port number, can be zero
-   * @throws IllegalArgumentException if port is out of range (0 - 65535)
-   */
-  public TCSocketAddress(int port) {
-    this(LOOPBACK_ADDR, port);
-  }
-
-  /**
-   * Creates an address for localhost on the given port
-   * 
-   * @param port the port number, can be zero
-   * @throws UnknownHostException
-   * @throws IllegalArgumentException if port is out of range (0 - 65535)
-   * @throws UnknownHostException if the host name provided can not be resolved
-   */
-  public TCSocketAddress(String host, int port) throws UnknownHostException {
-    this(InetAddress.getByName(host), port);
-  }
-
-  /**
-   * Create an TCSocketAdress instance for the gven address on the given port
-   * 
-   * @param addr the address to connect to. If null, this constructor behaves exactly like
-   *        <code>TCSocketAddress(int port)</code>
-   * @param port the port number, can be zero
-   * @throws IllegalArgumentException if port is out of range (0 - 65535)
-   */
-  public TCSocketAddress(InetAddress addr, int port) {
-    if (!isValidPort(port)) { throw new IllegalArgumentException("port (" + port + ") is out of range (0 - 0xFFFF)"); }
-
-    if (addr == null) {
       try {
-        addr = InetAddress.getLocalHost();
-      } catch (UnknownHostException e) {
-        addr = LOOPBACK_ADDR;
+        lookup = InetAddress.getByName(NATURAL_LOOPBACK_IPv6);
+      } catch (UnknownHostException f) {
+        throw new TCRuntimeException("Cannot create InetAddress instance for " + NATURAL_LOOPBACK_IPv6);
       }
     }
-
-    this.addr = addr;
-    this.port = port;
-
-    Assert.eval(this.addr != null);
-  }
-  
-  public TCSocketAddress(InetSocketAddress socket) throws UnknownHostException {
-    this(socket.getHostString(), socket.getPort());
-  }
-
-  public InetAddress getAddress() {
-    return addr;
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public byte[] getAddressBytes() {
-    return addr.getAddress();
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof TCSocketAddress) {
-      TCSocketAddress other = (TCSocketAddress) obj;
-      return ((this.port == other.port) && this.addr.equals(other.addr));
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    if (addr == null) { return super.hashCode(); }
-
-    return addr.hashCode() + port;
-  }
-
-  @Override
-  public String toString() {
-    return getStringForm();
+    LOOPBACK_ADDR_IPv6 = lookup;
   }
 
   /**
@@ -194,11 +122,11 @@ public class TCSocketAddress {
    * 
    * @return string form of this address
    */
-  public String getStringForm() {
-    if (stringForm == null) {
-      StringBuffer buf = new StringBuffer();
-      String hostAddr = addr.getHostAddress();
-      boolean isPhysicalIPv6 = addr instanceof Inet6Address && hostAddr.contains(":");
+  public static String getStringForm(InetSocketAddress addr) {
+    StringBuilder buf = new StringBuilder();
+    String hostAddr = addr.getHostString();
+    if (!isWildcardAddress(hostAddr)) {
+      boolean isPhysicalIPv6 = hostAddr.contains(":");
       if (isPhysicalIPv6) {
         buf.append("[");
       }
@@ -206,37 +134,42 @@ public class TCSocketAddress {
       if (isPhysicalIPv6) {
         buf.append("]");
       }
-      buf.append(":").append(port);
-      stringForm = buf.toString();
+    } else {
+      buf.append("*");
     }
-    return stringForm;
+    buf.append(":").append(addr.getPort());
+    return buf.toString();
   }
 
   /**
    * Return string form using canonical host name.
    */
-  public String getCanonicalStringForm() {
-    if (canonicalStringForm == null) {
-      StringBuffer buf = new StringBuffer();
-      String hostName = addr.getCanonicalHostName();
-      boolean isPhysicalIPv6 = addr instanceof Inet6Address && hostName.contains(":");
+  public static String getCanonicalStringForm(InetSocketAddress addr) {
+    StringBuilder buf = new StringBuilder();
+    String hostAddr = addr.getAddress().getCanonicalHostName();
+    if (!isWildcardAddress(hostAddr)) {
+      boolean isPhysicalIPv6 = hostAddr.contains(":");
       if (isPhysicalIPv6) {
         buf.append("[");
       }
-      buf.append(hostName);
+      buf.append(hostAddr);
       if (isPhysicalIPv6) {
         buf.append("]");
       }
-      buf.append(":").append(port);
-      canonicalStringForm = buf.toString();
     }
-    return canonicalStringForm;
+    buf.append(":").append(addr.getPort());
+    return buf.toString();
   }
 
   public static boolean isValidPort(int port) {
     return ((port >= 0) && (port <= 0xFFFF));
   }
 
-  private final InetAddress addr;
-  private final int         port;
+  public static boolean isWildcardAddress(String txt) {
+    return WILDCARD_IP.equals(txt) || COMPRESSED_WILDCARD_IPv6.equals(txt) || NATURAL_WILDCARD_IPv6.equals(txt);
+  }
+
+  public static boolean isLoopbackAddress(String txt) {
+    return LOOPBACK_IP.equals(txt) || COMPRESSED_LOOPBACK_IPv6.equals(txt) || NATURAL_WILDCARD_IPv6.equals(txt);
+  }
 }

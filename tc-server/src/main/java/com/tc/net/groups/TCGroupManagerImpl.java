@@ -26,7 +26,6 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.config.ServerConfigurationManager;
 import com.tc.config.GroupConfiguration;
-import com.tc.exception.TCRuntimeException;
 import com.tc.l2.L2DebugLogging;
 import com.tc.l2.L2DebugLogging.LogLevel;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
@@ -91,7 +90,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -177,17 +175,13 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.groupPort = l2DSOConfig.getGroupPort().getPort();
     this.weightGeneratorFactory = weightGenerator;
 
-    TCSocketAddress socketAddress;
-    try {
-      // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
-      // currently used by L2Reconnect proxy test.
-      int groupConnectPort = TCPropertiesImpl.getProperties()
-          .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
+    InetSocketAddress socketAddress;
+    // proxy group port. use a different group port from tc.properties (if exist) than the one on tc-config
+    // currently used by L2Reconnect proxy test.
+    int groupConnectPort = TCPropertiesImpl.getProperties()
+        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
 
-      socketAddress = new TCSocketAddress(l2DSOConfig.getTsaPort().getHostName(), groupConnectPort);
-    } catch (UnknownHostException e) {
-      throw new TCRuntimeException(e);
-    }
+    socketAddress = new InetSocketAddress(l2DSOConfig.getGroupPort().getHostString(), groupConnectPort);
     init(socketAddress);
     Assert.assertNotNull(thisNodeID);
     setDiscover(new TCGroupMemberDiscoveryStatic(this, thisNode));
@@ -218,10 +212,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
     this.weightGeneratorFactory = weightGenerator;
     this.serverCount = 0;
     thisNodeID = new ServerID(new Node(hostname, port).getServerNodeName(), UUID.getUUID().toString().getBytes());
-    init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
+    init(new InetSocketAddress(TCSocketAddress.WILDCARD_IP, groupPort));
   }
 
-  private void init(TCSocketAddress socketAddress) {
+  private void init(InetSocketAddress socketAddress) {
 
     TCProperties tcProperties = TCPropertiesImpl.getProperties();
 

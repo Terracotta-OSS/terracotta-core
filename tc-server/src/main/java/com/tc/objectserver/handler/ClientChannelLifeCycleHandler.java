@@ -39,6 +39,7 @@ import com.tc.objectserver.entity.ClientEntityStateManager;
 import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.net.core.ProductID;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
+import java.net.InetSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
    * These methods are called for both L1 and L2 when this server is in active mode. For L1s we go thru the cleanup of
    * sinks (@see below), for L2s group events will trigger this eventually.
    */
-  private void nodeDisconnected(NodeID nodeID, ProductID productId, TCSocketAddress address, Object clientInfo) {
+  private void nodeDisconnected(NodeID nodeID, ProductID productId, InetSocketAddress address, Object clientInfo) {
     // We want to track this if it is an L1 (ClientID) disconnecting.
     if (NodeID.CLIENT_NODE_TYPE == nodeID.getNodeType()) {
       ClientID clientID = (ClientID) nodeID;
@@ -130,7 +131,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
       (e)->voltronSink.addToSink(createMessageForEntityDisconnect(clientID, target, latch)));
   }
 
-  private void nodeConnected(NodeID nodeID, TCSocketAddress address, ProductID productId, Object clientInfo) {
+  private void nodeConnected(NodeID nodeID, InetSocketAddress address, ProductID productId, Object clientInfo) {
     logger.info("Channel Management : Received transport connect.  Starting client " + nodeID + ":" +address + ":" + productId + ":" + clientInfo);
   }
 /**
@@ -183,7 +184,7 @@ public class ClientChannelLifeCycleHandler implements ChannelManagerEventListene
     // Note that the remote node ID always refers to a client, in this path.
     ClientID clientID = (ClientID) channel.getRemoteNodeID();
     ProductID product = channel.getProductID();
-    TCSocketAddress address = channel.getRemoteAddress();
+    InetSocketAddress address = channel.getRemoteAddress();
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. 
     // this will only get fired on the active as this is a client removal.

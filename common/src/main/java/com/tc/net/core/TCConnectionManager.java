@@ -18,12 +18,12 @@
  */
 package com.tc.net.core;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.text.PrettyPrintable;
 
 import java.io.IOException;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.net.InetSocketAddress;
 
 /**
  * Manages connections and listeners. The connection manager also provides default implementations of connection event
@@ -47,7 +47,7 @@ public interface TCConnectionManager extends PrettyPrintable {
    * @param addr the address to bind the listener to
    * @param factory protocol adaptor factory used to attach protocol adaptors to newly accpted connections
    */
-  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory) throws IOException;
+  public TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory) throws IOException;
 
   /**
    * Create a new listening socket (ie. java.net.ServerSocket) on the given socket address with the given accect queue
@@ -58,7 +58,7 @@ public interface TCConnectionManager extends PrettyPrintable {
    * @param backlog accept queue backlog depth
    * @param reuseAddr whether the bind port will be reused if in use by open sockets
    */
-  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean reuseAddr)
+  public TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean reuseAddr)
       throws IOException;
 
   /**

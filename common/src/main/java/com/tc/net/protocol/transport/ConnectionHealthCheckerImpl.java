@@ -21,11 +21,11 @@ package com.tc.net.protocol.transport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.net.InetSocketAddress;
 
 import java.util.Iterator;
 import java.util.Timer;
@@ -101,9 +101,9 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     // HealthChecker Ping Thread can anyway determine this in the next probe interval thru mtb.isConnected and remove it
     // from its radar. still lets do it earlier
     if (monitorThreadEngine.removeConnection(transport)) {
-      TCSocketAddress remoteAddress = transport.getRemoteAddress();
+      InetSocketAddress remoteAddress = transport.getRemoteAddress();
       if (remoteAddress != null) {
-        logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
+        logger.info("Connection to [" + remoteAddress.toString()
                     + "] CLOSED. Health Monitoring for this node is now disabled.");
       } else {
         logger.info("Connection " + transport.getConnectionID() + " CLOSED. Health Monitor for this node is disabled.");
@@ -126,9 +126,9 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     // HealthChecker Ping Thread can anyway determine thru ping probe cycle and remove it
     // from its radar. still lets do it earlier
     if (monitorThreadEngine.removeConnection(transport)) {
-      TCSocketAddress remoteAddress = transport.getRemoteAddress();
+      InetSocketAddress remoteAddress = transport.getRemoteAddress();
       if (remoteAddress != null) {
-        logger.info("Connection to [" + remoteAddress.getCanonicalStringForm()
+        logger.info("Connection to [" + remoteAddress.toString()
                     + "] DISCONNECTED. Health Monitoring for this node is now disabled.");
       } else {
         logger.info("Connection " + transport.getConnectionID()
@@ -208,14 +208,14 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
 
         TCConnection conn = mtb.getConnection();
         if (conn == null || !mtb.isConnected()) {
-          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().getCanonicalStringForm())
+          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().toString())
                       + "] is not connected. Health Monitoring for this node is now disabled.");
           connectionIterator.remove();
           continue;
         }
 
         if (mtb.getReceiveLayer() == null) {
-          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().getCanonicalStringForm())
+          logger.info("[" + (conn == null ? null : conn.getRemoteAddress().toString())
                       + "] is no longer referenced.  Closing the connection");
           mtb.disconnect();
           connectionIterator.remove();

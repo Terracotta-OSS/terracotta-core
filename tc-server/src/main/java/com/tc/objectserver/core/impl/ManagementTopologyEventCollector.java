@@ -44,6 +44,8 @@ import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -128,8 +130,8 @@ public class ManagementTopologyEventCollector implements ITopologyEventCollector
     // Add it to the monitoring interface.
     if (null != this.serviceInterface) {
       // Create the structure to describe this client.
-      TCSocketAddress localAddress = channel.getLocalAddress();
-      TCSocketAddress remoteAddress = channel.getRemoteAddress();
+      InetSocketAddress localAddress = channel.getLocalAddress();
+      InetSocketAddress remoteAddress = channel.getRemoteAddress();
       ClientHandshakeMonitoringInfo minfo = (ClientHandshakeMonitoringInfo)channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT);
       Assert.assertNotNull(minfo);
       PlatformConnectedClient clientDescription = new PlatformConnectedClient(

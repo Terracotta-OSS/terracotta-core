@@ -18,10 +18,10 @@
  */
 package com.tc.net.core;
 
+import com.tc.net.TCSocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
@@ -33,11 +33,13 @@ import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CopyOnWriteArraySet;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 
 /**
  * TCListener implementation
@@ -50,24 +52,20 @@ final class TCListenerImpl implements TCListener {
   private final ServerSocketChannel                          ssc;
   private final TCConnectionEventListener                    listener;
   private final TCConnectionManagerImpl                      parent;
-  private final InetAddress                                  addr;
-  private final int                                          port;
-  private final TCSocketAddress                              sockAddr;
+  private final InetSocketAddress                              sockAddr;
   private final TCListenerEvent                              staticEvent;
   private final SetOnceFlag                                  closeEventFired = new SetOnceFlag();
   private final SetOnceFlag                                  stopPending     = new SetOnceFlag();
   private final SetOnceFlag                                  stopped         = new SetOnceFlag();
-  private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<TCListenerEventListener>();
+  private final CopyOnWriteArraySet<TCListenerEventListener> listeners       = new CopyOnWriteArraySet<>();
   private final ProtocolAdaptorFactory                       factory;
   private final CoreNIOServices                              commNIOServiceThread;
   private final BufferManagerFactory                         bufferManagerFactory;
 
   TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
-                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread, BufferManagerFactory bufferManagerFactory) {
-    this.addr = ssc.socket().getInetAddress();
-    this.port = ssc.socket().getLocalPort();
+                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread, BufferManagerFactory bufferManagerFactory) throws IOException {
+    this.sockAddr = new InetSocketAddress(ssc.socket().getInetAddress(), ssc.socket().getLocalPort());
     this.bufferManagerFactory = bufferManagerFactory;
-    this.sockAddr = new TCSocketAddress(this.addr, this.port);
     this.factory = factory;
     this.staticEvent = new TCListenerEvent(this);
     this.ssc = ssc;
@@ -99,8 +97,8 @@ final class TCListenerImpl implements TCListener {
   }
 
   @Override
-  public final TCSocketAddress getBindSocketAddress() {
-    return sockAddr;
+  public final InetSocketAddress getBindSocketAddress() {
+    return this.sockAddr;
   }
 
   @Override
@@ -138,17 +136,7 @@ final class TCListenerImpl implements TCListener {
       logger.warn("stop already requested");
     }
   }
-
-  @Override
-  public final int getBindPort() {
-    return port;
-  }
-
-  @Override
-  public final InetAddress getBindAddress() {
-    return addr;
-  }
-
+  
   @Override
   public final void addEventListener(TCListenerEventListener lsnr) {
     if (lsnr == null) {
@@ -176,7 +164,7 @@ final class TCListenerImpl implements TCListener {
 
   @Override
   public final String toString() {
-    return getClass().getName() + " " + addr.getHostAddress() + ":" + port;
+    return TCSocketAddress.getStringForm(sockAddr);
   }
 
   protected final void fireCloseEvent() {

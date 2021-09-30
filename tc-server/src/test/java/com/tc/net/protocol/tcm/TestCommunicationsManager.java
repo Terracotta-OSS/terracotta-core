@@ -18,12 +18,12 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -53,12 +53,12 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validate) {
+  public NetworkListener createListener(InetSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validate) {
     throw new UnsupportedOperationException(); 
   }
 
   @Override
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
+  public NetworkListener createListener(InetSocketAddress addr, boolean transportDisconnectRemovesChannel, ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider) {
     throw new UnsupportedOperationException(); 
   }
 
