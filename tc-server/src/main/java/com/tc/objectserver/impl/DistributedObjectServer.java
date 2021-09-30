@@ -1099,7 +1099,7 @@ public class DistributedObjectServer {
           getContext().getClientHandshakeManager().setStarting(existingClients);
           l2Coordinator.getReplicatedClusterStateManager().goActiveAndSyncState();
           startL1Listener(existingConnections);
-        } else if (!diagnosticsStarted) {
+        } else if (!diagnosticsStarted && StateManager.convert(sce.getCurrentState()) != ServerMode.STOP) {
           startDiagnosticListener();
           diagnosticsStarted = true;
         }
