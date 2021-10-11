@@ -38,6 +38,7 @@ public interface StateManager extends PrettyPrintable {
   public final State       START_STATE          = new State("START-STATE");
   public final State       STOP_STATE           = new State("STOP-STATE");
   public final State       DIAGNOSTIC_STATE           = new State("DIAGNOSTIC");
+  public final State       BOOTSTRAP_STATE           = new State("BOOTSTRAP");
 
   public void initializeAndStartElection();
 

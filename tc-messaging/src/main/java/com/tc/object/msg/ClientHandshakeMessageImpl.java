@@ -68,14 +68,14 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
                                     MessageChannel channel, TCMessageType messageType) {
     super(sessionID, monitor, out, channel, messageType);
     // if this is on the server, it will be replaced by the dehydrate
-    clientAddress = channel.getLocalAddress().getCanonicalStringForm();
+    clientAddress = channel.getLocalAddress().getStringForm();
   }
 
   public ClientHandshakeMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
                                     TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
     // if this is on the server, it will be replaced by the dehydrate
-    clientAddress = channel.getLocalAddress().getCanonicalStringForm();
+    clientAddress = channel.getLocalAddress().getStringForm();
   }
 
   @Override

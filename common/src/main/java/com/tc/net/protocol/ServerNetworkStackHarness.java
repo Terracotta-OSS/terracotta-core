@@ -22,6 +22,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageChannelInternal;
+import static com.tc.net.protocol.tcm.ServerMessageChannel.TRANSPORT_INFO;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.MessageTransportListener;
@@ -70,6 +71,7 @@ public class ServerNetworkStackHarness extends LayeredNetworkStackHarness {
     channel.setSendLayer(last);
     MessageTransportListener listener = createTransportListener(channel);
     transport.addTransportListener(listener);
+    channel.addAttachment(TRANSPORT_INFO, transport, true);
   }
   /**
    * This listener is added to the transport at the end of connecting the stack

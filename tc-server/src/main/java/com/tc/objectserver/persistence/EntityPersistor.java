@@ -425,7 +425,7 @@ public class EntityPersistor {
         ClientID key = (ClientID)bucket.readObject();
         @SuppressWarnings("unchecked")
         List<EntityData.JournalEntry> journal = (List<EntityData.JournalEntry>)bucket.readObject();
-        List<EntityData.JournalEntry> check = (List<EntityData.JournalEntry>)this.entityLifeJournal.get(key);
+        List<EntityData.JournalEntry> check = this.entityLifeJournal.get(key);
         if (check == null) {
           this.entityLifeJournal.put(key, journal);
           LOGGER.debug(key + " putting " + journal);

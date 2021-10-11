@@ -65,12 +65,21 @@ public class GuardianContext {
       props.setProperty("id", callName);
     }
     if (c != null) {
-      props.setProperty(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, String.valueOf(c.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)));
+      ClientHandshakeMonitoringInfo info = (ClientHandshakeMonitoringInfo)c.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT);
+      props.setProperty(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT, String.valueOf(info));
+      String handshakeAddress = "";
+      if (info != null) {
+        translateMaptoProperty(props, "handshake", info.getStateMap());
+        handshakeAddress = info.getClientReportedAddress();
+      }
       props.setProperty("product", c.getProductID().name());
       MessageTransport transport = (MessageTransport)c.getAttachment(ServerMessageChannel.TRANSPORT_INFO);
+      String remoteAddress = "";
       if (transport != null) {
         translateMaptoProperty(props, ServerMessageChannel.TRANSPORT_INFO, transport.getStateMap());
+        remoteAddress = transport.getRemoteAddress().getStringForm();
       }
+      props.setProperty("natDetected", Boolean.toString(!handshakeAddress.equals(remoteAddress)));
     }
     return props;
   }
@@ -119,6 +128,11 @@ public class GuardianContext {
   
   public static Properties getCurrentChannelProperties() {
     return createGuardContext("context");
+  }
+
+  public static MessageChannel getCurrentMessageChannel() {
+    ChannelID current = CURRENTID.get();
+    return CONTEXT.get(current);
   }
   
   private static Guardian getOperationGuardian() {

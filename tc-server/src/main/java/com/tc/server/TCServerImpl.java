@@ -263,7 +263,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public synchronized boolean isStarted() {
-    return this.stateManager == null || this.stateManager.getCurrentMode() != ServerMode.START;
+    return this.stateManager == null || this.stateManager.getCurrentMode().isStartup();
   }
 
   @Override

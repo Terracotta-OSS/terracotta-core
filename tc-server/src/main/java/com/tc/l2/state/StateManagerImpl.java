@@ -79,7 +79,7 @@ public class StateManagerImpl implements StateManager {
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
   private NodeID                       syncedTo          = ServerID.NULL_ID;
-  private volatile ServerMode               state               = ServerMode.START;
+  private volatile ServerMode               state               = ServerMode.INITIAL;
   private final ServerMode               startState;
   private final ElectionGate                      elections  = new ElectionGate();
 
@@ -254,6 +254,7 @@ public class StateManagerImpl implements StateManager {
           }
         }
         electionFinished();
+        moveToStartStateIfBootstrapping();
         if (rerun && canStartElection()) {
           electionMgr.reset(ServerID.NULL_ID, null);
           runElection();
@@ -338,12 +339,13 @@ public class StateManagerImpl implements StateManager {
     }
     ServerMode newState = (!winningEnrollment.getNodeID().isNull() && getVerificationEnrollment().equals(winningEnrollment)) ? 
             ServerMode.PASSIVE : ServerMode.UNINITIALIZED;
-    Set<ServerMode> modes = newState == ServerMode.UNINITIALIZED ? EnumSet.of(ServerMode.START,ServerMode.UNINITIALIZED) :
+    Set<ServerMode> modes = newState == ServerMode.UNINITIALIZED ? EnumSet.of(ServerMode.INITIAL, ServerMode.START,ServerMode.UNINITIALIZED) :
             EnumSet.of(ServerMode.PASSIVE);
     try {
       setActiveNodeID(active);
       ServerMode oldState = switchToState(newState, modes);
       switch (oldState) {
+        case INITIAL:
         case START:
           Assert.assertEquals(ServerMode.UNINITIALIZED, newState);
           break;
@@ -385,7 +387,17 @@ public class StateManagerImpl implements StateManager {
 
   @Override
   public void moveToDiagnosticMode() {
-      switchToState(ServerMode.DIAGNOSTIC, EnumSet.of(ServerMode.START));
+      switchToState(ServerMode.DIAGNOSTIC, EnumSet.of(ServerMode.INITIAL));
+  }
+
+  private void moveToStartStateIfBootstrapping() {
+    try {
+      if (getCurrentMode() == ServerMode.INITIAL) {
+        switchToState(ServerMode.START, EnumSet.of(ServerMode.INITIAL));
+      }
+    } catch (IllegalStateException state) {
+      logger.info("request to start denied. Current state: {}", this.getCurrentMode());
+    }
   }
 
   @Override
@@ -400,7 +412,7 @@ public class StateManagerImpl implements StateManager {
   }
 
   private void moveToActiveState(Set<ServerID> passives, Topology topology) {
-    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.START, ServerMode.PASSIVE));
+    ServerMode oldState = switchToState(ServerMode.ACTIVE, EnumSet.of(ServerMode.INITIAL, ServerMode.START, ServerMode.PASSIVE));
     // TODO :: If state == START_STATE publish cluster ID
     debugInfo("Moving to active state");
     for (NodeID peer : passives) {
@@ -450,7 +462,7 @@ public class StateManagerImpl implements StateManager {
     }
     //  TODO: rationalize the stop state.  Transistions here should be handled 
     //  but more work is required to properly shut queues
-    if (StateManager.convert(newState) != ServerMode.STOP) {
+    if (StateManager.convert(newState) != ServerMode.STOP && StateManager.convert(event.getOldState()) != StateManager.convert(newState)) {
       this.stateChangeSink.transition(event.getOldState(), newState);
     }
     fireStateChangedEvent(event);
@@ -466,11 +478,11 @@ public class StateManagerImpl implements StateManager {
   }
 
   private synchronized boolean isFreshServer() {
-    return state == ServerMode.START && startState == ServerMode.START;
+    return state.isStartup() && startState.isStartup();
   }
   
   private synchronized boolean canStartElection() {
-    return state == ServerMode.START || state == ServerMode.PASSIVE;
+    return state.canStartElection();
   }
 
   @Override
@@ -576,7 +588,7 @@ public class StateManagerImpl implements StateManager {
       logger.info("Agreed with Election Result from " + msg.messageFrom() + " : " + resultAgreed);
       groupManager.sendTo(msg.messageFrom(), resultAgreed);
     } else if (state == ServerMode.ACTIVE || !activeNode.isNull()
-               || (msg.getEnrollment().isANewCandidate() && state != ServerMode.START)) {
+               || (msg.getEnrollment().isANewCandidate() && !state.isStartup())) {
       // Condition 1 :
       // Obviously an issue.
       // Condition 2 :
@@ -695,7 +707,7 @@ public class StateManagerImpl implements StateManager {
     boolean elect = false;
     
     synchronized (this) {
-      if (state == ServerMode.START || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
+      if (state.isStartup() || (!disconnectedNode.isNull() && disconnectedNode.equals(activeNode))) {
         // ACTIVE Node is gone
         info("ACTIVE is gone");
         setActiveNodeID(ServerID.NULL_ID);
@@ -720,7 +732,7 @@ public class StateManagerImpl implements StateManager {
   private void sendVerificationOKResponse(L2StateMessage msg) {
     try {
       Assert.assertTrue(msg.getType() != L2StateMessage.ELECTION_WON);
-      ServerMode sendState = state == ServerMode.START ? startState : state;
+      ServerMode sendState = state.isStartup() ? startState : state;
       groupManager.sendTo(msg.messageFrom(), L2StateMessage.createResultAgreedMessage(msg, getVerificationEnrollment(), sendState.getState()));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);
@@ -730,7 +742,7 @@ public class StateManagerImpl implements StateManager {
   private void sendVerificationNGResponse(L2StateMessage msg) {
     try {
     Assert.assertTrue(msg.getType() != L2StateMessage.ELECTION_WON);
-      ServerMode sendState = state == ServerMode.START ? startState : state;
+      ServerMode sendState = state.isStartup() ? startState : state;
       groupManager.sendTo(msg.messageFrom(), L2StateMessage.createResultConflictMessage(msg, getVerificationEnrollment(), sendState.getState()));
     } catch (GroupException e) {
       logger.error("Error handling message : " + msg, e);

@@ -80,17 +80,21 @@ class NetworkListenerImpl implements NetworkListener {
   @Override
   public void start(Set<ConnectionID> initialConnectionIDs) throws IOException {
     CompletableFuture<Boolean> startDone = start();
-    try {
-      this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
-                                                  this.validation, this.connectionIdFactory, this.wireProtoMsgSnk);
-      this.commsMgr.registerListener(this);
-      startDone.complete(true);
-    } catch (IOException ioe) {
-      startDone.completeExceptionally(ioe);
-      throw ioe;
-    } finally {
-      if (!startDone.isDone()) {
-        startDone.complete(false);
+    if (startDone == null) {
+      LOGGER.info("network listener already started");
+    } else {
+      try {
+        this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs, this.activeProvider,
+                                                    this.validation, this.connectionIdFactory, this.wireProtoMsgSnk);
+        this.commsMgr.registerListener(this);
+        startDone.complete(true);
+      } catch (IOException ioe) {
+        startDone.completeExceptionally(ioe);
+        throw ioe;
+      } finally {
+        if (!startDone.isDone()) {
+          startDone.complete(false);
+        }
       }
     }
   }

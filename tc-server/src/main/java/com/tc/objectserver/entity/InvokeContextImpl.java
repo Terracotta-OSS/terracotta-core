@@ -24,6 +24,8 @@ import org.terracotta.entity.InvokeContext;
 
 public class InvokeContextImpl implements InvokeContext {
 
+  private static ThreadLocal<InvokeContext> INHERITED = new InheritableThreadLocal<>();
+
   public static InvokeContext NULL_CONTEXT=new InvokeContextImpl();
 
   private final long oldestid;
@@ -44,6 +46,17 @@ public class InvokeContextImpl implements InvokeContext {
     this.concurrencyKey = concurrencyKey;
     this.oldestid = oldestid;
     this.currentId = currentId;
+    setThreadLocal();
+  }
+
+  private void setThreadLocal() {
+    if (this.sourceId.isValidClient()) {
+      INHERITED.set(this);
+    }
+  }
+
+  public static InvokeContext getCurrentContext() {
+    return INHERITED.get();
   }
 
   @Override

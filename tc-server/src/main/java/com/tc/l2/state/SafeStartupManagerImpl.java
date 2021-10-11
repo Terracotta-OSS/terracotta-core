@@ -91,7 +91,7 @@ public class SafeStartupManagerImpl implements ConsistencyManager, GroupEventsLi
       // disable this mode since we have already tried to connect to an existing active.
       // safe startup mode no longer applies
       disable.attemptSet();
-    } else if (!disable.isSet() && consistentStartup && mode == ServerMode.START && newMode == Transition.MOVE_TO_ACTIVE) {
+    } else if (!disable.isSet() && consistentStartup && mode.isStartup() && newMode == Transition.MOVE_TO_ACTIVE) {
       if (activePeers.size() == peerServers) {
         CONSOLE.info("Action:{} allowed because all servers are connected", newMode);
         suspended = false;

@@ -242,7 +242,7 @@ public class ClientConnectionEstablisher {
             handleConnectException(e, false, connectionErrorLossyLogger);
           } catch (TCTimeoutException e) {
             target = null;
-            handleConnectException(e, true, connectionErrorLossyLogger);
+            handleConnectException(e, false, connectionErrorLossyLogger);
           } catch (IOException e) {
             target = null;
             handleConnectException(e, false, connectionErrorLossyLogger);

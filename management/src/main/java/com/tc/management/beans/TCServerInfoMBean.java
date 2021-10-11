@@ -105,4 +105,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getClusterState(boolean shortForm);
 
   String getConnectedClients() throws IOException;
+
+  String getCurrentChannelProperties() throws IOException;
 }

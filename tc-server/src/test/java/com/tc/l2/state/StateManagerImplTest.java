@@ -63,8 +63,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.tc.l2.state.StateManager.ACTIVE_COORDINATOR;
+import static com.tc.l2.state.StateManager.BOOTSTRAP_STATE;
 import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
-import static com.tc.l2.state.StateManager.START_STATE;
 import com.tc.net.ServerID;
 import com.tc.objectserver.core.impl.ManagementTopologyEventCollector;
 import com.tc.util.concurrent.ThreadUtil;
@@ -74,6 +74,7 @@ import org.junit.Ignore;
 import org.terracotta.utilities.test.net.PortManager;
 
 import static java.util.stream.Collectors.toSet;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -110,14 +111,9 @@ public class StateManagerImplTest {
   public void setUp() throws Exception {
     ServerEnv.setDefaultServer(mock(Server.class));
     Logger tcLogger = mock(Logger.class);
-    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
+//    WeightGeneratorFactory weightGeneratorFactory = RandomWeightGenerator.createTestingFactory(2);
     StageManager[] stageManagers = new StageManager[NUM_OF_SERVERS];
-    ConsistencyManager mgr = mock(ConsistencyManager.class);
-    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
-    when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
-    when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(i->{
-      return EnrollmentFactory.createTrumpEnrollment((NodeID)i.getArguments()[0], weightGeneratorFactory);
-    });
+
     Server server = mock(Server.class);
     when(server.getActivateTime()).thenReturn(System.currentTimeMillis());
 
@@ -128,6 +124,13 @@ public class StateManagerImplTest {
 
     this.topologyManager = new TopologyManager(servers, ()->-1);
     for(int i = 0; i < NUM_OF_SERVERS; i++) {
+      WeightGeneratorFactory wgf = RandomWeightGenerator.createTestingFactory(2);
+      ConsistencyManager mgr = mock(ConsistencyManager.class);
+      when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(Transition.class))).thenReturn(Boolean.TRUE);
+      when(mgr.requestTransition(any(ServerMode.class), any(NodeID.class), any(), any(Transition.class))).thenReturn(Boolean.TRUE);
+      when(mgr.createVerificationEnrollment(any(NodeID.class), any(WeightGeneratorFactory.class))).then(invoke->{
+        return EnrollmentFactory.createTrumpEnrollment((NodeID)invoke.getArguments()[0], wgf);
+      });
       nodes[i] = new Node(LOCALHOST, ports.get(i).port(), groupPorts.get(i).port());
       nodeSet.add(nodes[i]);
       stageControllers[i] = mock(StageController.class);
@@ -137,9 +140,9 @@ public class StateManagerImplTest {
 //      tcServers[i] = mock(TCServer.class);
       stageManagers[i] = new StageManagerImpl(new ThreadGroup("test"), new QueueFactory());
       groupManagers[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports.get(i).port(), groupPorts.get(i).port(),
-                                                stageManagers[i], weightGeneratorFactory, topologyManager);
+                                                stageManagers[i], wgf, topologyManager);
 
-      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, weightGeneratorFactory, mgr,
+      stateManagers[i] = new StateManagerImpl(tcLogger, groupManagers[i], stageControllers[i], mgmt[i], stageManagers[i], NUM_OF_SERVERS, 5, wgf, mgr,
                                               clusterStatePersistorMock, topologyManager);
       Sink<L2StateMessage> stateMessageSink = stageManagers[i].createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE, L2StateMessage.class, new L2StateMessageHandler(), 1, 1).getSink();
       groupManagers[i].routeMessages(L2StateMessage.class, stateMessageSink);
@@ -203,16 +206,26 @@ public class StateManagerImplTest {
     }
     
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
+      while (stateManagers[i].getCurrentMode() == ServerMode.INITIAL) {
+        ThreadUtil.reallySleep(1000);
+      }
       while (stateManagers[i].getCurrentMode() == ServerMode.START) {
         ThreadUtil.reallySleep(1000);
       }
     }
 
     for (int i = 0; i < NUM_OF_SERVERS; i++) {
+      ArgumentCaptor<State> cap = ArgumentCaptor.forClass(State.class);
       if (activeIndex == i) {
-        verify(stageControllers[i]).transition(eq(START_STATE), eq(ACTIVE_COORDINATOR));
+        verify(stageControllers[i]).transition(eq(BOOTSTRAP_STATE), cap.capture());
+        if (cap.getValue() == StateManager.START_STATE) {
+          verify(stageControllers[i]).transition(eq(StateManager.START_STATE), eq(ACTIVE_COORDINATOR));
+        }
       } else {
-        verify(stageControllers[i]).transition(eq(START_STATE), eq(PASSIVE_UNINITIALIZED));
+        verify(stageControllers[i]).transition(eq(BOOTSTRAP_STATE), cap.capture());
+        if (cap.getValue() == StateManager.START_STATE) {
+          verify(stageControllers[i]).transition(eq(StateManager.START_STATE), eq(PASSIVE_UNINITIALIZED));
+        }
       }
     }
   }
@@ -403,7 +416,7 @@ public class StateManagerImplTest {
     when(persistor.getInitialState()).thenReturn(StateManager.PASSIVE_SYNCING);
     StateManagerImpl mgr = new StateManagerImpl(tcLogger, groupManager, stageController, mgmtController, stageMgr, 2, 5, weightGeneratorFactory, availabilityMgr, persistor, this.topologyManager);
     mgr.initializeAndStartElection();
-    Assert.assertEquals(ServerMode.START, mgr.getCurrentMode());
+    Assert.assertEquals(ServerMode.INITIAL, mgr.getCurrentMode());
     Assert.assertEquals(ServerMode.SYNCING, mgr.getStateMap().get("startState"));
 
     L2StateMessage sw = mock(L2StateMessage.class);

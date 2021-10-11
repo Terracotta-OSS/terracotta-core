@@ -90,6 +90,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import org.terracotta.entity.ActiveServerEntity.ReconnectHandler;
 import org.terracotta.tripwire.Event;
 import org.terracotta.tripwire.TripwireFactory;
 
@@ -116,7 +117,7 @@ public class ManagedEntityImpl implements ManagedEntity {
   //  for destroy, passives need to reference count to understand if entity is deletable
   private int clientReferenceCount = 0;
   private final boolean canDelete;
-  private boolean isTemp;
+  private final boolean isTemp;
   private volatile boolean isDestroyed;
   // We only track a single CreateListener since it is intended to be the EntityMessengerService attached to this.
   private final List<LifecycleListener> createListener = new CopyOnWriteArrayList<>();
@@ -157,6 +158,7 @@ public class ManagedEntityImpl implements ManagedEntity {
     this.clientEntityStateManager = clientEntityStateManager;
     this.eventCollector = eventCollector;
     this.factory = factory;
+    this.isTemp = this.factory.getClass().isAnnotationPresent(TemporaryEntity.class);
     this.executor = process;
     // Create the RetirementManager here, since it is currently scoped per-entity.
     this.retirementManager = new RetirementManager();
@@ -804,9 +806,6 @@ public class ManagedEntityImpl implements ManagedEntity {
 
     notifyEntityCreated();
     this.isDestroyed = false;
-    if (this.factory.getClass().isAnnotationPresent(TemporaryEntity.class)) {
-      this.isTemp = true;
-    }
     eventCollector.entityWasCreated(id, this.consumerID, isInActiveState);
     response.complete();
   }
@@ -995,10 +994,11 @@ public class ManagedEntityImpl implements ManagedEntity {
         if (getEntityRequest.getTransaction().equals(TransactionID.NULL_ID)) {
 //   this is a reconnection, handle the extended reconnect data
           try {
-            if (this.reconnect == null) {
+            ReconnectHandler handler = this.reconnect;
+            if (handler == null) {
               throw new ReconnectRejectedException("no reconnect handler registered");
             } else {
-              this.reconnect.handleReconnect(descriptor, extendedData);
+              handler.handleReconnect(descriptor, extendedData);
             }
           } catch (ReconnectRejectedException rejected) {
             response.failure(ServerException.createReconnectRejected(getID(), rejected));

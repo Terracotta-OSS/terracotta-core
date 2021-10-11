@@ -56,6 +56,7 @@ import java.util.TimerTask;
 import javax.management.AttributeChangeNotification;
 import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
+import org.terracotta.server.ServerEnv;
 
 public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInfoMBean, StateChangeListener {
   private static final Logger logger = LoggerFactory.getLogger(TCServerInfo.class);
@@ -382,6 +383,14 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       props.setProperty(String.format(format, i, "revision"), c.getRevision());
       props.setProperty(String.format(format, i, "ipAddress"), c.getRemoteAddress());
     }
+    StringWriter writer = new StringWriter();
+    props.store(writer, null);
+    return writer.toString();
+  }
+
+  @Override
+  public String getCurrentChannelProperties() throws IOException {
+    Properties props = ServerEnv.getServer().getCurrentChannelProperties();
     StringWriter writer = new StringWriter();
     props.store(writer, null);
     return writer.toString();

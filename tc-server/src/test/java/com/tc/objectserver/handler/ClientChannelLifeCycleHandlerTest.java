@@ -30,6 +30,7 @@ import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.HydrateContext;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -74,6 +75,9 @@ public class ClientChannelLifeCycleHandlerTest {
     when(fakeChannel.getRemoteNodeID()).thenReturn(mock(ClientID.class));
     // But a null local address.
     when(fakeChannel.getLocalAddress()).thenReturn(null);
+
+    when(fakeChannel.getChannelID()).thenReturn(ChannelID.NULL_ID);
+    
     this.handler.channelRemoved(fakeChannel);
   }
 }

@@ -19,6 +19,7 @@
 package com.tc.l2.state;
 
 import static com.tc.l2.state.StateManager.ACTIVE_COORDINATOR;
+import static com.tc.l2.state.StateManager.BOOTSTRAP_STATE;
 import static com.tc.l2.state.StateManager.PASSIVE_STANDBY;
 import static com.tc.l2.state.StateManager.PASSIVE_SYNCING;
 import static com.tc.l2.state.StateManager.PASSIVE_UNINITIALIZED;
@@ -34,6 +35,22 @@ import java.util.Set;
  *
  */
 public enum ServerMode {
+  INITIAL(BOOTSTRAP_STATE) {
+    @Override
+    public boolean containsData() {
+      return false;
+    }
+
+    @Override
+    public boolean canBeActive() {
+      return true;
+    }
+
+    @Override
+    public boolean isStartup() {
+      return true;
+    }
+  },
   START(START_STATE) {
     @Override
     public boolean containsData() {
@@ -42,6 +59,11 @@ public enum ServerMode {
 
     @Override
     public boolean canBeActive() {
+      return true;
+    }
+
+    @Override
+    public boolean isStartup() {
       return true;
     }
   },
@@ -56,6 +78,11 @@ public enum ServerMode {
   PASSIVE(PASSIVE_STANDBY) {
     @Override
     public boolean canBeActive() {
+      return true;
+    }
+
+    @Override
+    public boolean canStartElection() {
       return true;
     }
   },
@@ -97,6 +124,14 @@ public enum ServerMode {
   
   public boolean containsData() {
     return true;
+  }
+
+  public boolean isStartup() {
+    return false;
+  }
+
+  public boolean canStartElection() {
+    return isStartup();
   }
   
   public static final Set<ServerMode> VALID_STATES = EnumSet.allOf(ServerMode.class);

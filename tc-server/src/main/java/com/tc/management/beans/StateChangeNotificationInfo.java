@@ -45,6 +45,7 @@ public class StateChangeNotificationInfo {
     map.put(ServerMode.ACTIVE, ACTIVE_INFO);
     map.put(ServerMode.PASSIVE, PASSIVE_STANDBY_INFO);
     map.put(ServerMode.UNINITIALIZED, PASSIVE_UNINIT_INFO);
+    map.put(ServerMode.INITIAL, START_INFO);
     map.put(ServerMode.START, START_INFO);
     map.put(ServerMode.STOP, STOP_INFO);
     map.put(ServerMode.RECOVERING, RECOVERING_INFO);
