@@ -18,7 +18,6 @@
  */
 package com.tc.net.basic;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.TCComm;
 import com.tc.net.core.TCConnection;
@@ -31,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 
 /**
@@ -61,12 +61,12 @@ public class BasicConnectionManager implements TCConnectionManager {
   }
 
   @Override
-  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory) throws IOException {
+  public TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory) throws IOException {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   @Override
-  public TCListener createListener(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean reuseAddr) throws IOException {
+  public TCListener createListener(InetSocketAddress addr, ProtocolAdaptorFactory factory, int backlog, boolean reuseAddr) throws IOException {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 

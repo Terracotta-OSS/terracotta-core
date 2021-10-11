@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
+import java.net.InetSocketAddress;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -44,7 +45,7 @@ public class ConnectionHealthCheckerContextTest {
     messageTransport = mock(MessageTransportBase.class);
     msg = mock(HealthCheckerProbeMessage.class);
 
-    when(messageTransport.getRemoteAddress()).thenReturn(new TCSocketAddress(9000));
+    when(messageTransport.getRemoteAddress()).thenReturn(new InetSocketAddress(9000));
 
     config = new HealthCheckerConfigImpl("test-config");
     context = new TestConnectionHealthCheckerContext(

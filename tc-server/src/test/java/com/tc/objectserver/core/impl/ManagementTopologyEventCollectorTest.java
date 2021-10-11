@@ -41,6 +41,7 @@ import com.tc.object.FetchID;
 import com.tc.objectserver.entity.ClientDescriptorImpl;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.util.UUID;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -269,8 +270,8 @@ public class ManagementTopologyEventCollectorTest {
     MessageChannel channel = mock(MessageChannel.class);
     ClientHandshakeMonitoringInfo info = new ClientHandshakeMonitoringInfo(TEST_CLIENT_PID, uuid, name, version, revision, address);
     when(channel.getAttachment(eq(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT))).thenReturn(info);
-    when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("localhost", 1234));
-    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("localhost", 4567));
+    when(channel.getLocalAddress()).thenReturn(new InetSocketAddress("localhost", 1234));
+    when(channel.getRemoteAddress()).thenReturn(new InetSocketAddress("localhost", 4567));
     ClientID client = mock(ClientID.class);
     this.collector.clientDidConnect(channel, client);
 
@@ -294,8 +295,8 @@ public class ManagementTopologyEventCollectorTest {
 
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)).thenReturn(mock(ClientHandshakeMonitoringInfo.class));
-    when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 1));
-    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 2));
+    when(channel.getLocalAddress()).thenReturn(new InetSocketAddress("0.0.0.0", 1));
+    when(channel.getRemoteAddress()).thenReturn(new InetSocketAddress("0.0.0.0", 2));
 
     EntityID entityID = mock(EntityID.class);
     long consumerID = 1L;
@@ -401,8 +402,8 @@ public class ManagementTopologyEventCollectorTest {
 
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)).thenReturn(mock(ClientHandshakeMonitoringInfo.class));
-    when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 1));
-    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 2));
+    when(channel.getLocalAddress()).thenReturn(new InetSocketAddress("0.0.0.0", 1));
+    when(channel.getRemoteAddress()).thenReturn(new InetSocketAddress("0.0.0.0", 2));
 
 //  TEST with 10 entities fetched
     int counts[] = {0,10,1};
@@ -466,8 +467,8 @@ public class ManagementTopologyEventCollectorTest {
 
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getAttachment(ClientHandshakeMonitoringInfo.MONITORING_INFO_ATTACHMENT)).thenReturn(mock(ClientHandshakeMonitoringInfo.class));
-    when(channel.getLocalAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 1));
-    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress("0.0.0.0", 2));
+    when(channel.getLocalAddress()).thenReturn(new InetSocketAddress("0.0.0.0", 1));
+    when(channel.getRemoteAddress()).thenReturn(new InetSocketAddress("0.0.0.0", 2));
 
 //  TEST with 10 entities fetched
     int counts[] = {0,10,1};
@@ -522,12 +523,8 @@ public class ManagementTopologyEventCollectorTest {
 
   private MessageChannel mockMessageChannel() {
     MessageChannel channel = mock(MessageChannel.class);
-    TCSocketAddress localAddress = mock(TCSocketAddress.class);
-    when(localAddress.getAddress()).thenReturn(mock(InetAddress.class));
-    when(localAddress.getPort()).thenReturn(1035);
-    TCSocketAddress remoteAddress = mock(TCSocketAddress.class);
-    when(remoteAddress.getAddress()).thenReturn(mock(InetAddress.class));
-    when(remoteAddress.getPort()).thenReturn(1035);
+    InetSocketAddress localAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 1035);
+    InetSocketAddress remoteAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 1035);
     when(channel.getAttachment(any(String.class))).thenReturn(mock(ClientHandshakeMonitoringInfo.class));
     when(channel.getLocalAddress()).thenReturn(localAddress);
     when(channel.getRemoteAddress()).thenReturn(remoteAddress);

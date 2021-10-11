@@ -431,7 +431,7 @@ public class DistributedObjectClient {
     this.clientHandshakeManager.waitForHandshake();
     ClientMessageChannel cmc = this.getClientMessageChannel();
     if (cmc != null) {
-      final TCSocketAddress remoteAddress = cmc.getRemoteAddress();
+      final InetSocketAddress remoteAddress = cmc.getRemoteAddress();
       final String infoMsg = "Connection successfully established to server at " + remoteAddress;
       if (!channel.getProductID().isInternal() && channel.isConnected()) {
         DSO_LOGGER.info(infoMsg);

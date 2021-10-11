@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
@@ -49,6 +48,8 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -164,7 +165,7 @@ try {
             }
           });
       if (dumbServerSink) {
-        lsnr = serverComms.createListener(new TCSocketAddress(port), (c)->false,
+        lsnr = serverComms.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), (c)->false,
             new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
 
           @Override
@@ -175,7 +176,7 @@ try {
           }
         }, null, (t)->true);
       } else {
-        lsnr = serverComms.createListener(new TCSocketAddress(port), (c)->false,
+        lsnr = serverComms.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), port), (c)->false,
             new DefaultConnectionIdFactory(), (MessageTransport t)->true);
       }
       lsnr.start(new HashSet<>());
@@ -336,7 +337,7 @@ try {
 
     NetworkListener rv;
     if (dumbServerSink) {
-      rv = serverComms1.createListener(new TCSocketAddress(0), (c)->false,
+      rv = serverComms1.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), (c)->false,
                                        new DefaultConnectionIdFactory(), false, new WireProtocolMessageSink() {
 
                                          @Override
@@ -347,7 +348,7 @@ try {
                                          }
                                        }, null, (t)->true);
     } else {
-      rv = serverComms1.createListener(new TCSocketAddress(0), (c)->false,
+      rv = serverComms1.createListener(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), (c)->false,
                                        new DefaultConnectionIdFactory(), (MessageTransport t)->true);
     }
 
@@ -536,15 +537,15 @@ try {
     createAndSendMessage();
     waitForMessages(1);
 
-    TCSocketAddress clientRemote = clientChannel.getRemoteAddress();
-    TCSocketAddress clientLocal = clientChannel.getLocalAddress();
+    InetSocketAddress clientRemote = clientChannel.getRemoteAddress();
+    InetSocketAddress clientLocal = clientChannel.getLocalAddress();
 
     MessageChannelInternal[] serverChannels = lsnr.getChannelManager().getChannels();
     assertEquals(1, serverChannels.length);
     MessageChannelInternal serverChannel = serverChannels[0];
 
-    TCSocketAddress serverRemote = serverChannel.getRemoteAddress();
-    TCSocketAddress serverLocal = serverChannel.getLocalAddress();
+    InetSocketAddress serverRemote = serverChannel.getRemoteAddress();
+    InetSocketAddress serverLocal = serverChannel.getLocalAddress();
 
     assertEquals(clientRemote, serverLocal);
     assertEquals(clientLocal, serverRemote);

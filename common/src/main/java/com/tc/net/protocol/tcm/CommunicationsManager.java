@@ -18,13 +18,13 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
 import com.tc.text.PrettyPrintable;
+import java.net.InetSocketAddress;
 import java.util.function.Predicate;
 
 /**
@@ -55,9 +55,9 @@ public interface CommunicationsManager extends PrettyPrintable {
 
   public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout);
     
-  public NetworkListener createListener(TCSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
+  public NetworkListener createListener(InetSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation);
 
-  public NetworkListener createListener(TCSocketAddress addr, boolean transportDisconnectRemovesChannel, 
+  public NetworkListener createListener(InetSocketAddress addr, boolean transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, RedirectAddressProvider activeNameProvider);
 }

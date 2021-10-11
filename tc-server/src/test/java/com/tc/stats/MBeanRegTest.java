@@ -33,8 +33,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.tc.net.ClientID;
-import com.tc.net.TCSocketAddress;
-import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
@@ -49,6 +47,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCumulativeCounter;
+import java.net.InetSocketAddress;
 
 import java.util.Collections;
 
@@ -89,7 +88,7 @@ public class MBeanRegTest {
     final ArgumentCaptor<ChannelManagerEventListener> lsnrCaptor = ArgumentCaptor.forClass(ChannelManagerEventListener.class);
     Mockito.doNothing().when(chMgr).addEventListener(lsnrCaptor.capture());
     
-    when(channel.getRemoteAddress()).thenReturn(new TCSocketAddress(8192));
+    when(channel.getRemoteAddress()).thenReturn(new InetSocketAddress(8192));
     when(channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE)).thenReturn(msg);
     when(chMgr.getChannel(cidCollector.capture())).thenReturn(channel);
     when(msg.getChannel()).thenReturn(channel);

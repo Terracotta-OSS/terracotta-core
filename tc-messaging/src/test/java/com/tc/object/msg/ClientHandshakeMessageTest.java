@@ -19,7 +19,6 @@
 package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -27,6 +26,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityID;
 import com.tc.object.session.SessionID;
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class ClientHandshakeMessageTest {
   @Test
   public void testMessage() throws Exception {
     MessageChannel channel = mock(MessageChannel.class);
-    TCSocketAddress socket = new TCSocketAddress(65432);
+    InetSocketAddress socket = new InetSocketAddress(65432);
     when(channel.getLocalAddress()).thenReturn(socket);
 
     ClientHandshakeMessageImpl msg = new ClientHandshakeMessageImpl(new SessionID(0), mock(MessageMonitor.class),

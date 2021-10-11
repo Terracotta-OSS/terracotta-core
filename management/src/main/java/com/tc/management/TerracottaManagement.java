@@ -19,11 +19,11 @@
 package com.tc.management;
 
 import com.tc.management.beans.L2MBeanNames;
-import com.tc.net.TCSocketAddress;
 import com.tc.util.Assert;
 import com.tc.util.UUID;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -136,17 +136,17 @@ public abstract class TerracottaManagement {
     }
   }
 
-  private static void addNodeInfo(StringBuffer objName, TCSocketAddress addr) {
+  private static void addNodeInfo(StringBuffer objName, InetSocketAddress addr) {
     objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(buildNodeId(addr));
   }
 
-  public static String buildNodeId(TCSocketAddress addr) {
+  public static String buildNodeId(InetSocketAddress addr) {
     String remoteHost = addr.getAddress().getCanonicalHostName();
     int remotePort = addr.getPort();
     return remoteHost + UNDERSCORE + remotePort;
   }
 
-  public static ObjectName addNodeInfo(ObjectName objName, TCSocketAddress addr)
+  public static ObjectName addNodeInfo(ObjectName objName, InetSocketAddress addr)
       throws MalformedObjectNameException {
     if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) {
       Hashtable<String, String> kpl = objName.getKeyPropertyList();

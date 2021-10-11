@@ -109,7 +109,6 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
-import com.tc.net.groups.Node;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.CommunicationsManager;
@@ -587,13 +586,13 @@ public class DistributedObjectServer {
 
     ConsistencyManager consistencyMgr = createConsistencyManager(configSetupManager, knownPeers, voteCount);
 
-    final String dsoBind = l2DSOConfig.getTsaPort().getHostName();
-    this.l1Listener = this.communicationsManager.createListener(new TCSocketAddress(dsoBind, serverPort), (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
+    final InetSocketAddress dsoBind = new InetSocketAddress(l2DSOConfig.getTsaPort().getHostString(), l2DSOConfig.getTsaPort().getPort());
+    this.l1Listener = this.communicationsManager.createListener(dsoBind, (MessageChannel c)->!c.getProductID().isReconnectEnabled() || !server.isReconnectWindow(),
                                                                 this.connectionIdFactory, (MessageTransport t)->{
                                                                   return getContext().getClientHandshakeManager().isStarting() || t.getConnectionID().getProductId() == ProductID.DIAGNOSTIC || consistencyMgr.requestTransition(context.getL2Coordinator().getStateManager().getCurrentMode(),
                                                                       t.getConnectionID().getClientID(), ConsistencyManager.Transition.ADD_CLIENT);
                                                                 });
-    this.l1Diagnostics = createDiagnosticsListener(dsoBind, serverPort, infoConnections);
+    this.l1Diagnostics = createDiagnosticsListener(dsoBind, infoConnections);
 
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.persistor.getClusterStatePersistor());
 
@@ -930,7 +929,7 @@ public class DistributedObjectServer {
     return bufferManagerFactory;
   }
 
-  private NetworkListener createDiagnosticsListener(String host, int port, ConnectionIDFactory idFactoryForInfoConnections) throws UnknownHostException {
+  private NetworkListener createDiagnosticsListener(InetSocketAddress address, ConnectionIDFactory idFactoryForInfoConnections) throws UnknownHostException {
     boolean enabled = tcProperties.getBoolean(TCPropertiesConsts.L2_L1REDIRECT_ENABLED, true);
     NetworkTranslator translator = null;
     try {
@@ -939,7 +938,7 @@ public class DistributedObjectServer {
       logger.warn("error getting printer for cluster state", se);
     }
     NetworkTranslator finalTranslator = translator == null ? (src,redirect)->redirect : translator;
-    return this.communicationsManager.createListener(new TCSocketAddress(host, port), true, idFactoryForInfoConnections, (final InetSocketAddress srcOfRequest) -> {
+    return this.communicationsManager.createListener(address, true, idFactoryForInfoConnections, (final InetSocketAddress srcOfRequest) -> {
       StateManager stateMgr = l2Coordinator.getStateManager();
       // only provide an active name if this server is not active
       ServerID server1 = !stateMgr.isActiveCoordinator() ? (ServerID)stateMgr.getActiveNodeID() : ServerID.NULL_ID;
@@ -1140,12 +1139,11 @@ public class DistributedObjectServer {
   }
 
   private ServerID makeServerNodeID(ServerConfiguration l2DSOConfig) {
-    String host = l2DSOConfig.getGroupPort().getHostName();
-    if (TCSocketAddress.WILDCARD_IP.equals(host)) {
+    String host = l2DSOConfig.getTsaPort().getHostName();
+    if (TCSocketAddress.isWildcardAddress(host)) {
       host = l2DSOConfig.getHost();
     }
-    final Node node = new Node(host, l2DSOConfig.getTsaPort().getPort());
-    final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
+    final ServerID aNodeID = new ServerID(TCSocketAddress.getCanonicalStringForm(new InetSocketAddress(host, l2DSOConfig.getTsaPort().getPort())), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
@@ -1212,36 +1210,29 @@ public class DistributedObjectServer {
         }
       } catch (IOException ioe) {
         if (!stopping.isSet()) {
-          consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", format(this.l1Diagnostics), ioe);
+          consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", this.l1Diagnostics, ioe);
           throw new RuntimeException(ioe);
         } else {
           logger.debug("cannot start listeners, server shutting down");
         }
       }
     }
-    consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on {}",format(this.l1Listener)
+    consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on {}", this.l1Listener
                        + " successfully, and is now ready for work.");
   }
 
   public void startDiagnosticListener() {
     try {
       this.l1Diagnostics.start(Collections.emptySet());
-      consoleLogger.info("Terracotta Server instance has started diagnostic listening on  {}",format(this.l1Diagnostics));
+      consoleLogger.info("Terracotta Server instance has started diagnostic listening on  {}", this.l1Diagnostics);
     } catch (IOException ioe) {
       if (!stopping.isSet()) {
-        consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", format(this.l1Diagnostics), ioe);
+        consoleLogger.info("Unable to start Terracotta Server instance diagnostic listening on {}", this.l1Diagnostics, ioe);
         throw new RuntimeException(ioe);
       } else {
         logger.debug("cannot start listeners, server shutting down");
       }
     }
-  }
-
-  private static String format(NetworkListener listener) {
-    final StringBuilder sb = new StringBuilder(listener.getBindAddress().getHostAddress());
-    sb.append(':');
-    sb.append(listener.getBindPort());
-    return sb.toString();
   }
 
   /**
@@ -1253,6 +1244,12 @@ public class DistributedObjectServer {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
     final int configValue = l2DSOConfig.getTsaPort().getPort();
     if (configValue != 0) { return configValue; }
+    if (this.l1Diagnostics != null) {
+      try {
+        return this.l1Diagnostics.getBindPort();
+      } catch (final IllegalStateException ise) {/**/
+      }
+    }
     if (this.l1Listener != null) {
       try {
         return this.l1Listener.getBindPort();
@@ -1260,10 +1257,6 @@ public class DistributedObjectServer {
       }
     }
     return -1;
-  }
-
-  public InetAddress getListenAddr() {
-    return this.l1Listener.getBindAddress();
   }
 
   public int getGroupPort() {

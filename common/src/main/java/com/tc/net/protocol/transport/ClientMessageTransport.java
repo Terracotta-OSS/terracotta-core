@@ -25,7 +25,6 @@ import com.tc.logging.ConnectionIdLogger;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.ReconnectionRejectedException;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -127,10 +126,9 @@ public class ClientMessageTransport extends MessageTransportBase {
     }
     Assert.eval("can't open an already open transport", !this.status.isAlive());
     Assert.eval("can't open an already connected transport", !this.isConnected());
-    TCSocketAddress socket = new TCSocketAddress(serverAddress);
     TCConnection connection = null;
     try {
-      connection = connect(socket);
+      connection = connect(serverAddress);
       openConnection(connection);
       NetworkStackID nid = new NetworkStackID(getConnectionID().getChannelID());
       if (connection.isClosed()) {
@@ -155,7 +153,7 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @throws IOException
    * @throws MaxConnectionsExceededException
    */
-  TCConnection connect(TCSocketAddress sa) throws TCTimeoutException, IOException {
+  TCConnection connect(InetSocketAddress sa) throws TCTimeoutException, IOException {
     TCConnection connection = this.connectionManager.createConnection(getProtocolAdapter());
     if (connection == null) {
       throw new IOException("failed to create a new connection");
@@ -470,11 +468,10 @@ public class ClientMessageTransport extends MessageTransportBase {
       return;
     }
     
-    TCSocketAddress socket = new TCSocketAddress(serverAddress);
-    reconnect(socket);
+    reconnect(serverAddress);
   }
   
-  void reconnect(TCSocketAddress socket) throws TCTimeoutException, ReconnectionRejectedException, MaxConnectionsExceededException, CommStackMismatchException, IOException {
+  void reconnect(InetSocketAddress socket) throws TCTimeoutException, ReconnectionRejectedException, MaxConnectionsExceededException, CommStackMismatchException, IOException {
     TCConnection connection = connect(socket);
       
     Assert.eval(!isConnected());

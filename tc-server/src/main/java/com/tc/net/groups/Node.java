@@ -32,10 +32,6 @@ public class Node {
   private final int    groupPort;
   private final int    hashCode;
 
-  public Node(String hostPort) {
-    this(getHost(hostPort), getPort(hostPort));
-  }
-
   public Node(String host, int port) {
     this(host, port, 0);
   }

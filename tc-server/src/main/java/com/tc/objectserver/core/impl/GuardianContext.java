@@ -19,6 +19,7 @@
 package com.tc.objectserver.core.impl;
 
 import com.tc.net.ClientID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.ServerMessageChannel;
@@ -77,7 +78,7 @@ public class GuardianContext {
       String remoteAddress = "";
       if (transport != null) {
         translateMaptoProperty(props, ServerMessageChannel.TRANSPORT_INFO, transport.getStateMap());
-        remoteAddress = transport.getRemoteAddress().getStringForm();
+        remoteAddress = TCSocketAddress.getStringForm(transport.getRemoteAddress());
       }
       props.setProperty("natDetected", Boolean.toString(!handshakeAddress.equals(remoteAddress)));
     }

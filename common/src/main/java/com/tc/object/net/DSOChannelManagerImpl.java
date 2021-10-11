@@ -34,6 +34,7 @@ import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeRefusedMessage;
 import com.tc.net.core.ProductID;
 import com.tc.util.concurrent.CopyOnWriteSequentialMap;
+import java.net.InetSocketAddress;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -106,8 +107,8 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   public String getChannelAddress(NodeID nid) {
     try {
       MessageChannel channel = getActiveChannel(nid);
-      TCSocketAddress addr = channel.getRemoteAddress();
-      return addr.getStringForm();
+      InetSocketAddress addr = channel.getRemoteAddress();
+      return TCSocketAddress.getStringForm(addr);
     } catch (NoSuchChannelException e) {
       return "no longer connected";
     }

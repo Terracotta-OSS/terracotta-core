@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionEventCaller;
 import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -96,8 +95,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private final AtomicBoolean                   isSocketEndpoint            = new AtomicBoolean(false);
   private final SetOnceFlag                     closed                      = new SetOnceFlag();
   private final AtomicBoolean                   connected                   = new AtomicBoolean(false);
-  private final SetOnceRef<TCSocketAddress>     localSocketAddress          = new SetOnceRef<TCSocketAddress>();
-  private final SetOnceRef<TCSocketAddress>     remoteSocketAddress         = new SetOnceRef<TCSocketAddress>();
+  private final SetOnceRef<InetSocketAddress>     localSocketAddress          = new SetOnceRef<>();
+  private final SetOnceRef<InetSocketAddress>     remoteSocketAddress         = new SetOnceRef<>();
   private final SocketParams                    socketParams;
   private final AtomicLong                      totalRead                   = new AtomicLong(0);
   private final AtomicLong                      totalWrite                  = new AtomicLong(0);
@@ -231,9 +230,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     this.eventCaller.fireConnectEvent(this.eventListeners, this);
   }
 
-  private void connectImpl(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
+  private void connectImpl(InetSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
     SocketChannel newSocket = null;
-    final InetSocketAddress inetAddr = new InetSocketAddress(addr.getAddress(), addr.getPort());
+    // always rebuild the socket address with exerything that comes with it UnkownHostException etc
+    final InetSocketAddress inetAddr = new InetSocketAddress(InetAddress.getByName(addr.getHostString()), addr.getPort());
     for (int i = 1; i <= 3; i++) {
       try {
         newSocket = createChannel();
@@ -286,7 +286,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     return pipeSocket;
   }
 
-  private boolean asynchConnectImpl(TCSocketAddress address) throws IOException {
+  private boolean asynchConnectImpl(InetSocketAddress address) throws IOException {
     final SocketChannel newSocket = createChannel();
     newSocket.configureBlocking(false);
 
@@ -670,14 +670,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (this.isSocketEndpoint.get()) {
       buf.append(" local=");
       if (this.localSocketAddress.isSet()) {
-        buf.append(this.localSocketAddress.get().getStringForm());
+        buf.append(this.localSocketAddress.get().toString());
       } else {
         buf.append("[unknown]");
       }
 
       buf.append(" remote=");
       if (this.remoteSocketAddress.isSet()) {
-        buf.append(this.remoteSocketAddress.get().getStringForm());
+        buf.append(this.remoteSocketAddress.get().toString());
       } else {
         buf.append("[unknown]");
       }
@@ -732,7 +732,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   @Override
-  public final synchronized Socket connect(TCSocketAddress addr, int timeout) throws IOException,
+  public final synchronized Socket connect(InetSocketAddress addr, int timeout) throws IOException,
       TCTimeoutException {
     if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
                                                                                        "Connection closed or already connected"); }
@@ -745,7 +745,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   @Override
-  public final synchronized boolean asynchConnect(TCSocketAddress addr) throws IOException {
+  public final synchronized boolean asynchConnect(InetSocketAddress addr) throws IOException {
     if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
                                                                                        "Connection closed or already connected"); }
 
@@ -766,7 +766,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   @Override
-  public final TCSocketAddress getLocalAddress() {
+  public final InetSocketAddress getLocalAddress() {
     if (this.localSocketAddress.isSet()) {
       return this.localSocketAddress.get();
     } else {
@@ -775,7 +775,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   }
 
   @Override
-  public final TCSocketAddress getRemoteAddress() {
+  public final InetSocketAddress getRemoteAddress() {
     if (this.remoteSocketAddress.isSet()) {
       return this.remoteSocketAddress.get();
     } else {
@@ -797,8 +797,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
       if (remoteAddress != null && localAddress != null) {
         this.isSocketEndpoint.set(true);
-        this.localSocketAddress.set(new TCSocketAddress(cloneInetAddress(localAddress), socket.getLocalPort()));
-        this.remoteSocketAddress.set(new TCSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()));
+        this.localSocketAddress.set(new InetSocketAddress(cloneInetAddress(localAddress), socket.getLocalPort()));
+        this.remoteSocketAddress.set(new InetSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()));
       } else {
         // abort if socket is not connected
         throw new IOException("socket is not connected");
@@ -906,9 +906,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private WireProtocolMessage finalizeWireProtocolMessage(WireProtocolMessage message, int messageCount) {
     final WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
-    hdr.setSourceAddress(getLocalAddress().getAddressBytes());
+    hdr.setSourceAddress(getLocalAddress().getAddress().getAddress());
     hdr.setSourcePort(getLocalAddress().getPort());
-    hdr.setDestinationAddress(getRemoteAddress().getAddressBytes());
+    hdr.setDestinationAddress(getLocalAddress().getAddress().getAddress());
     hdr.setDestinationPort(getRemoteAddress().getPort());
     hdr.setMessageCount(messageCount);
     hdr.computeChecksum();

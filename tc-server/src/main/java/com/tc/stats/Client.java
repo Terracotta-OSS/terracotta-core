@@ -31,6 +31,7 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.handshakemanager.ClientHandshakeMonitoringInfo;
 import com.tc.stats.api.ClientMBean;
+import java.net.InetSocketAddress;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -96,9 +97,9 @@ public class Client extends AbstractTerracottaMBean implements ClientMBean, Noti
 
   @Override
   public String getRemoteAddress() {
-    TCSocketAddress addr = channel.getRemoteAddress();
+    InetSocketAddress addr = channel.getRemoteAddress();
     if (addr == null) { return "not connected"; }
-    return addr.getCanonicalStringForm();
+    return TCSocketAddress.getCanonicalStringForm(addr);
   }
 
   @Override

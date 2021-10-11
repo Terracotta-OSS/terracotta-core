@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
@@ -40,9 +39,9 @@ import java.net.UnknownHostException;
  */
 public interface MessageChannel {
 
-  public TCSocketAddress getLocalAddress();
+  public InetSocketAddress getLocalAddress();
 
-  public TCSocketAddress getRemoteAddress();
+  public InetSocketAddress getRemoteAddress();
 
   public void addListener(ChannelEventListener listener);
   

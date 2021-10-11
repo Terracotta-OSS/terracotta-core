@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import junit.framework.TestCase;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import java.net.InetSocketAddress;
 
 import org.terracotta.utilities.test.net.PortManager;
 
@@ -78,7 +79,7 @@ public class TCConnectionTransportTest extends TestCase {
     };
 
     portRef = PortManager.getInstance().reservePort();
-    server = connMgr.createListener(new TCSocketAddress(portRef.port()), factory);
+    server = connMgr.createListener(new InetSocketAddress(portRef.port()), factory);
   }
 
   @Override
@@ -92,7 +93,7 @@ public class TCConnectionTransportTest extends TestCase {
 
   public void testBasic() throws TCTimeoutException, IOException, InterruptedException, BrokenBarrierException {
     final TCConnection clientConn = connMgr.createConnection(new WireProtocolAdaptorImpl(new ClientWPMGSink()));
-    clientConn.connect(new TCSocketAddress(server.getBindPort()), 3000);
+    clientConn.connect(new InetSocketAddress(server.getBindSocketAddress().getPort()), 3000);
 
     final CyclicBarrier startBarrier = new CyclicBarrier(2);
     final CyclicBarrier endBarrier = new CyclicBarrier(2);

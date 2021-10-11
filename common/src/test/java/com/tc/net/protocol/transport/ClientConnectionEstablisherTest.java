@@ -79,7 +79,7 @@ public class ClientConnectionEstablisherTest {
     try {
       cmt = spy(new ClientMessageTransport(connManager, mock(TransportHandshakeErrorHandler.class), mock(TransportHandshakeMessageFactory.class), mock(WireProtocolAdaptorFactory.class), TransportHandshakeMessage.NO_CALLBACK_PORT, 0));
       doNothing().when(cmt).sendToConnection(any(TCNetworkMessage.class));
-      doNothing().when(cmt).reconnect(any(TCSocketAddress.class));
+      doNothing().when(cmt).reconnect(any(InetSocketAddress.class));
       doReturn(new NetworkStackID(0)).when(cmt).open(any(InetSocketAddress.class));
       doNothing().when(cmt).openConnection(any(TCConnection.class));
       ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), 0);

@@ -18,11 +18,10 @@
  */
 package com.tc.net.core;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.util.TCTimeoutException;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * A handle to a network listening port
@@ -34,11 +33,7 @@ public interface TCListener {
 
   public void stop(long timeout) throws TCTimeoutException;
 
-  public int getBindPort();
-
-  public InetAddress getBindAddress();
-
-  public TCSocketAddress getBindSocketAddress();
+  public InetSocketAddress getBindSocketAddress();
 
   public void addEventListener(TCListenerEventListener lsnr);
 

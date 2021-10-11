@@ -28,6 +28,8 @@ import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +50,7 @@ class NetworkListenerImpl implements NetworkListener {
 
   private final ChannelManagerImpl channelManager;
   private final CommunicationsManagerImpl commsMgr;
-  private final TCSocketAddress addr;
+  private final InetSocketAddress addr;
   private TCListener lsnr;
   private CompletableFuture<Boolean> started = null;
   private final boolean reuseAddr;
@@ -58,7 +60,7 @@ class NetworkListenerImpl implements NetworkListener {
   private final Predicate<MessageTransport> validation;
 
   // this constructor is intentionally not public, only the Comms Manager should be creating them
-  NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
+  NetworkListenerImpl(InetSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
                       TCMessageFactory msgFactory, boolean reuseAddr, ConnectionIDFactory connectionIdFactory,
                       WireProtocolMessageSink wireProtoMsgSnk, RedirectAddressProvider activeProvider, Predicate<MessageTransport> validation) {
     this.commsMgr = commsMgr;
@@ -164,20 +166,31 @@ class NetworkListenerImpl implements NetworkListener {
 
   @Override
   public synchronized InetAddress getBindAddress() {
-    if (!isStarted()) { throw new IllegalStateException("Listener not running"); }
-    return this.lsnr.getBindAddress();
+    if (!isStarted()) {
+      return this.addr.getAddress();
+    } else {
+      return this.lsnr.getBindSocketAddress().getAddress();
+    }
   }
 
   @Override
   public synchronized int getBindPort() {
-    if (!isStarted()) { throw new IllegalStateException("Listener not running"); }
-    return this.lsnr.getBindPort();
+    if (!isStarted()) {
+      return this.addr.getPort();
+    } else {
+      return this.lsnr.getBindSocketAddress().getPort();
+    }
   }
 
   @Override
   public String toString() {
     try {
-      return getBindAddress().getHostAddress() + ":" + getBindPort();
+      NetworkInterface eth = NetworkInterface.getByInetAddress(addr.getAddress());
+      if (eth != null) {
+        return "interface:" + eth.getDisplayName() + " (address:" + addr.getAddress() + " port:" + addr.getPort() +')';
+      } else {
+        return "all interfaces (address:" + addr.getAddress() + " port:" + addr.getPort() +')';
+      }
     } catch (final Exception e) {
       return "Exception in toString(): " + e.getMessage();
     }

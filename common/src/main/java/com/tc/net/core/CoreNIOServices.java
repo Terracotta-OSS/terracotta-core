@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.exception.TCInternalError;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.core.event.TCConnectionEventListener;
@@ -158,9 +159,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     buf.append(" (listen ");
     for (int i = 0, n = listeners.size(); i < n; i++) {
       TCListener listener = listeners.get(i);
-      buf.append(listener.getBindAddress().getHostAddress());
-      buf.append(':');
-      buf.append(listener.getBindPort());
+      buf.append(listener.toString());
       if (i < (n - 1)) {
         buf.append(',');
       }
