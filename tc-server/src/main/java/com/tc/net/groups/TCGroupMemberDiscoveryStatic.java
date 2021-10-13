@@ -27,6 +27,7 @@ import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.utils.L2Utils;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -35,6 +36,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Map;
@@ -98,7 +100,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   }
 
   private String getNodeName(Node node) {
-    return node.getServerNodeName();
+    return TCSocketAddress.getStringForm(InetSocketAddress.createUnresolved(node.getHost(), node.getPort()));
   }
 
   @Override
