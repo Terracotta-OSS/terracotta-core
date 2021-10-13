@@ -44,7 +44,7 @@ public class GroupConfiguration {
     Node current = null;
     for (Map.Entry<String, ServerConfiguration> member : configMap.entrySet()) {
       ServerConfiguration serverConfiguration = member.getValue();
-      String bindAddress = serverConfiguration.getGroupPort().getHostName();
+      String bindAddress = serverConfiguration.getTsaPort().getHostName();
       if (TCSocketAddress.isWildcardAddress(bindAddress)) {
         bindAddress = serverConfiguration.getHost();
       }

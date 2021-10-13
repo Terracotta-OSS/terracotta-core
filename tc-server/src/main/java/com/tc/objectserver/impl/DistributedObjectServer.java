@@ -1143,7 +1143,7 @@ public class DistributedObjectServer {
     if (TCSocketAddress.isWildcardAddress(host)) {
       host = l2DSOConfig.getHost();
     }
-    final ServerID aNodeID = new ServerID(TCSocketAddress.getCanonicalStringForm(new InetSocketAddress(host, l2DSOConfig.getTsaPort().getPort())), UUID.getUUID().toString().getBytes());
+    final ServerID aNodeID = new ServerID(TCSocketAddress.getStringForm(InetSocketAddress.createUnresolved(host, l2DSOConfig.getTsaPort().getPort())), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
