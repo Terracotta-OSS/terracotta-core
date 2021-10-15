@@ -18,6 +18,9 @@
 #
 #
 
+# the solaris 64-bit JVM has a bug that makes it fail to allocate more than 2GB of offheap when
+# the max heap is <= 2G, hence we set the heap size to a bit more than 2GB
+JAVA_MEMORY_OPTS=${JAVA_MEMORY_OPTS:-"-Xms256m -Xmx2049m"}
 TC_SERVER_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
 
 # this will only happen if using sag installer
@@ -41,6 +44,7 @@ do
     # accept the first one that works
     "${JAVA_HOME}/bin/java" $JAVA_COMMAND_ARGS -version > /dev/null 2>&1 && break
 done
+JAVA_COMMAND_ARGS="${JAVA_COMMAND_ARGS} ${JAVA_MEMORY_OPTS}"
 
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly

@@ -54,6 +54,10 @@ if not defined JAVA_HOME (
   exit /b 1
 )
 
+if not defined JAVA_MEMORY_OPTS (
+ set JAVA_MEMORY_OPTS=-Xms256m -Xmx2g
+)
+
 for %%C in ("-d64 -server -XX:MaxDirectMemorySize=1048576g" ^
 			"-server -XX:MaxDirectMemorySize=1048576g" ^
 			"-d64 -client  -XX:MaxDirectMemorySize=1048576g" ^
@@ -74,7 +78,7 @@ exit /b 1
 
 :setJavaOptsAndClasspath
 
-set OPTS=%SERVER_OPT% -Xms256m -Xmx2g -XX:+HeapDumpOnOutOfMemoryError
+set OPTS=%SERVER_OPT% %JAVA_MEMORY_OPTS% -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% "-Dtc.install-root=%TC_SERVER_DIR%"
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 
