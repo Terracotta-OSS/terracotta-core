@@ -18,17 +18,31 @@
  */
 package com.tc.net;
 
+import com.tc.util.concurrent.ThreadUtil;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AddressChecker {
 
+  private static Logger LOGGER = LoggerFactory.getLogger(AddressChecker.class);
   private final Set<InetAddress> allLocalAddresses;
+  private final static int NTTL;
+
+  static {
+    String nTTLProp = java.security.Security.getProperty("networkaddress.cache.negative.ttl");
+    if (nTTLProp == null) {
+      nTTLProp = "10";
+    }
+    NTTL = Integer.parseInt(nTTLProp);
+  }
 
   public AddressChecker() {
     allLocalAddresses = findAllLocalAddresses();
@@ -36,6 +50,21 @@ public class AddressChecker {
 
   public Set<InetAddress> getAllLocalAddresses() {
     return allLocalAddresses;
+  }
+
+  public static InetAddress getByName(String hostname, int retry) throws UnknownHostException {
+    for (int x=0;x<=retry;x++) {
+      try {
+        return InetAddress.getByName(hostname);
+      } catch (UnknownHostException unknown) {
+//  ignore
+        if (x != retry) {
+          LOGGER.warn("Unable to resolve the hostname provided, waiting for {} seconds and retrying", NTTL);
+          ThreadUtil.reallySleep(NTTL * 1000);
+        }
+      }
+    }
+    throw new UnknownHostException(hostname);
   }
 
   public boolean isLegalBindAddress(InetAddress bindAddress) {

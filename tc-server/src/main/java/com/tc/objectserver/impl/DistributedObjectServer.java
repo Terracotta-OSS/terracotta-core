@@ -100,7 +100,6 @@ import com.tc.l2.state.StateManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.ThreadDumpHandler;
-import com.tc.net.AddressChecker;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
@@ -199,6 +198,7 @@ import org.terracotta.entity.BasicServiceConfiguration;
 import com.tc.l2.state.ConsistencyManager;
 import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
+import com.tc.net.AddressChecker;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.CachingClearTextBufferManagerFactory;
@@ -445,21 +445,30 @@ public class DistributedObjectServer {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
     // verify user input host name, DEV-2293
     final String host = l2DSOConfig.getHost();
-    final InetAddress ip = InetAddress.getByName(host);
-    if (!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
+    final InetAddress ip = AddressChecker.getByName(host, 3);
+    final NetworkInterface hostInterface = NetworkInterface.getByInetAddress(ip);
+    if (!ip.isLoopbackAddress() && hostInterface == null) {
       final String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
       ServerEnv.getServer().stop();
     }
 
-    String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getHostName();
-
-    final InetAddress jmxBind = InetAddress.getByName(bindAddress);
-    final AddressChecker addressChecker = new AddressChecker();
-    if (!addressChecker.isLegalBindAddress(jmxBind)) { throw new IOException("Invalid bind address [" + jmxBind
-                                                                             + "]. Local addresses are "
-                                                                             + addressChecker.getAllLocalAddresses()); }
+    final String bindAddress = this.configSetupManager.getServerConfiguration().getTsaPort().getHostString();
+    final InetAddress tsaBind = AddressChecker.getByName(host, 3);
+    final NetworkInterface tsaInterface = NetworkInterface.getByInetAddress(tsaBind);
+    if (!tsaBind.isAnyLocalAddress() && !ip.isLoopbackAddress() && tsaInterface == null) {
+      final String msg = "Unable to find local network interface for tsa bind " + bindAddress;
+      consoleLogger.error(msg);
+      logger.error(msg, new TCRuntimeException(msg));
+      ServerEnv.getServer().stop();
+    }
+    if (tsaInterface != null && !tsaInterface.equals(hostInterface)) {
+      final String msg = "tsa bind interface is not accessible via the hostname of the server";
+      consoleLogger.error(msg);
+      logger.error(msg, new TCRuntimeException(msg));
+      ServerEnv.getServer().stop();
+    }
 
     this.tcProperties = TCPropertiesImpl.getProperties();
 
@@ -490,15 +499,9 @@ public class DistributedObjectServer {
 
     // We want to register our IMonitoringProducer shim.
     // (note that it requires a PlatformServer instance of THIS server).
-    String hostAddress = "";
-    try {
-      hostAddress = java.net.InetAddress.getByName(host).getHostAddress();
-    } catch (UnknownHostException unknown) {
-      // ignore
-    }
     final int serverPort = l2DSOConfig.getTsaPort().getPort();
     final ProductInfo pInfo = server.productInfo();
-    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, hostAddress, bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), ServerEnv.getServer().getStartTime());
+    PlatformServer thisServer = new PlatformServer(server.getL2Identifier(), host, ip.getHostAddress(), bindAddress, serverPort, l2DSOConfig.getGroupPort().getPort(), pInfo.buildVersion(), pInfo.buildID(), ServerEnv.getServer().getStartTime());
 
     final LocalMonitoringProducer monitoringShimService = new LocalMonitoringProducer(this.configSetupManager.getServiceLocator().getServiceLoader(), this.serviceRegistry, thisServer, this.timer);
     this.serviceRegistry.registerImplementationProvided(monitoringShimService);
