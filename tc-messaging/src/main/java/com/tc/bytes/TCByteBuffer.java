@@ -18,11 +18,9 @@
  */
 package com.tc.bytes;
 
-import com.tc.lang.Recyclable;
-
 import java.nio.ByteBuffer;
 
-public interface TCByteBuffer extends Recyclable {
+public interface TCByteBuffer {
 
   public TCByteBuffer clear();
 
@@ -169,11 +167,4 @@ public interface TCByteBuffer extends Recyclable {
   public TCByteBuffer putUbyte(int index, short value);
 
   public TCByteBuffer putUbyte(short value);
-
-  public void commit();
-
-  public void checkedOut();
-
-  public BufferPool getBufferPool();
-
 }

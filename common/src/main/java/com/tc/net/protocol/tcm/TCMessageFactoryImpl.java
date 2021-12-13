@@ -19,7 +19,6 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionProvider;
 import java.lang.invoke.MethodHandle;
@@ -43,12 +42,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   public TCMessage createMessage(MessageChannel source, TCMessageType type)
       throws UnsupportedMessageTypeException {
     final GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(this.sessionProvider.getSessionID(), this.monitor,
-                                 createBuffer(), source, type);
-  }
-
-  private static TCByteBufferOutputStream createBuffer() {
-    return new TCByteBufferOutputStream();
+    return factory.createMessage(this.sessionProvider.getSessionID(), this.monitor, source, type);
   }
 
   @Override
@@ -92,7 +86,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     private final MethodHandle recvHdl;
     
     GeneratedMessageFactoryImpl(Class<? extends TCMessage> msgClass) {
-      sendHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, TCByteBufferOutputStream.class,
+      sendHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, 
                                  MessageChannel.class, TCMessageType.class);
       recvHdl = findMethodHandle(msgClass, SessionID.class, MessageMonitor.class, MessageChannel.class,
                                  TCMessageHeader.class, TCByteBuffer[].class);
@@ -112,12 +106,11 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
     }
     
     @Override
-    public TCMessage createMessage(SessionID sid, MessageMonitor monitor, TCByteBufferOutputStream output,
-                                   MessageChannel channel, TCMessageType type) {
+    public TCMessage createMessage(SessionID sid, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
       if (sendHdl == null) { throw new UnsupportedOperationException(); }
 
       try {
-        return (TCMessage)sendHdl.invoke(sid, monitor, output, channel, type);
+        return (TCMessage)sendHdl.invoke(sid, monitor, channel, type);
       } catch (Throwable e) {
         throw new RuntimeException(e);
       }

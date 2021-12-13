@@ -19,7 +19,6 @@
 package com.tc.object.msg;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -34,8 +33,8 @@ public abstract class DSOMessageBase extends TCMessageImpl {
 
   private final SessionID localSessionID;
 
-  public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(monitor, out, channel, type);
+  public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(monitor, channel, type);
     this.localSessionID = sessionID;
   }
 

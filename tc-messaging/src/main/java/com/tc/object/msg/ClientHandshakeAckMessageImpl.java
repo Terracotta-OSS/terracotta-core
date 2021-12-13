@@ -44,9 +44,9 @@ public class ClientHandshakeAckMessageImpl extends DSOMessageBase implements Cli
   private String                 serverVersion;
 
   public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor,
-                                       TCByteBufferOutputStream out, MessageChannel channel,
+                                        MessageChannel channel,
                                        TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+    super(sessionID, monitor, channel, type);
   }
 
   public ClientHandshakeAckMessageImpl(SessionID sessionID, MessageMonitor monitor,

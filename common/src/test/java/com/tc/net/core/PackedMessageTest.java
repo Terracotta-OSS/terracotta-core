@@ -20,6 +20,7 @@ package com.tc.net.core;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCByteBufferImpl;
 import com.tc.test.TCTestCase;
 
 import java.util.Random;
@@ -59,9 +60,9 @@ public class PackedMessageTest extends TCTestCase {
       TCByteBuffer buf = packedBuffers[i];
       final boolean last = i == packedBuffers.length - 1;
       if (last) {
-        Assert.assertTrue(TCByteBufferFactory.FIXED_BUFFER_SIZE >= buf.capacity());
+        Assert.assertTrue(TCByteBufferImpl.FIXED_BUFFER_SIZE >= buf.capacity());
       } else {
-        Assert.assertEquals(TCByteBufferFactory.FIXED_BUFFER_SIZE, buf.capacity());
+        Assert.assertEquals(TCByteBufferImpl.FIXED_BUFFER_SIZE, buf.capacity());
       }
       while (buf.hasRemaining()) {
         Assert.assertEquals(payloadGenerator.nextByte(), buf.get());
@@ -69,8 +70,8 @@ public class PackedMessageTest extends TCTestCase {
       }
     }
     System.out.println("Input length: " + inputBuffersLength + ", packed length: " + packedLength);
-    long numExpectedBlocks = packedLength / TCByteBufferFactory.FIXED_BUFFER_SIZE;
-    if (packedLength % TCByteBufferFactory.FIXED_BUFFER_SIZE != 0) numExpectedBlocks++;
+    long numExpectedBlocks = packedLength / TCByteBufferImpl.FIXED_BUFFER_SIZE;
+    if (packedLength % TCByteBufferImpl.FIXED_BUFFER_SIZE != 0) numExpectedBlocks++;
     Assert.assertEquals(numExpectedBlocks, packedBuffers.length);
 
     Assert.assertEquals("Packed count should be same - input length: " + inputBuffersLength + ", packed length: "

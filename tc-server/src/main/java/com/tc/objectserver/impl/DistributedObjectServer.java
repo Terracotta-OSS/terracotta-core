@@ -457,7 +457,6 @@ public class DistributedObjectServer {
     this.tcProperties = TCPropertiesImpl.getProperties();
 
     TCByteBufferFactory.setPoolingEnabled(tcProperties.getBoolean(TCPropertiesConsts.BYTEBUFFER_POOLING, false));
-    TCByteBufferFactory.setPoolingThreadMax(tcProperties.getInt(TCPropertiesConsts.BYTEBUFFER_POOLING_THREAD_MAX, 1024));
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final int fastStageSize = 1024;
     final StageManager stageManager = this.seda.getStageManager();

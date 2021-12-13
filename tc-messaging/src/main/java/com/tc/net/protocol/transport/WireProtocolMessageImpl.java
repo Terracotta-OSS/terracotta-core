@@ -65,15 +65,6 @@ public class WireProtocolMessageImpl extends AbstractTCNetworkMessage implements
     recordLength();
     this.sourceConnection = source;
   }
-  
-  @Override
-  public void doRecycleOnWrite() {
-    getWireProtocolHeader().recycle();
-    AbstractTCNetworkMessage messagePayLoad = (AbstractTCNetworkMessage) getMessagePayload();
-    if(messagePayLoad != null) {
-      messagePayLoad.doRecycleOnWrite();
-    }
-  }
 
   @Override
   public short getMessageProtocol() {

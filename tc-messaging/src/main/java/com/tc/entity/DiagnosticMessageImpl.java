@@ -92,8 +92,8 @@ public class DiagnosticMessageImpl extends DSOMessageBase implements DiagnosticM
     this.extendedData = extendedData;
   }
 
-  public DiagnosticMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+  public DiagnosticMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public DiagnosticMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

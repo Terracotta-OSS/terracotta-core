@@ -155,10 +155,6 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
       WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, bufs);
       messages.add(msg);
     }
-    fullMsgsBytes = null;
-    for (TCByteBuffer buf : msgs) {
-      buf.recycle();
-    }
     return messages;
   }
 
@@ -196,14 +192,4 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
 
     ((WireProtocolHeader) getHeader()).setTotalPacketLength(packetLength);
   }
-
-  @Override
-  public void doRecycleOnWrite() {
-    getWireProtocolHeader().recycle();
-    // recycle individual messages
-    for (TCNetworkMessage networkMessage : messagePayloads) {
-      ((AbstractTCNetworkMessage) networkMessage).doRecycleOnWrite();
-    }
-  }
-
 }

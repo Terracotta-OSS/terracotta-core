@@ -151,8 +151,8 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     this.supplier = supplier;
   }
 
-  public NetworkVoltronEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+  public NetworkVoltronEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public NetworkVoltronEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

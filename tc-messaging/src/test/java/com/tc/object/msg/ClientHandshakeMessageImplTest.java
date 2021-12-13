@@ -49,7 +49,7 @@ public class ClientHandshakeMessageImplTest {
         when(channel.getLocalAddress()).thenReturn(socket);
     
         ClientHandshakeMessageImpl chm = new ClientHandshakeMessageImpl(mock(SessionID.class), mock(MessageMonitor.class),
-                new TCByteBufferOutputStream(), channel, TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+                channel, TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
         ResendVoltronEntityMessage msg1 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(1),
                 mock(EntityDescriptor.class), VoltronEntityMessage.Type.FETCH_ENTITY, false, TCByteBufferFactory.getInstance(false, 0));
         ResendVoltronEntityMessage msg2 = new ResendVoltronEntityMessage(mock(ClientID.class), new TransactionID(10),

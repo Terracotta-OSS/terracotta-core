@@ -81,9 +81,9 @@ public class VoltronEntityAppliedResponseImpl extends DSOMessageBase implements 
     this.failureException = exception;
   }
   
-  
-  public VoltronEntityAppliedResponseImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+
+  public VoltronEntityAppliedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public VoltronEntityAppliedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

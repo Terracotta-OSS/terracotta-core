@@ -35,7 +35,7 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     super(hdrData, MIN_LENGTH, MAX_LENGTH);
   }
 
-  protected TCMessageHeaderImpl(TCMessageType type) {
+  public TCMessageHeaderImpl(TCMessageType type) {
     super(MIN_LENGTH, MAX_LENGTH);
 
     setMessageType(type.getType());

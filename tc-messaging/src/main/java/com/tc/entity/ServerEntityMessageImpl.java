@@ -43,8 +43,8 @@ public class ServerEntityMessageImpl extends DSOMessageBase implements ServerEnt
   private ClientInstanceID clientInstance;
   private Long responseId;
 
-  public ServerEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+  public ServerEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public ServerEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

@@ -53,8 +53,7 @@ public class NetworkVoltronEntityMessageImplTest {
     MessageMonitor monitor = mock(MessageMonitor.class);
     MessageChannel channel = null;
     TCMessageType type = TCMessageType.VOLTRON_ENTITY_MESSAGE;
-    TCByteBufferOutputStream outputStream = new TCByteBufferOutputStream(4, 4096, false);
-    NetworkVoltronEntityMessageImpl message = new NetworkVoltronEntityMessageImpl(sessionID, monitor, outputStream, channel, type);
+    NetworkVoltronEntityMessageImpl message = new NetworkVoltronEntityMessageImpl(sessionID, monitor, channel, type);
     
     ClientID clientID = new ClientID(1);
     TransactionID transactionID = new TransactionID(2);
@@ -69,7 +68,6 @@ public class NetworkVoltronEntityMessageImplTest {
     
     TCMessageHeader header = (TCMessageHeader) message.getHeader();
     TCByteBuffer[] payload = message.getPayload();
-    outputStream.close();
     NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, payload);
     decodingMessage.hydrate();
     assertEquals(clientID, decodingMessage.getSource());

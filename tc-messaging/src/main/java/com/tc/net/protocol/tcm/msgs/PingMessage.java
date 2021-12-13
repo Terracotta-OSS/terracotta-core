@@ -39,8 +39,8 @@ public class PingMessage extends DSOMessageBase {
 
   private long              sequence = -1;
 
-  public PingMessage(SessionID sessionID,MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+  public PingMessage(SessionID sessionID,MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public PingMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
@@ -49,7 +49,7 @@ public class PingMessage extends DSOMessageBase {
 
   @SuppressWarnings("resource")
   public PingMessage(MessageMonitor monitor) {
-    this( new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
+    this( new SessionID(0), monitor, null, TCMessageType.PING_MESSAGE);
   }
 
   public void initialize(long seq) {

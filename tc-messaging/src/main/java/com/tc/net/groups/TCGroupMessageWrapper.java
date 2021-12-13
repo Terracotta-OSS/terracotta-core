@@ -20,7 +20,6 @@ package com.tc.net.groups;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
-import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -37,9 +36,9 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
   private final static byte GROUP_MESSAGE_ID = 1;
   private AbstractGroupMessage      message;
 
-  public TCGroupMessageWrapper(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
+  public TCGroupMessageWrapper(SessionID sessionID, MessageMonitor monitor, 
                                MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+    super(sessionID, monitor, channel, type);
   }
 
   public TCGroupMessageWrapper(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
@@ -79,13 +78,6 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
         return true;
       default:
         return false;
-    }
-  }
-
-  @Override
-  public void doRecycleOnRead() {
-    if (message.isRecycleOnRead(this)) {
-      super.doRecycleOnRead();
     }
   }
 }

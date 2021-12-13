@@ -19,12 +19,11 @@
 package com.tc.net.protocol;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.lang.Recyclable;
 
 /**
  * @author teck
  */
-public interface TCNetworkMessage extends Recyclable {
+public interface TCNetworkMessage {
 
   public TCNetworkHeader getHeader();
 

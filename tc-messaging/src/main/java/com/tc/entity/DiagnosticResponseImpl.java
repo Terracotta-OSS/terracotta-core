@@ -47,9 +47,9 @@ public class DiagnosticResponseImpl extends DSOMessageBase implements Diagnostic
   public VoltronEntityMessage.Acks getAckType() {
     return VoltronEntityMessage.Acks.COMPLETED;
   }
-  
-  public DiagnosticResponseImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+
+  public DiagnosticResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public DiagnosticResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

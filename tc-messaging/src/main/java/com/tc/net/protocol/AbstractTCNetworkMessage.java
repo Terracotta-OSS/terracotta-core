@@ -85,19 +85,16 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
   @Override
   public final TCNetworkHeader getHeader() {
-    checkNotRecycled();
     return header;
   }
 
   @Override
   public final TCNetworkMessage getMessagePayload() {
-    checkNotRecycled();
     return messagePayload;
   }
 
   @Override
   public final TCByteBuffer[] getPayload() {
-    checkNotRecycled();
     return payloadData;
   }
 
@@ -110,21 +107,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
       payloadData = EMPTY_BUFFER_ARRAY;
     } else {
       payloadData = newPayload;
-    }
-  }
-
-  protected final void setMessagePayload(TCNetworkMessage subMessage) {
-    checkNotSealed();
-
-    entireMessageData = null;
-
-    if (subMessage == null) {
-      payloadData = EMPTY_BUFFER_ARRAY;
-      this.messagePayload = null;
-    } else {
-      if (!subMessage.isSealed()) { throw new IllegalStateException("Message paylaod is not yet sealed"); }
-      this.messagePayload = subMessage;
-      this.payloadData = subMessage.getEntireMessageData();
     }
   }
 
@@ -256,36 +238,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   @Override
   public final void wasSent() {
     fireSentCallback();
-    doRecycleOnWrite();
-  }
-
-  // Can be overloaded by sub classes to decide when to recycle differently.
-  public void doRecycleOnWrite() {
-    recycle();
-  }
-
-  @Override
-  public void recycle() {
-    if (entireMessageData != null) {
-      int i = 0;
-      if (entireMessageData.length > 1 && entireMessageData[0].array() == entireMessageData[1].array()) {
-        // This is done as TCMessageParser creates a dupilcate of the first buffer for the header.
-        // @see TCMessageParser.parseMessage()
-        // Can be done more elegantly, but it is done like this keeping performance in mind.
-        i++;
-      }
-      for (; i < entireMessageData.length; i++) {
-        entireMessageData[i].recycle();
-      }
-      entireMessageData = null;
-    } else {
-      logger.warn("Entire Message is null ! Probably recycle was called twice ! ");
-      Thread.dumpStack();
-    }
-  }
-
-  protected boolean isRecycled() {
-    return isSealed() && entireMessageData == null;
   }
 
   private void fireSentCallback() {
@@ -310,10 +262,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
     return this.sentCallback;
   }
 
-  private void checkNotRecycled() {
-    if (isRecycled()) { throw new IllegalStateException("Message is already Recycled"); }
-  }
-
   private void checkSealed() {
     if (!isSealed()) { throw new IllegalStateException("Message is not sealed"); }
   }
@@ -324,7 +272,7 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
   private final SetOnceFlag           sealed             = new SetOnceFlag();
   private final SetOnceFlag           sentCallbackFired  = new SetOnceFlag();
-  private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
+  protected static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;
   private TCByteBuffer[]              payloadData;
   private TCNetworkMessage            messagePayload;

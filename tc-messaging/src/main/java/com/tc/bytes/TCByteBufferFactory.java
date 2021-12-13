@@ -18,11 +18,9 @@
  */
 package com.tc.bytes;
 
+import java.lang.ref.ReferenceQueue;
+import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
-import java.util.AbstractQueue;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,35 +34,44 @@ import org.slf4j.LoggerFactory;
 public class TCByteBufferFactory {
 
   private static boolean POOLING = false;
-  private static int THREAD_MAX = 1024;
-  public static final int                  FIXED_BUFFER_SIZE       = 4 * 1024;                                                        // 4KiB
   private static final int                 WARN_THRESHOLD          = 10 * 1024 * 1024;                                                // 10MiB
   private static final TCByteBuffer[]      EMPTY_BB_ARRAY          = new TCByteBuffer[0];
   private static final TCByteBuffer        ZERO_BYTE_BUFFER        = TCByteBufferImpl.wrap(new byte[0]);
   private static final Logger logger = LoggerFactory.getLogger(TCByteBufferFactory.class);
   
-  private static final ThreadLocal<Queue<TCByteBuffer>>  DIRECT_POOL = ThreadLocal.withInitial(PoolQueue::new);
-  private static final ThreadLocal<Queue<TCByteBuffer>>  HEAP_POOL = ThreadLocal.withInitial(PoolQueue::new);
+  private static ReferenceQueue<ByteBuffer>  DIRECT_POOL = new ReferenceQueue<>();
+  private static ReferenceQueue<ByteBuffer>  HEAP_POOL = new ReferenceQueue<>();
   
   public static void setPoolingEnabled(boolean val) {
     POOLING = val;
+    if (POOLING) {
+      DIRECT_POOL = new ReferenceQueue<>();
+      HEAP_POOL = new ReferenceQueue<>();
+    } else {
+      DIRECT_POOL = null;
+      HEAP_POOL = null;
+    }
   }
-  
-  public static void setPoolingThreadMax(int size) {
-    THREAD_MAX = size;
-  }
-    
-  private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount, boolean usePool) {
+
+  private static TCByteBuffer createFixedPooledInstance(boolean direct) {
     try {
-      TCByteBuffer rv = new TCByteBufferImpl(capacity, direct, usePool ? direct ? DIRECT_POOL.get() : HEAP_POOL.get() : null);
-      // Assert.assertEquals(0, rv.position());
-      // Assert.assertEquals(capacity, rv.capacity());
-      // Assert.assertEquals(capacity, rv.limit());
+      ReferenceQueue<ByteBuffer>  pool = direct ? DIRECT_POOL : HEAP_POOL;
+      TCByteBuffer rv = new TCByteBufferImpl(direct, pool);
       return rv;
     } catch (OutOfMemoryError oome) {
       // try to log some useful context. Most OOMEs don't have stack traces unfortunately
-      logger.error("OOME trying to allocate " + (direct ? "direct" : "non-direct") + " buffer of size " + capacity
-                   + " (index " + index + " of count " + totalCount + ")");
+      logger.error("OOME trying to allocate " + (direct ? "direct" : "non-direct") + " buffer of size " + TCByteBufferImpl.FIXED_BUFFER_SIZE);
+      throw oome;
+    }
+  }
+
+  private static TCByteBuffer createNewInstance(boolean direct, int capacity) {
+    try {
+      TCByteBuffer rv = new TCByteBufferImpl(direct, capacity);
+      return rv;
+    } catch (OutOfMemoryError oome) {
+      // try to log some useful context. Most OOMEs don't have stack traces unfortunately
+      logger.error("OOME trying to allocate " + (direct ? "direct" : "non-direct") + " buffer of size " + capacity);
       throw oome;
     }
   }
@@ -89,10 +96,6 @@ public class TCByteBufferFactory {
     // Don't give 4k ByteBuffer from pool for smaller size requests.
     return createNewInstance(direct, size);
   }
-
-  private static TCByteBuffer createNewInstance(boolean direct, int bufferSize) {
-    return createNewInstance(direct, bufferSize, 0, 1, false);
-  }
   
   /**
    * Get enough fixed sized TCByteBuffer instances to contain the given number of bytes
@@ -113,61 +116,29 @@ public class TCByteBufferFactory {
 
     if (length == 0) { return EMPTY_BB_ARRAY; }
 
-    int numBuffers = getBufferCountNeededForMessageSize(length);
-    TCByteBuffer rv[] = new TCByteBuffer[numBuffers];
-    Queue<TCByteBuffer> pool = !POOLING ? null : direct ? DIRECT_POOL.get() : HEAP_POOL.get();
-    for (int i = 0; i < numBuffers; i++) {
-      if (pool != null) {
-        rv[i] = pool.poll();
-      }
-      if (rv[i] == null) {
-        rv[i] = createNewInstance(direct, FIXED_BUFFER_SIZE, i, numBuffers, POOLING);
-      } else {
-        rv[i].checkedOut();
-      }
+    TCByteBuffer[] buffers = new TCByteBuffer[getBufferCountNeededForMessageSize(length)];
+    int capacity = 0;
+    for (int x=0;x<buffers.length;x++) {
+      buffers[x] = createFixedPooledInstance(direct);
+      capacity += buffers[x].capacity();
     }
-
     // adjust limit of last buffer returned
-    TCByteBuffer lastBuffer = rv[rv.length - 1];
-    lastBuffer.limit(lastBuffer.capacity() - ((numBuffers * FIXED_BUFFER_SIZE) - length));
+    TCByteBuffer lastBuffer = buffers[buffers.length - 1];
+    lastBuffer.limit(lastBuffer.capacity() - (capacity - length));
 
-    // ensureSpace(rv, length);
-
-    return rv;
+    return buffers;
   }
 
   private static int getBufferCountNeededForMessageSize(int length) {
-    int numBuffers = length / FIXED_BUFFER_SIZE;
-    if ((length % FIXED_BUFFER_SIZE) != 0) {
+    int numBuffers = length / TCByteBufferImpl.FIXED_BUFFER_SIZE;
+    if ((length % TCByteBufferImpl.FIXED_BUFFER_SIZE) != 0) {
       numBuffers++;
     }
     return numBuffers;
   }
 
   public static int getTotalBufferSizeNeededForMessageSize(int length) {
-    return (getBufferCountNeededForMessageSize(length) * FIXED_BUFFER_SIZE);
-  }
-
-  public static void returnBuffers(TCByteBuffer buffers[]) {
-    for (TCByteBuffer buf : buffers) {
-      returnBuffer(buf);
-    }
-  }
-
-  public static void returnBuffer(TCByteBuffer buf) {
-    if (buf.capacity() == FIXED_BUFFER_SIZE) {
-      BufferPool bufferPool = buf.getBufferPool();
-      buf.commit();
-
-      if (bufferPool != null) {
-        try {
-          bufferPool.offer(buf);
-        } catch (InterruptedException e) {
-          logger.warn("interrupted while trying to return buffer", e);
-          Thread.currentThread().interrupt();
-        }
-      }
-    }
+    return (getBufferCountNeededForMessageSize(length) * TCByteBufferImpl.FIXED_BUFFER_SIZE);
   }
 
   public static TCByteBuffer wrap(byte[] buf) {
@@ -207,44 +178,5 @@ public class TCByteBufferFactory {
 
   public static boolean isPoolingEnabled() {
     return POOLING;
-  }
-  
-  private static class PoolQueue extends AbstractQueue<TCByteBuffer> {
-    
-    private TCByteBuffer[] store = new TCByteBuffer[THREAD_MAX];
-    private int pointer = 0;
-    
-    @Override
-    public Iterator<TCByteBuffer> iterator() {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public int size() {
-      return pointer;
-    }
-
-    @Override
-    public synchronized boolean offer(TCByteBuffer e) {
-      if (store.length != THREAD_MAX) {
-        store = Arrays.copyOf(store, THREAD_MAX);
-      }
-      if (pointer < store.length) {
-        store[pointer++] = e;
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    @Override
-    public synchronized TCByteBuffer poll() {
-      return (pointer > 0) ? store[--pointer] : null;
-    }
-
-    @Override
-    public TCByteBuffer peek() {
-      throw new UnsupportedOperationException("Not supported yet.");
-    }
   }
 }

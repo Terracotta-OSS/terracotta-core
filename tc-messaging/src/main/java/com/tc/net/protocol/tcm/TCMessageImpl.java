@@ -47,26 +47,21 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   private final MessageChannel          channel;
   private final boolean                 isOutgoing;
   private int                           nvCount;
-  private TCByteBufferOutputStream      out;
-  private TCByteBufferInputStream       bbis;
+  private final TCByteBufferOutputStream      out;
+  private final TCByteBufferInputStream       bbis;
   private int                           messageVersion;
 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
-  protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutputStream output,
-                          MessageChannel channel, TCMessageType type) {
+  protected TCMessageImpl(MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
     super(new TCMessageHeaderImpl(type), false);
     this.monitor = monitor;
     this.type = type;
     this.channel = channel;
-
-    // this.bbos = new TCByteBufferOutputStream(4, 4096, false);
-    this.out = output;
-
-    // write out a zero. When dehydrated, this space will be replaced with the NV count
+    this.out = createOutputStream();
     this.out.writeInt(0);
-
+    this.bbis = null;
     this.isOutgoing = true;
   }
 
@@ -82,9 +77,14 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     this.monitor = monitor;
     this.type = TCMessageType.getInstance(header.getMessageType());
     this.messageVersion = header.getMessageTypeVersion();
+    this.out = null;
     this.bbis = new TCByteBufferInputStream(data);
     this.channel = channel;
     this.isOutgoing = false;
+  }
+
+  protected TCByteBufferOutputStream createOutputStream() {
+    return new TCByteBufferOutputStream();
   }
 
   @Override
@@ -124,29 +124,20 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    */
   @Override
   public void dehydrate() {
-    dehydrate(null);
-  }
-
-  private void dehydrate(TCByteBuffer[] nvData) {
     if (processed.attemptSet()) {
       try {
-        if (nvData == null) nvData = nvToTCByteBufferArray();
-        setPayload(nvData);
+        setPayload(nvToTCByteBufferArray());
         populateHeader();
         seal();
       } catch (Throwable t) {
-        t.printStackTrace();
         throw new RuntimeException(t);
-      } finally {
-        this.out.close();
-        if (!isOutputStreamRecycled()) this.out = null;
       }
     }
   }
 
   private final TCByteBuffer[] nvToTCByteBufferArray() {
     dehydrateValues();
-
+    
     final TCByteBuffer[] nvData = out.toArray();
 
     Assert.eval(nvData.length > 0);
@@ -181,26 +172,8 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
         }
       } finally {
         this.bbis.close();
-        this.bbis = null;
-        doRecycleOnRead();
       }
       monitor.newIncomingMessage(this);
-    }
-  }
-
-  // Can be overloaded by sub classes to decide when to recycle differently.
-  public void doRecycleOnRead() {
-    recycle();
-  }
-
-  // if a subclass calls recycleOutputStream, then they need to override this method to return true
-  protected boolean isOutputStreamRecycled() {
-    return false;
-  }
-
-  protected void recycleOutputStream() {
-    if (out != null) {
-      out.recycle();
     }
   }
 
@@ -383,16 +356,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   private void basicSend() throws IOException {
     channel.send(this);
     monitor.newOutgoingMessage(this);
-  }
-
-  /*
-   * send with payload from a dehydrated message
-   */
-  public void cloneAndSend(TCMessageImpl message) throws IOException {
-    if (isSent.attemptSet()) {
-      dehydrate(message.getPayload());
-      basicSend();
-    }
   }
 
   @Override

@@ -21,7 +21,6 @@ package com.tc.net.protocol.transport;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
@@ -235,7 +234,7 @@ public class TCConnectionTransportTest extends TestCase {
 
     @SuppressWarnings("resource")
     MyMessage(MessageMonitor monitor) {
-      super(new SessionID(0), monitor, new TCByteBufferOutputStream(), null, TCMessageType.PING_MESSAGE);
+      super(new SessionID(0), monitor, null, TCMessageType.PING_MESSAGE);
     }
 
     public void initialize(long nextSequence, TCByteBuffer[] bufs) {
@@ -285,7 +284,6 @@ public class TCConnectionTransportTest extends TestCase {
     public void putMessage(WireProtocolMessage message) {
 
       rcvdMessagesTotalLength.addAndGet(message.getDataLength());
-      message.recycle();
       System.out.println("XXX Client rcvd msgs " + rcvdMessagesTotalLength);
 
     }
@@ -298,8 +296,6 @@ public class TCConnectionTransportTest extends TestCase {
 
     @Override
     public void putMessage(WireProtocolMessage message) {
-
-      message.recycle();
       synchronized (rcvdMessages2TotalLength) {
         rcvdMessages2TotalLength.addAndGet(message.getDataLength());
         rcvdMessages2TotalLength.notify();

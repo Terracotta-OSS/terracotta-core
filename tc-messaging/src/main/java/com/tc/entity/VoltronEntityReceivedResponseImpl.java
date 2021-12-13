@@ -36,9 +36,9 @@ public class VoltronEntityReceivedResponseImpl extends DSOMessageBase implements
   private static final byte TRANSACTION_ID = 0;
   
   private TransactionID transactionID;
-  
-  public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+
+  public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageType type) {
+    super(sessionID, monitor, channel, type);
   }
 
   public VoltronEntityReceivedResponseImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {

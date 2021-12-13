@@ -551,13 +551,13 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private TCGroupHandshakeMessage mockHandshakeMessage(MessageChannel messageChannel, String version, long[] weights) {
-    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), new TCByteBufferOutputStream(), messageChannel, TCMessageType.GROUP_HANDSHAKE_MESSAGE));
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), messageChannel, TCMessageType.GROUP_HANDSHAKE_MESSAGE));
     tcGroupHandshakeMessage.initializeNodeID(new ServerID("test", new byte[20]), version, weights);
     return tcGroupHandshakeMessage;
   }
 
   private MessageChannel mockMessageChannel() {
-    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), new TCByteBufferOutputStream(), mock(MessageChannel.class), TCMessageType.GROUP_HANDSHAKE_MESSAGE));
+    TCGroupHandshakeMessage tcGroupHandshakeMessage = spy(new TCGroupHandshakeMessage(SessionID.NULL_ID, mock(MessageMonitor.class), mock(MessageChannel.class), TCMessageType.GROUP_HANDSHAKE_MESSAGE));
 
     MessageChannel channel = mock(MessageChannel.class);
     when(channel.getAttachment(anyString())).thenReturn(null);

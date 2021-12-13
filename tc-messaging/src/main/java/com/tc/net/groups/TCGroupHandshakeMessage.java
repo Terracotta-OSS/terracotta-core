@@ -49,9 +49,9 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
   private String            version;
   private long[]            weights;
 
-  public TCGroupHandshakeMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
+  public TCGroupHandshakeMessage(SessionID sessionID, MessageMonitor monitor,
                                  MessageChannel channel, TCMessageType type) {
-    super(sessionID, monitor, out, channel, type);
+    super(sessionID, monitor, channel, type);
   }
 
   public TCGroupHandshakeMessage(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,

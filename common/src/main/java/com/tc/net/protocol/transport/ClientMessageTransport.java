@@ -273,11 +273,9 @@ public class ClientMessageTransport extends MessageTransportBase {
       synchronized (status) {
         if (this.status.isSynSent()) {
           handleSynAck(message);
-          message.recycle();
         } else if (!this.status.isEstablished()) {
           this.getLogger().debug("Ignoring the message received for an Un-Established Connection; " + message.getSource()
                      + "; " + message);
-          message.recycle();
         } else {
           receive = true;
         }
