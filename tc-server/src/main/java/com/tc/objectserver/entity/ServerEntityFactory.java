@@ -88,10 +88,10 @@ public class ServerEntityFactory {
       List<Class<? extends EntityServerService>> serviceLoader = this.locator.getImplementations(EntityServerService.class);
       for (Class<? extends EntityServerService> serverService : serviceLoader) {
         for (PermanentEntity p : serverService.getAnnotationsByType(PermanentEntity.class)) {
-          entityMessages.add(createMessage(p.type(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+          entityMessages.add(createMessage(p.type(), p.name(), p.version(), TCByteBufferFactory.getInstance(0)));
         }
         for (PermanentEntityType p : serverService.getAnnotationsByType(PermanentEntityType.class)) {
-          entityMessages.add(createMessage(p.type().getName(), p.name(), p.version(), TCByteBufferFactory.getInstance(false, 0)));
+          entityMessages.add(createMessage(p.type().getName(), p.name(), p.version(), TCByteBufferFactory.getInstance(0)));
         }
       }
     }

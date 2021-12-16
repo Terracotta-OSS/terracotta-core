@@ -53,7 +53,7 @@ public class NetworkVoltronEntityMessageImplTest {
     MessageMonitor monitor = mock(MessageMonitor.class);
     MessageChannel channel = null;
     TCMessageType type = TCMessageType.VOLTRON_ENTITY_MESSAGE;
-    TCByteBufferOutputStream outputStream = new TCByteBufferOutputStream(4, 4096, false);
+    TCByteBufferOutputStream outputStream = new TCByteBufferOutputStream(4, 4096);
     NetworkVoltronEntityMessageImpl message = new NetworkVoltronEntityMessageImpl(sessionID, monitor, outputStream, channel, type);
     
     ClientID clientID = new ClientID(1);

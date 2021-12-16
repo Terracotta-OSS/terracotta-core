@@ -553,7 +553,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       this.activeServerEntity.notifyDestroyed(new ClientSourceIdImpl(cid.toLong()));
       List<EntityDescriptor> eds = this.clientEntityStateManager.clientDisconnectedFromEntity(cid, this.fetchID);
       eventCollector.clientDisconnectedFromEntity(cid, fetchID, eds);
-      eds.forEach(ed->messageSelf.addToSink(new ReferenceMessage(cid, false, ed, TCByteBufferFactory.getInstance(false, 0))));
+      eds.forEach(ed->messageSelf.addToSink(new ReferenceMessage(cid, false, ed, TCByteBufferFactory.getInstance(0))));
     } else {
       this.passiveServerEntity.notifyDestroyed(new ClientSourceIdImpl(cid.toLong()));
     }

@@ -77,7 +77,7 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
     int i = 0;
     int copyPos = 0;
     while (i < msgPayloads.size()) {
-      TCByteBuffer tcb = TCByteBufferFactory.getInstance(false, (Integer.SIZE + Short.SIZE) / 8);
+      TCByteBuffer tcb = TCByteBufferFactory.getInstance((Integer.SIZE + Short.SIZE) / 8);
       tcb.putInt(msgPayloads.get(i).getTotalLength());
       tcb.putShort(WireProtocolHeader.getProtocolForMessageClass(msgPayloads.get(i)));
       tcb.flip();
@@ -136,7 +136,7 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
       short msgProto = b.getShort();
 
       // XXX: we are giving out 4K BB for a smaller msgs too; Though it is recycled, can do some opti., here
-      TCByteBuffer[] bufs = new TCByteBuffer[] {TCByteBufferFactory.getInstance(false, msgLen)};
+      TCByteBuffer[] bufs = new TCByteBuffer[] {TCByteBufferFactory.getInstance(msgLen)};
 
               
       for (TCByteBuffer buf : bufs) {

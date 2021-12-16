@@ -27,7 +27,7 @@ public class TCByteBufferTest {
 
   @Test
   public void testUint() {
-    TCByteBuffer buf = TCByteBufferFactory.getInstance(false, 4);
+    TCByteBuffer buf = TCByteBufferFactory.getInstance(4);
 
     buf.putUint(0, 0);
     assertEquals(0, buf.getUint(0));

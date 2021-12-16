@@ -16,30 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
-import com.tc.net.core.TCConnection;
 
-public class NullProtocolAdaptor implements TCProtocolAdaptor {
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
+/**
+ * Use me to write data to a set of TCByteBuffer instances. <br>
+ * <br>
+ * NOTE: This class never throws java.io.IOException (unlike the generic OutputStream) class
+ */
+public class TCDirectByteBufferOutputStream extends TCByteBufferOutputStream {
 
-  public NullProtocolAdaptor() {
+  public TCDirectByteBufferOutputStream() {
     super();
   }
 
   @Override
-  public void addReadData(TCConnection source, TCByteBuffer[] data, int length) {
-    logger.warn("Null Protocol Adaptor isn't supposed to receive any data from the network.");
-    return;
-  }
-
-  @Override
-  public TCByteBuffer[] getReadBuffers() {
-    return new TCByteBuffer[] {TCByteBufferFactory.getInstance(4096)};
+  protected TCByteBuffer newBuffer() {
+    return TCByteBufferFactory.getDirectByteBuffer();
   }
 }
+

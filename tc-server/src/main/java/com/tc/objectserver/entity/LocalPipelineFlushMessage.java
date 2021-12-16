@@ -95,7 +95,7 @@ public class LocalPipelineFlushMessage implements VoltronEntityMessage, Runnable
 
   @Override
   public TCByteBuffer getExtendedData() {
-    return TCByteBufferFactory.getInstance(false, 0);
+    return TCByteBufferFactory.getInstance(0);
   }
 
   @Override

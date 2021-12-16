@@ -43,7 +43,7 @@ public class ClientHandshakeMessageTest {
     when(channel.getLocalAddress()).thenReturn(socket);
 
     ClientHandshakeMessageImpl msg = new ClientHandshakeMessageImpl(new SessionID(0), mock(MessageMonitor.class),
-                                                                    new TCByteBufferOutputStream(4, 4096, false), channel,
+                                                                    new TCByteBufferOutputStream(4, 4096), channel,
                                                                     TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
 
     EntityID entity1 = new EntityID("class", "entity 1");

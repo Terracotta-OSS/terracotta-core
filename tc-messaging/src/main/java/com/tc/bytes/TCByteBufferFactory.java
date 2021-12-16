@@ -18,6 +18,9 @@
  */
 package com.tc.bytes;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.nio.ReadOnlyBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,37 +33,19 @@ import org.slf4j.LoggerFactory;
  * @author teck
  */
 public class TCByteBufferFactory {
-  public static final int                  FIXED_BUFFER_SIZE       = 4 * 1024;                                                        // 4KiB
+  public static int                  FIXED_BUFFER_SIZE       = 4 * 1024;                                                    // 4KiB
   private static final int                 WARN_THRESHOLD          = 10 * 1024 * 1024;                                                // 10MiB
   private static final TCByteBuffer[]      EMPTY_BB_ARRAY          = new TCByteBuffer[0];
   private static final TCByteBuffer        ZERO_BYTE_BUFFER        = TCByteBufferImpl.wrap(new byte[0]);
   private static final Logger logger = LoggerFactory.getLogger(TCByteBufferFactory.class);
-    
-  private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
-    try {
-      TCByteBuffer rv = new TCByteBufferImpl(capacity, direct);
-      // Assert.assertEquals(0, rv.position());
-      // Assert.assertEquals(capacity, rv.capacity());
-      // Assert.assertEquals(capacity, rv.limit());
-      return rv;
-    } catch (OutOfMemoryError oome) {
-      // try to log some useful context. Most OOMEs don't have stack traces unfortunately
-      logger.error("OOME trying to allocate " + (direct ? "direct" : "non-direct") + " buffer of size " + capacity
-                   + " (index " + index + " of count " + totalCount + ")");
-      throw oome;
-    }
-  }
+  private static final ReferenceQueue<TCByteBuffer> DIRECT_POOL = new ReferenceQueue<>();
   /**
    * Get a single variable sized TCByteBuffer instance Note: These are not pooled (yet)
    * 
    * @param size The desired minimum capacity of the buffer. The actual capacity may be higher. The buffer's limit will
    *        be equal to it's capacity.
-   * @param direct True to hint that the buffer should be a direct buffer (ie. not on the Java heap). A direct buffer
-   *        will never be returned if this parameter is false. A direct buffer may or MAY NOT returned if the parameter
-   *        is true TODO :: Make this the only interface and make it return fixed size buffer also make sure only
-   *        fixedBufferSize gets to the pool back.
    */
-  public static TCByteBuffer getInstance(boolean direct, int size) {
+  public static TCByteBuffer getInstance(int size) {
 
     if (size > WARN_THRESHOLD) {
       logger.warn("Asking for a large amount of memory: " + size + " bytes");
@@ -69,24 +54,21 @@ public class TCByteBufferFactory {
     if (size == 0) { return ZERO_BYTE_BUFFER; }
 
     // Don't give 4k ByteBuffer from pool for smaller size requests.
-    return createNewInstance(direct, size);
+    return new TCByteBufferImpl(size, false);
   }
 
-  private static TCByteBuffer createNewInstance(boolean direct, int bufferSize) {
-    return createNewInstance(direct, bufferSize, 0, 1);
+  public static void setFixedBufferSize(int size) {
+    FIXED_BUFFER_SIZE = size;
   }
   
   /**
    * Get enough fixed sized TCByteBuffer instances to contain the given number of bytes
    * 
-   * @param direct True to hint that the buffers should be direct buffers (ie. not on the Java heap). Direct buffers
-   *        will never be returned if this parameter is false. Direct buffers may or MAY NOT returned if the parameter
-   *        is true. The returned buffers may be a mix of direct and non-direct
    * @param length
    * @return an array of TCByteBuffer instances. The limit of the last buffer may be less then it's capacity to adjust
    *         for the given length
    */
-  public static TCByteBuffer[] getFixedSizedInstancesForLength(boolean direct, int length) {
+  public static TCByteBuffer[] getDirectBuffersForLength(int length) {
     if (length > WARN_THRESHOLD) {
       logger.warn("Asking for a large amount of memory: " + length + " bytes");
     }
@@ -98,7 +80,7 @@ public class TCByteBufferFactory {
     int numBuffers = getBufferCountNeededForMessageSize(length);
     TCByteBuffer rv[] = new TCByteBuffer[numBuffers];
     for (int i = 0; i < numBuffers; i++) {
-      rv[i] = createNewInstance(direct, FIXED_BUFFER_SIZE, i, numBuffers);
+      rv[i] = pullFromQueueOrCreate(i, numBuffers);
     }
 
     // adjust limit of last buffer returned
@@ -108,6 +90,39 @@ public class TCByteBufferFactory {
     // ensureSpace(rv, length);
 
     return rv;
+  }
+
+  public static TCByteBuffer getDirectByteBuffer() {
+    return pullFromQueueOrCreate(0, 1);
+  }
+
+  private static TCByteBuffer pullFromQueueOrCreate(int index, int totalCount) {
+    TCByteBuffer usable = null;
+
+    while (usable == null) {
+      Reference<? extends TCByteBuffer> ref = DIRECT_POOL.poll();
+      if (ref != null) {
+        usable = ref.get();
+        if (usable != null) {
+          if (usable.capacity() == FIXED_BUFFER_SIZE) {
+            usable = usable.reInit();
+          } else {
+            usable = null;
+          }
+        }
+      } else {
+        try {
+          usable = new TCByteBufferImpl(FIXED_BUFFER_SIZE, true);
+        } catch (OutOfMemoryError oome) {
+          // try to log some useful context. Most OOMEs don't have stack traces unfortunately
+          logger.error("OOME trying to allocate direct buffer of size " + FIXED_BUFFER_SIZE
+                       + " (index " + index + " of count " + totalCount + ")");
+          throw oome;
+        }
+      }
+    }
+    SoftReference root = new SoftReference(usable, DIRECT_POOL);
+    return usable;
   }
 
   private static int getBufferCountNeededForMessageSize(int length) {
@@ -149,10 +164,10 @@ public class TCByteBufferFactory {
   public static TCByteBuffer copyAndWrap(byte[] buf) {
     TCByteBuffer rv = null;
     if (buf != null) {
-      rv = getInstance(false, buf.length);
+      rv = getInstance(buf.length);
       rv.put(buf).rewind();
     } else {
-      rv = getInstance(false, 0);
+      rv = getInstance(0);
     }
     return rv;
   }

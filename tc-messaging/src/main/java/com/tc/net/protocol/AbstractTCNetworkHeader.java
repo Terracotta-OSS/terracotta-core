@@ -57,7 +57,7 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
     this.maxLength = max;
 
     if (buffer == null) {
-      this.data = TCByteBufferFactory.getInstance(false, max);
+      this.data = TCByteBufferFactory.getInstance(max);
       this.data.limit(min);
       localAllocation = true;
     } else {

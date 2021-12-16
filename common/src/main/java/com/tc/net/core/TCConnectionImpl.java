@@ -1011,7 +1011,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
 
       // packedup message is direct byte buffers based. so that system socket write can avoid copy over of data
-      TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getFixedSizedInstancesForLength(true, len);
+      TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getDirectBuffersForLength(len);
       srcOffset = sourceMessageByteBuffers[srcIndex].arrayOffset();
       while (srcIndex < sourceMessageByteBuffers.length) {
         dstRem = packedUpMessageByteBuffers[dstIndex].remaining();

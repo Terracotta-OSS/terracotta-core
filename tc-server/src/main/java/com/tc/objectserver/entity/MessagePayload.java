@@ -26,7 +26,7 @@ import org.terracotta.entity.MessageCodecException;
 
 public class MessagePayload {
   public static final MessagePayload emptyPayload() {
-    MessagePayload payload = new MessagePayload(TCByteBufferFactory.getInstance(false, 0), null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
+    MessagePayload payload = new MessagePayload(TCByteBufferFactory.getInstance(0), null, ConcurrencyStrategy.MANAGEMENT_KEY, 0, true, true);
     payload.setDebugId("EMPTY");
     return payload;
   }
