@@ -81,11 +81,4 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
         return false;
     }
   }
-
-  @Override
-  public void doRecycleOnRead() {
-    if (message.isRecycleOnRead(this)) {
-      super.doRecycleOnRead();
-    }
-  }
 }

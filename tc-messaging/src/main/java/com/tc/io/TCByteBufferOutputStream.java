@@ -220,13 +220,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
         }
       }
     }
-    if (TCByteBufferFactory.isPoolingEnabled()) {
-      TCByteBuffer[] fixed = TCByteBufferFactory.getFixedSizedInstancesForLength(direct, TCByteBufferFactory.FIXED_BUFFER_SIZE);
-      Assert.assertEquals(1, fixed.length);
-      current = fixed[0];
-    } else {
-      current = newBuffer(blockSize);
-    }
+    current = newBuffer(blockSize);
     blockSize = current.capacity();
   }
 
@@ -535,15 +529,6 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
         dest.write(array, pos, num);
         length -= num;
         pos = 0;
-      }
-    }
-  }
-
-  @Override
-  public void recycle() {
-    if (localBuffers.size() > 0) {
-      for (TCByteBuffer buffer : localBuffers) {
-        buffer.recycle();
       }
     }
   }

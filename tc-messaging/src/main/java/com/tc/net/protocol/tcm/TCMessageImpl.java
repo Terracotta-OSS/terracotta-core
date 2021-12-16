@@ -139,7 +139,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
         throw new RuntimeException(t);
       } finally {
         this.out.close();
-        if (!isOutputStreamRecycled()) this.out = null;
       }
     }
   }
@@ -182,25 +181,8 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
       } finally {
         this.bbis.close();
         this.bbis = null;
-        doRecycleOnRead();
       }
       monitor.newIncomingMessage(this);
-    }
-  }
-
-  // Can be overloaded by sub classes to decide when to recycle differently.
-  public void doRecycleOnRead() {
-    recycle();
-  }
-
-  // if a subclass calls recycleOutputStream, then they need to override this method to return true
-  protected boolean isOutputStreamRecycled() {
-    return false;
-  }
-
-  protected void recycleOutputStream() {
-    if (out != null) {
-      out.recycle();
     }
   }
 

@@ -100,11 +100,6 @@ class TransportMessageImpl extends WireProtocolMessageImpl implements SynMessage
   }
 
   @Override
-  public void doRecycleOnWrite() {
-    recycle();
-  }
-
-  @Override
   protected String describePayload() {
     return "type: " + typeToString() + ", connectionId: " + connectionId + ", timestamp: " + timestamp
            + ", errorContext " + errorContext + "\n";

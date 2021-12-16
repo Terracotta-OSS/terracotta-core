@@ -136,10 +136,7 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
       short msgProto = b.getShort();
 
       // XXX: we are giving out 4K BB for a smaller msgs too; Though it is recycled, can do some opti., here
-      TCByteBuffer[] bufs = TCByteBufferFactory.isPoolingEnabled() ?
-        TCByteBufferFactory.getFixedSizedInstancesForLength(false, msgLen)
-        :
-        new TCByteBuffer[] {TCByteBufferFactory.getInstance(false, msgLen)};
+      TCByteBuffer[] bufs = new TCByteBuffer[] {TCByteBufferFactory.getInstance(false, msgLen)};
 
               
       for (TCByteBuffer buf : bufs) {
@@ -154,10 +151,6 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
       hdr.computeChecksum();
       WireProtocolMessage msg = new WireProtocolMessageImpl(this.sourceConnection, hdr, bufs);
       messages.add(msg);
-    }
-    fullMsgsBytes = null;
-    for (TCByteBuffer buf : msgs) {
-      buf.recycle();
     }
     return messages;
   }
@@ -195,15 +188,6 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
                                                                + msgPayload.getTotalLength();
 
     ((WireProtocolHeader) getHeader()).setTotalPacketLength(packetLength);
-  }
-
-  @Override
-  public void doRecycleOnWrite() {
-    getWireProtocolHeader().recycle();
-    // recycle individual messages
-    for (TCNetworkMessage networkMessage : messagePayloads) {
-      ((AbstractTCNetworkMessage) networkMessage).doRecycleOnWrite();
-    }
   }
 
 }

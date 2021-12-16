@@ -115,7 +115,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private static final boolean                  MESSAGE_PACKUP             = TCPropertiesImpl
                                                                                 .getProperties()
                                                                                 .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
-                                                                                            true);
+                                                                                            false);
   private final Object                          readerLock                  = new Object();
   private final Object                          writerLock                  = new Object();
 
@@ -971,12 +971,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
 
-      if (MESSAGE_PACKUP && TCByteBufferFactory.isPoolingEnabled()) {
-        this.entireMessageData = getPackedUpMessage(message.getEntireMessageData());
-      } else {
-        this.entireMessageData = getClonedMessage(message.getEntireMessageData());
-      }
-
+      this.entireMessageData = MESSAGE_PACKUP ? getPackedUpMessage(message.getEntireMessageData()) : getClonedMessage(message.getEntireMessageData());
     }
 
     boolean done() {
@@ -988,12 +983,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     }
 
     void incrementIndexAndCleanOld() {
-      if (MESSAGE_PACKUP && TCByteBufferFactory.isPoolingEnabled()) {
-        // we created these new messages. lets recycle it.
-        entireMessageData[index].recycle();
-      }
-      entireMessageData[index] = null;
-      this.index++;
+      entireMessageData[index++] = null;
     }
 
     void writeComplete() {

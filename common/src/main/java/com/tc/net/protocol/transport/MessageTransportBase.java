@@ -131,7 +131,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       }
     }
     receiver.receive(message.getPayload());
-    message.getWireProtocolHeader().recycle();
   }
 
   @Override

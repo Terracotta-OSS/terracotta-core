@@ -46,7 +46,7 @@ public class TCByteBufferOutputStreamTest {
   
   @Before
   public void setup() {
-    TCByteBufferFactory.setPoolingEnabled(false);
+
   }
 
   @Test

@@ -285,7 +285,6 @@ public class TCConnectionTransportTest extends TestCase {
     public void putMessage(WireProtocolMessage message) {
 
       rcvdMessagesTotalLength.addAndGet(message.getDataLength());
-      message.recycle();
       System.out.println("XXX Client rcvd msgs " + rcvdMessagesTotalLength);
 
     }
@@ -299,7 +298,6 @@ public class TCConnectionTransportTest extends TestCase {
     @Override
     public void putMessage(WireProtocolMessage message) {
 
-      message.recycle();
       synchronized (rcvdMessages2TotalLength) {
         rcvdMessages2TotalLength.addAndGet(message.getDataLength());
         rcvdMessages2TotalLength.notify();
