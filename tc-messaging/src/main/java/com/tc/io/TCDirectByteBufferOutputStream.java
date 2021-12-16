@@ -16,8 +16,25 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.lang;
+package com.tc.io;
 
-public interface Recyclable {
-  public void recycle();
+import com.tc.bytes.TCByteBuffer;
+import com.tc.bytes.TCByteBufferFactory;
+
+/**
+ * Use me to write data to a set of TCByteBuffer instances. <br>
+ * <br>
+ * NOTE: This class never throws java.io.IOException (unlike the generic OutputStream) class
+ */
+public class TCDirectByteBufferOutputStream extends TCByteBufferOutputStream {
+
+  public TCDirectByteBufferOutputStream() {
+    super();
+  }
+
+  @Override
+  protected TCByteBuffer newBuffer() {
+    return TCByteBufferFactory.getDirectByteBuffer();
+  }
 }
+

@@ -57,7 +57,7 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
     this.maxLength = max;
 
     if (buffer == null) {
-      this.data = TCByteBufferFactory.getInstance(false, max);
+      this.data = TCByteBufferFactory.getInstance(max);
       this.data.limit(min);
       localAllocation = true;
     } else {
@@ -81,18 +81,6 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
 
   @Override
   abstract public void validate() throws TCProtocolException;
-
-  @Override
-  public void recycle() {
-    Assert.assertTrue(localAllocation);
-    if (data != null) {
-      data.recycle();
-      data = null;
-    } else {
-      // data is already null. Probably called recycle twice !!
-      Thread.dumpStack();
-    }
-  }
 
   private void setBytes(int pos, byte[] value) {
     setBytes(pos, value, 0, value.length);

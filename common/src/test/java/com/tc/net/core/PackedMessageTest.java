@@ -97,7 +97,7 @@ public class PackedMessageTest extends TCTestCase {
     TCByteBuffer[] inputs = new TCByteBuffer[numInputByteBuffers];
     for (int i = 0; i < inputs.length; i++) {
       int size = MIN_SIZE_PER_BYTE_BUFFER + random.nextInt(MAX_SIZE_PER_BYTE_BUFFER);
-      inputs[i] = TCByteBufferFactory.getInstance(false, size);
+      inputs[i] = TCByteBufferFactory.getInstance(size);
       for (int j = 0; j < size; j++) {
         inputs[i].put(payloadGenerator.nextByte());
       }

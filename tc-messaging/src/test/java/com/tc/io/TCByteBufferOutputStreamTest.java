@@ -46,14 +46,14 @@ public class TCByteBufferOutputStreamTest {
   
   @Before
   public void setup() {
-    TCByteBufferFactory.setPoolingEnabled(false);
+
   }
 
   @Test
   public void testMultipleToArray() {
     for (int i = 0; i < 250; i++) {
 
-      TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(random.nextInt(100) + 1, false);
+      TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(random.nextInt(100) + 1);
       try {
         int bytesToWrite = random.nextInt(75) + 50;
         for (int n = 0; n < bytesToWrite; n++) {
@@ -74,7 +74,7 @@ public class TCByteBufferOutputStreamTest {
   @Test
   public void testMark() {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream(32, false);
+    TCByteBufferOutputStream output = new TCByteBufferOutputStream(32);
     try {
       for (int i = 0; i < 30; i++) {
         output.write(1);
@@ -172,7 +172,7 @@ public class TCByteBufferOutputStreamTest {
   private void doRandomMark() throws IOException {
     int initial = random.nextInt(10) + 1;
     int max = initial + random.nextInt(1024) + 1;
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream(initial, max, false);
+    TCByteBufferOutputStream output = new TCByteBufferOutputStream(initial, max);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     List<byte[]> data = new ArrayList<byte[]>();
     List<Mark> marks = new ArrayList<Mark>();
@@ -222,9 +222,9 @@ public class TCByteBufferOutputStreamTest {
 
     try {
       TCByteBuffer[] bufs = new TCByteBuffer[5];
-      TCByteBuffer bufZeroLen = TCByteBufferFactory.getInstance(false, 0);
+      TCByteBuffer bufZeroLen = TCByteBufferFactory.getInstance(0);
       bufs[0] = bufZeroLen;
-      bufs[1] = TCByteBufferFactory.getInstance(false, 10);
+      bufs[1] = TCByteBufferFactory.getInstance(10);
       bufs[2] = bufZeroLen;
       bufs[3] = bufZeroLen;
       bufs[4] = bufZeroLen;
@@ -267,7 +267,7 @@ public class TCByteBufferOutputStreamTest {
   @Test
   public void testBasic() {
     int blockSize = 4096;
-    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(blockSize, false);
+    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(blockSize);
     int num = 10;
 
     byte write = 0;
@@ -304,7 +304,7 @@ public class TCByteBufferOutputStreamTest {
 
   @Test @Ignore
   public void testBasicConsolidation() {
-    TCByteBufferOutputStream os = new TCByteBufferOutputStream(32, 4096, false);
+    TCByteBufferOutputStream os = new TCByteBufferOutputStream(32, 4096);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     try {
@@ -334,7 +334,7 @@ public class TCByteBufferOutputStreamTest {
 
     final int bufSize = random.nextInt(50) + 1;
 
-    TCByteBufferOutputStream os = new TCByteBufferOutputStream(bufSize, false);
+    TCByteBufferOutputStream os = new TCByteBufferOutputStream(bufSize);
 
     try {
       for (int i = 0; i < bufSize * 3; i++) {
@@ -369,7 +369,7 @@ public class TCByteBufferOutputStreamTest {
             int num = random.nextInt(5);
             TCByteBuffer[] b = new TCByteBuffer[num];
             for (int n = 0; n < b.length; n++) {
-              TCByteBuffer buf = TCByteBufferFactory.getInstance(false, random.nextInt(bufSize * 2));
+              TCByteBuffer buf = TCByteBufferFactory.getInstance(random.nextInt(bufSize * 2));
               byte[] bites = new byte[buf.limit()];
               random.nextBytes(bites);
               buf.put(bites);
@@ -476,7 +476,7 @@ public class TCByteBufferOutputStreamTest {
   @Test
   public void testWithArrayWrite() {
     int blockSize = 4096;
-    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(blockSize, false);
+    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(blockSize);
     int num = 10;
 
     byte write = 0;
@@ -486,7 +486,7 @@ public class TCByteBufferOutputStreamTest {
       }
       TCByteBuffer[] b = new TCByteBuffer[1];
       byte[] s = "Hello Steve".getBytes();
-      b[0] = TCByteBufferFactory.getInstance(false, s.length);
+      b[0] = TCByteBufferFactory.getInstance(s.length);
       b[0].put(s);
       b[0].flip();
       bbos.write(b);
@@ -521,7 +521,7 @@ public class TCByteBufferOutputStreamTest {
   public void testExceptions() {
     TCByteBufferOutputStream bbos = null;
     try {
-      bbos = new TCByteBufferOutputStream(0, false);
+      bbos = new TCByteBufferOutputStream(0);
       fail();
     } catch (IllegalArgumentException iae) {
       // expected
@@ -532,7 +532,7 @@ public class TCByteBufferOutputStreamTest {
     }
 
     try {
-      bbos = new TCByteBufferOutputStream(-1, false);
+      bbos = new TCByteBufferOutputStream(-1);
       fail();
     } catch (IllegalArgumentException iae) {
       // expected
@@ -592,7 +592,7 @@ public class TCByteBufferOutputStreamTest {
 
   private void testEdgeCase(int bufLength, int byteArrLength, int iterationCount) {
 
-    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(bufLength, false);
+    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(bufLength);
     try {
       byte data[] = new byte[byteArrLength];
       int dataWriten = 0;
@@ -623,7 +623,7 @@ public class TCByteBufferOutputStreamTest {
 
   @Test
   public void testEdgeCase4() {
-    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(27, false);
+    TCByteBufferOutputStream bbos = new TCByteBufferOutputStream(27);
     try {
       byte data[] = new byte[370];
       int written = 0;

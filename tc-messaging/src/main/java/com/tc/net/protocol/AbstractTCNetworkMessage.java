@@ -85,19 +85,16 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
 
   @Override
   public final TCNetworkHeader getHeader() {
-    checkNotRecycled();
     return header;
   }
 
   @Override
   public final TCNetworkMessage getMessagePayload() {
-    checkNotRecycled();
     return messagePayload;
   }
 
   @Override
   public final TCByteBuffer[] getPayload() {
-    checkNotRecycled();
     return payloadData;
   }
 
@@ -256,36 +253,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   @Override
   public final void wasSent() {
     fireSentCallback();
-    doRecycleOnWrite();
-  }
-
-  // Can be overloaded by sub classes to decide when to recycle differently.
-  public void doRecycleOnWrite() {
-    recycle();
-  }
-
-  @Override
-  public void recycle() {
-    if (entireMessageData != null) {
-      int i = 0;
-      if (entireMessageData.length > 1 && entireMessageData[0].array() == entireMessageData[1].array()) {
-        // This is done as TCMessageParser creates a dupilcate of the first buffer for the header.
-        // @see TCMessageParser.parseMessage()
-        // Can be done more elegantly, but it is done like this keeping performance in mind.
-        i++;
-      }
-      for (; i < entireMessageData.length; i++) {
-        entireMessageData[i].recycle();
-      }
-      entireMessageData = null;
-    } else {
-      logger.warn("Entire Message is null ! Probably recycle was called twice ! ");
-      Thread.dumpStack();
-    }
-  }
-
-  protected boolean isRecycled() {
-    return isSealed() && entireMessageData == null;
   }
 
   private void fireSentCallback() {
@@ -308,10 +275,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   @Override
   public final Runnable getSentCallback() {
     return this.sentCallback;
-  }
-
-  private void checkNotRecycled() {
-    if (isRecycled()) { throw new IllegalStateException("Message is already Recycled"); }
   }
 
   private void checkSealed() {

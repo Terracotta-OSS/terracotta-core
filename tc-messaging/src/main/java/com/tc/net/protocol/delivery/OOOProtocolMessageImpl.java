@@ -95,18 +95,4 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
   public boolean isGoodbye() {
     return getOOOPHeader().isGoodbye();
   }
-
-  @Override
-  public void doRecycleOnWrite() {
-    // we are disabling this because on ooo layer knows when it's safe to recycle the message
-  }
-
-  @Override
-  public void reallyDoRecycleOnWrite() {
-    getOOOPHeader().recycle();
-    AbstractTCNetworkMessage messagePayLoad = (AbstractTCNetworkMessage) getMessagePayload();
-    if (messagePayLoad != null) {
-      messagePayLoad.doRecycleOnWrite();
-    }
-  }
 }

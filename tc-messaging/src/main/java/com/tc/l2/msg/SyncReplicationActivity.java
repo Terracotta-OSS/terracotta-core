@@ -269,7 +269,7 @@ public class SyncReplicationActivity implements OrderedEventContext {
 
   public TCByteBuffer getExtendedData() {
 //    Assert.assertTrue(ActivityType.SYNC_BEGIN != this.action);
-    return payload == null ? TCByteBufferFactory.getInstance(false, 0) : payload.duplicate();
+    return payload == null ? TCByteBufferFactory.getInstance(0) : payload.duplicate();
   }
   
   public ClientID getSource() {

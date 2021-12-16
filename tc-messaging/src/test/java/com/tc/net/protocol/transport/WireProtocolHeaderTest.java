@@ -125,7 +125,7 @@ public class WireProtocolHeaderTest {
   @Test
   public void testGoodHeader() {
     byte[] data = getGoodHeader();
-    TCByteBuffer buffer = TCByteBufferFactory.getInstance(false, WireProtocolHeader.MAX_LENGTH);
+    TCByteBuffer buffer = TCByteBufferFactory.getInstance(WireProtocolHeader.MAX_LENGTH);
     buffer.put(data);
     buffer.flip();
 

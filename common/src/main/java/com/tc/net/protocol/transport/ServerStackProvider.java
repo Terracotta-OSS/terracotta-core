@@ -258,7 +258,6 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         synchronized (this) {
           if (!isSynReceived) {
             isSynReceived = verifyAndHandleSyn(message);
-            message.recycle();
             return;
           }
         }

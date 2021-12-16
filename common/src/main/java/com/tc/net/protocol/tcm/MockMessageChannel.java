@@ -154,10 +154,9 @@ public class MockMessageChannel implements MessageChannelInternal {
     if (theClass == null) throw new UnsupportedOperationException();
 
     try {
-      Constructor<? extends TCMessage> constructor = theClass.getConstructor(new Class[] { MessageMonitor.class, TCByteBufferOutput.class,
+      Constructor<? extends TCMessage> constructor = theClass.getConstructor(new Class[] { MessageMonitor.class,
           MessageChannel.class, TCMessageType.class });
-      return constructor.newInstance(new Object[] { new NullMessageMonitor(),
-          new TCByteBufferOutputStream(4, 4096, false), this, type });
+      return constructor.newInstance(new Object[] { new NullMessageMonitor(), this, type });
     } catch (Exception e) {
       throw new UnsupportedOperationException("Failed", e);
     }

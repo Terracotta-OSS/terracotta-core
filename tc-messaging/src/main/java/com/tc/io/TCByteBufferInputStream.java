@@ -297,9 +297,9 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   public final TCByteBuffer read(int len) {
     checkClosed();
 
-    if (len == 0) { return TCByteBufferFactory.getInstance(false, 0); }
+    if (len == 0) { return TCByteBufferFactory.getInstance(0); }
 
-    if (available() == 0) { return TCByteBufferFactory.getInstance(false, 0); }
+    if (available() == 0) { return TCByteBufferFactory.getInstance(0); }
     
     TCByteBuffer result = this.data[this.index];
     if (result.remaining() >= len) {
@@ -309,7 +309,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
       return send;
     }
 
-    result = TCByteBufferFactory.getInstance(false, len);
+    result = TCByteBufferFactory.getInstance(len);
     while (this.index < this.numBufs) {
       TCByteBuffer buf = this.data[this.index];
       if (buf.hasRemaining()) {

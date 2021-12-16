@@ -68,7 +68,7 @@ public class TCByteBufferInputStreamTest {
     }
 
     try {
-      inputStream = new TCByteBufferInputStream(new TCByteBuffer[] { TCByteBufferFactory.getInstance(false, 5), null });
+      inputStream = new TCByteBufferInputStream(new TCByteBuffer[] { TCByteBufferFactory.getInstance(5), null });
       fail();
     } catch (NullPointerException npe) {
       // expected
@@ -80,7 +80,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(null);
         fail();
       } catch (NullPointerException npe) {
@@ -94,7 +94,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(null, 1, 10);
         fail();
       } catch (NullPointerException npe) {
@@ -106,7 +106,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(new byte[10], 10, 1);
         fail();
       } catch (IndexOutOfBoundsException ioobe) {
@@ -117,7 +117,7 @@ public class TCByteBufferInputStreamTest {
     }
 
     try {
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+      TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
       try {
         bbis.read(new byte[10], -1, 1);
         fail();
@@ -131,7 +131,7 @@ public class TCByteBufferInputStreamTest {
     {
       TCByteBufferInputStream bbis = null;
       try {
-        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+        bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
         bbis.read(new byte[10], 1, -1);
         fail();
       } catch (IndexOutOfBoundsException ioobe) {
@@ -143,7 +143,7 @@ public class TCByteBufferInputStreamTest {
       }
     }
 
-    TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(false, 10));
+    TCByteBufferInputStream bbis = new TCByteBufferInputStream(TCByteBufferFactory.getInstance(10));
     try {
       for (int i = 0; i < 10; i++) {
         bbis.close();
@@ -586,7 +586,7 @@ public class TCByteBufferInputStreamTest {
   @Test
   public void testTrailingZeroLength() {
     TCByteBuffer[] data = getRandomData();
-    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(false, 0);
+    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(0);
 
     for (int i = 0; i < Math.min(10, data.length); i++) {
       data[data.length - i - 1] = zeroLen;
@@ -602,7 +602,7 @@ public class TCByteBufferInputStreamTest {
   public void testRandomZeroLength() {
     TCByteBuffer[] data = getRandomDataNonZeroLength();
 
-    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(false, 0);
+    TCByteBuffer zeroLen = TCByteBufferFactory.getInstance(0);
 
     int num = Math.min(25, data.length);
 
@@ -749,7 +749,7 @@ public class TCByteBufferInputStreamTest {
   private TCByteBuffer[] createBuffersWithRandomData(int number, int size) {
     TCByteBuffer[] rv = new TCByteBuffer[number];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = TCByteBufferFactory.getInstance(false, size);
+      rv[i] = TCByteBufferFactory.getInstance(size);
       byte[] bites = new byte[size];
       this.random.nextBytes(bites);
       rv[i].put(bites);
@@ -766,7 +766,7 @@ public class TCByteBufferInputStreamTest {
     TCByteBuffer[] rv = new TCByteBuffer[num];
 
     for (int i = 0; i < num; i++) {
-      rv[i] = TCByteBufferFactory.getInstance(false, maxSize > 0 ? this.random.nextInt(maxSize) : 0);
+      rv[i] = TCByteBufferFactory.getInstance(maxSize > 0 ? this.random.nextInt(maxSize) : 0);
       this.random.nextBytes(rv[i].array());
     }
 

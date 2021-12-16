@@ -40,6 +40,6 @@ public class NullProtocolAdaptor implements TCProtocolAdaptor {
 
   @Override
   public TCByteBuffer[] getReadBuffers() {
-    return TCByteBufferFactory.getFixedSizedInstancesForLength(false, 4096);
+    return new TCByteBuffer[] {TCByteBufferFactory.getInstance(4096)};
   }
 }
