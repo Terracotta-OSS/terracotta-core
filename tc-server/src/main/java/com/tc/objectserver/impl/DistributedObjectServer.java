@@ -965,6 +965,7 @@ public class DistributedObjectServer {
         ServerConfigurationContext.VOLTRON_MESSAGE_STAGE,
         ServerConfigurationContext.RESPOND_TO_REQUEST_STAGE,
         ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE,
+        ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_STAGE,
         ServerConfigurationContext.PASSIVE_OUTGOING_RESPONSE_STAGE,
         ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE
@@ -1034,6 +1035,7 @@ public class DistributedObjectServer {
     // entities are create or existing entities are reloaded
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_REPLICATION_ACK_STAGE);
     control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.ACTIVE_TO_PASSIVE_DRIVER_STAGE);
+    control.addStageToState(ServerMode.ACTIVE.getState(), ServerConfigurationContext.PASSIVE_TO_ACTIVE_DRIVER_STAGE);
     return control;
   }
 

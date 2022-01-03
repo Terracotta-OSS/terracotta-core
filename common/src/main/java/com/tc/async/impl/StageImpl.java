@@ -43,7 +43,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 import org.terracotta.tripwire.StageMonitor;
 import org.terracotta.tripwire.TripwireFactory;
 
@@ -64,7 +64,7 @@ public class StageImpl<EC> implements Stage<EC> {
   private final boolean        pausable;
   private volatile boolean     paused;
   private volatile boolean     shutdown = true;
-  private final AtomicInteger  inflight = new AtomicInteger();
+  private final LongAdder  inflight = new LongAdder();
   private final long           warnStallTime = TCPropertiesImpl.getProperties()
                                                      .getLong(TCPropertiesConsts.L2_SEDA_STAGE_STALL_WARNING, 500);
   private volatile long lastWarnTime = 0;
@@ -112,13 +112,13 @@ public class StageImpl<EC> implements Stage<EC> {
   }
   
   private EventCreator<EC> eventCreator(boolean direct) {
-    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->inflight.get() == 0) : baseCreator();
+    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->inflight.sum() == 0) : baseCreator();
   }
   
   private EventCreator<EC> baseCreator() {
     return (event) -> {
       long start = System.nanoTime();
-      inflight.incrementAndGet();
+      inflight.increment();
       return ()-> {
         long exec = System.nanoTime();
         if (exec - start > TimeUnit.MILLISECONDS.toNanos(warnStallTime)) {
@@ -131,7 +131,7 @@ public class StageImpl<EC> implements Stage<EC> {
             warnIfWarranted("executed", event, TimeUnit.NANOSECONDS.toMillis(end-exec));
           }
         } finally {
-          inflight.decrementAndGet();
+          inflight.decrement();
         }
       };
     };
@@ -143,19 +143,19 @@ public class StageImpl<EC> implements Stage<EC> {
       lastWarnTime = now;
       logger.warn("Stage: {} has {} event {} for {}ms", name, type, event, time);
       if (listener != null) {
-        listener.stageStalled(name, time, inflight.get());
+        listener.stageStalled(name, time, inflight.intValue());
       }
     }
   }
   
   @Override
   public boolean isEmpty() {
-    return inflight.get() == 0;
+    return inflight.sum() == 0;
   }
 
   @Override
   public int size() {
-    return inflight.get();
+    return inflight.intValue();
   }
 
   @Override
@@ -209,7 +209,7 @@ public class StageImpl<EC> implements Stage<EC> {
   @Override
   public int pause() {
     paused = true;
-    return inflight.get();
+    return inflight.intValue();
   }
 
   @Override
@@ -221,7 +221,7 @@ public class StageImpl<EC> implements Stage<EC> {
   public void clear() {
     boolean interrupted = Thread.interrupted();
     int clearCount = this.stageQueue.clear();
-    inflight.addAndGet(-clearCount);
+    inflight.add(-clearCount);
     for (WorkerThread wt : threads) {
       try {
         if (wt != null) {
@@ -281,7 +281,7 @@ public class StageImpl<EC> implements Stage<EC> {
     Arrays.stream(threads).forEach(t->{if (t != null) tl.add(t.getStats());});
     data.put("name", name);
     data.put("threadCount", threads.length);
-    data.put("backlog", inflight.get());
+    data.put("backlog", inflight.sum());
     data.put("sink", this.stageQueue.getState());
     data.put("threads", tl);
     return data;
