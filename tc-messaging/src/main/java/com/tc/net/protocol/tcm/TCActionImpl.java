@@ -27,19 +27,22 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
-import com.tc.net.protocol.AbstractTCNetworkMessage;
+import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.TCNetworkMessageImpl;
 import com.tc.util.AbstractIdentifier;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author teck
  */
-public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements TCMessage {
+public abstract class TCActionImpl implements TCAction {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(TCMessageImpl.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TCActionImpl.class);
   private final MessageMonitor          monitor;
   private final SetOnceFlag             processed         = new SetOnceFlag();
   private final SetOnceFlag             isSent            = new SetOnceFlag();
@@ -50,13 +53,13 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   private TCByteBufferOutputStream      out;
   private TCByteBufferInputStream       bbis;
   private int                           messageVersion;
+  private final List<Runnable>          callbacks = new LinkedList<>();
 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
-  protected TCMessageImpl(MessageMonitor monitor, TCByteBufferOutputStream output,
+  protected TCActionImpl(MessageMonitor monitor, TCByteBufferOutputStream output,
                           MessageChannel channel, TCMessageType type) {
-    super(new TCMessageHeaderImpl(type), false);
     this.monitor = monitor;
     this.type = type;
     this.channel = channel;
@@ -76,13 +79,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
    * @param header
    * @param data
    */
-  protected TCMessageImpl(MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
-                          TCByteBuffer[] data) {
-    super(header, data);
+  protected TCActionImpl(MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
+                          TCByteBufferInputStream data) {
     this.monitor = monitor;
     this.type = TCMessageType.getInstance(header.getMessageType());
     this.messageVersion = header.getMessageTypeVersion();
-    this.bbis = new TCByteBufferInputStream(data);
+    this.bbis = data;
     this.channel = channel;
     this.isOutgoing = false;
   }
@@ -110,40 +112,16 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return this.out;
   }
 
-  // use me to write directly to the message data (as opposed to using the name-value mechanism)
-  // protected TCByteBufferOutputStream getOutputStream() {
-  // return this.bbos;
-  // }
+  protected abstract void dehydrateValues();
 
-  protected void dehydrateValues() {
-    // override me to add NV data to your message
+  public TCNetworkMessage convertToNetworkMessage() {
+    TCNetworkMessageImpl msg = new TCNetworkMessageImpl(new TCMessageHeaderImpl(type), getDataBuffers());
+    msg.addCompleteCallback(this::notifyProcessedCallbacks);
+    msg.addCompleteCallback(out::reset);
+    return msg;
   }
 
-  /**
-   * Prepares all instance data into the payload byte buffer array in preparation for sending it.
-   */
-  @Override
-  public void dehydrate() {
-    dehydrate(null);
-  }
-
-  private void dehydrate(TCByteBuffer[] nvData) {
-    if (processed.attemptSet()) {
-      try {
-        if (nvData == null) nvData = nvToTCByteBufferArray();
-        setPayload(nvData);
-        populateHeader();
-        seal();
-      } catch (Throwable t) {
-        t.printStackTrace();
-        throw new RuntimeException(t);
-      } finally {
-        this.out.close();
-      }
-    }
-  }
-
-  private final TCByteBuffer[] nvToTCByteBufferArray() {
+  public TCByteBuffer[] getDataBuffers() {
     dehydrateValues();
 
     final TCByteBuffer[] nvData = out.toArray();
@@ -151,12 +129,6 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     Assert.eval(nvData.length > 0);
     nvData[0].putInt(0, nvCount);
     return nvData;
-  }
-
-  private void populateHeader() {
-    TCMessageHeader hdr = (TCMessageHeader) getHeader();
-    hdr.setMessageType(getMessageType().getType());
-    hdr.setMessageTypeVersion(getMessageVersion());
   }
 
   /**
@@ -174,13 +146,14 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
         for (int i = 0; i < count; i++) {
           final byte name = bbis.readByte();
           if (!hydrateValue(name)) {
-            logger.error(" Hydrate Error - " + toString());
+            LOGGER.error(" Hydrate Error - " + toString());
             throw new UnknownNameException(getClass(), name);
           }
         }
       } finally {
-        this.bbis.close();
+        this.bbis.reset();
         this.bbis = null;
+        notifyProcessedCallbacks();
       }
       monitor.newIncomingMessage(this);
     }
@@ -347,9 +320,9 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   @Override
   public boolean send() {
     if (isSent.attemptSet()) {
-      dehydrate();
+      TCNetworkMessage msg = convertToNetworkMessage();
       try {
-        basicSend();
+        basicSend(msg);
         return true;
       } catch (IOException ioe) {
 //  suppress some warnings when the channel is closed as this is expected, client is not
@@ -362,19 +335,9 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return false;
   }
 
-  private void basicSend() throws IOException {
-    channel.send(this);
+  private void basicSend(TCNetworkMessage msg) throws IOException {
+    channel.send(msg);
     monitor.newOutgoingMessage(this);
-  }
-
-  /*
-   * send with payload from a dehydrated message
-   */
-  public void cloneAndSend(TCMessageImpl message) throws IOException {
-    if (isSent.attemptSet()) {
-      dehydrate(message.getPayload());
-      basicSend();
-    }
   }
 
   @Override
@@ -387,4 +350,18 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     return isOutgoing ? channel.getRemoteNodeID() : channel.getLocalNodeID();
   }
 
+  @Override
+  public void addProcessedCallback(Runnable r) {
+    callbacks.add(r);
+  }
+
+  private void notifyProcessedCallbacks() {
+    callbacks.forEach(Runnable::run);
+  }
+
+  @Override
+  public int getMessageLength() {
+    return (TCMessageHeader.MIN_LENGTH / 4) + (isOutgoing ? out.getBytesWritten() : bbis.getTotalLength());
+  }
 }
+

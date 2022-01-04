@@ -50,14 +50,14 @@ package com.tc.net.protocol.transport;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.core.TCConnection;
-import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.TCNetworkMessageImpl;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage implements WireProtocolGroupMessage {
+public class WireProtocolGroupMessageImpl extends TCNetworkMessageImpl implements WireProtocolGroupMessage {
 
   private final TCConnection                sourceConnection;
   private final ArrayList<TCNetworkMessage> messagePayloads;
@@ -181,13 +181,13 @@ public class WireProtocolGroupMessageImpl extends AbstractTCNetworkMessage imple
   }
 
   protected void recordLength() {
-    TCNetworkMessage msgPayload = getMessagePayload();
-    // if the payload is null, then we need to record our own length as the packet length. Otherwise, we need to add the
-    // our header length + the length of the our payload message length.
-    int packetLength = msgPayload == null ? getTotalLength() : getHeader().getHeaderByteLength()
-                                                               + msgPayload.getTotalLength();
+    int packetLength = getTotalLength();
 
     ((WireProtocolHeader) getHeader()).setTotalPacketLength(packetLength);
   }
 
+  @Override
+  public void complete() {
+    this.getMessageIterator().forEachRemaining(TCNetworkMessage::complete);
+  }
 }

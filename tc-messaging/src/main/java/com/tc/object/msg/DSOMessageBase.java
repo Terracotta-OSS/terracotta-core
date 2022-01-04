@@ -18,19 +18,19 @@
  */
 package com.tc.object.msg;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCActionImpl;
 import com.tc.net.protocol.tcm.TCMessageHeader;
-import com.tc.net.protocol.tcm.TCMessageImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionID;
 
 /**
  * Base class for DSO network messages
  */
-public abstract class DSOMessageBase extends TCMessageImpl {
+public abstract class DSOMessageBase extends TCActionImpl {
 
   private final SessionID localSessionID;
 
@@ -40,7 +40,7 @@ public abstract class DSOMessageBase extends TCMessageImpl {
   }
 
   public DSOMessageBase(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header,
-                        TCByteBuffer[] data) {
+                        TCByteBufferInputStream data) {
     super(monitor, channel, header, data);
     this.localSessionID = sessionID;
   }

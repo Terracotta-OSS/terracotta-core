@@ -22,7 +22,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.session.SessionID;
 
-public class TestTCMessage implements TCMessage {
+public class TestTCMessage implements TCAction {
 
   public TCMessageType type = TCMessageType.PING_MESSAGE;
 
@@ -45,11 +45,6 @@ public class TestTCMessage implements TCMessage {
   }
 
   @Override
-  public void dehydrate() {
-    return;
-  }
-
-  @Override
   public boolean send() {
     return true;
   }
@@ -60,7 +55,7 @@ public class TestTCMessage implements TCMessage {
   }
 
   @Override
-  public int getTotalLength() {
+  public int getMessageLength() {
     return 100;
   }
 
@@ -88,4 +83,8 @@ public class TestTCMessage implements TCMessage {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public void addProcessedCallback(Runnable r) {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
 }

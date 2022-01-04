@@ -18,6 +18,8 @@
  */
 package com.tc.net.core;
 
+import com.tc.bytes.TCByteBufferFactory;
+import com.tc.bytes.TCDirectByteBufferCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.text.PrettyPrintable;
 
 /**
  * The {@link TCConnectionManager} implementation.
@@ -52,16 +55,18 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final Logger logger                 = LoggerFactory.getLogger(TCConnectionManager.class);
 
   private final TCCommImpl              comm;
-  private final Set<TCConnection>       connections            = new HashSet<TCConnection>();
-  private final Set<TCListener>         listeners              = new HashSet<TCListener>();
+  private final Set<TCConnection>       connections            = new HashSet<>();
+  private final Set<TCListener>         listeners              = new HashSet<>();
   private final SetOnceFlag             shutdown               = new SetOnceFlag();
   private final ConnectionEvents        connEvents;
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
   private final BufferManagerFactory    bufferManagerFactory;
 
+  private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(null, TCByteBufferFactory.getFixedBufferSize(), 16 * 1024);
+
   public TCConnectionManagerImpl() {
-    this("ConnectionMgr", 0, new ClearTextBufferManagerFactory());
+    this("ConnectionMgr", 0, new CachingClearTextBufferManagerFactory());
   }
 
   public TCConnectionManagerImpl(String name, int workerCommCount, BufferManagerFactory bufferManagerFactory) {
@@ -80,6 +85,13 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
       state.put("connections", connections.stream().map(connection->connection.getState()).collect(Collectors.toList()));
     }
     state.put("processors", comm.getState());
+    state.put("buffers.cached", buffers.size());
+    state.put("buffers.referenced", buffers.referenced());
+    if (bufferManagerFactory instanceof PrettyPrintable) {
+      state.put("bufferManager", ((PrettyPrintable)bufferManagerFactory).getStateMap());
+    } else {
+      state.put("bufferManager", bufferManagerFactory.toString());
+    }
     return state;
   }
 
@@ -218,6 +230,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
     if (shutdown.attemptSet()) {
       closeAllListeners();
       asynchCloseAllConnections();
+      this.buffers.close();
       comm.stop();
     }
   }
@@ -300,6 +313,10 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
         listeners.remove(event.getSource());
       }
     }
+  }
+
+  TCDirectByteBufferCache getBufferCache() {
+    return buffers;
   }
 
 }

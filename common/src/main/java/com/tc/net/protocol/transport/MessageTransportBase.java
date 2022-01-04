@@ -18,9 +18,9 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.io.TCByteBufferOutputStream;
 import org.slf4j.Logger;
 
-import com.tc.bytes.TCByteBuffer;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionErrorEvent;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -118,23 +118,26 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     NetworkLayer receiver = this.getReceiveLayer();
     if (receiver == null) {
       disconnect();
+      message.complete();
       return;
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_TRANSPORT_HANDSHAKE) {
       // message is printed for debugging
+      message.complete();
       getLogger().info(message.toString());
       throw new AssertionError("Wrong handshake message from: " + message.getSource());
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
       if (this.healthCheckerContext.receiveProbe((HealthCheckerProbeMessage) message)) {
+        message.complete();
         return;
       } else {
         throw new AssertionError("Wrong HealthChecker Probe message from: " + message.getSource());
       }
     }
-    receiver.receive(message.getPayload());
+    receiver.receive(message);
   }
 
   @Override
-  public final void receive(TCByteBuffer[] msgData) {
+  public final void receive(TCNetworkMessage msgData) {
     throw new UnsupportedOperationException();
   }
 
@@ -400,6 +403,16 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected synchronized final void clearConnectionID() {
     this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
+  }
+
+  @Override
+  public TCByteBufferOutputStream createOutputStream() {
+    TCConnection conn = getConnection();
+    if (conn == null) {
+      return new TCByteBufferOutputStream();
+    } else {
+      return conn.createOutput();
+    }
   }
 
   void log(String msg) {

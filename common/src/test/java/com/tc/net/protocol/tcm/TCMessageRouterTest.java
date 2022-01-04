@@ -39,21 +39,21 @@ public class TCMessageRouterTest extends TestCase {
       // expected
     }
 
-    final AtomicReference<TCMessage> msg = new AtomicReference<TCMessage>(null);
+    final AtomicReference<TCAction> msg = new AtomicReference<TCAction>(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
       @Override
-      public void putMessage(TCMessage message) {
+      public void putMessage(TCAction message) {
         msg.set(message);
       }
     });
-    TCMessage message = createMessage();
+    TCAction message = createMessage();
     router.putMessage(message);
     assertSame(message, msg.get());
 
     msg.set(null);
     router.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       @Override
-      public void putMessage(TCMessage m) {
+      public void putMessage(TCAction m) {
         // ignore it
       }
     });
@@ -62,22 +62,22 @@ public class TCMessageRouterTest extends TestCase {
   }
 
   public void testRouteByType() {
-    final AtomicReference<TCMessage> defmsg = new AtomicReference<TCMessage>(null);
+    final AtomicReference<TCAction> defmsg = new AtomicReference<TCAction>(null);
     TCMessageRouter router = new TCMessageRouterImpl(new TCMessageSink() {
       @Override
-      public void putMessage(TCMessage m) {
+      public void putMessage(TCAction m) {
         defmsg.set(m);
       }
     });
 
-    final AtomicReference<TCMessage> msg = new AtomicReference<TCMessage>(null);
+    final AtomicReference<TCAction> msg = new AtomicReference<TCAction>(null);
     router.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       @Override
-      public void putMessage(TCMessage m) {
+      public void putMessage(TCAction m) {
         msg.set(m);
       }
     });
-    TCMessage message = createMessage();
+    TCAction message = createMessage();
     router.putMessage(message);
     assertSame(message, msg.get());
     assertNull(defmsg.get());
@@ -96,7 +96,7 @@ public class TCMessageRouterTest extends TestCase {
     final SetOnceFlag stop = new SetOnceFlag();
     final TCMessageSink nullSink = new TCMessageSink() {
       @Override
-      public void putMessage(TCMessage message) {
+      public void putMessage(TCAction message) {
         // nada
       }
     };
@@ -105,7 +105,7 @@ public class TCMessageRouterTest extends TestCase {
     final Runnable putter = new Runnable() {
       @Override
       public void run() {
-        TCMessage msg = createMessage();
+        TCAction msg = createMessage();
         try {
           while (true) {
             for (int i = 0; i < 100; i++) {
@@ -167,7 +167,6 @@ public class TCMessageRouterTest extends TestCase {
 
   private PingMessage createMessage() {
     PingMessage rv = new PingMessage(new NullMessageMonitor());
-    rv.dehydrate();
     return rv;
   }
 

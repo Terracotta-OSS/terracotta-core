@@ -49,7 +49,7 @@ public interface MessageChannel {
 
   public boolean isClosed();
 
-  public TCMessage createMessage(TCMessageType type);
+  public TCAction createMessage(TCMessageType type);
   
   public Object getAttachment(String key);
 

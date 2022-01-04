@@ -21,6 +21,7 @@ package com.tc.entity;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -155,7 +156,7 @@ public class NetworkVoltronEntityMessageImpl extends DSOMessageBase implements N
     super(sessionID, monitor, out, channel, type);
   }
 
-  public NetworkVoltronEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBuffer[] data) {
+  public NetworkVoltronEntityMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel, TCMessageHeader header, TCByteBufferInputStream data) {
     super(sessionID, monitor, channel, header, data);
   }
 

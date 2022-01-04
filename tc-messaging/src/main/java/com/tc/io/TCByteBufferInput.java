@@ -39,16 +39,6 @@ public interface TCByteBufferInput extends TCDataInput {
    */
   public TCByteBufferInput duplicateAndLimit(int limit);
 
-  public TCByteBuffer[] toArray();
-
-  public TCByteBuffer[] toArray(Mark start, Mark end);
-
-  /**
-   * Artificially limit the length of this input stream starting at the current read position. This operation is
-   * destructive to the stream contents (ie. data trimmed off by setting limit can never be read with this stream).
-   */
-  public TCDataInput limit(int limit);
-
   public int getTotalLength();
 
   public int available();

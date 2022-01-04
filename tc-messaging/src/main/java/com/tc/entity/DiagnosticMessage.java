@@ -19,13 +19,13 @@
 
 package com.tc.entity;
 
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.tx.TransactionID;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 /**
  */
-public interface DiagnosticMessage extends VoltronEntityMessage, TCMessage {
+public interface DiagnosticMessage extends VoltronEntityMessage, TCAction {
   /**
    * Initializes the contents of the message.
    */

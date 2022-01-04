@@ -31,7 +31,7 @@ public class TCMessageHydrateSink<T> implements TCMessageSink {
   }
 
   @Override
-  public void putMessage(TCMessage message) {    
+  public void putMessage(TCAction message) {    
       try {
         message.hydrate();
         this.destSink.addToSink((T)message);

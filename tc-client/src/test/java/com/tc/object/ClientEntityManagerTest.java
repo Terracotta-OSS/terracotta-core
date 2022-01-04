@@ -45,7 +45,6 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.object.session.SessionID;
@@ -83,6 +82,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 public class ClientEntityManagerTest extends TestCase {
@@ -138,9 +138,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });    
@@ -172,9 +172,9 @@ public class ClientEntityManagerTest extends TestCase {
     // Set the target for failure.
     final byte[] resultObject = null;
     final EntityException resultException = new EntityNotFoundException(null, null);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });       
@@ -190,9 +190,9 @@ public class ClientEntityManagerTest extends TestCase {
   // Test pause will block progress but it the lookup will complete (failing to find the entity) after unpause.
   public void testLookupStalledByPause() throws Exception {
     final EntityException resultException = new EntityNotFoundException(null, null);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, null, resultException, true);
       }
     });    
@@ -225,9 +225,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });       
@@ -248,9 +248,9 @@ public class ClientEntityManagerTest extends TestCase {
     // Set the target for failure.
     final byte[] resultObject = null;
     final EntityException resultException = new EntityNotFoundException(null, null);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });       
@@ -281,9 +281,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });   
@@ -319,9 +319,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });   
@@ -357,9 +357,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });
@@ -394,9 +394,9 @@ public class ClientEntityManagerTest extends TestCase {
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
@@ -412,10 +412,10 @@ public class ClientEntityManagerTest extends TestCase {
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       int counter = 0;
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         // the 1st message ("fetch") needs to be successful
         if (counter++ > 0) {
           return new TestRequestBatchMessage(manager, null, new EntityException("a.class.name", "an.entity.name", "mock error", new RuntimeException("boom!")) {}, true);
@@ -438,9 +438,9 @@ public class ClientEntityManagerTest extends TestCase {
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, null, true);
       }
     });
@@ -463,10 +463,10 @@ public class ClientEntityManagerTest extends TestCase {
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       int counter = 0;
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         // the 1st message ("fetch") needs to be successful
         if (counter++ > 0) {
           return new TestRequestBatchMessage(manager, null, new EntityException("a.class.name", "an.entity.name", "mock error", new RuntimeException("boom!")) {}, true);
@@ -499,10 +499,10 @@ public class ClientEntityManagerTest extends TestCase {
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       int counter = 0;
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         // the 1st message ("fetch") needs to be successful
         if (counter++ > 0) {
           return new TestRequestBatchMessage(manager, resultObject, null, false);
@@ -531,10 +531,10 @@ public class ClientEntityManagerTest extends TestCase {
     ByteBuffer.wrap(messageObject).putLong(0xFFFFFFFFL);
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       int counter = 0;
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         // the 1st message ("fetch") needs to be successful
         if (counter++ > 0) {
           return new TestRequestBatchMessage(manager, resultObject, null, false);
@@ -564,9 +564,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });       
@@ -575,9 +575,9 @@ public class ClientEntityManagerTest extends TestCase {
     fetcher.join();
     
     List<TestRequestBatchMessage> full = new ArrayList<>();
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         TestRequestBatchMessage msg = new TestRequestBatchMessage(manager, resultObject, resultException, false);
         full.add(msg);
         return msg;
@@ -609,9 +609,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });       
@@ -619,9 +619,9 @@ public class ClientEntityManagerTest extends TestCase {
     fetcher.start();
     fetcher.join();
     List<TestRequestBatchMessage> full = new ArrayList<>();
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         TestRequestBatchMessage msg = new TestRequestBatchMessage(manager, resultObject, resultException, false);
         full.add(msg);
         return msg;
@@ -660,9 +660,9 @@ public class ClientEntityManagerTest extends TestCase {
     final byte[] resultObject = new byte[8];
     ByteBuffer.wrap(resultObject).putLong(1L);
     final EntityException resultException = null;
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });       
@@ -685,9 +685,9 @@ public class ClientEntityManagerTest extends TestCase {
     // Configure the test to return the failure for this.
     final byte[] resultObject = null;
     final EntityException resultException = new EntityNotFoundException(null, null);
-    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCMessage>() {
+    when(channel.createMessage(Mockito.eq(TCMessageType.VOLTRON_ENTITY_MESSAGE))).then(new Answer<TCAction>() {
       @Override
-      public TCMessage answer(InvocationOnMock invocation) throws Throwable {
+      public TCAction answer(InvocationOnMock invocation) throws Throwable {
         return new TestRequestBatchMessage(manager, resultObject, resultException, true);
       }
     });
@@ -953,10 +953,7 @@ public class ClientEntityManagerTest extends TestCase {
     public void hydrate() throws IOException, UnknownNameException {
       throw new UnsupportedOperationException();
     }
-    @Override
-    public void dehydrate() {
-      throw new UnsupportedOperationException();
-    }
+
     boolean sent = false;
     @Override
     public boolean send() {
@@ -993,10 +990,7 @@ public class ClientEntityManagerTest extends TestCase {
     public SessionID getLocalSessionID() {
       throw new UnsupportedOperationException();
     }
-    @Override
-    public int getTotalLength() {
-      throw new UnsupportedOperationException();
-    }
+
     @Override
     public ClientID getSource() {
       throw new UnsupportedOperationException();

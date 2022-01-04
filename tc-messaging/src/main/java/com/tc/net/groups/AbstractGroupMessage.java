@@ -21,7 +21,6 @@ package com.tc.net.groups;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.net.ServerID;
-import com.tc.net.protocol.tcm.TCMessageImpl;
 
 import java.io.IOException;
 
@@ -67,11 +66,6 @@ public abstract class AbstractGroupMessage implements GroupMessage {
   abstract protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException;
 
   abstract protected void basicSerializeTo(TCByteBufferOutput out);
-
-  @Override
-  public boolean isRecycleOnRead(TCMessageImpl message) {
-    return true;
-  }
 
   private static final synchronized MessageID getNextID() {
     return new MessageID(nextID++);

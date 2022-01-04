@@ -28,7 +28,7 @@ public class HydrateHandler extends AbstractEventHandler<HydrateContext> {
 
   @Override
   public void handleEvent(HydrateContext hc) {
-    TCMessage message = hc.getMessage();
+    TCAction message = hc.getMessage();
 
     try {
       message.hydrate();

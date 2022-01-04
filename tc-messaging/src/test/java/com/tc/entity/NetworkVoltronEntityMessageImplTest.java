@@ -24,8 +24,10 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.entity.VoltronEntityMessage.Acks;
 import com.tc.entity.VoltronEntityMessage.Type;
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -65,12 +67,12 @@ public class NetworkVoltronEntityMessageImplTest {
     TransactionID oldestTransactionPending = new TransactionID(1);
     message.setContents(clientID, transactionID, EntityID.NULL_ID, entityDescriptor, messageType, 
             requiresReplication, extendedData, oldestTransactionPending, EnumSet.of(Acks.RECEIVED));
-    message.dehydrate();
+    TCNetworkMessage msg = message.convertToNetworkMessage();
     
-    TCMessageHeader header = (TCMessageHeader) message.getHeader();
-    TCByteBuffer[] payload = message.getPayload();
+    TCMessageHeader header = (TCMessageHeader) msg.getHeader();
+    TCByteBuffer[] payload = msg.getPayload();
     outputStream.close();
-    NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, payload);
+    NetworkVoltronEntityMessageImpl decodingMessage = new NetworkVoltronEntityMessageImpl(SessionID.NULL_ID, monitor, null, header, new TCByteBufferInputStream(payload));
     decodingMessage.hydrate();
     assertEquals(clientID, decodingMessage.getSource());
     assertEquals(transactionID, decodingMessage.getTransactionID());

@@ -30,7 +30,6 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionErrorListener;
@@ -46,6 +45,7 @@ import com.tc.object.session.SessionProvider;
 
 import java.util.Map;
 import java.util.Properties;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 public class StandardClientBuilder implements ClientBuilder {
@@ -76,7 +76,7 @@ public class StandardClientBuilder implements ClientBuilder {
                                                            ConnectionPolicy connectionPolicy, 
                                                            TCConnectionManager connections,
                                                            HealthCheckerConfig aConfig,
-                                                           Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping,
+                                                           Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping,
                                                            ReconnectionRejectedHandler reconnectionRejectedHandler) {
     return new CommunicationsManagerImpl(monitor, messageRouter, stackHarnessFactory, connections,
                                          connectionPolicy, aConfig, new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping,

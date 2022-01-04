@@ -112,7 +112,7 @@ public class StageImpl<EC> implements Stage<EC> {
   }
   
   private EventCreator<EC> eventCreator(boolean direct) {
-    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->inflight.sum() == 0) : baseCreator();
+    return (direct) ? new DirectEventCreator<>(baseCreator(), ()->isEmpty()) : baseCreator();
   }
   
   private EventCreator<EC> baseCreator() {

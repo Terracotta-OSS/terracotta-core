@@ -26,16 +26,17 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Queue;
 
 public class TCByteBufferInputStream extends InputStream implements TCByteBufferInput {
   private static final int            EOF                     = -1;
   private static final TCByteBuffer[] EMPTY_BYTE_BUFFER_ARRAY = new TCByteBuffer[] {};
 
-  private TCByteBuffer[]              data;
+  private final Queue<TCByteBuffer>   returns;
+
+  private final TCByteBuffer[]              data;
   private int                         totalLength;
-  private int                         numBufs;
+  private final int                         numBufs;
   private boolean                     closed                  = false;
   private int                         position                = 0;
   private int                         index                   = 0;
@@ -49,7 +50,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this(new TCByteBuffer[] { data });
   }
 
-  public TCByteBufferInputStream(TCByteBuffer[] data) {
+  public TCByteBufferInputStream(TCByteBuffer[] data, Queue<TCByteBuffer> returns) {
     if (data == null) { throw new NullPointerException(); }
 
     long length = 0;
@@ -68,6 +69,12 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
 
     this.numBufs = this.data.length;
     this.totalLength = (int) length;
+
+    this.returns = returns;
+  }
+
+  public TCByteBufferInputStream(TCByteBuffer[] data) {
+    this(data, null);
   }
 
   private TCByteBufferInputStream(TCByteBuffer[] sourceData, int dupeLength, int sourceIndex, boolean duplicate) {
@@ -90,6 +97,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this.totalLength = dupeLength;
     this.position = 0;
     this.index = 0;
+    this.returns = null;
   }
 
   /**
@@ -140,8 +148,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     return new TCByteBufferInputStream(limitedData, limit, 0, false);
   }
 
-  @Override
-  public TCByteBuffer[] toArray() {
+  TCByteBuffer[] toArray() {
     checkClosed();
 
     if (available() == 0) { return EMPTY_BYTE_BUFFER_ARRAY; }
@@ -155,8 +162,7 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     return rv;
   }
 
-  @Override
-  public TCByteBuffer[] toArray(Mark s, Mark e) {
+  TCByteBuffer[] toArray(Mark s, Mark e) {
     checkClosed();
 
     TCMark start = validateMark(s);
@@ -181,40 +187,6 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     return rv;
   }
 
-  /**
-   * Artificially limit the length of this input stream starting at the current read position. This operation is
-   * destructive to the stream contents (ie. data trimmed off by setting limit can never be read with this stream).
-   */
-  @Override
-  public TCDataInput limit(int limit) {
-    checkClosed();
-
-    if (available() < limit) { throw new IllegalArgumentException("Not enough data left in stream: " + limit + " > "
-                                                                  + available()); }
-
-    List<TCByteBuffer> newData = new ArrayList<TCByteBuffer>();
-    int num = limit;
-    while (num > 0) {
-      TCByteBuffer current = this.data[this.index];
-      int avail = current.remaining();
-      int take = Math.min(avail, num);
-      if (take > 0) {
-        newData.add(current.slice().limit(take));
-        num -= take;
-      }
-      nextBuffer();
-    }
-
-    this.data = new TCByteBuffer[newData.size()];
-    this.data = newData.toArray(this.data);
-    this.numBufs = this.data.length;
-    this.totalLength = limit;
-    this.position = 0;
-    this.index = 0;
-
-    return this;
-  }
-
   @Override
   public int getTotalLength() {
     return this.totalLength;
@@ -229,7 +201,6 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
   public void close() {
     if (!this.closed) {
       this.closed = true;
-      this.data = null;
     }
   }
 
@@ -300,16 +271,8 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     if (len == 0) { return TCByteBufferFactory.getInstance(0); }
 
     if (available() == 0) { return TCByteBufferFactory.getInstance(0); }
-    
-    TCByteBuffer result = this.data[this.index];
-    if (result.remaining() >= len) {
-      TCByteBuffer send = result.slice();
-      send.limit(len);
-      result.position(result.position() + len);
-      return send;
-    }
 
-    result = TCByteBufferFactory.getInstance(len);
+    TCByteBuffer result = TCByteBufferFactory.getInstance(len);
     while (this.index < this.numBufs) {
       TCByteBuffer buf = this.data[this.index];
       if (buf.hasRemaining()) {
@@ -351,10 +314,13 @@ public class TCByteBufferInputStream extends InputStream implements TCByteBuffer
     this.index++;
   }
 
-  @SuppressWarnings("sync-override")
   @Override
   public void reset() {
-    throw new UnsupportedOperationException();
+    if (returns != null) {
+      for (TCByteBuffer buf : data) {
+        returns.offer(buf.reInit());
+      }
+    }
   }
 
   /**

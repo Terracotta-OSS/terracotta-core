@@ -39,13 +39,14 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
   private static final int       DEFAULT_MAX_BLOCK_SIZE     = 512 * 1024;
   private static final int       DEFAULT_INITIAL_BLOCK_SIZE = 1024;
 
+  private final int              initialBlockSize;
   private final int              maxBlockSize;
   private final DataOutputStream dos;
 
   // The "buffers" list is accessed by index in the Mark class, thus it should not be a linked list
   private List<TCByteBuffer>     buffers                    = new ArrayList<TCByteBuffer>(16);
 
-  private TCByteBuffer           current;
+  private TCByteBuffer           current = TCByteBufferFactory.getInstance(0);
   private boolean                closed;
   private int                    written;
   private int                    blockSize;
@@ -71,10 +72,10 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
                                                                               "Initial block size less than max block size"); }
 
     this.maxBlockSize = maxBlockSize;
+    this.initialBlockSize = initialBlockSize;
     this.blockSize = initialBlockSize;
     this.closed = false;
     this.dos = new DataOutputStream(this);
-    addBuffer();
   }
 
   /**
@@ -93,9 +94,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
 
     written++;
 
-    if (!current.hasRemaining()) {
-      addBuffer();
-    }
+    checkBuffer();
 
     current.put((byte) b);
   }
@@ -111,6 +110,11 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     write(new TCByteBuffer[] { data });
   }
 
+  private void checkBuffer() {
+    while (current == null || !current.hasRemaining()) {
+      current = addBuffer();
+    }
+  }
   /**
    * Add arbitrary buffers into the stream. All of the data (from position 0 to limit()) in each buffer passed will be
    * used in the stream. If that is not what you want, setup your buffers differently before calling this write()
@@ -123,29 +127,17 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     
     for (TCByteBuffer element : data) {
       int len = element.remaining();
-      if (len == 0) {
-        continue;
-      }
-      if (current != null) {
-        if (len < current.remaining()) {
-          current.put(element);
-          Assert.assertFalse(element.hasRemaining());
-        } else {
-          if (current.position() > 0) {
-            buffers.add(current.flip());
-          }
-          current = null;
-          buffers.add(element.duplicate());
-          element.position(element.limit());
+      while (element.hasRemaining()) {
+        checkBuffer();
+        int saveLimit = element.limit();
+        if (element.remaining() > current.remaining()) {
+          element.limit(element.position() + current.remaining());
         }
-      } else {
-        buffers.add(element.duplicate());
-        element.position(element.limit());
+        current.put(element);
+        Assert.assertFalse(element.hasRemaining());
+        element.limit(saveLimit);
       }
       written += len;
-    }
-    if (current == null) {
-      addBuffer();
     }
   }
 
@@ -169,9 +161,7 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     int index = offset;
     int numToWrite = length;
     while (numToWrite > 0) {
-      if (!current.hasRemaining()) {
-        addBuffer();
-      }
+      checkBuffer();
       final int numToPut = Math.min(current.remaining(), numToWrite);
       current.put(b, index, numToPut);
       numToWrite -= numToPut;
@@ -182,9 +172,17 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
   @Override
   public void close() {
     if (!closed) {
-      finalizeBuffers();
+      finalizeBuffer();
       closed = true;
     }
+  }
+
+  public void reset() {
+    current = null;
+    closed = false;
+    buffers.clear();
+    written = 0;
+    this.blockSize = this.initialBlockSize;
   }
 
   /**
@@ -202,13 +200,11 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     return (buffers == null) ? "null" : buffers.toString();
   }
   
-  private void addBuffer() {
-    if (current != null) {
-      current.flip();
-      buffers.add(current);
-    }
-    current = newBuffer();
-    blockSize = current.capacity();
+  private TCByteBuffer addBuffer() {
+    finalizeBuffer();
+    TCByteBuffer nb = newBuffer();
+    blockSize = nb.capacity();
+    return nb;
   }
 
   protected TCByteBuffer newBuffer() {
@@ -220,10 +216,12 @@ public class TCByteBufferOutputStream extends OutputStream implements TCByteBuff
     return rv;
   }
 
-  private void finalizeBuffers() {
-    if (current.position() > 0) {
+  private void finalizeBuffer() {
+    if (current != null) {
       current.flip();
-      buffers.add(current);
+      if (current.hasRemaining()) {
+        buffers.add(current);
+      }
     }
   }
 

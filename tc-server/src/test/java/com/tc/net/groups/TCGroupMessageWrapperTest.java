@@ -36,7 +36,6 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageFactoryImpl;
 import com.tc.net.protocol.tcm.TCMessageRouter;
@@ -61,6 +60,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
+import com.tc.net.protocol.tcm.TCAction;
 
 /*
  * This test really belongs in the TC Messaging module but it's dependencies
@@ -131,7 +131,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE,
                                                                                   new TCMessageSink() {
                                                                                     @Override
-                                                                                    public void putMessage(TCMessage message)
+                                                                                    public void putMessage(TCAction message)
                                                                                         throws UnsupportedMessageTypeException {
                                                                                       try {
                                                                                         TCGroupMessageWrapper mesg = (TCGroupMessageWrapper) message;

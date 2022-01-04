@@ -44,7 +44,7 @@ public interface CommunicationsManager extends PrettyPrintable {
 
   public NetworkListener[] getAllListeners();
 
-  public void addClassMapping(TCMessageType messageType, Class<? extends TCMessage> messageClass);
+  public void addClassMapping(TCMessageType messageType, Class<? extends TCAction> messageClass);
 
   /**
    * Creates a client message channel to the given host/port.

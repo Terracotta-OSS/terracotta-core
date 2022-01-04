@@ -20,6 +20,8 @@ package com.tc.io;
 
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Use me to write data to a set of TCByteBuffer instances. <br>
@@ -28,13 +30,32 @@ import com.tc.bytes.TCByteBufferFactory;
  */
 public class TCDirectByteBufferOutputStream extends TCByteBufferOutputStream {
 
+  private final Queue<TCByteBuffer> cache;
+
   public TCDirectByteBufferOutputStream() {
-    super();
+    this(new LinkedList<>());
+  }
+
+  public TCDirectByteBufferOutputStream(Queue<TCByteBuffer> cache) {
+    this.cache = cache;
   }
 
   @Override
   protected TCByteBuffer newBuffer() {
-    return TCByteBufferFactory.getDirectByteBuffer();
+    TCByteBuffer bb = cache.poll();
+    if (bb == null) {
+      bb = TCByteBufferFactory.getDirectByteBuffer();
+    }
+    return bb;
+  }
+
+  @Override
+  public void reset() {
+    close();
+    for (TCByteBuffer buffer : toArray()) {
+      cache.offer(buffer.reInit());
+    }
+    super.reset();
   }
 }
 

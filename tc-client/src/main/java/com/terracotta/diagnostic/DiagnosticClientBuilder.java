@@ -26,7 +26,6 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -39,6 +38,7 @@ import com.tc.net.core.ProductID;
 import java.util.Map;
 
 import java.util.Properties;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 public class DiagnosticClientBuilder extends StandardClientBuilder {
@@ -49,7 +49,7 @@ public class DiagnosticClientBuilder extends StandardClientBuilder {
 
   @Override
   public CommunicationsManager createCommunicationsManager(MessageMonitor monitor, TCMessageRouter messageRouter, NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy, 
-          TCConnectionManager connections, HealthCheckerConfig aConfig, Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping, ReconnectionRejectedHandler reconnectionRejectedHandler) {
+          TCConnectionManager connections, HealthCheckerConfig aConfig, Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping, ReconnectionRejectedHandler reconnectionRejectedHandler) {
     return super.createCommunicationsManager(monitor, messageRouter, stackHarnessFactory, connectionPolicy, connections, new DisabledHealthCheckerConfigImpl(), messageTypeClassMapping, reconnectionRejectedHandler); 
   }
   

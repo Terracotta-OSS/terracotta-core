@@ -26,39 +26,32 @@ import com.tc.exception.TCInternalError;
 import com.tc.util.Assert;
 import com.tc.util.HexDump;
 import com.tc.util.concurrent.SetOnceFlag;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Base class for network messages
  * 
  * @author teck
  */
-public class AbstractTCNetworkMessage implements TCNetworkMessage {
+public class TCNetworkMessageImpl implements TCNetworkMessage {
   protected static final Logger logger = LoggerFactory.getLogger(TCNetworkMessage.class);
   private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
-  protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {
-    this(header, null, null, seal);
+  protected TCNetworkMessageImpl(TCNetworkHeader header, boolean seal) {
+    this(header, null, seal);
   }
 
-  protected AbstractTCNetworkMessage(TCNetworkHeader header, TCNetworkMessage msgPayload) {
-    this(header, msgPayload, null, true);
+  public TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload) {
+    this(header, payload, true);
   }
 
-  protected AbstractTCNetworkMessage(TCNetworkHeader header, TCByteBuffer[] payload) {
-    this(header, null, payload, true);
-  }
-
-  private AbstractTCNetworkMessage(TCNetworkHeader header, TCNetworkMessage msgPayload, TCByteBuffer[] payload,
+  private TCNetworkMessageImpl(TCNetworkHeader header, TCByteBuffer[] payload,
                                    boolean seal) {
     Assert.eval(header != null);
 
     this.header = header;
-    this.messagePayload = msgPayload;
     this.payloadData = (payload == null) ? EMPTY_BUFFER_ARRAY : payload;
-
-    if (msgPayload != null) {
-      payloadData = msgPayload.getEntireMessageData();
-    }
 
     if (seal) {
       seal();
@@ -89,11 +82,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   }
 
   @Override
-  public final TCNetworkMessage getMessagePayload() {
-    return messagePayload;
-  }
-
-  @Override
   public final TCByteBuffer[] getPayload() {
     return payloadData;
   }
@@ -107,21 +95,6 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
       payloadData = EMPTY_BUFFER_ARRAY;
     } else {
       payloadData = newPayload;
-    }
-  }
-
-  protected final void setMessagePayload(TCNetworkMessage subMessage) {
-    checkNotSealed();
-
-    entireMessageData = null;
-
-    if (subMessage == null) {
-      payloadData = EMPTY_BUFFER_ARRAY;
-      this.messagePayload = null;
-    } else {
-      if (!subMessage.isSealed()) { throw new IllegalStateException("Message paylaod is not yet sealed"); }
-      this.messagePayload = subMessage;
-      this.payloadData = subMessage.getEntireMessageData();
     }
   }
 
@@ -251,30 +224,23 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   }
 
   @Override
-  public final void wasSent() {
-    fireSentCallback();
+  public void complete() {
+    fireCallbacks();
   }
 
-  private void fireSentCallback() {
-    if (sentCallback != null) {
-      if (sentCallbackFired.attemptSet()) {
-        try {
-          sentCallback.run();
-        } catch (Exception e) {
-          logger.error("Caught exception running sent callback", e);
-        }
+  private void fireCallbacks() {
+    if (callbackFired.attemptSet()) {
+      try {
+        callbacks.forEach(Runnable::run);
+      } catch (Exception e) {
+        logger.error("Caught exception running sent callback", e);
       }
     }
   }
 
   @Override
-  public final void setSentCallback(Runnable callback) {
-    this.sentCallback = callback;
-  }
-
-  @Override
-  public final Runnable getSentCallback() {
-    return this.sentCallback;
+  public void addCompleteCallback(Runnable r) {
+    callbacks.add(r);
   }
 
   private void checkSealed() {
@@ -286,15 +252,14 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
   }
 
   private final SetOnceFlag           sealed             = new SetOnceFlag();
-  private final SetOnceFlag           sentCallbackFired  = new SetOnceFlag();
+  private final SetOnceFlag           callbackFired  = new SetOnceFlag();
   private static final TCByteBuffer[] EMPTY_BUFFER_ARRAY = {};
   private final TCNetworkHeader       header;
   private TCByteBuffer[]              payloadData;
-  private TCNetworkMessage            messagePayload;
   private TCByteBuffer[]              entireMessageData;
   private int                         totalLength;
   private int                         dataLength;
   private int                         headerLength;
-  private Runnable                    sentCallback       = null;
+  private final List<Runnable>        callbacks       = new LinkedList<>();
 
 }

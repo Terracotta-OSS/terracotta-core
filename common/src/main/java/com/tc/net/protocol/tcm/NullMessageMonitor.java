@@ -21,12 +21,12 @@ package com.tc.net.protocol.tcm;
 public class NullMessageMonitor implements MessageMonitor {
 
   @Override
-  public void newIncomingMessage(TCMessage message) {
+  public void newIncomingMessage(TCAction message) {
     return;
   }
 
   @Override
-  public void newOutgoingMessage(TCMessage message) {
+  public void newOutgoingMessage(TCAction message) {
     return;
   }
 

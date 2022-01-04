@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.util.Assert;
 
 /**
@@ -35,7 +37,8 @@ class TCMessageParser {
     this.factory = factory;
   }
 
-  TCMessage parseMessage(MessageChannel source, TCByteBuffer[] data) {
+  TCAction parseMessage(MessageChannel source, TCNetworkMessage msg) {
+    TCByteBuffer[] data = msg.getPayload();
     TCMessageHeader hdr = new TCMessageHeaderImpl(data[0].duplicate().limit(TCMessageHeader.HEADER_LENGTH));
     final int headerLength = hdr.getHeaderByteLength();
 
@@ -65,7 +68,10 @@ class TCMessageParser {
       throw new RuntimeException("Can't find message type for type: " + msgType);
     }
 
-    return factory.createMessage(source, type, hdr, msgData);
+    TCAction converted = factory.createMessage(source, type, hdr, new TCByteBufferInputStream(msgData));
+    converted.addProcessedCallback(msg::complete);
+    
+    return converted;
   }
 
   private String toString(TCByteBuffer[] data) {

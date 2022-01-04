@@ -32,7 +32,6 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientMessageTransport;
@@ -68,6 +67,7 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import org.junit.Ignore;
 import org.terracotta.utilities.test.net.PortManager;
+import com.tc.net.protocol.tcm.TCAction;
 
 public class TCWorkerCommManagerTest extends TCTestCase {
 
@@ -324,7 +324,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                      config,
                                                                      new ServerID(),
                                                                      new TransportHandshakeErrorNullHandler(),
-                                                                     Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                                     Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),
                                                                      Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
       NetworkListener listener = commsMgr.createListener(new InetSocketAddress(0), (c)->true,
                                                          new DefaultConnectionIdFactory(), (MessageTransport t)->true);

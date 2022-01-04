@@ -18,15 +18,16 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 
 public interface TCMessageFactory {
 
-  public TCMessage createMessage(MessageChannel source, TCMessageType type);
+  public TCAction createMessage(MessageChannel source, TCMessageType type, TCByteBufferOutputStream output);
 
-  public TCMessage createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header, TCByteBuffer[] data);
+  public TCAction createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header, TCByteBufferInputStream data);
 
-  public void addClassMapping(TCMessageType type, Class<? extends TCMessage> msgClass);
+  public void addClassMapping(TCMessageType type, Class<? extends TCAction> msgClass);
 
   public void addClassMapping(TCMessageType type, GeneratedMessageFactory messageFactory);
 

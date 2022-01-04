@@ -51,7 +51,6 @@ import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -119,6 +118,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import com.tc.net.protocol.tcm.TCAction;
 
 
 /**
@@ -439,8 +439,8 @@ public class DistributedObjectClient {
     }
   }
 
-  private Map<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMapping() {
-    final Map<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<TCMessageType, Class<? extends TCMessage>>();
+  private Map<TCMessageType, Class<? extends TCAction>> getMessageTypeClassMapping() {
+    final Map<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping = new HashMap<TCMessageType, Class<? extends TCAction>>();
 
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);

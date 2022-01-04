@@ -34,7 +34,6 @@ import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
@@ -61,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.tc.net.protocol.tcm.TCAction;
 
 public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
   private final int             L1_RECONNECT_TIMEOUT = 5000;
@@ -110,7 +110,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                                                      "Test Server"),
                                                                          new ServerID(),
                                                                          new TransportHandshakeErrorNullHandler(),
-                                                                         Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                                         Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),
                                                                          Collections.<TCMessageType, GeneratedMessageFactory>emptyMap()
     );
     NetworkListener listener = serverCommsMgr.createListener(new InetSocketAddress(0), (c)->true,

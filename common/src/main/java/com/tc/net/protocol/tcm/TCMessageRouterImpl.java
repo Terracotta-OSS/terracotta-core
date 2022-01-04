@@ -41,7 +41,7 @@ public class TCMessageRouterImpl implements TCMessageRouter {
     if (null == defRoute) {
       defaultRoute = new TCMessageSink() {
         @Override
-        public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
+        public void putMessage(TCAction message) throws UnsupportedMessageTypeException {
           throw new UnsupportedMessageTypeException(message.getMessageType());
         }
       };
@@ -51,7 +51,7 @@ public class TCMessageRouterImpl implements TCMessageRouter {
   }
 
   @Override
-  public void putMessage(TCMessage msg) {
+  public void putMessage(TCAction msg) {
     final boolean debug = logger.isDebugEnabled();
 
     if (debug) logger.debug("Received a message: " + msg.toString());

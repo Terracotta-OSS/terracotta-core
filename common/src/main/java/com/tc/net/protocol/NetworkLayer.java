@@ -19,6 +19,7 @@
 package com.tc.net.protocol;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.ProductID;
@@ -79,7 +80,7 @@ public interface NetworkLayer {
 
   public void send(TCNetworkMessage message) throws IOException;
 
-  public void receive(TCByteBuffer[] msgData);
+  public void receive(TCNetworkMessage msgData);
 
   public boolean isConnected();
 

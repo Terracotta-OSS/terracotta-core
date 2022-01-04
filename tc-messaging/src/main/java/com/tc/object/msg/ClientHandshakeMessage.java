@@ -19,12 +19,12 @@
 package com.tc.object.msg;
 
 import com.tc.entity.ResendVoltronEntityMessage;
-import com.tc.net.protocol.tcm.TCMessage;
 
 import java.util.Collection;
+import com.tc.net.protocol.tcm.TCAction;
 
 
-public interface ClientHandshakeMessage extends TCMessage {
+public interface ClientHandshakeMessage extends TCAction {
   
   void setUUID(String uuid);
   

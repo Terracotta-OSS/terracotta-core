@@ -201,56 +201,6 @@ public class TCByteBufferInputStreamTest {
   }
 
   @Test
-  public void testLimit() {
-    for (int i = 0; i < 250; i++) {
-      TCByteBuffer[] data = getRandomDataNonZeroLength();
-      TCByteBufferInputStream bbis = new TCByteBufferInputStream(data);
-
-      try {
-        int read = this.random.nextInt(bbis.available());
-        for (int r = 0; r < read; r++) {
-          bbis.read();
-        }
-        int which = this.random.nextInt(3);
-        switch (which) {
-          case 0: {
-            bbis.limit(0);
-            assertEquals(0, bbis.available());
-            break;
-          }
-          case 1: {
-            int before = bbis.available();
-            bbis.limit(bbis.available());
-            assertEquals(before, bbis.available());
-            break;
-          }
-          case 2: {
-            bbis.limit(this.random.nextInt(bbis.available()));
-            break;
-          }
-          default: {
-            throw new RuntimeException("" + which);
-          }
-        }
-        TCByteBufferInputStream compare = new TCByteBufferInputStream(bbis.toArray());
-        try {
-          while (compare.available() > 0) {
-            int orig = bbis.read();
-            int comp = compare.read();
-            assertEquals(orig, comp);
-          }
-          assertEquals(0, compare.available());
-          assertEquals(0, bbis.available());
-        } finally {
-          compare.close();
-        }
-      } finally {
-        bbis.close();
-      }
-    }
-  }
-
-  @Test
   public void testDuplicateAndLimitZeroLen() {
     TCByteBufferInputStream bbis = new TCByteBufferInputStream(new TCByteBuffer[] {});
 

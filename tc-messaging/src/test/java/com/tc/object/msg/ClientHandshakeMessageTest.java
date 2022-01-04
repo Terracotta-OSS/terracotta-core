@@ -18,7 +18,9 @@
  */
 package com.tc.object.msg;
 
+import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -61,11 +63,10 @@ public class ClientHandshakeMessageTest {
     Assert.assertNotEquals(ref1, ref2);
     msg.addReconnectReference(ref1);
     msg.addReconnectReference(ref2);
-    msg.dehydrate();
+    TCNetworkMessage nmsg = msg.convertToNetworkMessage();
 
     ClientHandshakeMessageImpl msg2 = new ClientHandshakeMessageImpl(SessionID.NULL_ID, mock(MessageMonitor.class), channel,
-                                                                     (TCMessageHeader) msg.getHeader(), msg
-                                                                         .getPayload());
+                                                                     (TCMessageHeader)nmsg.getHeader(), new TCByteBufferInputStream(nmsg.getPayload()));
     msg2.hydrate();
     Collection<ClientEntityReferenceContext> reconnectReferences = msg2.getReconnectReferences();
     Assert.assertTrue(reconnectReferences.contains(ref1));

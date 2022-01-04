@@ -34,7 +34,7 @@ public class TCMessageHydrateAndConvertSink<T, C> implements TCMessageSink {
   }
 
   @Override
-  public void putMessage(TCMessage message) {    
+  public void putMessage(TCAction message) {    
       try {
         message.hydrate();
         C converted = converter.apply((T)message);

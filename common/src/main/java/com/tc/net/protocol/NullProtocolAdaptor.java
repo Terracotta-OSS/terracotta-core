@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.net.core.TCConnection;
+import java.util.Queue;
 
 public class NullProtocolAdaptor implements TCProtocolAdaptor {
   private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -33,7 +34,7 @@ public class NullProtocolAdaptor implements TCProtocolAdaptor {
   }
 
   @Override
-  public void addReadData(TCConnection source, TCByteBuffer[] data, int length) {
+  public void addReadData(TCConnection source, TCByteBuffer[] data, int length, Queue<TCByteBuffer> recycle) {
     logger.warn("Null Protocol Adaptor isn't supposed to receive any data from the network.");
     return;
   }

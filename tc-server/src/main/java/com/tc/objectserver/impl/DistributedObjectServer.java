@@ -27,7 +27,6 @@ import com.tc.config.GroupConfiguration;
 import com.tc.l2.state.DiagnosticModeConsistencyManager;
 import com.tc.l2.state.SafeStartupManagerImpl;
 import com.tc.logging.TCLogging;
-import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.services.PlatformConfigurationImpl;
 import com.tc.services.PlatformServiceProvider;
@@ -116,7 +115,6 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageRouter;
 import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -204,6 +202,7 @@ import com.tc.l2.state.ConsistencyManagerImpl;
 import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
+import com.tc.net.core.CachingClearTextBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -240,6 +239,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
+import com.tc.net.protocol.tcm.TCAction;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -456,6 +456,7 @@ public class DistributedObjectServer {
 
     this.tcProperties = TCPropertiesImpl.getProperties();
 
+    TCByteBufferFactory.setFixedBufferSize(tcProperties.getInt("bytebuffer.direct.size", 4096));
     final int maxStageSize = tcProperties.getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
     final int fastStageSize = 1024;
     final StageManager stageManager = this.seda.getStageManager();
@@ -687,7 +688,7 @@ public class DistributedObjectServer {
     final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
-    Stage<TCMessage> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCMessage.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
+    Stage<TCAction> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCAction.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
 
     VoltronMessageSink voltronSink = new VoltronMessageSink(hydrator, fast.getSink(), entityManager);
     messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, new TCMessageHydrateSink<>(clientHandshake.getSink()));
@@ -922,7 +923,7 @@ public class DistributedObjectServer {
       Assert.fail("Multiple BufferManagerFactory implementations found!");
     }
     if (bufferManagerFactory == null) {
-      bufferManagerFactory = new ClearTextBufferManagerFactory();
+      bufferManagerFactory = new CachingClearTextBufferManagerFactory();
     }
     return bufferManagerFactory;
   }
@@ -1116,8 +1117,8 @@ public class DistributedObjectServer {
     }
   }
 
-  private HashMap<TCMessageType, Class<? extends TCMessage>> getMessageTypeClassMappings() {
-    HashMap<TCMessageType, Class<? extends TCMessage>> messageTypeClassMapping = new HashMap<>();
+  private HashMap<TCMessageType, Class<? extends TCAction>> getMessageTypeClassMappings() {
+    HashMap<TCMessageType, Class<? extends TCAction>> messageTypeClassMapping = new HashMap<>();
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
     messageTypeClassMapping

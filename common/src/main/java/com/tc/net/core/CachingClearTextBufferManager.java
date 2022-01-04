@@ -16,24 +16,32 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.net.protocol;
+package com.tc.net.core;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.net.core.TCConnection;
+import java.nio.channels.SocketChannel;
 import java.util.Queue;
 
 /**
- * Message adaptor/parser for incoming data from TCConnection
- * 
- * @author teck
+ *
  */
-public interface TCProtocolAdaptor {
-  default void addReadData(TCConnection source, TCByteBuffer data[], int length) throws TCProtocolException {
-    addReadData(source, data, length, null);
+public class CachingClearTextBufferManager extends ClearTextBufferManager {
+
+  private final Queue<TCByteBuffer> retPool;
+  private final TCByteBuffer send;
+  private final TCByteBuffer recv;
+
+  public CachingClearTextBufferManager(SocketChannel channel, TCByteBuffer send, TCByteBuffer recv, Queue<TCByteBuffer> returnpool) {
+    super(channel, send.getNioBuffer(), recv.getNioBuffer());
+    this.retPool = returnpool;
+    this.send = send;
+    this.recv = recv;
   }
 
-  public void addReadData(TCConnection source, TCByteBuffer data[], int length, Queue<TCByteBuffer> recycle) throws TCProtocolException;
-
-  public TCByteBuffer[] getReadBuffers();
+  @Override
+  public void close() {
+    super.close();
+    retPool.offer(send.reInit());
+    retPool.offer(recv.reInit());
+  }
 }
-

@@ -115,14 +115,14 @@ try {
     clientComms = new CommunicationsManagerImpl(mm, clientMessageRouter,
                                                 clientStackHarnessFactory, clientConns, new NullConnectionPolicy(),
                                                 new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), 
-                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     serverConns = new TCConnectionManagerImpl("TestCommMgr-server", 0, new ClearTextBufferManagerFactory());
     serverComms = new CommunicationsManagerImpl(mm, serverMessageRouter,
                                                 serverStackHarnessFactory, serverConns, new NullConnectionPolicy(),
                                                 new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorNullHandler(),
-                                                Collections.<TCMessageType, Class<? extends TCMessage>>emptyMap(),
+                                                Collections.<TCMessageType, Class<? extends TCAction>>emptyMap(),
                                                 Collections.<TCMessageType, GeneratedMessageFactory>emptyMap());
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
@@ -144,7 +144,7 @@ try {
       ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
           new TCMessageSink() {
             @Override
-            public void putMessage(TCMessage message)
+            public void putMessage(TCAction message)
                 throws UnsupportedMessageTypeException {
               //System.out.println(message);
 
@@ -363,7 +363,7 @@ try {
     ((CommunicationsManagerImpl) serverComms1).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
         new TCMessageSink() {
           @Override
-          public void putMessage(TCMessage message)
+          public void putMessage(TCAction message)
               throws UnsupportedMessageTypeException {
             //System.out.println(message);
 
@@ -648,7 +648,7 @@ try {
     ((CommunicationsManagerImpl) clientComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
         new TCMessageSink() {
           @Override
-          public void putMessage(TCMessage message)
+          public void putMessage(TCAction message)
               throws UnsupportedMessageTypeException {
             try {
               PingMessage ping = (PingMessage)message;

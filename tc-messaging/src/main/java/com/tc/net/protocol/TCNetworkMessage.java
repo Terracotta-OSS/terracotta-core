@@ -27,8 +27,6 @@ public interface TCNetworkMessage {
 
   public TCNetworkHeader getHeader();
 
-  public TCNetworkMessage getMessagePayload();
-
   public TCByteBuffer[] getPayload();
 
   public TCByteBuffer[] getEntireMessageData();
@@ -43,9 +41,7 @@ public interface TCNetworkMessage {
 
   public int getTotalLength();
 
-  public void wasSent();
+  public void complete();
 
-  public void setSentCallback(Runnable callback);
-  
-  public Runnable getSentCallback();
+  void addCompleteCallback(Runnable r);
 }

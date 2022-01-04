@@ -21,6 +21,7 @@ package com.tc.bytes;
 import com.tc.util.Assert;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author teck A thin wrapper to a real java.nio.ByteBuffer instance
@@ -29,18 +30,20 @@ import java.nio.ByteBuffer;
 // XXX: Should we wrap the native java.nio overflow, underflow and readOnly exceptions with the TC versions?
 // This would make the TCByteBuffer interface consistent w.r.t. exceptions (whilst being blind to JDK13 vs JDK14)
 public class TCByteBufferImpl implements TCByteBuffer {
-  private final ByteBuffer          buffer;
-  
+  private final ByteBuffer          hiddenBuffer;
+  private static final boolean ACCESS_CHECK = Boolean.getBoolean("buffer.access.check");
+  AtomicBoolean lock =  ACCESS_CHECK ? new AtomicBoolean() : null;
+
   TCByteBufferImpl(int capacity, boolean direct) {
     if (direct) {
-      buffer = ByteBuffer.allocateDirect(capacity);
+      hiddenBuffer = ByteBuffer.allocateDirect(capacity);
     } else {
-      buffer = ByteBuffer.allocate(capacity);
+      hiddenBuffer = ByteBuffer.allocate(capacity);
     }
   }
 
   private TCByteBufferImpl(ByteBuffer buf) {
-    buffer = buf;
+    hiddenBuffer = buf;
   }
 
   static TCByteBuffer wrap(byte[] data) {
@@ -48,326 +51,333 @@ public class TCByteBufferImpl implements TCByteBuffer {
   }
 
   protected ByteBuffer getBuffer() {
-    return buffer;
+    return accessBuffer();
   }
 
   @Override
   public TCByteBuffer clear() {
-    buffer.clear();
+    accessBuffer().clear();
     return this;
   }
 
   @Override
   public int capacity() {
-    return buffer.capacity();
+    return accessBuffer().capacity();
   }
 
   @Override
   public int position() {
-    return buffer.position();
+    return accessBuffer().position();
   }
 
   @Override
   public TCByteBuffer flip() {
-    buffer.flip();
+    accessBuffer().flip();
+    return this;
+  }
+
+  @Override
+  public TCByteBuffer compact() {
+    accessBuffer().compact();
     return this;
   }
 
   @Override
   public boolean hasRemaining() {
-    return buffer.hasRemaining();
+    return accessBuffer().hasRemaining();
   }
 
   @Override
   public int limit() {
-    return buffer.limit();
+    return accessBuffer().limit();
   }
 
   @Override
   public TCByteBuffer limit(int newLimit) {
-    buffer.limit(newLimit);
+    accessBuffer().limit(newLimit);
     return this;
   }
 
   @Override
   public TCByteBuffer position(int newPosition) {
-    buffer.position(newPosition);
+    accessBuffer().position(newPosition);
     return this;
   }
 
   @Override
   public int remaining() {
-    return buffer.remaining();
+    return accessBuffer().remaining();
   }
 
   @Override
   public com.tc.bytes.TCByteBuffer rewind() {
-    buffer.rewind();
+    accessBuffer().rewind();
     return this;
   }
 
   @Override
   public ByteBuffer getNioBuffer() {
-    return buffer;
+    return accessBuffer();
   }
 
   @Override
   public boolean isDirect() {
-    return buffer.isDirect();
+    return accessBuffer().isDirect();
   }
 
   @Override
   public byte[] array() {
-    return buffer.array();
+    return accessBuffer().array();
   }
 
   @Override
   public byte get() {
-    return buffer.get();
+    return accessBuffer().get();
   }
 
   @Override
   public boolean getBoolean() {
     // XXX: Um-- why isn't there a getBoolean in ByteBuffer?
-    return buffer.get() > 0;
+    return accessBuffer().get() > 0;
   }
 
   @Override
   public boolean getBoolean(int index) {
-    return buffer.get(index) > 0;
+    return accessBuffer().get(index) > 0;
   }
 
   @Override
   public char getChar() {
-    return buffer.getChar();
+    return accessBuffer().getChar();
   }
 
   @Override
   public char getChar(int index) {
-    return buffer.getChar(index);
+    return accessBuffer().getChar(index);
   }
 
   @Override
   public double getDouble() {
-    return buffer.getDouble();
+    return accessBuffer().getDouble();
   }
 
   @Override
   public double getDouble(int index) {
-    return buffer.getDouble(index);
+    return accessBuffer().getDouble(index);
   }
 
   @Override
   public float getFloat() {
-    return buffer.getFloat();
+    return accessBuffer().getFloat();
   }
 
   @Override
   public float getFloat(int index) {
-    return buffer.getFloat(index);
+    return accessBuffer().getFloat(index);
   }
 
   @Override
   public int getInt() {
-    return buffer.getInt();
+    return accessBuffer().getInt();
   }
 
   @Override
   public int getInt(int index) {
-    return buffer.getInt(index);
+    return accessBuffer().getInt(index);
   }
 
   @Override
   public long getLong() {
-    return buffer.getLong();
+    return accessBuffer().getLong();
   }
 
   @Override
   public long getLong(int index) {
-    return buffer.getLong(index);
+    return accessBuffer().getLong(index);
   }
 
   @Override
   public short getShort() {
-    return buffer.getShort();
+    return accessBuffer().getShort();
   }
 
   @Override
   public short getShort(int index) {
-    return buffer.getShort(index);
+    return accessBuffer().getShort(index);
   }
 
   @Override
   public TCByteBuffer get(byte[] dst) {
-    buffer.get(dst);
+    accessBuffer().get(dst);
     return this;
   }
 
   @Override
   public TCByteBuffer get(byte[] dst, int offset, int length) {
-    buffer.get(dst, offset, length);
+    accessBuffer().get(dst, offset, length);
     return this;
   }
 
   @Override
   public byte get(int index) {
-    return buffer.get(index);
+    return accessBuffer().get(index);
   }
 
   @Override
   public TCByteBuffer put(byte b) {
-    buffer.put(b);
+    accessBuffer().put(b);
     return this;
   }
 
   @Override
   public TCByteBuffer put(byte[] src) {
-    buffer.put(src);
+    accessBuffer().put(src);
     return this;
   }
 
   @Override
   public TCByteBuffer put(byte[] src, int offset, int length) {
-    buffer.put(src, offset, length);
+    accessBuffer().put(src, offset, length);
     return this;
   }
 
   @Override
   public TCByteBuffer put(int index, byte b) {
-    buffer.put(index, b);
+    accessBuffer().put(index, b);
     return this;
   }
 
   @Override
   public TCByteBuffer putBoolean(boolean b) {
     // XXX: Why isn't there a putBoolean in ByteBuffer?
-    buffer.put((b) ? (byte) 1 : (byte) 0);
+    accessBuffer().put((b) ? (byte) 1 : (byte) 0);
     return this;
   }
 
   @Override
   public TCByteBuffer putBoolean(int index, boolean b) {
-    buffer.put(index, (b) ? (byte) 1 : (byte) 0);
+    accessBuffer().put(index, (b) ? (byte) 1 : (byte) 0);
     return this;
   }
 
   @Override
   public TCByteBuffer putChar(char c) {
-    buffer.putChar(c);
+    accessBuffer().putChar(c);
     return this;
   }
 
   @Override
   public TCByteBuffer putChar(int index, char c) {
-    buffer.putChar(index, c);
+    accessBuffer().putChar(index, c);
     return this;
   }
 
   @Override
   public TCByteBuffer putDouble(double d) {
-    buffer.putDouble(d);
+    accessBuffer().putDouble(d);
     return this;
   }
 
   @Override
   public TCByteBuffer putDouble(int index, double d) {
-    buffer.putDouble(index, d);
+    accessBuffer().putDouble(index, d);
     return this;
   }
 
   @Override
   public TCByteBuffer putFloat(float f) {
-    buffer.putFloat(f);
+    accessBuffer().putFloat(f);
     return this;
   }
 
   @Override
   public TCByteBuffer putFloat(int index, float f) {
-    buffer.putFloat(index, f);
+    accessBuffer().putFloat(index, f);
     return this;
   }
 
   @Override
   public TCByteBuffer putInt(int i) {
-    buffer.putInt(i);
+    accessBuffer().putInt(i);
     return this;
   }
 
   @Override
   public TCByteBuffer putInt(int index, int i) {
-    buffer.putInt(index, i);
+    accessBuffer().putInt(index, i);
     return this;
   }
 
   @Override
   public TCByteBuffer putLong(long l) {
-    buffer.putLong(l);
+    accessBuffer().putLong(l);
     return this;
   }
 
   @Override
   public TCByteBuffer putLong(int index, long l) {
-    buffer.putLong(index, l);
+    accessBuffer().putLong(index, l);
     return this;
   }
 
   @Override
   public TCByteBuffer putShort(short s) {
-    buffer.putShort(s);
+    accessBuffer().putShort(s);
     return this;
   }
 
   @Override
   public TCByteBuffer putShort(int index, short s) {
-    buffer.putShort(index, s);
+    accessBuffer().putShort(index, s);
     return this;
   }
 
   @Override
   public TCByteBuffer duplicate() {
-    return new TCByteBufferImpl(buffer.duplicate());
+    return new TCByteBufferImpl(accessBuffer().duplicate());
   }
 
   @Override
   public TCByteBuffer put(TCByteBuffer src) {
-    buffer.put(src.getNioBuffer());
+    accessBuffer().put(src.getNioBuffer());
     return this;
   }
 
   @Override
   public TCByteBuffer slice() {
-    return new TCByteBufferImpl(buffer.slice());
+    return new TCByteBufferImpl(accessBuffer().slice());
   }
 
   @Override
   public int arrayOffset() {
-    return buffer.arrayOffset();
+    return accessBuffer().arrayOffset();
   }
 
   @Override
   public TCByteBuffer asReadOnlyBuffer() {
-    return new TCByteBufferImpl(buffer.asReadOnlyBuffer());
+    return new TCByteBufferImpl(accessBuffer().asReadOnlyBuffer());
   }
 
   @Override
   public boolean isReadOnly() {
-    return buffer.isReadOnly();
+    return accessBuffer().isReadOnly();
   }
 
   @Override
   public String toString() {
-    return (buffer == null) ? "TCByteBufferJDK14(null buffer)" : "TCByteBufferJDK14@" + System.identityHashCode(this)
-                                                                 + "(" + buffer.toString() + ")";
+    return (accessBuffer() == null) ? "TCByteBufferJDK14(null buffer)" : "TCByteBufferJDK14@" + System.identityHashCode(this)
+                                                                 + "(" + accessBuffer().toString() + ")";
   }
 
   @Override
   public boolean hasArray() {
-    return buffer.hasArray();
+    return accessBuffer().hasArray();
   }
 
   @Override
   public TCByteBuffer reInit() {
     clear();
+    lock();
     return this;
   }
 
@@ -548,5 +558,36 @@ public class TCByteBufferImpl implements TCByteBuffer {
                                                                             "Unsigned byte value must in range 0-255 inclusive"); }
     put((byte) (value & 0xFF));
     return this;
+  }
+
+  void verifyLocked() {
+    if (ACCESS_CHECK && !lock.get()) {
+      throw new IllegalStateException("buffer is not locked");
+    }
+  }
+
+  private void checkLock() {
+    if (ACCESS_CHECK && lock.get()) {
+      throw new IllegalStateException("buffer is locked");
+    }
+  }
+
+  private void lock() {
+    if (ACCESS_CHECK && !lock.compareAndSet(false, true)) {
+      throw new IllegalStateException("buffer is already locked");
+    }
+  }
+
+  @Override
+  public TCByteBuffer unlock() {
+    if (ACCESS_CHECK && !lock.compareAndSet(true, false)) {
+      throw new IllegalStateException("buffer is not locked");
+    }
+    return this;
+  }
+
+  private ByteBuffer accessBuffer() {
+    checkLock();
+    return hiddenBuffer;
   }
 }

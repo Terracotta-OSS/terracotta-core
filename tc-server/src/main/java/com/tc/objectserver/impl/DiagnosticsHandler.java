@@ -29,10 +29,7 @@ import com.tc.entity.DiagnosticMessage;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.spi.Guardian;
 import com.tc.util.State;
@@ -46,11 +43,12 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
+import com.tc.net.protocol.tcm.TCAction;
 
 /**
  *
  */
-public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implements TCMessageSink {
+public class DiagnosticsHandler extends AbstractEventHandler<TCAction> {
   
   private final static Logger logger = LoggerFactory.getLogger(DiagnosticsHandler.class);
   private final DistributedObjectServer server;
@@ -62,16 +60,11 @@ public class DiagnosticsHandler extends AbstractEventHandler<TCMessage> implemen
   }
   
   @Override
-  public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-    processMessage(message);
-  }
-
-  @Override
-  public void handleEvent(TCMessage context) throws EventHandlerException {
+  public void handleEvent(TCAction context) throws EventHandlerException {
     processMessage(context);
   }
   
-  private void processMessage(TCMessage message) {
+  private void processMessage(TCAction message) {
     Charset set = Charset.forName("UTF-8");
     MessageChannel channel = message.getChannel();
     try {

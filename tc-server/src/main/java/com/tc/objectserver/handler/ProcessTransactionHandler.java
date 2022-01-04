@@ -35,7 +35,6 @@ import com.tc.exception.ServerExceptionType;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.utils.L2Utils;
 import com.tc.object.ClientInstanceID;
@@ -88,6 +87,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityMessage;
+import com.tc.net.protocol.tcm.TCAction;
 
 public class ProcessTransactionHandler implements ReconnectListener {
 
@@ -120,7 +120,7 @@ public class ProcessTransactionHandler implements ReconnectListener {
     @Override
     public void handleEvent(ResponseMessage context) throws EventHandlerException {
       NodeID destinationID = context.getResponse().getDestinationNodeID();
-      TCMessage response = context.getResponse();
+      TCAction response = context.getResponse();
             
       if (response instanceof VoltronEntityMultiResponse) {
         VoltronEntityMultiResponse voltronEntityMultiResponse = (VoltronEntityMultiResponse)response;

@@ -68,7 +68,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public void addClassMapping(TCMessageType messageType, Class<? extends TCMessage> messageClass) {
+  public void addClassMapping(TCMessageType messageType, Class<? extends TCAction> messageClass) {
     throw new UnsupportedOperationException();
   }
 
