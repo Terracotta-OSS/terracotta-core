@@ -18,9 +18,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutput;
-import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -32,6 +29,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
 
@@ -260,6 +258,11 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   @Override
   public ConnectionID getConnectionID() {
+    return null;
+  }
+
+  @Override
+  public SessionID getSessionID() {
     return null;
   }
 }

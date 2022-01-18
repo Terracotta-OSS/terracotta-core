@@ -62,8 +62,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.object.session.SessionManagerImpl;
-import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handler.ReceiveGroupMessageHandler;
@@ -597,18 +595,11 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
 
     if (isStopped.get()) return;
 
-    SessionProvider sessionProvider = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
-      @Override
-      public Sequence newSequence() {
-        return new SimpleSequence();
-      }
-    });
-
     communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
 
     ProductID product = ProductID.DISCOVERY;
-    ClientMessageChannel channel = communicationsManager.createClientChannel(product, sessionProvider, 2_000 /*  timeout */);
+    ClientMessageChannel channel = communicationsManager.createClientChannel(product, 2_000 /*  timeout */);
 
     channel.addListener(listener);
     channel.open(serverAddress);

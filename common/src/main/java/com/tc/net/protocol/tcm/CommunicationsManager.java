@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
 import com.tc.text.PrettyPrintable;
 import java.net.InetSocketAddress;
@@ -53,7 +52,7 @@ public interface CommunicationsManager extends PrettyPrintable {
    *        giving up.
    */
 
-  public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout);
+  public ClientMessageChannel createClientChannel(ProductID product, int timeout);
     
   public NetworkListener createListener(InetSocketAddress addr, Predicate<MessageChannel> transportDisconnectRemovesChannel,
                                         ConnectionIDFactory connectionIdFactory, Predicate<MessageTransport> validation);

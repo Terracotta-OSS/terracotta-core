@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
@@ -37,7 +36,6 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
-import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -49,7 +47,6 @@ import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.TransportNetworkStackHarnessFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.proxy.TCPProxy;
-import com.tc.object.session.NullSessionManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -299,7 +296,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                       new NullConnectionPolicy());
 
     ClientMessageChannel clientMsgCh = clientComms
-        .createClientChannel(ProductID.STRIPE, new NullSessionManager(),
+        .createClientChannel(ProductID.STRIPE,
                              1000);
     return clientMsgCh;
   }

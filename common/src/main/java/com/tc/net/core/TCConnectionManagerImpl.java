@@ -63,7 +63,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final SocketParams            socketParams;
   private final BufferManagerFactory    bufferManagerFactory;
 
-  private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(null, TCByteBufferFactory.getFixedBufferSize(), 16 * 1024);
+  private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(TCByteBufferFactory.getFixedBufferSize(), 16 * 1024);
 
   public TCConnectionManagerImpl() {
     this("ConnectionMgr", 0, new CachingClearTextBufferManagerFactory());

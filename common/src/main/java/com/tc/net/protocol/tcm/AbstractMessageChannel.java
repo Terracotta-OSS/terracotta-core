@@ -30,6 +30,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import java.io.IOException;
@@ -337,6 +338,11 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
       return "Status:" + this.state.toString();
     }
 
+  }
+
+  @Override
+  public SessionID getSessionID() {
+    return sendLayer.getSessionID();
   }
 
   // for testing purpose

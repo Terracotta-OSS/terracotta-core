@@ -18,12 +18,11 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.bytes.TCByteBuffer;
-import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.ProductID;
 import com.tc.net.protocol.transport.ConnectionID;
+import com.tc.object.session.SessionID;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -98,4 +97,6 @@ public interface NetworkLayer {
   public ProductID getProductID();
   
   public ConnectionID getConnectionID();
+
+  public SessionID getSessionID();
 }

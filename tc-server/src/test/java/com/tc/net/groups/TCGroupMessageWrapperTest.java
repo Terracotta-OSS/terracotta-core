@@ -48,7 +48,6 @@ import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
-import com.tc.object.session.NullSessionManager;
 import com.tc.net.core.ProductID;
 import com.tc.util.State;
 import com.tc.util.UUID;
@@ -73,8 +72,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
 
   private final static String                     LOCALHOST      = "localhost";
   MessageMonitor                                  monitor        = new NullMessageMonitor();
-  final NullSessionManager                        sessionManager = new NullSessionManager();
-  final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
+  final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(monitor);
   final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
   private TCConnectionManager                     clientConns;
   private TCConnectionManager                     serverConns;  
@@ -154,7 +152,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     ClientMessageChannel channel;
     clientComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel = clientComms
-        .createClientChannel(ProductID.SERVER, sessionManager,
+        .createClientChannel(ProductID.SERVER,
                              3000);
     channel.open(InetSocketAddress.createUnresolved(LOCALHOST, lsnr.getBindPort()));
 

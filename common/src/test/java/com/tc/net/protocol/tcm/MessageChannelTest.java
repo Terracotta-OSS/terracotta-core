@@ -38,7 +38,6 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.protocol.transport.TransportHandshakeException;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
-import com.tc.object.session.NullSessionManager;
 import com.tc.net.core.ProductID;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -48,7 +47,6 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -577,7 +575,7 @@ try {
 
   private ClientMessageChannel createClientMessageChannel(ProductID product, CommunicationsManager clComms) {
     clComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    ClientMessageChannel ch = clientComms.createClientChannel(product, new NullSessionManager(), WAIT);
+    ClientMessageChannel ch = clientComms.createClientChannel(product, WAIT);
     return ch;
   }
 

@@ -43,7 +43,6 @@ import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
-import com.tc.object.session.NullSessionManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.TCTimeoutException;
@@ -91,7 +90,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                       connMgr,
                                                                       new NullConnectionPolicy());
     ClientMessageChannel clientMsgCh = clientComms
-        .createClientChannel(ProductID.SERVER, new NullSessionManager(),
+        .createClientChannel(ProductID.SERVER,
                              1000);
     return clientMsgCh;
   }

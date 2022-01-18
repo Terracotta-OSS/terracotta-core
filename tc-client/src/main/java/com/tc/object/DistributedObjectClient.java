@@ -69,8 +69,6 @@ import com.tc.object.msg.ClientHandshakeResponse;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.request.MultiRequestReceiveHandler;
 import com.tc.object.request.RequestReceiveHandler;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionManagerImpl;
 import com.tc.cluster.ClientChannelEventController;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -84,8 +82,6 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.SetOnceRef;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 import com.tc.entity.DiagnosticResponse;
 import com.tc.entity.LinearVoltronEntityMultiResponse;
 import com.tc.entity.ReplayVoltronEntityMultiResponse;
@@ -231,12 +227,6 @@ public class DistributedObjectClient {
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     final int maxSize = tcProperties.getInt(TCPropertiesConsts.L1_SEDA_STAGE_SINK_CAPACITY);
 
-    final SessionManager sessionManager = new SessionManagerImpl(new SessionManagerImpl.SequenceFactory() {
-      @Override
-      public Sequence newSequence() {
-        return new SimpleSequence();
-      }
-    });
 //  weak reference to allow garbage collection if ref is dropped    
     Reference<DistributedObjectClient> ref = new WeakReference<>(this);
     this.threadGroup.addCallbackOnExitDefaultHandler((CallbackOnExitState state) -> {
@@ -272,7 +262,7 @@ public class DistributedObjectClient {
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
     ClientMessageChannel clientChannel = this.clientBuilder.createClientMessageChannel(this.communicationsManager,
-                                                                 sessionManager, socketTimeout);
+                                                                 socketTimeout);
 
 
     final ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(clientChannel::getClientID);
@@ -310,7 +300,7 @@ public class DistributedObjectClient {
     
     this.clientHandshakeManager = this.clientBuilder
         .createClientHandshakeManager(new ClientIDLogger(clientChannel, LoggerFactory
-                                          .getLogger(ClientHandshakeManagerImpl.class)), chmf, sessionManager,
+                                          .getLogger(ClientHandshakeManagerImpl.class)), chmf,
                                           this.uuid, this.name, pInfo.version(), pInfo.buildRevision(), clientEntityManager);
 
     ClientChannelEventController.connectChannelEventListener(clientChannel, clientHandshakeManager);

@@ -20,7 +20,6 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.net.core.ProductID;
 import com.tc.net.protocol.transport.MessageTransportInitiator;
-import com.tc.object.session.SessionProvider;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import org.junit.After;
@@ -52,9 +51,8 @@ public class ClientMessageChannelImplTest {
     System.out.println("setMessageTransportInitiator");
     TCMessageFactory factory = mock(TCMessageFactory.class);
     TCMessageRouter router = mock(TCMessageRouter.class);
-    SessionProvider provider = mock(SessionProvider.class);
     
-    ClientMessageChannelImpl instance = new ClientMessageChannelImpl(factory, router, provider, ProductID.DIAGNOSTIC);
+    ClientMessageChannelImpl instance = new ClientMessageChannelImpl(factory, router, ProductID.DIAGNOSTIC);
     instance.setMessageTransportInitiator(mock(MessageTransportInitiator.class));
     instance.close();
     instance.open(InetSocketAddress.createUnresolved("localhost", 9510));

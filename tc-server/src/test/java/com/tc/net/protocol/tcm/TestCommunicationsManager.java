@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransport;
-import com.tc.object.session.SessionProvider;
 import com.tc.net.core.ProductID;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -48,7 +47,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   }
 
   @Override
-  public ClientMessageChannel createClientChannel(ProductID product, SessionProvider provider, int timeout) {
+  public ClientMessageChannel createClientChannel(ProductID product, int timeout) {
     throw new UnsupportedOperationException(); 
   }
 

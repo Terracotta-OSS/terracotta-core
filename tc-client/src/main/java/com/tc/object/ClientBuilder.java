@@ -35,8 +35,6 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.ReconnectionRejectedHandler;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.net.core.TCConnectionManager;
 
 import java.util.Map;
@@ -45,7 +43,6 @@ import com.tc.net.protocol.tcm.TCAction;
 
 public interface ClientBuilder {
   ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                     SessionProvider sessionProvider,
                                                      int socketConnectTimeout);
 
   CommunicationsManager createCommunicationsManager(MessageMonitor monitor,
@@ -59,7 +56,6 @@ public interface ClientBuilder {
 
   ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                       ClientHandshakeMessageFactory chmf,
-                                                      SessionManager sessionManager,
                                                       String uuid,
                                                       String name,
                                                       String clientVersion,

@@ -25,7 +25,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ClearTextBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
@@ -37,7 +36,6 @@ import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
-import com.tc.object.session.NullSessionManager;
 import com.tc.net.core.ProductID;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -111,7 +109,7 @@ public class LazyHandshakeTest extends TCTestCase {
 
   private ClientMessageChannel createClientMessageChannel() {
     return clientComms
-        .createClientChannel(ProductID.STRIPE, new NullSessionManager(),
+        .createClientChannel(ProductID.STRIPE,
                              (int) PROXY_SYNACK_DELAY);
   }
 

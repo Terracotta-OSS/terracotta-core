@@ -40,8 +40,6 @@ import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
-import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionProvider;
 
 import java.util.Map;
 import java.util.Properties;
@@ -61,9 +59,8 @@ public class StandardClientBuilder implements ClientBuilder {
 
   @Override
   public ClientMessageChannel createClientMessageChannel(CommunicationsManager commMgr,
-                                                         SessionProvider sessionProvider, 
                                                          int socketConnectTimeout) {
-    ClientMessageChannel cmc = commMgr.createClientChannel(getTypeOfClient(), sessionProvider, socketConnectTimeout);
+    ClientMessageChannel cmc = commMgr.createClientChannel(getTypeOfClient(), socketConnectTimeout);
     if (listener != null){
       cmc.addClientConnectionErrorListener(listener);
     }
@@ -86,13 +83,12 @@ public class StandardClientBuilder implements ClientBuilder {
   @Override
   public ClientHandshakeManager createClientHandshakeManager(Logger logger,
                                                              ClientHandshakeMessageFactory chmf, 
-                                                             SessionManager sessionManager,
                                                              String uuid, 
                                                              String name, 
                                                              String clientVersion,
                                                              String clientRevision,
                                                              ClientEntityManager entity) {
-    return new ClientHandshakeManagerImpl(logger, chmf, sessionManager, uuid, name, clientVersion, clientRevision, entity);
+    return new ClientHandshakeManagerImpl(logger, chmf, uuid, name, clientVersion, clientRevision, entity);
   }
 
   @Override

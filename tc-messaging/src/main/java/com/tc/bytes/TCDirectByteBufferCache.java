@@ -18,12 +18,15 @@
  */
 package com.tc.bytes;
 
+import com.tc.util.concurrent.SetOnceFlag;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.AbstractQueue;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -34,25 +37,30 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
   private final ReferenceQueue<TCByteBuffer> gcqueue = new ReferenceQueue<>();
   private final Set<Reference<? extends TCByteBuffer>> refs = ConcurrentHashMap.newKeySet();
-  private final TCDirectByteBufferCache parent;
+  private final Queue<TCByteBuffer> parent;
 
   private final int size;
   private final int limit;
   private final Deque<TCByteBuffer> localpool = new ConcurrentLinkedDeque<>();
+  private final SetOnceFlag closed = new SetOnceFlag();
 
   public TCDirectByteBufferCache() {
     this(TCByteBufferFactory.getFixedBufferSize());
   }
 
   public TCDirectByteBufferCache(int size) {
-    this(null, size, Integer.MAX_VALUE);
+    this(new NullQueue(), size, Integer.MAX_VALUE);
   }
 
-  public TCDirectByteBufferCache(TCDirectByteBufferCache parent) {
+  public TCDirectByteBufferCache(int size, int limit) {
+    this(new NullQueue(), size, limit);
+  }
+
+  public TCDirectByteBufferCache(Queue<TCByteBuffer> parent) {
     this(parent, TCByteBufferFactory.getFixedBufferSize(), Integer.MAX_VALUE);
   }
   
-  public TCDirectByteBufferCache(TCDirectByteBufferCache parent, int size, int limit) {
+  private TCDirectByteBufferCache(Queue<TCByteBuffer> parent, int size, int limit) {
     this.parent = parent;
     this.size = size;
     this.limit = limit;
@@ -86,17 +94,19 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
     if (e instanceof TCByteBufferImpl) {
       ((TCByteBufferImpl)e).verifyLocked();
     }
-    return (localpool.size() > limit) ? false : localpool.offerFirst(e);
+    return (localpool.size() > limit || closed.isSet()) ? parent.offer(e) : localpool.offerFirst(e);
   }
 
   @Override
   public TCByteBuffer poll() {
     processReferencePool();
+    if (closed.isSet()) {
+      return null;
+    }
     TCByteBuffer buffer = localpool.pollLast();
     if (buffer == null) {
-      if (parent != null) {
-        buffer = parent.poll();
-      } else {
+      buffer = parent.poll();
+      if (buffer == null) {
         buffer = new TCByteBufferImpl(size, true);
         refs.add(new SoftReference<>(buffer, gcqueue));
       }
@@ -116,8 +126,39 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
   }
 
   public void close() {
-    if (parent != null) {
-      localpool.forEach(parent::offer);
+    if (closed.attemptSet()) {
+      while (!localpool.isEmpty()) {
+        parent.offer(localpool.pop());
+      }
     }
+  }
+
+  private static class NullQueue extends AbstractQueue<TCByteBuffer> {
+
+    @Override
+    public Iterator<TCByteBuffer> iterator() {
+      return Collections.emptyIterator();
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    public boolean offer(TCByteBuffer e) {
+      return false;
+    }
+
+    @Override
+    public TCByteBuffer poll() {
+      return null;
+    }
+
+    @Override
+    public TCByteBuffer peek() {
+      return null;
+    }
+    
   }
 }

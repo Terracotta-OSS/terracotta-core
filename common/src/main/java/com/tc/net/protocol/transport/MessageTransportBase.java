@@ -30,6 +30,7 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.Assert;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -403,6 +404,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
 
   protected synchronized final void clearConnectionID() {
     this.connectionId = new ConnectionID(JvmIDUtil.getJvmID(), ChannelID.NULL_ID.toLong());
+  }
+
+  @Override
+  public SessionID getSessionID() {
+    TCConnection conn = getConnection();
+    return conn == null ? SessionID.NULL_ID : new SessionID(System.identityHashCode(conn));
   }
 
   @Override

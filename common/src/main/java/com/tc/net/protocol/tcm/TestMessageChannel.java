@@ -30,6 +30,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.MessageTransport;
 import com.tc.net.core.ProductID;
+import com.tc.object.session.SessionID;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import java.io.IOException;
@@ -198,5 +199,12 @@ public class TestMessageChannel implements MessageChannel {
   @Override
   public ConnectionID getConnectionID() {
     return null;
-  }  
+  }
+
+  @Override
+  public SessionID getSessionID() {
+    return null;
+  }
+
+
 }

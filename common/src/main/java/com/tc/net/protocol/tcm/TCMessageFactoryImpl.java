@@ -21,7 +21,6 @@ package com.tc.net.protocol.tcm;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.session.SessionID;
-import com.tc.object.session.SessionProvider;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -32,10 +31,8 @@ import java.util.Map;
 public class TCMessageFactoryImpl implements TCMessageFactory {
   private final Map<TCMessageType, GeneratedMessageFactory> generators = new EnumMap<>(TCMessageType.class);
   private final MessageMonitor  monitor;
-  private final SessionProvider sessionProvider;
 
-  public TCMessageFactoryImpl(SessionProvider sessionProvider, MessageMonitor monitor) {
-    this.sessionProvider = sessionProvider;
+  public TCMessageFactoryImpl(MessageMonitor monitor) {
     this.monitor = monitor;
   }
 
@@ -43,7 +40,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   public TCAction createMessage(MessageChannel source, TCMessageType type, TCByteBufferOutputStream output)
       throws UnsupportedMessageTypeException {
     final GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(this.sessionProvider.getSessionID(), this.monitor,
+    return factory.createMessage(source.getSessionID(), this.monitor,
                                  output, source, type);
   }
 
@@ -51,7 +48,7 @@ public class TCMessageFactoryImpl implements TCMessageFactory {
   public TCAction createMessage(MessageChannel source, TCMessageType type, TCMessageHeader header,
                                  TCByteBufferInputStream data) {
     final GeneratedMessageFactory factory = lookupFactory(type);
-    return factory.createMessage(this.sessionProvider.getSessionID(), this.monitor, source,
+    return factory.createMessage(source.getSessionID(), this.monitor, source,
                                  header, data);
   }
 
