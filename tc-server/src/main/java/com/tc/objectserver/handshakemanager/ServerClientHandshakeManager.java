@@ -32,7 +32,9 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.utils.L2Utils;
+import com.tc.object.ClientInstanceID;
 import com.tc.object.EntityDescriptor;
+import com.tc.object.FetchID;
 import com.tc.object.msg.ClientEntityReferenceContext;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -40,6 +42,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.api.ManagedEntity;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
+import com.tc.objectserver.entity.PlatformEntity;
 import com.tc.objectserver.entity.ReconnectListener;
 import com.tc.objectserver.entity.ReferenceMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
@@ -232,7 +235,7 @@ public class ServerClientHandshakeManager {
     notifyComplete(!cids.isEmpty());
     // Tell the transaction handler the message to replay any resends we received.  Schedule a noop 
     // in case all the clients are waiting on resends
-    voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.NULL_ID, false));
+    voltron.addToSink(new LocalPipelineFlushMessage(EntityDescriptor.createDescriptorForInvoke(PlatformEntity.PLATFORM_FETCH_ID, ClientInstanceID.NULL_ID), false));
   }
 
   public void stop() {

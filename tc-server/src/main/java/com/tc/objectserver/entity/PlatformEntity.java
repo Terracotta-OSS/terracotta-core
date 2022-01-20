@@ -84,6 +84,11 @@ public class PlatformEntity implements ManagedEntity {
   }
 
   @Override
+  public boolean isCompatibleEntity(EntityID type) {
+    return false;
+  }
+
+  @Override
   public boolean canDelete() { return false; }
 
   @Override

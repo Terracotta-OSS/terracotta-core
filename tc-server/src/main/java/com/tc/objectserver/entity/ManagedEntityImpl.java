@@ -176,6 +176,11 @@ public class ManagedEntityImpl implements ManagedEntity {
   }
 
   @Override
+  public boolean isCompatibleEntity(EntityID type) {
+    return factory.handlesEntityType(type.getClassName()) && type.getEntityName().equals(id.getEntityName());
+  }
+
+  @Override
   public long getVersion() {
     return version;
   }
