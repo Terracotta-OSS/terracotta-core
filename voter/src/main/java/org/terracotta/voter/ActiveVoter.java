@@ -170,7 +170,15 @@ public class ActiveVoter implements AutoCloseable {
             if (response >= 0) {
               registrationLatch.complete(voterManager);
             } else {
-              LOGGER.warn("Registration with {} in state {} failed. Retrying...", voterManager.getTargetHostPort(), voterManager.getServerState());
+              StringBuilder message = new StringBuilder();
+              message.append(String.format("Registration with %s in state %s failed. ",
+                  voterManager.getTargetHostPort(), voterManager.getServerState()));
+              long voterLimit = Math.max(0, voterManager.getRegisteredVoterLimit());
+              if (voterManager.getRegisteredVoterCount() >= voterLimit) {
+                message.append(String.format("Configured voter limit (%d) has already been reached. ", voterLimit));
+              }
+              message.append("Retrying...");
+              LOGGER.warn(message.toString());
             }
           } else {
             LOGGER.info("State of {}: {}. Continuing the search for an active server.", voterManager.getTargetHostPort(), serverState);

@@ -33,6 +33,12 @@ public interface ServerVoterManager extends VoterManagerMBean {
    * @return the total number of votes received so far
    */
   int getVoteCount();
+
+  /**
+   *
+   * @return the configured limit of voters
+   */
+  int getVoterLimit();
   
     /**
    *

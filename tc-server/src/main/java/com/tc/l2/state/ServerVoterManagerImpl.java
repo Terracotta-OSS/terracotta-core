@@ -162,6 +162,11 @@ public class ServerVoterManagerImpl extends AbstractTerracottaMBean implements S
   }
 
   @Override
+  public int getVoterLimit() {
+    return voterLimit.get();
+  }
+
+  @Override
   public boolean overrideVote(String id) {
     logger.info("Override vote received from {}", id);
     this.overrideVote = true;

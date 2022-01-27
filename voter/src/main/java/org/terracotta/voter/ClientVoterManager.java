@@ -64,4 +64,14 @@ public interface ClientVoterManager extends VoterManager {
   void zombie();
   
   boolean isConnected();
+
+  /**
+   * @return the number of voters that have been registered with the server.
+   */
+  long getRegisteredVoterCount() throws TimeoutException;
+
+  /**
+   * @return the maximum number of voters that can be registered with the server.
+   */
+  long getRegisteredVoterLimit() throws TimeoutException;
 }

@@ -189,4 +189,16 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public String toString() {
     return "ClientVoterManagerImpl{" + "hostPort=" + hostPort + ", connection=" + diagnostics + '}';
   }
+
+  @Override
+  public long getRegisteredVoterCount() throws TimeoutException {
+    String result = processInvocation(diagnostics.invoke(MBEAN_NAME, "getRegisteredVoters"));
+    return Long.parseLong(result);
+  }
+
+  @Override
+  public long getRegisteredVoterLimit() throws TimeoutException {
+    String result = processInvocation(diagnostics.invoke(MBEAN_NAME, "getVoterLimit"));
+    return Long.parseLong(result);
+  }
 }
