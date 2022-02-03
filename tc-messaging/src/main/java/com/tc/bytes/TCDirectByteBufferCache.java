@@ -24,12 +24,12 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.AbstractQueue;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  *
@@ -40,8 +40,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
   private final Queue<TCByteBuffer> parent;
 
   private final int size;
-  private final int limit;
-  private final Deque<TCByteBuffer> localpool = new ConcurrentLinkedDeque<>();
+  private final Queue<TCByteBuffer> localpool;
   private final SetOnceFlag closed = new SetOnceFlag();
 
   public TCDirectByteBufferCache() {
@@ -63,7 +62,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
   private TCDirectByteBufferCache(Queue<TCByteBuffer> parent, int size, int limit) {
     this.parent = parent;
     this.size = size;
-    this.limit = limit;
+    this.localpool = new LinkedBlockingQueue<>(limit);
   }
 
   private void processReferencePool() {
@@ -94,7 +93,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
     if (e instanceof TCByteBufferImpl) {
       ((TCByteBufferImpl)e).verifyLocked();
     }
-    return (localpool.size() > limit || closed.isSet()) ? parent.offer(e) : localpool.offerFirst(e);
+    return (closed.isSet() || !localpool.offer(e)) ? parent.offer(e) : true;
   }
 
   @Override
@@ -103,7 +102,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
     if (closed.isSet()) {
       return null;
     }
-    TCByteBuffer buffer = localpool.pollLast();
+    TCByteBuffer buffer = localpool.poll();
     if (buffer == null) {
       buffer = parent.poll();
       if (buffer == null) {
@@ -128,7 +127,7 @@ public class TCDirectByteBufferCache extends AbstractQueue<TCByteBuffer> {
   public void close() {
     if (closed.attemptSet()) {
       while (!localpool.isEmpty()) {
-        parent.offer(localpool.pop());
+        parent.offer(localpool.remove());
       }
     }
   }

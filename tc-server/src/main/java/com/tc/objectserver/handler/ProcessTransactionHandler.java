@@ -80,7 +80,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -127,7 +126,9 @@ public class ProcessTransactionHandler implements ReconnectListener {
         VoltronEntityMultiResponse sub = (VoltronEntityMultiResponse)response.getChannel().createMessage(TCMessageType.VOLTRON_ENTITY_MULTI_RESPONSE);
         invokeReturn.put((ClientID)destinationID, sub);
         voltronEntityMultiResponse.stopAdding();
-        waitForTransactions(voltronEntityMultiResponse);
+        if (!transactionOrderPersistenceFutures.isEmpty()) {
+          waitForTransactions(voltronEntityMultiResponse);
+        }
       } else if (response instanceof VoltronEntityAppliedResponse) {
         waitForTransactionOrderPersistenceFuture(((VoltronEntityAppliedResponse)response).getTransactionID());
       } else {

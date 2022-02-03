@@ -1332,6 +1332,7 @@ public class ManagedEntityImpl implements ManagedEntity {
       notifyAll();
     }
 
+    @Override
     public void accept(ActivePassiveAckWaiter waiter) {
       try {
         setWaitFor(waiter);
