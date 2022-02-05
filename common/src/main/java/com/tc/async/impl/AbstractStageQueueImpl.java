@@ -36,16 +36,18 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   private volatile boolean closed = false;  // open at create
   private volatile boolean extraStats = true;  
   private volatile int maxDepth = 0;
+  private final int queueSize;
   private final MonitoringEventCreator<EC> monitoring;
   private final EventCreator<EC> creator;
   final Logger logger;
   final String stageName;
   
-  public AbstractStageQueueImpl(TCLoggerProvider loggerProvider, String stageName, EventCreator<EC> creator) {
+  public AbstractStageQueueImpl(TCLoggerProvider loggerProvider, String stageName, EventCreator<EC> creator, int queueSize) {
     this.logger = loggerProvider.getLogger(Sink.class.getName() + ": " + stageName);
     this.stageName = stageName;
     this.creator = creator;
     this.monitoring = new MonitoringEventCreator<>(stageName, creator);
+    this.queueSize = queueSize;
   }
   
   abstract SourceQueue[] getSources();
@@ -94,26 +96,15 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
       if (!stats.isEmpty()) {
         queueState.put("stats", stats);
         queueState.put("maxQueueDepth", maxDepth);
+        queueState.put("queueSize", queueSize);
       }
     }
     return queueState;
   }
   
   interface SourceQueue extends Source {
-    int clear();
-
-    @Override
-    boolean isEmpty();
-
-    @Override
-    Event poll(long timeout) throws InterruptedException;
     /*  returns queue depth at time of put  */
     int put(Event context) throws InterruptedException;
-
-    int size();
-
-    @Override
-    String getSourceName();
   }
 
   class HandledEvent<C> implements Event {
@@ -130,7 +121,7 @@ public abstract class AbstractStageQueueImpl<EC> implements StageQueue<EC> {
   }
   
   
-  static class CloseEvent<C> implements Event {
+  static class CloseEvent implements Event {
 
     public CloseEvent() {
     }

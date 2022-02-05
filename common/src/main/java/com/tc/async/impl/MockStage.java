@@ -81,11 +81,6 @@ public class MockStage implements Stage {
   }
 
   @Override
-  public void clear() {
-
-  }
-
-  @Override
   public String toString() {
     return "MockStage(" + name + ")";
   }

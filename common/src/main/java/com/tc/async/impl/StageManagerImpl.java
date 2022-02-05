@@ -127,10 +127,8 @@ public class StageManagerImpl implements StageManager {
     if (started) {
       throw new IllegalStateException("A new stage cannot be created, because StageManager is already started.");
     }
-
-    int capacity = maxSize >= 0 ? maxSize : Integer.MAX_VALUE;
     // Note that the queue factory is used by all the stages under this manager so it can't be type-safe.
-    Stage<EC> s = new StageImpl<>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, listener, capacity, canBeDirect, stallWarn);
+    Stage<EC> s = new StageImpl<>(loggerProvider, name, verification, handler, queueCount, group, queueFactory, listener, maxSize, canBeDirect, stallWarn);
     addStage(name, s);
     this.classVerifications.put(name,  verification);
     return s;
@@ -166,13 +164,6 @@ public class StageManagerImpl implements StageManager {
     stages.clear();
     this.classVerifications.clear();
     started = false;
-  }
-
-  @Override
-  public void cleanup() {
-    for (Stage<?> s : stages.values()) {
-      s.clear();
-    }
   }
 
   @SuppressWarnings("unchecked")

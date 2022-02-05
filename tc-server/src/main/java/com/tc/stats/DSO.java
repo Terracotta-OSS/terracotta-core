@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tc.management.TerracottaManagement;
+import com.tc.net.core.TCConnectionManager;
+import com.tc.net.groups.GroupManager;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -81,6 +83,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   
   private final Map<ObjectName, Client>             clientMap              = new HashMap<>();
   private final DSOChannelManagerMBean                 channelMgr;
+  private final TCConnectionManager                 connections;
+  private final GroupManager                        group;
   private final ChannelStats                           channelStats;
   private final ConnectionPolicy                       connectionPolicy;
   private final VoltronMessageHandler               messageHandler;
@@ -104,6 +108,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.connectionPolicy = managementContext.getConnectionPolicy();
     this.messageHandler = managementContext.getVoltronMessageHandler();
     this.messageSink = managementContext.getVoltronMessageSink();
+    this.connections = managementContext.getConnectionManager();
+    this.group = configContext.getL2Coordinator().getGroupManager();
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     channelMgr.addEventListener(new ChannelManagerListener());
     configContext.addShutdownItem(pool::shutdown);
@@ -122,6 +128,16 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  @Override
+  public int getBufferCount() {
+    return connections.getBufferCount();
+  }
+  
+  @Override
+  public int getGroupBufferCount() {
+    return group.getBufferCount();
+  }
+  
   @Override
   public List<Client> getConnectedClients() {
     synchronized (clientMap) {

@@ -503,22 +503,22 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     if (this.writeContexts.size() <= 0) {
       buildWriteContextsFromMessages();
     }
-    while (this.writeContexts.size() > 0) {
+    while (!this.writeContexts.isEmpty()) {
       WriteContext context = this.writeContexts.get(0);
-      final TCByteBuffer[] buffers = context.entireMessageData;
+      final TCByteBuffer[] bufs = context.entireMessageData;
 
       long bytesWritten = 0;
       // Do the write in a loop, instead of calling write(ByteBuffer[]).
       // This seems to avoid memory leaks and faster
-      for (int i = context.index, nn = buffers.length; i < nn; i++) {
-        final int written = bufferManager.forwardToWriteBuffer(buffers[i].getNioBuffer());
+      for (int i = context.index, nn = bufs.length; i < nn; i++) {
+        final int written = bufferManager.forwardToWriteBuffer(bufs[i].getNioBuffer());
         if (written == 0) {
           break;
         }
 
         bytesWritten += written;
 
-        if (buffers[i].hasRemaining()) {
+        if (bufs[i].hasRemaining()) {
           break;
         } else {
           context.incrementIndexAndCleanOld();

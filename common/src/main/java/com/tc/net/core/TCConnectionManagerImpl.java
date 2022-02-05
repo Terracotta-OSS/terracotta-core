@@ -318,5 +318,9 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   TCDirectByteBufferCache getBufferCache() {
     return buffers;
   }
+  
+  public int getBufferCount() {
+    return buffers.referenced();
+  }
 
 }

@@ -20,7 +20,6 @@ package com.tc.object.net;
 
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;

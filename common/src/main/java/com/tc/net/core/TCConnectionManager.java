@@ -93,4 +93,6 @@ public interface TCConnectionManager extends PrettyPrintable {
    * Get the associated comm implementation cotext -- used for testing only
    */
   public TCComm getTcComm();
+  
+  public int getBufferCount();
 }

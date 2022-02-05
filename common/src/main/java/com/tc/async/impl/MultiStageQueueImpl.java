@@ -21,7 +21,6 @@ package com.tc.async.impl;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Source;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
@@ -83,7 +82,7 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
                       TCLoggerProvider loggerProvider,
                       String stageName,
                       int queueSize) {
-    super(loggerProvider, stageName, creator);
+    super(loggerProvider, stageName, creator, queueSize);
     Assert.eval(queueCount > 0);
 
     if (queueCount >= 8) {
@@ -129,10 +128,9 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
   }
 
   private void createWorkerQueues(int queueCount, QueueFactory queueFactory, Class<EC> type, int queueSize, String stage) {
-    if (queueSize != Integer.MAX_VALUE && queueSize != 0) {
+    if (queueSize != Integer.MAX_VALUE && queueSize > 0) {
       queueSize = (int) Math.ceil(((double) queueSize) / queueCount);
     }
-    Assert.eval(queueSize >= 0);
 
     for (int i = 0; i < queueCount; i++) {
       this.sourceQueues[i] = new MultiSourceQueueImpl(queueFactory.createInstance(type, queueSize), v->this.fcheck = v, i);
@@ -247,16 +245,6 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
     return "StageQueue(" + this.stageName + ")";
   }
 
-  @Override
-  public int clear() {
-    int clearCount = 0;
-    for (MultiSourceQueueImpl sourceQueue : this.sourceQueues) {
-      clearCount += sourceQueue.clear();
-    }
-    this.logger.info("Cleared " + clearCount);
-    return clearCount;
-  }
-
   private static final class MultiSourceQueueImpl implements SourceQueue {
 
     private final Consumer<Integer> hint;
@@ -272,20 +260,6 @@ public class MultiStageQueueImpl<EC extends MultiThreadedEventContext> extends A
     @Override
     public String toString() {
       return "SourceQueueImpl{" + sourceIndex + "size=" + queue.size() + '}';
-    }
-
-    // XXX: poor man's clear.
-    @Override
-    public int clear() {
-      int cleared = 0;
-      try {
-        while (poll(0) != null) {
-          cleared++;
-        }
-        return cleared;
-      } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
-      }
     }
 
     @Override

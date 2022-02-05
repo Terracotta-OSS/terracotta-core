@@ -367,7 +367,7 @@ public class DistributedObjectServer {
     collectState(this.seda.getStageManager(), pp);
     collectState(this.persistor, pp);
     collectState(this.communicationsManager, pp);
-    collectState(new ClientHandshakePrettyPrintable(this.context.getChannelManager().getActiveChannels()), pp);
+    collectState(new ClientHandshakePrettyPrintable(this.managementContext.getChannelManager().getActiveChannels()), pp);
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
@@ -811,7 +811,7 @@ public class DistributedObjectServer {
     startStages(stageManager, toInit);
 
     // XXX: yucky casts
-    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager,channelStats,
+    this.managementContext = new ServerManagementContext((DSOChannelManagerMBean) channelManager, connectionManager, channelStats,
                                                          connectionPolicy, getOperationGuardian(platformServiceRegistry,
                                                                  channelLifeCycleHandler), voltron, voltronSink);
 

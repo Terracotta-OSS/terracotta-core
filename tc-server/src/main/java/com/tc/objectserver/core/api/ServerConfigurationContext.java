@@ -21,7 +21,6 @@ package com.tc.objectserver.core.api;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.object.net.ChannelStats;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 
 public interface ServerConfigurationContext extends ConfigurationContext {
@@ -51,8 +50,6 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String PLATFORM_INFORMATION_REQUEST                       = "platform_information_request";
 
   public L2Coordinator getL2Coordinator();
-
-  public DSOChannelManager getChannelManager();
 
   public ServerClientHandshakeManager getClientHandshakeManager();
 

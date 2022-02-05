@@ -18,6 +18,7 @@
  */
 package com.tc.objectserver.core.impl;
 
+import com.tc.net.core.TCConnectionManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManagerMBean;
@@ -31,16 +32,18 @@ import com.tc.text.PrettyPrintable;
 public class ServerManagementContext implements PrettyPrintable {
 
   private final DSOChannelManagerMBean        channelMgr;
+  private final TCConnectionManager           connections;
   private final ChannelStats                  channelStats;
   private final ConnectionPolicy              connectionPolicy;
   private final Guardian           guardian;
   private final VoltronMessageHandler handler;
   private final VoltronMessageSink msgSink;
 
-  public ServerManagementContext(DSOChannelManagerMBean channelMgr,ChannelStats channelStats,
+  public ServerManagementContext(DSOChannelManagerMBean channelMgr, TCConnectionManager connections, ChannelStats channelStats,
                                  ConnectionPolicy connectionPolicy, Guardian guard, VoltronMessageHandler handler,
                                  VoltronMessageSink msgs) {
     this.channelMgr = channelMgr;
+    this.connections = connections;
     this.channelStats = channelStats;
     this.connectionPolicy = connectionPolicy;
     this.guardian = guard;
@@ -58,6 +61,10 @@ public class ServerManagementContext implements PrettyPrintable {
   
   public ConnectionPolicy getConnectionPolicy() {
     return this.connectionPolicy;
+  }
+  
+  public TCConnectionManager getConnectionManager() {
+    return this.connections;
   }
   
   public Guardian getOperationGuardian() {

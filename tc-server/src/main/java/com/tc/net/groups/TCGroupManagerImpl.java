@@ -79,8 +79,6 @@ import com.tc.net.utils.L2Utils;
 import com.tc.spi.Guardian;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
-import com.tc.util.sequence.Sequence;
-import com.tc.util.sequence.SimpleSequence;
 import org.terracotta.configuration.ServerConfiguration;
 
 import java.io.IOException;
@@ -1435,6 +1433,10 @@ public class TCGroupManagerImpl implements GroupManager<AbstractGroupMessage>, C
   @Override
   public boolean isServerConnected(String nodeName) {
     return this.discover.isServerConnected(nodeName);
+  }
+  
+  public int getBufferCount() {
+    return connectionManager.getBufferCount();
   }
 
   private static void debugInfo(String message) {

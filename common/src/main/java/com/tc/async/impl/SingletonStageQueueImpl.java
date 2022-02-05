@@ -20,7 +20,6 @@ package com.tc.async.impl;
 
 
 import com.tc.async.api.Source;
-import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
@@ -52,14 +51,12 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
                           TCLoggerProvider loggerProvider,
                           String stageName,
                           int queueSize) {
-    super(loggerProvider, stageName, creator);
+    super(loggerProvider, stageName, creator, queueSize);
     this.sourceQueue = createWorkerQueue(queueFactory, type, queueSize);
   }
 
   private SourceQueueImpl createWorkerQueue(QueueFactory queueFactory, Class<EC> type, 
                                                                 int queueSize) {
-    Assert.eval(queueSize >= 0);
-
     return new SourceQueueImpl(queueFactory.createInstance(type, queueSize));
   }
 
@@ -112,13 +109,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     return "StageQueue(" + this.stageName + ")";
   }
 
-  @Override
-  public int clear() {
-    int clearCount = sourceQueue.clear();
-    this.logger.info("Cleared " + clearCount);
-    return clearCount;
-  }
-
   private final class SourceQueueImpl implements SourceQueue {
 
     private final BlockingQueue<Event> queue;
@@ -130,20 +120,6 @@ public class SingletonStageQueueImpl<EC> extends AbstractStageQueueImpl<EC> {
     @Override
     public String toString() {
       return "SourceQueueImpl{Singleton size=" + queue.size() + '}';
-    }
-
-    // XXX: poor man's clear.
-    @Override
-    public int clear() {
-      int cleared = 0;
-      try {
-        while (poll(0) != null) {
-          cleared++;
-        }
-        return cleared;
-      } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
-      }
     }
 
     @Override

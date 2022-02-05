@@ -216,25 +216,6 @@ public class StageImpl<EC> implements Stage<EC> {
   public void unpause() {
     paused = false;
   }
-
-  @Override
-  public void clear() {
-    boolean interrupted = Thread.interrupted();
-    int clearCount = this.stageQueue.clear();
-    inflight.add(-clearCount);
-    for (WorkerThread wt : threads) {
-      try {
-        if (wt != null) {
-          wt.waitForIdle();
-        }
-      } catch (InterruptedException ie) {
-        interrupted = true;
-      }
-    }
-    if (interrupted) {
-      Thread.currentThread().interrupt();
-    }
-  }
  
   private synchronized void startThreads(String contextId) {
     for (int i = 0; i < threads.length; i++) {
@@ -271,7 +252,11 @@ public class StageImpl<EC> implements Stage<EC> {
   }
 // for testing
   void waitForIdle() {
-    Arrays.stream(threads).forEach(t->t.waitForIdleUninterruptibly());
+    Arrays.stream(threads).forEach(t->{
+      while (!t.isIdle()) {
+        ThreadUtil.reallySleep(500);
+      }
+    });
   }
   
   @Override
@@ -290,8 +275,6 @@ public class StageImpl<EC> implements Stage<EC> {
   private class WorkerThread<EC> extends Thread {
     private final Source       source;
     private volatile boolean idle = false;
-    private final Object idleLock = new Object();
-    private boolean waitingForIdle = false;
     // these are single threaded, don't need special handling
     private long idleTime  = 0;
     private long runTime = 0;
@@ -316,7 +299,7 @@ public class StageImpl<EC> implements Stage<EC> {
     }
     
     public boolean isIdle() {
-      return this.idle;
+      return this.idle && this.source.isEmpty();
     }
 
     @Override
@@ -326,12 +309,12 @@ public class StageImpl<EC> implements Stage<EC> {
       while (!shutdown || !source.isEmpty()) {
         Event ctxt = null;
         try {
-          this.setToIdle();
           long stopped = System.nanoTime();
+          idle = true;
           ctxt = (spinner) ? source.poll(0) : source.poll(pollTime);
           if (ctxt != null) {
+            idle = false;
             long running = System.nanoTime();
-            this.idle = false;
             handleStageDebugPauses();
             idleTime += (running - stopped);
             ctxt.call();
@@ -367,48 +350,10 @@ public class StageImpl<EC> implements Stage<EC> {
             throw new TCRuntimeException("Uncaught exception in stage", e);
           }
         } finally {
-          this.setToIdle();
           // Aggressively null out the reference before going around the loop again. If you don't do this, the reference
           // to the context will exist until another context comes in. This can potentially keep many objects in memory
           // longer than necessary
           ctxt = null;
-        }
-      }
-    }
-    
-    private void setToIdle() {
-      if (this.idle != true && source.isEmpty()) {
-        this.idle = true;
-        synchronized (idleLock) {
-          if (waitingForIdle) {
-            idleLock.notifyAll();
-          }
-        }
-      }
-    }
-    
-    private void waitForIdleUninterruptibly() {
-      boolean interrupted = false;
-      boolean localIdle = false;
-      while (!localIdle) {
-        try {
-          waitForIdle();
-          localIdle = true;
-        } catch (InterruptedException ie) {
-          interrupted = true;
-        }
-      }
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-    
-    private void waitForIdle() throws InterruptedException {
-      while (!this.idle) {
-        synchronized (idleLock) {
-          waitingForIdle = true;
-          idleLock.wait();
-          waitingForIdle = false;
         }
       }
     }

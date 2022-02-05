@@ -85,7 +85,6 @@ public class StageImplTest {
   public void testRapidTeardown() throws Exception {
     TCLoggerProvider logger = new DefaultLoggerProvider();
     QueueFactory context = mock(QueueFactory.class);
-    when(context.createInstance(ArgumentMatchers.any())).thenReturn(new ArrayBlockingQueue<>(16));
     when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(new ArrayBlockingQueue<>(16));
     EventHandler handler = mock(EventHandler.class);
 
@@ -102,65 +101,6 @@ public class StageImplTest {
     instance.destroy();
     verify(handler).destroy();
     
-  }
-  
-  @Test
-  public void testSingletonClear() throws Exception {
-    TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory context = mock(QueueFactory.class);
-    ArrayBlockingQueue queue = new ArrayBlockingQueue<>(16);
-    when(context.createInstance(ArgumentMatchers.any())).thenReturn(queue);
-    when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
-    EventHandler handler = mock(EventHandler.class);
-
-    StageImpl<Object> instance = new StageImpl<Object>(logger, "mock", Object.class, handler, 1, null, context, null, 16, false, true);
-    Object event = new Object();
-    instance.getSink().addToSink(context);
-    instance.getSink().addToSink(context);
-    instance.getSink().addToSink(context);
-    instance.getSink().addToSink(context);
-    
-    Assert.assertEquals(4, instance.size());
-    
-    instance.clear();
-    
-    Assert.assertEquals(0, instance.size());
-    Assert.assertTrue(instance.isEmpty());
-  }
-  
-  @Test
-  public void testMultipleClear() throws Exception {
-    TCLoggerProvider logger = new DefaultLoggerProvider();
-    QueueFactory context = mock(QueueFactory.class);
-    ArrayBlockingQueue queue = new ArrayBlockingQueue<>(16);
-    when(context.createInstance(ArgumentMatchers.any())).thenReturn(queue);
-    when(context.createInstance(ArgumentMatchers.any(), anyInt())).thenReturn(queue);
-    EventHandler handler = mock(EventHandler.class);
-
-    StageImpl<MultiThreadedEventContext> instance = new StageImpl<>(logger, "mock", MultiThreadedEventContext.class, handler, 4, null, context, null, 16, false, true);
-    MultiThreadedEventContext event = new MultiThreadedEventContext() {
-      @Override
-      public Object getSchedulingKey() {
-        return null;
-      }
-
-      @Override
-      public boolean flush() {
-        return false;
-      }
-
-    };
-    instance.getSink().addToSink(event);
-    instance.getSink().addToSink(event);
-    instance.getSink().addToSink(event);
-    instance.getSink().addToSink(event);
-    
-    Assert.assertEquals(4, instance.size());
-    
-    instance.clear();
-    
-    Assert.assertEquals(0, instance.size());
-    Assert.assertTrue(instance.isEmpty());
   }
   
   private void testMultiContextFlush(int size) throws Exception {

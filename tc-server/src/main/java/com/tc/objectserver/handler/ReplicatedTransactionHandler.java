@@ -133,9 +133,6 @@ public class ReplicatedTransactionHandler {
     public void handleEvent(ReplicationMessage message) throws EventHandlerException {
       try {
         currentSequence = message.getSequenceID();
-        if (currentSequence >= 0) {
-          TripwireFactory.createReplicationEvent(SessionID.NULL_ID.toLong(), currentSequence).commit();
-        }
         processMessage(message);
       } catch (Throwable t) {
         // We don't expect to see an exception executing a replicated message.
