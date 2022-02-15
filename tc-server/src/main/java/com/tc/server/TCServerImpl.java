@@ -27,7 +27,6 @@ import org.terracotta.monitoring.PlatformStopException;
 import com.tc.async.api.SEDA;
 import com.tc.async.api.Stage;
 import com.tc.config.ServerConfigurationManager;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
@@ -43,10 +42,10 @@ import com.tc.objectserver.core.impl.GuardianContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.impl.JMXSubsystem;
+import com.tc.productinfo.ProductInfo;
 import com.tc.spi.Guardian;
 import com.tc.stats.DSO;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import java.io.ByteArrayOutputStream;
 
@@ -433,11 +432,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     } catch (InterruptedException ie) {
       throw new RuntimeException(ie);
     }
-  }
-
-  @Override
-  public void reloadConfiguration() throws ConfigurationSetupException {
-
   }
 
   @Override

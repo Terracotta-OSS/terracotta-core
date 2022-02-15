@@ -16,17 +16,18 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.repository;
+package com.tc.util;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
- * An object that holds onto an {@link XmlObject}, and lets you know when it changes.
+ *
  */
-public interface BeanRepository {
+public class TestBuildData extends BaseBuildInfo {
 
-  void ensureBeanIsOfClass(Class<?> theClass);
-
-  Object bean();
-
-  void setBean(Object bean, String description);
-
+  public TestBuildData(InputStream is) throws IOException {
+    super(is);
+  }
+  
 }

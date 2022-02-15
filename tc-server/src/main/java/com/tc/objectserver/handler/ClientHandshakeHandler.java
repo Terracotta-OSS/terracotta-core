@@ -30,8 +30,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.net.core.ProductID;
+import com.tc.productinfo.ProductInfo;
 import com.tc.spi.Guardian;
-import com.tc.util.ProductInfo;
 import com.tc.util.version.Version;
 import com.tc.util.version.VersionCompatibility;
 

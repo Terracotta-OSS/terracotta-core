@@ -38,7 +38,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.EntityManager;
 import com.tc.objectserver.entity.LocalPipelineFlushMessage;
 import com.tc.objectserver.handler.ProcessTransactionHandler;
-import com.tc.util.ProductInfo;
+import com.tc.productinfo.ProductInfo;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -41,7 +41,6 @@ import com.tc.logging.ClientIDLogger;
 import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -88,7 +87,6 @@ import com.tc.entity.ReplayVoltronEntityMultiResponse;
 import com.tc.logging.CallbackOnExitState;
 import com.tc.net.basic.BasicConnectionManager;
 import com.tc.net.core.ProductID;
-import com.tc.util.ProductInfo;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.TCMessageHydrateAndConvertSink;
@@ -97,7 +95,6 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -105,16 +102,15 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import com.tc.net.protocol.tcm.TCAction;
+import com.tc.productinfo.ProductInfo;
 
 
 /**

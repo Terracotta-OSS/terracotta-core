@@ -22,8 +22,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-
 import java.util.Optional;
 import java.util.Properties;
 
@@ -89,7 +87,7 @@ public class TCVoterMainTest {
 
     String[] args = new String[] {"-s", "foo:1234", "-s", "bar:2345"};
 
-    expectedException.expect(ConfigurationSetupException.class);
+    expectedException.expect(RuntimeException.class);
     expectedException.expectMessage("Usage of multiple -connect-to options not supported");
     voterMain.processArgs(args);
   }
@@ -99,7 +97,7 @@ public class TCVoterMainTest {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[0];
 
-    expectedException.expect(ConfigurationSetupException.class);
+    expectedException.expect(RuntimeException.class);
     expectedException.expectMessage("Neither the -vote-for option nor the regular -connect-to option provided");
     voterMain.processArgs(args);
   }
@@ -109,7 +107,7 @@ public class TCVoterMainTest {
     TCVoterMain voterMain = new TCVoterMain();
     String[] args = new String[] {"-s", "bar:baz"};
 
-    expectedException.expect(ConfigurationSetupException.class);
+    expectedException.expect(RuntimeException.class);
     expectedException.expectMessage("Invalid host:port combination provided");
     voterMain.processArgs(args);
   }

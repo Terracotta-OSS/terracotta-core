@@ -19,7 +19,6 @@
 package com.tc.object;
 
 import com.tc.client.ClientFactory;
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.lang.L1ThrowableHandler;
 import com.tc.lang.TCThreadGroup;
 import com.tc.net.core.ProductID;
@@ -59,7 +58,7 @@ public class DistributedObjectClientFactory {
     TCPropertiesImpl.getProperties().overwriteTcPropertiesFromConfig(props);
   }
 
-  public DistributedObjectClient create(Runnable shutdown) throws InterruptedException, ConfigurationSetupException, TimeoutException {
+  public DistributedObjectClient create(Runnable shutdown) throws InterruptedException, TimeoutException {
     L1ThrowableHandler throwableHandler = new L1ThrowableHandler(LoggerFactory.getLogger(DistributedObjectClient.class),
                                                                  new Callable<Void>() {
                                                                    @Override

@@ -158,7 +158,6 @@ import com.tc.services.TerracottaServiceProviderRegistryImpl;
 import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.startuplock.FileNotCreatedException;
@@ -203,6 +202,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.net.ClientID;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.CachingClearTextBufferManagerFactory;
+import com.tc.net.core.DefaultBufferManagerFactory;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.protocol.tcm.HydrateContext;
@@ -240,6 +240,7 @@ import java.util.concurrent.CountDownLatch;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
+import com.tc.productinfo.ProductInfo;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -917,13 +918,14 @@ public class DistributedObjectServer {
 
   private BufferManagerFactory getBufferManagerFactory(ServiceRegistry platformRegistry) {
     BufferManagerFactory bufferManagerFactory = null;
+    DefaultBufferManagerFactory.setBufferManagerFactory(new CachingClearTextBufferManagerFactory());
     try {
       bufferManagerFactory = platformRegistry.getService(new BasicServiceConfiguration<>(BufferManagerFactory.class));
     } catch (ServiceException e) {
       Assert.fail("Multiple BufferManagerFactory implementations found!");
     }
     if (bufferManagerFactory == null) {
-      bufferManagerFactory = new CachingClearTextBufferManagerFactory();
+      bufferManagerFactory = DefaultBufferManagerFactory.getBufferManagerFactory();
     }
     return bufferManagerFactory;
   }

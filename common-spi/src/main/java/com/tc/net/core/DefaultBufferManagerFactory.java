@@ -16,8 +16,19 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.config.schema.setup;
+package com.tc.net.core;
 
-public enum TopologyReloadStatus {
-  TOPOLOGY_CHANGE_ACCEPTABLE, TOPOLOGY_CHANGE_UNACCEPTABLE, TOPOLOGY_UNCHANGED, SPECIFY_MIRROR_GROUPS, SERVER_STILL_ALIVE
+/**
+ *
+ */
+public class DefaultBufferManagerFactory {
+  private static BufferManagerFactory DEFAULT;
+  
+  public static void setBufferManagerFactory(BufferManagerFactory d) {
+    DEFAULT = d;
+  }
+  
+  public static BufferManagerFactory getBufferManagerFactory() {
+    return DEFAULT;
+  }
 }

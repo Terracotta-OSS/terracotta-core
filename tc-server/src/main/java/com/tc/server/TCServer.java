@@ -21,11 +21,10 @@ package com.tc.server;
 import com.tc.stats.Client;
 import org.terracotta.monitoring.PlatformStopException;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.objectserver.impl.JMXSubsystem;
+import com.tc.productinfo.ProductInfo;
 import com.tc.spi.Pauseable;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ProductInfo;
 import com.tc.util.State;
 import org.terracotta.server.StopAction;
 
@@ -81,8 +80,6 @@ public interface TCServer extends Pauseable {
   boolean waitUntilShutdown();
 
   void dump();
-
-  void reloadConfiguration() throws ConfigurationSetupException;
 
   JMXSubsystem getJMX();
 

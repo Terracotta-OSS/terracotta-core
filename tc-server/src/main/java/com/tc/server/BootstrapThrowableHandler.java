@@ -20,7 +20,6 @@ package com.tc.server;
 
 import org.slf4j.Logger;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
 import com.tc.exception.RuntimeExceptionHelper;
@@ -87,7 +86,6 @@ public class BootstrapThrowableHandler implements ThrowableHandler {
   }
 
   private void registerStartupExceptionCallbackHandlers() {
-    addCallbackOnExitExceptionHandler(ConfigurationSetupException.class, new CallbackStartupExceptionLoggingAdapter());
     String bindExceptionExtraMessage = ".  Please make sure the server isn't already running or choose a different port.";
     addCallbackOnExitExceptionHandler(BindException.class,
                                       new CallbackStartupExceptionLoggingAdapter(bindExceptionExtraMessage));

@@ -21,6 +21,7 @@ package com.tc.object;
 import com.tc.net.core.BufferManagerFactory;
 import com.tc.net.core.BufferManagerFactorySupplier;
 import com.tc.net.core.ClearTextBufferManagerFactory;
+import com.tc.net.core.DefaultBufferManagerFactory;
 import com.tc.net.core.ProductID;
 import com.terracotta.diagnostic.DiagnosticClientBuilder;
 
@@ -33,6 +34,7 @@ public class StandardClientBuilderFactory implements ClientBuilderFactory {
   private final BufferManagerFactorySupplier supplier;
 
   public StandardClientBuilderFactory(String scheme) {
+    DefaultBufferManagerFactory.setBufferManagerFactory(new ClearTextBufferManagerFactory());
     BufferManagerFactorySupplier base = ClientBuilderFactory.get(BufferManagerFactorySupplier.class);
     this.scheme = scheme;
     if (base == null) {

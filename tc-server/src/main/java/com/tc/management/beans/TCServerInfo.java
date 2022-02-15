@@ -28,6 +28,7 @@ import com.tc.l2.state.ServerMode;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.productinfo.ProductInfo;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
@@ -35,7 +36,6 @@ import com.tc.server.TCServer;
 import com.tc.text.AbbreviatedMapListPrettyPrint;
 import com.tc.text.MapListPrettyPrint;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 

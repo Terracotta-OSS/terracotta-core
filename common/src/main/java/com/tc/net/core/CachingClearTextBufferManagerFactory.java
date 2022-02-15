@@ -26,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @author Ludovic Orban
  */
 public class CachingClearTextBufferManagerFactory implements BufferManagerFactory, PrettyPrintable {
   private final TCDirectByteBufferCache buffers = new TCDirectByteBufferCache(ClearTextBufferManager.BUFFER_SIZE_KB);
