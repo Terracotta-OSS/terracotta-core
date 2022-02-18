@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol;
 
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.ProductID;
@@ -99,4 +100,6 @@ public interface NetworkLayer {
   public ConnectionID getConnectionID();
 
   public SessionID getSessionID();
+  
+  public TCByteBufferOutputStream createOutput();
 }

@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -185,6 +186,11 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   @Override
   public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TCByteBufferOutputStream createOutput() {
     throw new UnsupportedOperationException();
   }
 

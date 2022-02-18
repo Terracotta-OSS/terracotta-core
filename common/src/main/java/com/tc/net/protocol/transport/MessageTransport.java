@@ -18,7 +18,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
@@ -56,6 +55,4 @@ public interface MessageTransport extends NetworkLayer, PrettyPrintable {
   public int getRemoteCallbackPort();
 
   public void initConnectionID(ConnectionID cid);
-
-  TCByteBufferOutputStream createOutputStream();
 }

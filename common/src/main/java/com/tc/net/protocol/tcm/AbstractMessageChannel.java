@@ -18,6 +18,7 @@
  */
 package com.tc.net.protocol.tcm;
 
+import com.tc.io.TCByteBufferOutputStream;
 import org.slf4j.Logger;
 
 import com.tc.net.ClientID;
@@ -120,12 +121,17 @@ abstract class AbstractMessageChannel implements MessageChannelInternal {
 
   @Override
   public TCAction createMessage(TCMessageType type) {
-    TCAction rv = this.msgFactory.createMessage(this, type, ((MessageTransport)sendLayer).createOutputStream());
+    TCAction rv = this.msgFactory.createMessage(this, type, createOutput());
     // TODO: set default channel specific information in the TC message header
 
     return rv;
   }
 
+  @Override
+  public TCByteBufferOutputStream createOutput() {
+    return sendLayer.createOutput();
+  }
+  
   private void fireChannelOpenedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
   }

@@ -413,7 +413,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   @Override
-  public TCByteBufferOutputStream createOutputStream() {
+  public TCByteBufferOutputStream createOutput() {
     TCConnection conn = getConnection();
     if (conn == null) {
       return new TCByteBufferOutputStream();
