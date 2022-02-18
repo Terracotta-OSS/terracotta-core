@@ -241,6 +241,9 @@ import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.server.ServerEnv;
 import com.tc.net.protocol.tcm.TCAction;
 import com.tc.productinfo.ProductInfo;
+import com.tc.productinfo.VersionCompatibility;
+import com.tc.util.version.CollectionVersionCompatibility;
+import com.tc.util.version.DefaultVersionCompatibility;
 
 /**
  * Startup and shutdown point. Builds and starts the server
@@ -685,8 +688,8 @@ public class DistributedObjectServer {
     if (consistencyMgr instanceof GroupEventsListener) {
       this.groupCommManager.registerForGroupEvents((GroupEventsListener)consistencyMgr);
     }
-
-    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler), 1, maxStageSize);
+    
+    final Stage<ClientHandshakeMessage> clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE, ClientHandshakeMessage.class, createHandShakeHandler(entityManager, processTransactionHandler, getVersionCompatibility()), 1, maxStageSize);
 
     Stage<HydrateContext> hydrator = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_STAGE, HydrateContext.class, new HydrateHandler(), L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
     Stage<TCAction> diagStage = stageManager.createStage(ServerConfigurationContext.MONITOR_STAGE, TCAction.class, new DiagnosticsHandler(this, this.server.getJMX()), 1, 1);
@@ -1262,6 +1265,17 @@ public class DistributedObjectServer {
     return -1;
   }
 
+  private VersionCompatibility getVersionCompatibility() {
+    Collection<VersionCompatibility> compat = serviceRegistry.subRegistry(0).getServices(()->VersionCompatibility.class);
+    if (compat == null || compat.isEmpty()) {
+      return new DefaultVersionCompatibility();
+    } else if (compat.size() == 1) {
+      return compat.iterator().next();
+    } else {
+      return new CollectionVersionCompatibility(compat);
+    }
+  }
+  
   public int getGroupPort() {
     final ServerConfiguration l2DSOConfig = this.configSetupManager.getServerConfiguration();
     final int configValue = l2DSOConfig.getGroupPort().getPort();
@@ -1289,8 +1303,8 @@ public class DistributedObjectServer {
     return configSetupManager;
   }
 
-  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler) {
-    return new ClientHandshakeHandler(entities, processTransactionHandler);
+  protected ClientHandshakeHandler createHandShakeHandler(EntityManager entities, ProcessTransactionHandler processTransactionHandler, VersionCompatibility versionCheck) {
+    return new ClientHandshakeHandler(entities, processTransactionHandler, versionCheck);
   }
 
   // for tests only

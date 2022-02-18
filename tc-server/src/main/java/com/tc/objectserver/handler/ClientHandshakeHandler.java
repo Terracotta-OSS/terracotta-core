@@ -31,9 +31,9 @@ import com.tc.objectserver.handshakemanager.ClientHandshakeException;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.net.core.ProductID;
 import com.tc.productinfo.ProductInfo;
+import com.tc.productinfo.VersionCompatibility;
 import com.tc.spi.Guardian;
 import com.tc.util.version.Version;
-import com.tc.util.version.VersionCompatibility;
 
 public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshakeMessage> {
 
@@ -42,11 +42,13 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
   private final EntityManager          entityManager;
   private final ProcessTransactionHandler transactionHandler;
   private final Version               serverVersion;
+  private final VersionCompatibility versionCheck;
 
-  public ClientHandshakeHandler(EntityManager entityManager, ProcessTransactionHandler transactionHandler) {
+  public ClientHandshakeHandler(EntityManager entityManager, ProcessTransactionHandler transactionHandler, VersionCompatibility versionCheck) {
     this.entityManager = entityManager;
     this.transactionHandler = transactionHandler;
     this.serverVersion = new Version(ProductInfo.getInstance().version());
+    this.versionCheck = versionCheck;
   }
 
   @Override
@@ -58,7 +60,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler<ClientHandshake
     try {
       if (!GuardianContext.validate(Guardian.Op.CONNECT_CLIENT, cid, clientMsg.getChannel())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "new connections not allowed");
-      } else if (VersionCompatibility.isNewer(client, serverVersion, 3)) {
+      } else if (versionCheck.isCompatibleClientServer(version, serverVersion.toString())) {
         this.handshakeManager.notifyClientRefused(clientMsg, "client version is newer than the server client version:" + clientMsg.getClientVersion() + " server version:" + serverVersion);
       } else if (clientMsg.getChannel().getProductID() == ProductID.DIAGNOSTIC) {
         this.handshakeManager.notifyDiagnosticClient(clientMsg);
