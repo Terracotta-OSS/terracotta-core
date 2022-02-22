@@ -41,7 +41,7 @@ public class DefaultVersionCompatibility implements VersionCompatibility {
   }
 
   private boolean isCompatibleClientServer(Version clientVersion, Version serverVersion) {
-    return !clientVersion.isNewer(serverVersion, 3);
+    return isCompatible(clientVersion, serverVersion) && !clientVersion.isNewer(serverVersion, 3);
   }
 
   private boolean isCompatibleServerServer(Version v1, Version v2) {

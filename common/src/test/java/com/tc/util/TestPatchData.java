@@ -27,8 +27,8 @@ import java.io.InputStream;
  */
 public class TestPatchData extends BasePatchInfo {
 
-  public TestPatchData(InputStream is) throws IOException {
-    super(is);
+  public TestPatchData() throws IOException {
+    super(TestBuildData.class.getResourceAsStream("TestPatchData.txt"));
   }
   
 }

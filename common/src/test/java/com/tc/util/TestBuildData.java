@@ -20,15 +20,14 @@ package com.tc.util;
 
 import com.tc.productinfo.BaseBuildInfo;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  *
  */
 public class TestBuildData extends BaseBuildInfo {
 
-  public TestBuildData(InputStream is) throws IOException {
-    super(is);
+  public TestBuildData() throws IOException {
+    super(TestBuildData.class.getResourceAsStream("TestBuildData.txt"));
   }
   
 }
