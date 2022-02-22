@@ -38,6 +38,7 @@
 package com.terracotta.connection;
 
 import com.tc.util.ManagedServiceLoader;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -50,7 +51,7 @@ import org.terracotta.entity.EntityResponse;
 
 public class EntityClientServiceFactory {
   private final ManagedServiceLoader loader;
-  private final Map<ClassLoader, List<Class<? extends EntityClientService>>> cachedEntities = new WeakHashMap<ClassLoader, List<Class<? extends EntityClientService>>>();
+  private final Map<ClassLoader, Collection<Class<? extends EntityClientService>>> cachedEntities = new WeakHashMap<>();
 
   public EntityClientServiceFactory() {
     loader = new ManagedServiceLoader();
@@ -58,7 +59,7 @@ public class EntityClientServiceFactory {
   
   public <T extends Entity, C, U> EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> creationServiceForType(Class<T> cls) {
     EntityClientService<T, C, ? extends EntityMessage, ? extends EntityResponse, U> foundService = null;
-    List<Class<? extends EntityClientService>> implementations = getEntityServices(cls.getClassLoader());
+    Collection<Class<? extends EntityClientService>> implementations = getEntityServices(cls.getClassLoader());
     for (Class<? extends EntityClientService> ctype : implementations) {
       EntityClientService instance = instantiate(ctype);
       if (instance.handlesEntityType(cls)) {
@@ -69,10 +70,10 @@ public class EntityClientServiceFactory {
     return foundService;
   }
   
-  private synchronized List<Class<? extends EntityClientService>> getEntityServices(ClassLoader cl) {
-    List<Class<? extends EntityClientService>> list = cachedEntities.get(cl);
+  private synchronized Collection<Class<? extends EntityClientService>> getEntityServices(ClassLoader cl) {
+    Collection<Class<? extends EntityClientService>> list = cachedEntities.get(cl);
     if (list == null) {
-      list = loader.getImplementations(EntityClientService.class, cl);
+      list = loader.getImplementationsTypes(EntityClientService.class, cl);
       cachedEntities.put(cl, list);
     }
     return list;

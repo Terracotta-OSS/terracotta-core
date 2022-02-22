@@ -69,6 +69,9 @@ public final class ProductInfo {
    * @throws ParseException If there is an error reading the timestamp format in build or patch data streams
    */
   ProductInfo(BuildInfo build, List<PatchInfo> patches, List<ExtensionInfo> extensions) throws IOException {    
+    if (build == null) {
+      build = new BaseBuildInfo(getClass().getResourceAsStream("/build-data.txt"));
+    }
     buildInfo = build;
 
     if (patches != null) {

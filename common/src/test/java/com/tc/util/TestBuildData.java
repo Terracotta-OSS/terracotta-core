@@ -18,6 +18,7 @@
  */
 package com.tc.util;
 
+import com.tc.productinfo.BaseBuildInfo;
 import java.io.IOException;
 import java.io.InputStream;
 

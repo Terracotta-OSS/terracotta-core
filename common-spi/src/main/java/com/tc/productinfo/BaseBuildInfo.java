@@ -16,9 +16,8 @@
  *  Terracotta, Inc., a Software AG company
  *
  */
-package com.tc.util;
+package com.tc.productinfo;
 
-import com.tc.productinfo.BuildInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
