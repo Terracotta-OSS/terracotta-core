@@ -310,7 +310,6 @@ public class DistributedObjectServer {
     this.server = server;
     this.serverBuilder = createServerBuilder(configSetupManager.getGroupConfiguration(), logger, server);
     this.timer = new SingleThreadedTimer(null, threadGroup);
-    this.timer.start();
     this.serviceRegistry = new TerracottaServiceProviderRegistryImpl();
     this.topologyManager = new TopologyManager(this.configSetupManager.getGroupConfiguration().getHostPorts(), ()-> {
       Configuration config = this.configSetupManager.getConfiguration();
@@ -371,7 +370,9 @@ public class DistributedObjectServer {
     collectState(this.seda.getStageManager(), pp);
     collectState(this.persistor, pp);
     collectState(this.communicationsManager, pp);
-    collectState(new ClientHandshakePrettyPrintable(this.managementContext.getChannelManager().getActiveChannels()), pp);
+    if (managementContext != null) {
+      collectState(new ClientHandshakePrettyPrintable(this.managementContext.getChannelManager().getActiveChannels()), pp);
+    }
     collectState(this.groupCommManager, pp);
     collectState(this.l2Coordinator, pp);
     collectState(this.entityManager, pp);
@@ -384,7 +385,9 @@ public class DistributedObjectServer {
 
   private static void collectState(PrettyPrintable prettyPrintable, PrettyPrinter prettyPrinter) {
     try {
-      prettyPrintable.prettyPrint(prettyPrinter);
+      if (prettyPrintable != null) {
+        prettyPrintable.prettyPrint(prettyPrinter);
+      }
     } catch (Throwable t) {
       prettyPrinter.println("unable to collect cluster state for " + prettyPrintable + " : " + t.getLocalizedMessage());
       StringWriter w = new StringWriter();
@@ -811,7 +814,8 @@ public class DistributedObjectServer {
                                                                        maxStageSize);
     this.context.addShutdownItem(passives::close);
     toInit.add(this.serverBuilder);
-
+    
+    this.timer.start();
     startStages(stageManager, toInit);
 
     // XXX: yucky casts
