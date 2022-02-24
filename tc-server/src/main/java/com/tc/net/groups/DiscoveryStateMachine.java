@@ -74,18 +74,18 @@ public class DiscoveryStateMachine implements ChannelEventListener {
     switchToState(initialState());
   }
 
-  protected DiscoveryState initialState() {
+  private DiscoveryState initialState() {
     return (STATE_INIT);
   }
 
-  protected synchronized void switchToState(DiscoveryState state) {
+  private synchronized void switchToState(DiscoveryState state) {
     Assert.assertNotNull(state);
     debugInfo("DiscoverStateMachine [" + node + "]: switching to state: " + state);
     this.current = state;
     state.enter();
   }
 
-  protected synchronized boolean switchToStateFrom(DiscoveryState from, DiscoveryState to) {
+  private synchronized boolean switchToStateFrom(DiscoveryState from, DiscoveryState to) {
     Assert.assertNotNull(from);
     Assert.assertNotNull(to);
     if (this.current == from) {
@@ -93,7 +93,7 @@ public class DiscoveryStateMachine implements ChannelEventListener {
       to.enter();
       return true;
     } else {
-      logger.warn("DiscoverStateMachine [" + node + "]: Ignored switching state from: " + from + ", to: " + to
+      debugInfo("DiscoverStateMachine [" + node + "]: Ignored switching state from: " + from + ", to: " + to
                   + ", current: " + current);
       return false;
     }
