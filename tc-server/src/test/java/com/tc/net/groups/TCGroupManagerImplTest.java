@@ -30,6 +30,7 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -40,6 +41,7 @@ import com.tc.object.session.SessionID;
 import com.tc.objectserver.impl.TopologyManager;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -57,9 +59,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Test;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.spy;
@@ -350,6 +355,42 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
+  @Test
+  public void testHalfDuplexClose() throws Exception {
+    int nGrp = 2;
+    TCPropertiesImpl.getProperties().setProperty("l2.healthcheck.l2.ping.enabled", "false");
+    TCPropertiesImpl.getProperties().setProperty("l2.healthcheck.l2.socketConnect", "false");
+    setupGroups(nGrp);
+
+    groups[0].registerForMessages(PlatformInfoRequest.class, listeners[0]);
+    groups[1].registerForMessages(PlatformInfoRequest.class, listeners[1]);
+
+    Set<Node> nodeSet = new HashSet<>();
+    Collections.addAll(nodeSet, nodes);
+    GroupConfiguration groupConfiguration1 = getGroupConfiguration(nodeSet, nodes[0]);
+    GroupConfiguration groupConfiguration2 = getGroupConfiguration(nodeSet, nodes[1]);
+
+    groups[0].join(groupConfiguration1);
+    groups[1].join(groupConfiguration2);
+    waitForMembersToJoin();
+
+    CompletableFuture<GroupResponse<AbstractGroupMessage>> resp = CompletableFuture.supplyAsync(()->{
+      AbstractGroupMessage sMesg = createPlatformInfo();
+      try {
+        return groups[1].sendAllAndWaitForResponse(sMesg);
+      } catch (GroupException g) {
+        throw new RuntimeException(g);
+      }
+    }, Executors.newSingleThreadExecutor());
+    
+    Thread.sleep(2000);
+    groups[0].closeMember(groups[1].getLocalNodeID());
+
+    GroupResponse<AbstractGroupMessage> r = resp.get();
+    Assert.assertTrue(r.getResponses().isEmpty());
+    tearGroups();
+  }
+  
   public void testSendToAll() throws Exception {
     int nGrp = 5;
     setupGroups(nGrp);
